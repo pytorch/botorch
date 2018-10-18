@@ -4,12 +4,13 @@ from math import pi, sqrt
 from typing import Callable, List, Optional
 
 import torch
+from botorch.models.utils import initialize_BFGP
 from botorch.optim.constraints import soft_eval_constraint
 from botorch.utils import manual_seed
 from gpytorch import Module, fast_pred_var
 from torch import Tensor
 from torch.nn.functional import sigmoid
-from botorch.models.utils import initialize_BFGP
+
 
 """
 Batch acquisition functions using the reparameterization trick in combination
@@ -229,12 +230,7 @@ def batch_knowledge_gradient(
     # Cannot use .mul_ here as it breaks gradient
     old_value = (old_per_point * w).sum()
 
-    fantasy_model = initialize_BFGP(
-        model=model,
-        X=X,
-        num_samples=mc_samples,
-        seed=seed
-    )
+    fantasy_model = initialize_BFGP(model=model, X=X, num_samples=mc_samples, seed=seed)
     new_posterior = fantasy_model(X_all.unsqueeze(0).repeat(mc_samples, 1, 1))
     # TODO: Tell the posterior to use the same set
     # of Z's for each of the "batches" in the fantasy model. This
@@ -261,8 +257,8 @@ def batch_knowledge_gradient(
     new_per_point = new_obj.mean(dim=0)
     # Cannot use .mul_ here as it breaks gradient
     new_value = (
-        new_per_point * torch.softmax(new_per_point / eta, dim=-1)
-    ).sum(dim=-1).mean()
+        (new_per_point * torch.softmax(new_per_point / eta, dim=-1)).sum(dim=-1).mean()
+    )
 
     return new_value - old_value
 
@@ -306,7 +302,9 @@ def batch_upper_confidence_bound(
         val = (
             (
                 sqrt(beta * pi / 2)
-                * mvn.covar().zero_mean_mvn_samples(sample_shape=torch.Size([mc_samples])).abs()
+                * mvn.covar()
+                .zero_mean_mvn_samples(sample_shape=torch.Size([mc_samples]))
+                .abs()
                 + mvn._mean.view(1, -1)
             )
             .max(1)[0]

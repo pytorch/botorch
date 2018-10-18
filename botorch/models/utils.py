@@ -1,20 +1,17 @@
 #!/usr/bin/env python3
 
 from copy import deepcopy
-from typing import Tuple, Optional
+from typing import Optional, Tuple
 
 import torch
-from gpytorch.module import Module
-from gpytorch import fast_pred_var
-from torch import Tensor
 from botorch.utils import manual_seed
+from gpytorch import fast_pred_var
+from gpytorch.module import Module
+from torch import Tensor
 
 
 def initialize_BFGP(
-        model: Module,
-        X: Tensor,
-        num_samples: int,
-        seed: Optional[int] = None
+    model: Module, X: Tensor, num_samples: int, seed: Optional[int] = None
 ) -> Module:
     """Initializes a batched fantasized GP from a given GP
 
@@ -46,10 +43,7 @@ def initialize_BFGP(
 
     # create new training data tensors
     train_x = torch.cat([model.train_inputs[0], X]).expand(num_samples, -1, p)
-    train_y = torch.cat(
-        [model.train_targets.expand(*fantasy_shape), fantasies],
-        dim=1
-    )
+    train_y = torch.cat([model.train_targets.expand(*fantasy_shape), fantasies], dim=1)
 
     # instantiate the fantasy model(s) and load the (shared) hyperparameters
     likelihood = deepcopy(model.likelihood).eval()
