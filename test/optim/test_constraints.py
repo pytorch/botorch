@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import unittest
+
 import torch
 from botorch.optim.constraints import soft_eval_constraint
 
@@ -9,7 +10,9 @@ class TestSoftEvalConstraint(unittest.TestCase):
     def test_soft_eval_scalar_constraint(self):
         lhs = torch.tensor([0.0])
         self.assertTrue(torch.equal(soft_eval_constraint(lhs), torch.tensor([0.5])))
-        self.assertTrue(torch.equal(soft_eval_constraint(lhs, eta=1), torch.tensor([0.5])))
+        self.assertTrue(
+            torch.equal(soft_eval_constraint(lhs, eta=1), torch.tensor([0.5]))
+        )
 
     def test_soft_eval_tensor_constraint(self):
         eta = 0.1

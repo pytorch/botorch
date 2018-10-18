@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from numbers import Number
-from typing import Union, Tuple
+from typing import Tuple, Union
 
 import torch
 from gpytorch import Module

@@ -3,11 +3,11 @@
 from typing import Dict, List, Optional, Union
 
 import torch
-from torch import Tensor
 from botorch.utils import check_convergence
 from gpytorch import Module
 from gpytorch.likelihoods import Likelihood
 from gpytorch.mlls import ExactMarginalLogLikelihood
+from torch import Tensor
 from torch.optim import Optimizer
 
 

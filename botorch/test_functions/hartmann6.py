@@ -40,5 +40,5 @@ def hartmann6(X: Tensor):
     batch = X.ndimension() > 1
     X = X if batch else X.unsqueeze(0)
     inner_sum = torch.sum(X.new(A) * (X.unsqueeze(1) - 0.0001 * X.new(P)) ** 2, dim=2)
-    result = - torch.sum(X.new(ALPHA) * torch.exp(-inner_sum), dim=1)
+    result = -torch.sum(X.new(ALPHA) * torch.exp(-inner_sum), dim=1)
     return result if batch else result.squeeze(0)

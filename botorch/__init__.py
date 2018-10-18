@@ -6,11 +6,4 @@ from .gen import gen_candidates
 from .utils import manual_seed
 
 
-__all__ = [
-    acquisition,
-    fit_model,
-    gen_candidates,
-    optim,
-    manual_seed,
-    test_functions,
-]
+__all__ = [acquisition, fit_model, gen_candidates, optim, manual_seed, test_functions]

@@ -4,7 +4,7 @@ from torch import Tensor
 from torch.nn.functional import sigmoid
 
 
-def soft_eval_constraint(lhs: Tensor, eta: float=1e-3):
+def soft_eval_constraint(lhs: Tensor, eta: float = 1e-3):
     """Element-wise evaluation of a constraint in a 'soft' fashion
 
     `value(x) = 1 / (1 + exp(x / eta))`

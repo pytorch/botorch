@@ -2,6 +2,7 @@
 
 from torch import Tensor
 
+
 GLOBAL_MINIMIZER = -2.903534
 GLOBAL_MINIMUM = -39.166166
 
