@@ -35,7 +35,7 @@ def batch_expected_improvement(
 ) -> Tensor:
     """q-EI with constraints, supporting t-batch mode.
 
-    *** NOTE: THIS FUNCTION DOES NOT YET SUPPORT t-BATCHES. #TODO: T32892289 ***
+    *** NOTE: THIS FUNCTION DOES NOT YET SUPPORT t-BATCHES.***
 
     Args:
         X: A `b x q x n` Tensor with `b` t-batches of `q` design points
@@ -48,7 +48,7 @@ def batch_expected_improvement(
             to a Tensor of size `b x q x mc_samples`, where `t` is the number of
             outputs (tasks) of the model. If omitted, use the identity map
             (applicable to single-task models only).
-            Assumed to be non-negative when the constaints are used!
+            Assumed to be non-negative when the constraints are used!
         constraints: A list of callables, each mapping a Tensor of size
             `b x q x t x mc_samples` to a Tensor of size `b x q x mc_samples`,
             where negative values imply feasibility. Only relevant for multi-task
@@ -91,7 +91,7 @@ def batch_noisy_expected_improvement(
 ) -> Tensor:
     """q-NoisyEI with constraints, supporting t-batch mode.
 
-    *** NOTE: THIS FUNCTION DOES NOT YET SUPPORT t-BATCHES. TODO: T32892289 ***
+    *** NOTE: THIS FUNCTION DOES NOT YET SUPPORT t-BATCHES.***
 
     Args:
         X: A `b x q x n` Tensor with `b` t-batches of `q` design points each.
@@ -104,7 +104,7 @@ def batch_noisy_expected_improvement(
             to a Tensor of size `b x q x mc_samples`, where `t` is the number of
             outputs (tasks) of the model. If omitted, use the identity map
             (applicable to single-task models only).
-            Assumed to be non-negative when the constaints are used!
+            Assumed to be non-negative when the constraints are used!
         constraints: A list of callables, each mapping a Tensor of size
             `b x q x t x mc_samples` to a Tensor of size `b x q x mc_samples`,
             where negative values imply feasibility. Only relevant for multi-task
@@ -117,7 +117,7 @@ def batch_noisy_expected_improvement(
         seed: The random seed to use for sampling.
 
     Returns:
-        Tensor: The constrained q-EI value of the design X for each of the `b`
+        Tensor: The constrained q-NoisyEI value of the design X for each of the `b`
             t-batches.
 
     """
@@ -158,7 +158,7 @@ def batch_knowledge_gradient(
     Multifidelity optimization can be performed by using the
     optional project and cost callables.
 
-    *** NOTE: THIS FUNCTION DOES NOT YET SUPPORT t-BATCHES. TODO: T32892289 ***
+    *** NOTE: THIS FUNCTION DOES NOT YET SUPPORT t-BATCHES.***
 
     *** TODO: Check whether soft-maxes help the gradients **
 
@@ -292,8 +292,7 @@ def batch_knowledge_gradient_no_discretization(
     Unlike batch_knowledge_gradient, this function optimizes
     the knowledge gradient without discretization.
 
-    *** NOTE: THIS FUNCTION DOES NOT YET SUPPORT t-BATCHES. IT MAY NOT BE
-    POSSIBLE IN THIS CASE. TODO: T32892289 ***
+    *** NOTE: THIS FUNCTION DOES NOT YET SUPPORT t-BATCHES. ***
 
     *** TODO: Check whether soft-maxes help the gradients **
 
@@ -396,7 +395,26 @@ def batch_probability_of_improvement(
     mc_samples: int = 5000,
     seed: Optional[int] = None,
 ) -> Tensor:
-    """TODO"""
+    """q-PI, supporting t-batch mode.
+
+    *** NOTE: THIS FUNCTION DOES NOT YET SUPPORT t-BATCHES.***
+
+    Args:
+        X: A `b x q x n` Tensor with `b` t-batches of `q` design points
+            each. If X is two-dimensional, assume `b = 1`.
+        model: A fitted model implementing an `rsample` method to sample from the
+            posterior function values
+        best_f: The best (feasible) function value observed so far (assumed
+            noiseless).
+        mc_samples: The number of Monte-Carlo samples to draw from the model
+            posterior.
+        seed: The random seed to use for sampling.
+
+    Returns:
+        Tensor: The constrained q-PI value of the design X for each of the `b`
+            t-batches.
+
+    """
     model.eval()
     with manual_seed(seed=seed), fast_pred_var():
         samples = model(X).rsample(sample_shape=torch.Size([mc_samples])).max(1)[0]
@@ -407,7 +425,24 @@ def batch_probability_of_improvement(
 def batch_simple_regret(
     X: Tensor, model: Module, mc_samples: int = 5000, seed: Optional[int] = None
 ) -> Tensor:
-    """TODO"""
+    """q-simple regret, support t-batch mode.
+
+    *** NOTE: THIS FUNCTION DOES NOT YET SUPPORT t-BATCHES.***
+
+    Args:
+        X: A `b x q x n` Tensor with `b` t-batches of `q` design points
+            each. If X is two-dimensional, assume `b = 1`.
+        model: A fitted model implementing an `rsample` method to sample from the
+            posterior function values
+        mc_samples: The number of Monte-Carlo samples to draw from the model
+            posterior.
+        seed: The random seed to use for sampling.
+
+    Returns:
+        Tensor: The constrained q-simple regret value of the design X for each of
+            the `b`t-batches.
+
+    """
     model.eval()
     with manual_seed(seed=seed), fast_pred_var():
         val = model(X).rsample(sample_shape=torch.Size([mc_samples])).max(1)[0].mean()
@@ -421,7 +456,25 @@ def batch_upper_confidence_bound(
     mc_samples: int = 5000,
     seed: Optional[int] = None,
 ) -> Tensor:
-    """TODO"""
+    """q-UCB, support t-batch mode.
+
+    *** NOTE: THIS FUNCTION DOES NOT YET SUPPORT t-BATCHES.***
+
+    Args:
+        X: A `b x q x n` Tensor with `b` t-batches of `q` design points
+            each. If X is two-dimensional, assume `b = 1`.
+        model: A fitted model implementing an `rsample` method to sample from the
+            posterior function values
+        beta:  controls tradeoff between mean and standard deviation in UCB
+        mc_samples: The number of Monte-Carlo samples to draw from the model
+            posterior.
+        seed: The random seed to use for sampling.
+
+    Returns:
+        Tensor: The constrained q-UCB value of the design X for each of
+            the `b`t-batches.
+
+    """
     model.eval()
     with manual_seed(seed=seed), fast_pred_var():
         mvn = model(X)
