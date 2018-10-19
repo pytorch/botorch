@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import torch
 from botorch.utils import check_convergence
@@ -16,6 +16,7 @@ def fit_model(
     likelihood: Likelihood,
     train_x: Tensor,
     train_y: Tensor,
+    model_kwargs: Optional[Dict[str, Any]] = None,
     optimizer: Optimizer = torch.optim.Adam,
     options: Optional[Dict[str, Union[float, str]]] = None,
     max_iter: int = 50,
@@ -28,6 +29,7 @@ def fit_model(
         likelihood: A gpytorch likelihood
         train_x: An n x p Tensor of training features
         train_y: An n x 1 Tensor of training lables (n x t) for multi-task GPs
+        model_kwargs: A dictionary with kwargs to be passed to the model constructor
         optimizer: A pytorch Optimzer from the torch.optim module
         options: A dictionary of options to be passed to the optimizer and / or
             the convergence check
@@ -38,7 +40,8 @@ def fit_model(
         The fitted gp_model
 
     """
-    model = gp_model(train_x.detach(), train_y.detach(), likelihood)
+    model_kwargs = model_kwargs or {}
+    model = gp_model(train_x.detach(), train_y.detach(), likelihood, **model_kwargs)
     if train_x.is_cuda:
         model.to(device=train_x.device)
     options = options or {}
@@ -59,13 +62,14 @@ def fit_model(
         i += 1
         optimizer.zero_grad()
         output = model(train_x)
-        loss = -mll(output, train_y)
+        # we sum here to support batch mode
+        loss = -mll(output, train_y).sum()
         loss.backward()
         loss_trajectory.append(loss.item())
         for name, param in model.named_parameters():
             param_trajectory[name].append(param.detach().clone())
         if verbose:
-            print("Iter: {} - MLL: {:.3f}".format(i, -loss.item()))
+            print("Iter: {}, MLL: {:.3f}".format(i, -loss.item()))
         optimizer.step()
         converged = check_convergence(
             loss_trajectory=loss_trajectory,
