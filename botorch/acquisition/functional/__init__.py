@@ -10,6 +10,7 @@ from .acquisition import (
 from .batch_acquisition import (
     batch_expected_improvement,
     batch_knowledge_gradient,
+    batch_knowledge_gradient_no_discretization,
     batch_noisy_expected_improvement,
     batch_probability_of_improvement,
     batch_simple_regret,
@@ -25,6 +26,7 @@ __all__ = [
     upper_confidence_bound,
     batch_expected_improvement,
     batch_knowledge_gradient,
+    batch_knowledge_gradient_no_discretization,
     batch_noisy_expected_improvement,
     batch_probability_of_improvement,
     batch_upper_confidence_bound,
