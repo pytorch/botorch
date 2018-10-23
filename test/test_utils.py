@@ -3,7 +3,7 @@
 import unittest
 
 import torch
-from botorch.utils import check_convergence, columnwise_clamp, manual_seed
+from botorch.utils import check_convergence, columnwise_clamp, fix_features, manual_seed
 
 
 class TestCheckConvergence(unittest.TestCase):
@@ -23,6 +23,54 @@ class TestCheckConvergence(unittest.TestCase):
     def test_check_convergence_cuda(self):
         if torch.cuda.is_available():
             self.test_check_convergence(cuda=True)
+
+
+class TestFixFeatures(unittest.TestCase):
+    def setUp(self):
+        self.X = torch.tensor([[-2, 1, 3], [0.5, -0.5, 1.0]], requires_grad=True)
+        self.X_null_two = torch.tensor(
+            [[-2, 1, 3], [0.5, -0.5, 1.0]], requires_grad=True
+        )
+        self.X_expected = torch.tensor([[-1, 1, -2], [-1, -0.5, -2]])
+        self.X_expected_null_two = torch.tensor([[-1, 1, 3], [-1, -0.5, 1.0]])
+
+    def test_fix_features(self, cuda=False):
+        X = self.X.cuda() if cuda else self.X
+        X_expected = self.X_expected.cuda() if cuda else self.X_expected
+        X_null_two = self.X_null_two.cuda() if cuda else self.X_null_two
+        X_expected_null_two = (
+            self.X_expected_null_two.cuda() if cuda else self.X_expected_null_two
+        )
+        X_fix = fix_features(X, {0: -1, 2: -2})
+        X_fix_null_two = fix_features(X_null_two, {0: -1, 2: None})
+
+        self.assertTrue(torch.equal(X_fix, X_expected))
+        self.assertTrue(torch.equal(X_fix_null_two, X_expected_null_two))
+
+        def f(X):
+            return X.sum()
+
+        f(X).backward()
+        self.assertTrue(torch.equal(X.grad, torch.ones_like(X)))
+        X.grad.zero_()
+        f(X_fix).backward()
+        self.assertTrue(
+            torch.equal(X.grad, torch.tensor([[0.0, 1.0, 0.0], [0.0, 1.0, 0.0]]))
+        )
+
+        f(X_null_two).backward()
+        self.assertTrue(torch.equal(X_null_two.grad, torch.ones_like(X)))
+        X_null_two.grad.zero_()
+        f(X_fix_null_two).backward()
+        self.assertTrue(
+            torch.equal(
+                X_null_two.grad, torch.tensor([[0.0, 1.0, 0.0], [0.0, 1.0, 0.0]])
+            )
+        )
+
+    def test_fix_features_cuda(self):
+        if torch.cuda.is_available():
+            self.test_fix_features(cuda=True)
 
 
 class TestColumnWiseClamp(unittest.TestCase):
