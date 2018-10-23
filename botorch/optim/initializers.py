@@ -8,30 +8,37 @@ from torch import Tensor
 
 
 def q_batch_initialization(
-    model: Module,
     gen_function: Callable[[int], Tensor],
+    acq_function: Module,
     q: int,
-    utility: Callable[[Tensor, Module], Tensor],
     multiplier: int = 50,
+    torch_batches: int = 1,
 ) -> Tensor:
     """Generate initial points for batch optimiziation.
 
-    Replicates the procedure from Wilson, et al. (Section B.1)
-
     Args:
-        model: A fitted GP model
         gen_function: A function n -> X_cand producing n (typically random)
             feasible candidates as a `n x d` tensor X_cand
+        acq_function:  An acquisition function Module assumed
+            to support the given value of q that returns
+            a Tensor when evaluated at a given q-batch
         q: The number of candidates in each q-batch
-        utility: A callable (X_cand, model) -> U computing the utility of each
-            candidate in X_cand under the provided model.
-        multiplier: This factor determines how many points to generate from
-            gen_function for each q-batch (for a total of q * multiplier points)
+        multiplier: This factor determines how many q-batches
+            to generate from gen_function
+        torch_batches:  This factor determines how many q-batches
+            in total will be returned by the function.  Must
+            be less than multiplier.
 
     Returns:
-        The set of candidates with the highest value under the utility
+        A Tensor X of size torch_batches x q x d where
+        X[i,:] has one of the torch_batches highest values of
+        acq_function(X[i,:])
     """
-    # TODO: There is a better heuristic for this in AE, adopt that
-    bulk_X = gen_function(q * multiplier)
-    _, best_indices = torch.topk(-utility(bulk_X, model), k=q)
+    bulk_X = torch.cat([gen_function(q).unsqueeze(0) for i in range(multiplier)], dim=0)
+    # TODO: bulk_X is multiplier x q x d. Replace below
+    # when acq_functions all support t-batches
+    val_X = torch.cat(
+        [acq_function(bulk_X[i, ...]).reshape(1) for i in range(bulk_X.shape[0])]
+    )
+    _, best_indices = torch.topk(val_X, k=torch_batches)
     return bulk_X[best_indices]
