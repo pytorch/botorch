@@ -22,6 +22,44 @@ def check_convergence(
         return False
 
 
+def _fix_feature(Z: Tensor, value: Optional[float]) -> Tensor:
+    Z_detached = Z.detach().requires_grad_(False)
+    if value is None:
+        return Z_detached
+    else:
+        return Z_detached.fill_(value)
+
+
+def fix_features(
+    X: Tensor, fixed_features: Optional[Dict[int, Optional[float]]] = None
+) -> Tensor:
+    """Fix feature values in a Tensor.  These fixed features
+        will have zero gradient in downstream calculations.
+
+    Args:
+        X: input Tensor with shape (..., p) where p is the number of features
+        fixed_features:  A dictionary with keys as column
+            indices and values equal to what the feature should be set to
+            in X.  If the value is None, that column is just
+            considered fixed.  Keys should be in the range [0, p - 1].
+
+    Returns:
+        Tensor X with fixed features.
+    """
+    if fixed_features is None:
+        return X
+    else:
+        return torch.cat(
+            [
+                X[..., i].unsqueeze(-1)
+                if i not in fixed_features
+                else _fix_feature(X[..., i].unsqueeze(-1), fixed_features[i])
+                for i in range(X.shape[-1])
+            ],
+            dim=-1,
+        )
+
+
 def columnwise_clamp(
     X: Tensor,
     lower: Optional[Union[float, Tensor]] = None,

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-from typing import Callable, Dict, List, Optional, Union
+from typing import Callable, Dict, List, Optional, Type, Union
 
 import torch
-from botorch.utils import check_convergence, columnwise_clamp
+from botorch.utils import check_convergence, columnwise_clamp, fix_features
 from torch import Tensor
 from torch.optim import Optimizer
 
@@ -13,10 +13,11 @@ def gen_candidates(
     acquisition_function: Callable,
     lower_bounds: Optional[Tensor] = None,
     upper_bounds: Optional[Tensor] = None,
-    optimizer: Optimizer = torch.optim.Adam,
+    optimizer: Type[Optimizer] = torch.optim.Adam,
     options: Optional[Dict[str, Union[float, str]]] = None,
     max_iter: int = 50,
     verbose: bool = True,
+    fixed_features: Optional[Dict[int, Optional[float]]] = None,
 ) -> Tensor:
     """Generate a set of candidates via optimization from a given set of
     starting points.
@@ -26,22 +27,30 @@ def gen_candidates(
         acquisition_function: acquisition function to be used
         lower_bounds: minimum values for each column of initial_candidates
         upper_bounds: maximum values for each column of initial_candidates
-        inner_optimization_steps (int): the number of optimization steps to
-            perform when searching for the candidate
-        candidate_optimizer (Callable): The pytorch optimizer to use to perform
+        optimizer (Optimizer): The pytorch optimizer to use to perform
             candidate search
-        learning_rate (float): The learning rate to use for stochastic gradient
-            optimization.
+        options:  options used to control the optimization
+        max_iter (int):  maximum number of iterations
+        verbose (bool):  whether to provide verbose output
+        fixed_features:  This is a dictionary of feature indices
+            to values, where all generated candidates will have features
+            fixed to these values.  If the dictionary value is None, then that
+            feature will just be fixed to the clamped value and
+            not optimized.  Assumes values to be compatible with
+            lower_bounds and upper_bounds!
 
     Returns:
         The set of generated candidates
 
     """
     options = options or {}
-    candidates = columnwise_clamp(
+    clamped_candidates = columnwise_clamp(
         initial_candidates, lower_bounds, upper_bounds
     ).requires_grad_(True)
-    bayes_optimizer = optimizer(params=[candidates], lr=options.get("lr", 0.025))
+    candidates = fix_features(clamped_candidates, fixed_features)
+    bayes_optimizer = optimizer(
+        params=[clamped_candidates], lr=options.get("lr", 0.025)
+    )
     param_trajectory: Dict[str, List[Tensor]] = {"candidates": []}
     loss_trajectory: List[float] = []
     i = 0
@@ -61,7 +70,10 @@ def gen_candidates(
             return loss
 
         bayes_optimizer.step(closure)
-        candidates.data = columnwise_clamp(candidates, lower_bounds, upper_bounds)
+        clamped_candidates.data = columnwise_clamp(
+            clamped_candidates, lower_bounds, upper_bounds
+        )
+        candidates = fix_features(clamped_candidates, fixed_features)
         converged = check_convergence(
             loss_trajectory=loss_trajectory,
             param_trajectory=param_trajectory,
