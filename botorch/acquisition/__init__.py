@@ -2,6 +2,8 @@
 
 from .batch_modules import (
     qExpectedImprovement,
+    qKnowledgeGradient,
+    qNoisyExpectedImprovement,
     qProbabilityOfImprovement,
     qUpperConfidenceBound,
 )
@@ -21,6 +23,8 @@ __all__ = [
     ProbabilityOfImprovement,
     UpperConfidenceBound,
     qExpectedImprovement,
+    qKnowledgeGradient,
+    qNoisyExpectedImprovement,
     qProbabilityOfImprovement,
     qUpperConfidenceBound,
 ]

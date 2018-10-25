@@ -222,7 +222,7 @@ class qKnowledgeGradient(BatchAcquisitionFunction):
         cost: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
         X_pending: Optional[torch.Tensor] = None,
     ) -> None:
-        super(qNoisyExpectedImprovement, self).__init__(model)
+        super(qKnowledgeGradient, self).__init__(model)
         self.X_observed = X_observed
         self.objective = objective
         self.constraints = constraints
