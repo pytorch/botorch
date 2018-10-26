@@ -127,3 +127,17 @@ def _expand_bounds(
         return ebounds.to(**target)
     else:
         return None
+
+
+def gen_x_uniform(n: int, bounds: torch.Tensor) -> torch.Tensor:
+    """
+    Generate random n points within the bounds specified for each column.
+    Args:
+        n: The number of points to sample.
+        bounds: A (2 x d) tensor where bounds[0] is contains the lower bounds
+        for each column and bounds[1] contains the upper bounds.
+    Returns:
+        torch.Tensor: a (n x d) tensor of points
+    """
+    x_ranges = torch.sum(bounds * torch.Tensor([-1, 1]).view(2, -1), 0)
+    return torch.rand((n, bounds.shape[1])) * x_ranges + bounds[0]

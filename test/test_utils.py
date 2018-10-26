@@ -3,7 +3,13 @@
 import unittest
 
 import torch
-from botorch.utils import check_convergence, columnwise_clamp, fix_features, manual_seed
+from botorch.utils import (
+    check_convergence,
+    columnwise_clamp,
+    fix_features,
+    gen_x_uniform,
+    manual_seed,
+)
 
 
 class TestCheckConvergence(unittest.TestCase):
@@ -131,6 +137,22 @@ class TestManualSeed(unittest.TestCase):
         with manual_seed(1234):
             self.assertFalse(torch.all(torch.random.get_rng_state() == initial_state))
         self.assertTrue(torch.all(torch.random.get_rng_state() == initial_state))
+
+
+class TestGenXUniform(unittest.TestCase):
+    def testGenX(self):
+        n = 4
+        bounds = torch.tensor([[0.0, 1.0, 2.0], [1.0, 4.0, 5.0]])
+        X = gen_x_uniform(n, bounds)
+        # Check shape
+        self.assertTrue(X.shape == torch.Size((n, bounds.shape[1])))
+        # Make sure bounds are satisfied
+        self.assertTrue(
+            torch.sum(torch.max(X, dim=0)[0] <= bounds[1]) == bounds.shape[1]
+        )
+        self.assertTrue(
+            torch.sum(torch.min(X, dim=0)[0] >= bounds[0]) == bounds.shape[1]
+        )
 
 
 if __name__ == "__main__":
