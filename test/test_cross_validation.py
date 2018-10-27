@@ -102,6 +102,7 @@ class TestFitBatchCrossValidation(unittest.TestCase):
             model_cls=CVExactGPModel,
             likelihood_cls=CVGaussianLikelihood,
             cv_folds=cv_folds,
+            fit_args={"options": {"maxiter": 1}},
         )
         # compute MSE
         ((cv_results.observed - cv_results.posterior.mean) ** 2).mean()
@@ -123,6 +124,7 @@ class TestFitBatchCrossValidation(unittest.TestCase):
             model_cls=CVMultitaskExactGPModel,
             likelihood_cls=CVMultitaskGaussianLikelihood,
             cv_folds=cv_folds,
+            fit_args={"options": {"maxiter": 1}},
         )
         # compute MSE
         ((cv_results.observed - cv_results.posterior.mean) ** 2).sum(-1).mean()

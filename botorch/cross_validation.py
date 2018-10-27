@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 
-from typing import NamedTuple, Type
+from typing import Any, Dict, NamedTuple, Optional, Type
 
 import gpytorch
 import torch
 from botorch.fit import fit_model
 from gpytorch.likelihoods import GaussianLikelihood
+from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.models import ExactGP
 from torch import Tensor
 from torch.distributions import Distribution
@@ -53,6 +54,7 @@ def batch_cross_validation(
     model_cls: Type[ExactGP],
     likelihood_cls: Type[GaussianLikelihood],
     cv_folds: CVFolds,
+    fit_args: Optional[Dict[str, Any]] = None,
 ) -> CVResults:
     """Perform cross validation by using gpytorch batch mode
 
@@ -63,6 +65,7 @@ def batch_cross_validation(
             non-batch and in batch mode, and take a "batch_size" kwarg in its
             constructor
         cv_folds: A CVFolds tuple
+        fit_args: Arguments passed along to fit_model
 
     Returns:
         A CVResults tuple with the following fields:
@@ -76,15 +79,14 @@ def batch_cross_validation(
     """
     num_folds = cv_folds.train_x.shape[0]
     likelihood_cv = likelihood_cls(batch_size=num_folds)
-    # Fit the model in batch mode (needs to be improved)
-    model_cv = fit_model(
-        gp_model=model_cls,
-        likelihood=likelihood_cv,
-        train_x=cv_folds.train_x,
-        train_y=cv_folds.train_y,
-        model_kwargs={"batch_size": num_folds},
-        verbose=False,
+    model_cv = model_cls(
+        cv_folds.train_x, cv_folds.train_y, likelihood_cv, batch_size=num_folds
     )
+    mll_cv = ExactMarginalLogLikelihood(likelihood_cv, model_cv)
+
+    # Fit the model in batch mode (needs to be improved)
+    mll_cv = fit_model(mll_cv, **fit_args)
+
     # Evaluate on the hold-out set in batch mode
     with torch.no_grad(), gpytorch.fast_pred_var():
         posterior = likelihood_cv(model_cv(cv_folds.test_x))
