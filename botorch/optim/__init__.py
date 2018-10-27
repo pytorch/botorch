@@ -2,16 +2,16 @@
 
 from .batch_lbfgs import batch_compact_lbfgs_updates
 from .constraints import soft_eval_constraint
-from .converter import numpy_to_state_dict, state_dict_to_numpy
+from .converter import module_to_array, set_params_with_array
 from .initializers import q_batch_initialization
 from .random_restart import random_restarts
 
 
 __all__ = [
     batch_compact_lbfgs_updates,
-    numpy_to_state_dict,
+    module_to_array,
     q_batch_initialization,
     random_restarts,
+    set_params_with_array,
     soft_eval_constraint,
-    state_dict_to_numpy,
 ]

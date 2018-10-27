@@ -8,6 +8,7 @@ from botorch import fit_model, gen_candidates
 from botorch.acquisition import qExpectedImprovement
 from botorch.models import GPRegressionModel
 from gpytorch.likelihoods import GaussianLikelihood
+from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 
 from .test_fit import NOISE
 
@@ -21,14 +22,15 @@ class TestGenCandidates(unittest.TestCase):
         self.initial_candidates = torch.tensor([[0.5]])
 
     def test_gen_candidates(self, cuda=False):
-        model = fit_model(
-            gp_model=GPRegressionModel,
-            likelihood=GaussianLikelihood(),
-            train_x=self.train_x.cuda() if cuda else self.train_x,
-            train_y=self.train_y.cuda() if cuda else self.train_y,
-            max_iter=5,
-            verbose=False,
+        likelihood = GaussianLikelihood()
+        model = GPRegressionModel(
+            self.train_x.cuda() if cuda else self.train_x,
+            self.train_y.cuda() if cuda else self.train_y,
+            likelihood,
         )
+        mll = ExactMarginalLogLikelihood(likelihood, model)
+        mll = fit_model(mll, options={"maxiter": 1})
+
         ics = self.initial_candidates.cuda() if cuda else self.initial_candidates
         qEI = qExpectedImprovement(model, best_f=self.f_best)
         candidates = gen_candidates(
