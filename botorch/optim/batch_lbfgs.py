@@ -22,14 +22,17 @@ class LBFGScompact(NamedTuple):
         M_LU: The data for the batch LU factorization of M
         M_LU_pivots: The pivots for the batch LU factorization of M
         F: A `b x n x 2m` batch of tall matrices
-        E: A `b x 2m x 2m` matrix
+        E: A `b x 2m x 2m` batch of square matrices
+        FE: A `b x n x 2m` batch of tall matrices (batch matrix product of F and E)
     """
+
     gamma: Optional[Tensor] = None
     N: Optional[Tensor] = None
     M_LU: Optional[Tensor] = None
     M_LU_pivots: Optional[Tensor] = None
     F: Optional[Tensor] = None
     E: Optional[Tensor] = None
+    FE: Optional[Tensor] = None
 
 
 def batch_compact_lbfgs_updates(
@@ -64,9 +67,10 @@ def batch_compact_lbfgs_updates(
         N, M_LU, M_LU_pivots = None, None, None
     if H:
         F, E = _batch_make_H_compact(gamma, S, Y, D_diag, R)
+        FE = F.bmm(E)
     else:
-        F, E = None, None
-    return LBFGScompact(gamma, N, M_LU, M_LU_pivots, F, E)
+        F, E, FE = None, None, None
+    return LBFGScompact(gamma, N, M_LU, M_LU_pivots, F, E, FE)
 
 
 def _batch_make_gamma_S_Y(
