@@ -61,7 +61,7 @@ def gen_candidates(
         if verbose:
             print("Iter: {} - Value: {:.3f}".format(i, -loss.item()))
         loss_trajectory.append(loss.item())
-        param_trajectory["candidates"].append(candidates)
+        param_trajectory["candidates"].append(candidates.clone())
 
         def closure():
             bayes_optimizer.zero_grad()
