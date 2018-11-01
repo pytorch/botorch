@@ -258,6 +258,7 @@ def check_convergence(
         rb = best_res.primal + best_res.dual + nineq * best_res.mu
         impr = (r < rb).type_as(r)
         new_n_not_impr = n_not_impr + int(impr.sum().item() == 0)
+        # TODO: Speed this up, this takes a non-negligible amount of time.
         nbr: Dict[str, Tensor] = {
             k: impr * getattr(res, k) + (1 - impr) * getattr(best_res, k)
             for k in res._fields
@@ -352,9 +353,7 @@ def step(
     else:
         alpha_s = _find_alpha(s, D_s)
         alpha_lmbda = _find_alpha(lmbda, D_lmbda)
-        alpha = torch.min(
-            torch.ones_like(alpha_s), 0.99 * torch.min(alpha_s, alpha_lmbda)
-        )
+        alpha = (0.99 * torch.min(alpha_s, alpha_lmbda)).clamp_max_(1.0)
 
     # update variables and return
     new_variables = Variables(
@@ -581,7 +580,7 @@ def _gen_factor_Z(
 
 
 def _find_alpha(v: Tensor, Delta_v: Tensor) -> Tensor:
-    """Compute sup {alpha >=0 | v + alpha Delta_v >=0}
+    """Compute sup {alpha >= 0 | v + alpha Delta_v >=0}, assuming v >= 0
 
     Input:
         v: A `num_batch x k x 1` batch tensor
@@ -592,7 +591,7 @@ def _find_alpha(v: Tensor, Delta_v: Tensor) -> Tensor:
             a_i = sup {alpha >=0 | v_i + alpha Delta_v_i >=0}
     """
     neg = (Delta_v < 0).type_as(v)
-    a = neg * (-v / Delta_v) + (1 - neg) * torch.ones_like(v)
+    a = neg * (-v / Delta_v) + (1 - neg)
     return a.min(dim=1, keepdim=True)[0].clamp_min_(0.0)
 
 
