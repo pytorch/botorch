@@ -497,10 +497,13 @@ def compute_residuals(
     primal_eq = (A.bmm(x) - b).norm(p=2, dim=1, keepdim=True)
 
     # compute dual residual
-    Minv_NT_x = torch.btrisolve(
-        lbfgs.N.transpose(1, 2).bmm(x), lbfgs.M_LU, lbfgs.M_LU_pivots
-    )
-    Qx = x / lbfgs.gamma + lbfgs.N.bmm(Minv_NT_x)
+    if lbfgs.N is not None:
+        Minv_NT_x = torch.btrisolve(
+            lbfgs.N.transpose(1, 2).bmm(x), lbfgs.M_LU, lbfgs.M_LU_pivots
+        )
+        Qx = x / lbfgs.gamma + lbfgs.N.bmm(Minv_NT_x)
+    else:
+        Qx = x / lbfgs.gamma
     dual = (Qx + q + A.transpose(1, 2).bmm(nu) + G.transpose(1, 2).bmm(lmbda)).norm(
         p=2, dim=1, keepdim=True
     )
