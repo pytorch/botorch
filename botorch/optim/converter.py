@@ -35,7 +35,7 @@ def module_to_array(module: Module) -> Tuple[np.ndarray, Dict[str, TorchAttr]]:
             property_dict[p_name] = TorchAttr(
                 shape=t.shape, dtype=t.dtype, device=t.device
             )
-            x.append(t.detach().view(-1).numpy().copy())
+            x.append(t.detach().view(-1).cpu().double().clone().numpy())
     return np.concatenate(x), property_dict
 
 
