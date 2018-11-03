@@ -158,6 +158,6 @@ def _scipy_objective_and_grad(
     grad = []
     for p_name in property_dict:
         t = param_dict[p_name].grad
-        grad.append(t.detach().view(-1).double().numpy().copy())
+        grad.append(t.detach().view(-1).cpu().double().clone().numpy())
     mll.zero_grad()
     return loss.item(), np.concatenate(grad)
