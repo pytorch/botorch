@@ -8,6 +8,7 @@ from botorch.utils import (
     columnwise_clamp,
     fix_features,
     gen_x_uniform,
+    get_objective_weights_transform,
     manual_seed,
 )
 
@@ -153,6 +154,34 @@ class TestGenXUniform(unittest.TestCase):
         self.assertTrue(
             torch.sum(torch.min(X, dim=0)[0] >= bounds[0]) == bounds.shape[1]
         )
+
+
+class TestGetObjectiveWeightsTransform(unittest.TestCase):
+    def setUp(self):
+        self.b = 2
+        self.q = 4
+        self.mc_samples = 5
+
+    def testNoWeights(self):
+        X = torch.ones((self.b, self.q, self.mc_samples), dtype=torch.float32)
+        objective_transform = get_objective_weights_transform(None)
+        X_transformed = objective_transform(X)
+        self.assertTrue(torch.equal(X, X_transformed))
+        objective_transform = get_objective_weights_transform(torch.tensor([]))
+        X_transformed = objective_transform(X)
+        self.assertTrue(torch.equal(X, X_transformed))
+
+    def testOneWeight(self):
+        X = torch.ones((self.b, self.q, self.mc_samples))
+        objective_transform = get_objective_weights_transform(torch.tensor([-1.0]))
+        X_transformed = objective_transform(X)
+        self.assertTrue(torch.equal(X, -1 * X_transformed))
+
+    def testMultiTaskWeights(self):
+        X = torch.ones((self.b, self.q, 2, self.mc_samples))
+        objective_transform = get_objective_weights_transform(torch.tensor([1.0, 1.0]))
+        X_transformed = objective_transform(X)
+        self.assertTrue(torch.equal(torch.sum(X, dim=2), X_transformed))
 
 
 if __name__ == "__main__":

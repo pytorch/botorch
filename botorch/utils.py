@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from contextlib import contextmanager
-from typing import Dict, Generator, List, Optional, Union
+from typing import Callable, Dict, Generator, List, Optional, Union
 
 import torch
 from torch import Tensor
@@ -129,7 +129,7 @@ def _expand_bounds(
         return None
 
 
-def gen_x_uniform(n: int, bounds: torch.Tensor) -> torch.Tensor:
+def gen_x_uniform(n: int, bounds: Tensor) -> Tensor:
     """
     Generate random n points within the bounds specified for each column.
     Args:
@@ -139,5 +139,41 @@ def gen_x_uniform(n: int, bounds: torch.Tensor) -> torch.Tensor:
     Returns:
         torch.Tensor: a (n x d) tensor of points
     """
-    x_ranges = torch.sum(bounds * torch.Tensor([-1, 1]).view(2, -1), 0)
-    return torch.rand((n, bounds.shape[1])) * x_ranges + bounds[0]
+    x_ranges = torch.sum(
+        bounds
+        * torch.tensor([-1.0, 1.0], dtype=bounds.dtype, device=bounds.device).view(
+            2, -1
+        ),
+        dim=0,
+    )
+    return (
+        torch.rand((n, bounds.shape[1]), dtype=bounds.dtype, device=bounds.device)
+        * x_ranges
+        + bounds[0]
+    )
+
+
+def get_objective_weights_transform(
+    objective_weights: Optional[Tensor]
+) -> Callable[[Tensor], Tensor]:
+    """
+    Create a callable mapping a Tensor of size `b x q x t x mc_samples`
+        to a Tensor of size `b x q x mc_samples`, where `t` is the number of
+        outputs (tasks) of the model using the objective weights. For t=1, the
+        objective weight determines the optimization direction.
+    Args:
+        objective_weights: a 1-dimensional Tensor containing a weight for each task.
+        If not provided, the identity mapping is used.
+    Returns:
+        Callable[Tensor, Tensor]: transform function using the objective weights
+    """
+
+    if objective_weights is None:
+        return lambda Y: Y
+    weights = objective_weights.view(-1)
+    if weights.shape[0] == 0:
+        return lambda Y: Y
+    elif weights.shape[0] == 1:
+        return lambda Y: Y * weights[0]
+    # TODO: replace with einsum once performance issues are resolved upstream.
+    return lambda Y: torch.sum(Y * weights.view(1, 1, -1, 1), dim=2)
