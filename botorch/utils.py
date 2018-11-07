@@ -65,14 +65,14 @@ def columnwise_clamp(
     lower: Optional[Union[float, Tensor]] = None,
     upper: Optional[Union[float, Tensor]] = None,
 ) -> Tensor:
-    """Clamp values of a Tensor in column-wise fashion.
+    """Clamp values of a Tensor in column-wise fashion (with support for t-batches).
 
     This function is useful in conjunction with optimizers from the torch.optim
     package, which don't natively handle constraints. If you apply this after
     a gradient step you can be fancy and call it "projected gradient descent".
 
     Args:
-        X: The `n x d` input tensor.
+        X: The `b x n x d` input tensor. If 2-dimensional, b is assumed to be 1.
         lower: The column-wise lower bounds. If scalar, apply bound to all columns.
         upper: The column-wise upper bounds. If scalar, apply bound to all columns.
 
@@ -109,18 +109,28 @@ def manual_seed(seed: Optional[int] = None) -> Generator:
 def _expand_bounds(
     bounds: Optional[Union[float, Tensor]], X: Tensor
 ) -> Optional[Tensor]:
-    # TODO: Make work properly with batch mode
+    """
+    Expand the dimension of bounds if necessary such that the 1st dimension of
+        bounds is the same as the last dimension of X.
+    Args:
+        bounds: a bound (either upper or lower) of each column (last dimension)
+            of X. If this is a single float, then all columns have the same bound.
+        X: `... x d` tensor
+
+    Returns
+
+    """
     if bounds is not None:
         target = {"dtype": X.dtype, "device": X.device}
         if not torch.is_tensor(bounds):
             bounds = torch.tensor(bounds)
         if len(bounds.shape) == 0:
-            ebounds = bounds.expand(1, X.shape[1])
+            ebounds = bounds.expand(1, X.shape[-1])
         elif len(bounds.shape) == 1:
             ebounds = bounds.view(1, -1)
         else:
             ebounds = bounds
-        if ebounds.shape[1] != X.shape[1]:
+        if ebounds.shape[1] != X.shape[-1]:
             raise RuntimeError(
                 "Bounds must either be a single value or the same dimension as X"
             )
@@ -157,9 +167,10 @@ def get_objective_weights_transform(
     objective_weights: Optional[Tensor]
 ) -> Callable[[Tensor], Tensor]:
     """
-    Create a callable mapping a Tensor of size `b x q x t x mc_samples`
-        to a Tensor of size `b x q x mc_samples`, where `t` is the number of
-        outputs (tasks) of the model using the objective weights. For t=1, the
+    Create a callable mapping a Tensor of size `b x q x t` to a Tensor of size
+        `b x q`, where `t` is the number of outputs (tasks) of the model using
+        the objective weights. This callable supports broadcasting (e.g.
+        for calling on a tensor of shape `mc_samples x b x q x t`. For t=1, the
         objective weight determines the optimization direction.
     Args:
         objective_weights: a 1-dimensional Tensor containing a weight for each task.
@@ -176,4 +187,4 @@ def get_objective_weights_transform(
     elif weights.shape[0] == 1:
         return lambda Y: Y * weights[0]
     # TODO: replace with einsum once performance issues are resolved upstream.
-    return lambda Y: torch.sum(Y * weights.view(1, 1, -1, 1), dim=2)
+    return lambda Y: torch.sum(Y * weights.view(1, 1, -1), dim=-1)

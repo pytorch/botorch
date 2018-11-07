@@ -35,24 +35,22 @@ def batch_expected_improvement(
 ) -> Tensor:
     """q-EI with constraints, supporting t-batch mode.
 
-    *** NOTE: THIS FUNCTION DOES NOT YET SUPPORT t-BATCHES.***
-
     Args:
-        X: A `b x q x n` Tensor with `b` t-batches of `q` design points
+        X: A `b x q x d` Tensor with `b` t-batches of `q` design points
             each. If X is two-dimensional, assume `b = 1`.
         model: A fitted model implementing an `rsample` method to sample from the
             posterior function values
         best_f: The best (feasible) function value observed so far (assumed
             noiseless).
-        objective: A callable mapping a Tensor of size `b x q x t x mc_samples`
-            to a Tensor of size `b x q x mc_samples`, where `t` is the number of
-            outputs (tasks) of the model. If omitted, use the identity map
-            (applicable to single-task models only).
+        objective: A callable mapping a Tensor of size `b x q x (t)`
+            to a Tensor of size `b x q`, where `t` is the number of
+            outputs (tasks) of the model. Note: the callable must support broadcasting.
+            If omitted, use the identity map (applicable to single-task models only).
             Assumed to be non-negative when the constraints are used!
         constraints: A list of callables, each mapping a Tensor of size
-            `b x q x t x mc_samples` to a Tensor of size `b x q x mc_samples`,
-            where negative values imply feasibility. Only relevant for multi-task
-            models (`t` > 1).
+            `b x q x t` to a Tensor of size `b x q`, where negative values imply
+            feasibility. Note: the callable must support broadcasting. Only
+            relevant for multi-task models (`t` > 1).
         mc_samples: The number of Monte-Carlo samples to draw from the model
             posterior.
         eta: The temperature parameter of the softmax function used in approximating
@@ -66,17 +64,25 @@ def batch_expected_improvement(
 
     """
     model.eval()
+    # make sure X is `b x q x d`
+    is_batch_mode = X.ndimension() != 2
+    X = X.unsqueeze(0) if not is_batch_mode else X
     # predict posterior (joint across points and tasks)
     posterior = model(X)
-    # Draw MC samples (shape is n_eval x n_tasks x n_samples)
+
     with manual_seed(seed=seed), fast_pred_var():
+        # samples is mc_samples x b x q x (t)
         samples = posterior.rsample(sample_shape=torch.Size([mc_samples]))
     # compute objective value
     obj = (objective(samples) - best_f).clamp_min_(0)
     if constraints is not None:
         for constraint in constraints:
             obj.mul_(soft_eval_constraint(constraint(samples), eta=eta))
-    return obj.max(dim=1)[0].mean()
+    q_ei = obj.max(dim=2)[0].mean(dim=0)
+    # remove batch dimension if in non-batch mode
+    if not is_batch_mode:
+        return q_ei.squeeze(0)
+    return q_ei
 
 
 def batch_noisy_expected_improvement(

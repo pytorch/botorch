@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import unittest
+from test.utils.mock import MockLikelihood, MockModel
 
 import torch
 from botorch.acquisition.functional.batch_acquisition import (
@@ -8,16 +9,14 @@ from botorch.acquisition.functional.batch_acquisition import (
     batch_noisy_expected_improvement,
 )
 
-from ...utils.mock import MockLikelihood, MockModel
-
 
 class TestFunctionalBatchAcquisition(unittest.TestCase):
     def test_batch_expected_improvement(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
-        samples = torch.zeros(1, 2, 1, device=device)
+        samples = torch.zeros((2, 1, 1), device=device)
         mm = MockModel(MockLikelihood(samples=samples))
 
-        X = torch.tensor(0, device=device)  # dummy Tensor for type checking
+        X = torch.zeros((1, 1), device=device)  # dummy Tensor for type checking
         # basic test
         res = batch_expected_improvement(X=X, model=mm, best_f=0, mc_samples=2)
         self.assertEqual(res.item(), 0)
