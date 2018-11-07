@@ -11,8 +11,8 @@ from torch.optim import Optimizer
 def gen_candidates(
     initial_candidates: Tensor,
     acquisition_function: Callable,
-    lower_bounds: Optional[Tensor] = None,
-    upper_bounds: Optional[Tensor] = None,
+    lower_bounds: Optional[Union[float, Tensor]] = None,
+    upper_bounds: Optional[Union[float, Tensor]] = None,
     optimizer: Type[Optimizer] = torch.optim.Adam,
     options: Optional[Dict[str, Union[float, str]]] = None,
     max_iter: int = 50,
@@ -40,7 +40,8 @@ def gen_candidates(
             lower_bounds and upper_bounds!
 
     Returns:
-        The set of generated candidates
+        Tensor: The set of generated candidates
+        Tensor: The acquisition value for each t-batch.
 
     """
     options = options or {}
@@ -57,7 +58,7 @@ def gen_candidates(
     converged = False
     while not converged:
         i += 1
-        loss = -acquisition_function(candidates)
+        loss = -acquisition_function(candidates).sum()
         if verbose:
             print("Iter: {} - Value: {:.3f}".format(i, -loss.item()))
         loss_trajectory.append(loss.item())
@@ -65,7 +66,7 @@ def gen_candidates(
 
         def closure():
             bayes_optimizer.zero_grad()
-            loss = -acquisition_function(candidates)
+            loss = -acquisition_function(candidates).sum()
             loss.backward()
             return loss
 
@@ -80,5 +81,5 @@ def gen_candidates(
             options=options,
             max_iter=max_iter,
         )
-
-    return candidates
+    batch_acquisition = acquisition_function(candidates)
+    return candidates, batch_acquisition

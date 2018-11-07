@@ -163,7 +163,7 @@ class TestGetObjectiveWeightsTransform(unittest.TestCase):
         self.mc_samples = 5
 
     def testNoWeights(self):
-        X = torch.ones((self.b, self.q, self.mc_samples), dtype=torch.float32)
+        X = torch.ones((self.mc_samples, self.b, self.q), dtype=torch.float32)
         objective_transform = get_objective_weights_transform(None)
         X_transformed = objective_transform(X)
         self.assertTrue(torch.equal(X, X_transformed))
@@ -172,16 +172,22 @@ class TestGetObjectiveWeightsTransform(unittest.TestCase):
         self.assertTrue(torch.equal(X, X_transformed))
 
     def testOneWeight(self):
-        X = torch.ones((self.b, self.q, self.mc_samples))
+        X = torch.ones((self.mc_samples, self.b, self.q))
         objective_transform = get_objective_weights_transform(torch.tensor([-1.0]))
         X_transformed = objective_transform(X)
         self.assertTrue(torch.equal(X, -1 * X_transformed))
 
     def testMultiTaskWeights(self):
-        X = torch.ones((self.b, self.q, 2, self.mc_samples))
+        X = torch.ones((self.mc_samples, self.b, self.q, 2))
         objective_transform = get_objective_weights_transform(torch.tensor([1.0, 1.0]))
         X_transformed = objective_transform(X)
-        self.assertTrue(torch.equal(torch.sum(X, dim=2), X_transformed))
+        self.assertTrue(torch.equal(torch.sum(X, dim=-1), X_transformed))
+
+    def testNoMCSamples(self):
+        X = torch.ones((self.b, self.q, 2))
+        objective_transform = get_objective_weights_transform(torch.tensor([1.0, 1.0]))
+        X_transformed = objective_transform(X)
+        self.assertTrue(torch.equal(torch.sum(X, dim=-1), X_transformed))
 
 
 if __name__ == "__main__":
