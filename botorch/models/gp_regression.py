@@ -13,8 +13,19 @@ class GPRegressionModel(ExactGP):
         self, train_x: Tensor, train_y: Tensor, likelihood: Likelihood
     ) -> None:
         super(GPRegressionModel, self).__init__(train_x, train_y, likelihood)
-        self.mean_module = ConstantMean()
-        self.covar_module = ScaleKernel(RBFKernel())
+        if train_x.ndimension() == 1:
+            batch_size, ard_num_dims = 1, None
+        elif train_x.ndimension() == 2:
+            batch_size, ard_num_dims = 1, train_x.shape[-1]
+        elif train_x.ndimension() == 3:
+            batch_size, ard_num_dims = train_x.shape[0], train_x.shape[-1]
+        else:
+            raise ValueError(f"Unsupported shape {train_x.shape} for train_x.")
+        self.mean_module = ConstantMean(batch_size=batch_size)
+        self.covar_module = ScaleKernel(
+            RBFKernel(ard_num_dims=ard_num_dims, batch_size=batch_size),
+            batch_size=batch_size,
+        )
 
     def forward(self, x: Tensor) -> MultivariateNormal:
         mean_x = self.mean_module(x)
