@@ -24,7 +24,7 @@ GLOBAL_MINIMIZER = [0.20169, 0.150011, 0.476874, 0.275332, 0.311652, 0.6573]
 GLOBAL_MINIMUM = -3.32237
 
 
-def hartmann6(X: Tensor):
+def hartmann6(X: Tensor) -> Tensor:
     """Hartmann6 synthetic test function supporting batch evaluation.
 
     H(x) = - sum_{i=1}^4 ALPHA_i exp( - sum_{j=1}^6 A_ij (x_j - P_ij)**2 )

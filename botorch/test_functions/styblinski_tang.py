@@ -7,7 +7,7 @@ GLOBAL_MINIMIZER = -2.903534
 GLOBAL_MINIMUM = -39.166166
 
 
-def styblinski_tang(X: Tensor):
+def styblinski_tang(X: Tensor) -> Tensor:
     """Styblinski-Tang synthetic test function supporting batch evaluation.
 
     H(x) = 0.5 * sum_{i=1}^d (x_i^4 - 16 * x_i^2 + 5 * x_i)
