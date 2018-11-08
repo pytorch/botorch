@@ -6,19 +6,19 @@ import torch
 from torch import Tensor
 
 
-GLOBAL_MINIMIZERS = [
+GLOBAL_MAXIMIZERS = [
     [8.0550, 9.6646],
     [-8.0550, -9.6646],
     [-8.0550, 9.6646],
     [8.0550, -9.6646],
 ]
-GLOBAL_MINIMUM = -19.2085
+GLOBAL_MAXIMUM = 19.2085
 
 
-def holder_table(X: Tensor) -> Tensor:
-    """Holder Table synthetic test function supporting batch evaluation.
+def neg_holder_table(X: Tensor) -> Tensor:
+    """Negative Holder Table synthetic test function supporting batch evaluation.
 
-    Two-dimensional function that is typically evaluated on [0, 10]^2.
+    Two-dimensional function (typically evaluated on [0, 10]^2):
 
     H(x) = - | sin(x_1) * cos(x_2) * exp(| 1 - ||x|| / pi |) |
 
@@ -31,9 +31,12 @@ def holder_table(X: Tensor) -> Tensor:
     Args:
         X (Tensor): A Tensor of size 2 or k x 2 (k batch evaluations)
 
+    Returns:
+        -H(X), the negative value of the standard Holder Table function
     """
     batch = X.ndimension() > 1
     X = X if batch else X.unsqueeze(0)
     term = torch.abs(1 - torch.norm(X, dim=1) / math.pi)
-    result = -torch.abs(torch.sin(X[:, 0]) * torch.cos(X[:, 1]) * torch.exp(term))
+    H = -torch.abs(torch.sin(X[:, 0]) * torch.cos(X[:, 1]) * torch.exp(term))
+    result = -H
     return result if batch else result.squeeze(0)
