@@ -20,12 +20,14 @@ P = [
     [4047, 8828, 8732, 5743, 1091, 381],
 ]
 
-GLOBAL_MINIMIZER = [0.20169, 0.150011, 0.476874, 0.275332, 0.311652, 0.6573]
-GLOBAL_MINIMUM = -3.32237
+GLOBAL_MAXIMIZER = [0.20169, 0.150011, 0.476874, 0.275332, 0.311652, 0.6573]
+GLOBAL_MAXIMUM = 3.32237
 
 
-def hartmann6(X: Tensor) -> Tensor:
-    """Hartmann6 synthetic test function supporting batch evaluation.
+def neg_hartmann6(X: Tensor) -> Tensor:
+    """Negative Hartmann6 synthetic test function supporting batch evaluation.
+
+    Six-dimensional function (typically evaluated on [0, 1]^6) is
 
     H(x) = - sum_{i=1}^4 ALPHA_i exp( - sum_{j=1}^6 A_ij (x_j - P_ij)**2 )
 
@@ -36,9 +38,12 @@ def hartmann6(X: Tensor) -> Tensor:
     Args:
         X (Tensor): A Tensor of size 6 or k x 6 (k batch evaluations)
 
+    Returns:
+        -H(X), the negative value of the standard Hartmann6 function
     """
     batch = X.ndimension() > 1
     X = X if batch else X.unsqueeze(0)
     inner_sum = torch.sum(X.new(A) * (X.unsqueeze(1) - 0.0001 * X.new(P)) ** 2, dim=2)
-    result = -torch.sum(X.new(ALPHA) * torch.exp(-inner_sum), dim=1)
+    H = -torch.sum(X.new(ALPHA) * torch.exp(-inner_sum), dim=1)
+    result = -H
     return result if batch else result.squeeze(0)

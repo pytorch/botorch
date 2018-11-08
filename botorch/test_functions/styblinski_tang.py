@@ -3,24 +3,27 @@
 from torch import Tensor
 
 
-GLOBAL_MINIMIZER = -2.903534
-GLOBAL_MINIMUM = -39.166166
+GLOBAL_MAXIMIZER = -2.903534
+GLOBAL_MAXIMUM = 39.166166
 
 
-def styblinski_tang(X: Tensor) -> Tensor:
-    """Styblinski-Tang synthetic test function supporting batch evaluation.
+def neg_styblinski_tang(X: Tensor) -> Tensor:
+    """Negative Styblinski-Tang synthetic test function supporting batch evaluation.
+
+    d-dimensional function (usually evaluated on the hypercube [-5, 5]^d):
 
     H(x) = 0.5 * sum_{i=1}^d (x_i^4 - 16 * x_i^2 + 5 * x_i)
 
-    H is usually evaluated on the hypercube [-5, 5]^d
-
-    H has a single global mininimum H(z) = -39.166166 * d at z = -2.903534
+    H has a single global mininimum H(z) = -39.166166 * d at z = [-2.903534]^d
 
     Args:
         X (Tensor): A Tensor of size d or k x d (k batch evaluations)
 
+    Returns:
+        -H(X), the negative value of the standard Styblinski-Tang function
     """
     batch = X.ndimension() > 1
     X = X if batch else X.unsqueeze(0)
-    result = 0.5 * (X ** 4 - 16 * X ** 2 + 5 * X).sum(dim=1)
+    H = 0.5 * (X ** 4 - 16 * X ** 2 + 5 * X).sum(dim=1)
+    result = -H
     return result if batch else result.squeeze(0)
