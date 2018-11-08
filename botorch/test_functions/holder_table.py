@@ -15,7 +15,7 @@ GLOBAL_MINIMIZERS = [
 GLOBAL_MINIMUM = -19.2085
 
 
-def holder_table(X: Tensor):
+def holder_table(X: Tensor) -> Tensor:
     """Holder Table synthetic test function supporting batch evaluation.
 
     Two-dimensional function that is typically evaluated on [0, 10]^2.
