@@ -4,6 +4,9 @@ import torch
 from gpytorch.lazy import LazyTensor, NonLazyTensor
 
 
+empty_size = torch.Size()
+
+
 class MockLikelihood(object):
     """Mock object that implements dummy methods and feeds through specified outputs"""
 
@@ -28,7 +31,7 @@ class MockLikelihood(object):
             return NonLazyTensor(self._covariance)
         return self._covariance
 
-    def rsample(self, sample_shape=torch.Size()):
+    def rsample(self, sample_shape=empty_size):
         return self._samples.repeat(sample_shape.numel() or 1, 1, 1)
 
 
@@ -43,3 +46,16 @@ class MockModel(object):
 
     def eval(self):
         pass
+
+    def train(self):
+        pass
+
+
+class MockBatchAcquisitionModule(object):
+    """Mock batch acquisition module that returns the sum of the input"""
+
+    def __init__(self):
+        self.model = MockModel(None)
+
+    def __call__(self, X):
+        return X.sum()

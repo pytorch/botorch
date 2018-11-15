@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import unittest
+from test.utils.mock import MockBatchAcquisitionModule
 
 import torch
 from botorch.optim.initializers import q_batch_initialization
@@ -19,8 +20,7 @@ class TestQBatchInitialization(unittest.TestCase):
             self.used = self.used + 1
             return torch.arange(lb, ub, device=device).reshape(n, 2)
 
-        def fake_acq(X):
-            return X.sum()
+        fake_acq = MockBatchAcquisitionModule()
 
         q = 2
         R = fake_gen(q)
