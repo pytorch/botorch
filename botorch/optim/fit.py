@@ -4,6 +4,7 @@ import time
 from collections import OrderedDict
 from typing import Any, Dict, List, NamedTuple, Optional, Tuple
 
+import gpytorch
 import numpy as np
 from botorch.optim.converter import TorchAttr, module_to_array, set_params_with_array
 from botorch.utils import check_convergence
@@ -92,6 +93,7 @@ def fit_scipy(
     method: str = "L-BFGS-B",
     options: Optional[Dict[str, Any]] = None,
     track_iterations: bool = True,
+    max_preconditioner_size: int = 10,
 ):
     """Fit a gpytorch model by maximizing MLL with a scipy optimizer.
 
@@ -103,6 +105,8 @@ def fit_scipy(
         options: Dictionary of solver options, passed along to scipy.minimize.
         track_iterations: Track the function values and wall time for each
             iteration.
+        max_preconditioner_size: Size of gpytorch preconditioner, for improving
+            stability of the MLL estimate.
 
     Returns:
         mll: mll with parameters optimized in-place.
@@ -125,7 +129,7 @@ def fit_scipy(
     res = minimize(
         _scipy_objective_and_grad,
         x0,
-        args=(mll, property_dict),
+        args=(mll, property_dict, max_preconditioner_size),
         method=method,
         jac=True,
         options=options,
@@ -137,7 +141,11 @@ def fit_scipy(
         for i, xk in enumerate(xs):
             iterations.append(
                 OptimizationIteration(
-                    i, _scipy_objective_and_grad(xk, mll, property_dict)[0], ts[i]
+                    i,
+                    _scipy_objective_and_grad(
+                        xk, mll, property_dict, max_preconditioner_size
+                    )[0],
+                    ts[i],
                 )
             )
 
@@ -147,12 +155,16 @@ def fit_scipy(
 
 
 def _scipy_objective_and_grad(
-    x: np.ndarray, mll: MarginalLogLikelihood, property_dict: Dict[str, TorchAttr]
+    x: np.ndarray,
+    mll: MarginalLogLikelihood,
+    property_dict: Dict[str, TorchAttr],
+    max_preconditioner_size: int,
 ) -> Tuple[float, np.ndarray]:
     mll = set_params_with_array(mll, x, property_dict)
     mll.zero_grad()
     output = mll.model(*mll.model.train_inputs)
-    loss = -mll(output, mll.model.train_targets).sum()
+    with gpytorch.settings.max_preconditioner_size(max_preconditioner_size):
+        loss = -mll(output, mll.model.train_targets).sum()
     loss.backward()
     param_dict = OrderedDict(mll.named_parameters())
     grad = []
