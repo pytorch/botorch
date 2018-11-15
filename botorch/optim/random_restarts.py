@@ -65,11 +65,6 @@ def random_restarts(
         multiplier=multiplier,
         torch_batches=num_starting_points,
     )
-    # TODO: remove cache clearing once upstream issues regarding non-batch evaluation
-    #    followed by batch evaluation are resolved
-    # clear caches
-    acq_function.model.train()
-    acq_function.model.eval()
     # performs batch evaluation
     candidates, batch_acquisition = gen_candidates(
         initial_candidates=initial_candidates,
