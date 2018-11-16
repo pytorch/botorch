@@ -34,7 +34,7 @@ class SingleTaskGPTest(unittest.TestCase):
         self.assertIsInstance(self.model.covar_module, ScaleKernel)
         matern_kernel = self.model.covar_module.base_kernel
         self.assertIsInstance(matern_kernel, MaternKernel)
-        self.assertIsInstance(matern_kernel.log_lengthscale_prior, GammaPrior)
+        self.assertIsInstance(matern_kernel.lengthscale_prior, GammaPrior)
 
     def testForward(self):
         test_x = torch.tensor([6.0, 7.0, 8.0]).view(-1, 1)
