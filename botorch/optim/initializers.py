@@ -34,11 +34,6 @@ def q_batch_initialization(
         X[i,:] has one of the torch_batches highest values of
         acq_function(X[i,:])
     """
-    # TODO: remove cache clearing once upstream issues regarding non-batch
-    # evaluation followed by batch evaluation are resolved T36825603
-    # clear caches
-    acq_function.model.train()
-    acq_function.model.eval()
     bulk_X = torch.cat([gen_function(q).unsqueeze(0) for i in range(multiplier)], dim=0)
     # TODO: bulk_X is multiplier x q x d. Replace below
     # when acq_functions all support t-batches
@@ -46,9 +41,4 @@ def q_batch_initialization(
         [acq_function(bulk_X[i, ...]).reshape(1) for i in range(bulk_X.shape[0])]
     )
     _, best_indices = torch.topk(val_X, k=torch_batches)
-    # TODO: remove cache clearing once upstream issues regarding non-batch
-    # evaluation followed by batch evaluation are resolved T36825603
-    # clear caches
-    acq_function.model.train()
-    acq_function.model.eval()
     return bulk_X[best_indices]
