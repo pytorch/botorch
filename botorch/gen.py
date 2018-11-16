@@ -44,11 +44,6 @@ def gen_candidates(
         Tensor: The acquisition value for each t-batch.
 
     """
-    # TODO: remove cache clearing once upstream issues regarding non-batch
-    # evaluation followed by batch evaluation are resolved. T36825603
-    # clear caches
-    acquisition_function.model.train()
-    acquisition_function.model.eval()
     options = options or {}
     clamped_candidates = columnwise_clamp(
         initial_candidates, lower_bounds, upper_bounds
@@ -87,9 +82,4 @@ def gen_candidates(
             max_iter=max_iter,
         )
     batch_acquisition = acquisition_function(candidates)
-    # TODO: remove cache clearing once upstream issues regarding non-batch
-    # evaluation followed by batch evaluation are resolved T36825603
-    # clear caches
-    acquisition_function.model.train()
-    acquisition_function.model.eval()
     return candidates, batch_acquisition
