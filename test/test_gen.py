@@ -6,7 +6,7 @@ import unittest
 import torch
 from botorch import fit_model, gen_candidates
 from botorch.acquisition import qExpectedImprovement
-from botorch.models import GPRegressionModel
+from botorch.models import SingleTaskGP
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 
@@ -21,7 +21,7 @@ class TestBaseCandidateGeneration(unittest.TestCase):
         self.f_best = self.train_y.max().item()
         self.initial_candidates = torch.tensor([[0.5]])
         self.likelihood = GaussianLikelihood()
-        self.model = GPRegressionModel(
+        self.model = SingleTaskGP(
             self.train_x.cuda() if cuda else self.train_x,
             self.train_y.cuda() if cuda else self.train_y,
             self.likelihood,
@@ -32,7 +32,7 @@ class TestBaseCandidateGeneration(unittest.TestCase):
 
 class TestGenCandidates(TestBaseCandidateGeneration):
     def setUp(self):
-        super(TestGenCandidates, self).setUp()
+        super().setUp()
         self.f_best = self.train_y.max().item()
         self.initial_candidates = torch.tensor([[0.5]])
 

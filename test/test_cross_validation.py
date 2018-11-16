@@ -22,14 +22,13 @@ class CVExactGPModel(ExactGP):
         self.covar_module = ScaleKernel(
             RBFKernel(
                 batch_size=batch_size,
-                log_lengthscale_prior=NormalPrior(
+                lengthscale_prior=NormalPrior(
                     loc=torch.zeros(batch_size, 1, 1),
                     scale=torch.ones(batch_size, 1, 1),
-                    log_transform=True,
                 ),
             ),
             batch_size=batch_size,
-            log_outputscale_prior=SmoothedBoxPrior(-2, 2, log_transform=True),
+            outputscale_prior=SmoothedBoxPrior(-2, 2),
         )
 
     def forward(self, x):
@@ -41,10 +40,8 @@ class CVExactGPModel(ExactGP):
 class CVGaussianLikelihood(GaussianLikelihood):
     def __init__(self, batch_size=1):
         super(CVGaussianLikelihood, self).__init__(
-            log_noise_prior=NormalPrior(
-                loc=torch.zeros(batch_size),
-                scale=torch.ones(batch_size),
-                log_transform=True,
+            noise_prior=NormalPrior(
+                loc=torch.zeros(batch_size), scale=torch.ones(batch_size)
             ),
             batch_size=batch_size,
         )
@@ -62,10 +59,9 @@ class CVMultitaskExactGPModel(ExactGP):
         self.covar_module = MultitaskKernel(
             RBFKernel(
                 batch_size=batch_size,
-                log_lengthscale_prior=NormalPrior(
+                lengthscale_prior=NormalPrior(
                     loc=torch.zeros(batch_size, 1, 1),
                     scale=torch.ones(batch_size, 1, 1),
-                    log_transform=True,
                 ),
             ),
             num_tasks=2,
@@ -81,10 +77,8 @@ class CVMultitaskExactGPModel(ExactGP):
 class CVMultitaskGaussianLikelihood(MultitaskGaussianLikelihood):
     def __init__(self, batch_size=1):
         super(CVMultitaskGaussianLikelihood, self).__init__(
-            log_noise_prior=NormalPrior(
-                loc=torch.zeros(batch_size),
-                scale=torch.ones(batch_size),
-                log_transform=True,
+            noise_prior=NormalPrior(
+                loc=torch.zeros(batch_size), scale=torch.ones(batch_size)
             ),
             num_tasks=2,
             batch_size=batch_size,
@@ -96,7 +90,7 @@ class TestFitBatchCrossValidation(unittest.TestCase):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         train_x = torch.linspace(0, 1, 5, device=device).view(-1, 1)
         train_y = torch.sin(train_x * (2 * math.pi)).view(-1)
-        train_y += torch.randn_like(train_y, device=device).mul_(0.05)
+        train_y += torch.randn_like(train_y).mul_(0.05)
         cv_folds = gen_loo_cv_folds(train_x, train_y)
         cv_results = batch_cross_validation(
             model_cls=CVExactGPModel,

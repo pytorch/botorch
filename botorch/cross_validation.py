@@ -82,9 +82,12 @@ def batch_cross_validation(
     model_cv = model_cls(
         cv_folds.train_x, cv_folds.train_y, likelihood_cv, batch_size=num_folds
     )
-    mll_cv = ExactMarginalLogLikelihood(likelihood_cv, model_cv)
+    if cv_folds.train_x.is_cuda:
+        model_cv.cuda()
+    if cv_folds.train_x.dtype == torch.double:
+        model_cv.double()
 
-    # Fit the model in batch mode (needs to be improved)
+    mll_cv = ExactMarginalLogLikelihood(likelihood_cv, model_cv)
     mll_cv = fit_model(mll_cv, **fit_args)
 
     # Evaluate on the hold-out set in batch mode

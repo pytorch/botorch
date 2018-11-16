@@ -33,21 +33,19 @@ class TestCheckConvergence(unittest.TestCase):
 
 
 class TestFixFeatures(unittest.TestCase):
-    def setUp(self):
-        self.X = torch.tensor([[-2, 1, 3], [0.5, -0.5, 1.0]], requires_grad=True)
-        self.X_null_two = torch.tensor(
-            [[-2, 1, 3], [0.5, -0.5, 1.0]], requires_grad=True
-        )
-        self.X_expected = torch.tensor([[-1, 1, -2], [-1, -0.5, -2]])
-        self.X_expected_null_two = torch.tensor([[-1, 1, 3], [-1, -0.5, 1.0]])
+    def _getTensors(self, device):
+        X = torch.tensor([[-2, 1, 3], [0.5, -0.5, 1.0]], device=device)
+        X_null_two = torch.tensor([[-2, 1, 3], [0.5, -0.5, 1.0]], device=device)
+        X_expected = torch.tensor([[-1, 1, -2], [-1, -0.5, -2]], device=device)
+        X_expected_null_two = torch.tensor([[-1, 1, 3], [-1, -0.5, 1.0]], device=device)
+        return X, X_null_two, X_expected, X_expected_null_two
 
     def test_fix_features(self, cuda=False):
-        X = self.X.cuda() if cuda else self.X
-        X_expected = self.X_expected.cuda() if cuda else self.X_expected
-        X_null_two = self.X_null_two.cuda() if cuda else self.X_null_two
-        X_expected_null_two = (
-            self.X_expected_null_two.cuda() if cuda else self.X_expected_null_two
-        )
+        device = torch.device("cuda") if cuda else torch.device("cpu")
+        X, X_null_two, X_expected, X_expected_null_two = self._getTensors(device)
+        X.requires_grad_(True)
+        X_null_two.requires_grad_(True)
+
         X_fix = fix_features(X, {0: -1, 2: -2})
         X_fix_null_two = fix_features(X_null_two, {0: -1, 2: None})
 
@@ -60,9 +58,12 @@ class TestFixFeatures(unittest.TestCase):
         f(X).backward()
         self.assertTrue(torch.equal(X.grad, torch.ones_like(X)))
         X.grad.zero_()
+
         f(X_fix).backward()
         self.assertTrue(
-            torch.equal(X.grad, torch.tensor([[0.0, 1.0, 0.0], [0.0, 1.0, 0.0]]))
+            torch.equal(
+                X.grad, torch.tensor([[0.0, 1.0, 0.0], [0.0, 1.0, 0.0]], device=device)
+            )
         )
 
         f(X_null_two).backward()
@@ -71,7 +72,8 @@ class TestFixFeatures(unittest.TestCase):
         f(X_fix_null_two).backward()
         self.assertTrue(
             torch.equal(
-                X_null_two.grad, torch.tensor([[0.0, 1.0, 0.0], [0.0, 1.0, 0.0]])
+                X_null_two.grad,
+                torch.tensor([[0.0, 1.0, 0.0], [0.0, 1.0, 0.0]], device=device),
             )
         )
 
