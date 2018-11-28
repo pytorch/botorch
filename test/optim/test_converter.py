@@ -27,12 +27,12 @@ class TestNumpyTorchParameterConversion(unittest.TestCase):
         x, property_dict = module_to_array(mll)
         self.assertTrue(np.array_equal(x, np.zeros(5)))
         self.assertEqual(
-            list(property_dict.keys()),
-            [
-                "likelihood.log_noise",
-                "model.covar_module.log_lengthscale",
+            set(property_dict.keys()),
+            {
+                "likelihood.noise_covar.raw_noise",
+                "model.covar_module.raw_lengthscale",
                 "model.mean_module.constant",
-            ],
+            },
         )
         sizes = [torch.Size([1, 1]), torch.Size([1, 1, 3]), torch.Size([1, 1])]
         for i, val in enumerate(property_dict.values()):
@@ -46,11 +46,13 @@ class TestNumpyTorchParameterConversion(unittest.TestCase):
         )
         z = OrderedDict(mll.named_parameters())
         self.assertTrue(
-            torch.equal(z["likelihood.log_noise"].data, torch.tensor([[1.0]]))
+            torch.equal(
+                z["likelihood.noise_covar.raw_noise"].data, torch.tensor([[1.0]])
+            )
         )
         self.assertTrue(
             torch.equal(
-                z["model.covar_module.log_lengthscale"].data,
+                z["model.covar_module.raw_lengthscale"].data,
                 torch.tensor([[[2.0, 3.0, 4.0]]]),
             )
         )

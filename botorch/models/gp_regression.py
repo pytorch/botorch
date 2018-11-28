@@ -1,8 +1,13 @@
 #! /usr/bin/env python3
 
 from gpytorch.distributions import MultivariateNormal
-from gpytorch.kernels import MaternKernel, RBFKernel, ScaleKernel
-from gpytorch.likelihoods import Likelihood
+from gpytorch.kernels import MaternKernel, ScaleKernel
+from gpytorch.likelihoods import (
+    GaussianLikelihood,
+    HeteroskedasticNoise,
+    Likelihood,
+    _GaussianLikelihoodBase,
+)
 from gpytorch.means import ConstantMean
 from gpytorch.models import ExactGP
 from gpytorch.priors import GammaPrior
@@ -46,3 +51,11 @@ class SingleTaskGP(ExactGP):
         mean_x = self.mean_module(x)
         covar_x = self.covar_module(x)
         return MultivariateNormal(mean_x, covar_x)
+
+
+class HeteroskedasticSingleTaskGP(SingleTaskGP):
+    def __init__(self, train_X: Tensor, train_Y: Tensor, train_Y_sem) -> None:
+        train_Y_log_var = (train_Y_sem ** 2).log()
+        noise_model = SingleTaskGP(train_X, train_Y_log_var, GaussianLikelihood())
+        likelihood = _GaussianLikelihoodBase(HeteroskedasticNoise(noise_model))
+        super().__init__(train_X, train_Y, likelihood)

@@ -7,7 +7,10 @@ import torch
 from botorch.cross_validation import batch_cross_validation, gen_loo_cv_folds
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.kernels import MultitaskKernel, RBFKernel, ScaleKernel
-from gpytorch.likelihoods import GaussianLikelihood, MultitaskGaussianLikelihood
+from gpytorch.likelihoods import (
+    GaussianLikelihood,
+    MultitaskGaussianLikelihoodKronecker,
+)
 from gpytorch.means import ConstantMean, MultitaskMean
 from gpytorch.models import ExactGP
 from gpytorch.priors import NormalPrior, SmoothedBoxPrior
@@ -74,7 +77,7 @@ class CVMultitaskExactGPModel(ExactGP):
         return MultitaskMultivariateNormal(mean_x, covar_x)
 
 
-class CVMultitaskGaussianLikelihood(MultitaskGaussianLikelihood):
+class CVMultitaskGaussianLikelihood(MultitaskGaussianLikelihoodKronecker):
     def __init__(self, batch_size=1):
         super(CVMultitaskGaussianLikelihood, self).__init__(
             noise_prior=NormalPrior(
