@@ -52,26 +52,27 @@ def fit_torch(
     """
     optimizer_args = {} if optimizer_args is None else optimizer_args
     optimizer = optimizer_cls(
-        params=[{"params": mll.model.parameters()}], lr=lr, **optimizer_args
+        params=[{"params": mll.parameters()}], lr=lr, **optimizer_args
     )
 
     iterations = []
     t1 = time.time()
 
     param_trajectory: Dict[str, List[Tensor]] = {
-        name: [] for name, param in mll.model.named_parameters()
+        name: [] for name, param in mll.named_parameters()
     }
     loss_trajectory: List[float] = []
     i = 0
     converged = False
+    train_inputs, train_targets = mll.model.train_inputs, mll.model.train_targets
     while not converged:
         optimizer.zero_grad()
-        output = mll.model(mll.model.train_inputs[0])
+        output = mll.model(*train_inputs)
         # we sum here to support batch mode
-        loss = -mll(output, mll.model.train_targets).sum()
+        loss = -mll(output, train_targets, *train_inputs).sum()
         loss.backward()
         loss_trajectory.append(loss.item())
-        for name, param in mll.model.named_parameters():
+        for name, param in mll.named_parameters():
             param_trajectory[name].append(param.detach().clone())
         if disp and (i % 10 == 0 or i == (maxiter - 1)):
             print(f"Iter {i +1}/{maxiter}: {loss.item()}")
@@ -139,15 +140,10 @@ def fit_scipy(
     iterations = []
     if track_iterations:
         for i, xk in enumerate(xs):
-            iterations.append(
-                OptimizationIteration(
-                    i,
-                    _scipy_objective_and_grad(
-                        xk, mll, property_dict, max_preconditioner_size
-                    )[0],
-                    ts[i],
-                )
+            obj, _ = _scipy_objective_and_grad(
+                xk, mll, property_dict, max_preconditioner_size
             )
+            iterations.append(OptimizationIteration(i, obj, ts[i]))
 
     # Set to optimum
     mll = set_params_with_array(mll, res.x, property_dict)
@@ -161,15 +157,20 @@ def _scipy_objective_and_grad(
     max_preconditioner_size: int,
 ) -> Tuple[float, np.ndarray]:
     mll = set_params_with_array(mll, x, property_dict)
+    train_inputs, train_targets = mll.model.train_inputs, mll.model.train_targets
     mll.zero_grad()
-    output = mll.model(*mll.model.train_inputs)
+    output = mll.model(*train_inputs)
     with gpytorch.settings.max_preconditioner_size(max_preconditioner_size):
-        loss = -mll(output, mll.model.train_targets).sum()
+        loss = -mll(output, train_targets, *train_inputs).sum()
     loss.backward()
     param_dict = OrderedDict(mll.named_parameters())
     grad = []
     for p_name in property_dict:
         t = param_dict[p_name].grad
-        grad.append(t.detach().view(-1).cpu().double().clone().numpy())
+        if t is None:
+            # this deals with parameters that do not affect the loss
+            grad.append(np.zeros(property_dict[p_name].shape.numel()))
+        else:
+            grad.append(t.detach().view(-1).cpu().double().clone().numpy())
     mll.zero_grad()
     return loss.item(), np.concatenate(grad)

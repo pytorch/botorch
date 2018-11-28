@@ -30,7 +30,7 @@ def module_to_array(module: Module) -> Tuple[np.ndarray, Dict[str, TorchAttr]]:
     """
     x: List[np.ndarray] = []
     property_dict = OrderedDict()
-    for p_name, t in OrderedDict(module.named_parameters()).items():
+    for p_name, t in module.named_parameters():
         if t.requires_grad:
             property_dict[p_name] = TorchAttr(
                 shape=t.shape, dtype=t.dtype, device=t.device
