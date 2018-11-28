@@ -32,7 +32,14 @@ class MockLikelihood(object):
         return self._covariance
 
     def rsample(self, sample_shape=empty_size):
-        return self._samples.repeat(sample_shape.numel() or 1, 1, 1)
+        """
+        Mock rsample by repeating only the 0th dimension of self._samples.
+        """
+        # create list with a one for each dimension of self._samples
+        size = torch.ones(self._samples.ndimension(), dtype=torch.int).tolist()
+        # set the number of times to repeat the 0th dimension
+        size[0] = sample_shape.numel()
+        return self._samples.repeat(torch.Size(size))
 
 
 class MockModel(object):

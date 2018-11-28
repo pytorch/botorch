@@ -3,6 +3,7 @@
 from typing import Callable, List, Optional
 
 import torch
+from botorch.acquisition.batch_utils import match_batch_size
 from gpytorch import Module
 
 from .functional import (
@@ -23,35 +24,41 @@ into BatchAcquisitionFunction gpytorch modules.
 
 
 class BatchAcquisitionFunction(AcquisitionFunction):
-    def forward(self, X: torch.Tensor) -> torch.Tensor:
+    def _forward(self, X: torch.Tensor) -> torch.Tensor:
         """Takes in a `b x q x d` X Tensor of `b` t-batches with `q`
         `d`-dimensional design points each, and returns a one-dimensional Tensor
         with `b` elements."""
         raise NotImplementedError("BatchAcquisitionFunction cannot be used directly")
 
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
+        """Takes in a `b x q x d` X Tensor of `b` t-batches with `q`
+        `d`-dimensional design points each, expands and concatenates self.X_pending
+        and returns a one-dimensional Tensor with `b` elements."""
+        if self.X_pending is not None:
+            X = torch.cat([X, match_batch_size(X, self.X_pending)], dim=-2)
+        return self._forward(X)
+
 
 class qExpectedImprovement(BatchAcquisitionFunction):
     """q-EI with constraints, supporting t-batch mode.
-
-    *** NOTE: THIS MODULE DOES NOT YET SUPPORT t-BATCHES.***
 
     Args:
         model: A fitted model implementing an `rsample` method to sample from the
             posterior function values
         best_f: The best (feasible) function value observed so far (assumed
             noiseless).
-        objective: A callable mapping a Tensor of size `b x q x t x mc_samples`
-            to a Tensor of size `b x q x mc_samples`, where `t` is the number of
-            outputs (tasks) of the model. If omitted, use the identity map
-            (applicable to single-task models only).
-            Assumed to be non-negative when constraints are used!
+        objective: A callable mapping a Tensor of size `b x q x (t)`
+            to a Tensor of size `b x q`, where `t` is the number of
+            outputs (tasks) of the model. Note: the callable must support broadcasting.
+            If omitted, use the identity map (applicable to single-task models only).
+            Assumed to be non-negative when the constraints are used!
         constraints: A list of callables, each mapping a Tensor of size
-            `b x q x t x mc_samples` to a Tensor of size `b x q x mc_samples`,
-            where negative values imply feasibility. Only relevant for multi-task
-            models (`t` > 1).
+            `b x q x t` to a Tensor of size `b x q`, where negative values imply
+            feasibility. Note: the callable must support broadcasting. Only
+            relevant for multi-task models (`t` > 1).
         mc_samples: The number of Monte-Carlo samples to draw from the model
             posterior.
-        X_pending:  A `q' x n` Tensor with `q'` design points that are pending for
+        X_pending:  A `q' x d` Tensor with `q'` design points that are pending for
             evaluation.
     """
 
@@ -73,10 +80,10 @@ class qExpectedImprovement(BatchAcquisitionFunction):
         if self.X_pending is not None:
             self.X_pending.requires_grad_(False)
 
-    def forward(self, X: torch.Tensor) -> torch.Tensor:
+    def _forward(self, X: torch.Tensor) -> torch.Tensor:
         """
         Args:
-            X: A `b x q x n` Tensor with `b` t-batches of `q` design points
+            X: A `b x q x d` Tensor with `b` t-batches of `q` design points
                 each. If X is two-dimensional, assume `b = 1`.
 
         Returns:
@@ -84,7 +91,7 @@ class qExpectedImprovement(BatchAcquisitionFunction):
                 t-batches.
         """
         return batch_expected_improvement(
-            X=X if self.X_pending is None else torch.cat([X, self.X_pending], dim=-2),
+            X=X,
             model=self.model,
             best_f=self.best_f,
             objective=self.objective,
@@ -96,28 +103,26 @@ class qExpectedImprovement(BatchAcquisitionFunction):
 class qNoisyExpectedImprovement(BatchAcquisitionFunction):
     """q-NoisyEI with constraints, supporting t-batch mode.
 
-    *** NOTE: THIS FUNCTION DOES NOT YET SUPPORT t-BATCHES. ***
-
     Args:
         model: A fitted model implementing a `sample` method to sample from the
             posterior function values
-        X_observed: A q' x n Tensor of q' design points that have already been
+        X_observed: A q' x d Tensor of q' design points that have already been
             observed and would be considered as the best design point.
-        objective: A callable mapping a Tensor of size `b x q x t x mc_samples`
-            to a Tensor of size `b x q x mc_samples`, where `t` is the number of
-            outputs (tasks) of the model. If omitted, use the identity map
-            (applicable to single-task models only).
-            Assumed to be non-negative when the constaints are used!
+        objective: A callable mapping a Tensor of size `b x q x (t)`
+            to a Tensor of size `b x q`, where `t` is the number of
+            outputs (tasks) of the model. Note: the callable must support broadcasting.
+            If omitted, use the identity map (applicable to single-task models only).
+            Assumed to be non-negative when the constraints are used!
         constraints: A list of callables, each mapping a Tensor of size
-            `b x q x t x mc_samples` to a Tensor of size `b x q x mc_samples`,
-            where negative values imply feasibility. Only relevant for multi-task
-            models (`t` > 1).
+            `b x q x t` to a Tensor of size `b x q`, where negative values imply
+            feasibility. Note: the callable must support broadcasting. Only
+            relevant for multi-task models (`t` > 1).
         mc_samples: The number of Monte-Carlo samples to draw from the model
             posterior.
         eta: The temperature parameter of the softmax function used in approximating
             the constraints. As `eta -> 0`, the exact (discontinuous) constraint
             is recovered.
-        X_pending:  A q' x n Tensor with q' design points that are pending for
+        X_pending:  A q' x d Tensor with q' design points that are pending for
             evaluation.
 
     """
@@ -141,10 +146,10 @@ class qNoisyExpectedImprovement(BatchAcquisitionFunction):
         if self.X_pending is not None:
             self.X_pending.requires_grad_(False)
 
-    def forward(self, X: torch.Tensor) -> torch.Tensor:
+    def _forward(self, X: torch.Tensor) -> torch.Tensor:
         """
         Args:
-            X: A `b x q x n` Tensor with `b` t-batches of `q` design points each.
+            X: A `b x q x d` Tensor with `b` t-batches of `q` design points each.
                 If X is two-dimensional, assume `b = 1`.
 
         Returns:
@@ -153,7 +158,7 @@ class qNoisyExpectedImprovement(BatchAcquisitionFunction):
 
         """
         return batch_noisy_expected_improvement(
-            X=X if self.X_pending is None else torch.cat([X, self.X_pending], dim=-2),
+            X=X,
             model=self.model,
             X_observed=self.X_observed,
             objective=self.objective,
@@ -172,7 +177,7 @@ class qKnowledgeGradient(BatchAcquisitionFunction):
 
     Args:
         model: A fitted GPyTorch model
-        X_observed: A q' x n Tensor of q' design points that have already been
+        X_observed: A q' x d Tensor of q' design points that have already been
             observed and would be considered as the best design point.  A
             judicious filtering of the points here can massively
             speed up the function evaluation without altering the
@@ -181,27 +186,27 @@ class qKnowledgeGradient(BatchAcquisitionFunction):
             For example, points that clearly do not satisfy the constraints
             or have terrible objective observations can be safely
             excluded from X_observed.
-        objective: A callable mapping a Tensor of size `b x q x t x mc_samples`
-            to a Tensor of size `b x q x mc_samples`, where `t` is the number of
-            outputs (tasks) of the model. If omitted, use the identity map
-            (applicable to single-task models only).
+        objective: A callable mapping a Tensor of size `b x q x (t)`
+            to a Tensor of size `b x q`, where `t` is the number of
+            outputs (tasks) of the model. Note: the callable must support broadcasting.
+            If omitted, use the identity map (applicable to single-task models only).
             Assumed to be non-negative when the constraints are used!
         constraints: A list of callables, each mapping a Tensor of size
-            `b x q x t x mc_samples` to a Tensor of size `b x q x mc_samples`,
-            where negative values imply feasibility. Only relevant for multi-task
-            models (`t` > 1).
+            `b x q x t` to a Tensor of size `b x q`, where negative values imply
+            feasibility. Note: the callable must support broadcasting. Only
+            relevant for multi-task models (`t` > 1).
         mc_samples: The number of Monte-Carlo samples to draw from the model
             posterior for the outer sample.  GP memory usage is multiplied by
             this value.
         inner_mc_samples:  The number of Monte-Carlo samples to draw for the
             inner expectation
-        project:  A callable mapping a Tensor of size `b x (q + q') x n` to a
+        project:  A callable mapping a Tensor of size `b x (q + q') x d` to a
             Tensor of the same size.  Use for multi-fidelity optimization where
             the returned Tensor should be projected to the highest fidelity.
-        cost: A callable mapping a Tensor of size `b x q x n` to a Tensor of
+        cost: A callable mapping a Tensor of size `b x q x d` to a Tensor of
             size `b x 1`.  The resulting Tensor's value is the cost of submitting
             each t-batch.
-        X_pending:  A q' x n Tensor with q' design points that are pending for
+        X_pending: A q' x d Tensor with q' design points that are pending for
             evaluation.
 
     Returns:
@@ -234,10 +239,10 @@ class qKnowledgeGradient(BatchAcquisitionFunction):
         if self.X_pending is not None:
             self.X_pending.requires_grad_(False)
 
-    def forward(self, X: torch.Tensor) -> torch.Tensor:
+    def _forward(self, X: torch.Tensor) -> torch.Tensor:
         """
         Args:
-            X: A `b x q x n` Tensor with `b` t-batches of `q` design points each.
+            X: A `b x q x d` Tensor with `b` t-batches of `q` design points each.
                 If X is two-dimensional, assume `b = 1`.
 
         Returns:
@@ -246,7 +251,7 @@ class qKnowledgeGradient(BatchAcquisitionFunction):
 
         """
         return batch_knowledge_gradient(
-            X=X if self.X_pending is None else torch.cat([X, self.X_pending], dim=-2),
+            X=X,
             model=self.model,
             X_observed=self.X_observed,
             objective=self.objective,
@@ -261,10 +266,8 @@ class qKnowledgeGradient(BatchAcquisitionFunction):
 class qProbabilityOfImprovement(BatchAcquisitionFunction):
     """q-PI, supporting t-batch mode.
 
-    *** NOTE: THIS FUNCTION DOES NOT YET SUPPORT t-BATCHES.***
-
     Args:
-        X: A `b x q x n` Tensor with `b` t-batches of `q` design points
+        X: A `b x q x d` Tensor with `b` t-batches of `q` design points
             each. If X is two-dimensional, assume `b = 1`.
         model: A fitted model implementing an `rsample` method to sample from the
             posterior function values
@@ -272,7 +275,7 @@ class qProbabilityOfImprovement(BatchAcquisitionFunction):
             noiseless).
         mc_samples: The number of Monte-Carlo samples to draw from the model
             posterior.
-        X_pending:  A q' x n Tensor with q' design points that are pending for
+        X_pending:  A q' x d Tensor with q' design points that are pending for
             evaluation.
 
     """
@@ -291,10 +294,10 @@ class qProbabilityOfImprovement(BatchAcquisitionFunction):
         if self.X_pending is not None:
             self.X_pending.requires_grad_(False)
 
-    def forward(self, X: torch.Tensor) -> torch.Tensor:
+    def _forward(self, X: torch.Tensor) -> torch.Tensor:
         """
         Args:
-            X: A `b x q x n` Tensor with `b` t-batches of `q` design points
+            X: A `b x q x d` Tensor with `b` t-batches of `q` design points
                 each. If X is two-dimensional, assume `b = 1`.
 
         Returns:
@@ -303,27 +306,22 @@ class qProbabilityOfImprovement(BatchAcquisitionFunction):
 
         """
         return batch_probability_of_improvement(
-            X=X if self.X_pending is None else torch.cat([X, self.X_pending], dim=-2),
-            model=self.model,
-            best_f=self.best_f,
-            mc_samples=self.mc_samples,
+            X=X, model=self.model, best_f=self.best_f, mc_samples=self.mc_samples
         )
 
 
 class qUpperConfidenceBound(BatchAcquisitionFunction):
     """q-UCB, support t-batch mode.
 
-    *** NOTE: THIS FUNCTION DOES NOT YET SUPPORT t-BATCHES.***
-
     Args:
-        X: A `b x q x n` Tensor with `b` t-batches of `q` design points
+        X: A `b x q x d` Tensor with `b` t-batches of `q` design points
             each. If X is two-dimensional, assume `b = 1`.
         model: A fitted model implementing an `rsample` method to sample from the
             posterior function values
         beta: controls tradeoff between mean and standard deviation in UCB
         mc_samples: The number of Monte-Carlo samples to draw from the model
             posterior.
-        X_pending:  A q' x n Tensor with q' design points that are pending for
+        X_pending:  A q' x d Tensor with q' design points that are pending for
             evaluation.
 
     Returns:
@@ -346,10 +344,10 @@ class qUpperConfidenceBound(BatchAcquisitionFunction):
         if self.X_pending is not None:
             self.X_pending.requires_grad_(False)
 
-    def forward(self, X: torch.Tensor) -> torch.Tensor:
+    def _forward(self, X: torch.Tensor) -> torch.Tensor:
         """
         Args:
-            X: A `b x q x n` Tensor with `b` t-batches of `q` design points
+            X: A `b x q x d` Tensor with `b` t-batches of `q` design points
                 each. If X is two-dimensional, assume `b = 1`.
 
         Returns:
@@ -358,24 +356,19 @@ class qUpperConfidenceBound(BatchAcquisitionFunction):
 
         """
         return batch_upper_confidence_bound(
-            X=X if self.X_pending is None else torch.cat([X, self.X_pending], dim=-2),
-            model=self.model,
-            beta=self.beta,
-            mc_samples=self.mc_samples,
+            X=X, model=self.model, beta=self.beta, mc_samples=self.mc_samples
         )
 
 
 class qSimpleRegret(BatchAcquisitionFunction):
     """q-simple regret, support t-batch mode.
 
-    *** NOTE: THIS FUNCTION DOES NOT YET SUPPORT t-BATCHES.***
-
     Args:
         model: A fitted model implementing an `rsample` method to sample from the
             posterior function values
         mc_samples: The number of Monte-Carlo samples to draw from the model
             posterior.
-        X_pending:  A q' x n Tensor with q' design points that are pending for
+        X_pending:  A q' x d Tensor with q' design points that are pending for
             evaluation.
 
     """
@@ -392,10 +385,10 @@ class qSimpleRegret(BatchAcquisitionFunction):
         if self.X_pending is not None:
             self.X_pending.requires_grad_(False)
 
-    def forward(self, X: torch.Tensor) -> torch.Tensor:
+    def _forward(self, X: torch.Tensor) -> torch.Tensor:
         """
         Args:
-            X: A `b x q x n` Tensor with `b` t-batches of `q` design points
+            X: A `b x q x d` Tensor with `b` t-batches of `q` design points
                 each. If X is two-dimensional, assume `b = 1`.
 
         Returns:
@@ -403,8 +396,4 @@ class qSimpleRegret(BatchAcquisitionFunction):
                 the `b`t-batches.
 
         """
-        return batch_simple_regret(
-            X=X if self.X_pending is None else torch.cat([X, self.X_pending], dim=-2),
-            model=self.model,
-            mc_samples=self.mc_samples,
-        )
+        return batch_simple_regret(X=X, model=self.model, mc_samples=self.mc_samples)
