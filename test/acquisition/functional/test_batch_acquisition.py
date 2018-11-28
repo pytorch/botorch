@@ -13,9 +13,8 @@ from botorch.acquisition.functional.batch_acquisition import (
 class TestFunctionalBatchAcquisition(unittest.TestCase):
     def test_batch_expected_improvement(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
-        samples = torch.zeros((2, 1, 1), device=device)
+        samples = torch.zeros((1, 1, 1, 1), device=device)
         mm = MockModel(MockLikelihood(samples=samples))
-
         X = torch.zeros((1, 1), device=device)  # dummy Tensor for type checking
         # basic test
         res = batch_expected_improvement(X=X, model=mm, best_f=0, mc_samples=2)
@@ -48,11 +47,11 @@ class TestFunctionalBatchAcquisition(unittest.TestCase):
 
     def test_batch_noisy_expected_improvement(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
-        samples_noisy = torch.tensor([1.0, 0.0], device=device).view(1, 2, 1)
+        samples_noisy = torch.tensor([1.0, 0.0], device=device).view(1, 1, 2, 1)
+        X_observed = torch.zeros((1, 1), device=device)
         mm_noisy = MockModel(MockLikelihood(samples=samples_noisy))
 
-        X = torch.zeros(1, device=device)
-        X_observed = torch.zeros(1, device=device)
+        X = torch.zeros((1, 1), device=device)
         # basic test
         res = batch_noisy_expected_improvement(
             X=X, model=mm_noisy, X_observed=X_observed, mc_samples=2

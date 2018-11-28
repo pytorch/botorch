@@ -4,6 +4,7 @@ from math import pi, sqrt
 from typing import Callable, List, Optional
 
 import torch
+from botorch.acquisition.batch_utils import batch_mode_transform
 from botorch.models.utils import initialize_BFGP
 from botorch.optim.constraints import soft_eval_constraint
 from botorch.utils import manual_seed
@@ -23,6 +24,7 @@ with MC sampling as outlined in:
 """
 
 
+@batch_mode_transform
 def batch_expected_improvement(
     X: Tensor,
     model: Module,
@@ -64,10 +66,6 @@ def batch_expected_improvement(
 
     """
     model.eval()
-    # make sure X is `b x q x d`
-    is_batch_mode = X.ndimension() != 2
-    X = X.unsqueeze(0) if not is_batch_mode else X
-    # predict posterior (joint across points and tasks)
     posterior = model(X)
 
     with manual_seed(seed=seed), fast_pred_var():
@@ -79,12 +77,10 @@ def batch_expected_improvement(
         for constraint in constraints:
             obj.mul_(soft_eval_constraint(constraint(samples), eta=eta))
     q_ei = obj.max(dim=2)[0].mean(dim=0)
-    # remove batch dimension if in non-batch mode
-    if not is_batch_mode:
-        return q_ei.squeeze(0)
     return q_ei
 
 
+@batch_mode_transform
 def batch_noisy_expected_improvement(
     X: Tensor,
     model: Module,
@@ -97,24 +93,22 @@ def batch_noisy_expected_improvement(
 ) -> Tensor:
     """q-NoisyEI with constraints, supporting t-batch mode.
 
-    *** NOTE: THIS FUNCTION DOES NOT YET SUPPORT t-BATCHES.***
-
     Args:
-        X: A `b x q x n` Tensor with `b` t-batches of `q` design points each.
+        X: A `b x q x d` Tensor with `b` t-batches of `q` design points each.
             If X is two-dimensional, assume `b = 1`.
         model: A fitted model implementing a `sample` method to sample from the
             posterior function values
-        X_observed: A q' x n Tensor of q' design points that have already been
+        X_observed: A q' x d Tensor of q' design points that have already been
             observed and would be considered as the best design point.
-        objective: A callable mapping a Tensor of size `b x q x t x mc_samples`
-            to a Tensor of size `b x q x mc_samples`, where `t` is the number of
-            outputs (tasks) of the model. If omitted, use the identity map
-            (applicable to single-task models only).
+        objective: A callable mapping a Tensor of size `b x q x (t)`
+            to a Tensor of size `b x q`, where `t` is the number of
+            outputs (tasks) of the model. Note: the callable must support broadcasting.
+            If omitted, use the identity map (applicable to single-task models only).
             Assumed to be non-negative when the constraints are used!
         constraints: A list of callables, each mapping a Tensor of size
-            `b x q x t x mc_samples` to a Tensor of size `b x q x mc_samples`,
-            where negative values imply feasibility. Only relevant for multi-task
-            models (`t` > 1).
+            `b x q x t` to a Tensor of size `b x q`, where negative values imply
+            feasibility. Note: the callable must support broadcasting. Only
+            relevant for multi-task models (`t` > 1).
         mc_samples: The number of Monte-Carlo samples to draw from the model
             posterior.
         eta: The temperature parameter of the softmax function used in approximating
@@ -128,11 +122,11 @@ def batch_noisy_expected_improvement(
 
     """
     model.eval()
+    q = X.shape[1]
     # predict posterior (joint across points and tasks)
-    posterior = model(torch.cat([X, X_observed]))
-    # Draw MC samples (shape is n_eval x n_tasks x n_samples) for multi-task
-    # models and n_eval x n_samples otherwise)
+    posterior = model(torch.cat([X, X_observed], dim=1))
     with manual_seed(seed=seed), fast_pred_var():
+        # samples is mc_samples x b x q x (t)
         samples = posterior.rsample(sample_shape=torch.Size([mc_samples]))
     # compute objective value
     obj = objective(samples)
@@ -140,8 +134,12 @@ def batch_noisy_expected_improvement(
         obj.clamp_min_(0)  # Enforce non-negativity with constraints
         for constraint in constraints:
             obj.mul_(soft_eval_constraint(constraint(samples), eta=eta))
-    diff = obj[:, : X.shape[0]].max(dim=1)[0] - obj[:, X.shape[0] :].max(dim=1)[0]
-    return diff.clamp_min_(0).mean()
+    diff = (
+        (obj[:, :, :q].max(dim=2)[0] - obj[:, :, q:].max(dim=2)[0])
+        .clamp_min_(0)
+        .mean(dim=0)
+    )
+    return diff
 
 
 def batch_knowledge_gradient(
@@ -165,6 +163,7 @@ def batch_knowledge_gradient(
     optional project and cost callables.
 
     *** NOTE: THIS FUNCTION DOES NOT YET SUPPORT t-BATCHES.***
+    *** This will require support for b x b' batch mode in gpytorch ***
 
     *** TODO: Check whether soft-maxes help the gradients **
 
@@ -173,10 +172,10 @@ def batch_knowledge_gradient(
     mean can be used. ***
 
     Args:
-        X: A `b x q x n` Tensor with `b` t-batches of `q` design points each.
+        X: A `b x q x d` Tensor with `b` t-batches of `q` design points each.
             If X is two-dimensional, assume `b = 1`.
         model: A fitted GPyTorch model
-        X_observed: A q' x n Tensor of q' design points that have already been
+        X_observed: A q' x d Tensor of q' design points that have already been
             observed and would be considered as the best design point.  A
             judicious filtering of the points here can massively
             speed up the function evaluation without altering the
@@ -185,15 +184,15 @@ def batch_knowledge_gradient(
             For example, points that clearly do not satisfy the constraints
             or have terrible objective observations can be safely
             excluded from X_observed.
-        objective: A callable mapping a Tensor of size `b x q x t x mc_samples`
-            to a Tensor of size `b x q x mc_samples`, where `t` is the number of
-            outputs (tasks) of the model. If omitted, use the identity map
-            (applicable to single-task models only).
+        objective: A callable mapping a Tensor of size `b x q x (t)`
+            to a Tensor of size `b x q`, where `t` is the number of
+            outputs (tasks) of the model. Note: the callable must support broadcasting.
+            If omitted, use the identity map (applicable to single-task models only).
             Assumed to be non-negative when the constraints are used!
         constraints: A list of callables, each mapping a Tensor of size
-            `b x q x t x mc_samples` to a Tensor of size `b x q x mc_samples`,
-            where negative values imply feasibility. Only relevant for multi-task
-            models (`t` > 1).
+            `b x q x t` to a Tensor of size `b x q`, where negative values imply
+            feasibility. Note: the callable must support broadcasting. Only
+            relevant for multi-task models (`t` > 1).
         mc_samples: The number of Monte-Carlo samples to draw from the model
             posterior for the outer sample.  GP memory usage is multiplied by
             this value.
@@ -204,10 +203,10 @@ def batch_knowledge_gradient(
             is recovered.
         seed: The random seed to use for the outer sampling
         inner_seed:  The random seed to use for the inner sampling
-        project:  A callable mapping a Tensor of size `b x (q + q') x n` to a
+        project:  A callable mapping a Tensor of size `b x (q + q') x d` to a
             Tensor of the same size.  Use for multi-fidelity optimization where
             the returned Tensor should be projected to the highest fidelity.
-        cost: A callable mapping a Tensor of size `b x q x n` to a Tensor of
+        cost: A callable mapping a Tensor of size `b x q x d` to a Tensor of
             size `b x 1`.  The resulting Tensor's value is the cost of submitting
             each t-batch.
         use_X_for_old_posterior:  If True, concatenate X and
@@ -307,22 +306,22 @@ def batch_knowledge_gradient_no_discretization(
     mean can be used. ***
 
     Args:
-        X: A `b x q x n` Tensor with `b` t-batches of `q` design points each.
+        X: A `b x q x d` Tensor with `b` t-batches of `q` design points each.
             If X is two-dimensional, assume `b = 1`.
-        X_fantasies:  A `q' x n` Tensor of q' design points where
+        X_fantasies:  A `q' x d` Tensor of q' design points where
             there is one design point for each fantasy.
-        X_old:  A `1 x n` Tensor of a single design point
+        X_old:  A `1 x d` Tensor of a single design point
         model: A fitted GPyTorch model from which the fantasy_model
             was created.
-        objective: A callable mapping a Tensor of size `b x q x t x mc_samples`
-            to a Tensor of size `b x q x mc_samples`, where `t` is the number of
-            outputs (tasks) of the model. If omitted, use the identity map
-            (applicable to single-task models only).
+        objective: A callable mapping a Tensor of size `b x q x (t)`
+            to a Tensor of size `b x q`, where `t` is the number of
+            outputs (tasks) of the model. Note: the callable must support broadcasting.
+            If omitted, use the identity map (applicable to single-task models only).
             Assumed to be non-negative when the constraints are used!
         constraints: A list of callables, each mapping a Tensor of size
-            `b x q x t x mc_samples` to a Tensor of size `b x q x mc_samples`,
-            where negative values imply feasibility. Only relevant for multi-task
-            models (`t` > 1).
+            `b x q x t` to a Tensor of size `b x q`, where negative values imply
+            feasibility. Note: the callable must support broadcasting. Only
+            relevant for multi-task models (`t` > 1).
         seed: The random seed to use for the fantasies
         inner_mc_samples:  The number of Monte-Carlo samples to draw for the
             inner expectation
@@ -330,10 +329,10 @@ def batch_knowledge_gradient_no_discretization(
             the constraints. As `eta -> 0`, the exact (discontinuous) constraint
             is recovered.
         inner_seed:  The random seed to use for the inner sampling
-        project:  A callable mapping a Tensor of size `q x n` to a
+        project:  A callable mapping a Tensor of size `q x d` to a
             Tensor of the same size.  Use for multi-fidelity optimization where
             the returned Tensor should be projected to the highest fidelity.
-        cost: A callable mapping a Tensor of size `b x q x n` to a Tensor of
+        cost: A callable mapping a Tensor of size `b x q x d` to a Tensor of
             size `b x 1`.  The resulting Tensor's value is the cost of submitting
             each t-batch.
 
@@ -363,7 +362,7 @@ def batch_knowledge_gradient_no_discretization(
     fantasy_model = initialize_BFGP(
         model=model, X=X, num_samples=X_fantasies.shape[0], seed=seed
     )
-    # X_fantasies is q' x n, needs to be q' x 1 x n
+    # X_fantasies is q' x d, needs to be q' x 1 x d
     # for batch mode evaluation with q' fantasies
     new_posterior = fantasy_model(project(X_fantasies).unsqueeze(1))
     # TODO: Tell the posterior to use the same set
@@ -394,6 +393,7 @@ def batch_knowledge_gradient_no_discretization(
     return result
 
 
+@batch_mode_transform
 def batch_probability_of_improvement(
     X: Tensor,
     model: Module,
@@ -403,10 +403,8 @@ def batch_probability_of_improvement(
 ) -> Tensor:
     """q-PI, supporting t-batch mode.
 
-    *** NOTE: THIS FUNCTION DOES NOT YET SUPPORT t-BATCHES.***
-
     Args:
-        X: A `b x q x n` Tensor with `b` t-batches of `q` design points
+        X: A `b x q x d` Tensor with `b` t-batches of `q` design points
             each. If X is two-dimensional, assume `b = 1`.
         model: A fitted model implementing an `rsample` method to sample from the
             posterior function values
@@ -423,20 +421,19 @@ def batch_probability_of_improvement(
     """
     model.eval()
     with manual_seed(seed=seed), fast_pred_var():
-        samples = model(X).rsample(sample_shape=torch.Size([mc_samples])).max(1)[0]
-        val = sigmoid(samples - best_f).mean()
+        samples = model(X).rsample(sample_shape=torch.Size([mc_samples])).max(dim=2)[0]
+        val = sigmoid(samples - best_f).mean(dim=0)
     return val
 
 
+@batch_mode_transform
 def batch_simple_regret(
     X: Tensor, model: Module, mc_samples: int = 5000, seed: Optional[int] = None
 ) -> Tensor:
     """q-simple regret, support t-batch mode.
 
-    *** NOTE: THIS FUNCTION DOES NOT YET SUPPORT t-BATCHES.***
-
     Args:
-        X: A `b x q x n` Tensor with `b` t-batches of `q` design points
+        X: A `b x q x d` Tensor with `b` t-batches of `q` design points
             each. If X is two-dimensional, assume `b = 1`.
         model: A fitted model implementing an `rsample` method to sample from the
             posterior function values
@@ -451,10 +448,16 @@ def batch_simple_regret(
     """
     model.eval()
     with manual_seed(seed=seed), fast_pred_var():
-        val = model(X).rsample(sample_shape=torch.Size([mc_samples])).max(1)[0].mean()
+        val = (
+            model(X)
+            .rsample(sample_shape=torch.Size([mc_samples]))
+            .max(dim=2)[0]
+            .mean(dim=0)
+        )
     return val
 
 
+@batch_mode_transform
 def batch_upper_confidence_bound(
     X: Tensor,
     model: Module,
@@ -464,10 +467,8 @@ def batch_upper_confidence_bound(
 ) -> Tensor:
     """q-UCB, support t-batch mode.
 
-    *** NOTE: THIS FUNCTION DOES NOT YET SUPPORT t-BATCHES.***
-
     Args:
-        X: A `b x q x n` Tensor with `b` t-batches of `q` design points
+        X: A `b x q x d` Tensor with `b` t-batches of `q` design points
             each. If X is two-dimensional, assume `b = 1`.
         model: A fitted model implementing an `rsample` method to sample from the
             posterior function values
@@ -483,16 +484,9 @@ def batch_upper_confidence_bound(
     """
     model.eval()
     with manual_seed(seed=seed), fast_pred_var():
-        mvn = model(X)
-        val = (
-            (
-                sqrt(beta * pi / 2)
-                * mvn.covar()
-                .zero_mean_mvn_samples(sample_shape=torch.Size([mc_samples]))
-                .abs()
-                + mvn._mean.view(1, -1)
-            )
-            .max(1)[0]
-            .mean()
-        )
-    return val
+        posterior = model(X)
+        samples = posterior.lazy_covariance_matrix.zero_mean_mvn_samples(mc_samples)
+        ucb_mc_samples = (sqrt(beta * pi / 2) * samples.abs() + posterior.mean).max(
+            dim=2
+        )[0]
+    return ucb_mc_samples.mean(dim=0)
