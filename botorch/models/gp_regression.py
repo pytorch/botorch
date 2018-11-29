@@ -1,21 +1,24 @@
 #! /usr/bin/env python3
 
-from gpytorch.distributions import MultivariateNormal
-from gpytorch.kernels import MaternKernel, ScaleKernel
-from gpytorch.likelihoods import (
+from gpytorch.distributions.multivariate_normal import MultivariateNormal
+from gpytorch.kernels.matern_kernel import MaternKernel
+from gpytorch.kernels.scale_kernel import ScaleKernel
+from gpytorch.likelihoods.gaussian_likelihood import (
     GaussianLikelihood,
-    HeteroskedasticNoise,
-    Likelihood,
     _GaussianLikelihoodBase,
 )
-from gpytorch.means import ConstantMean
-from gpytorch.models import ExactGP
-from gpytorch.priors import GammaPrior
+from gpytorch.likelihoods.likelihood import Likelihood
+from gpytorch.likelihoods.noise_models import HeteroskedasticNoise
+from gpytorch.means.constant_mean import ConstantMean
+from gpytorch.models.exact_gp import ExactGP
+from gpytorch.priors.torch_priors import GammaPrior
 from torch import Tensor
 from torch.nn.functional import softplus
 
+from .gpytorch import GPyTorchModel
 
-class SingleTaskGP(ExactGP):
+
+class SingleTaskGP(ExactGP, GPyTorchModel):
     """
     Class implementing a single task exact GP using relatively strong priors on
     the Kernel hyperparameters, which work best when covariates are normalized

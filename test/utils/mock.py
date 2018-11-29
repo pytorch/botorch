@@ -1,18 +1,22 @@
 #!/usr/bin/env python3
 
+from typing import List, Optional
+
 import torch
-from gpytorch.lazy import LazyTensor, NonLazyTensor
+from botorch.models import Model
+from botorch.posteriors import Posterior
+from torch import Tensor
 
 
-empty_size = torch.Size()
+EMPTY_SIZE = torch.Size()
 
 
-class MockLikelihood(object):
+class MockPosterior(Posterior):
     """Mock object that implements dummy methods and feeds through specified outputs"""
 
-    def __init__(self, mean=None, covariance=None, samples=None):
+    def __init__(self, mean=None, variance=None, samples=None):
         self._mean = mean
-        self._covariance = covariance
+        self._variance = variance
         self._samples = samples
 
     @property
@@ -20,21 +24,19 @@ class MockLikelihood(object):
         return self._mean
 
     @property
-    def covariance_matrix(self):
-        if isinstance(self._covariance, LazyTensor):
-            return self._covariance.evaluate()
-        return self._covariance
+    def variance(self):
+        return self._variance
 
-    @property
-    def lazy_covariance_matrix(self):
-        if not isinstance(self._covariance, LazyTensor):
-            return NonLazyTensor(self._covariance)
-        return self._covariance
-
-    def rsample(self, sample_shape=empty_size):
-        """
-        Mock rsample by repeating only the 0th dimension of self._samples.
-        """
+    def rsample(
+        self,
+        sample_shape: Optional[torch.Size] = None,
+        base_samples: Optional[Tensor] = None,
+    ) -> Tensor:
+        """Mock sample by repeating only the 0th dimension of self._samples."""
+        if base_samples is not None:
+            raise RuntimeError("base_samples are not supported in MockPosterior")
+        if sample_shape is None:
+            sample_shape = torch.Size()
         # create list with a one for each dimension of self._samples
         size = torch.ones(self._samples.ndimension(), dtype=torch.int).tolist()
         # set the number of times to repeat the 0th dimension
@@ -42,23 +44,22 @@ class MockLikelihood(object):
         return self._samples.repeat(torch.Size(size))
 
 
-class MockModel(object):
+class MockModel(Model):
     """Mock object that implements dummy methods and feeds through specified outputs"""
 
-    def __init__(self, output):
-        self.output = output
+    def __init__(self, posterior: MockPosterior):
+        self._posterior = posterior
 
-    def __call__(self, test_x):
-        return self.output
+    def posterior(
+        self,
+        X: Tensor,
+        output_indices: Optional[List[int]] = None,
+        observation_noise: bool = False,
+    ) -> MockPosterior:
+        return self._posterior
 
-    def eval(self):
-        pass
 
-    def train(self):
-        pass
-
-
-class MockBatchAcquisitionModule(object):
+class MockBatchAcquisitionModule:
     """Mock batch acquisition module that returns the sum of the input"""
 
     def __init__(self):

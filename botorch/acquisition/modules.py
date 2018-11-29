@@ -3,10 +3,11 @@
 from abc import ABC, abstractmethod
 from typing import Union
 
-from gpytorch import Module
 from torch import Tensor
+from torch.nn import Module
 
-from .functional import (
+from ..models.model import Model
+from .functional.acquisition import (
     expected_improvement,
     max_value_entropy_search,
     posterior_mean,
@@ -18,7 +19,7 @@ from .functional import (
 class AcquisitionFunction(Module, ABC):
     """Abstract module class for wrapping acquisition functions"""
 
-    def __init__(self, model: Module) -> None:
+    def __init__(self, model: Model) -> None:
         super().__init__()
         self.model = model
 
@@ -51,7 +52,7 @@ class ExpectedImprovement(AcquisitionFunction):
             representing the best function value observed so far (assumed noiseless)
     """
 
-    def __init__(self, model: Module, best_f: Union[float, Tensor]) -> None:
+    def __init__(self, model: Model, best_f: Union[float, Tensor]) -> None:
         super().__init__(model)
         self.best_f = best_f
 
@@ -81,7 +82,7 @@ class ProbabilityOfImprovement(AcquisitionFunction):
             representing the best function value observed so far (assumed noiseless)
     """
 
-    def __init__(self, model: Module, best_f: Union[float, Tensor]) -> None:
+    def __init__(self, model: Model, best_f: Union[float, Tensor]) -> None:
         super().__init__(model)
         self.best_f = best_f
 
@@ -99,7 +100,7 @@ class UpperConfidenceBound(AcquisitionFunction):
             representing the trade-off parameter between mean and covariance
     """
 
-    def __init__(self, model: Module, beta: Union[float, Tensor]) -> None:
+    def __init__(self, model: Model, beta: Union[float, Tensor]) -> None:
         super().__init__(model)
         self.beta = beta
 
@@ -110,7 +111,7 @@ class UpperConfidenceBound(AcquisitionFunction):
 class MaxValueEntropySearch(AcquisitionFunction):
     """NOT YET IMPLEMENTED"""
 
-    def __init__(self, model: Module, num_samples: int) -> None:
+    def __init__(self, model: Model, num_samples: int) -> None:
         super().__init__(model)
         self.num_samples = num_samples
 

@@ -4,24 +4,24 @@ import unittest
 
 import torch
 
-from .mock import MockLikelihood, MockModel
+from .mock import MockModel, MockPosterior
 
 
 class TestMock(unittest.TestCase):
-    def test_mockmodel(self):
-        o = object()
-        mm = MockModel(o)
-        mm.eval()
-        self.assertEqual(mm(None), o)
-
-    def test_mocklikelihood(self):
+    def test_mockposterior(self):
         mean = torch.rand(2)
-        covariance = torch.eye(2)
+        variance = torch.eye(2)
         samples = torch.rand(1, 2)
-        ml = MockLikelihood(mean=mean, covariance=covariance, samples=samples)
-        self.assertTrue(torch.equal(ml.mean, mean))
-        self.assertTrue(torch.equal(ml.covariance_matrix, covariance))
-        self.assertTrue(torch.all(ml.rsample() == samples.unsqueeze(0)))
+        mp = MockPosterior(mean=mean, variance=variance, samples=samples)
+        self.assertTrue(torch.equal(mp.mean, mean))
+        self.assertTrue(torch.equal(mp.variance, variance))
+        self.assertTrue(torch.all(mp.sample() == samples.unsqueeze(0)))
         self.assertTrue(
-            torch.all(ml.rsample(torch.Size([2])) == samples.repeat(2, 1, 1))
+            torch.all(mp.sample(torch.Size([2])) == samples.repeat(2, 1, 1))
         )
+
+    def test_mockmodel(self):
+        mp = MockPosterior()
+        mm = MockModel(mp)
+        X = torch.empty(0)
+        self.assertEqual(mm.posterior(X), mp)
