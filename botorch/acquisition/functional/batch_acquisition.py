@@ -10,7 +10,7 @@ from torch.nn.functional import sigmoid
 from ...models import Model, initialize_BFGP
 from ...optim.constraints import soft_eval_constraint
 from ...utils import manual_seed
-from .batch_utils import batch_mode_transform
+from ..batch_utils import batch_mode_transform
 
 
 """

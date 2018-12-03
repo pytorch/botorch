@@ -7,6 +7,7 @@ from .batch_modules import (
     qProbabilityOfImprovement,
     qUpperConfidenceBound,
 )
+from .batch_utils import batch_mode_transform, match_batch_size
 from .modules import (
     AcquisitionFunction,
     ExpectedImprovement,
@@ -22,6 +23,8 @@ __all__ = [
     PosteriorMean,
     ProbabilityOfImprovement,
     UpperConfidenceBound,
+    batch_mode_transform,
+    match_batch_size,
     qExpectedImprovement,
     qKnowledgeGradient,
     qNoisyExpectedImprovement,
