@@ -6,10 +6,11 @@ from typing import Any, Dict, List, NamedTuple, Optional, Tuple
 
 import gpytorch
 import numpy as np
+from botorch.optim.constraints import ParameterBounds
 from botorch.optim.converter import TorchAttr, module_to_array, set_params_with_array
 from botorch.utils import check_convergence
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
-from scipy.optimize import minimize
+from scipy.optimize import Bounds, minimize
 from torch import Tensor
 from torch.optim.adam import Adam
 from torch.optim.optimizer import Optimizer
@@ -29,7 +30,7 @@ def fit_torch(
     optimizer_args: Optional[Dict[str, float]] = None,
     disp: bool = True,
     track_iterations: bool = True,
-) -> Tuple[MarginalLogLikelihood, List[OptimizationIteration]]:
+) -> Tuple[MarginalLogLikelihood, Optional[List[OptimizationIteration]]]:
     """Fit a gpytorch model by maximizing MLL with a torch optimizer.
 
     The model and likelihood in mll must already be in train mode.
@@ -86,22 +87,25 @@ def fit_torch(
             options={},
             max_iter=maxiter,
         )
-    return mll, iterations
+    return mll, iterations if track_iterations else None
 
 
 def fit_scipy(
     mll: MarginalLogLikelihood,
+    bounds: Optional[ParameterBounds] = None,
     method: str = "L-BFGS-B",
     options: Optional[Dict[str, Any]] = None,
     track_iterations: bool = True,
     max_preconditioner_size: int = 10,
-):
+) -> Tuple[MarginalLogLikelihood, Optional[List[OptimizationIteration]]]:
     """Fit a gpytorch model by maximizing MLL with a scipy optimizer.
 
     The model and likelihood in mll must already be in train mode.
 
     Args:
         mll: MarginalLogLikelihood to be maximized.
+        bounds: A ParameterBounds dictionary mapping parameter names to tuples of
+            lower and upper bounds.
         method: Solver type, passed along to scipy.minimize.
         options: Dictionary of solver options, passed along to scipy.minimize.
         track_iterations: Track the function values and wall time for each
@@ -114,8 +118,10 @@ def fit_scipy(
         iterations: List of OptimizationIteration objects describing each
             iteration. If track_iterations is False, will be an empty list.
     """
-    x0, property_dict = module_to_array(mll)
+    x0, property_dict, bounds = module_to_array(module=mll, bounds=bounds)
     x0 = x0.astype(np.float64)
+    if bounds is not None:
+        bounds = Bounds(lb=bounds[0], ub=bounds[1], keep_feasible=True)
 
     xs = []
     ts = []
@@ -131,6 +137,7 @@ def fit_scipy(
         _scipy_objective_and_grad,
         x0,
         args=(mll, property_dict, max_preconditioner_size),
+        bounds=bounds,
         method=method,
         jac=True,
         options=options,

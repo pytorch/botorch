@@ -24,7 +24,8 @@ class TestNumpyTorchParameterConversion(unittest.TestCase):
         model.mean_module = ConstantMean()
         mll = ExactMarginalLogLikelihood(likelihood, model)
 
-        x, property_dict = module_to_array(mll)
+        bounds_dict = {"likelihood.noise_covar.raw_noise": (0.0, None)}
+        x, property_dict, bounds = module_to_array(module=mll, bounds=bounds_dict)
         self.assertTrue(np.array_equal(x, np.zeros(5)))
         self.assertEqual(
             set(property_dict.keys()),
@@ -39,6 +40,18 @@ class TestNumpyTorchParameterConversion(unittest.TestCase):
             self.assertEqual(val.dtype, torch.float32)
             self.assertEqual(val.shape, sizes[i])
             self.assertEqual(val.device, torch.device("cpu"))
+
+        # check bound parsing
+        self.assertIsInstance(bounds, tuple)
+        lower_exp = np.full_like(x, -np.inf)
+        idx = 0
+        for p_name, ta in property_dict.items():
+            if p_name == "likelihood.noise_covar.raw_noise":
+                break
+            idx += ta.shape.numel()
+        lower_exp[idx] = 0.0
+        self.assertTrue(np.equal(bounds[0], lower_exp).all())
+        self.assertTrue(np.equal(bounds[1], np.full_like(x, np.inf)).all())
 
         # Set parameters
         mll = set_params_with_array(
@@ -61,7 +74,7 @@ class TestNumpyTorchParameterConversion(unittest.TestCase):
         )
 
         # Extract again
-        x2, property_dict2 = module_to_array(mll)
+        x2, property_dict2, bounds2 = module_to_array(module=mll, bounds=bounds_dict)
         self.assertTrue(np.array_equal(x2, np.array([1.0, 2.0, 3.0, 4.0, 5.0])))
 
 

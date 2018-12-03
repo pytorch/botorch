@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 
+from typing import Dict, Optional, Tuple
+
 from torch import Tensor
 from torch.nn.functional import sigmoid
 
 
-def soft_eval_constraint(lhs: Tensor, eta: float = 1e-3):
+ParameterBounds = Dict[str, Tuple[Optional[float], Optional[float]]]
+
+
+def soft_eval_constraint(lhs: Tensor, eta: float = 1e-3) -> Tensor:
     """Element-wise evaluation of a constraint in a 'soft' fashion
 
     `value(x) = 1 / (1 + exp(x / eta))`

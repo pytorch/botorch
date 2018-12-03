@@ -1,14 +1,100 @@
 #!/usr/bin/env python3
 
-from typing import Callable, Dict, List, Optional, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Type, Union
 
+import numpy as np
 import torch
 from botorch.utils import check_convergence, columnwise_clamp, fix_features
+from scipy.optimize import Bounds, minimize
 from torch import Tensor
+from torch.nn import Module
 from torch.optim import Optimizer
 
 
-def gen_candidates(
+def _arrayify(X: Tensor) -> np.ndarray:
+    return X.cpu().detach().double().clone().numpy()
+
+
+def _make_bounds_scipy(
+    lower_bounds: Optional[Union[float, Tensor]],
+    upper_bounds: Optional[Union[float, Tensor]],
+    X: Tensor,
+) -> Optional[Bounds]:
+    """Creates a scipy Bounds object for optimziation
+
+    Args:
+        lower_bounds: Lower bounds on each column (last dimension) of X. If this
+            is a single float, then all columns have the same bound.
+        upper_bounds: Lower bounds on each column (last dimension) of X. If this
+            is a single float, then all columns have the same bound.
+        X: `... x d` tensor
+
+    Returns
+        A scipy Bounds object if either lower_bounds or upper_bounds is not None,
+            and None otherwise.
+
+    """
+    if lower_bounds is None and upper_bounds is None:
+        return None
+
+    def _expand(bounds: Tensor, X: Tensor) -> Tensor:
+        if bounds is None:
+            ebounds = torch.full_like(X, np.inf)
+        else:
+            if not torch.is_tensor(bounds):
+                bounds = torch.tensor(bounds)
+            ebounds = bounds.expand_as(X)
+        return ebounds.cpu().detach().double().view(-1).clone().numpy()
+
+    lb = -_expand(lower_bounds, X)
+    ub = _expand(upper_bounds, X)
+    return Bounds(lb=lb, ub=ub, keep_feasible=True)
+
+
+def gen_candidates_scipy(
+    initial_candidates: Tensor,
+    acquisition_function: Module,
+    lower_bounds: Optional[Union[float, Tensor]] = None,
+    upper_bounds: Optional[Union[float, Tensor]] = None,
+    method: str = "L-BFGS-B",
+    options: Optional[Dict[str, Any]] = None,
+    fixed_features: Optional[Dict[int, Optional[float]]] = None,
+) -> Tensor:
+    clamped_candidates = columnwise_clamp(
+        initial_candidates, lower_bounds, upper_bounds
+    ).requires_grad_(True)
+
+    shapeX = clamped_candidates.shape
+    x0 = _arrayify(clamped_candidates.view(-1))
+    bounds = _make_bounds_scipy(
+        lower_bounds=lower_bounds, upper_bounds=upper_bounds, X=initial_candidates
+    )
+
+    def f(x):
+        X = (
+            torch.from_numpy(x)
+            .type_as(initial_candidates)
+            .view(shapeX)
+            .contiguous()
+            .requires_grad_(True)
+        )
+        X = fix_features(X=X, fixed_features=fixed_features)
+        loss = -acquisition_function(X).sum()
+        loss.backward()
+        fval = loss.item()
+        gradf = _arrayify(X.grad.view(-1))
+        return fval, gradf
+
+    res = minimize(f, x0, method=method, jac=True, bounds=bounds, options=options)
+
+    candidates = (
+        torch.from_numpy(res.x).type_as(initial_candidates).view(shapeX).contiguous()
+    )
+    batch_acquisition = acquisition_function(candidates)
+    return candidates, batch_acquisition
+
+
+def gen_candidates_torch(
     initial_candidates: Tensor,
     acquisition_function: Callable,
     lower_bounds: Optional[Union[float, Tensor]] = None,
