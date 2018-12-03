@@ -3,11 +3,10 @@
 from typing import Callable, Dict, Optional, Type, Union
 
 import torch
-from botorch.gen import gen_candidates
+from botorch.gen import gen_candidates_torch
 from botorch.optim.initializers import q_batch_initialization
 from gpytorch import Module
 from torch import Tensor
-from torch.optim import LBFGS
 from torch.optim.optimizer import Optimizer
 
 
@@ -66,7 +65,7 @@ def random_restarts(
         torch_batches=num_starting_points,
     )
     # performs batch evaluation
-    candidates, batch_acquisition = gen_candidates(
+    candidates, batch_acquisition = gen_candidates_torch(
         initial_candidates=initial_candidates,
         acquisition_function=acq_function,
         lower_bounds=lower_bounds,

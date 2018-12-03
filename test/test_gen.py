@@ -4,7 +4,7 @@ import math
 import unittest
 
 import torch
-from botorch import fit_model, gen_candidates
+from botorch import fit_model, gen_candidates_scipy
 from botorch.acquisition import qExpectedImprovement
 from botorch.models import SingleTaskGP
 from gpytorch.likelihoods import GaussianLikelihood
@@ -36,16 +36,14 @@ class TestGenCandidates(TestBaseCandidateGeneration):
         self.f_best = self.train_y.max().item()
         self.initial_candidates = torch.tensor([[0.5]])
 
-    def test_gen_candidates(self, cuda=False):
+    def test_gen_candidates_scipy(self, cuda=False):
         ics = self.initial_candidates.cuda() if cuda else self.initial_candidates
         qEI = qExpectedImprovement(self.model, best_f=self.f_best)
-        candidates, _ = gen_candidates(
+        candidates, _ = gen_candidates_scipy(
             initial_candidates=ics,
             acquisition_function=qEI,
             lower_bounds=0,
             upper_bounds=1,
-            max_iter=5,
-            verbose=False,
         )
         self.assertTrue(0 <= candidates <= 1)
 
