@@ -3,9 +3,9 @@
 from typing import Callable, List, Optional
 
 import torch
-from botorch.acquisition.batch_utils import match_batch_size
 
 from ..models.model import Model
+from .batch_utils import match_batch_size
 from .functional.batch_acquisition import (
     batch_expected_improvement,
     batch_knowledge_gradient,
