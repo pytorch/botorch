@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 
+import torch
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels.matern_kernel import MaternKernel
 from gpytorch.kernels.scale_kernel import ScaleKernel
@@ -11,6 +12,7 @@ from gpytorch.likelihoods.likelihood import Likelihood
 from gpytorch.likelihoods.noise_models import HeteroskedasticNoise
 from gpytorch.means.constant_mean import ConstantMean
 from gpytorch.models.exact_gp import ExactGP
+from gpytorch.priors.smoothed_box_prior import SmoothedBoxPrior
 from gpytorch.priors.torch_priors import GammaPrior
 from torch import Tensor
 from torch.nn.functional import softplus
@@ -57,8 +59,11 @@ class SingleTaskGP(ExactGP, GPyTorchModel):
 
 
 class HeteroskedasticSingleTaskGP(SingleTaskGP):
-    def __init__(self, train_X: Tensor, train_Y: Tensor, train_Y_sem) -> None:
-        train_Y_log_var = (train_Y_sem ** 2).log()
-        noise_model = SingleTaskGP(train_X, train_Y_log_var, GaussianLikelihood())
+    def __init__(self, train_X: Tensor, train_Y: Tensor, train_Y_se: Tensor) -> None:
+        train_Y_log_var = (train_Y_se ** 2).log()
+        noise_likelihood = GaussianLikelihood(
+            noise_prior=SmoothedBoxPrior(-3, 5, 0.5, transform=torch.log)
+        )
+        noise_model = SingleTaskGP(train_X, train_Y_log_var, noise_likelihood)
         likelihood = _GaussianLikelihoodBase(HeteroskedasticNoise(noise_model))
         super().__init__(train_X, train_Y, likelihood)

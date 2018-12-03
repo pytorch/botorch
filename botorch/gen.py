@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from typing import Any, Callable, Dict, List, Optional, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 import torch
@@ -59,7 +59,7 @@ def gen_candidates_scipy(
     method: str = "L-BFGS-B",
     options: Optional[Dict[str, Any]] = None,
     fixed_features: Optional[Dict[int, Optional[float]]] = None,
-) -> Tensor:
+) -> Tuple[Tensor, Tensor]:
     clamped_candidates = columnwise_clamp(
         initial_candidates, lower_bounds, upper_bounds
     ).requires_grad_(True)
@@ -104,7 +104,7 @@ def gen_candidates_torch(
     max_iter: int = 50,
     verbose: bool = True,
     fixed_features: Optional[Dict[int, Optional[float]]] = None,
-) -> Tensor:
+) -> Tuple[Tensor, Tensor]:
     """Generate a set of candidates via optimization from a given set of
     starting points.
 
