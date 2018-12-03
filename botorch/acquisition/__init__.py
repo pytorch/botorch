@@ -15,6 +15,7 @@ from .modules import (
     ProbabilityOfImprovement,
     UpperConfidenceBound,
 )
+from .utils import get_acquisition_function
 
 
 __all__ = [
@@ -25,6 +26,7 @@ __all__ = [
     UpperConfidenceBound,
     batch_mode_transform,
     match_batch_size,
+    get_acquisition_function,
     qExpectedImprovement,
     qKnowledgeGradient,
     qNoisyExpectedImprovement,
