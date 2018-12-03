@@ -10,7 +10,7 @@ from torch import Tensor
 from .gpytorch import GPyTorchModel
 
 
-def initialize_BFGP(
+def initialize_batch_fantasy_GP(
     model: GPyTorchModel, X: Tensor, num_samples: int, seed: Optional[int] = None
 ) -> GPyTorchModel:
     """Initializes a batched fantasized GP from a given GPyTorch model
@@ -44,9 +44,15 @@ def initialize_BFGP(
     train_x = torch.cat([model.train_inputs[0], X]).expand(num_samples, -1, p)
     train_y = torch.cat([model.train_targets.expand(*fantasy_shape), fantasies], dim=1)
 
-    # instantiate the fantasy model(s) and load the (shared) hyperparameters
+    # instantiate the fantasy model(s)
     likelihood = deepcopy(model.likelihood).eval()
     fantasy_model = model.__class__(train_x, train_y, likelihood)
+
+    # load the (shared) hyperparameters, make sure to adjust size appropriately
+    for k, v in fantasy_model.named_parameters():
+        state_dict[k] = state_dict[k].expand_as(v)
+    for k, v in fantasy_model.named_buffers():
+        state_dict[k] = state_dict[k].expand_as(v)
     fantasy_model.load_state_dict(state_dict)
     fantasy_model.eval()
 

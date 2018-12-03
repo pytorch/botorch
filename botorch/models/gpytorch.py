@@ -20,7 +20,7 @@ class GPyTorchModel(Model, ABC):
     ) -> GPyTorchPosterior:
         self.eval()  # pyre-ignore
         with gpytorch.fast_pred_var():
-            posterior = self(X)
+            posterior = GPyTorchPosterior(self(X))
         if observation_noise:
             posterior = self.add_observation_noise(
                 posterior=posterior, X=X, output_indices=output_indices
