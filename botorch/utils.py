@@ -188,3 +188,16 @@ def get_objective_weights_transform(
         return lambda Y: Y * weights[0]
     # TODO: replace with einsum once performance issues are resolved upstream.
     return lambda Y: torch.sum(Y * weights.view(1, 1, -1), dim=-1)
+
+
+def standardize(X: Tensor) -> Tensor:
+    """
+    Standardize a tensor by dim=0
+    Args:
+        X: tensor `n x (d)`
+    Returns:
+        Tensor: standardized X
+    """
+    X_std = X.std(dim=0)
+    X_std = X_std.where(X_std >= 1e-9, torch.full_like(X_std, 1.0))
+    return (X - X.mean(dim=0)) / X_std
