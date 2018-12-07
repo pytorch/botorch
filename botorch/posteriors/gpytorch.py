@@ -19,14 +19,21 @@ class GPyTorchPosterior(Posterior):
         sample_shape: Optional[torch.Size] = None,
         base_samples: Optional[Tensor] = None,
     ) -> Tensor:
+        """
+            We follow the convention of GPyTorch which
+            gives base_samples priority over sample_shape,
+            but we also check that sample_shape agrees
+            with base_samples.
+        """
         if sample_shape is not None and base_samples is not None:
-            raise RuntimeError("Use either sample_shape or base_samples, not both.")
+            if tuple(base_samples.shape[: len(sample_shape)]) != tuple(sample_shape):
+                raise RuntimeError("Sample shape disagrees with base_samples.")
         if sample_shape is None and base_samples is None:
             kwargs = {}
-        elif sample_shape is not None:
-            kwargs = {"sample_shape": sample_shape}
         elif base_samples is not None:
             kwargs = {"base_samples": base_samples}
+        elif sample_shape is not None:
+            kwargs = {"sample_shape": sample_shape}
         with fast_pred_var():
             return self.mvn.rsample(**kwargs)
 
@@ -40,3 +47,6 @@ class GPyTorchPosterior(Posterior):
 
     def zero_mean_mvn_samples(self, num_samples: int) -> Tensor:
         return self.mvn.lazy_covariance_matrix.zero_mean_mvn_samples(num_samples)
+
+    def get_base_samples(self, sample_shape: Optional[torch.Size] = None) -> Tensor:
+        return self.mvn.get_base_samples(sample_shape=sample_shape)

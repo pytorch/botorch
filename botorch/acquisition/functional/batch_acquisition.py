@@ -24,6 +24,18 @@ with MC sampling as outlined in:
 """
 
 
+def apply_constraints_(
+    obj: Tensor,
+    constraints: List[Callable[[Tensor], Tensor]],
+    samples: Tensor,
+    eta: float,
+) -> None:
+    if constraints is not None:
+        obj.clamp_min_(0)  # Enforce non-negativity with constraints
+        for constraint in constraints:
+            obj.mul_(soft_eval_constraint(constraint(samples), eta=eta))
+
+
 @batch_mode_transform
 def batch_expected_improvement(
     X: Tensor,
@@ -33,7 +45,7 @@ def batch_expected_improvement(
     constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
     mc_samples: int = 5000,
     eta: float = 1e-3,
-    seed: Optional[int] = None,
+    base_samples: Optional[Tensor] = None,
 ) -> Tensor:
     """q-EI with constraints, supporting t-batch mode.
 
@@ -53,11 +65,12 @@ def batch_expected_improvement(
             Note: the callable must support broadcasting.
             Only relevant for multi-task models (`t` > 1).
         mc_samples: The number of Monte-Carlo samples to draw from the model
-            posterior.
+            posterior.  Only used if base_samples is not provided.
         eta: The temperature parameter of the softmax function used in approximating
             the constraints. As `eta -> 0`, the exact (discontinuous) constraint
             is recovered.
-        seed: The random seed to use for sampling.
+        base_samples: A fixed Tensor of N(0,1) random variables used for
+            deterministic optimization.
 
     Returns:
         Tensor: The constrained q-EI value of the design X for each of the `b`
@@ -65,14 +78,11 @@ def batch_expected_improvement(
 
     """
     posterior = model.posterior(X)
-    with manual_seed(seed=seed):
-        # samples is mc_samples x b x q x (t)
-        samples = posterior.rsample(sample_shape=torch.Size([mc_samples]))
-    # compute objective value
+    samples = posterior.rsample(
+        sample_shape=torch.Size([mc_samples]), base_samples=base_samples
+    )
     obj = (objective(samples) - best_f).clamp_min_(0)
-    if constraints is not None:
-        for constraint in constraints:
-            obj.mul_(soft_eval_constraint(constraint(samples), eta=eta))
+    apply_constraints_(obj=obj, constraints=constraints, samples=samples, eta=eta)
     q_ei = obj.max(dim=2)[0].mean(dim=0)
     return q_ei
 
@@ -86,7 +96,7 @@ def batch_noisy_expected_improvement(
     constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
     mc_samples: int = 5000,
     eta: float = 1e-3,
-    seed: Optional[int] = None,
+    base_samples: Optional[Tensor] = None,
 ) -> Tensor:
     """q-NoisyEI with constraints, supporting t-batch mode.
 
@@ -106,11 +116,12 @@ def batch_noisy_expected_improvement(
             Note: the callable must support broadcasting.
             Only relevant for multi-task models (`t` > 1).
         mc_samples: The number of Monte-Carlo samples to draw from the model
-            posterior.
+            posterior.  Only used if base_samples is not provided.
         eta: The temperature parameter of the softmax function used in approximating
             the constraints. As `eta -> 0`, the exact (discontinuous) constraint
             is recovered.
-        seed: The random seed to use for sampling.
+        base_samples: A Tensor of N(0,1) random variables used for
+            deterministic optimization.
 
     Returns:
         Tensor: The constrained q-NoisyEI value of the design X for each of the `b`
@@ -120,15 +131,12 @@ def batch_noisy_expected_improvement(
     q = X.shape[1]
     # predict posterior (joint across points and tasks)
     posterior = model.posterior(torch.cat([X, X_observed], dim=1))
-    with manual_seed(seed=seed):
-        # samples is mc_samples x b x q x (t)
-        samples = posterior.rsample(sample_shape=torch.Size([mc_samples]))
+    samples = posterior.rsample(
+        sample_shape=torch.Size([mc_samples]), base_samples=base_samples
+    )
     # compute objective value
     obj = objective(samples)
-    if constraints is not None:
-        obj.clamp_min_(0)  # Enforce non-negativity with constraints
-        for constraint in constraints:
-            obj.mul_(soft_eval_constraint(constraint(samples), eta=eta))
+    apply_constraints_(obj=obj, constraints=constraints, samples=samples, eta=eta)
     diff = (
         (obj[:, :, :q].max(dim=2)[0] - obj[:, :, q:].max(dim=2)[0])
         .clamp_min_(0)
@@ -146,8 +154,9 @@ def batch_knowledge_gradient(
     mc_samples: int = 40,
     inner_mc_samples: int = 1000,
     eta: float = 1e-3,
-    seed: Optional[int] = None,
-    inner_seed: Optional[int] = None,
+    inner_old_base_samples: Optional[Tensor] = None,
+    inner_new_base_samples: Optional[Tensor] = None,
+    fantasy_base_samples: Optional[Tensor] = None,
     project: Callable[[Tensor], Tensor] = lambda X: X,
     cost: Optional[Callable[[Tensor], Tensor]] = None,
     use_X_for_old_posterior: Optional[bool] = False,
@@ -189,15 +198,19 @@ def batch_knowledge_gradient(
             Note: the callable must support broadcastingself.
             Only relevant for multi-task models (`t` > 1).
         mc_samples: The number of Monte-Carlo samples to draw from the model
-            posterior for the outer sample.  GP memory usage is multiplied by
-            this value.
+            posterior.  GP memory usage is multiplied by
+            this value.  Only used if fantasy_base_samples is not provided.
         inner_mc_samples:  The number of Monte-Carlo samples to draw for the
-            inner expectation
+            inner expectation.  Only used if inner_base_samples is not provided.
         eta: The temperature parameter of the softmax function used in approximating
             the constraints. As `eta -> 0`, the exact (discontinuous) constraint
             is recovered.
-        seed: The random seed to use for the outer sampling
-        inner_seed:  The random seed to use for the inner sampling
+        inner_old_base_samples: A Tensor of N(0,1) random variables used for
+            deterministic optimization.
+        inner_new_base_samples: A Tensor of N(0,1) random variables used for
+            deterministic optimization.
+        fantasy_base_samples: A Tensor of N(0,1) random variables used for
+            deterministic optimization.
         project:  A callable mapping a Tensor of size `b x (q + q') x d` to a
             Tensor of the same size.  Use for multi-fidelity optimization where
             the returned Tensor should be projected to the highest fidelity.
@@ -218,15 +231,14 @@ def batch_knowledge_gradient(
     X_all = project(torch.cat([X, X_observed]))
 
     old_posterior = model.posterior(X_all if use_X_for_old_posterior else X_observed)
-
-    with manual_seed(seed=inner_seed):
-        old_samples = old_posterior.rsample(torch.Size([inner_mc_samples]))
+    old_samples = old_posterior.rsample(
+        sample_shape=torch.Size([inner_mc_samples]), base_samples=inner_old_base_samples
+    )
     # Shape of samples is inner_mc_samples x q' x t
     old_obj = objective(old_samples)
-    if constraints is not None:
-        old_obj.clamp_min_(0)  # Enforce non-negativity with constraints
-        for constraint in constraints:
-            old_obj.mul_(soft_eval_constraint(constraint(old_samples), eta=eta))
+    apply_constraints_(
+        obj=old_obj, constraints=constraints, samples=old_samples, eta=eta
+    )
     # Shape of obj is inner_mc_samples x q'
     # First compute mean across inner samples, then maximize across X_observed
     # Uses soft-max for maximization across X_observed instead of
@@ -236,7 +248,7 @@ def batch_knowledge_gradient(
     old_value = (old_per_point * w).sum()
 
     fantasy_model = initialize_batch_fantasy_GP(
-        model=model, X=X, num_samples=mc_samples, seed=seed
+        model=model, X=X, num_samples=mc_samples, base_samples=fantasy_base_samples
     )
     new_posterior = fantasy_model.posterior(X_all.unsqueeze(0).repeat(mc_samples, 1, 1))
     # TODO: Tell the posterior to use the same set
@@ -246,16 +258,15 @@ def batch_knowledge_gradient(
     # each of the fantasies.  We can probably safely reuse the
     # same inner_samples x (q + q') x t Z tensor for each of the
     # fantasies.  Possible since rsample accepts a base_sample argument.
-    with manual_seed(seed=inner_seed):
-        new_samples = new_posterior.rsample(torch.Size([inner_mc_samples]))
+    new_samples = new_posterior.rsample(
+        sample_shape=torch.Size([inner_mc_samples]), base_samples=inner_new_base_samples
+    )
     # Shape of new_samples is
     # inner_mc_samples x mc_samples x (q + q') x t
     new_obj = objective(new_samples)
-    if constraints is not None:
-        new_obj.clamp_min_(0)  # Enforce non-negativity with constraints
-        for constraint in constraints:
-            new_obj.mul_(soft_eval_constraint(constraint(new_samples), eta=eta))
-
+    apply_constraints_(
+        obj=new_obj, constraints=constraints, samples=new_samples, eta=eta
+    )
     # Shape of obj is inner_mc_samples x mc_samples x (q + q')
     # First compute mean across inner samples, then maximize across
     # X_all, then compute mean across outer samples
@@ -279,10 +290,11 @@ def batch_knowledge_gradient_no_discretization(
     model: Model,
     objective: Callable[[Tensor], Tensor] = lambda Y: Y,
     constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
-    seed: Optional[int] = None,
+    inner_old_base_samples: Optional[Tensor] = None,
+    inner_new_base_samples: Optional[Tensor] = None,
+    fantasy_base_samples: Optional[Tensor] = None,
     inner_mc_samples: int = 1000,
     eta: float = 1e-3,
-    inner_seed: Optional[int] = None,
     project: Callable[[Tensor], Tensor] = lambda X: X,
     cost: Optional[Callable[[Tensor], Tensor]] = None,
 ) -> Tensor:
@@ -318,13 +330,17 @@ def batch_knowledge_gradient_no_discretization(
             `b x q x t` to a Tensor of size `b x q`, where negative values imply
             feasibility. Note: the callable must support broadcasting. Only
             relevant for multi-task models (`t` > 1).
-        seed: The random seed to use for the fantasies
         inner_mc_samples:  The number of Monte-Carlo samples to draw for the
-            inner expectation
+            inner expectation.  Only used if inner_base_samples is not provided.
+        inner_old_base_samples: A Tensor of N(0,1) random variables used for
+            deterministic optimization.
+        inner_new_base_samples: A Tensor of N(0,1) random variables used for
+            deterministic optimization.
+        fantasy_base_samples: A Tensor of N(0,1) random variables used for
+            deterministic optimization.
         eta: The temperature parameter of the softmax function used in approximating
             the constraints. As `eta -> 0`, the exact (discontinuous) constraint
             is recovered.
-        inner_seed:  The random seed to use for the inner sampling
         project:  A callable mapping a Tensor of size `q x d` to a Tensor of the
             same size. Use for multi-fidelity optimization where the returned Tensor
             should be projected to the highest fidelity.
@@ -341,19 +357,22 @@ def batch_knowledge_gradient_no_discretization(
 
     """
     old_posterior = model.posterior(project(X_old))
-    with manual_seed(seed=inner_seed):
-        old_samples = old_posterior.rsample(torch.Size([inner_mc_samples]))
+    old_samples = old_posterior.rsample(
+        sample_shape=torch.Size([inner_mc_samples]), base_samples=inner_old_base_samples
+    )
     # Shape of samples is inner_mc_samples x 1 x t
     old_obj = objective(old_samples)
-    if constraints is not None:
-        old_obj.clamp_min_(0)  # Enforce non-negativity with constraints
-        for constraint in constraints:
-            old_obj.mul_(soft_eval_constraint(constraint(old_samples), eta=eta))
+    apply_constraints_(
+        obj=old_obj, constraints=constraints, samples=old_samples, eta=eta
+    )
     # Shape of obj is inner_mc_samples x 1
     old_value = old_obj.mean()
 
     fantasy_model = initialize_batch_fantasy_GP(
-        model=model, X=X, num_samples=X_fantasies.shape[0], seed=seed
+        model=model,
+        X=X,
+        num_samples=X_fantasies.shape[0],
+        base_samples=fantasy_base_samples,
     )
     # X_fantasies is q' x d, needs to be q' x 1 x d
     # for batch mode evaluation with q' fantasies
@@ -365,15 +384,15 @@ def batch_knowledge_gradient_no_discretization(
     # each of the fantasies.  We can probably safely reuse the
     # same inner_samples x 1 x t Z tensor for each of the
     # q' fantasies.  Possible since rsample accepts a base_sample argument.
-    with manual_seed(seed=inner_seed):
-        new_samples = new_posterior.rsample(torch.Size([inner_mc_samples]))
+    new_samples = new_posterior.rsample(
+        sample_shape=torch.Size([inner_mc_samples]), base_samples=inner_new_base_samples
+    )
     # Shape of new_samples is
     # inner_mc_samples x q' x 1 x t
     new_obj = objective(new_samples)
-    if constraints is not None:
-        new_obj.clamp_min_(0)  # Enforce non-negativity with constraints
-        for constraint in constraints:
-            new_obj.mul_(soft_eval_constraint(constraint(new_samples), eta=eta))
+    apply_constraints_(
+        obj=new_obj, constraints=constraints, samples=new_samples, eta=eta
+    )
 
     # Shape of new_obj is inner_mc_samples x q' x 1
     # First compute mean across inner samples, then
@@ -392,7 +411,7 @@ def batch_probability_of_improvement(
     model: Model,
     best_f: Tensor,
     mc_samples: int = 5000,
-    seed: Optional[int] = None,
+    base_samples: Optional[Tensor] = None,
 ) -> Tensor:
     """q-PI, supporting t-batch mode.
 
@@ -403,8 +422,9 @@ def batch_probability_of_improvement(
         best_f: The best (feasible) function value observed so far (assumed
             noiseless).
         mc_samples: The number of Monte-Carlo samples to draw from the model
-            posterior.
-        seed: The random seed to use for sampling.
+            posterior.  Only used if base_samples is not provided.
+        base_samples: A Tensor of N(0,1) random variables used for
+            deterministic optimization.
 
     Returns:
         Tensor: The constrained q-PI value of the design X for each of the `b`
@@ -412,15 +432,19 @@ def batch_probability_of_improvement(
 
     """
     posterior = model.posterior(X)
-    with manual_seed(seed=seed):
-        samples = posterior.rsample(sample_shape=torch.Size([mc_samples])).max(dim=2)[0]
-        val = sigmoid(samples - best_f).mean(dim=0)
+    samples = posterior.rsample(
+        sample_shape=torch.Size([mc_samples]), base_samples=base_samples
+    ).max(dim=2)[0]
+    val = sigmoid(samples - best_f).mean(dim=0)
     return val
 
 
 @batch_mode_transform
 def batch_simple_regret(
-    X: Tensor, model: Model, mc_samples: int = 5000, seed: Optional[int] = None
+    X: Tensor,
+    model: Model,
+    mc_samples: int = 5000,
+    base_samples: Optional[Tensor] = None,
 ) -> Tensor:
     """q-simple regret, support t-batch mode.
 
@@ -429,8 +453,9 @@ def batch_simple_regret(
             each. If X is two-dimensional, assume `b = 1`.
         model: A fitted model.
         mc_samples: The number of Monte-Carlo samples to draw from the model
-            posterior.
-        seed: The random seed to use for sampling.
+            posterior.  Only used if base_samples is not provided.
+        base_samples: A Tensor of N(0,1) random variables used for
+            deterministic optimization.
 
     Returns:
         Tensor: The constrained q-simple regret value of the design X for each of
@@ -438,12 +463,13 @@ def batch_simple_regret(
 
     """
     posterior = model.posterior(X)
-    with manual_seed(seed=seed):
-        val = (
-            posterior.rsample(sample_shape=torch.Size([mc_samples]))
-            .max(dim=2)[0]
-            .mean(dim=0)
+    val = (
+        posterior.rsample(
+            sample_shape=torch.Size([mc_samples]), base_samples=base_samples
         )
+        .max(dim=2)[0]
+        .mean(dim=0)
+    )
     return val
 
 
@@ -472,6 +498,7 @@ def batch_upper_confidence_bound(
 
     """
     with manual_seed(seed=seed):
+        # TODO: remove manual_seed here
         posterior = model.posterior(X)
         samples = posterior.zero_mean_mvn_samples(mc_samples)
         ucb_mc_samples = (

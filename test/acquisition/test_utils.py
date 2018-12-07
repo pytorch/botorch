@@ -26,6 +26,7 @@ class TestGetAcquisitionFunction(unittest.TestCase):
             objective=objective,
             constraints=None,
             X_pending=self.X_pending,
+            seed=None,
             acquisition_function_args=None,
         )
         self.assertTrue(acquisition_function == mock_acquisition.return_value)
@@ -34,6 +35,7 @@ class TestGetAcquisitionFunction(unittest.TestCase):
             best_f=self.model.posterior(self.X_observed).mean.max().item(),
             objective=objective,
             constraints=None,
+            seed=None,
             X_pending=self.X_pending,
         )
 
@@ -46,6 +48,7 @@ class TestGetAcquisitionFunction(unittest.TestCase):
             objective=objective,
             constraints=None,
             X_pending=self.X_pending,
+            seed=None,
             acquisition_function_args=None,
         )
         self.assertTrue(acquisition_function == mock_acquisition.return_value)
@@ -55,6 +58,7 @@ class TestGetAcquisitionFunction(unittest.TestCase):
             objective=objective,
             constraints=None,
             X_pending=self.X_pending,
+            seed=None,
         )
 
     @mock.patch(f"{utils.__name__}.qNoisyExpectedImprovement")
@@ -66,6 +70,7 @@ class TestGetAcquisitionFunction(unittest.TestCase):
             objective=objective,
             constraints=None,
             X_pending=self.X_pending,
+            seed=None,
             acquisition_function_args=None,
         )
         self.assertTrue(acquisition_function == mock_acquisition.return_value)
@@ -75,6 +80,7 @@ class TestGetAcquisitionFunction(unittest.TestCase):
             objective=objective,
             constraints=None,
             X_pending=self.X_pending,
+            seed=None,
         )
 
     @mock.patch(f"{utils.__name__}.qUpperConfidenceBound")
@@ -86,11 +92,12 @@ class TestGetAcquisitionFunction(unittest.TestCase):
             objective=objective,
             constraints=None,
             X_pending=self.X_pending,
+            seed=None,
             acquisition_function_args={"beta": 2.0},
         )
         self.assertTrue(acquisition_function == mock_acquisition.return_value)
         mock_acquisition.assert_called_once_with(
-            self.model, beta=2.0, X_pending=self.X_pending
+            self.model, beta=2.0, X_pending=self.X_pending, seed=None
         )
 
     def testGetQUCBNoBeta(self):
@@ -103,6 +110,7 @@ class TestGetAcquisitionFunction(unittest.TestCase):
             objective=objective,
             constraints=None,
             X_pending=self.X_pending,
+            seed=None,
             acquisition_function_args={},
         )
 
@@ -110,10 +118,11 @@ class TestGetAcquisitionFunction(unittest.TestCase):
         self.assertRaises(
             NotImplementedError,
             utils.get_acquisition_function,
-            "qKG",
+            "qES",
             self.model,
             self.X_observed,
             objective=objective,
             constraints=None,
             X_pending=self.X_pending,
+            seed=None,
         )

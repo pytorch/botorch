@@ -5,7 +5,8 @@ from typing import Callable, List, Optional
 import torch
 
 from ..models.model import Model
-from .batch_utils import match_batch_size
+from ..models.utils import initialize_batch_fantasy_GP
+from .batch_utils import construct_base_samples_from_posterior, match_batch_size
 from .functional.batch_acquisition import (
     batch_expected_improvement,
     batch_knowledge_gradient,
@@ -24,6 +25,22 @@ into BatchAcquisitionFunction gpytorch modules.
 
 
 class BatchAcquisitionFunction(AcquisitionFunction):
+    def __init__(
+        self,
+        model: Model,
+        mc_samples: int = 5000,
+        X_pending: Optional[torch.Tensor] = None,
+        seed: Optional[int] = None,
+    ) -> None:
+        super().__init__(model=model)
+        self.mc_samples = mc_samples
+        self.X_pending = X_pending
+        if self.X_pending is not None:
+            self.X_pending.requires_grad_(False)
+        self.seed = seed
+        self.base_samples = None
+        self.base_samples_q_batch_size = None
+
     def _forward(self, X: torch.Tensor) -> torch.Tensor:
         """Takes in a `b x q x d` X Tensor of `b` t-batches with `q`
         `d`-dimensional design points each, and returns a one-dimensional Tensor
@@ -36,7 +53,21 @@ class BatchAcquisitionFunction(AcquisitionFunction):
         and returns a one-dimensional Tensor with `b` elements."""
         if self.X_pending is not None:
             X = torch.cat([X, match_batch_size(X, self.X_pending)], dim=-2)
+        if self.seed is not None:
+            if self.base_samples_q_batch_size != X.shape[-2]:
+                # Remove batch dimension for base sample construction.
+                # We rely upon the @batch_mode_transform decorator
+                # to expand base_samples to the appropriate batch size within
+                # a call to batch_acquisition.
+                self._construct_base_samples(X if X.dim() < 3 else X[0, ...])
+                self.base_samples_q_batch_size = X.shape[-2]
         return self._forward(X)
+
+    def _construct_base_samples(self, X: torch.Tensor) -> None:
+        posterior = self.model.posterior(X)
+        self.base_samples = construct_base_samples_from_posterior(
+            posterior=posterior, num_samples=self.mc_samples, seed=self.seed
+        )
 
 
 class qExpectedImprovement(BatchAcquisitionFunction):
@@ -59,6 +90,8 @@ class qExpectedImprovement(BatchAcquisitionFunction):
             posterior.
         X_pending:  A `q' x d` Tensor with `q'` design points that are pending for
             evaluation.
+        seed: If seed is provided, do deterministic optimization where the
+            function to optimize is fixed and not stochastic.
     """
 
     def __init__(
@@ -69,15 +102,14 @@ class qExpectedImprovement(BatchAcquisitionFunction):
         constraints: Optional[List[Callable[[torch.Tensor], torch.Tensor]]] = None,
         mc_samples: int = 5000,
         X_pending: Optional[torch.Tensor] = None,
+        seed: Optional[int] = None,
     ) -> None:
-        super(qExpectedImprovement, self).__init__(model)
+        super().__init__(
+            model=model, mc_samples=mc_samples, X_pending=X_pending, seed=seed
+        )
         self.best_f = best_f
         self.objective = objective
         self.constraints = constraints
-        self.mc_samples = mc_samples
-        self.X_pending = X_pending
-        if self.X_pending is not None:
-            self.X_pending.requires_grad_(False)
 
     def _forward(self, X: torch.Tensor) -> torch.Tensor:
         """
@@ -96,6 +128,7 @@ class qExpectedImprovement(BatchAcquisitionFunction):
             objective=self.objective,
             constraints=self.constraints,
             mc_samples=self.mc_samples,
+            base_samples=self.base_samples,
         )
 
 
@@ -122,6 +155,8 @@ class qNoisyExpectedImprovement(BatchAcquisitionFunction):
             is recovered.
         X_pending:  A q' x d Tensor with q' design points that are pending for
             evaluation.
+        seed: If seed is provided, do deterministic optimization where the
+            function to optimize is fixed and not stochastic.
 
     """
 
@@ -133,16 +168,23 @@ class qNoisyExpectedImprovement(BatchAcquisitionFunction):
         constraints: Optional[List[Callable[[torch.Tensor], torch.Tensor]]] = None,
         mc_samples: int = 5000,
         X_pending: Optional[torch.Tensor] = None,
+        seed: Optional[int] = None,
     ) -> None:
-        super(qNoisyExpectedImprovement, self).__init__(model)
+        super().__init__(
+            model=model, mc_samples=mc_samples, X_pending=X_pending, seed=seed
+        )
         # TODO: get X_observed from model?
         self.X_observed = X_observed
         self.objective = objective
         self.constraints = constraints
-        self.mc_samples = mc_samples
-        self.X_pending = X_pending
-        if self.X_pending is not None:
-            self.X_pending.requires_grad_(False)
+
+    def _construct_base_samples(self, X: torch.Tensor) -> None:
+        X_all = torch.cat([X, self.X_observed], dim=-2)
+        posterior = self.model.posterior(X_all)
+        self.base_samples = construct_base_samples_from_posterior(
+            posterior=posterior, num_samples=self.mc_samples, seed=self.seed
+        )
+        return
 
     def _forward(self, X: torch.Tensor) -> torch.Tensor:
         """
@@ -162,13 +204,14 @@ class qNoisyExpectedImprovement(BatchAcquisitionFunction):
             objective=self.objective,
             constraints=self.constraints,
             mc_samples=self.mc_samples,
+            base_samples=self.base_samples,
         )
 
 
 class qKnowledgeGradient(BatchAcquisitionFunction):
     """Constrained, multi-fidelity q-KG (q-knowledge gradient).
 
-    *** NOTE: THIS FUNCTION DOES NOT SUPPORT t-BATCHES.***
+    This function supports t-batches in an inefficient manner.
 
     Multifidelity optimization can be performed by using the
     optional project and cost callables.
@@ -206,6 +249,8 @@ class qKnowledgeGradient(BatchAcquisitionFunction):
             each t-batch.
         X_pending: A q' x d Tensor with q' design points that are pending for
             evaluation.
+        seed: If seed is provided, do deterministic optimization where the
+            function to optimize is fixed and not stochastic.
 
     Returns:
         Tensor: The q-KG value of the design X for each of the `b`
@@ -224,18 +269,44 @@ class qKnowledgeGradient(BatchAcquisitionFunction):
         project: Callable[[torch.Tensor], torch.Tensor] = lambda X: X,
         cost: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
         X_pending: Optional[torch.Tensor] = None,
+        seed: Optional[int] = None,
     ) -> None:
-        super(qKnowledgeGradient, self).__init__(model)
+        super().__init__(
+            model=model, mc_samples=mc_samples, X_pending=X_pending, seed=seed
+        )
         self.X_observed = X_observed
         self.objective = objective
         self.constraints = constraints
-        self.mc_samples = mc_samples
         self.inner_mc_samples = inner_mc_samples
         self.project = project
         self.cost = cost
-        self.X_pending = X_pending
-        if self.X_pending is not None:
-            self.X_pending.requires_grad_(False)
+
+        self.inner_old_base_samples = None
+        self.inner_new_base_samples = None
+        self.fantasy_base_samples = None
+
+    def _construct_base_samples(self, X: torch.Tensor) -> None:
+        # TODO: remove [0] in base_samples when qKG works with t-batches
+        old_posterior = self.model.posterior(self.X_observed)
+        self.inner_old_base_samples = construct_base_samples_from_posterior(
+            posterior=old_posterior, num_samples=self.inner_mc_samples, seed=self.seed
+        )[0]
+
+        posterior = self.model(X)
+        self.fantasy_base_samples = construct_base_samples_from_posterior(
+            posterior=posterior, num_samples=self.mc_samples, seed=self.seed
+        )[0]
+
+        X_all = torch.cat([X, self.X_observed], dim=-2)
+        fantasy_model = initialize_batch_fantasy_GP(
+            model=self.model, X=X, num_samples=self.mc_samples
+        )
+        new_posterior = fantasy_model.posterior(
+            X_all.unsqueeze(0).repeat(self.mc_samples, 1, 1)
+        )
+        self.inner_new_base_samples = construct_base_samples_from_posterior(
+            posterior=new_posterior, num_samples=self.inner_mc_samples, seed=self.seed
+        )[0]
 
     def _forward(self, X: torch.Tensor) -> torch.Tensor:
         """
@@ -248,16 +319,26 @@ class qKnowledgeGradient(BatchAcquisitionFunction):
                 t-batches.
 
         """
-        return batch_knowledge_gradient(
-            X=X,
-            model=self.model,
-            X_observed=self.X_observed,
-            objective=self.objective,
-            constraints=self.constraints,
-            mc_samples=self.mc_samples,
-            inner_mc_samples=self.inner_mc_samples,
-            project=self.project,
-            cost=self.cost,
+        # TODO: update this when batch_knowledge_gradient supports t-batches
+        Xs = list(X) if X.dim() > 2 else [X]
+        return torch.cat(
+            [
+                batch_knowledge_gradient(
+                    X=Xi,
+                    model=self.model,
+                    X_observed=self.X_observed,
+                    objective=self.objective,
+                    constraints=self.constraints,
+                    mc_samples=self.mc_samples,
+                    inner_mc_samples=self.inner_mc_samples,
+                    inner_old_base_samples=self.inner_old_base_samples,
+                    inner_new_base_samples=self.inner_new_base_samples,
+                    fantasy_base_samples=self.fantasy_base_samples,
+                    project=self.project,
+                    cost=self.cost,
+                ).reshape(1)
+                for Xi in Xs
+            ]
         )
 
 
@@ -274,6 +355,8 @@ class qProbabilityOfImprovement(BatchAcquisitionFunction):
             posterior.
         X_pending:  A q' x d Tensor with q' design points that are pending for
             evaluation.
+        seed: If seed is provided, do deterministic optimization where the
+            function to optimize is fixed and not stochastic.
 
     """
 
@@ -283,13 +366,12 @@ class qProbabilityOfImprovement(BatchAcquisitionFunction):
         best_f: float,
         mc_samples: int = 5000,
         X_pending: Optional[torch.Tensor] = None,
+        seed: Optional[int] = None,
     ) -> None:
-        super(qProbabilityOfImprovement, self).__init__(model)
+        super().__init__(
+            model=model, mc_samples=mc_samples, X_pending=X_pending, seed=seed
+        )
         self.best_f = best_f
-        self.mc_samples = mc_samples
-        self.X_pending = X_pending
-        if self.X_pending is not None:
-            self.X_pending.requires_grad_(False)
 
     def _forward(self, X: torch.Tensor) -> torch.Tensor:
         """
@@ -303,12 +385,16 @@ class qProbabilityOfImprovement(BatchAcquisitionFunction):
 
         """
         return batch_probability_of_improvement(
-            X=X, model=self.model, best_f=self.best_f, mc_samples=self.mc_samples
+            X=X,
+            model=self.model,
+            best_f=self.best_f,
+            mc_samples=self.mc_samples,
+            base_samples=self.base_samples,
         )
 
 
 class qUpperConfidenceBound(BatchAcquisitionFunction):
-    """q-UCB, support t-batch mode.
+    """q-UCB, supporting t-batch mode.
 
     Args:
         X: A `b x q x d` Tensor with `b` t-batches of `q` design points
@@ -319,6 +405,8 @@ class qUpperConfidenceBound(BatchAcquisitionFunction):
             posterior.
         X_pending:  A q' x d Tensor with q' design points that are pending for
             evaluation.
+        seed: If seed is provided, do deterministic optimization where the
+            function to optimize is fixed and not stochastic.
 
     Returns:
         Tensor: The constrained q-UCB value of the design X for each of
@@ -332,13 +420,12 @@ class qUpperConfidenceBound(BatchAcquisitionFunction):
         beta: float,
         mc_samples: int = 5000,
         X_pending: Optional[torch.Tensor] = None,
+        seed: Optional[int] = None,
     ) -> None:
-        super(qUpperConfidenceBound, self).__init__(model)
+        super().__init__(
+            model=model, mc_samples=mc_samples, X_pending=X_pending, seed=seed
+        )
         self.beta = beta
-        self.mc_samples = mc_samples
-        self.X_pending = X_pending
-        if self.X_pending is not None:
-            self.X_pending.requires_grad_(False)
 
     def _forward(self, X: torch.Tensor) -> torch.Tensor:
         """
@@ -352,12 +439,16 @@ class qUpperConfidenceBound(BatchAcquisitionFunction):
 
         """
         return batch_upper_confidence_bound(
-            X=X, model=self.model, beta=self.beta, mc_samples=self.mc_samples
+            X=X,
+            model=self.model,
+            beta=self.beta,
+            mc_samples=self.mc_samples,
+            seed=self.seed,
         )
 
 
 class qSimpleRegret(BatchAcquisitionFunction):
-    """q-simple regret, support t-batch mode.
+    """q-simple regret, supporting t-batch mode.
 
     Args:
         model: A fitted model.
@@ -365,6 +456,8 @@ class qSimpleRegret(BatchAcquisitionFunction):
             posterior.
         X_pending:  A q' x d Tensor with q' design points that are pending for
             evaluation.
+        seed: If seed is provided, do deterministic optimization where the
+            function to optimize is fixed and not stochastic.
 
     """
 
@@ -373,12 +466,11 @@ class qSimpleRegret(BatchAcquisitionFunction):
         model: Model,
         mc_samples: int = 5000,
         X_pending: Optional[torch.Tensor] = None,
+        seed: Optional[int] = None,
     ) -> None:
-        super(qSimpleRegret, self).__init__(model)
-        self.mc_samples = mc_samples
-        self.X_pending = X_pending
-        if self.X_pending is not None:
-            self.X_pending.requires_grad_(False)
+        super().__init__(
+            model=model, mc_samples=mc_samples, X_pending=X_pending, seed=seed
+        )
 
     def _forward(self, X: torch.Tensor) -> torch.Tensor:
         """
@@ -391,4 +483,9 @@ class qSimpleRegret(BatchAcquisitionFunction):
                 the `b`t-batches.
 
         """
-        return batch_simple_regret(X=X, model=self.model, mc_samples=self.mc_samples)
+        return batch_simple_regret(
+            X=X,
+            model=self.model,
+            mc_samples=self.mc_samples,
+            base_samples=self.base_samples,
+        )

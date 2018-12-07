@@ -60,10 +60,10 @@ class MockModel(Model):
 
 
 class MockBatchAcquisitionModule:
-    """Mock batch acquisition module that returns the sum of the input"""
+    """Mock batch acquisition module that returns the sum of the input."""
 
     def __init__(self):
         self.model = MockModel(None)
 
     def __call__(self, X):
-        return X.sum()
+        return X.sum((1, 2))

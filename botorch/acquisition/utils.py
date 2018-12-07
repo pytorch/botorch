@@ -8,6 +8,7 @@ from torch.nn import Module
 from ..models import Model
 from .batch_modules import (
     qExpectedImprovement,
+    qKnowledgeGradient,
     qNoisyExpectedImprovement,
     qProbabilityOfImprovement,
     qUpperConfidenceBound,
@@ -21,6 +22,7 @@ def get_acquisition_function(
     objective: Callable[[torch.Tensor], torch.Tensor] = lambda Y: Y,
     constraints: Optional[List[Callable[[torch.Tensor], torch.Tensor]]] = None,
     X_pending: Optional[torch.Tensor] = None,
+    seed: Optional[int] = None,
     acquisition_function_args: Optional[Dict[str, Union[float, int]]] = None,
 ) -> Module:
     """
@@ -43,6 +45,8 @@ def get_acquisition_function(
             models (`t` > 1).
         X_pending:  A (k x d) feature tensor X for k pending
             observations.
+        seed: if seed is provided, do deterministic optimization where the function to
+            optimize is fixed and not stochastic.
         acquisition_function_args: A map containing extra arguments for initializing
             the acquisition function module. For UCB, this should include beta.
     Returns:
@@ -55,6 +59,7 @@ def get_acquisition_function(
             objective=objective,
             constraints=constraints,
             X_pending=X_pending,
+            seed=seed,
         )
     elif acquisition_function_name == "qPI":
         return qProbabilityOfImprovement(
@@ -63,6 +68,7 @@ def get_acquisition_function(
             objective=objective,
             constraints=constraints,
             X_pending=X_pending,
+            seed=seed,
         )
     elif acquisition_function_name == "qNEI":
         return qNoisyExpectedImprovement(
@@ -71,11 +77,24 @@ def get_acquisition_function(
             objective=objective,
             constraints=constraints,
             X_pending=X_pending,
+            seed=seed,
+        )
+    elif acquisition_function_name == "qKG":
+        return qKnowledgeGradient(
+            model,
+            X_observed,
+            objective=objective,
+            constraints=constraints,
+            X_pending=X_pending,
+            seed=seed,
         )
     elif acquisition_function_name == "qUCB":
         if acquisition_function_args and "beta" in acquisition_function_args:
             return qUpperConfidenceBound(
-                model, beta=acquisition_function_args["beta"], X_pending=X_pending
+                model,
+                beta=acquisition_function_args["beta"],
+                X_pending=X_pending,
+                seed=seed,
             )
         else:
             print("Beta must be specified in acquisition_function_args for qUCB.")
