@@ -35,10 +35,7 @@ def q_batch_initialization(
         acq_function(X[i,:])
     """
     bulk_X = torch.cat([gen_function(q).unsqueeze(0) for i in range(multiplier)], dim=0)
-    # TODO: bulk_X is multiplier x q x d. Replace below
-    # when acq_functions all support t-batches
-    val_X = torch.cat(
-        [acq_function(bulk_X[i, ...]).reshape(1) for i in range(bulk_X.shape[0])]
-    )
+    # All acquisition function modules support t-batches
+    val_X = acq_function(bulk_X)
     _, best_indices = torch.topk(val_X, k=torch_batches)
     return bulk_X[best_indices]

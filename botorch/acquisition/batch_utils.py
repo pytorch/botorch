@@ -1,17 +1,24 @@
 #!/usr/bin/env python3
 from functools import wraps
-from typing import Any, Callable
+from typing import Any, Callable, Optional, Tuple
 
-from torch import Tensor
+from torch import Size, Tensor
+
+from ..posteriors.posterior import Posterior
+from ..utils import manual_seed
 
 
 TFunc = Callable[..., Any]
 
 
-def tranform_arg_to_batch_mode(x: Any, b: int) -> Any:
+def transform_arg_to_batch_mode(x: Any, b: int) -> Any:
     """
     Helper function to unsqueeze non-batch mode tensor arguments and expand
     the batch dimension to match b (the number of t-batches).
+
+    A tuple (Tensor, int) can be used to specify where the batch dimension is to
+    be inserted.  In this circumstance, the dimension is always inserted
+    regardless of the shape of the Tensor.
     """
     if isinstance(x, Tensor):
         if x.ndimension() == 2:
@@ -19,7 +26,18 @@ def tranform_arg_to_batch_mode(x: Any, b: int) -> Any:
         if x.shape[0] < b:
             repeat_vals = [b] + [-1] * (x.ndimension() - 1)
             x = x.expand(*repeat_vals)
-    return x
+        return x
+    elif isinstance(x, tuple):
+        if isinstance(x[0], Tensor) and len(x) == 2 and isinstance(x[1], int):
+            batch_dim = x[1]
+            t = x[0].unsqueeze(batch_dim)
+            if t.shape[batch_dim] < b:
+                repeat_vals = [-1] * batch_dim + [b] + [-1] * (t.dim() - batch_dim - 1)
+                t = t.expand(*repeat_vals)
+            return t
+        return x
+    else:
+        return x
 
 
 def match_batch_size(X: Tensor, X_to_match: Tensor) -> Tensor:
@@ -34,7 +52,7 @@ def match_batch_size(X: Tensor, X_to_match: Tensor) -> Tensor:
     """
     if X.ndimension() > 2:
         b = X.shape[0]
-        X_to_match = tranform_arg_to_batch_mode(X_to_match, b)
+        X_to_match = transform_arg_to_batch_mode(X_to_match, b)
     return X_to_match
 
 
@@ -44,6 +62,12 @@ def batch_mode_transform(batch_acquisition_function: TFunc) -> TFunc:
     and all other tensor arguments to batch mode (`b x ...`). Then the decorator calls
     the batch acquisition function and untransforms the output if X was not originally
     in batch mode.
+
+    By default the batch dimension is inserted for all Tensor arguments at dimension
+    zero.  If the batch dimension should be inserted at a different position, provide
+    Tuple(Tensor, int) for an argument where the batch_acquisition expects a Tensor
+    with batch dimension at index int.  Note the batch_acquisition function will receive
+    Tensor, not Tuple(Tensor, int).
 
     Args:
         batch_acquisition_function: the batch acquisition function to decorate
@@ -60,12 +84,22 @@ def batch_mode_transform(batch_acquisition_function: TFunc) -> TFunc:
         b = X.shape[0]
         # transform other tensor arguments to batch mode
         for i in range(len(args)):
-            args[i] = tranform_arg_to_batch_mode(x=args[i], b=b)
+            args[i] = transform_arg_to_batch_mode(x=args[i], b=b)
         for k in kwargs:
-            kwargs[k] = tranform_arg_to_batch_mode(x=kwargs[k], b=b)
+            kwargs[k] = transform_arg_to_batch_mode(x=kwargs[k], b=b)
         val = batch_acquisition_function(X, *args, **kwargs)
         if not is_batch_mode:
             val = val.squeeze(0)
         return val
 
     return decorated
+
+
+def construct_base_samples_from_posterior(
+    posterior: Posterior, num_samples: int, seed: Optional[int] = None
+) -> Tuple[Tensor, int]:
+    with manual_seed(seed=seed):
+        base_samples = posterior.get_base_samples(sample_shape=Size([num_samples]))
+    # Inform batch_mode_eval decorator that batch_dim should be inserted at
+    # dimension 1 if needed
+    return (base_samples, 1)

@@ -11,7 +11,10 @@ from .gpytorch import GPyTorchModel
 
 
 def initialize_batch_fantasy_GP(
-    model: GPyTorchModel, X: Tensor, num_samples: int, seed: Optional[int] = None
+    model: GPyTorchModel,
+    X: Tensor,
+    num_samples: int,
+    base_samples: Optional[Tensor] = None,
 ) -> GPyTorchModel:
     """Initializes a batched fantasized GP from a given GPyTorch model
 
@@ -19,12 +22,17 @@ def initialize_batch_fantasy_GP(
         model: The input GPyTorch model (must not operate in batch mode)
         X: A `k x p` tensor containing the `k` points at which to fantasize
         num_samples: The number of fantasies
+        base_samples:  A Tensor of N(0, 1) random variables used for
+            deterministic optimization
 
     Returns:
         The fantasy model as a GP in batch mode
     """
     # save model parameters
     state_dict = deepcopy(model.state_dict())
+
+    if base_samples is not None:
+        num_samples = base_samples.shape[0]
 
     train_targets = model.train_targets
     fantasy_shape: Tuple[int, ...]
@@ -37,8 +45,9 @@ def initialize_batch_fantasy_GP(
 
     # generate fantasies from model posterior at new q-batch
     posterior = model.posterior(X, observation_noise=True)
-    with manual_seed(seed=seed):
-        fantasies = posterior.rsample(torch.Size([num_samples]))
+    fantasies = posterior.rsample(
+        sample_shape=torch.Size([num_samples]), base_samples=base_samples
+    )
 
     # create new training data tensors
     train_x = torch.cat([model.train_inputs[0], X]).expand(num_samples, -1, p)
