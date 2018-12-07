@@ -19,7 +19,7 @@ class GPyTorchModel(Model, ABC):
         observation_noise: bool = False,
     ) -> GPyTorchPosterior:
         self.eval()  # pyre-ignore
-        with gpytorch.fast_pred_var():
+        with gpytorch.fast_pred_var(), gpytorch.settings.debug(False):
             posterior = GPyTorchPosterior(self(X))
         if observation_noise:
             posterior = self.add_observation_noise(
