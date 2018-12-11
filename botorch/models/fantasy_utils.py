@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 
 from copy import deepcopy
-from typing import Optional, Tuple
+from typing import Dict, Optional, Tuple
 
+import gpytorch
 import torch
-from botorch.utils import manual_seed
 from torch import Tensor
 
 from .gpytorch import GPyTorchModel
 
 
-def initialize_batch_fantasy_GP(
+def _get_fantasy_state(
     model: GPyTorchModel,
     X: Tensor,
     num_samples: int,
@@ -29,10 +29,17 @@ def initialize_batch_fantasy_GP(
         The fantasy model as a GP in batch mode
     """
     # save model parameters
-    state_dict = deepcopy(model.state_dict())
+    state_dict = model.state_dict()
 
     if base_samples is not None:
         num_samples = base_samples.shape[0]
+
+    # generate fantasies from model posterior at new q-batch
+    with gpytorch.fast_pred_var():
+        posterior = model.posterior(X, observation_noise=True)
+        fantasies = posterior.rsample(
+            sample_shape=torch.Size([num_samples]), base_samples=base_samples
+        )
 
     train_targets = model.train_targets
     fantasy_shape: Tuple[int, ...]
@@ -43,26 +50,22 @@ def initialize_batch_fantasy_GP(
         fantasy_shape = (num_samples, -1)
     p = model.train_inputs[0].shape[-1]
 
-    # generate fantasies from model posterior at new q-batch
-    posterior = model.posterior(X, observation_noise=True)
-    fantasies = posterior.rsample(
-        sample_shape=torch.Size([num_samples]), base_samples=base_samples
-    )
-
     # create new training data tensors
-    train_x = torch.cat([model.train_inputs[0], X]).expand(num_samples, -1, p)
-    train_y = torch.cat([model.train_targets.expand(*fantasy_shape), fantasies], dim=1)
+    train_X = torch.cat([model.train_inputs[0], X]).expand(num_samples, -1, p)
+    train_Y = torch.cat([model.train_targets.expand(*fantasy_shape), fantasies], dim=1)
 
-    # instantiate the fantasy model(s)
-    likelihood = deepcopy(model.likelihood).eval()
-    fantasy_model = model.__class__(train_x, train_y, likelihood)
+    return state_dict, train_X, train_Y
 
+
+def _load_fantasy_state_dict(
+    model: GPyTorchModel, state_dict: Dict[str, Tensor]
+) -> GPyTorchModel:
+    state_dict = deepcopy(state_dict)
     # load the (shared) hyperparameters, make sure to adjust size appropriately
-    for k, v in fantasy_model.named_parameters():
+    for k, v in model.named_parameters():
         state_dict[k] = state_dict[k].expand_as(v)
-    for k, v in fantasy_model.named_buffers():
+    for k, v in model.named_buffers():
         state_dict[k] = state_dict[k].expand_as(v)
-    fantasy_model.load_state_dict(state_dict)
-    fantasy_model.eval()
-
-    return fantasy_model
+    model.load_state_dict(state_dict)
+    model.eval()
+    return model

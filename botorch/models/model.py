@@ -25,3 +25,8 @@ class Model(ABC):
         output_indices: Optional[List[int]] = None,
     ) -> Posterior:
         raise NotImplementedError
+
+    def fantasize(
+        self, X: Tensor, num_samples: int, base_samples: Optional[Tensor] = None
+    ) -> "Model":
+        raise NotImplementedError
