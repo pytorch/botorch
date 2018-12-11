@@ -1,5 +1,8 @@
 #! /usr/bin/env python3
 
+from copy import deepcopy
+from typing import Optional
+
 import torch
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels.matern_kernel import MaternKernel
@@ -17,6 +20,7 @@ from gpytorch.priors.torch_priors import GammaPrior
 from torch import Tensor
 from torch.nn.functional import softplus
 
+from .fantasy_utils import _get_fantasy_state, _load_fantasy_state_dict
 from .gpytorch import GPyTorchModel
 
 
@@ -57,13 +61,50 @@ class SingleTaskGP(ExactGP, GPyTorchModel):
         covar_x = self.covar_module(x)
         return MultivariateNormal(mean_x, covar_x)
 
+    def fantasize(
+        self, X: Tensor, num_samples: int, base_samples: Optional[Tensor] = None
+    ) -> "SingleTaskGP":
+        state_dict, train_X, train_Y = _get_fantasy_state(
+            model=self, X=X, num_samples=num_samples, base_samples=base_samples
+        )
+        fantasy_model = SingleTaskGP(
+            train_X=train_X, train_Y=train_Y, likelihood=deepcopy(self.likelihood)
+        )
+        return _load_fantasy_state_dict(model=fantasy_model, state_dict=state_dict)
+
 
 class HeteroskedasticSingleTaskGP(SingleTaskGP):
     def __init__(self, train_X: Tensor, train_Y: Tensor, train_Y_se: Tensor) -> None:
-        train_Y_log_var = (train_Y_se ** 2).log()
+        train_Y_log_var = 2 * torch.log(train_Y_se)
         noise_likelihood = GaussianLikelihood(
             noise_prior=SmoothedBoxPrior(-3, 5, 0.5, transform=torch.log)
         )
-        noise_model = SingleTaskGP(train_X, train_Y_log_var, noise_likelihood)
+        noise_model = SingleTaskGP(
+            train_X=train_X, train_Y=train_Y_log_var, likelihood=noise_likelihood
+        )
         likelihood = _GaussianLikelihoodBase(HeteroskedasticNoise(noise_model))
-        super().__init__(train_X, train_Y, likelihood)
+        super().__init__(train_X=train_X, train_Y=train_Y, likelihood=likelihood)
+
+    def fantasize(
+        self, X: Tensor, num_samples: int, base_samples: Optional[Tensor] = None
+    ) -> "HeteroskedasticSingleTaskGP":
+        state_dict, train_X, train_Y = _get_fantasy_state(
+            model=self, X=X, num_samples=num_samples, base_samples=base_samples
+        )
+        noise_covar = self.likelihood.noise_covar
+        train_Y_log_var = noise_covar.noise_model.train_targets
+        # for now use the mean predictions for all noise "samples"
+        # TODO: Sample from noise posterior
+        noise_fantasies = noise_covar(X).diag()
+        tYlv = torch.cat(
+            [
+                train_Y_log_var.expand(num_samples, -1),
+                noise_fantasies.expand(num_samples, -1),
+            ],
+            dim=1,
+        )
+        train_Y_se = torch.exp(0.5 * tYlv)
+        fantasy_model = HeteroskedasticSingleTaskGP(
+            train_X=train_X, train_Y=train_Y, train_Y_se=train_Y_se
+        )
+        return _load_fantasy_state_dict(model=fantasy_model, state_dict=state_dict)

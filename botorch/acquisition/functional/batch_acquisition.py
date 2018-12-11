@@ -7,7 +7,7 @@ import torch
 from torch import Tensor
 from torch.nn.functional import sigmoid
 
-from ...models import Model, initialize_batch_fantasy_GP
+from ...models import Model
 from ...optim.constraints import soft_eval_constraint
 from ...utils import manual_seed
 from ..batch_utils import batch_mode_transform
@@ -247,8 +247,8 @@ def batch_knowledge_gradient(
     w = torch.softmax(old_per_point / eta, dim=-1)
     old_value = (old_per_point * w).sum()
 
-    fantasy_model = initialize_batch_fantasy_GP(
-        model=model, X=X, num_samples=mc_samples, base_samples=fantasy_base_samples
+    fantasy_model = model.fantasize(
+        X=X, num_samples=mc_samples, base_samples=fantasy_base_samples
     )
     new_posterior = fantasy_model.posterior(X_all.unsqueeze(0).repeat(mc_samples, 1, 1))
     # TODO: Tell the posterior to use the same set
@@ -368,11 +368,8 @@ def batch_knowledge_gradient_no_discretization(
     # Shape of obj is inner_mc_samples x 1
     old_value = old_obj.mean()
 
-    fantasy_model = initialize_batch_fantasy_GP(
-        model=model,
-        X=X,
-        num_samples=X_fantasies.shape[0],
-        base_samples=fantasy_base_samples,
+    fantasy_model = model.fantasize(
+        X=X, num_samples=X_fantasies.shape[0], base_samples=fantasy_base_samples
     )
     # X_fantasies is q' x d, needs to be q' x 1 x d
     # for batch mode evaluation with q' fantasies

@@ -5,7 +5,6 @@ from typing import Callable, List, Optional
 import torch
 
 from ..models.model import Model
-from ..models.utils import initialize_batch_fantasy_GP
 from .batch_utils import construct_base_samples_from_posterior, match_batch_size
 from .functional.batch_acquisition import (
     batch_expected_improvement,
@@ -298,9 +297,7 @@ class qKnowledgeGradient(BatchAcquisitionFunction):
         )[0]
 
         X_all = torch.cat([X, self.X_observed], dim=-2)
-        fantasy_model = initialize_batch_fantasy_GP(
-            model=self.model, X=X, num_samples=self.mc_samples
-        )
+        fantasy_model = self.model.fantasize(X=X, num_samples=self.mc_samples)
         new_posterior = fantasy_model.posterior(
             X_all.unsqueeze(0).repeat(self.mc_samples, 1, 1)
         )
