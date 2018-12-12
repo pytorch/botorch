@@ -5,8 +5,8 @@ from typing import Callable, Dict, Optional, Type, Union
 import torch
 from botorch.gen import gen_candidates_torch
 from botorch.optim.initializers import q_batch_initialization
-from gpytorch import Module
 from torch import Tensor
+from torch.nn import Module
 from torch.optim.optimizer import Optimizer
 
 
