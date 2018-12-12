@@ -9,6 +9,7 @@ from .batch_utils import construct_base_samples_from_posterior, match_batch_size
 from .functional.batch_acquisition import (
     batch_expected_improvement,
     batch_knowledge_gradient,
+    batch_knowledge_gradient_no_discretization,
     batch_noisy_expected_improvement,
     batch_probability_of_improvement,
     batch_simple_regret,
@@ -51,7 +52,11 @@ class BatchAcquisitionFunction(AcquisitionFunction):
         `d`-dimensional design points each, expands and concatenates self.X_pending
         and returns a one-dimensional Tensor with `b` elements."""
         if self.X_pending is not None:
-            X = torch.cat([X, match_batch_size(X, self.X_pending)], dim=-2)
+            # Some batch acquisition functions like qKG without discretization rely
+            # upon the order of points in this torch.cat.  It must
+            # remain [X_pending, X], not [X, X_pending] for this
+            # code to work properly.
+            X = torch.cat([match_batch_size(X, self.X_pending), X], dim=-2)
         if self.seed is not None:
             if self.base_samples_q_batch_size != X.shape[-2]:
                 # Remove batch dimension for base sample construction.
@@ -251,10 +256,6 @@ class qKnowledgeGradient(BatchAcquisitionFunction):
         seed: If seed is provided, do deterministic optimization where the
             function to optimize is fixed and not stochastic.
 
-    Returns:
-        Tensor: The q-KG value of the design X for each of the `b`
-            t-batches.
-
     """
 
     def __init__(
@@ -339,6 +340,152 @@ class qKnowledgeGradient(BatchAcquisitionFunction):
         )
 
 
+class qKnowledgeGradientNoDiscretization(BatchAcquisitionFunction):
+    """Constrained, multi-fidelity q-KG (q-knowledge gradient) without
+        discretization.
+
+    Multifidelity optimization can be performed by using the
+    optional project and cost callables.
+
+    Unlike qKnowledgeGradient this module optimizes qKG without using discretization.
+
+    Args:
+        model: A fitted GPyTorchModel (required to efficiently generate fantasies)
+        objective: A callable mapping a Tensor of size `b x q x (t)`
+            to a Tensor of size `b x q`, where `t` is the number of
+            outputs (tasks) of the model. Note: the callable must support broadcasting.
+            If omitted, use the identity map (applicable to single-task models only).
+            Assumed to be non-negative when the constraints are used!
+        constraints: A list of callables, each mapping a Tensor of size
+            `b x q x t` to a Tensor of size `b x q`, where negative values imply
+            feasibility. Note: the callable must support broadcasting. Only
+            relevant for multi-task models (`t` > 1).
+        mc_samples: The number of Monte-Carlo samples to draw from the model
+            posterior for the outer sample.  GP memory usage is multiplied by
+            this value.  This is the number of fantasies that will be used.
+        inner_mc_samples:  The number of Monte-Carlo samples to draw for the
+            inner expectation over each fantasy.
+        project:  A callable mapping a Tensor of size `b x (q + q') x d` to a
+            Tensor of the same size.  Use for multi-fidelity optimization where
+            the returned Tensor should be projected to the highest fidelity.
+        cost: A callable mapping a Tensor of size `b x q x d` to a Tensor of
+            size `b x 1`.  The resulting Tensor's value is the cost of submitting
+            each t-batch.
+        X_pending: A q' x d Tensor with q' design points that are pending for
+            evaluation.
+
+    """
+
+    def __init__(
+        self,
+        model: Model,
+        objective: Callable[[torch.Tensor], torch.Tensor] = lambda Y: Y,
+        constraints: Optional[List[Callable[[torch.Tensor], torch.Tensor]]] = None,
+        mc_samples: int = 20,
+        inner_mc_samples: int = 100,
+        project: Callable[[torch.Tensor], torch.Tensor] = lambda X: X,
+        cost: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
+        X_pending: Optional[torch.Tensor] = None,
+        seed: Optional[int] = None,
+    ) -> None:
+        super().__init__(
+            model=model, mc_samples=mc_samples, X_pending=X_pending, seed=seed
+        )
+        self.objective = objective
+        self.constraints = constraints
+        self.inner_mc_samples = inner_mc_samples
+        self.project = project
+        self.cost = cost
+
+        self.inner_old_base_samples = None
+        self.inner_new_base_samples = None
+        self.fantasy_base_samples = None
+
+    def _construct_base_samples(self, X: torch.Tensor) -> None:
+        # See _forward below for explanation
+        X_actual = X[: (-self.mc_samples - 1), :]
+        X_fantasies = X[(-self.mc_samples - 1) : -1, :]
+        X_old = X[-1:, :]
+
+        # TODO: remove [0] in base_samples when this works with t-batches
+        old_posterior = self.model.posterior(X_old)
+        self.inner_old_base_samples = construct_base_samples_from_posterior(
+            posterior=old_posterior, num_samples=self.inner_mc_samples, seed=self.seed
+        )[0]
+
+        posterior = self.model(X_actual)
+        self.fantasy_base_samples = construct_base_samples_from_posterior(
+            posterior=posterior, num_samples=X_fantasies.shape[0], seed=self.seed
+        )[0]
+
+        fantasy_model = self.model.fantasize(
+            X=X_actual, num_samples=X_fantasies.shape[0]
+        )
+        new_posterior = fantasy_model.posterior(X_fantasies.unsqueeze(1))
+        self.inner_new_base_samples = construct_base_samples_from_posterior(
+            posterior=new_posterior, num_samples=self.inner_mc_samples, seed=self.seed
+        )[0]
+
+    def _forward(self, X: torch.Tensor) -> torch.Tensor:
+        """
+        Args:
+            X: A `b x q x d` Tensor with `b` t-batches of `q` design points each.
+                If X is two-dimensional, assume `b = 1`.  We split this X tensor into
+                three parts.  The first corresponds to the design we are trying to
+                evaluate and the other corresponds to X_fantasies and X_old.  We
+                require that:
+
+                X_old = X[:, -1:, :]
+                X_old.shape = b x 1 x d
+
+                X_fantasies = X[:, (-mc_samples - 1):-1, :]
+                X_fantasies.shape = b x mc_samples x d
+
+                X_actual = X[:, :(-mc_samples - 1), :]
+
+        Returns:
+            Tensor: For t-batch b, the constrained q-KG value of the design X_actual[b]
+                averaged across the fantasy models where X_fantasies[b,i] is
+                chosen as the final selection for the i-th fantasy model and
+                X_old[b, 0] is chosen as the final selection for the previous model.
+                The maximum across X_fantasies[b,i] and X_old[b,0] evaluated at
+                X_actual is the true q-KG of X_actual.
+
+        """
+        # TODO: update this when the batch acquisition supports t-batches
+        Xs = list(X) if X.dim() > 2 else [X]
+        return torch.cat(
+            [
+                batch_knowledge_gradient_no_discretization(
+                    X=Xi[: (-self.mc_samples - 1), :],
+                    X_fantasies=Xi[(-self.mc_samples - 1) : -1, :],
+                    X_old=Xi[-1:, :],
+                    model=self.model,
+                    objective=self.objective,
+                    constraints=self.constraints,
+                    inner_mc_samples=self.inner_mc_samples,
+                    inner_old_base_samples=self.inner_old_base_samples,
+                    inner_new_base_samples=self.inner_new_base_samples,
+                    fantasy_base_samples=self.fantasy_base_samples,
+                    project=self.project,
+                    cost=self.cost,
+                ).reshape(1)
+                for Xi in Xs
+            ]
+        )
+
+    def extract_candidates(self, X: torch.Tensor) -> torch.Tensor:
+        """We only return X_actual as the set of candidates post-optimization.
+
+        Args:
+            X: optimized `b x q x d` Tensor
+
+        Returns:
+            X_actual
+        """
+        return X[..., : (-self.mc_samples - 1), :]
+
+
 class qProbabilityOfImprovement(BatchAcquisitionFunction):
     """q-PI, supporting t-batch mode.
 
@@ -404,10 +551,6 @@ class qUpperConfidenceBound(BatchAcquisitionFunction):
             evaluation.
         seed: If seed is provided, do deterministic optimization where the
             function to optimize is fixed and not stochastic.
-
-    Returns:
-        Tensor: The constrained q-UCB value of the design X for each of
-            the `b`t-batches.
 
     """
 
