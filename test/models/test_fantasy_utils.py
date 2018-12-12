@@ -9,7 +9,7 @@ from botorch.models.fantasy_utils import _get_fantasy_state, _load_fantasy_state
 from gpytorch.likelihoods import GaussianLikelihood
 
 
-class BotorchModelUtilsTest(unittest.TestCase):
+class BotorchModelFantasyUtilsTest(unittest.TestCase):
     def setUp(self):
         self.train_x = torch.randn(2, 3)
         train_y = torch.randn(2)
@@ -62,3 +62,7 @@ class BotorchModelUtilsTest(unittest.TestCase):
             self.assertTrue(torch.equal(state_dict[k].expand_as(v), v))
         for k, v in fantasy_model.named_buffers():
             self.assertTrue(torch.equal(state_dict[k].expand_as(v), v))
+
+
+if __name__ == "__main__":
+    unittest.main()
