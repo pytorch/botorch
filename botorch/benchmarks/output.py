@@ -23,7 +23,7 @@ class ClosedLoopOutput(NamedTuple):
 
 
 class BenchmarkOutput(NamedTuple):
-    """Container for collected closed loop output across iterations"""
+    """Container for closed loop output collected across runs"""
 
     Xs: List[List[Tensor]]  # run x iteration x q_i x d
     Ys: List[List[Tensor]]  # run x iteration x q_i x t
@@ -33,8 +33,8 @@ class BenchmarkOutput(NamedTuple):
     best_model_feasibility: List[List[float]]  # run x iteration
     costs: List[List[float]]  # run x iteration
     runtime: List[float]  # run
-    best_true_objective: List[List[float]]  # run x iteration
-    best_true_feasibility: List[List[float]]  # run x iteration
-    regrets: List[List[float]]  # run x iteration
-    best_regrets: List[List[float]]  # run x iteration
+    best_true_objective: List[Tensor]  # run x iteration
+    best_true_feasibility: List[Tensor]  # run x iteration
+    regrets: List[List[Tensor]]  # run x iteration x q_i
+    best_regrets: List[Tensor]  # run x iteration
     weights: Optional[List[List[Tensor]]] = None  # run x iteration x q_i
