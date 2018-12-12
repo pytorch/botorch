@@ -104,7 +104,7 @@ class HeteroskedasticSingleTaskGP(SingleTaskGP):
             dim=1,
         )
         train_Y_se = torch.exp(0.5 * tYlv)
-        fantasy_model = HeteroskedasticSingleTaskGP(
+        fantasy_model = self.__class__(
             train_X=train_X, train_Y=train_Y, train_Y_se=train_Y_se
         )
         return _load_fantasy_state_dict(model=fantasy_model, state_dict=state_dict)
