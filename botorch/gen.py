@@ -44,7 +44,7 @@ def _make_bounds_scipy(
             if not torch.is_tensor(bounds):
                 bounds = torch.tensor(bounds)
             ebounds = bounds.expand_as(X)
-        return ebounds.cpu().detach().double().view(-1).clone().numpy()
+        return ebounds.cpu().detach().double().contiguous().view(-1).clone().numpy()
 
     lb = -_expand(lower_bounds, X)
     ub = _expand(upper_bounds, X)
