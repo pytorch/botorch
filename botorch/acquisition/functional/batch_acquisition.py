@@ -230,7 +230,9 @@ def batch_knowledge_gradient(
     # just once outside this function
     X_all = project(torch.cat([X, X_observed]))
 
-    old_posterior = model.posterior(X_all if use_X_for_old_posterior else X_observed)
+    old_posterior = model.posterior(
+        X_all if use_X_for_old_posterior else project(X_observed)
+    )
     old_samples = old_posterior.rsample(
         sample_shape=torch.Size([inner_mc_samples]), base_samples=inner_old_base_samples
     )
@@ -293,7 +295,7 @@ def batch_knowledge_gradient_no_discretization(
     inner_old_base_samples: Optional[Tensor] = None,
     inner_new_base_samples: Optional[Tensor] = None,
     fantasy_base_samples: Optional[Tensor] = None,
-    inner_mc_samples: int = 1000,
+    inner_mc_samples: int = 100,
     eta: float = 1e-3,
     project: Callable[[Tensor], Tensor] = lambda X: X,
     cost: Optional[Callable[[Tensor], Tensor]] = None,

@@ -3,6 +3,7 @@
 from .batch_modules import (
     qExpectedImprovement,
     qKnowledgeGradient,
+    qKnowledgeGradientNoDiscretization,
     qNoisyExpectedImprovement,
     qProbabilityOfImprovement,
     qUpperConfidenceBound,
@@ -29,6 +30,7 @@ __all__ = [
     get_acquisition_function,
     qExpectedImprovement,
     qKnowledgeGradient,
+    qKnowledgeGradientNoDiscretization,
     qNoisyExpectedImprovement,
     qProbabilityOfImprovement,
     qUpperConfidenceBound,

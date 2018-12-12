@@ -41,6 +41,18 @@ class AcquisitionFunction(Module, ABC):
         """
         pass
 
+    def extract_candidates(self, X: Tensor) -> Tensor:
+        """Perform any final operations on the candidate set X post-optimization of the
+            acquisition function.
+
+        Args:
+            X: optimized `b x q x d` Tensor or points
+
+        Returns:
+            Tensor created from X
+        """
+        return X
+
 
 class ExpectedImprovement(AcquisitionFunction):
     """Single-outcome expected improvement (assumes maximization)

@@ -9,6 +9,7 @@ from ..models import Model
 from .batch_modules import (
     qExpectedImprovement,
     qKnowledgeGradient,
+    qKnowledgeGradientNoDiscretization,
     qNoisyExpectedImprovement,
     qProbabilityOfImprovement,
     qUpperConfidenceBound,
@@ -99,5 +100,13 @@ def get_acquisition_function(
         else:
             print("Beta must be specified in acquisition_function_args for qUCB.")
             raise ValueError
+    elif acquisition_function_name == "qKGNoDiscretization":
+        return qKnowledgeGradientNoDiscretization(
+            model,
+            objective=objective,
+            constraints=constraints,
+            X_pending=X_pending,
+            seed=seed,
+        )
     else:
         raise NotImplementedError

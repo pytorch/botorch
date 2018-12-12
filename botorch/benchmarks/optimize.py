@@ -27,6 +27,7 @@ class OptimizeConfig(NamedTuple):
     candidate_gen_max_iter: int = 25
     model_max_iter: int = 50
     num_starting_points: int = 1
+    seed: int = None  # used for deterministic acq optimization
 
 
 def greedy(
@@ -146,6 +147,7 @@ def optimize(
                         objective=objective,
                         constraints=constraints,
                         X_pending=None,
+                        seed=config.seed,
                     )
                     if verbose:
                         print("---- acquisition optimization")
@@ -158,7 +160,7 @@ def optimize(
                         max_iter=config.candidate_gen_max_iter,
                         verbose=False,
                     )
-                    X = candidates.detach()
+                    X = acquisition_function.extract_candidates(candidates).detach()
                 if verbose:
                     print("---- evaluate")
 
