@@ -2,6 +2,7 @@
 
 from typing import List, NamedTuple, Optional
 
+import torch
 from torch import Tensor
 
 
@@ -38,3 +39,26 @@ class BenchmarkOutput(NamedTuple):
     regrets: List[List[Tensor]]  # run x iteration x q_i
     best_regrets: List[Tensor]  # run x iteration
     weights: Optional[List[List[Tensor]]] = None  # run x iteration x q_i
+
+
+class AggregatedBenchmarkOutput(NamedTuple):
+    """Container for a summary of benchmark output across trials."""
+
+    num_trials: int
+    mean_runtime: float
+    var_runtime: float
+    batch_iterations: Tensor = torch.tensor([])
+    mean_best_model_objective: Tensor = torch.tensor([])
+    var_best_model_objective: Tensor = torch.tensor([])
+    mean_best_model_feasibility: Tensor = torch.tensor([])
+    var_best_model_feasibility: Tensor = torch.tensor([])
+    mean_best_true_objective: Tensor = torch.tensor([])
+    var_best_true_objective: Tensor = torch.tensor([])
+    mean_best_true_feasibility: Tensor = torch.tensor([])
+    var_best_true_feasibility: Tensor = torch.tensor([])
+    mean_cost: Tensor = torch.tensor([])
+    var_cost: Tensor = torch.tensor([])
+    mean_regret: Tensor = torch.tensor([])
+    var_regret: Tensor = torch.tensor([])
+    mean_best_regret: Tensor = torch.tensor([])
+    var_best_regret: Tensor = torch.tensor([])
