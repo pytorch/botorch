@@ -27,9 +27,8 @@ class TestRandomRestarts(TestBaseCandidateGeneration):
             num_starting_points=3,
             lower_bounds=0,
             upper_bounds=1,
-            max_iter=3,
+            options={"max_iter": 3},
         )
-        print(candidates.shape)
         self.assertTrue(0 <= candidates <= 1)
 
 
