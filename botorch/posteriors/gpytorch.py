@@ -2,8 +2,8 @@
 
 from typing import Optional
 
+import gpytorch
 import torch
-from gpytorch import fast_pred_var
 from gpytorch.distributions import MultivariateNormal
 from torch import Tensor
 
@@ -34,7 +34,7 @@ class GPyTorchPosterior(Posterior):
             kwargs = {"base_samples": base_samples}
         elif sample_shape is not None:
             kwargs = {"sample_shape": sample_shape}
-        with fast_pred_var():
+        with gpytorch.settings.fast_pred_var():
             return self.mvn.rsample(**kwargs)
 
     @property

@@ -91,7 +91,7 @@ def batch_cross_validation(
     mll_cv = fit_model(mll_cv, **fit_args)
 
     # Evaluate on the hold-out set in batch mode
-    with torch.no_grad(), gpytorch.fast_pred_var():
+    with torch.no_grad(), gpytorch.settings.fast_pred_var():
         posterior = likelihood_cv(model_cv(cv_folds.test_x))
 
     return CVResults(posterior=posterior, observed=cv_folds.test_y)

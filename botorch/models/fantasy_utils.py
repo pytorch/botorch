@@ -35,7 +35,7 @@ def _get_fantasy_state(
         num_samples = base_samples.shape[0]
 
     # generate fantasies from model posterior at new q-batch
-    with gpytorch.fast_pred_var():
+    with gpytorch.settings.fast_pred_var():
         posterior = model.posterior(X, observation_noise=True)
         fantasies = posterior.rsample(
             sample_shape=torch.Size([num_samples]), base_samples=base_samples

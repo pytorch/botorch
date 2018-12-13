@@ -3,9 +3,9 @@
 from time import time
 from typing import Callable, List, NamedTuple, Optional, Tuple
 
+import gpytorch
 import torch
 from botorch import fit_model
-from gpytorch import fast_pred_var
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from torch import Tensor
@@ -63,7 +63,7 @@ def greedy(
 
     """
     posterior = model.posterior(X)
-    with fast_pred_var():
+    with gpytorch.settings.fast_pred_var():
         # mc_samples x b x q x (t)
         samples = posterior.rsample(sample_shape=torch.Size([mc_samples])).unsqueeze(1)
     # TODO: handle non-positive definite objectives
