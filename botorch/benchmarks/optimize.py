@@ -162,8 +162,7 @@ def run_closed_loop(
                         q=config.q,
                         num_starting_points=config.num_starting_points,
                         multiplier=100,
-                        max_iter=config.candidate_gen_max_iter,
-                        verbose=False,
+                        options={"maxiter": config.candidate_gen_max_iter},
                     )
                     X = acquisition_function.extract_candidates(candidates).detach()
                 if verbose:
@@ -182,7 +181,7 @@ def run_closed_loop(
                 model = SingleTaskGP(train_X, train_Y, likelihood)
                 mll = ExactMarginalLogLikelihood(likelihood, model)
                 mll.to(dtype=train_X.dtype, device=train_X.device)
-                mll = fit_model(mll)
+                mll = fit_model(mll, options={"maxiter": config.model_max_iter})
                 if verbose:
                     print("---- identify")
                 best_point, obj, feas = greedy(

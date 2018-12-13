@@ -56,10 +56,32 @@ def gen_candidates_scipy(
     acquisition_function: Module,
     lower_bounds: Optional[Union[float, Tensor]] = None,
     upper_bounds: Optional[Union[float, Tensor]] = None,
-    method: str = "L-BFGS-B",
     options: Optional[Dict[str, Any]] = None,
     fixed_features: Optional[Dict[int, Optional[float]]] = None,
 ) -> Tuple[Tensor, Tensor]:
+    """Generate a set of candidates via optimization from a given set of
+    starting points.
+
+    Args:
+        initial_candidates: starting points for optimization
+        acquisition_function: acquisition function to be used
+        lower_bounds: minimum values for each column of initial_candidates
+        upper_bounds: maximum values for each column of initial_candidates
+        options:  options used to control the optimization including "method"
+            and "maxiter"
+        fixed_features:  This is a dictionary of feature indices
+            to values, where all generated candidates will have features
+            fixed to these values.  If the dictionary value is None, then that
+            feature will just be fixed to the clamped value and
+            not optimized.  Assumes values to be compatible with
+            lower_bounds and upper_bounds!
+
+    Returns:
+        Tensor: The set of generated candidates
+        Tensor: The acquisition value for each t-batch.
+
+    """
+    options = options or {}
     clamped_candidates = columnwise_clamp(
         initial_candidates, lower_bounds, upper_bounds
     ).requires_grad_(True)
@@ -85,7 +107,14 @@ def gen_candidates_scipy(
         gradf = _arrayify(X.grad.view(-1))
         return fval, gradf
 
-    res = minimize(f, x0, method=method, jac=True, bounds=bounds, options=options)
+    res = minimize(
+        f,
+        x0,
+        method=options.get("method", "L-BFGS-B"),
+        jac=True,
+        bounds=bounds,
+        options=options,
+    )
 
     candidates = (
         torch.from_numpy(res.x).type_as(initial_candidates).view(shapeX).contiguous()

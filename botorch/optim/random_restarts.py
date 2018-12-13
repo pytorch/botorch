@@ -1,13 +1,12 @@
 #! /usr/bin/env python3
 
-from typing import Callable, Dict, Optional, Type, Union
+from typing import Any, Callable, Dict, Optional
 
 import torch
-from botorch.gen import gen_candidates_torch
+from botorch.gen import gen_candidates_scipy
 from botorch.optim.initializers import q_batch_initialization
 from torch import Tensor
 from torch.nn import Module
-from torch.optim.optimizer import Optimizer
 
 
 def random_restarts(
@@ -18,10 +17,7 @@ def random_restarts(
     multiplier: int = 50,
     lower_bounds: Optional[Tensor] = None,
     upper_bounds: Optional[Tensor] = None,
-    optimizer: Type[Optimizer] = torch.optim.Adam,
-    options: Optional[Dict[str, Union[float, str]]] = None,
-    max_iter: int = 50,
-    verbose: bool = True,
+    options: Optional[Dict[str, Any]] = None,
     fixed_features: Optional[Dict[int, Optional[float]]] = None,
 ):
     """
@@ -39,11 +35,7 @@ def random_restarts(
             to generate from gen_function
         lower_bounds: minimum values for each column of initial_candidates
         upper_bounds: maximum values for each column of initial_candidates
-        optimizer (Optimizer): The pytorch optimizer to use to perform
-            candidate search
-        options:  options used to control the optimization
-        max_iter (int):  maximum number of iterations
-        verbose (bool):  whether to provide verbose output
+        options: options used to control the optimization
         fixed_features:  This is a dictionary of feature indices
             to values, where all generated candidates will have features
             fixed to these values.  If the dictionary value is None, then that
@@ -65,15 +57,12 @@ def random_restarts(
         torch_batches=num_starting_points,
     )
     # performs batch evaluation
-    candidates, batch_acquisition = gen_candidates_torch(
+    candidates, batch_acquisition = gen_candidates_scipy(
         initial_candidates=initial_candidates,
         acquisition_function=acq_function,
         lower_bounds=lower_bounds,
         upper_bounds=upper_bounds,
-        optimizer=optimizer,
         options=options,
-        max_iter=max_iter,
-        verbose=verbose,
         fixed_features=fixed_features,
     )
     return candidates[torch.max(batch_acquisition.view(-1), dim=0)[1].item()]
