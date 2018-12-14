@@ -274,7 +274,7 @@ def run_benchmark(
         best_true_objective=[],
         best_true_feasibility=[],
         regrets=[],
-        best_regrets=[],
+        cumulative_regrets=[],
         weights=[],
     )
     for run in range(num_runs):
@@ -307,16 +307,20 @@ def run_benchmark(
             outputs.best_true_objective.append(best_true_objective)
             outputs.best_true_feasibility.append(best_true_feasibility)
             if global_optimum is not None:
-                regrets = [
-                    torch.abs(
-                        -objective(true_func(X)[0]) + global_optimum  # pyre-ignore [16]
-                    )
-                    for X in run_output.Xs
-                ]
+                regrets = torch.tensor(
+                    [
+                        (global_optimum - objective(true_func(X)[0]))  # pyre-ignore [6]
+                        .sum()
+                        .item()
+                        for X in run_output.Xs
+                    ]
+                ).type_as(best)
+                # check that objective is never > than global_optimum
+                assert torch.all(regrets >= 0)
                 # compute regret on best point (greedy from model)
-                best_regrets = torch.abs(global_optimum - best_true_objective)
+                cumulative_regrets = torch.cumsum(regrets, dim=0)
                 outputs.regrets.append(regrets)
-                outputs.best_regrets.append(best_regrets)
+                outputs.cumulative_regrets.append(cumulative_regrets)
         for f in run_output._fields:
             getattr(outputs, f).append(getattr(run_output, f))
     return outputs

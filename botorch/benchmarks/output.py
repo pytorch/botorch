@@ -36,8 +36,8 @@ class BenchmarkOutput(NamedTuple):
     runtime: List[float]  # run
     best_true_objective: List[Tensor]  # run x iteration
     best_true_feasibility: List[Tensor]  # run x iteration
-    regrets: List[List[Tensor]]  # run x iteration x q_i
-    best_regrets: List[Tensor]  # run x iteration
+    regrets: List[Tensor]  # run x iteration (regret of the q-batch)
+    cumulative_regrets: List[Tensor]  # run x iteration
     weights: Optional[List[List[Tensor]]] = None  # run x iteration x q_i
 
 
@@ -60,5 +60,5 @@ class AggregatedBenchmarkOutput(NamedTuple):
     var_cost: Tensor = torch.tensor([])
     mean_regret: Tensor = torch.tensor([])
     var_regret: Tensor = torch.tensor([])
-    mean_best_regret: Tensor = torch.tensor([])
-    var_best_regret: Tensor = torch.tensor([])
+    mean_cumulative_regret: Tensor = torch.tensor([])
+    var_cumulative_regret: Tensor = torch.tensor([])

@@ -173,15 +173,17 @@ class TestRunBenchmark(unittest.TestCase):
                     outputs.best_true_feasibility[0], expected_best_true_feasibility
                 )
             )
-            expected_regrets_trial = [self.global_optimum - self.func(X)[0] for X in Xs]
+            expected_regrets_trial = torch.tensor(
+                [(self.global_optimum - self.func(X)[0]).sum().item() for X in Xs]
+            ).type_as(Xs[0])
             self.assertEqual(len(outputs.regrets[0]), len(expected_regrets_trial))
             self.assertTrue(
                 torch.equal(outputs.regrets[0][0], expected_regrets_trial[0])
             )
             self.assertTrue(
                 torch.equal(
-                    outputs.best_regrets[0],
-                    self.global_optimum - expected_best_true_objective,
+                    outputs.cumulative_regrets[0],
+                    torch.cumsum(expected_regrets_trial, dim=0),
                 )
             )
             # test modifying the objective

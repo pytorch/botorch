@@ -18,10 +18,9 @@ class TestAggregateBenchMark(unittest.TestCase):
         for dtype in (torch.float, torch.double):
             tkwargs["dtype"] = dtype
             X = [
-                torch.tensor([1.0, 2.0], **tkwargs).view(-1, 1),
-                torch.tensor([3.0, 4.0], **tkwargs).view(-1, 1),
+                torch.tensor([i], **tkwargs).view(-1, 1) for i in range(num_iterations)
             ]
-            Xs = [X for i in range(num_trials)]
+            Xs = [X for trial in range(num_trials)]
             # f_hat(X) = X + 0.5
             best_model_objective = [
                 (torch.cat(X_trial).view(-1) + 0.5).tolist() for X_trial in Xs
@@ -38,10 +37,12 @@ class TestAggregateBenchMark(unittest.TestCase):
                 for X_trial in Xs
             ]
             best_model_feasibility = [feas.tolist() for feas in best_true_feasibility]
-
             regrets = [
-                global_optimum - best_true_objective[trial]
+                (global_optimum - best_true_objective[trial])
                 for trial in range(num_trials)
+            ]
+            cumulative_regrets = [
+                torch.cumsum(regrets[trial], dim=0) for trial in range(num_trials)
             ]
             runtimes = torch.ones(num_trials, **tkwargs)
             output = BenchmarkOutput(
@@ -56,7 +57,7 @@ class TestAggregateBenchMark(unittest.TestCase):
                 best_true_objective=best_true_objective,
                 best_true_feasibility=best_true_feasibility,
                 regrets=regrets,
-                best_regrets=regrets,
+                cumulative_regrets=cumulative_regrets,
             )
             agg_results = aggregate_benchmark(output)
             self.assertTrue(isinstance(agg_results, AggregatedBenchmarkOutput))
@@ -66,7 +67,7 @@ class TestAggregateBenchMark(unittest.TestCase):
             self.assertTrue(
                 torch.equal(
                     agg_results.batch_iterations,
-                    torch.tensor([2, 4], dtype=torch.long, device=device),
+                    torch.tensor([1, 2, 3, 4], dtype=torch.long, device=device),
                 )
             )
 
@@ -127,14 +128,12 @@ class TestAggregateBenchMark(unittest.TestCase):
                 )
             )
             self.assertTrue(
-                torch.equal(
-                    agg_results.mean_best_regret,
-                    global_optimum - torch.tensor(best_true_objective[0], **tkwargs),
-                )
+                torch.equal(agg_results.mean_cumulative_regret, cumulative_regrets[0])
             )
             self.assertTrue(
                 torch.equal(
-                    agg_results.var_best_regret, torch.zeros(num_iterations, **tkwargs)
+                    agg_results.var_cumulative_regret,
+                    torch.zeros(num_iterations, **tkwargs),
                 )
             )
 

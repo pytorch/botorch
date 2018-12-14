@@ -33,7 +33,7 @@ def aggregate_benchmark(output: BenchmarkOutput) -> AggregatedBenchmarkOutput:
     best_true_objective = torch.stack(output.best_true_objective, dim=0)
     best_true_feasibility = torch.stack(output.best_true_feasibility, dim=0)
     regrets = torch.stack(output.regrets, dim=0)
-    best_regrets = torch.stack(output.best_regrets, dim=0)
+    cumulative_regrets = torch.stack(output.cumulative_regrets, dim=0)
     true_pfeas = best_true_feasibility.mean(dim=0)  # pyre-ignore [16]
     true_pfeas_var = true_pfeas * (1 - true_pfeas) / best_true_feasibility.shape[0]
 
@@ -50,8 +50,8 @@ def aggregate_benchmark(output: BenchmarkOutput) -> AggregatedBenchmarkOutput:
         var_cost=costs.var(dim=0),
         mean_regret=regrets.mean(dim=0),  # pyre-ignore [16]
         var_regret=regrets.var(dim=0),  # pyre-ignore [16]
-        mean_best_regret=best_regrets.mean(dim=0),  # pyre-ignore [16]
-        var_best_regret=best_regrets.var(dim=0),  # pyre-ignore [16]
+        mean_cumulative_regret=cumulative_regrets.mean(dim=0),  # pyre-ignore [16]
+        var_cumulative_regret=cumulative_regrets.var(dim=0),  # pyre-ignore [16]
         mean_best_true_objective=best_true_objective.mean(dim=0),  # pyre-ignore [16]
         var_best_true_objective=best_true_objective.var(dim=0),  # pyre-ignore [16]
         mean_best_true_feasibility=true_pfeas,
