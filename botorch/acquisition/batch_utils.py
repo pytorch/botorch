@@ -83,6 +83,7 @@ def batch_mode_transform(batch_acquisition_function: TFunc) -> TFunc:
             X = X.unsqueeze(0)
         b = X.shape[0]
         # transform other tensor arguments to batch mode
+        args = list(args)
         for i in range(len(args)):
             args[i] = transform_arg_to_batch_mode(x=args[i], b=b)
         for k in kwargs:
