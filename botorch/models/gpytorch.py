@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 from abc import ABC
+from contextlib import ExitStack
 from typing import List, Optional
 
 import gpytorch
@@ -17,13 +18,20 @@ class GPyTorchModel(Model, ABC):
         X: Tensor,
         output_indices: Optional[List[int]] = None,
         observation_noise: bool = False,
+        detach_test_caches: bool = True,
     ) -> GPyTorchPosterior:
         self.eval()  # pyre-ignore
-        with gpytorch.settings.fast_pred_var(), gpytorch.settings.debug(False):
+        with ExitStack() as es:
+            es.enter_context(gpytorch.settings.debug(False))
+            es.enter_context(gpytorch.settings.fast_pred_var())
+            es.enter_context(gpytorch.settings.detach_test_caches(detach_test_caches))
             posterior = GPyTorchPosterior(self(X))
         if observation_noise:
             posterior = self.add_observation_noise(
-                posterior=posterior, X=X, output_indices=output_indices
+                posterior=posterior,
+                X=X,
+                output_indices=output_indices,
+                detach_test_caches=detach_test_caches,
             )
         elif output_indices is not None:
             # we just need to properly subset the covariance matrix here
@@ -35,8 +43,12 @@ class GPyTorchModel(Model, ABC):
         posterior: Posterior,
         X: Tensor,
         output_indices: Optional[List[int]] = None,
+        detach_test_caches: bool = True,
     ) -> Posterior:
-        with gpytorch.settings.fast_pred_var():
+        with ExitStack() as es:
+            es.enter_context(gpytorch.settings.debug(False))
+            es.enter_context(gpytorch.settings.fast_pred_var())
+            es.enter_context(gpytorch.settings.detach_test_caches(detach_test_caches))
             mvn = self.likelihood(posterior.mvn, X)  # pyre-ignore
             posterior = GPyTorchPosterior(mvn)
         if output_indices is not None:

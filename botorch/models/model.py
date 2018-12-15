@@ -15,6 +15,7 @@ class Model(ABC):
         X: Tensor,
         output_indices: Optional[List[int]] = None,
         observation_noise: bool = False,
+        **kwargs
     ) -> Posterior:
         pass
 
@@ -23,6 +24,7 @@ class Model(ABC):
         posterior: Posterior,
         X: Tensor,
         output_indices: Optional[List[int]] = None,
+        **kwargs
     ) -> Posterior:
         raise NotImplementedError
 

@@ -252,7 +252,10 @@ def batch_knowledge_gradient(
     fantasy_model = model.fantasize(
         X=X, num_samples=mc_samples, base_samples=fantasy_base_samples
     )
-    new_posterior = fantasy_model.posterior(X_all.unsqueeze(0).repeat(mc_samples, 1, 1))
+    # we need to make sure to tell gpytorch not to detach the test caches
+    new_posterior = fantasy_model.posterior(
+        X=X_all.expand(mc_samples, *X_all.shape), detach_test_caches=False
+    )
     # TODO: Tell the posterior to use the same set
     # of Z's for each of the "batches" in the fantasy model. This
     # is doing mc_samples x inner_mc_samples x (q + q') x t
@@ -375,7 +378,10 @@ def batch_knowledge_gradient_no_discretization(
     )
     # X_fantasies is q' x d, needs to be q' x 1 x d
     # for batch mode evaluation with q' fantasies
-    new_posterior = fantasy_model.posterior(project(X_fantasies).unsqueeze(1))
+    # we need to make sure to tell gpytorch not to detach the test caches
+    new_posterior = fantasy_model.posterior(
+        X=project(X_fantasies).unsqueeze(1), detach_test_caches=False
+    )
     # TODO: Tell the posterior to use the same set
     # of Z's for each of the "batches" in the fantasy model. This
     # is doing q' x inner_mc_samples x 1 x t
