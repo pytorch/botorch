@@ -3,7 +3,6 @@
 from copy import deepcopy
 from typing import Dict, Optional, Tuple
 
-import gpytorch
 import torch
 from torch import Tensor
 
@@ -34,12 +33,16 @@ def _get_fantasy_state(
     if base_samples is not None:
         num_samples = base_samples.shape[0]
 
-    # generate fantasies from model posterior at new q-batch
-    with gpytorch.settings.fast_pred_var():
-        posterior = model.posterior(X, observation_noise=True)
-        fantasies = posterior.rsample(
-            sample_shape=torch.Size([num_samples]), base_samples=base_samples
-        )
+    # generate fantasies from model posterior at new q-batch. Note that the
+    # posterior is over observations rather than over latent function values
+    # which accounts for the effect of heteroskedastic observation noise models
+    # on the to-be-gained information at the new locations.
+    # note: this does not detach the test caches, which means that gradients
+    # w.r.t. the model training data will be zero!
+    posterior = model.posterior(X, observation_noise=True)
+    fantasies = posterior.rsample(
+        sample_shape=torch.Size([num_samples]), base_samples=base_samples
+    )
 
     train_targets = model.train_targets
     fantasy_shape: Tuple[int, ...]

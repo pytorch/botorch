@@ -167,7 +167,7 @@ def batch_knowledge_gradient(
     optional project and cost callables.
 
     *** NOTE: THIS FUNCTION DOES NOT YET SUPPORT t-BATCHES.***
-    *** This will require support for b x b' batch mode in gpytorch ***
+    *** This will require support for arbitrary batch shapes in gpytorch ***
 
     *** TODO: Check whether soft-maxes help the gradients **
 
@@ -180,13 +180,12 @@ def batch_knowledge_gradient(
             If X is two-dimensional, assume `b = 1`.
         model: A fitted GPyTorch model
         X_observed: A q' x d Tensor of q' design points that have already been
-            observed and would be considered as the best design point.  A
-            judicious filtering of the points here can massively
-            speed up the function evaluation without altering the
-            function if points that are highly unlikely to be the
-            best (regardless of what is observed at X) are removed.
-            For example, points that clearly do not satisfy the constraints
-            or have terrible objective observations can be safely
+            observed and would be considered as the best design point. A judicious
+            filtering of the points here can massively speed up the function
+            evaluation without altering the function if points that are highly
+            unlikely to be the best (regardless of what is observed at X) are
+            removed. For example, points that clearly do not satisfy the
+            constraints or have terrible objective observations can be safely
             excluded from X_observed.
         objective: A callable mapping a Tensor of size `b x q x (t)` to a Tensor
             of size `b x q`, where `t` is the number of outputs (tasks) of the model.
@@ -198,10 +197,10 @@ def batch_knowledge_gradient(
             Note: the callable must support broadcastingself.
             Only relevant for multi-task models (`t` > 1).
         mc_samples: The number of Monte-Carlo samples to draw from the model
-            posterior.  GP memory usage is multiplied by
-            this value.  Only used if fantasy_base_samples is not provided.
-        inner_mc_samples:  The number of Monte-Carlo samples to draw for the
-            inner expectation.  Only used if inner_base_samples is not provided.
+            posterior. GP memory usage is multiplied by this value.
+            Only used if fantasy_base_samples is not provided.
+        inner_mc_samples: The number of Monte-Carlo samples to draw for the inner
+            expectation. Only used if inner_base_samples is not provided.
         eta: The temperature parameter of the softmax function used in approximating
             the constraints. As `eta -> 0`, the exact (discontinuous) constraint
             is recovered.
@@ -211,15 +210,15 @@ def batch_knowledge_gradient(
             deterministic optimization.
         fantasy_base_samples: A Tensor of N(0,1) random variables used for
             deterministic optimization.
-        project:  A callable mapping a Tensor of size `b x (q + q') x d` to a
-            Tensor of the same size.  Use for multi-fidelity optimization where
+        project: A callable mapping a Tensor of size `b x (q + q') x d` to a
+            Tensor of the same size. Use for multi-fidelity optimization where
             the returned Tensor should be projected to the highest fidelity.
         cost: A callable mapping a Tensor of size `b x q x d` to a Tensor of
-            size `b x 1`.  The resulting Tensor's value is the cost of submitting
+            size `b x 1`. The resulting Tensor's value is the cost of submitting
             each t-batch.
-        use_X_for_old_posterior:  If True, concatenate X and
-            X_observed for best point evaluation prior to the new observations.
-            Defaults to False such that X is not included.
+        use_X_for_old_posterior: If True, concatenate `X` and `X_observed` for
+            best point evaluation prior to the new observations. Defaults to
+            False such that X is not included.
 
     Returns:
         Tensor: The constrained q-KG value of the design X for each of the `b`
@@ -241,10 +240,9 @@ def batch_knowledge_gradient(
     apply_constraints_(
         obj=old_obj, constraints=constraints, samples=old_samples, eta=eta
     )
-    # Shape of obj is inner_mc_samples x q'
-    # First compute mean across inner samples, then maximize across X_observed
-    # Uses soft-max for maximization across X_observed instead of
-    # old_value = old_obj.mean(dim=0).max()
+    # Shape of obj is inner_mc_samples x q'. First compute mean across inner
+    # samples, then maximize across X_observed. Uses soft-max for maximization
+    # across X_observed instead of old_value = old_obj.mean(dim=0).max()
     old_per_point = old_obj.mean(dim=0)
     w = torch.softmax(old_per_point / eta, dim=-1)
     old_value = (old_per_point * w).sum()
@@ -253,29 +251,24 @@ def batch_knowledge_gradient(
         X=X, num_samples=mc_samples, base_samples=fantasy_base_samples
     )
     # we need to make sure to tell gpytorch not to detach the test caches
-    new_posterior = fantasy_model.posterior(
-        X=X_all.expand(mc_samples, *X_all.shape), detach_test_caches=False
-    )
-    # TODO: Tell the posterior to use the same set
-    # of Z's for each of the "batches" in the fantasy model. This
-    # is doing mc_samples x inner_mc_samples x (q + q') x t
-    # draws from the normal distribution because a different Z is used for
-    # each of the fantasies.  We can probably safely reuse the
-    # same inner_samples x (q + q') x t Z tensor for each of the
-    # fantasies.  Possible since rsample accepts a base_sample argument.
+    new_posterior = fantasy_model.posterior(X=X_all, detach_test_caches=False)
+    # TODO: Tell the posterior to use the same set of Z's for each of the
+    # "batches" in the fantasy model. This is doing
+    # mc_samples x inner_mc_samples x (q + q') x t draws from the normal
+    # distribution because a different Z is used for each of the fantasies.
+    # We can probably safely reuse the same inner_samples x (q + q') x t Z tensor
+    # for each of the fantasies. Possible since rsample accepts a base_sample argument.
     new_samples = new_posterior.rsample(
         sample_shape=torch.Size([inner_mc_samples]), base_samples=inner_new_base_samples
     )
-    # Shape of new_samples is
-    # inner_mc_samples x mc_samples x (q + q') x t
+    # Shape of new_samples is inner_mc_samples x mc_samples x (q + q') x t
     new_obj = objective(new_samples)
     apply_constraints_(
         obj=new_obj, constraints=constraints, samples=new_samples, eta=eta
     )
-    # Shape of obj is inner_mc_samples x mc_samples x (q + q')
-    # First compute mean across inner samples, then maximize across
-    # X_all, then compute mean across outer samples
-    # Uses soft-max for maximization across X_all instead of
+    # Shape of obj is inner_mc_samples x mc_samples x (q + q'). First compute mean
+    # across inner samples, then maximize across X_all, then compute mean across
+    # outer samples. Uses soft-max for maximization across X_all instead of
     # new_value = new_obj.mean(dim=0).max(dim=-1)[0].mean()
     new_per_point = new_obj.mean(dim=0)
     new_value = (
