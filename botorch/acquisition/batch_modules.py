@@ -3,6 +3,7 @@
 from typing import Callable, List, Optional
 
 import torch
+from torch import Tensor
 
 from ..models.model import Model
 from .batch_utils import construct_base_samples_from_posterior, match_batch_size
@@ -29,7 +30,7 @@ class BatchAcquisitionFunction(AcquisitionFunction):
         self,
         model: Model,
         mc_samples: int = 5000,
-        X_pending: Optional[torch.Tensor] = None,
+        X_pending: Optional[Tensor] = None,
         seed: Optional[int] = None,
     ) -> None:
         super().__init__(model=model)
@@ -41,13 +42,13 @@ class BatchAcquisitionFunction(AcquisitionFunction):
         self.base_samples = None
         self.base_samples_q_batch_size = None
 
-    def _forward(self, X: torch.Tensor) -> torch.Tensor:
+    def _forward(self, X: Tensor) -> Tensor:
         """Takes in a `b x q x d` X Tensor of `b` t-batches with `q`
         `d`-dimensional design points each, and returns a one-dimensional Tensor
         with `b` elements."""
         raise NotImplementedError("BatchAcquisitionFunction cannot be used directly")
 
-    def forward(self, X: torch.Tensor) -> torch.Tensor:
+    def forward(self, X: Tensor) -> Tensor:
         """Takes in a `b x q x d` X Tensor of `b` t-batches with `q`
         `d`-dimensional design points each, expands and concatenates self.X_pending
         and returns a one-dimensional Tensor with `b` elements."""
@@ -67,7 +68,7 @@ class BatchAcquisitionFunction(AcquisitionFunction):
                 self.base_samples_q_batch_size = X.shape[-2]
         return self._forward(X)
 
-    def _construct_base_samples(self, X: torch.Tensor) -> None:
+    def _construct_base_samples(self, X: Tensor) -> None:
         posterior = self.model.posterior(X)
         self.base_samples = construct_base_samples_from_posterior(
             posterior=posterior, num_samples=self.mc_samples, seed=self.seed
@@ -102,10 +103,10 @@ class qExpectedImprovement(BatchAcquisitionFunction):
         self,
         model: Model,
         best_f: float,
-        objective: Callable[[torch.Tensor], torch.Tensor] = lambda Y: Y,
-        constraints: Optional[List[Callable[[torch.Tensor], torch.Tensor]]] = None,
+        objective: Callable[[Tensor], Tensor] = lambda Y: Y,
+        constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
         mc_samples: int = 5000,
-        X_pending: Optional[torch.Tensor] = None,
+        X_pending: Optional[Tensor] = None,
         seed: Optional[int] = None,
     ) -> None:
         super().__init__(
@@ -115,7 +116,7 @@ class qExpectedImprovement(BatchAcquisitionFunction):
         self.objective = objective
         self.constraints = constraints
 
-    def _forward(self, X: torch.Tensor) -> torch.Tensor:
+    def _forward(self, X: Tensor) -> Tensor:
         """
         Args:
             X: A `b x q x d` Tensor with `b` t-batches of `q` design points
@@ -167,11 +168,11 @@ class qNoisyExpectedImprovement(BatchAcquisitionFunction):
     def __init__(
         self,
         model: Model,
-        X_observed: torch.Tensor,
-        objective: Callable[[torch.Tensor], torch.Tensor] = lambda Y: Y,
-        constraints: Optional[List[Callable[[torch.Tensor], torch.Tensor]]] = None,
+        X_observed: Tensor,
+        objective: Callable[[Tensor], Tensor] = lambda Y: Y,
+        constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
         mc_samples: int = 5000,
-        X_pending: Optional[torch.Tensor] = None,
+        X_pending: Optional[Tensor] = None,
         seed: Optional[int] = None,
     ) -> None:
         super().__init__(
@@ -182,7 +183,7 @@ class qNoisyExpectedImprovement(BatchAcquisitionFunction):
         self.objective = objective
         self.constraints = constraints
 
-    def _construct_base_samples(self, X: torch.Tensor) -> None:
+    def _construct_base_samples(self, X: Tensor) -> None:
         X_all = torch.cat([X, self.X_observed], dim=-2)
         posterior = self.model.posterior(X_all)
         self.base_samples = construct_base_samples_from_posterior(
@@ -190,7 +191,7 @@ class qNoisyExpectedImprovement(BatchAcquisitionFunction):
         )
         return
 
-    def _forward(self, X: torch.Tensor) -> torch.Tensor:
+    def _forward(self, X: Tensor) -> Tensor:
         """
         Args:
             X: A `b x q x d` Tensor with `b` t-batches of `q` design points each.
@@ -261,14 +262,14 @@ class qKnowledgeGradient(BatchAcquisitionFunction):
     def __init__(
         self,
         model: Model,
-        X_observed: torch.Tensor,
-        objective: Callable[[torch.Tensor], torch.Tensor] = lambda Y: Y,
-        constraints: Optional[List[Callable[[torch.Tensor], torch.Tensor]]] = None,
+        X_observed: Tensor,
+        objective: Callable[[Tensor], Tensor] = lambda Y: Y,
+        constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
         mc_samples: int = 40,
         inner_mc_samples: int = 1000,
-        project: Callable[[torch.Tensor], torch.Tensor] = lambda X: X,
-        cost: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
-        X_pending: Optional[torch.Tensor] = None,
+        project: Callable[[Tensor], Tensor] = lambda X: X,
+        cost: Optional[Callable[[Tensor], Tensor]] = None,
+        X_pending: Optional[Tensor] = None,
         seed: Optional[int] = None,
     ) -> None:
         super().__init__(
@@ -285,7 +286,7 @@ class qKnowledgeGradient(BatchAcquisitionFunction):
         self.inner_new_base_samples = None
         self.fantasy_base_samples = None
 
-    def _construct_base_samples(self, X: torch.Tensor) -> None:
+    def _construct_base_samples(self, X: Tensor) -> None:
         # TODO: remove [0] in base_samples when qKG works with t-batches
         old_posterior = self.model.posterior(self.X_observed)
         self.inner_old_base_samples = construct_base_samples_from_posterior(
@@ -306,7 +307,7 @@ class qKnowledgeGradient(BatchAcquisitionFunction):
             posterior=new_posterior, num_samples=self.inner_mc_samples, seed=self.seed
         )[0]
 
-    def _forward(self, X: torch.Tensor) -> torch.Tensor:
+    def _forward(self, X: Tensor) -> Tensor:
         """
         Args:
             X: A `b x q x d` Tensor with `b` t-batches of `q` design points each.
@@ -379,13 +380,13 @@ class qKnowledgeGradientNoDiscretization(BatchAcquisitionFunction):
     def __init__(
         self,
         model: Model,
-        objective: Callable[[torch.Tensor], torch.Tensor] = lambda Y: Y,
-        constraints: Optional[List[Callable[[torch.Tensor], torch.Tensor]]] = None,
+        objective: Callable[[Tensor], Tensor] = lambda Y: Y,
+        constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
         mc_samples: int = 20,
         inner_mc_samples: int = 100,
-        project: Callable[[torch.Tensor], torch.Tensor] = lambda X: X,
-        cost: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
-        X_pending: Optional[torch.Tensor] = None,
+        project: Callable[[Tensor], Tensor] = lambda X: X,
+        cost: Optional[Callable[[Tensor], Tensor]] = None,
+        X_pending: Optional[Tensor] = None,
         seed: Optional[int] = None,
     ) -> None:
         super().__init__(
@@ -401,7 +402,7 @@ class qKnowledgeGradientNoDiscretization(BatchAcquisitionFunction):
         self.inner_new_base_samples = None
         self.fantasy_base_samples = None
 
-    def _construct_base_samples(self, X: torch.Tensor) -> None:
+    def _construct_base_samples(self, X: Tensor) -> None:
         # See _forward below for explanation
         X_actual = X[: (-self.mc_samples - 1), :]
         X_fantasies = X[(-self.mc_samples - 1) : -1, :]
@@ -426,7 +427,7 @@ class qKnowledgeGradientNoDiscretization(BatchAcquisitionFunction):
             posterior=new_posterior, num_samples=self.inner_mc_samples, seed=self.seed
         )[0]
 
-    def _forward(self, X: torch.Tensor) -> torch.Tensor:
+    def _forward(self, X: Tensor) -> Tensor:
         """
         Args:
             X: A `b x q x d` Tensor with `b` t-batches of `q` design points each.
@@ -474,7 +475,7 @@ class qKnowledgeGradientNoDiscretization(BatchAcquisitionFunction):
             ]
         )
 
-    def extract_candidates(self, X: torch.Tensor) -> torch.Tensor:
+    def extract_candidates(self, X: Tensor) -> Tensor:
         """We only return X_actual as the set of candidates post-optimization.
 
         Args:
@@ -509,7 +510,7 @@ class qProbabilityOfImprovement(BatchAcquisitionFunction):
         model: Model,
         best_f: float,
         mc_samples: int = 5000,
-        X_pending: Optional[torch.Tensor] = None,
+        X_pending: Optional[Tensor] = None,
         seed: Optional[int] = None,
     ) -> None:
         super().__init__(
@@ -517,7 +518,7 @@ class qProbabilityOfImprovement(BatchAcquisitionFunction):
         )
         self.best_f = best_f
 
-    def _forward(self, X: torch.Tensor) -> torch.Tensor:
+    def _forward(self, X: Tensor) -> Tensor:
         """
         Args:
             X: A `b x q x d` Tensor with `b` t-batches of `q` design points
@@ -559,7 +560,7 @@ class qUpperConfidenceBound(BatchAcquisitionFunction):
         model: Model,
         beta: float,
         mc_samples: int = 5000,
-        X_pending: Optional[torch.Tensor] = None,
+        X_pending: Optional[Tensor] = None,
         seed: Optional[int] = None,
     ) -> None:
         super().__init__(
@@ -567,7 +568,7 @@ class qUpperConfidenceBound(BatchAcquisitionFunction):
         )
         self.beta = beta
 
-    def _forward(self, X: torch.Tensor) -> torch.Tensor:
+    def _forward(self, X: Tensor) -> Tensor:
         """
         Args:
             X: A `b x q x d` Tensor with `b` t-batches of `q` design points
@@ -605,14 +606,14 @@ class qSimpleRegret(BatchAcquisitionFunction):
         self,
         model: Model,
         mc_samples: int = 5000,
-        X_pending: Optional[torch.Tensor] = None,
+        X_pending: Optional[Tensor] = None,
         seed: Optional[int] = None,
     ) -> None:
         super().__init__(
             model=model, mc_samples=mc_samples, X_pending=X_pending, seed=seed
         )
 
-    def _forward(self, X: torch.Tensor) -> torch.Tensor:
+    def _forward(self, X: Tensor) -> Tensor:
         """
         Args:
             X: A `b x q x d` Tensor with `b` t-batches of `q` design points

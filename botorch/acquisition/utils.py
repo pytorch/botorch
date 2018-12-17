@@ -3,6 +3,7 @@
 from typing import Callable, Dict, List, Optional, Union
 
 import torch
+from torch import Tensor
 from torch.nn import Module
 
 from ..models import Model
@@ -19,10 +20,10 @@ from .batch_modules import (
 def get_acquisition_function(
     acquisition_function_name: str,
     model: Model,
-    X_observed: torch.Tensor,
-    objective: Callable[[torch.Tensor], torch.Tensor] = lambda Y: Y,
-    constraints: Optional[List[Callable[[torch.Tensor], torch.Tensor]]] = None,
-    X_pending: Optional[torch.Tensor] = None,
+    X_observed: Tensor,
+    objective: Callable[[Tensor], Tensor] = lambda Y: Y,
+    constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
+    X_pending: Optional[Tensor] = None,
     seed: Optional[int] = None,
     acquisition_function_args: Optional[Dict[str, Union[float, int]]] = None,
 ) -> Module:

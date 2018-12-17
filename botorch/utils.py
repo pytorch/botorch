@@ -147,7 +147,7 @@ def gen_x_uniform(n: int, bounds: Tensor) -> Tensor:
         bounds: A (2 x d) tensor where bounds[0] is contains the lower bounds
         for each column and bounds[1] contains the upper bounds.
     Returns:
-        torch.Tensor: a (n x d) tensor of points
+        Tensor: a (n x d) tensor of points
     """
     x_ranges = torch.sum(
         bounds
