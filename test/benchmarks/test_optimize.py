@@ -233,22 +233,23 @@ class TestGreedy(unittest.TestCase):
             model = MockModel(MockPosterior(samples=X.view(1, -1) * 2.0))
             # basic test
             (best_point, best_obj, feasiblity) = greedy(X=X, model=model)
-            self.assertTrue(best_point.item() == 3.0)
-            self.assertTrue(best_obj == 6.0)
-            self.assertTrue(feasiblity == 1)
+            self.assertAlmostEqual(best_point.item(), 3.0, places=6)
+            # interestingly, on the GPU this comparison is not exact
+            self.assertAlmostEqual(best_obj, 6.0, places=6)
+            self.assertAlmostEqual(feasiblity, 1.0, places=6)
             # test objective
             (best_point2, best_obj2, feasiblity2) = greedy(
                 X=X, model=model, objective=lambda Y: 0.5 * Y
             )
             print((best_point2, best_obj2, feasiblity2))
-            self.assertTrue(best_point2.item() == 3.0)
-            self.assertTrue(best_obj2 == 3.0)
-            self.assertTrue(feasiblity2 == 1)
+            self.assertAlmostEqual(best_point2.item(), 3.0, places=6)
+            self.assertAlmostEqual(best_obj2, 3.0, places=6)
+            self.assertAlmostEqual(feasiblity2, 1.0, places=6)
             # test constraints
             feasiblity3 = greedy(
                 X=X, model=model, constraints=[lambda Y: torch.ones_like(Y)]
             )[2]
-            self.assertTrue(feasiblity3 == 0.0)
+            self.assertAlmostEqual(feasiblity3, 0.0, places=6)
 
     def test_greedy_cuda(self):
         if torch.cuda.is_available():
