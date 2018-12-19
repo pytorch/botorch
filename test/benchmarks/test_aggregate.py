@@ -62,80 +62,55 @@ class TestAggregateBenchMark(unittest.TestCase):
             agg_results = aggregate_benchmark(output)
             self.assertTrue(isinstance(agg_results, AggregatedBenchmarkOutput))
             self.assertEqual(agg_results.num_trials, 3)
-            self.assertTrue(agg_results.mean_runtime == 1.0)
-            self.assertTrue(agg_results.var_runtime == 0.0)
+            # on the GPU we can't check for exact equality b/c of numerical issues
+            self.assertAlmostEqual(agg_results.mean_runtime, 1.0)
+            self.assertAlmostEqual(agg_results.var_runtime, 0.0)
             self.assertTrue(
                 torch.equal(
                     agg_results.batch_iterations,
                     torch.tensor([1, 2, 3, 4], dtype=torch.long, device=device),
                 )
             )
+            ni_shape = torch.Size([num_iterations])
 
-            self.assertTrue(
-                torch.equal(
-                    agg_results.mean_cost, torch.ones(num_iterations, **tkwargs)
-                )
+            self.assertEqual(agg_results.mean_cost.shape, ni_shape)
+            self.assertLess(torch.norm(agg_results.mean_cost - 1), 1e-6)
+            self.assertEqual(agg_results.var_cost.shape, ni_shape)
+            self.assertLess(torch.norm(agg_results.var_cost), 1e-6)
+            mbmo = torch.tensor(best_model_objective[0], **tkwargs)
+            self.assertTrue(agg_results.mean_best_model_objective.shape == mbmo.shape)
+            self.assertLess(
+                torch.norm(agg_results.mean_best_model_objective - mbmo), 1e-6
             )
-            self.assertTrue(
-                torch.equal(
-                    agg_results.var_cost, torch.zeros(num_iterations, **tkwargs)
-                )
+            self.assertEqual(agg_results.var_best_model_objective.shape, ni_shape)
+            self.assertLess(torch.norm(agg_results.var_best_model_objective), 1e-6)
+            self.assertEqual(agg_results.mean_best_model_feasibility.shape, ni_shape)
+            self.assertLess(
+                torch.norm(agg_results.mean_best_model_feasibility - 1), 1e-6
             )
-            self.assertTrue(
-                torch.equal(
-                    agg_results.mean_best_model_objective,
-                    torch.tensor(best_model_objective[0], **tkwargs),
-                )
+            self.assertEqual(agg_results.var_best_model_feasibility.shape, ni_shape)
+            self.assertLess(torch.norm(agg_results.var_best_model_feasibility), 1e-6)
+            bto = torch.tensor(best_true_objective[0], **tkwargs)
+            self.assertEqual(agg_results.mean_best_true_objective.shape, bto.shape)
+            self.assertLess(
+                torch.norm(agg_results.mean_best_true_objective - bto), 1e-6
             )
-            self.assertTrue(
-                torch.equal(
-                    agg_results.var_best_model_objective,
-                    torch.zeros(num_iterations, **tkwargs),
-                )
+            self.assertEqual(agg_results.var_best_true_objective.shape, ni_shape)
+            self.assertLess(torch.norm(agg_results.var_best_true_objective), 1e-6)
+            mr = torch.tensor(regrets[0], **tkwargs)
+            self.assertEqual(agg_results.mean_regret.shape, mr.shape)
+            self.assertLess(torch.norm(agg_results.mean_regret - mr), 1e-6)
+            self.assertEqual(agg_results.var_regret.shape, ni_shape)
+            self.assertLess(torch.norm(agg_results.var_regret), 1e-6)
+            self.assertEqual(
+                agg_results.mean_cumulative_regret.shape, cumulative_regrets[0].shape
             )
-            self.assertTrue(
-                torch.equal(
-                    agg_results.mean_best_model_feasibility,
-                    torch.ones(num_iterations, **tkwargs),
-                )
+            self.assertLess(
+                torch.norm(agg_results.mean_cumulative_regret - cumulative_regrets[0]),
+                1e-5,
             )
-            self.assertTrue(
-                torch.equal(
-                    agg_results.var_best_model_feasibility,
-                    torch.zeros(num_iterations, **tkwargs),
-                )
-            )
-            self.assertTrue(
-                torch.equal(
-                    agg_results.mean_best_true_objective,
-                    torch.tensor(best_true_objective[0], **tkwargs),
-                )
-            )
-            self.assertTrue(
-                torch.equal(
-                    agg_results.var_best_true_objective,
-                    torch.zeros(num_iterations, **tkwargs),
-                )
-            )
-            self.assertTrue(
-                torch.equal(
-                    agg_results.mean_regret, torch.tensor(regrets[0], **tkwargs)
-                )
-            )
-            self.assertTrue(
-                torch.equal(
-                    agg_results.var_regret, torch.zeros(num_iterations, **tkwargs)
-                )
-            )
-            self.assertTrue(
-                torch.equal(agg_results.mean_cumulative_regret, cumulative_regrets[0])
-            )
-            self.assertTrue(
-                torch.equal(
-                    agg_results.var_cumulative_regret,
-                    torch.zeros(num_iterations, **tkwargs),
-                )
-            )
+            self.assertEqual(agg_results.var_cumulative_regret.shape, ni_shape)
+            self.assertLess(torch.norm(agg_results.var_cumulative_regret), 1e-6)
 
     def test_aggregate_benchmark_cuda(self):
         if torch.cuda.is_available():
