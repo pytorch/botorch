@@ -76,7 +76,7 @@ class FidelityAwareSingleTaskGP(ExactGP, GPyTorchModel):
             the latent function, and `d'` noise-only features only re-scale the
             observation noise. The second set of features are strictly for fidelity.
         train_Y: A `(b) x n`-dimensional tensor of output observations.
-        train_Y_sem: A `(b) x n`-dimensional tensor of observed measurement noise.
+        train_Y_se: A `(b) x n`-dimensional tensor of observed measurement noise.
             This should not be normalized.
         phi_idcs: The index or indices corresponding to the noise-only features.
         phi_func: A callable mapping the noise-only features to the fidelity level.
@@ -95,7 +95,7 @@ class FidelityAwareSingleTaskGP(ExactGP, GPyTorchModel):
         self,
         train_X: Tensor,
         train_Y: Tensor,
-        train_Y_sem: Tensor,
+        train_Y_se: Tensor,
         phi_idcs: Union[int, Iterable[int]] = -1,
         phi_func: Callable[[Tensor], Tensor] = lambda phi: phi,
     ) -> None:
@@ -116,7 +116,7 @@ class FidelityAwareSingleTaskGP(ExactGP, GPyTorchModel):
 
         # Set up noise model
         train_y_log_var = (
-            2 * train_Y_sem.log() + phi_func(train_phi.view_as(train_Y_sem)).log()
+            2 * train_Y_se.log() + phi_func(train_phi.view_as(train_Y_se)).log()
         )
         noise_likelihood = GaussianLikelihood(
             batch_size=batch_size, param_transform=softplus
@@ -168,15 +168,32 @@ class FidelityAwareSingleTaskGP(ExactGP, GPyTorchModel):
             ],
             dim=-1,
         )
-        train_Y_sem = torch.exp(0.5 * tYlv)
+        train_Y_se = torch.exp(0.5 * tYlv)
         fantasy_model = FidelityAwareSingleTaskGP(
             train_X=train_X,
             train_Y=train_Y,
-            train_Y_sem=train_Y_sem,
+            train_Y_se=train_Y_se,
             phi_idcs=self._phi_idcs,
             phi_func=noise_covar._phi_func,
         )
         return _load_fantasy_state_dict(model=fantasy_model, state_dict=state_dict)
+
+    def reinitialize(
+        self, train_X: Tensor, train_Y: Tensor, train_Y_se: Optional[Tensor] = None
+    ) -> None:
+        """
+        Reinitialize model and the likelihood.
+
+        Note: this does not refit the model.
+        """
+        assert train_Y_se is not None
+        self.__init__(
+            train_X=train_X,
+            train_Y=train_Y,
+            train_Y_se=train_Y_se,
+            phi_idcs=self._phi_idcs,
+            phi_func=self.likelihood.noise_covar._phi_func,
+        )
 
 
 def _make_phi_indexers(

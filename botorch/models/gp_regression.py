@@ -55,6 +55,7 @@ class SingleTaskGP(ExactGP, GPyTorchModel):
             param_transform=softplus,
             outputscale_prior=GammaPrior(1.1, 0.05),
         )
+        self._likelihood_state_dict = deepcopy(self.likelihood.state_dict())
 
     def forward(self, x: Tensor) -> MultivariateNormal:
         mean_x = self.mean_module(x)
@@ -71,6 +72,18 @@ class SingleTaskGP(ExactGP, GPyTorchModel):
             train_X=train_X, train_Y=train_Y, likelihood=deepcopy(self.likelihood)
         )
         return _load_fantasy_state_dict(model=fantasy_model, state_dict=state_dict)
+
+    def reinitialize(
+        self, train_X: Tensor, train_Y: Tensor, train_Y_se: Optional[Tensor] = None
+    ) -> None:
+        """
+        Reinitialize model and the likelihood.
+
+        Note: this does not refit the model.
+        Note: train_Y_se is not used by SingleTaskGP
+        """
+        self.likelihood.load_state_dict(self._likelihood_state_dict)
+        self.__init__(train_X, train_Y, self.likelihood)
 
 
 class HeteroskedasticSingleTaskGP(SingleTaskGP):
@@ -108,3 +121,14 @@ class HeteroskedasticSingleTaskGP(SingleTaskGP):
             train_X=train_X, train_Y=train_Y, train_Y_se=train_Y_se
         )
         return _load_fantasy_state_dict(model=fantasy_model, state_dict=state_dict)
+
+    def reinitialize(
+        self, train_X: Tensor, train_Y: Tensor, train_Y_se: Optional[Tensor] = None
+    ) -> None:
+        """
+        Reinitialize model and the likelihood.
+
+        Note: this does not refit the model.
+        """
+        assert train_Y_se is not None
+        self.__init__(train_X=train_X, train_Y=train_Y, train_Y_se=train_Y_se)

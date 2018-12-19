@@ -45,6 +45,19 @@ class SingleTaskGPTest(unittest.TestCase):
         posterior = self.model(test_x)
         self.assertIsInstance(posterior, MultivariateNormal)
 
+    def testReinitialize(self):
+        train_x = torch.linspace(0, 1, 11).unsqueeze(1)
+        noise = torch.tensor(NOISE + [0.1])
+        train_y = torch.sin(train_x * (2 * math.pi)).view(-1) + noise
+        self.model.reinitialize(train_x, train_y)
+        params = dict(self.model.named_parameters())
+        for p in params:
+            self.assertEqual(params[p].item(), 0.0)
+        mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
+        fit_model(mll)
+        # check that some of the parameters changed
+        self.assertFalse(all(params[p].item() == 0.0 for p in params))
+
 
 class HeteroskedasticSingleTaskGPTest(unittest.TestCase):
     def setUp(self, cuda=False):
@@ -74,6 +87,20 @@ class HeteroskedasticSingleTaskGPTest(unittest.TestCase):
         test_x = torch.tensor([6.0, 7.0, 8.0]).view(-1, 1)
         posterior = self.model(test_x)
         self.assertIsInstance(posterior, MultivariateNormal)
+
+    def testReinitialize(self):
+        train_x = torch.linspace(0, 1, 11).unsqueeze(1)
+        noise = torch.tensor(NOISE + [0.1])
+        train_y = torch.sin(train_x * (2 * math.pi)).view(-1) + noise
+        train_y_sem = 0.1 + 0.1 * torch.rand_like(train_y)
+        self.model.reinitialize(train_x, train_y, train_y_sem)
+        params = dict(self.model.named_parameters())
+        for p in params:
+            self.assertEqual(params[p].item(), 0.0)
+        mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
+        fit_model(mll)
+        # check that some of the parameters changed
+        self.assertFalse(all(params[p].item() == 0.0 for p in params))
 
 
 if __name__ == "__main__":
