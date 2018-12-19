@@ -2,53 +2,18 @@
 
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
-import numpy as np
 import torch
 from botorch.utils import check_convergence, columnwise_clamp, fix_features
-from scipy.optimize import Bounds, minimize
+from scipy.optimize import minimize
 from torch import Tensor
 from torch.nn import Module
 from torch.optim import Optimizer
 
-
-def _arrayify(X: Tensor) -> np.ndarray:
-    return X.cpu().detach().double().clone().numpy()
-
-
-def _make_bounds_scipy(
-    lower_bounds: Optional[Union[float, Tensor]],
-    upper_bounds: Optional[Union[float, Tensor]],
-    X: Tensor,
-) -> Optional[Bounds]:
-    """Creates a scipy Bounds object for optimziation
-
-    Args:
-        lower_bounds: Lower bounds on each column (last dimension) of X. If this
-            is a single float, then all columns have the same bound.
-        upper_bounds: Lower bounds on each column (last dimension) of X. If this
-            is a single float, then all columns have the same bound.
-        X: `... x d` tensor
-
-    Returns
-        A scipy Bounds object if either lower_bounds or upper_bounds is not None,
-            and None otherwise.
-
-    """
-    if lower_bounds is None and upper_bounds is None:
-        return None
-
-    def _expand(bounds: Tensor, X: Tensor) -> Tensor:
-        if bounds is None:
-            ebounds = torch.full_like(X, np.inf)
-        else:
-            if not torch.is_tensor(bounds):
-                bounds = torch.tensor(bounds)
-            ebounds = bounds.expand_as(X)
-        return ebounds.cpu().detach().double().contiguous().view(-1).clone().numpy()
-
-    lb = -_expand(lower_bounds, X)
-    ub = _expand(upper_bounds, X)
-    return Bounds(lb=lb, ub=ub, keep_feasible=True)
+from .optim.parameter_constraints import (
+    _arrayify,
+    make_scipy_bounds,
+    make_scipy_linear_constraints,
+)
 
 
 def gen_candidates_scipy(
@@ -56,30 +21,31 @@ def gen_candidates_scipy(
     acquisition_function: Module,
     lower_bounds: Optional[Union[float, Tensor]] = None,
     upper_bounds: Optional[Union[float, Tensor]] = None,
+    inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
+    equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     options: Optional[Dict[str, Any]] = None,
     fixed_features: Optional[Dict[int, Optional[float]]] = None,
 ) -> Tuple[Tensor, Tensor]:
     """Generate a set of candidates via optimization from a given set of
-    starting points.
+
+    starting points using scipy.optim.minimize via a numpy converter.
 
     Args:
-        initial_candidates: starting points for optimization
-        acquisition_function: acquisition function to be used
-        lower_bounds: minimum values for each column of initial_candidates
-        upper_bounds: maximum values for each column of initial_candidates
-        options:  options used to control the optimization including "method"
+        initial_candidates: Starting points for optimization.
+        acquisition_function: Acquisition function to be used.
+        lower_bounds: Minimum values for each column of initial_candidates.
+        upper_bounds: Maximum values for each column of initial_candidates.
+        options: options used to control the optimization including "method"
             and "maxiter"
-        fixed_features:  This is a dictionary of feature indices
-            to values, where all generated candidates will have features
-            fixed to these values.  If the dictionary value is None, then that
-            feature will just be fixed to the clamped value and
-            not optimized.  Assumes values to be compatible with
-            lower_bounds and upper_bounds!
+        fixed_features: This is a dictionary of feature indices to values, where
+            all generated candidates will have features fixed to these values.
+            If the dictionary value is None, then that feature will just be
+            fixed to the clamped value and not optimized. Assumes values to be
+            compatible with lower_bounds and upper_bounds!
 
     Returns:
-        Tensor: The set of generated candidates
+        Tensor: The set of generated candidates.
         Tensor: The acquisition value for each t-batch.
-
     """
     options = options or {}
     clamped_candidates = columnwise_clamp(
@@ -88,8 +54,13 @@ def gen_candidates_scipy(
 
     shapeX = clamped_candidates.shape
     x0 = _arrayify(clamped_candidates.view(-1))
-    bounds = _make_bounds_scipy(
+    bounds = make_scipy_bounds(
         lower_bounds=lower_bounds, upper_bounds=upper_bounds, X=initial_candidates
+    )
+    constraints = make_scipy_linear_constraints(
+        shapeX=clamped_candidates.shape,
+        inequality_constraints=inequality_constraints,
+        equality_constraints=equality_constraints,
     )
 
     def f(x):
@@ -107,12 +78,20 @@ def gen_candidates_scipy(
         gradf = _arrayify(X.grad.view(-1))
         return fval, gradf
 
+    method = options.get("method")
+    if method is None:
+        if inequality_constraints is None and equality_constraints is None:
+            method = "L-BFGS-B"
+        else:
+            method = "SLSQP"
+
     res = minimize(
         f,
         x0,
-        method=options.get("method", "L-BFGS-B"),
+        method=method,
         jac=True,
         bounds=bounds,
+        constraints=constraints,
         options=options,
     )
 
@@ -138,26 +117,24 @@ def gen_candidates_torch(
     starting points.
 
     Args:
-        initial_candidates: starting points for optimization
-        acquisition_function: acquisition function to be used
-        lower_bounds: minimum values for each column of initial_candidates
-        upper_bounds: maximum values for each column of initial_candidates
+        initial_candidates: Starting points for optimization.
+        acquisition_function: Acquisition function to be used.
+        lower_bounds: Minimum values for each column of initial_candidates.
+        upper_bounds: Maximum values for each column of initial_candidates.
         optimizer (Optimizer): The pytorch optimizer to use to perform
-            candidate search
-        options:  options used to control the optimization
-        max_iter (int):  maximum number of iterations
-        verbose (bool):  whether to provide verbose output
-        fixed_features:  This is a dictionary of feature indices
-            to values, where all generated candidates will have features
-            fixed to these values.  If the dictionary value is None, then that
-            feature will just be fixed to the clamped value and
-            not optimized.  Assumes values to be compatible with
-            lower_bounds and upper_bounds!
+            candidate search.
+        options: Options used to control the optimization.
+        max_iter: Maximum number of iterations.
+        verbose: If True, provide verbose output.
+        fixed_features: This is a dictionary of feature indices to values, where
+            all generated candidates will have features fixed to these values.
+            If the dictionary value is None, then that feature will just be
+            fixed to the clamped value and not optimized. Assumes values to be
+            compatible with lower_bounds and upper_bounds!
 
     Returns:
-        Tensor: The set of generated candidates
+        Tensor: The set of generated candidates.
         Tensor: The acquisition value for each t-batch.
-
     """
     options = options or {}
     clamped_candidates = columnwise_clamp(

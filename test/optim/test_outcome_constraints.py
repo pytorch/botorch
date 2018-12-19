@@ -3,7 +3,7 @@
 import unittest
 
 import torch
-from botorch.optim.constraints import soft_eval_constraint
+from botorch.optim.outcome_constraints import soft_eval_constraint
 
 
 class TestSoftEvalConstraint(unittest.TestCase):

@@ -8,7 +8,7 @@ from torch import Tensor
 from torch.nn.functional import sigmoid
 
 from ...models import Model
-from ...optim.constraints import soft_eval_constraint
+from ...optim.outcome_constraints import soft_eval_constraint
 from ...utils import manual_seed
 from ..batch_utils import batch_mode_transform
 

@@ -6,8 +6,12 @@ from typing import Any, Dict, List, NamedTuple, Optional, Tuple
 
 import gpytorch
 import numpy as np
-from botorch.optim.constraints import ParameterBounds
-from botorch.optim.converter import TorchAttr, module_to_array, set_params_with_array
+from botorch.optim.numpy_converter import (
+    TorchAttr,
+    module_to_array,
+    set_params_with_array,
+)
+from botorch.optim.outcome_constraints import ParameterBounds
 from botorch.utils import check_convergence
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from scipy.optimize import Bounds, minimize

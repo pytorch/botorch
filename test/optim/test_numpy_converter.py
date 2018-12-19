@@ -5,7 +5,7 @@ from collections import OrderedDict
 
 import numpy as np
 import torch
-from botorch.optim.converter import module_to_array, set_params_with_array
+from botorch.optim.numpy_converter import module_to_array, set_params_with_array
 from gpytorch.kernels.rbf_kernel import RBFKernel
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.means.constant_mean import ConstantMean
