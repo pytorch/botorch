@@ -7,7 +7,7 @@ import numpy as np
 import torch
 from torch.nn import Module
 
-from .constraints import ParameterBounds
+from .outcome_constraints import ParameterBounds
 
 
 class TorchAttr(NamedTuple):

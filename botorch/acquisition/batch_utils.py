@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 from functools import wraps
 from typing import Any, Callable, Optional, Tuple
 
