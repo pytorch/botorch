@@ -162,6 +162,8 @@ def run_closed_loop(
                         q=config.q,
                         num_starting_points=config.num_starting_points,
                         multiplier=100,
+                        lower_bounds=lower_bounds,
+                        upper_bounds=upper_bounds,
                         options={"maxiter": config.candidate_gen_max_iter},
                     )
                     X = acq_func.extract_candidates(candidates).detach()
