@@ -62,8 +62,8 @@ def greedy(
         float: feasibility of best point
 
     """
-    posterior = model.posterior(X)
-    with gpytorch.settings.fast_pred_var():
+    with torch.no_grad(), gpytorch.settings.fast_pred_var():
+        posterior = model.posterior(X)
         # mc_samples x b x q x (t)
         samples = posterior.rsample(sample_shape=torch.Size([mc_samples])).unsqueeze(1)
     # TODO: handle non-positive definite objectives
@@ -145,7 +145,7 @@ def run_closed_loop(
                 if iteration > 0:
                     # type check for pyre
                     assert isinstance(model, Model)
-                    acquisition_function: BatchAcquisitionFunction = get_acquisition_function(
+                    acq_func: BatchAcquisitionFunction = get_acquisition_function(
                         acquisition_function_name=config.acquisition_function_name,
                         model=model,
                         X_observed=train_X,
@@ -158,21 +158,21 @@ def run_closed_loop(
                         print("---- acquisition optimization")
                     candidates = random_restarts(
                         gen_function=gen_function,
-                        acq_function=acquisition_function,
+                        acq_function=acq_func,
                         q=config.q,
                         num_starting_points=config.num_starting_points,
                         multiplier=100,
                         options={"maxiter": config.candidate_gen_max_iter},
                     )
-                    X = acquisition_function.extract_candidates(candidates).detach()
+                    X = acq_func.extract_candidates(candidates).detach()
                 if verbose:
                     print("---- evaluate")
                 Y, Ycov = func(X)
                 Xs.append(X.detach())
                 Ys.append(Y.detach())
                 Ycovs.append(Ycov.detach())
-                train_X = torch.cat(Xs, dim=0).detach()
-                train_Y = torch.cat(Ys, dim=0).detach()
+                train_X = torch.cat(Xs, dim=0)
+                train_Y = torch.cat(Ys, dim=0)
                 if verbose:
                     print("---- train")
                 # TODO: copy over the state_dict from the existing model before
