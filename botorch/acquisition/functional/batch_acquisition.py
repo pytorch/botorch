@@ -247,9 +247,9 @@ def batch_knowledge_gradient(
     w = torch.softmax(old_per_point / eta, dim=-1)
     old_value = (old_per_point * w).sum()
 
-    fantasy_model = model.fantasize(
-        X=X, num_samples=mc_samples, base_samples=fantasy_base_samples
-    )
+    first_posterior_X = model.posterior(X=X)
+    fantasy_y = first_posterior_X.rsample(sample_shape=torch.Size([mc_samples]), base_samples=fantasy_base_samples)
+    fantasy_model = model.get_fantasy_model(X, fantasy_y)
     # we need to make sure to tell gpytorch not to detach the test caches
     new_posterior = fantasy_model.posterior(X=X_all, detach_test_caches=False)
     # TODO: Tell the posterior to use the same set of Z's for each of the
