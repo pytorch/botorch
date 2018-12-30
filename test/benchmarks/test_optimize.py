@@ -12,9 +12,13 @@ from botorch.benchmarks.optimize import (
     run_closed_loop,
 )
 from botorch.benchmarks.output import BenchmarkOutput, ClosedLoopOutput
-from botorch.models.gp_regression import SingleTaskGP
+from botorch.models.gp_regression import HeteroskedasticSingleTaskGP, SingleTaskGP
 from botorch.utils import gen_x_uniform
-from gpytorch.likelihoods import GaussianLikelihood
+from gpytorch.likelihoods import (
+    GaussianLikelihood,
+    HeteroskedasticNoise,
+    _GaussianLikelihoodBase,
+)
 
 from ..utils.mock import MockModel, MockPosterior
 
@@ -50,17 +54,10 @@ class TestRunClosedLoop(unittest.TestCase):
         )
         self.func = test_func
 
-    @mock.patch("botorch.benchmarks.optimize.fit_model")
-    @mock.patch("botorch.benchmarks.optimize.ExactMarginalLogLikelihood")
+    @mock.patch("botorch.benchmarks.optimize._get_fitted_model")
     @mock.patch("botorch.benchmarks.optimize.random_restarts")
-    @mock.patch("botorch.benchmarks.optimize.SingleTaskGP")
     def test_run_closed_loop(
-        self,
-        mock_single_task_gp,
-        mock_random_restarts,
-        _mock_mll,
-        _mock_fit_model,
-        cuda=False,
+        self, mock_random_restarts, mock_get_fitted_model, cuda=False
     ):
         for dtype in [torch.float, torch.double]:
             bounds = get_bounds(cuda, dtype=dtype)
@@ -74,12 +71,13 @@ class TestRunClosedLoop(unittest.TestCase):
             mm1 = MockModel(MockPosterior(mean=mean1, samples=samples1))
             samples2 = torch.zeros([2, self.config.q], **tkwargs)
             mm2 = MockModel(MockPosterior(samples=samples2))
-            mock_single_task_gp.side_effect = [mm1, mm2]
+            mock_get_fitted_model.side_effect = [mm1, mm2]
             # basic test for output shapes and types
             output = run_closed_loop(
                 func=self.func,
                 gen_function=gen_x,
                 config=self.config,
+                model=mm1,
                 lower_bounds=bounds[0],
                 upper_bounds=bounds[1],
             )
@@ -149,10 +147,12 @@ class TestRunBenchmark(unittest.TestCase):
             )
             mock_run_closed_loop.return_value = closed_loop_output
             gen_x = get_gen_x(bounds)
+            model = MockModel(posterior=MockPosterior())
             outputs = run_benchmark(
                 func=self.func,
                 gen_function=gen_x,
                 config=self.config,
+                model=model,
                 lower_bounds=bounds[0],
                 upper_bounds=bounds[1],
                 num_runs=2,
@@ -194,6 +194,7 @@ class TestRunBenchmark(unittest.TestCase):
                 func=self.func,
                 gen_function=gen_x,
                 config=self.config,
+                model=model,
                 objective=lambda Y: Y + 0.1,
                 lower_bounds=bounds[0],
                 upper_bounds=bounds[1],
@@ -210,6 +211,7 @@ class TestRunBenchmark(unittest.TestCase):
                 func=self.func,
                 gen_function=gen_x,
                 config=self.config,
+                model=model,
                 constraints=[lambda Y: torch.ones_like(Y)],
                 lower_bounds=bounds[0],
                 upper_bounds=bounds[1],
@@ -244,7 +246,6 @@ class TestGreedy(unittest.TestCase):
             (best_point2, best_obj2, feasiblity2) = greedy(
                 X=X, model=model, objective=lambda Y: 0.5 * Y
             )
-            print((best_point2, best_obj2, feasiblity2))
             self.assertAlmostEqual(best_point2.item(), 3.0, places=6)
             self.assertAlmostEqual(best_obj2, 3.0, places=6)
             self.assertAlmostEqual(feasiblity2, 1.0, places=6)
@@ -264,12 +265,43 @@ class TestGetFittedModel(unittest.TestCase):
     def test_get_fitted_model(self, mock_fit_model, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
+            init_X = torch.rand((5, 2), dtype=dtype, device=device)
+            init_Y = torch.rand(5, dtype=dtype, device=device)
+            init_Y_se = torch.rand(5, dtype=dtype, device=device)
+            likelihood = GaussianLikelihood()
+            initial_model = SingleTaskGP(
+                train_X=init_X, train_Y=init_Y, likelihood=likelihood
+            )
             train_X = torch.rand((5, 2), dtype=dtype, device=device)
             train_Y = torch.rand(5, dtype=dtype, device=device)
-            model = _get_fitted_model(train_X, train_Y, max_iter=1)
+            train_Y_se = torch.rand(5, dtype=dtype, device=device)
+            model = _get_fitted_model(
+                train_X=train_X,
+                train_Y=train_Y,
+                train_Y_se=train_Y_se,
+                model=initial_model,
+                max_iter=1,
+            )
             self.assertIsInstance(model, SingleTaskGP)
             self.assertIsInstance(model.likelihood, GaussianLikelihood)
-        self.assertEqual(mock_fit_model.call_count, 2)
+            self.assertTrue(torch.equal(model.train_inputs[0], train_X))
+            self.assertTrue(torch.equal(model.train_targets, train_Y))
+            initial_model2 = HeteroskedasticSingleTaskGP(
+                train_X=init_X, train_Y=init_Y, train_Y_se=init_Y_se
+            )
+            model2 = _get_fitted_model(
+                train_X=train_X,
+                train_Y=train_Y,
+                train_Y_se=train_Y_se,
+                model=initial_model2,
+                max_iter=1,
+            )
+            self.assertIsInstance(model2, HeteroskedasticSingleTaskGP)
+            self.assertIsInstance(model2.likelihood, _GaussianLikelihoodBase)
+            self.assertIsInstance(model2.likelihood.noise_covar, HeteroskedasticNoise)
+            self.assertTrue(torch.equal(model2.train_inputs[0], train_X))
+            self.assertTrue(torch.equal(model2.train_targets, train_Y))
+        self.assertEqual(mock_fit_model.call_count, 4)
 
     def test_get_fitted_model_cuda(self):
         if torch.cuda.is_available():

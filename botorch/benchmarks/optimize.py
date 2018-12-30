@@ -6,13 +6,11 @@ from typing import Callable, List, NamedTuple, Optional, Tuple
 import gpytorch
 import torch
 from botorch import fit_model
-from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from torch import Tensor
 
 from ..acquisition.batch_modules import BatchAcquisitionFunction
 from ..acquisition.utils import get_acquisition_function
-from ..models.gp_regression import SingleTaskGP
 from ..models.model import Model
 from ..optim.random_restarts import random_restarts
 from .output import BenchmarkOutput, ClosedLoopOutput
@@ -31,22 +29,25 @@ class OptimizeConfig(NamedTuple):
     max_retries: int = 0  # number of retries, in the case of exceptions
 
 
-def _get_fitted_model(train_X: Tensor, train_Y: Tensor, max_iter: int) -> Model:
+def _get_fitted_model(
+    train_X: Tensor, train_Y: Tensor, train_Y_se: Tensor, model: Model, max_iter: int
+) -> Model:
     """
     Helper function that returns a model fitted to the provided data.
 
     Args:
         train_X: A `n x d` Tensor of points
         train_Y: A `n x (t)` Tensor of outcomes
+        train_Y_se: A `n x (t)` Tensor of observed standard errors for each outcome
+        model: an initialized Model. This model must have a likelihood attribute.
         max_iter: The maximum number of iterations
     Returns:
         Model: a fitted model
     """
     # TODO: copy over the state_dict from the existing model before
     # optimization begins
-    likelihood = GaussianLikelihood()  # pyre-ignore [16]
-    model = SingleTaskGP(train_X, train_Y, likelihood)
-    mll = ExactMarginalLogLikelihood(likelihood, model)
+    model.reinitialize(train_X=train_X, train_Y=train_Y, train_Y_se=train_Y_se)
+    mll = ExactMarginalLogLikelihood(model.likelihood, model)
     mll.to(dtype=train_X.dtype, device=train_X.device)
     mll = fit_model(mll, options={"maxiter": max_iter})
     return model
@@ -107,6 +108,7 @@ def run_closed_loop(
     func: Callable[[Tensor], List[Tensor]],
     gen_function: Callable[[int], Tensor],
     config: OptimizeConfig,
+    model: Model,
     objective: Callable[[Tensor], Tensor] = lambda Y: Y,
     constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
     lower_bounds: Optional[Tensor] = None,
@@ -122,6 +124,7 @@ def run_closed_loop(
         gen_function: A function n -> X_cand producing n (typically random)
             feasible candidates as a `n x d` tensor X_cand
         config: configuration for the optimization
+        model: an initialized Model. This model must have a likelihood attribute.
         objective: A callable mapping a Tensor of size `b x q x (t)`
             to a Tensor of size `b x q`, where `t` is the number of
             outputs (tasks) of the model. Note: the callable must support broadcasting.
@@ -140,7 +143,6 @@ def run_closed_loop(
         ClosedLoopOutput: outputs from optimization
 
     # TODO: Add support for multi-task models.
-    # TODO: Add support for known observation noise.
     """
     # TODO: remove exception handling wrappers when model fitting is stabilized
     Xs = []
@@ -157,9 +159,9 @@ def run_closed_loop(
     best_point: Tensor
     obj: float
     feas: float
-    model = None
     train_X = None
     train_Y = None
+    train_Y_se = None
 
     start_time = time()
     X = gen_function(config.initial_points)
@@ -176,6 +178,8 @@ def run_closed_loop(
                         model = _get_fitted_model(
                             train_X=train_X,
                             train_Y=train_Y,
+                            train_Y_se=train_Y_se,
+                            model=model,
                             max_iter=config.model_max_iter,
                         )
                         best_point, obj, feas = greedy(
@@ -230,6 +234,7 @@ def run_closed_loop(
         Ycovs.append(Ycov)
         train_X = torch.cat(Xs, dim=0)
         train_Y = torch.cat(Ys, dim=0)
+        train_Y_se = torch.cat(Ycovs, dim=0).sqrt()
         failed = True
         # handle errors in model fitting and model evaluation (when selecting best
         # point).
@@ -238,7 +243,11 @@ def run_closed_loop(
                 if verbose:
                     print("---- train")
                 model = _get_fitted_model(
-                    train_X=train_X, train_Y=train_Y, max_iter=config.model_max_iter
+                    train_X=train_X,
+                    train_Y=train_Y,
+                    train_Y_se=train_Y_se,
+                    model=model,
+                    max_iter=config.model_max_iter,
                 )
                 if verbose:
                     print("---- identify")
@@ -273,6 +282,7 @@ def run_benchmark(
     func: Callable[[Tensor], List[Tensor]],
     gen_function: Callable[[int], Tensor],
     config: OptimizeConfig,
+    model: Model,
     objective: Callable[[Tensor], Tensor] = lambda Y: Y,
     constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
     lower_bounds: Optional[Tensor] = None,
@@ -291,6 +301,7 @@ def run_benchmark(
         gen_function: A function n -> X_cand producing n (typically random)
             feasible candidates as a `n x d` tensor X_cand
         config: configuration for the optimization
+        model: an initialized Model. This model must have a likelihood attribute.
         objective: A callable mapping a Tensor of size `b x q x (t)`
             to a Tensor of size `b x q`, where `t` is the number of
             outputs (tasks) of the model. Note: the callable must support broadcasting.
@@ -333,6 +344,7 @@ def run_benchmark(
             func=func,
             gen_function=gen_function,
             config=config,
+            model=model,
             objective=objective,
             constraints=constraints,
             lower_bounds=lower_bounds,
