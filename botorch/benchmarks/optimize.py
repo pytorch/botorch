@@ -31,6 +31,27 @@ class OptimizeConfig(NamedTuple):
     max_retries: int = 0  # number of retries, in the case of exceptions
 
 
+def _get_fitted_model(train_X: Tensor, train_Y: Tensor, max_iter: int) -> Model:
+    """
+    Helper function that returns a model fitted to the provided data.
+
+    Args:
+        train_X: A `n x d` Tensor of points
+        train_Y: A `n x (t)` Tensor of outcomes
+        max_iter: The maximum number of iterations
+    Returns:
+        Model: a fitted model
+    """
+    # TODO: copy over the state_dict from the existing model before
+    # optimization begins
+    likelihood = GaussianLikelihood()  # pyre-ignore [16]
+    model = SingleTaskGP(train_X, train_Y, likelihood)
+    mll = ExactMarginalLogLikelihood(likelihood, model)
+    mll.to(dtype=train_X.dtype, device=train_X.device)
+    mll = fit_model(mll, options={"maxiter": max_iter})
+    return model
+
+
 def greedy(
     X: Tensor,
     model: Model,
@@ -121,7 +142,7 @@ def run_closed_loop(
     # TODO: Add support for multi-task models.
     # TODO: Add support for known observation noise.
     """
-    # TODO: remove exception handling wrapper when model fitting is stabilized
+    # TODO: remove exception handling wrappers when model fitting is stabilized
     Xs = []
     Ys = []
     Ycovs = []
@@ -131,18 +152,43 @@ def run_closed_loop(
     costs = []
     runtime = 0.0
     retry = 0
+    refit_model = False
+
+    best_point: Tensor
+    obj: float
+    feas: float
+    model = None
+    train_X = None
+    train_Y = None
 
     start_time = time()
     X = gen_function(config.initial_points)
-    model = None
-    train_X = None
     for iteration in range(config.n_batch):
-        failed = True
-        while retry <= config.max_retries and failed:
-            try:
-                if verbose:
-                    print("Iteration:", iteration + 1)
-                if iteration > 0:
+        if verbose:
+            print("Iteration:", iteration + 1)
+        if iteration > 0:
+            failed = True
+            while retry <= config.max_retries and failed:
+                try:
+                    # If an exception occured during at evaluation time, then refit
+                    # the model.
+                    if refit_model:
+                        model = _get_fitted_model(
+                            train_X=train_X,
+                            train_Y=train_Y,
+                            max_iter=config.model_max_iter,
+                        )
+                        best_point, obj, feas = greedy(
+                            X=train_X,
+                            model=model,
+                            objective=objective,
+                            constraints=constraints,
+                        )
+                        best[-1] = best_point
+                        best_model_objective[-1] = obj
+                        best_model_feasibility[-1] = feas
+                        costs[-1] = 1.0
+                        refit_model = False
                     # type check for pyre
                     assert isinstance(model, Model)
                     acq_func: BatchAcquisitionFunction = get_acquisition_function(
@@ -167,46 +213,49 @@ def run_closed_loop(
                         options={"maxiter": config.candidate_gen_max_iter},
                     )
                     X = acq_func.extract_candidates(candidates).detach()
-                if verbose:
-                    print("---- evaluate")
-                Y, Ycov = func(X)
-                Xs.append(X.detach())
-                Ys.append(Y.detach())
-                Ycovs.append(Ycov.detach())
-                train_X = torch.cat(Xs, dim=0)
-                train_Y = torch.cat(Ys, dim=0)
+                    failed = False
+                    refit_model = False
+                except Exception:
+                    retry += 1
+                    refit_model = True
+                    if verbose:
+                        print("---- Failed {} times ----".format(retry))
+                    if retry > config.max_retries:
+                        raise
+        if verbose:
+            print("---- evaluate")
+        Y, Ycov = func(X)
+        Xs.append(X)
+        Ys.append(Y)
+        Ycovs.append(Ycov)
+        train_X = torch.cat(Xs, dim=0)
+        train_Y = torch.cat(Ys, dim=0)
+        failed = True
+        # handle errors in model fitting and model evaluation (when selecting best
+        # point).
+        while retry <= config.max_retries and failed:
+            try:
                 if verbose:
                     print("---- train")
-                # TODO: copy over the state_dict from the existing model before
-                # optimization begins
-                likelihood = GaussianLikelihood()  # pyre-ignore [16]
-                model = SingleTaskGP(train_X, train_Y, likelihood)
-                mll = ExactMarginalLogLikelihood(likelihood, model)
-                mll.to(dtype=train_X.dtype, device=train_X.device)
-                mll = fit_model(mll, options={"maxiter": config.model_max_iter})
+                model = _get_fitted_model(
+                    train_X=train_X, train_Y=train_Y, max_iter=config.model_max_iter
+                )
                 if verbose:
                     print("---- identify")
                 best_point, obj, feas = greedy(
                     X=train_X, model=model, objective=objective, constraints=constraints
                 )
-                best.append(best_point)
-                best_model_objective.append(obj)
-                best_model_feasibility.append(feas)
-                costs.append(1.0)
                 failed = False
             except Exception:
                 retry += 1
                 if verbose:
                     print("---- Failed {} times ----".format(retry))
-                Xs = []
-                Ys = []
-                Ycovs = []
-                best = []
-                best_model_objective = []
-                best_model_feasibility = []
-                costs = []
                 if retry > config.max_retries:
                     raise
+        best.append(best_point)
+        best_model_objective.append(obj)
+        best_model_feasibility.append(feas)
+        costs.append(1.0)
     runtime = time() - start_time
     return ClosedLoopOutput(
         Xs=Xs,
