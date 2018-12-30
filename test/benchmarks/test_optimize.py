@@ -6,12 +6,15 @@ from unittest import mock
 import torch
 from botorch.benchmarks.optimize import (
     OptimizeConfig,
+    _get_fitted_model,
     greedy,
     run_benchmark,
     run_closed_loop,
 )
 from botorch.benchmarks.output import BenchmarkOutput, ClosedLoopOutput
+from botorch.models.gp_regression import SingleTaskGP
 from botorch.utils import gen_x_uniform
+from gpytorch.likelihoods import GaussianLikelihood
 
 from ..utils.mock import MockModel, MockPosterior
 
@@ -254,3 +257,20 @@ class TestGreedy(unittest.TestCase):
     def test_greedy_cuda(self):
         if torch.cuda.is_available():
             self.test_greedy(cuda=True)
+
+
+class TestGetFittedModel(unittest.TestCase):
+    @mock.patch("botorch.benchmarks.optimize.fit_model")
+    def test_get_fitted_model(self, mock_fit_model, cuda=False):
+        device = torch.device("cuda") if cuda else torch.device("cpu")
+        for dtype in (torch.float, torch.double):
+            train_X = torch.rand((5, 2), dtype=dtype, device=device)
+            train_Y = torch.rand(5, dtype=dtype, device=device)
+            model = _get_fitted_model(train_X, train_Y, max_iter=1)
+            self.assertIsInstance(model, SingleTaskGP)
+            self.assertIsInstance(model.likelihood, GaussianLikelihood)
+        self.assertEqual(mock_fit_model.call_count, 2)
+
+    def test_get_fitted_model_cuda(self):
+        if torch.cuda.is_available():
+            self.test_get_fitted_model(cuda=True)
