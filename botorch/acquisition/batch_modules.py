@@ -252,6 +252,9 @@ class qKnowledgeGradient(BatchAcquisitionFunction):
         cost: A callable mapping a Tensor of size `b x q x d` to a Tensor of
             size `b x 1`.  The resulting Tensor's value is the cost of submitting
             each t-batch.
+        use_posterior_mean: If True, instead of sampling, the mean of the posterior is
+            sent into the objective and constraints.  Should be used for linear
+            objectives without constraints.
         X_pending: A q' x d Tensor with q' design points that are pending for
             evaluation.
         seed: If seed is provided, do deterministic optimization where the
@@ -269,6 +272,7 @@ class qKnowledgeGradient(BatchAcquisitionFunction):
         inner_mc_samples: int = 1000,
         project: Callable[[Tensor], Tensor] = lambda X: X,
         cost: Optional[Callable[[Tensor], Tensor]] = None,
+        use_posterior_mean: Optional[bool] = False,
         X_pending: Optional[Tensor] = None,
         seed: Optional[int] = None,
     ) -> None:
@@ -281,6 +285,7 @@ class qKnowledgeGradient(BatchAcquisitionFunction):
         self.inner_mc_samples = inner_mc_samples
         self.project = project
         self.cost = cost
+        self.use_posterior_mean = use_posterior_mean
 
         self.inner_old_base_samples = None
         self.inner_new_base_samples = None
@@ -335,6 +340,7 @@ class qKnowledgeGradient(BatchAcquisitionFunction):
                     fantasy_base_samples=self.fantasy_base_samples,
                     project=self.project,
                     cost=self.cost,
+                    use_posterior_mean=self.use_posterior_mean,
                 ).reshape(1)
                 for Xi in Xs
             ]
@@ -372,8 +378,14 @@ class qKnowledgeGradientNoDiscretization(BatchAcquisitionFunction):
         cost: A callable mapping a Tensor of size `b x q x d` to a Tensor of
             size `b x 1`.  The resulting Tensor's value is the cost of submitting
             each t-batch.
+        use_posterior_mean: If True, instead of sampling, the mean of the posterior is
+            sent into the objective and constraints.  Should be used for linear
+            objectives without constraints.
         X_pending: A q' x d Tensor with q' design points that are pending for
             evaluation.
+        seed: If seed is provided, do deterministic optimization where the
+            function to optimize is fixed and not stochastic.  A seed should be
+            provided to this batch module.
 
     """
 
@@ -386,6 +398,7 @@ class qKnowledgeGradientNoDiscretization(BatchAcquisitionFunction):
         inner_mc_samples: int = 100,
         project: Callable[[Tensor], Tensor] = lambda X: X,
         cost: Optional[Callable[[Tensor], Tensor]] = None,
+        use_posterior_mean: Optional[bool] = False,
         X_pending: Optional[Tensor] = None,
         seed: Optional[int] = None,
     ) -> None:
@@ -397,6 +410,7 @@ class qKnowledgeGradientNoDiscretization(BatchAcquisitionFunction):
         self.inner_mc_samples = inner_mc_samples
         self.project = project
         self.cost = cost
+        self.use_posterior_mean = use_posterior_mean
 
         self.inner_old_base_samples = None
         self.inner_new_base_samples = None
@@ -470,6 +484,7 @@ class qKnowledgeGradientNoDiscretization(BatchAcquisitionFunction):
                     fantasy_base_samples=self.fantasy_base_samples,
                     project=self.project,
                     cost=self.cost,
+                    use_posterior_mean=self.use_posterior_mean,
                 ).reshape(1)
                 for Xi in Xs
             ]

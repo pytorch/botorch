@@ -160,6 +160,7 @@ def batch_knowledge_gradient(
     project: Callable[[Tensor], Tensor] = lambda X: X,
     cost: Optional[Callable[[Tensor], Tensor]] = None,
     use_X_for_old_posterior: Optional[bool] = False,
+    use_posterior_mean: Optional[bool] = False,
 ) -> Tensor:
     """Constrained, multi-fidelity knowledge gradient supporting t-batch mode.
 
@@ -170,10 +171,6 @@ def batch_knowledge_gradient(
     *** This will require support for arbitrary batch shapes in gpytorch ***
 
     *** TODO: Check whether soft-maxes help the gradients **
-
-    *** TODO: If there are no constraints and the objective is linear then the
-    inner sampling is unnecessary and just the posterior
-    mean can be used. ***
 
     Args:
         X: A `b x q x d` Tensor with `b` t-batches of `q` design points each.
@@ -219,6 +216,9 @@ def batch_knowledge_gradient(
         use_X_for_old_posterior: If True, concatenate `X` and `X_observed` for
             best point evaluation prior to the new observations. Defaults to
             False such that X is not included.
+        use_posterior_mean: If True, instead of sampling, the mean of the posterior is
+            sent into the objective and constraints.  Should be used for linear
+            objectives without constraints.
 
     Returns:
         Tensor: The constrained q-KG value of the design X for each of the `b`
@@ -232,9 +232,13 @@ def batch_knowledge_gradient(
     old_posterior = model.posterior(
         X_all if use_X_for_old_posterior else project(X_observed)
     )
-    old_samples = old_posterior.rsample(
-        sample_shape=torch.Size([inner_mc_samples]), base_samples=inner_old_base_samples
-    )
+    if use_posterior_mean:
+        old_samples = old_posterior.mean.unsqueeze(0)
+    else:
+        old_samples = old_posterior.rsample(
+            sample_shape=torch.Size([inner_mc_samples]),
+            base_samples=inner_old_base_samples,
+        )
     # Shape of samples is inner_mc_samples x q' x t
     old_obj = objective(old_samples)
     apply_constraints_(
@@ -247,9 +251,11 @@ def batch_knowledge_gradient(
     w = torch.softmax(old_per_point / eta, dim=-1)
     old_value = (old_per_point * w).sum()
 
-    fantasy_model = model.fantasize(
-        X=X, num_samples=mc_samples, base_samples=fantasy_base_samples
+    X_posterior = model.posterior(X=X, observation_noise=True)
+    fantasy_y = X_posterior.rsample(
+        sample_shape=torch.Size([mc_samples]), base_samples=fantasy_base_samples
     )
+    fantasy_model = model.get_fantasy_model(X, fantasy_y)
     # we need to make sure to tell gpytorch not to detach the test caches
     new_posterior = fantasy_model.posterior(X=X_all, detach_test_caches=False)
     # TODO: Tell the posterior to use the same set of Z's for each of the
@@ -258,9 +264,14 @@ def batch_knowledge_gradient(
     # distribution because a different Z is used for each of the fantasies.
     # We can probably safely reuse the same inner_samples x (q + q') x t Z tensor
     # for each of the fantasies. Possible since rsample accepts a base_sample argument.
-    new_samples = new_posterior.rsample(
-        sample_shape=torch.Size([inner_mc_samples]), base_samples=inner_new_base_samples
-    )
+    if use_posterior_mean:
+        new_samples = new_posterior.mean.unsqueeze(0)
+    else:
+        new_samples = new_posterior.rsample(
+            sample_shape=torch.Size([inner_mc_samples]),
+            base_samples=inner_new_base_samples,
+        )
+
     # Shape of new_samples is inner_mc_samples x mc_samples x (q + q') x t
     new_obj = objective(new_samples)
     apply_constraints_(
@@ -295,6 +306,7 @@ def batch_knowledge_gradient_no_discretization(
     eta: float = 1e-3,
     project: Callable[[Tensor], Tensor] = lambda X: X,
     cost: Optional[Callable[[Tensor], Tensor]] = None,
+    use_posterior_mean: Optional[bool] = False,
 ) -> Tensor:
     """Constrained, multi-fidelity knowledge gradient supporting t-batch mode.
 
@@ -307,10 +319,6 @@ def batch_knowledge_gradient_no_discretization(
     *** NOTE: THIS FUNCTION DOES NOT YET SUPPORT t-BATCHES. ***
 
     *** TODO: Check whether soft-maxes help the gradients **
-
-    *** TODO: If there are no constraints and the objective is linear then the
-    sampling is unnecessary and just the posterior
-    mean can be used. ***
 
     Args:
         X: A `b x q x d` Tensor with `b` t-batches of `q` design points each.
@@ -345,6 +353,9 @@ def batch_knowledge_gradient_no_discretization(
         cost: A callable mapping a Tensor of size `b x q x d` to a Tensor of
             size `b x 1`.  The resulting Tensor's value is the cost of submitting
             each t-batch.
+        use_posterior_mean: If True, instead of sampling, the mean of the posterior is
+            sent into the Objective and Constraints.  Should be used for linear
+            objectives without constraints.
 
     Returns:
         Tensor: The q-KG value of the design X averaged across the fantasy models
@@ -355,9 +366,13 @@ def batch_knowledge_gradient_no_discretization(
 
     """
     old_posterior = model.posterior(project(X_old))
-    old_samples = old_posterior.rsample(
-        sample_shape=torch.Size([inner_mc_samples]), base_samples=inner_old_base_samples
-    )
+    if use_posterior_mean:
+        old_samples = old_posterior.mean.unsqueeze(0)
+    else:
+        old_samples = old_posterior.rsample(
+            sample_shape=torch.Size([inner_mc_samples]),
+            base_samples=inner_old_base_samples,
+        )
     # Shape of samples is inner_mc_samples x 1 x t
     old_obj = objective(old_samples)
     apply_constraints_(
@@ -366,9 +381,12 @@ def batch_knowledge_gradient_no_discretization(
     # Shape of obj is inner_mc_samples x 1
     old_value = old_obj.mean()
 
-    fantasy_model = model.fantasize(
-        X=X, num_samples=X_fantasies.shape[0], base_samples=fantasy_base_samples
+    X_posterior = model.posterior(X=X, observation_noise=True)
+    fantasy_y = X_posterior.rsample(
+        sample_shape=torch.Size([X_fantasies.shape[0]]),
+        base_samples=fantasy_base_samples,
     )
+    fantasy_model = model.get_fantasy_model(X, fantasy_y)
     # X_fantasies is q' x d, needs to be q' x 1 x d
     # for batch mode evaluation with q' fantasies
     # we need to make sure to tell gpytorch not to detach the test caches
@@ -382,9 +400,13 @@ def batch_knowledge_gradient_no_discretization(
     # each of the fantasies.  We can probably safely reuse the
     # same inner_samples x 1 x t Z tensor for each of the
     # q' fantasies.  Possible since rsample accepts a base_sample argument.
-    new_samples = new_posterior.rsample(
-        sample_shape=torch.Size([inner_mc_samples]), base_samples=inner_new_base_samples
-    )
+    if use_posterior_mean:
+        new_samples = new_posterior.mean.unsqueeze(0)
+    else:
+        new_samples = new_posterior.rsample(
+            sample_shape=torch.Size([inner_mc_samples]),
+            base_samples=inner_new_base_samples,
+        )
     # Shape of new_samples is
     # inner_mc_samples x q' x 1 x t
     new_obj = objective(new_samples)
