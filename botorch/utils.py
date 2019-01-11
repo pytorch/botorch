@@ -4,6 +4,9 @@ from contextlib import contextmanager
 from typing import Callable, Dict, Generator, List, Optional, Union
 
 import torch
+
+# TODO: Use torch Sobol engine: https://github.com/pytorch/pytorch/pull/10505
+from botorch.qmc.sobol import SobolEngine
 from torch import Tensor
 
 
@@ -11,12 +14,16 @@ def check_convergence(
     loss_trajectory: List[float],
     param_trajectory: Dict[str, List[Tensor]],
     options: Dict[str, Union[float, str]],
-    max_iter: int = 50,
 ) -> bool:
-    """Check convergence of optimization."""
+    """Check convergence of optimization for pytorch optimizers.
+
+    Right now this is just a dummy function and only checks for maxiter.
+
+    """
+    maxiter: int = options.get("maxiter", 50)
     # TODO: Be A LOT smarter about this
     # TODO: Make this work in batch mode (see parallel L-BFGS-P)
-    if len(loss_trajectory) >= max_iter:
+    if len(loss_trajectory) >= maxiter:
         return True
     else:
         return False
@@ -111,17 +118,19 @@ def _expand_bounds(
 ) -> Optional[Tensor]:
     """
     Expand the dimension of bounds if necessary such that the 1st dimension of
-        bounds is the same as the last dimension of X.
+        bounds is the same as the last dimension of `X`.
+
     Args:
         bounds: a bound (either upper or lower) of each column (last dimension)
             of X. If this is a single float, then all columns have the same bound.
         X: `... x d` tensor
 
-    Returns
+    Returns:
+        A tensor of bounds expanded to be compatible with the size of `X` if
+            bounds is not None, and None if bounds is None
 
     """
     if bounds is not None:
-        target = {"dtype": X.dtype, "device": X.device}
         if not torch.is_tensor(bounds):
             bounds = torch.tensor(bounds)
         if len(bounds.shape) == 0:
@@ -134,33 +143,27 @@ def _expand_bounds(
             raise RuntimeError(
                 "Bounds must either be a single value or the same dimension as X"
             )
-        return ebounds.to(**target)
+        return ebounds.to(dtype=X.dtype, device=X.device)
     else:
         return None
 
 
-def gen_x_uniform(n: int, bounds: Tensor) -> Tensor:
-    """
-    Generate random n points within the bounds specified for each column.
+def gen_x_uniform(b: int, q: int, bounds: Tensor) -> Tensor:
+    """Generate `b` random `q`-batches with elements within the specified bounds.
+
     Args:
-        n: The number of points to sample.
-        bounds: A (2 x d) tensor where bounds[0] is contains the lower bounds
-        for each column and bounds[1] contains the upper bounds.
+        n: The number of `q`-batches to sample.
+        q: The size of the `q`-batches.
+        bounds: A `2 x d` tensor where bounds[0] (bounds[1]) contains the lower
+            (upper) bounds for each column.
+
     Returns:
-        Tensor: a (n x d) tensor of points
+        A `b x q x d` tensor with elements uniformly sampled from the box
+            specified by bounds.
+
     """
-    x_ranges = torch.sum(
-        bounds
-        * torch.tensor([-1.0, 1.0], dtype=bounds.dtype, device=bounds.device).view(
-            2, -1
-        ),
-        dim=0,
-    )
-    return (
-        torch.rand((n, bounds.shape[1]), dtype=bounds.dtype, device=bounds.device)
-        * x_ranges
-        + bounds[0]
-    )
+    x_ranges = torch.sum(bounds * torch.tensor([[-1.0], [1.0]]).type_as(bounds), dim=0)
+    return bounds[0] + torch.rand((b, q, bounds.shape[1])).type_as(bounds) * x_ranges
 
 
 def get_objective_weights_transform(
@@ -172,13 +175,15 @@ def get_objective_weights_transform(
         the objective weights. This callable supports broadcasting (e.g.
         for calling on a tensor of shape `mc_samples x b x q x t`. For t=1, the
         objective weight determines the optimization direction.
+
     Args:
         objective_weights: a 1-dimensional Tensor containing a weight for each task.
         If not provided, the identity mapping is used.
+
     Returns:
         Callable[Tensor, Tensor]: transform function using the objective weights
-    """
 
+    """
     if objective_weights is None:
         return lambda Y: Y
     weights = objective_weights.view(-1)
@@ -188,6 +193,37 @@ def get_objective_weights_transform(
         return lambda Y: Y * weights[0]
     # TODO: replace with einsum once performance issues are resolved upstream.
     return lambda Y: torch.sum(Y * weights.view(1, 1, -1), dim=-1)
+
+
+def draw_sobol_samples(
+    bounds: Tensor, n: int, q: int, seed: Optional[int] = None
+) -> Tensor:
+    """Draw qMC samples from the box defined by bounds
+
+    NOTE: This currently uses botorch's own cython SobolEngine. In the future
+        (once perf issues are resolved), this will instead use the native torch
+        implementation from https://github.com/pytorch/pytorch/pull/10505
+
+    Args:
+        bounds: A `2 x d` dimensional tensor specifying box constraints on a
+            `d`-dimensional space, where bounds[0, :] and bounds[1, :] correspond
+            to lower and upper bounds, respectively.
+        n: The number of (q-batch) samples.
+        q: The size of each q-batch.
+        seed: The seed used for initializing Owen scrambling. If None (default),
+            use a random seed.
+
+    Returns:
+        An `n x q x d` tensor `X` of qMC samples from the box defined by bounds
+
+    """
+    d = bounds.shape[-1]
+    lower = bounds[0]
+    rng = bounds[1] - bounds[0]
+    sobol_engine = SobolEngine(d, scramble=True, seed=seed)
+    samples_np = sobol_engine.draw(n * q).reshape(n, q, d)
+    samples_raw = torch.from_numpy(samples_np).type_as(lower)
+    return lower + rng * samples_raw
 
 
 def standardize(X: Tensor) -> Tensor:

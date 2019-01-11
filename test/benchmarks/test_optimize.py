@@ -29,15 +29,16 @@ def get_bounds(cuda, dtype):
 
 
 def get_gen_x(bounds):
-    def gen_x(num_samples):
-        return gen_x_uniform(num_samples, bounds=bounds)
+    def gen_x(b, q):
+        return gen_x_uniform(b, q, bounds=bounds)
 
     return gen_x
 
 
 def test_func(X):
     f_X = torch.sin(X)
-    return (f_X + torch.randn_like(f_X)).view(-1), torch.tensor([])
+    f_X_noisy = f_X + torch.randn_like(f_X)
+    return f_X_noisy, torch.tensor([]).type_as(X)
 
 
 class TestRunClosedLoop(unittest.TestCase):
@@ -47,29 +48,37 @@ class TestRunClosedLoop(unittest.TestCase):
             initial_points=5,
             q=2,
             n_batch=2,
-            candidate_gen_max_iter=3,
-            model_max_iter=3,
+            candidate_gen_maxiter=3,
+            model_maxiter=3,
             num_starting_points=1,
+            num_raw_samples=2,
             max_retries=0,
         )
         self.func = test_func
 
     @mock.patch("botorch.benchmarks.optimize._get_fitted_model")
-    @mock.patch("botorch.benchmarks.optimize.random_restarts")
+    @mock.patch("botorch.benchmarks.optimize.gen_candidates_scipy")
     def test_run_closed_loop(
-        self, mock_random_restarts, mock_get_fitted_model, cuda=False
+        self, mock_gen_candidates_scipy, mock_get_fitted_model, cuda=False
     ):
-        for dtype in [torch.float, torch.double]:
-            bounds = get_bounds(cuda, dtype=dtype)
+        for dtype in (torch.float, torch.double):
+            bounds = get_bounds(cuda=cuda, dtype=dtype)
             tkwargs = {"dtype": dtype, "device": bounds.device}
-            gen_x = get_gen_x(bounds)
-            mock_random_restarts.side_effect = [
-                gen_x(self.config.q) for _ in range(self.config.n_batch - 1)
+
+            def gen_x(b, q):
+                return gen_x_uniform(b, q, bounds=bounds)
+
+            mock_gen_candidates_scipy.side_effect = [
+                (
+                    gen_x(self.config.num_starting_points, self.config.q),
+                    torch.ones(self.config.num_starting_points, **tkwargs),
+                )
+                for _ in range(self.config.n_batch - 1)
             ]
             mean1 = torch.ones(self.config.initial_points, **tkwargs)
-            samples1 = torch.zeros([2, self.config.initial_points], **tkwargs)
+            samples1 = torch.zeros(1, 1, self.config.initial_points, **tkwargs)
             mm1 = MockModel(MockPosterior(mean=mean1, samples=samples1))
-            samples2 = torch.zeros([2, self.config.q], **tkwargs)
+            samples2 = torch.zeros(1, 1, self.config.q, **tkwargs)
             mm2 = MockModel(MockPosterior(samples=samples2))
             mock_get_fitted_model.side_effect = [mm1, mm2]
             # basic test for output shapes and types
@@ -106,8 +115,8 @@ class TestRunBenchmark(unittest.TestCase):
             initial_points=5,
             q=2,
             n_batch=2,
-            candidate_gen_max_iter=3,
-            model_max_iter=3,
+            candidate_gen_maxiter=3,
+            model_maxiter=3,
             num_starting_points=1,
             max_retries=0,
         )
@@ -232,32 +241,69 @@ class TestRunBenchmark(unittest.TestCase):
 class TestGreedy(unittest.TestCase):
     def test_greedy(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
-        for dtype in [torch.float, torch.double]:
+        for dtype in (torch.float, torch.double):
+            X = torch.tensor([1.0, 2.0, 3.0]).unsqueeze(-1)
+            X = X.to(device=device, dtype=dtype)
+            model = MockModel(MockPosterior(samples=X.view(1, 1, -1) * 2))
             # basic test
-            X = torch.tensor([1.0, 2.0, 3.0], device=device, dtype=dtype).view(-1, 1)
-            model = MockModel(MockPosterior(samples=X.view(1, -1) * 2.0))
-            # basic test
-            (best_point, best_obj, feasiblity) = greedy(X=X, model=model)
-            self.assertAlmostEqual(best_point.item(), 3.0, places=6)
-            # interestingly, on the GPU this comparison is not exact
-            self.assertAlmostEqual(best_obj, 6.0, places=6)
-            self.assertAlmostEqual(feasiblity, 1.0, places=6)
+            best_point, best_obj, best_feas = greedy(X=X, model=model)
+            best_point_exp = torch.tensor([3.0]).type_as(X)
+            best_obj_exp = torch.tensor(6.0).type_as(X)
+            best_feas_exp = torch.tensor(1.0).type_as(X)
+            self.assertTrue(torch.equal(best_point, best_point_exp))
+            # interestingly, these are not exactly the same on the GPU
+            self.assertTrue(torch.allclose(best_obj, best_obj_exp))
+            self.assertTrue(torch.allclose(best_feas, best_feas_exp))
             # test objective
-            (best_point2, best_obj2, feasiblity2) = greedy(
+            best_point2, best_obj2, best_feas2 = greedy(
                 X=X, model=model, objective=lambda Y: 0.5 * Y
             )
-            self.assertAlmostEqual(best_point2.item(), 3.0, places=6)
-            self.assertAlmostEqual(best_obj2, 3.0, places=6)
-            self.assertAlmostEqual(feasiblity2, 1.0, places=6)
+            self.assertTrue(torch.equal(best_point2, best_point_exp))
+            self.assertTrue(torch.allclose(best_obj2, 0.5 * best_obj_exp))
+            self.assertTrue(torch.allclose(best_feas2, best_feas_exp))
             # test constraints
-            feasiblity3 = greedy(
+            _, _, best_feas3 = greedy(
                 X=X, model=model, constraints=[lambda Y: torch.ones_like(Y)]
-            )[2]
-            self.assertAlmostEqual(feasiblity3, 0.0, places=6)
+            )
+            best_feas3_exp = torch.tensor(0.0).type_as(X)
+            self.assertTrue(torch.allclose(best_feas3, best_feas3_exp))
 
     def test_greedy_cuda(self):
         if torch.cuda.is_available():
             self.test_greedy(cuda=True)
+
+    def test_greedy_batch(self, cuda=False):
+        device = torch.device("cuda") if cuda else torch.device("cpu")
+        for dtype in (torch.float, torch.double):
+            X = torch.tensor([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]).unsqueeze(-1)
+            X = X.to(device=device, dtype=dtype)
+            model = MockModel(MockPosterior(samples=X.view(1, 2, -1) * 2))
+            # basic test
+            best_point, best_obj, best_feas = greedy(X=X, model=model)
+            best_point_exp = torch.tensor([[3.0], [6.0]]).type_as(X)
+            best_obj_exp = torch.tensor([6.0, 12.0]).type_as(X)
+            best_feas_exp = torch.tensor([1.0, 1.0]).type_as(X)
+            self.assertTrue(torch.equal(best_point, best_point_exp))
+            # interestingly, these are not exactly the same on the GPU
+            self.assertTrue(torch.allclose(best_obj, best_obj_exp))
+            self.assertTrue(torch.allclose(best_feas, best_feas_exp))
+            # test objective
+            best_point2, best_obj2, best_feas2 = greedy(
+                X=X, model=model, objective=lambda Y: 0.5 * Y
+            )
+            self.assertTrue(torch.equal(best_point2, best_point_exp))
+            self.assertTrue(torch.allclose(best_obj2, 0.5 * best_obj_exp))
+            self.assertTrue(torch.allclose(best_feas2, best_feas_exp))
+            # test constraints
+            _, _, best_feas3 = greedy(
+                X=X, model=model, constraints=[lambda Y: torch.ones_like(Y)]
+            )
+            best_feas3_exp = torch.tensor([0.0, 0.0]).type_as(X)
+            self.assertTrue(torch.allclose(best_feas3, best_feas3_exp))
+
+    def test_greedy_batch_cuda(self):
+        if torch.cuda.is_available():
+            self.test_greedy_batch(cuda=True)
 
 
 class TestGetFittedModel(unittest.TestCase):
@@ -280,7 +326,7 @@ class TestGetFittedModel(unittest.TestCase):
                 train_Y=train_Y,
                 train_Y_se=train_Y_se,
                 model=initial_model,
-                max_iter=1,
+                maxiter=1,
             )
             self.assertIsInstance(model, SingleTaskGP)
             self.assertIsInstance(model.likelihood, GaussianLikelihood)
@@ -294,7 +340,7 @@ class TestGetFittedModel(unittest.TestCase):
                 train_Y=train_Y,
                 train_Y_se=train_Y_se,
                 model=initial_model2,
-                max_iter=1,
+                maxiter=1,
             )
             self.assertIsInstance(model2, HeteroskedasticSingleTaskGP)
             self.assertIsInstance(model2.likelihood, _GaussianLikelihoodBase)

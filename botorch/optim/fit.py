@@ -88,8 +88,7 @@ def fit_torch(
         converged = check_convergence(
             loss_trajectory=loss_trajectory,
             param_trajectory=param_trajectory,
-            options={},
-            max_iter=maxiter,
+            options={"maxiter": maxiter},
         )
     return mll, iterations if track_iterations else None
 

@@ -19,12 +19,12 @@ class TestCheckConvergence(unittest.TestCase):
         losses = torch.rand(5).tolist()
         self.assertTrue(
             check_convergence(
-                loss_trajectory=losses, param_trajectory=[], options={}, max_iter=5
+                loss_trajectory=losses, param_trajectory=[], options={"maxiter": 5}
             )
         )
         self.assertFalse(
             check_convergence(
-                loss_trajectory=losses, param_trajectory=[], options={}, max_iter=6
+                loss_trajectory=losses, param_trajectory=[], options={"maxiter": 6}
             )
         )
 
@@ -144,19 +144,23 @@ class TestManualSeed(unittest.TestCase):
 
 
 class TestGenXUniform(unittest.TestCase):
-    def testGenX(self):
-        n = 4
-        bounds = torch.tensor([[0.0, 1.0, 2.0], [1.0, 4.0, 5.0]])
-        X = gen_x_uniform(n, bounds)
-        # Check shape
-        self.assertTrue(X.shape == torch.Size((n, bounds.shape[1])))
-        # Make sure bounds are satisfied
-        self.assertTrue(
-            torch.sum(torch.max(X, dim=0)[0] <= bounds[1]) == bounds.shape[1]
-        )
-        self.assertTrue(
-            torch.sum(torch.min(X, dim=0)[0] >= bounds[0]) == bounds.shape[1]
-        )
+    def setUp(self):
+        self.bounds = torch.tensor([[0.0, 1.0, 2.0, 3.0], [1.0, 4.0, 5.0, 7.0]])
+        self.d = self.bounds.shape[-1]
+
+    def testGenXUniform(self, cuda=False):
+        device = torch.device("cuda") if cuda else torch.device("cpu")
+        for dtype in (torch.float, torch.double):
+            bnds = self.bounds.to(dtype=dtype, device=device)
+            X = gen_x_uniform(2, 3, bnds)
+            self.assertTrue(X.shape == torch.Size([2, 3, self.d]))
+            X_flat = X.view(-1, self.d)
+            self.assertTrue(torch.all(X_flat.max(0)[0] <= bnds[1]))
+            self.assertTrue(torch.all(X_flat.min(0)[0] >= bnds[0]))
+
+    def testGenXUniform_cuda(self):
+        if torch.cuda.is_available():
+            self.testGenXUniform(cuda=True)
 
 
 class TestGetObjectiveWeightsTransform(unittest.TestCase):
