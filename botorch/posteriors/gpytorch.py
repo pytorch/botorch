@@ -2,6 +2,7 @@
 
 from typing import Optional
 
+import gpytorch
 import torch
 from gpytorch.distributions import MultivariateNormal
 from torch import Tensor
@@ -33,7 +34,9 @@ class GPyTorchPosterior(Posterior):
             kwargs = {"base_samples": base_samples}
         elif sample_shape is not None:
             kwargs = {"sample_shape": sample_shape}
-        return self.mvn.rsample(**kwargs)
+        with gpytorch.settings.fast_computations(covar_root_decomposition=False):
+            samples = self.mvn.rsample(**kwargs)
+        return samples
 
     @property
     def mean(self):

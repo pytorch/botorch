@@ -65,7 +65,7 @@ def batch_expected_improvement(
             Note: the callable must support broadcasting.
             Only relevant for multi-task models (`t` > 1).
         mc_samples: The number of Monte-Carlo samples to draw from the model
-            posterior.  Only used if base_samples is not provided.
+            posterior. Only used if base_samples is not provided.
         eta: The temperature parameter of the softmax function used in approximating
             the constraints. As `eta -> 0`, the exact (discontinuous) constraint
             is recovered.

@@ -109,7 +109,6 @@ def gen_candidates_torch(
     upper_bounds: Optional[Union[float, Tensor]] = None,
     optimizer: Type[Optimizer] = torch.optim.Adam,
     options: Optional[Dict[str, Union[float, str]]] = None,
-    max_iter: int = 50,
     verbose: bool = True,
     fixed_features: Optional[Dict[int, Optional[float]]] = None,
 ) -> Tuple[Tensor, Tensor]:
@@ -123,8 +122,8 @@ def gen_candidates_torch(
         upper_bounds: Maximum values for each column of initial_candidates.
         optimizer (Optimizer): The pytorch optimizer to use to perform
             candidate search.
-        options: Options used to control the optimization.
-        max_iter: Maximum number of iterations.
+        options: Options used to control the optimization. Includes
+            maxiter: Maximum number of iterations
         verbose: If True, provide verbose output.
         fixed_features: This is a dictionary of feature indices to values, where
             all generated candidates will have features fixed to these values.
@@ -171,7 +170,24 @@ def gen_candidates_torch(
             loss_trajectory=loss_trajectory,
             param_trajectory=param_trajectory,
             options=options,
-            max_iter=max_iter,
         )
     batch_acquisition = acquisition_function(candidates)
     return candidates, batch_acquisition
+
+
+def get_best_candidates(batch_candidates: Tensor, batch_values: Tensor) -> Tensor:
+    """Extract best (q-batch) candidate from batch of candidates
+
+    Args:
+        batch_candidates: A `b x q x d` tensor of `b` q-batch candidates, or a
+            `b x d` tensor of `b` single-point candidates.
+        batch_values: A tensor with `b` elements containing the value of the
+            respective candidate (higher is better).
+
+    Returns:
+        A tensor of size `q x d` (if q-batch mode) or `d` from batch_candidates
+            with the highest associated value.
+
+    """
+    best = torch.max(batch_values.view(-1), dim=0)[1].item()
+    return batch_candidates[best]
