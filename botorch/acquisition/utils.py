@@ -2,7 +2,6 @@
 
 from typing import Callable, Dict, List, Optional, Union
 
-import torch
 from torch import Tensor
 from torch.nn import Module
 
@@ -50,64 +49,70 @@ def get_acquisition_function(
         seed: if seed is provided, do deterministic optimization where the function to
             optimize is fixed and not stochastic.
         acquisition_function_args: A map containing extra arguments for initializing
-            the acquisition function module. For UCB, this should include beta.
+            the acquisition function module.
+            - beta (for UCB only): default: 2.0
+
     Returns:
         AcquisitionFunction: the acquisition function
     """
+    acquisition_function_args = acquisition_function_args or {}
     if acquisition_function_name == "qEI":
         return qExpectedImprovement(
-            model,
+            model=model,
             best_f=model.posterior(X_observed).mean.max().item(),
             objective=objective,
             constraints=constraints,
             X_pending=X_pending,
             seed=seed,
+            **acquisition_function_args,
         )
     elif acquisition_function_name == "qPI":
         return qProbabilityOfImprovement(
-            model,
+            model=model,
             best_f=model.posterior(X_observed).mean.max().item(),
             objective=objective,
             constraints=constraints,
             X_pending=X_pending,
             seed=seed,
+            **acquisition_function_args,
         )
     elif acquisition_function_name == "qNEI":
         return qNoisyExpectedImprovement(
-            model,
-            X_observed,
+            model=model,
+            X_observed=X_observed,
             objective=objective,
             constraints=constraints,
             X_pending=X_pending,
             seed=seed,
+            **acquisition_function_args,
         )
     elif acquisition_function_name == "qKG":
         return qKnowledgeGradient(
-            model,
-            X_observed,
+            model=model,
+            X_observed=X_observed,
             objective=objective,
             constraints=constraints,
             X_pending=X_pending,
             seed=seed,
+            **acquisition_function_args,
         )
     elif acquisition_function_name == "qUCB":
-        if acquisition_function_args and "beta" in acquisition_function_args:
-            return qUpperConfidenceBound(
-                model,
-                beta=acquisition_function_args["beta"],
-                X_pending=X_pending,
-                seed=seed,
+        if "beta" not in acquisition_function_args:
+            raise ValueError(
+                "Beta must be specified in acquisition_function_args for qUCB."
             )
-        else:
-            print("Beta must be specified in acquisition_function_args for qUCB.")
-            raise ValueError
+        return qUpperConfidenceBound(
+            model=model, X_pending=X_pending, seed=seed, **acquisition_function_args
+        )
+
     elif acquisition_function_name == "qKGNoDiscretization":
         return qKnowledgeGradientNoDiscretization(
-            model,
+            model=model,
             objective=objective,
             constraints=constraints,
             X_pending=X_pending,
             seed=seed,
+            **acquisition_function_args,
         )
     else:
         raise NotImplementedError

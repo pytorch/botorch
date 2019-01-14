@@ -7,7 +7,11 @@ import torch
 from botorch.acquisition import utils
 
 
-def objective(Y):
+def dummy_objective(Y):
+    return Y
+
+
+def dummy_constraint(Y):
     return Y
 
 
@@ -16,102 +20,143 @@ class TestGetAcquisitionFunction(unittest.TestCase):
         self.model = mock.MagicMock()
         self.X_observed = torch.tensor([[1.0, 2.0, 3.0], [2.0, 3.0, 4.0]])
         self.X_pending = torch.tensor([[1.0, 3.0, 4.0]])
+        self.seed = 1
+        self.constraints = [dummy_constraint]
 
     @mock.patch(f"{utils.__name__}.qExpectedImprovement")
     def testGetQEI(self, mock_acquisition):
         acquisition_function = utils.get_acquisition_function(
-            "qEI",
-            self.model,
-            self.X_observed,
-            objective=objective,
-            constraints=None,
+            acquisition_function_name="qEI",
+            model=self.model,
+            X_observed=self.X_observed,
+            objective=dummy_objective,
+            constraints=self.constraints,
             X_pending=self.X_pending,
-            seed=None,
+            seed=self.seed,
             acquisition_function_args=None,
         )
         self.assertTrue(acquisition_function == mock_acquisition.return_value)
         mock_acquisition.assert_called_once_with(
-            self.model,
+            model=self.model,
             best_f=self.model.posterior(self.X_observed).mean.max().item(),
-            objective=objective,
-            constraints=None,
-            seed=None,
+            objective=dummy_objective,
+            constraints=self.constraints,
             X_pending=self.X_pending,
+            seed=self.seed,
         )
 
     @mock.patch(f"{utils.__name__}.qProbabilityOfImprovement")
     def testGetQPI(self, mock_acquisition):
         acquisition_function = utils.get_acquisition_function(
-            "qPI",
-            self.model,
-            self.X_observed,
-            objective=objective,
-            constraints=None,
+            acquisition_function_name="qPI",
+            model=self.model,
+            X_observed=self.X_observed,
+            objective=dummy_objective,
+            constraints=self.constraints,
             X_pending=self.X_pending,
-            seed=None,
+            seed=self.seed,
             acquisition_function_args=None,
         )
         self.assertTrue(acquisition_function == mock_acquisition.return_value)
         mock_acquisition.assert_called_once_with(
-            self.model,
+            model=self.model,
             best_f=self.model.posterior(self.X_observed).mean.max().item(),
-            objective=objective,
-            constraints=None,
+            objective=dummy_objective,
+            constraints=self.constraints,
             X_pending=self.X_pending,
-            seed=None,
+            seed=self.seed,
         )
 
     @mock.patch(f"{utils.__name__}.qNoisyExpectedImprovement")
     def testGetQNEI(self, mock_acquisition):
         acquisition_function = utils.get_acquisition_function(
-            "qNEI",
-            self.model,
-            self.X_observed,
-            objective=objective,
-            constraints=None,
+            acquisition_function_name="qNEI",
+            model=self.model,
+            X_observed=self.X_observed,
+            objective=dummy_objective,
+            constraints=self.constraints,
             X_pending=self.X_pending,
-            seed=None,
+            seed=self.seed,
             acquisition_function_args=None,
         )
         self.assertTrue(acquisition_function == mock_acquisition.return_value)
         mock_acquisition.assert_called_once_with(
-            self.model,
-            self.X_observed,
-            objective=objective,
-            constraints=None,
+            model=self.model,
+            X_observed=self.X_observed,
+            objective=dummy_objective,
+            constraints=self.constraints,
             X_pending=self.X_pending,
-            seed=None,
+            seed=self.seed,
         )
 
     @mock.patch(f"{utils.__name__}.qUpperConfidenceBound")
     def testGetQUCB(self, mock_acquisition):
+
         acquisition_function = utils.get_acquisition_function(
-            "qUCB",
-            self.model,
-            self.X_observed,
-            objective=objective,
-            constraints=None,
+            acquisition_function_name="qUCB",
+            model=self.model,
+            X_observed=self.X_observed,
+            objective=dummy_objective,
+            constraints=self.constraints,
             X_pending=self.X_pending,
-            seed=None,
+            seed=self.seed,
             acquisition_function_args={"beta": 2.0},
         )
         self.assertTrue(acquisition_function == mock_acquisition.return_value)
         mock_acquisition.assert_called_once_with(
-            self.model, beta=2.0, X_pending=self.X_pending, seed=None
+            model=self.model, beta=2.0, X_pending=self.X_pending, seed=self.seed
+        )
+
+    @mock.patch(f"{utils.__name__}.qKnowledgeGradient")
+    def testGetQKG(self, mock_acquisition):
+        acquisition_function = utils.get_acquisition_function(
+            acquisition_function_name="qKG",
+            model=self.model,
+            X_observed=self.X_observed,
+            objective=dummy_objective,
+            constraints=self.constraints,
+            X_pending=self.X_pending,
+            seed=self.seed,
+        )
+        self.assertTrue(acquisition_function == mock_acquisition.return_value)
+        mock_acquisition.assert_called_once_with(
+            model=self.model,
+            X_observed=self.X_observed,
+            objective=dummy_objective,
+            constraints=self.constraints,
+            X_pending=self.X_pending,
+            seed=self.seed,
+        )
+
+    @mock.patch(f"{utils.__name__}.qKnowledgeGradientNoDiscretization")
+    def testGetQKGNoDiscretization(self, mock_acquisition):
+        acquisition_function = utils.get_acquisition_function(
+            acquisition_function_name="qKGNoDiscretization",
+            model=self.model,
+            X_observed=self.X_observed,
+            objective=dummy_objective,
+            constraints=self.constraints,
+            X_pending=self.X_pending,
+            seed=self.seed,
+        )
+        self.assertTrue(acquisition_function == mock_acquisition.return_value)
+        mock_acquisition.assert_called_once_with(
+            model=self.model,
+            objective=dummy_objective,
+            constraints=self.constraints,
+            X_pending=self.X_pending,
+            seed=self.seed,
         )
 
     def testGetQUCBNoBeta(self):
         self.assertRaises(
             ValueError,
             utils.get_acquisition_function,
-            "qUCB",
-            self.model,
-            self.X_observed,
-            objective=objective,
-            constraints=None,
+            acquisition_function_name="qUCB",
+            model=self.model,
+            X_observed=self.X_observed,
+            objective=dummy_objective,
             X_pending=self.X_pending,
-            seed=None,
-            acquisition_function_args={},
         )
 
     def testGetAcquisitionNotImplemented(self):
@@ -121,8 +166,29 @@ class TestGetAcquisitionFunction(unittest.TestCase):
             "qES",
             self.model,
             self.X_observed,
-            objective=objective,
-            constraints=None,
+            objective=dummy_objective,
             X_pending=self.X_pending,
-            seed=None,
+        )
+
+    @mock.patch(f"{utils.__name__}.qExpectedImprovement")
+    def testAcquisitionFunctionArgs(self, mock_acquisition):
+        acquisition_function = utils.get_acquisition_function(
+            acquisition_function_name="qEI",
+            model=self.model,
+            X_observed=self.X_observed,
+            objective=dummy_objective,
+            constraints=self.constraints,
+            X_pending=self.X_pending,
+            acquisition_function_args={"mc_samples": 2},
+            seed=self.seed,
+        )
+        self.assertTrue(acquisition_function == mock_acquisition.return_value)
+        mock_acquisition.assert_called_once_with(
+            model=self.model,
+            mc_samples=2,
+            best_f=self.model.posterior(self.X_observed).mean.max().item(),
+            objective=dummy_objective,
+            constraints=self.constraints,
+            X_pending=self.X_pending,
+            seed=self.seed,
         )
