@@ -19,14 +19,14 @@ class GPyTorchPosterior(Posterior):
         sample_shape: Optional[torch.Size] = None,
         base_samples: Optional[Tensor] = None,
     ) -> Tensor:
-        """
-            We follow the convention of GPyTorch which
-            gives base_samples priority over sample_shape,
-            but we also check that sample_shape agrees
-            with base_samples.
+        """Sample from the posterior
+
+        We follow the convention of GPyTorch which gives base_samples priority
+        over sample_shape, but we also check that sample_shape agrees with
+        base_samples.
         """
         if sample_shape is not None and base_samples is not None:
-            if tuple(base_samples.shape[: len(sample_shape)]) != tuple(sample_shape):
+            if base_samples.shape[: len(sample_shape)] != sample_shape:
                 raise RuntimeError("Sample shape disagrees with base_samples.")
         if sample_shape is None and base_samples is None:
             kwargs = {}

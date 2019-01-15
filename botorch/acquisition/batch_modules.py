@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from abc import abstractmethod
 from typing import Callable, List, Optional
 
 import torch
@@ -42,11 +43,12 @@ class BatchAcquisitionFunction(AcquisitionFunction):
         self.base_samples = None
         self.base_samples_q_batch_size = None
 
+    @abstractmethod
     def _forward(self, X: Tensor) -> Tensor:
         """Takes in a `b x q x d` X Tensor of `b` t-batches with `q`
         `d`-dimensional design points each, and returns a one-dimensional Tensor
         with `b` elements."""
-        raise NotImplementedError("BatchAcquisitionFunction cannot be used directly")
+        pass
 
     def forward(self, X: Tensor) -> Tensor:
         """Takes in a `b x q x d` X Tensor of `b` t-batches with `q`
