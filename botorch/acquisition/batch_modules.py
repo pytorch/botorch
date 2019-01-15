@@ -302,9 +302,13 @@ class qKnowledgeGradient(BatchAcquisitionFunction):
         self.fantasy_base_samples = construct_base_samples_from_posterior(
             posterior=posterior, num_samples=self.mc_samples, seed=self.seed
         )[0]
-
         X_all = torch.cat([X, self.X_observed], dim=-2)
-        fantasy_model = self.model.fantasize(X=X, num_samples=self.mc_samples)
+        X_posterior = self.model.posterior(X=X, observation_noise=True)
+        fantasy_y = X_posterior.rsample(
+            sample_shape=torch.Size([self.mc_samples]),
+            base_samples=self.fantasy_base_samples,
+        )
+        fantasy_model = self.model.get_fantasy_model(inputs=X, targets=fantasy_y)
         new_posterior = fantasy_model.posterior(
             X_all.unsqueeze(0).repeat(self.mc_samples, 1, 1)
         )
@@ -432,10 +436,12 @@ class qKnowledgeGradientNoDiscretization(BatchAcquisitionFunction):
         self.fantasy_base_samples = construct_base_samples_from_posterior(
             posterior=posterior, num_samples=X_fantasies.shape[0], seed=self.seed
         )[0]
-
-        fantasy_model = self.model.fantasize(
-            X=X_actual, num_samples=X_fantasies.shape[0]
+        X_posterior = self.model.posterior(X=X_actual, observation_noise=True)
+        fantasy_y = X_posterior.rsample(
+            sample_shape=torch.Size([X_fantasies.shape[0]]),
+            base_samples=self.fantasy_base_samples,
         )
+        fantasy_model = self.model.get_fantasy_model(inputs=X, targets=fantasy_y)
         new_posterior = fantasy_model.posterior(X_fantasies.unsqueeze(1))
         self.inner_new_base_samples = construct_base_samples_from_posterior(
             posterior=new_posterior, num_samples=self.inner_mc_samples, seed=self.seed

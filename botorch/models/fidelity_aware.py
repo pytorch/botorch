@@ -175,7 +175,7 @@ class FidelityAwareSingleTaskGP(ExactGP, GPyTorchModel):
             train_Y_se=train_Y_se,
             phi_idcs=self._phi_idcs,
             phi_func=noise_covar._phi_func,
-        )
+        ).to(dtype=train_X.dtype, device=train_X.device)
         return _load_fantasy_state_dict(model=fantasy_model, state_dict=state_dict)
 
     def reinitialize(
