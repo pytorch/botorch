@@ -14,7 +14,6 @@ from gpytorch.priors import GammaPrior
 from torch import Tensor
 from torch.nn.functional import softplus
 
-from .fantasy_utils import _get_fantasy_state, _load_fantasy_state_dict
 from .gp_regression import SingleTaskGP
 from .gpytorch import GPyTorchModel
 
@@ -149,34 +148,6 @@ class FidelityAwareSingleTaskGP(ExactGP, GPyTorchModel):
         mean_x = self.mean_module(x)
         covar_x = self.covar_module(x)
         return MultivariateNormal(mean_x, covar_x)
-
-    def fantasize(
-        self, X: Tensor, num_samples: int, base_samples: Optional[Tensor] = None
-    ) -> "FidelityAwareSingleTaskGP":
-        state_dict, train_X, train_Y = _get_fantasy_state(
-            model=self, X=X, num_samples=num_samples, base_samples=base_samples
-        )
-        noise_covar = self.likelihood.noise_covar
-        train_Y_log_var = noise_covar.noise_model.train_targets
-        # for now use mean prediction for noise
-        noise_fantasies = noise_covar(X).diag()
-        # TODO: Use variance of noise predictions for fantasizing
-        tYlv = torch.cat(
-            [
-                train_Y_log_var.expand(num_samples, -1),
-                noise_fantasies.expand(num_samples, -1),
-            ],
-            dim=-1,
-        )
-        train_Y_se = torch.exp(0.5 * tYlv)
-        fantasy_model = FidelityAwareSingleTaskGP(
-            train_X=train_X,
-            train_Y=train_Y,
-            train_Y_se=train_Y_se,
-            phi_idcs=self._phi_idcs,
-            phi_func=noise_covar._phi_func,
-        ).to(dtype=train_X.dtype, device=train_X.device)
-        return _load_fantasy_state_dict(model=fantasy_model, state_dict=state_dict)
 
     def reinitialize(
         self, train_X: Tensor, train_Y: Tensor, train_Y_se: Optional[Tensor] = None
