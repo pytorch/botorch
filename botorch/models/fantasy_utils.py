@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from copy import deepcopy
+from itertools import chain
 from typing import Dict, Optional, Tuple
 
 import torch
@@ -65,9 +66,7 @@ def _load_fantasy_state_dict(
 ) -> GPyTorchModel:
     state_dict = deepcopy(state_dict)
     # load the (shared) hyperparameters, make sure to adjust size appropriately
-    for k, v in model.named_parameters():
-        state_dict[k] = state_dict[k].expand_as(v)
-    for k, v in model.named_buffers():
+    for k, v in chain(model.named_parameters(), model.named_buffers()):
         state_dict[k] = state_dict[k].expand_as(v)
     model.load_state_dict(state_dict)
     model.eval()

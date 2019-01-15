@@ -70,7 +70,7 @@ class SingleTaskGP(ExactGP, GPyTorchModel):
         )
         fantasy_model = SingleTaskGP(
             train_X=train_X, train_Y=train_Y, likelihood=deepcopy(self.likelihood)
-        )
+        ).to(dtype=train_X.dtype, device=train_X.device)
         return _load_fantasy_state_dict(model=fantasy_model, state_dict=state_dict)
 
     def reinitialize(
@@ -119,7 +119,7 @@ class HeteroskedasticSingleTaskGP(SingleTaskGP):
         train_Y_se = torch.exp(0.5 * tYlv)
         fantasy_model = self.__class__(
             train_X=train_X, train_Y=train_Y, train_Y_se=train_Y_se
-        )
+        ).to(dtype=train_X.dtype, device=train_X.device)
         return _load_fantasy_state_dict(model=fantasy_model, state_dict=state_dict)
 
     def reinitialize(
