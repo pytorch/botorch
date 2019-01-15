@@ -20,7 +20,6 @@ from gpytorch.priors.torch_priors import GammaPrior
 from torch import Tensor
 from torch.nn.functional import softplus
 
-from .fantasy_utils import _get_fantasy_state, _load_fantasy_state_dict
 from .gpytorch import GPyTorchModel
 
 
@@ -62,17 +61,6 @@ class SingleTaskGP(ExactGP, GPyTorchModel):
         covar_x = self.covar_module(x)
         return MultivariateNormal(mean_x, covar_x)
 
-    def fantasize(
-        self, X: Tensor, num_samples: int, base_samples: Optional[Tensor] = None
-    ) -> "SingleTaskGP":
-        state_dict, train_X, train_Y = _get_fantasy_state(
-            model=self, X=X, num_samples=num_samples, base_samples=base_samples
-        )
-        fantasy_model = SingleTaskGP(
-            train_X=train_X, train_Y=train_Y, likelihood=deepcopy(self.likelihood)
-        ).to(dtype=train_X.dtype, device=train_X.device)
-        return _load_fantasy_state_dict(model=fantasy_model, state_dict=state_dict)
-
     def reinitialize(
         self, train_X: Tensor, train_Y: Tensor, train_Y_se: Optional[Tensor] = None
     ) -> None:
@@ -97,30 +85,6 @@ class HeteroskedasticSingleTaskGP(SingleTaskGP):
         )
         likelihood = _GaussianLikelihoodBase(HeteroskedasticNoise(noise_model))
         super().__init__(train_X=train_X, train_Y=train_Y, likelihood=likelihood)
-
-    def fantasize(
-        self, X: Tensor, num_samples: int, base_samples: Optional[Tensor] = None
-    ) -> "HeteroskedasticSingleTaskGP":
-        state_dict, train_X, train_Y = _get_fantasy_state(
-            model=self, X=X, num_samples=num_samples, base_samples=base_samples
-        )
-        noise_covar = self.likelihood.noise_covar
-        train_Y_log_var = noise_covar.noise_model.train_targets
-        # for now use the mean predictions for all noise "samples"
-        # TODO: Sample from noise posterior
-        noise_fantasies = noise_covar(X).diag()
-        tYlv = torch.cat(
-            [
-                train_Y_log_var.expand(num_samples, -1),
-                noise_fantasies.expand(num_samples, -1),
-            ],
-            dim=1,
-        )
-        train_Y_se = torch.exp(0.5 * tYlv)
-        fantasy_model = self.__class__(
-            train_X=train_X, train_Y=train_Y, train_Y_se=train_Y_se
-        ).to(dtype=train_X.dtype, device=train_X.device)
-        return _load_fantasy_state_dict(model=fantasy_model, state_dict=state_dict)
 
     def reinitialize(
         self, train_X: Tensor, train_Y: Tensor, train_Y_se: Optional[Tensor] = None

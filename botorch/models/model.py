@@ -28,11 +28,6 @@ class Model(ABC):
     ) -> Posterior:
         raise NotImplementedError
 
-    def fantasize(
-        self, X: Tensor, num_samples: int, base_samples: Optional[Tensor] = None
-    ) -> "Model":
-        raise NotImplementedError
-
     def reinitialize(
         self, train_X: Tensor, train_Y: Tensor, train_Y_se: Optional[Tensor] = None
     ) -> None:
