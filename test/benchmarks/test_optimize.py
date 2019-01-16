@@ -4,14 +4,19 @@ import unittest
 from unittest import mock
 
 import torch
+from botorch.benchmarks.config import AcquisitionFunctionConfig, OptimizeConfig
 from botorch.benchmarks.optimize import (
-    OptimizeConfig,
+    _fit_model_and_get_best_point,
     _get_fitted_model,
     greedy,
     run_benchmark,
     run_closed_loop,
 )
-from botorch.benchmarks.output import BenchmarkOutput, ClosedLoopOutput
+from botorch.benchmarks.output import (
+    BenchmarkOutput,
+    ClosedLoopOutput,
+    _ModelBestPointOutput,
+)
 from botorch.models.gp_regression import HeteroskedasticSingleTaskGP, SingleTaskGP
 from botorch.utils import gen_x_uniform
 from gpytorch.likelihoods import (
@@ -43,16 +48,18 @@ def test_func(X):
 
 class TestRunClosedLoop(unittest.TestCase):
     def setUp(self):
-        self.config = OptimizeConfig(
-            acquisition_function_name="qEI",
+        self.optim_config = OptimizeConfig(
             initial_points=5,
             q=2,
-            n_batch=2,
+            n_batch=1,
             candidate_gen_maxiter=3,
             model_maxiter=3,
             num_starting_points=1,
             num_raw_samples=2,
             max_retries=0,
+        )
+        self.acq_func_config = AcquisitionFunctionConfig(
+            name="qEI", args={"mc_samples": 20}
         )
         self.func = test_func
 
@@ -70,38 +77,58 @@ class TestRunClosedLoop(unittest.TestCase):
 
             mock_gen_candidates_scipy.side_effect = [
                 (
-                    gen_x(self.config.num_starting_points, self.config.q),
-                    torch.ones(self.config.num_starting_points, **tkwargs),
+                    gen_x(self.optim_config.num_starting_points, self.optim_config.q),
+                    torch.ones(self.optim_config.num_starting_points, **tkwargs),
                 )
-                for _ in range(self.config.n_batch - 1)
+                for _ in range(self.optim_config.n_batch)
             ]
-            mean1 = torch.ones(self.config.initial_points, **tkwargs)
-            samples1 = torch.zeros(1, 1, self.config.initial_points, **tkwargs)
+            X = torch.zeros((self.optim_config.initial_points, 1), **tkwargs)
+            Y, Ycov = self.func(X)
+            mean1 = torch.ones(self.optim_config.initial_points, **tkwargs)
+            samples1 = torch.zeros(1, 1, self.optim_config.initial_points, **tkwargs)
             mm1 = MockModel(MockPosterior(mean=mean1, samples=samples1))
-            samples2 = torch.zeros(1, 1, self.config.q, **tkwargs)
+            samples2 = torch.zeros(1, 1, self.optim_config.q, **tkwargs)
             mm2 = MockModel(MockPosterior(samples=samples2))
             mock_get_fitted_model.side_effect = [mm1, mm2]
             # basic test for output shapes and types
+            best_point = X[0].view(-1, 1)
+            obj = torch.tensor(0.0, **tkwargs)
+            feas = torch.tensor(1.0, **tkwargs)
+            output = ClosedLoopOutput(
+                Xs=[X],
+                Ys=[Y],
+                Ycovs=[Ycov],
+                best=[best_point],
+                best_model_objective=[obj],
+                best_model_feasibility=[feas],
+                costs=[1.0],
+                runtimes=[1.0],
+            )
             output = run_closed_loop(
                 func=self.func,
-                gen_function=gen_x,
-                config=self.config,
+                acq_func_config=self.acq_func_config,
+                optim_config=self.optim_config,
                 model=mm1,
+                output=output,
                 lower_bounds=bounds[0],
                 upper_bounds=bounds[1],
             )
-            self.assertTrue(isinstance(output, ClosedLoopOutput))
             self.assertEqual(len(output.Xs), 2)
-            self.assertEqual(output.Xs[0].shape[0], self.config.initial_points)
-            self.assertEqual(output.Xs[1].shape[0], self.config.q)
+            self.assertEqual(output.Xs[0].shape[0], self.optim_config.initial_points)
+            self.assertEqual(output.Xs[1].shape[0], self.optim_config.q)
             self.assertEqual(len(output.Ys), 2)
-            self.assertEqual(output.Ys[0].shape[0], self.config.initial_points)
-            self.assertEqual(output.Ys[1].shape[0], self.config.q)
+            self.assertEqual(output.Ys[0].shape[0], self.optim_config.initial_points)
+            self.assertEqual(output.Ys[1].shape[0], self.optim_config.q)
             self.assertEqual(len(output.best), 2)
+            self.assertEqual(output.best[1].shape, best_point.shape)
             self.assertEqual(len(output.best_model_objective), 2)
+            self.assertEqual(output.best_model_objective[1].shape, obj.shape)
             self.assertEqual(len(output.best_model_feasibility), 2)
-            self.assertEqual(output.costs, [1.0 for _ in range(self.config.n_batch)])
-            self.assertTrue(output.runtime > 0.0)
+            self.assertEqual(output.best_model_feasibility[1].shape, feas.shape)
+            self.assertEqual(
+                output.costs, [1.0 for _ in range(self.optim_config.n_batch + 1)]
+            )
+            self.assertEqual(len(output.runtimes), 2)
 
     def test_run_closed_loop_cuda(self):
         if torch.cuda.is_available():
@@ -110,28 +137,32 @@ class TestRunClosedLoop(unittest.TestCase):
 
 class TestRunBenchmark(unittest.TestCase):
     def setUp(self):
-        self.config = OptimizeConfig(
-            acquisition_function_name="qEI",
+        self.optim_config = OptimizeConfig(
             initial_points=5,
             q=2,
             n_batch=2,
             candidate_gen_maxiter=3,
             model_maxiter=3,
             num_starting_points=1,
+            num_raw_samples=2,
             max_retries=0,
         )
+        self.acq_func_configs = {
+            "test_qEI": AcquisitionFunctionConfig(name="qEI", args={"mc_samples": 20})
+        }
         self.func = lambda X: (X + 0.25, torch.tensor([]))
         self.global_optimum = 5.0
 
+    @mock.patch("botorch.benchmarks.optimize._fit_model_and_get_best_point")
     @mock.patch("botorch.benchmarks.optimize.run_closed_loop")
-    def test_run_benchmark(self, mock_run_closed_loop, cuda=False):
+    def test_run_benchmark(
+        self, mock_run_closed_loop, mock_fit_model_and_get_best_point, cuda=False
+    ):
         for dtype in [torch.float, torch.double]:
             bounds = get_bounds(cuda, dtype=dtype)
             tkwargs = {"dtype": dtype, "device": bounds.device}
-            Xs = [
-                torch.tensor([-1.0, 0.0], **tkwargs).view(-1, 1),
-                torch.tensor([1.0, 0.0], **tkwargs).view(-1, 1),
-            ]
+            init_X = torch.tensor([-1.0, 0.0], **tkwargs).view(-1, 1)
+            Xs = [init_X, torch.tensor([1.0, 0.0], **tkwargs).view(-1, 1)]
             Ys = []
             best_model_objective = []
             best_model_feasibility = []
@@ -139,6 +170,7 @@ class TestRunBenchmark(unittest.TestCase):
             costs = []
             for X in Xs:
                 Ys.append(X + 0.5)
+                Ycovs = torch.zeros_like(Ys[-1])
                 best_obj, best_idx = torch.max(X, dim=0)
                 best_model_objective.append(best_obj.item())
                 best.append(X[best_idx])
@@ -147,27 +179,34 @@ class TestRunBenchmark(unittest.TestCase):
             closed_loop_output = ClosedLoopOutput(
                 Xs=Xs,
                 Ys=Ys,
-                Ycovs=[],
+                Ycovs=Ycovs,
                 best=best,
                 best_model_objective=best_model_objective,
                 best_model_feasibility=best_model_feasibility,
                 costs=costs,
-                runtime=1.0,
+                runtimes=[1.0],
             )
             mock_run_closed_loop.return_value = closed_loop_output
-            gen_x = get_gen_x(bounds)
             model = MockModel(posterior=MockPosterior())
-            outputs = run_benchmark(
-                func=self.func,
-                gen_function=gen_x,
-                config=self.config,
+            mock_fit_model_and_get_best_point.return_value = _ModelBestPointOutput(
                 model=model,
+                best_point=best[0],
+                obj=best_model_objective[0],
+                feas=1.0,
+                retry=0,
+            )
+            outputs_dict = run_benchmark(
+                func=self.func,
+                acq_func_configs=self.acq_func_configs,
+                optim_config=self.optim_config,
+                initial_model=model,
                 lower_bounds=bounds[0],
                 upper_bounds=bounds[1],
                 num_runs=2,
                 true_func=self.func,
                 global_optimum=self.global_optimum,
             )
+            outputs = outputs_dict["test_qEI"]
             self.assertTrue(isinstance(outputs, BenchmarkOutput))
             # Check 2 trials
             self.assertEqual(len(outputs.Xs), 2)
@@ -199,11 +238,11 @@ class TestRunBenchmark(unittest.TestCase):
                 )
             )
             # test modifying the objective
-            outputs2 = run_benchmark(
+            outputs_dict2 = run_benchmark(
                 func=self.func,
-                gen_function=gen_x,
-                config=self.config,
-                model=model,
+                acq_func_configs=self.acq_func_configs,
+                optim_config=self.optim_config,
+                initial_model=model,
                 objective=lambda Y: Y + 0.1,
                 lower_bounds=bounds[0],
                 upper_bounds=bounds[1],
@@ -212,15 +251,16 @@ class TestRunBenchmark(unittest.TestCase):
             expected_best_true_objective2 = torch.tensor([0.35, 1.35], **tkwargs)
             self.assertTrue(
                 torch.equal(
-                    outputs2.best_true_objective[0], expected_best_true_objective2
+                    outputs_dict2["test_qEI"].best_true_objective[0],
+                    expected_best_true_objective2,
                 )
             )
             # test constraints
-            outputs3 = run_benchmark(
+            outputs_dict3 = run_benchmark(
                 func=self.func,
-                gen_function=gen_x,
-                config=self.config,
-                model=model,
+                acq_func_configs=self.acq_func_configs,
+                optim_config=self.optim_config,
+                initial_model=model,
                 constraints=[lambda Y: torch.ones_like(Y)],
                 lower_bounds=bounds[0],
                 upper_bounds=bounds[1],
@@ -229,7 +269,8 @@ class TestRunBenchmark(unittest.TestCase):
             expected_best_true_feasibility = torch.zeros(2, **tkwargs)
             self.assertTrue(
                 torch.equal(
-                    outputs3.best_true_feasibility[0], expected_best_true_feasibility
+                    outputs_dict3["test_qEI"].best_true_feasibility[0],
+                    expected_best_true_feasibility,
                 )
             )
 
@@ -352,3 +393,64 @@ class TestGetFittedModel(unittest.TestCase):
     def test_get_fitted_model_cuda(self):
         if torch.cuda.is_available():
             self.test_get_fitted_model(cuda=True)
+
+
+class TestFitModelAndGetBestPoint(unittest.TestCase):
+    @mock.patch("botorch.benchmarks.optimize.greedy")
+    @mock.patch("botorch.benchmarks.optimize._get_fitted_model")
+    def test_fit_model_and_get_best_point(
+        self, mock_get_fitted_model, mock_greedy, cuda=False
+    ):
+        device = torch.device("cuda") if cuda else torch.device("cpu")
+        for dtype in (torch.float, torch.double):
+            train_X = torch.rand((5, 2), dtype=dtype, device=device)
+            train_Y = torch.rand(5, dtype=dtype, device=device)
+            train_Y_se = torch.rand(5, dtype=dtype, device=device)
+            likelihood = GaussianLikelihood()
+            model = SingleTaskGP(
+                train_X=train_X, train_Y=train_Y, likelihood=likelihood
+            )
+            mock_get_fitted_model.return_value = model
+            exp_best_point = train_X[0]
+            exp_obj = torch.tensor(2.0, dtype=dtype, device=device)
+            exp_feas = torch.tensor(1.0, dtype=dtype, device=device)
+            mock_greedy.return_value = (exp_best_point, exp_obj, exp_feas)
+
+            def objective(Y):
+                return lambda Y: Y
+
+            constraints = [lambda Y: torch.ones_like(Y)]
+            model_and_best_point_output = _fit_model_and_get_best_point(
+                train_X=train_X,
+                train_Y=train_Y,
+                train_Y_se=train_Y_se,
+                model=model,
+                max_retries=0,
+                maxiter=1,
+                verbose=False,
+                objective=objective,
+                constraints=constraints,
+                retry=0,
+            )
+
+            call_args = mock_get_fitted_model.call_args[-1]
+            self.assertTrue(torch.equal(call_args["train_X"], train_X))
+            self.assertTrue(torch.equal(call_args["train_Y"], train_Y))
+            self.assertTrue(torch.equal(call_args["train_Y_se"], train_Y_se))
+            self.assertEqual(call_args["model"], model)
+            self.assertEqual(call_args["maxiter"], 1)
+            greedy_call_args = mock_greedy.call_args[-1]
+            self.assertTrue(torch.equal(greedy_call_args["X"], train_X))
+            self.assertEqual(greedy_call_args["model"], model)
+            self.assertEqual(greedy_call_args["objective"], objective)
+            self.assertEqual(greedy_call_args["constraints"], constraints)
+            self.assertTrue(
+                torch.equal(model_and_best_point_output.best_point, exp_best_point)
+            )
+            self.assertTrue(torch.equal(model_and_best_point_output.obj, exp_obj))
+            self.assertTrue(torch.equal(model_and_best_point_output.feas, exp_feas))
+            self.assertEqual(model_and_best_point_output.retry, 0)
+
+    def test_fit_model_and_get_best_point_cuda(self):
+        if torch.cuda.is_available():
+            self.test_fit_model_and_get_best_point(cuda=True)

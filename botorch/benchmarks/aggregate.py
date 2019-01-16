@@ -18,8 +18,7 @@ def aggregate_benchmark(output: BenchmarkOutput) -> AggregatedBenchmarkOutput:
     X = output.Xs[0][0]
     tkwargs = {"dtype": X.dtype, "device": X.device}  # pyre-ignore [16]
     best_model_feasibility = torch.tensor(output.best_model_feasibility, **tkwargs)
-
-    runtime = torch.tensor(output.runtime, **tkwargs)
+    runtimes = torch.tensor(output.runtimes, **tkwargs)
     trial_X = output.Xs[0]
     batch_iterations = torch.tensor(
         [len(trial_X[i]) for i in range(len(trial_X))],
@@ -38,9 +37,9 @@ def aggregate_benchmark(output: BenchmarkOutput) -> AggregatedBenchmarkOutput:
     true_pfeas_var = true_pfeas * (1 - true_pfeas) / best_true_feasibility.shape[0]
 
     return AggregatedBenchmarkOutput(
-        num_trials=runtime.shape[0],
-        mean_runtime=runtime.mean(dim=0).item(),
-        var_runtime=runtime.var(dim=0).item(),
+        num_trials=runtimes.shape[0],
+        mean_runtime=runtimes.mean(dim=0),
+        var_runtime=runtimes.var(dim=0),
         batch_iterations=batch_iterations,
         mean_best_model_objective=best_model_objective.mean(dim=0),
         var_best_model_objective=best_model_objective.var(dim=0),

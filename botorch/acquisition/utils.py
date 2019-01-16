@@ -24,7 +24,7 @@ def get_acquisition_function(
     constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
     X_pending: Optional[Tensor] = None,
     seed: Optional[int] = None,
-    acquisition_function_args: Optional[Dict[str, Union[float, int]]] = None,
+    acquisition_function_args: Optional[Dict[str, Union[bool, float, int]]] = None,
 ) -> Module:
     """
     Initializes and returns the AcquisitionFunction module.
