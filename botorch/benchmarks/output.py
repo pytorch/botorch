@@ -2,8 +2,12 @@
 
 from typing import List, NamedTuple, Optional
 
-import torch
 from torch import Tensor
+
+from ..models.model import Model
+
+
+# TODO: replace NamedTuple output containers with dataclass in py3.7+: T39170426
 
 
 class ClosedLoopOutput(NamedTuple):
@@ -19,7 +23,7 @@ class ClosedLoopOutput(NamedTuple):
     best_model_objective: List[float]  # iteration
     best_model_feasibility: List[float]  # iteration
     costs: List[float]  # iteration
-    runtime: float
+    runtimes: List[float]  # iteration
     weights: Optional[List[Tensor]] = None  # iteration x q_i
 
 
@@ -33,7 +37,7 @@ class BenchmarkOutput(NamedTuple):
     best_model_objective: List[List[float]]  # run x iteration
     best_model_feasibility: List[List[float]]  # run x iteration
     costs: List[List[float]]  # run x iteration
-    runtime: List[float]  # run
+    runtimes: List[List[float]]  # run x iteration
     best_true_objective: List[Tensor]  # run x iteration
     best_true_feasibility: List[Tensor]  # run x iteration
     regrets: List[Tensor]  # run x iteration (regret of the q-batch)
@@ -45,20 +49,28 @@ class AggregatedBenchmarkOutput(NamedTuple):
     """Container for a summary of benchmark output across trials."""
 
     num_trials: int
-    mean_runtime: float
-    var_runtime: float
-    batch_iterations: Tensor = torch.tensor([])
-    mean_best_model_objective: Tensor = torch.tensor([])
-    var_best_model_objective: Tensor = torch.tensor([])
-    mean_best_model_feasibility: Tensor = torch.tensor([])
-    var_best_model_feasibility: Tensor = torch.tensor([])
-    mean_best_true_objective: Tensor = torch.tensor([])
-    var_best_true_objective: Tensor = torch.tensor([])
-    mean_best_true_feasibility: Tensor = torch.tensor([])
-    var_best_true_feasibility: Tensor = torch.tensor([])
-    mean_cost: Tensor = torch.tensor([])
-    var_cost: Tensor = torch.tensor([])
-    mean_regret: Tensor = torch.tensor([])
-    var_regret: Tensor = torch.tensor([])
-    mean_cumulative_regret: Tensor = torch.tensor([])
-    var_cumulative_regret: Tensor = torch.tensor([])
+    mean_runtime: Tensor
+    var_runtime: Tensor
+    batch_iterations: Tensor
+    mean_best_model_objective: Tensor
+    var_best_model_objective: Tensor
+    mean_best_model_feasibility: Tensor
+    var_best_model_feasibility: Tensor
+    mean_best_true_objective: Tensor
+    var_best_true_objective: Tensor
+    mean_best_true_feasibility: Tensor
+    var_best_true_feasibility: Tensor
+    mean_cost: Tensor
+    var_cost: Tensor
+    mean_regret: Tensor
+    var_regret: Tensor
+    mean_cumulative_regret: Tensor
+    var_cumulative_regret: Tensor
+
+
+class _ModelBestPointOutput(NamedTuple):
+    model: Model
+    best_point: Tensor
+    obj: Tensor
+    feas: Tensor
+    retry: int

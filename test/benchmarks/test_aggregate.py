@@ -44,7 +44,7 @@ class TestAggregateBenchMark(unittest.TestCase):
             cumulative_regrets = [
                 torch.cumsum(regrets[trial], dim=0) for trial in range(num_trials)
             ]
-            runtimes = torch.ones(num_trials, **tkwargs)
+            runtimes = torch.ones((num_trials, num_iterations), **tkwargs)
             output = BenchmarkOutput(
                 Xs=Xs,
                 Ys=[[]],
@@ -53,7 +53,7 @@ class TestAggregateBenchMark(unittest.TestCase):
                 best_model_objective=best_model_objective,
                 best_model_feasibility=best_model_feasibility,
                 costs=best_model_feasibility,
-                runtime=runtimes,
+                runtimes=runtimes.tolist(),
                 best_true_objective=best_true_objective,
                 best_true_feasibility=best_true_feasibility,
                 regrets=regrets,
@@ -63,8 +63,10 @@ class TestAggregateBenchMark(unittest.TestCase):
             self.assertTrue(isinstance(agg_results, AggregatedBenchmarkOutput))
             self.assertEqual(agg_results.num_trials, 3)
             # on the GPU we can't check for exact equality b/c of numerical issues
-            self.assertAlmostEqual(agg_results.mean_runtime, 1.0)
-            self.assertAlmostEqual(agg_results.var_runtime, 0.0)
+            self.assertEqual(agg_results.mean_runtime.shape, runtimes[0].shape)
+            self.assertLess(torch.norm(agg_results.mean_runtime - 1), 1e-6)
+            self.assertEqual(agg_results.var_runtime.shape, runtimes[0].shape)
+            self.assertLess(torch.norm(agg_results.var_runtime), 1e-6)
             self.assertTrue(
                 torch.equal(
                     agg_results.batch_iterations,

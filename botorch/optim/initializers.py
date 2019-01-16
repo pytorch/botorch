@@ -8,6 +8,32 @@ import numpy as np
 import torch
 from torch import Tensor
 
+from ..models.model import Model
+
+
+def get_similarity_measure(
+    model: Model
+) -> Optional[Callable[[Tensor, Tensor], Tensor]]:
+    """
+    Creates a similiarity measure function using the model's covar_module,
+        if available.
+    Args:
+        model: A Model
+    Returns:
+        Optional[Callable[[Tensor, Tensor], Tensor]: A callable `(X, x) -> C`,
+            where `X`, `x`, and `C` are Tensorsof size `b x q x d`, `q x d`, and
+             `n_samples x q x q`, respectively, where `C[k, i, j]` characterizes
+             the similiarity betweem the points `X[k, i]` and `x[j]`.
+    """
+    covar_module = getattr(model, "covar_module", None)
+    if covar_module is None:
+        return None
+
+    def sim_measure(X: Tensor, x: Tensor) -> Tensor:
+        return covar_module(X, x).evaluate()
+
+    return sim_measure
+
 
 def initialize_q_batch(
     X: Tensor,
