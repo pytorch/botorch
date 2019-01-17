@@ -8,6 +8,7 @@ import gpytorch
 import torch
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from torch import Tensor
+from torch.nn import Module
 
 from .. import fit_model
 from ..acquisition.batch_modules import BatchAcquisitionFunction
@@ -215,8 +216,7 @@ def run_closed_loop(
         upper_bounds: maximum values for each column of initial_candidates
         verbose: whether to provide verbose output
         seed: if seed is provided, do deterministic optimization where the function to
-            optimize is fixed and not stochastic. This seed is also used to make
-            sampling the initial conditions deterministic.
+            optimize is fixed and not stochastic.  The value of seed is ignored.
 
     Returns:
         ClosedLoopOutput: results of closed loop
@@ -247,39 +247,38 @@ def run_closed_loop(
                     objective=objective,
                     constraints=constraints,
                     X_pending=None,
-                    seed=seed,
+                    # TODO: check appropriate limits for this seed
+                    seed=seed
+                    if seed is None
+                    else torch.randint(1, 1_000_000, size=(1,)).item(),
                     acquisition_function_args=acq_func_config.args,
                 )
                 if verbose:
                     print("---- acquisition optimization")
 
-                # Generate random points for determining intial conditions
-                X_rnd = draw_sobol_samples(
-                    bounds=torch.stack([lower_bounds, upper_bounds]),
-                    n=optim_config.num_raw_samples,
-                    q=optim_config.q,
-                    seed=seed,
-                )
-                with torch.no_grad():
-                    Y_rnd = acq_func(X_rnd)
+                if optim_config.joint_optimization:
+                    optimize = joint_optimize
+                else:
+                    optimize = sequential_optimize
 
                 sim_measure = get_similarity_measure(model=model)
-                batch_initial_conditions = initialize_q_batch(
-                    X=X_rnd,
-                    Y=Y_rnd,
-                    n=optim_config.num_starting_points,
-                    sim_measure=sim_measure,
-                )
 
-                batch_candidates, batch_acq_values = gen_candidates_scipy(
-                    initial_candidates=batch_initial_conditions,
-                    acquisition_function=acq_func,
+                candidates = optimize(
+                    acq_func=acq_func,
+                    q=optim_config.q,
+                    num_raw_samples=optim_config.num_raw_samples,
+                    num_starting_points=optim_config.num_starting_points,
                     lower_bounds=lower_bounds,
                     upper_bounds=upper_bounds,
+                    sim_measure=sim_measure,
                 )
-                candidates = get_best_candidates(
-                    batch_candidates=batch_candidates, batch_values=batch_acq_values
-                )
+                if optim_config.fine_tune:
+                    candidates = optimize_from_initialization(
+                        initial_candidates=candidates.unsqueeze(0),
+                        acq_func=acq_func,
+                        lower_bounds=lower_bounds,
+                        upper_bounds=upper_bounds,
+                    )
 
                 X = acq_func.extract_candidates(candidates).detach()
                 failed = False
@@ -509,3 +508,130 @@ def run_benchmark(
         if seed is not None:
             seed += 1
     return outputs
+
+
+def joint_optimize(
+    acq_func: Module,
+    q: int,
+    num_raw_samples: int = 1,
+    num_starting_points: int = 1,
+    lower_bounds: Optional[Tensor] = None,
+    upper_bounds: Optional[Tensor] = None,
+    sim_measure: Optional[Callable[[Tensor, Tensor], Tensor]] = None,
+) -> Tensor:
+    """
+    Generate a set of candidates via multi-start optimization.
+    Args:
+        acq_func:  An acquisition function Module
+        q: The number of candidates in each q-batch
+        num_raw_samples: number of samples for initialization
+        num_starting_points:  Number of starting points for multistart acquisition
+            function optimization.
+        lower_bounds: minimum values for each column of initial_candidates
+        upper_bounds: maximum values for each column of initial_candidates
+        sim_measure: similarity measure used for generating initial candidates
+    Returns:
+        The set of generated candidates
+    """
+    # Generate random points for determining intial conditions
+    # This does not utilize the seed as we want a new shuffled set of initial points
+    # whenever this is called.
+    X_rnd = draw_sobol_samples(
+        bounds=torch.stack([lower_bounds, upper_bounds]), n=num_raw_samples, q=q
+    )
+
+    with torch.no_grad():
+        Y_rnd = acq_func(X_rnd)
+
+    batch_initial_conditions = initialize_q_batch(
+        X=X_rnd, Y=Y_rnd, n=num_starting_points, sim_measure=sim_measure
+    )
+    return optimize_from_initialization(
+        initial_candidates=batch_initial_conditions,
+        acq_func=acq_func,
+        lower_bounds=lower_bounds,
+        upper_bounds=upper_bounds,
+    )
+
+
+def optimize_from_initialization(
+    initial_candidates: Tensor,
+    acq_func: Module,
+    lower_bounds: Optional[Tensor] = None,
+    upper_bounds: Optional[Tensor] = None,
+) -> Tensor:
+    """
+    Returns optimized candidates from initial_candidates
+
+    Args:
+        initial_candidates: initial candidates to optimize from
+        acq_func:  An acquisition function Module
+        lower_bounds: minimum values for each column of initial_candidates
+        upper_bounds: maximum values for each column of initial_candidates
+
+    Returns:
+        The set of generated candidates
+    """
+
+    batch_candidates, batch_acq_values = gen_candidates_scipy(
+        initial_candidates=initial_candidates,
+        acquisition_function=acq_func,
+        lower_bounds=lower_bounds,
+        upper_bounds=upper_bounds,
+    )
+    return get_best_candidates(
+        batch_candidates=batch_candidates, batch_values=batch_acq_values
+    )
+
+
+def sequential_optimize(
+    acq_func: Module,
+    q: int,
+    num_raw_samples: int = 1,
+    num_starting_points: int = 1,
+    lower_bounds: Optional[Tensor] = None,
+    upper_bounds: Optional[Tensor] = None,
+    sim_measure: Optional[Callable[[Tensor, Tensor], Tensor]] = None,
+) -> Tensor:
+    """
+    Returns a set of candidates via sequential multi-start optimization.
+
+    Args:
+        acq_func:  An acquisition function Module
+        q: The number of candidates in each q-batch
+        num_raw_samples: number of samples for initialization
+        num_starting_points:  Number of starting points for multistart acquisition
+            function optimization.
+        lower_bounds: minimum values for each column of initial_candidates
+        upper_bounds: maximum values for each column of initial_candidates
+        sim_measure: similarity measure used for generating initial candidates
+
+    Returns:
+        The set of generated candidates
+    """
+
+    candidate_list = []
+    base_X_pending = acq_func.X_pending
+    # Needed to clear base_samples
+    acq_func.set_X_pending(base_X_pending)
+    for _ in range(q):
+        candidate_list.append(
+            joint_optimize(
+                acq_func=acq_func,
+                q=1,
+                num_raw_samples=num_raw_samples,
+                num_starting_points=num_starting_points,
+                sim_measure=sim_measure,
+                lower_bounds=lower_bounds,
+                upper_bounds=upper_bounds,
+            )
+        )
+        candidates = torch.cat(candidate_list, dim=-2)
+        acq_func.set_X_pending(
+            torch.cat([base_X_pending, candidates], dim=-2)
+            if base_X_pending is not None
+            else candidates
+        )
+    # Reset acq_func to previous X_pending state
+    acq_func.set_X_pending(base_X_pending)
+    return candidates

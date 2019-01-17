@@ -8,10 +8,11 @@ class OptimizeConfig(NamedTuple):
     Config for closed loop optimization.
     """
 
+    joint_optimization: bool = True  # whether to do joint or sequential optimization
+    fine_tune: bool = False  # whether to perform a secondary joint optimization
     initial_points: int = 10
     q: int = 5
     n_batch: int = 10
-    candidate_gen_maxiter: int = 25
     model_maxiter: int = 50
     num_starting_points: int = 1
     num_raw_samples: int = 500  # number of samples for random restart heuristic
