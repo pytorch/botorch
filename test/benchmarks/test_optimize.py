@@ -49,10 +49,11 @@ def test_func(X):
 class TestRunClosedLoop(unittest.TestCase):
     def setUp(self):
         self.optim_config = OptimizeConfig(
+            joint_optimization=True,
+            fine_tune=False,
             initial_points=5,
             q=2,
             n_batch=1,
-            candidate_gen_maxiter=3,
             model_maxiter=3,
             num_starting_points=1,
             num_raw_samples=2,
@@ -138,10 +139,11 @@ class TestRunClosedLoop(unittest.TestCase):
 class TestRunBenchmark(unittest.TestCase):
     def setUp(self):
         self.optim_config = OptimizeConfig(
+            joint_optimization=True,
+            fine_tune=False,
             initial_points=5,
             q=2,
             n_batch=2,
-            candidate_gen_maxiter=3,
             model_maxiter=3,
             num_starting_points=1,
             num_raw_samples=2,

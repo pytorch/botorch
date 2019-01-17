@@ -42,6 +42,11 @@ class BatchAcquisitionFunction(AcquisitionFunction):
         self.base_samples = None
         self.base_samples_q_batch_size = None
 
+    def set_X_pending(self, X_pending: Tensor) -> None:
+        self.X_pending = X_pending
+        # Ensure we regenerate base_samples, which is stateful.
+        self.base_samples_q_batch_size = None
+
     def _forward(self, X: Tensor) -> Tensor:
         """Takes in a `b x q x d` X Tensor of `b` t-batches with `q`
         `d`-dimensional design points each, and returns a one-dimensional Tensor
