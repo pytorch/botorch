@@ -20,6 +20,26 @@ class MockPosterior(Posterior):
         self._samples = samples
 
     @property
+    def device(self) -> torch.device:
+        for t in (self._mean, self._variance, self._samples):
+            if torch.is_tensor(t):
+                return t.device
+        return torch.device("cpu")
+
+    @property
+    def dtype(self) -> torch.dtype:
+        for t in (self._mean, self._variance, self._samples):
+            if torch.is_tensor(t):
+                return t.dtype
+        return torch.float32
+
+    @property
+    def event_shape(self) -> torch.Size:
+        if self._samples is not None:
+            return self._samples.shape
+        return torch.Size()
+
+    @property
     def mean(self):
         return self._mean
 
