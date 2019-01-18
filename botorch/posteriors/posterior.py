@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 
-from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod, abstractproperty
 from typing import Optional
 
 import torch
@@ -8,6 +8,19 @@ from torch import Tensor
 
 
 class Posterior(ABC):
+    @abstractproperty
+    def device(self) -> torch.device:
+        pass
+
+    @abstractproperty
+    def dtype(self) -> torch.dtype:
+        pass
+
+    @abstractproperty
+    def event_shape(self) -> torch.Size:
+        """Return the event shape (i.e. the shape of a single sample)"""
+        pass
+
     @property
     def mean(self) -> Tensor:
         raise NotImplementedError
