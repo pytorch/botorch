@@ -1461,6 +1461,8 @@ class SobolEngine:
 
     """
 
+    MAXDIM = 1111
+
     def __init__(self, dimen, scramble=False, seed=None):
         # type: (int, bool, Optional[int]) -> None
         if dimen > 1111:
