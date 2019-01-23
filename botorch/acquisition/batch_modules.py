@@ -32,6 +32,7 @@ class BatchAcquisitionFunction(AcquisitionFunction):
         mc_samples: int = 5000,
         X_pending: Optional[Tensor] = None,
         seed: Optional[int] = None,
+        qmc: Optional[bool] = True,  # TODO: evaluate this default further
     ) -> None:
         super().__init__(model=model)
         self.mc_samples = mc_samples
@@ -41,6 +42,7 @@ class BatchAcquisitionFunction(AcquisitionFunction):
         self.seed = seed
         self.base_samples = None
         self.base_samples_q_batch_size = None
+        self.qmc = qmc
 
     def set_X_pending(self, X_pending: Tensor) -> None:
         self.X_pending = X_pending
@@ -63,20 +65,24 @@ class BatchAcquisitionFunction(AcquisitionFunction):
             # remain [X_pending, X], not [X, X_pending] for this
             # code to work properly.
             X = torch.cat([match_batch_size(X, self.X_pending), X], dim=-2)
-        if self.seed is not None:
-            if self.base_samples_q_batch_size != X.shape[-2]:
-                # Remove batch dimension for base sample construction.
-                # We rely upon the @batch_mode_transform decorator
-                # to expand base_samples to the appropriate batch size within
-                # a call to batch_acquisition.
-                self._construct_base_samples(X if X.dim() < 3 else X[0, ...])
-                self.base_samples_q_batch_size = X.shape[-2]
+        if (self.qmc and self.seed is None) or (
+            self.seed is not None and self.base_samples_q_batch_size != X.shape[-2]
+        ):
+            # Remove batch dimension for base sample construction.
+            # We rely upon the @batch_mode_transform decorator
+            # to expand base_samples to the appropriate batch size within
+            # a call to batch_acquisition.
+            self._construct_base_samples(X if X.dim() < 3 else X[0, ...])
+            self.base_samples_q_batch_size = X.shape[-2]
         return self._forward(X)
 
     def _construct_base_samples(self, X: Tensor) -> None:
         posterior = self.model.posterior(X)
         self.base_samples = construct_base_samples_from_posterior(
-            posterior=posterior, num_samples=self.mc_samples, seed=self.seed
+            posterior=posterior,
+            num_samples=self.mc_samples,
+            qmc=self.qmc,
+            seed=self.seed,
         )
 
 
@@ -113,9 +119,10 @@ class qExpectedImprovement(BatchAcquisitionFunction):
         mc_samples: int = 5000,
         X_pending: Optional[Tensor] = None,
         seed: Optional[int] = None,
+        qmc: Optional[bool] = False,
     ) -> None:
         super().__init__(
-            model=model, mc_samples=mc_samples, X_pending=X_pending, seed=seed
+            model=model, mc_samples=mc_samples, X_pending=X_pending, seed=seed, qmc=qmc
         )
         self.best_f = best_f
         self.objective = objective
@@ -179,9 +186,10 @@ class qNoisyExpectedImprovement(BatchAcquisitionFunction):
         mc_samples: int = 5000,
         X_pending: Optional[Tensor] = None,
         seed: Optional[int] = None,
+        qmc: Optional[bool] = False,
     ) -> None:
         super().__init__(
-            model=model, mc_samples=mc_samples, X_pending=X_pending, seed=seed
+            model=model, mc_samples=mc_samples, X_pending=X_pending, seed=seed, qmc=qmc
         )
         # TODO: get X_observed from model?
         self.X_observed = X_observed
@@ -192,7 +200,10 @@ class qNoisyExpectedImprovement(BatchAcquisitionFunction):
         X_all = torch.cat([X, self.X_observed], dim=-2)
         posterior = self.model.posterior(X_all)
         self.base_samples = construct_base_samples_from_posterior(
-            posterior=posterior, num_samples=self.mc_samples, seed=self.seed
+            posterior=posterior,
+            num_samples=self.mc_samples,
+            qmc=self.qmc,
+            seed=self.seed,
         )
         return
 
@@ -280,9 +291,10 @@ class qKnowledgeGradient(BatchAcquisitionFunction):
         use_posterior_mean: Optional[bool] = False,
         X_pending: Optional[Tensor] = None,
         seed: Optional[int] = None,
+        qmc: Optional[bool] = False,
     ) -> None:
         super().__init__(
-            model=model, mc_samples=mc_samples, X_pending=X_pending, seed=seed
+            model=model, mc_samples=mc_samples, X_pending=X_pending, seed=seed, qmc=qmc
         )
         self.X_observed = X_observed
         self.objective = objective
@@ -300,12 +312,19 @@ class qKnowledgeGradient(BatchAcquisitionFunction):
         # TODO: remove [0] in base_samples when qKG works with t-batches
         old_posterior = self.model.posterior(self.X_observed)
         self.inner_old_base_samples = construct_base_samples_from_posterior(
-            posterior=old_posterior, num_samples=self.inner_mc_samples, seed=self.seed
+            posterior=old_posterior,
+            num_samples=self.inner_mc_samples,
+            qmc=self.qmc,
+            seed=self.seed,
         )[0]
 
-        posterior = self.model(X)
+        posterior = self.model.posterior(X)
+        # Increment seed by one to get different base samples
         self.fantasy_base_samples = construct_base_samples_from_posterior(
-            posterior=posterior, num_samples=self.mc_samples, seed=self.seed
+            posterior=posterior,
+            num_samples=self.mc_samples,
+            qmc=self.qmc,
+            seed=None if self.seed is None else self.seed + 1,
         )[0]
         X_all = torch.cat([X, self.X_observed], dim=-2)
         X_posterior = self.model.posterior(X=X, observation_noise=True)
@@ -317,8 +336,12 @@ class qKnowledgeGradient(BatchAcquisitionFunction):
         new_posterior = fantasy_model.posterior(
             X_all.unsqueeze(0).repeat(self.mc_samples, 1, 1)
         )
+        # Increment seed by two to get different base samples
         self.inner_new_base_samples = construct_base_samples_from_posterior(
-            posterior=new_posterior, num_samples=self.inner_mc_samples, seed=self.seed
+            posterior=new_posterior,
+            num_samples=self.inner_mc_samples,
+            qmc=self.qmc,
+            seed=None if self.seed is None else self.seed + 2,
         )[0]
 
     def _forward(self, X: Tensor) -> Tensor:
@@ -410,9 +433,10 @@ class qKnowledgeGradientNoDiscretization(BatchAcquisitionFunction):
         use_posterior_mean: Optional[bool] = False,
         X_pending: Optional[Tensor] = None,
         seed: Optional[int] = None,
+        qmc: Optional[bool] = False,
     ) -> None:
         super().__init__(
-            model=model, mc_samples=mc_samples, X_pending=X_pending, seed=seed
+            model=model, mc_samples=mc_samples, X_pending=X_pending, seed=seed, qmc=qmc
         )
         self.objective = objective
         self.constraints = constraints
@@ -434,12 +458,19 @@ class qKnowledgeGradientNoDiscretization(BatchAcquisitionFunction):
         # TODO: remove [0] in base_samples when this works with t-batches
         old_posterior = self.model.posterior(X_old)
         self.inner_old_base_samples = construct_base_samples_from_posterior(
-            posterior=old_posterior, num_samples=self.inner_mc_samples, seed=self.seed
+            posterior=old_posterior,
+            num_samples=self.inner_mc_samples,
+            qmc=self.qmc,
+            seed=self.seed,
         )[0]
 
-        posterior = self.model(X_actual)
+        posterior = self.model.posterior(X_actual)
+        # Increments seed by one to get different base samples
         self.fantasy_base_samples = construct_base_samples_from_posterior(
-            posterior=posterior, num_samples=X_fantasies.shape[0], seed=self.seed
+            posterior=posterior,
+            num_samples=X_fantasies.shape[0],
+            qmc=self.qmc,
+            seed=None if self.seed is None else self.seed + 1,
         )[0]
         X_posterior = self.model.posterior(X=X_actual, observation_noise=True)
         fantasy_y = X_posterior.rsample(
@@ -448,8 +479,12 @@ class qKnowledgeGradientNoDiscretization(BatchAcquisitionFunction):
         )
         fantasy_model = self.model.get_fantasy_model(inputs=X, targets=fantasy_y)
         new_posterior = fantasy_model.posterior(X_fantasies.unsqueeze(1))
+        # Increments seed by two to get different base samples
         self.inner_new_base_samples = construct_base_samples_from_posterior(
-            posterior=new_posterior, num_samples=self.inner_mc_samples, seed=self.seed
+            posterior=new_posterior,
+            num_samples=self.inner_mc_samples,
+            qmc=self.qmc,
+            seed=None if self.seed is None else self.seed + 2,
         )[0]
 
     def _forward(self, X: Tensor) -> Tensor:
@@ -538,9 +573,10 @@ class qProbabilityOfImprovement(BatchAcquisitionFunction):
         mc_samples: int = 5000,
         X_pending: Optional[Tensor] = None,
         seed: Optional[int] = None,
+        qmc: Optional[bool] = False,
     ) -> None:
         super().__init__(
-            model=model, mc_samples=mc_samples, X_pending=X_pending, seed=seed
+            model=model, mc_samples=mc_samples, X_pending=X_pending, seed=seed, qmc=qmc
         )
         self.best_f = best_f
 
@@ -588,9 +624,10 @@ class qUpperConfidenceBound(BatchAcquisitionFunction):
         mc_samples: int = 5000,
         X_pending: Optional[Tensor] = None,
         seed: Optional[int] = None,
+        qmc: Optional[bool] = False,
     ) -> None:
         super().__init__(
-            model=model, mc_samples=mc_samples, X_pending=X_pending, seed=seed
+            model=model, mc_samples=mc_samples, X_pending=X_pending, seed=seed, qmc=qmc
         )
         self.beta = beta
 
@@ -634,9 +671,10 @@ class qSimpleRegret(BatchAcquisitionFunction):
         mc_samples: int = 5000,
         X_pending: Optional[Tensor] = None,
         seed: Optional[int] = None,
+        qmc: Optional[bool] = False,
     ) -> None:
         super().__init__(
-            model=model, mc_samples=mc_samples, X_pending=X_pending, seed=seed
+            model=model, mc_samples=mc_samples, X_pending=X_pending, seed=seed, qmc=qmc
         )
 
     def _forward(self, X: Tensor) -> Tensor:
