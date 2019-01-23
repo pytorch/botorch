@@ -6,7 +6,8 @@ from typing import Any, Callable, Optional, Tuple
 from torch import Size, Tensor
 
 from ..posteriors.posterior import Posterior
-from ..utils import manual_seed
+from ..qmc.sobol import SobolEngine
+from ..utils import draw_sobol_normal_samples, manual_seed
 
 
 TFunc = Callable[..., Any]
@@ -98,10 +99,20 @@ def batch_mode_transform(batch_acquisition_function: TFunc) -> TFunc:
 
 
 def construct_base_samples_from_posterior(
-    posterior: Posterior, num_samples: int, seed: Optional[int] = None
+    posterior: Posterior, num_samples: int, qmc: bool, seed: Optional[int] = None
 ) -> Tuple[Tensor, int]:
-    with manual_seed(seed=seed):
-        base_samples = posterior.get_base_samples(sample_shape=Size([num_samples]))
+    d = posterior.event_shape.numel()
+    if qmc and d < SobolEngine.MAXDIM:
+        base_samples = draw_sobol_normal_samples(
+            d=d,
+            n=num_samples,
+            device=posterior.device,
+            dtype=posterior.dtype,
+            seed=seed,
+        ).view(num_samples, *posterior.event_shape)
+    else:
+        with manual_seed(seed=seed):
+            base_samples = posterior.get_base_samples(sample_shape=Size([num_samples]))
     # Inform batch_mode_eval decorator that batch_dim should be inserted at
     # dimension 1 if needed
     return (base_samples, 1)

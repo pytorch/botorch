@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from typing import Callable, Dict, Generator, List, Optional, Union
 
 import torch
+from botorch.qmc.normal import NormalQMCEngine
 
 # TODO: Use torch Sobol engine: https://github.com/pytorch/pytorch/pull/10505
 from botorch.qmc.sobol import SobolEngine
@@ -224,6 +225,43 @@ def draw_sobol_samples(
     samples_np = sobol_engine.draw(n * q).reshape(n, q, d)
     samples_raw = torch.from_numpy(samples_np).type_as(lower)
     return lower + rng * samples_raw
+
+
+def draw_sobol_normal_samples(
+    d: int,
+    n: int,
+    device: Optional[torch.device] = None,
+    dtype: Optional[torch.dtype] = None,
+    seed: Optional[int] = None,
+) -> Tensor:
+    """Draw qMC samples from a multi-variate standard normal N(0, I_d)
+
+    A primary use-case for this functionality is to compute an QMC average
+    of f(X) over X where each element of X is drawn N(0, 1).
+
+    NOTE: This currently uses botorch's own cython SobolEngine. In the future
+        (once perf issues are resolved), this will instead use the native torch
+        implementation from https://github.com/pytorch/pytorch/pull/10505
+
+    Args:
+        d: The dimension of the normal distribution
+        n: The number of samples to return
+        device: The torch device
+        dtype:  The torch dtype
+        seed: The seed used for initializing Owen scrambling. If None (default),
+            use a random seed.
+
+    Returns:
+        An tensor of qMC standard normal samples with dimension `n x d` with device
+        and dtype specified by the input.
+
+    """
+    normal_qmc_engine = NormalQMCEngine(d=d, seed=seed, inv_transform=True)
+    samples_np = normal_qmc_engine.draw(n)
+    return torch.from_numpy(samples_np).to(
+        dtype=torch.float if dtype is None else dtype,
+        device=device,  # None here will leave it on the cpu
+    )
 
 
 def standardize(X: Tensor) -> Tensor:
