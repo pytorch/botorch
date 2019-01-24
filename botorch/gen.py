@@ -95,8 +95,9 @@ def gen_candidates_scipy(
         options=options,
     )
 
-    candidates = (
-        torch.from_numpy(res.x).type_as(initial_candidates).view(shapeX).contiguous()
+    candidates = fix_features(
+        X=torch.from_numpy(res.x).type_as(initial_candidates).view(shapeX).contiguous(),
+        fixed_features=fixed_features,
     )
     batch_acquisition = acquisition_function(candidates)
     return candidates, batch_acquisition

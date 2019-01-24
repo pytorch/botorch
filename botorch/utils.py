@@ -31,11 +31,9 @@ def check_convergence(
 
 
 def _fix_feature(Z: Tensor, value: Optional[float]) -> Tensor:
-    Z_detached = Z.detach().requires_grad_(False)
     if value is None:
-        return Z_detached
-    else:
-        return Z_detached.fill_(value)
+        return Z.detach()
+    return torch.full_like(Z, value)
 
 
 def fix_features(
