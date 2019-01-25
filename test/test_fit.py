@@ -7,7 +7,6 @@ import torch
 from botorch import fit_model
 from botorch.models import SingleTaskGP
 from botorch.optim.fit import fit_torch
-from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 
 
@@ -22,9 +21,8 @@ class TestFitModel(unittest.TestCase):
     def _getModel(self, cuda=False):
         train_x = self.train_x.cuda() if cuda else self.train_x
         train_y = self.train_y.cuda() if cuda else self.train_y
-        likelihood = GaussianLikelihood()
-        model = SingleTaskGP(train_x.detach(), train_y.detach(), likelihood)
-        mll = ExactMarginalLogLikelihood(likelihood, model)
+        model = SingleTaskGP(train_x.detach(), train_y.detach())
+        mll = ExactMarginalLogLikelihood(model.likelihood, model)
         return mll.cuda() if cuda else mll
 
     def test_fit_model_scipy(self, cuda=False):

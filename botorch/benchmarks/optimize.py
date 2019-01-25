@@ -22,10 +22,14 @@ from .output import BenchmarkOutput, ClosedLoopOutput, _ModelBestPointOutput
 
 
 def _get_fitted_model(
-    train_X: Tensor, train_Y: Tensor, train_Y_se: Tensor, model: Model, maxiter: int
+    train_X: Tensor,
+    train_Y: Tensor,
+    train_Y_se: Tensor,
+    model: Model,
+    maxiter: int,
+    warm_start: bool = True,
 ) -> Model:
-    """
-    Helper function that returns a model fitted to the provided data.
+    """Helper function that returns a model fitted to the provided data.
 
     Args:
         train_X: A `n x d` (or `b x n x d`) Tensor of points
@@ -34,12 +38,15 @@ def _get_fitted_model(
             errors for each outcome
         model: an initialized Model. This model must have a likelihood attribute.
         maxiter: The maximum number of iterations
+        warm_start: If True, start optimizing the hyperparameters from their
+            previous values without resetting them
+
     Returns:
         Model: a fitted model
     """
-    # TODO: copy over the state_dict from the existing model before
-    # optimization begins
-    model.reinitialize(train_X=train_X, train_Y=train_Y, train_Y_se=train_Y_se)
+    model.reinitialize(
+        train_X=train_X, train_Y=train_Y, train_Y_se=train_Y_se, keep_params=warm_start
+    )
     mll = ExactMarginalLogLikelihood(model.likelihood, model)
     mll.to(dtype=train_X.dtype, device=train_X.device)
     mll = fit_model(mll, options={"maxiter": maxiter})
@@ -53,8 +60,7 @@ def greedy(
     constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
     mc_samples: int = 10000,
 ) -> Tuple[Tensor, Tensor, Tensor]:
-    """
-    Fetch the best point, best objective, and feasibility based on the joint
+    """Fetch the best point, best objective, and feasibility based on the joint
     posterior of the evaluated points.
 
     Args:
@@ -71,6 +77,7 @@ def greedy(
             relevant for multi-task models (`t` > 1).
         mc_samples: The number of Monte-Carlo samples to draw from the model
             posterior.
+
     Returns:
         Tensor: `d` (or `b x d`)-dim (batch mode) best point(s)
         Tensor: `0` (or `b`)-dim (batch mode) tensor of best objective(s)
@@ -121,9 +128,8 @@ def _fit_model_and_get_best_point(
     constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
     retry: int = 0,
 ) -> _ModelBestPointOutput:
-    """
-    Fit model and fetch the best point, best objective, and feasibility based on
-    the joint posterior of the evaluated points.
+    """Fit model and fetch the best point, best objective, and feasibility based
+    on the joint posterior of the evaluated points.
 
     Args:
         train_X: A `n x d` Tensor of points
@@ -143,12 +149,14 @@ def _fit_model_and_get_best_point(
             feasibility. Note: the callable must support broadcasting. Only
             relevant for multi-task models (`t` > 1).
         retry: current retry count
+
     Returns:
         _ModelBestPointOutput: container with:
             - model (Model): a fitted model
             - best_point (Tensor): `d` (or `b x d`)-dim (batch mode) best point(s)
             - obj (Tensor): `0` (or `b`)-dim (batch mode) tensor of best objective(s)
-            - feas (Tensor): `0` (or `b`)-dim (batch mode) tensor of feasibility of best point(s)
+            - feas (Tensor): `0` (or `b`)-dim (batch mode) tensor of feasibility
+                of best point(s)
             - retry (int): the current retry count
 
     """
@@ -193,8 +201,7 @@ def run_closed_loop(
     verbose: bool = False,
     seed: Optional[int] = None,
 ) -> ClosedLoopOutput:
-    """
-    Uses Bayesian Optimization to optimize func.
+    """Uses Bayesian Optimization to optimize func.
 
     Args:
         func: function to optimize (maximize by default)
@@ -221,7 +228,7 @@ def run_closed_loop(
     Returns:
         ClosedLoopOutput: results of closed loop
 
-    # TODO: Add support for multi-task models.
+    # TODO: Add support for multi-task / multi-output models.
     """
     # TODO: remove exception handling wrappers when model fitting is stabilized
     retry = 0
@@ -365,8 +372,7 @@ def run_benchmark(
     true_func: Optional[Callable[[Tensor], List[Tensor]]] = None,
     global_optimum: Optional[float] = None,
 ) -> Dict[str, BenchmarkOutput]:
-    """
-    Uses Bayesian Optimization to optimize func multiple times.
+    """Uses Bayesian Optimization to optimize func multiple times.
 
     Args:
         func: function to optimize (maximize by default)
@@ -393,6 +399,7 @@ def run_benchmark(
         true_func: true noiseless function being optimized
         global_optimum: the global optimum of func after applying the objective
             transformation. If provided, this is used to compute regret.
+
     Returns:
         Dict[str, BenchmarkOutput]: dictionary mapping each key of acq_func_configs
             to its corresponding output.
@@ -519,8 +526,8 @@ def joint_optimize(
     upper_bounds: Optional[Tensor] = None,
     sim_measure: Optional[Callable[[Tensor, Tensor], Tensor]] = None,
 ) -> Tensor:
-    """
-    Generate a set of candidates via multi-start optimization.
+    """Generate a set of candidates via multi-start optimization.
+
     Args:
         acq_func:  An acquisition function Module
         q: The number of candidates in each q-batch
@@ -530,6 +537,7 @@ def joint_optimize(
         lower_bounds: minimum values for each column of initial_candidates
         upper_bounds: maximum values for each column of initial_candidates
         sim_measure: similarity measure used for generating initial candidates
+
     Returns:
         The set of generated candidates
     """

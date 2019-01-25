@@ -24,14 +24,12 @@ class SingleTaskGPTest(unittest.TestCase):
     def setUp(self, cuda=False):
         train_x = torch.linspace(0, 1, 10).unsqueeze(1)
         train_y = torch.sin(train_x * (2 * math.pi)).view(-1) + torch.tensor(NOISE)
-        likelihood = GaussianLikelihood()
-        self.model = SingleTaskGP(
-            train_x.cuda() if cuda else train_x,
-            train_y.cuda() if cuda else train_y,
-            likelihood,
+        model = SingleTaskGP(
+            train_x.cuda() if cuda else train_x, train_y.cuda() if cuda else train_y
         )
-        mll = ExactMarginalLogLikelihood(likelihood, self.model)
+        mll = ExactMarginalLogLikelihood(model.likelihood, model)
         fit_model(mll, options={"maxiter": 1})
+        self.model = model
 
     def testInit(self):
         self.assertIsInstance(self.model.mean_module, ConstantMean)
@@ -49,11 +47,22 @@ class SingleTaskGPTest(unittest.TestCase):
         train_x = torch.linspace(0, 1, 11).unsqueeze(1)
         noise = torch.tensor(NOISE + [0.1])
         train_y = torch.sin(train_x * (2 * math.pi)).view(-1) + noise
-        self.model.reinitialize(train_x, train_y)
-        params = dict(self.model.named_parameters())
+
+        model = self.model
+
+        # check reinitializing while keeping param values
+        old_params = dict(model.named_parameters())
+        model.reinitialize(train_x, train_y, keep_params=True)
+        params = dict(model.named_parameters())
+        for p in params:
+            self.assertEqual(params[p].item(), old_params[p].item())
+
+        # check reinitializing, resetting param values
+        model.reinitialize(train_x, train_y, keep_params=False)
+        params = dict(model.named_parameters())
         for p in params:
             self.assertEqual(params[p].item(), 0.0)
-        mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
+        mll = ExactMarginalLogLikelihood(model.likelihood, self.model)
         fit_model(mll)
         # check that some of the parameters changed
         self.assertFalse(all(params[p].item() == 0.0 for p in params))
@@ -93,11 +102,22 @@ class HeteroskedasticSingleTaskGPTest(unittest.TestCase):
         noise = torch.tensor(NOISE + [0.1])
         train_y = torch.sin(train_x * (2 * math.pi)).view(-1) + noise
         train_y_sem = 0.1 + 0.1 * torch.rand_like(train_y)
-        self.model.reinitialize(train_x, train_y, train_y_sem)
-        params = dict(self.model.named_parameters())
+
+        model = self.model
+
+        # check reinitializing while keeping param values
+        old_params = dict(model.named_parameters())
+        model.reinitialize(train_x, train_y, train_y_sem, keep_params=True)
+        params = dict(model.named_parameters())
+        for p in params:
+            self.assertEqual(params[p].item(), old_params[p].item())
+
+        # check reinitializing, resetting param values
+        model.reinitialize(train_x, train_y, train_y_sem, keep_params=False)
+        params = dict(model.named_parameters())
         for p in params:
             self.assertEqual(params[p].item(), 0.0)
-        mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
+        mll = ExactMarginalLogLikelihood(model.likelihood, self.model)
         fit_model(mll)
         # check that some of the parameters changed
         self.assertFalse(all(params[p].item() == 0.0 for p in params))

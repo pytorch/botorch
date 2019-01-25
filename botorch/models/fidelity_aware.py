@@ -6,7 +6,7 @@ import torch
 from gpytorch.distributions import MultivariateNormal
 from gpytorch.kernels import MaternKernel, ScaleKernel
 from gpytorch.lazy import DiagLazyTensor, LazyTensor
-from gpytorch.likelihoods import GaussianLikelihood, _GaussianLikelihoodBase
+from gpytorch.likelihoods import _GaussianLikelihoodBase
 from gpytorch.means import ConstantMean
 from gpytorch.models.exact_gp import ExactGP
 from gpytorch.module import Module
@@ -117,12 +117,7 @@ class FidelityAwareSingleTaskGP(ExactGP, GPyTorchModel):
         train_y_log_var = (
             2 * train_Y_se.log() + phi_func(train_phi.view_as(train_Y_se)).log()
         )
-        noise_likelihood = GaussianLikelihood(
-            batch_size=batch_size, param_transform=softplus
-        )
-        noise_model = SingleTaskGP(
-            train_X=train_x, train_Y=train_y_log_var, likelihood=noise_likelihood
-        )
+        noise_model = SingleTaskGP(train_X=train_x, train_Y=train_y_log_var)
         noise_covar = FidelityAwareHeteroskedasticNoise(
             noise_model=noise_model, x_idxr=x_idxr, phi_idxr=phi_idxr, phi_func=phi_func
         )
@@ -150,21 +145,44 @@ class FidelityAwareSingleTaskGP(ExactGP, GPyTorchModel):
         return MultivariateNormal(mean_x, covar_x)
 
     def reinitialize(
-        self, train_X: Tensor, train_Y: Tensor, train_Y_se: Optional[Tensor] = None
+        self,
+        train_X: Tensor,
+        train_Y: Tensor,
+        train_Y_se: Optional[Tensor] = None,
+        keep_params: bool = True,
     ) -> None:
-        """
-        Reinitialize model and the likelihood.
+        """Reinitialize model and the likelihood.
+
+        Args:
+            train_X: A tensor of new training data
+            train_Y: A tensor of new training observations
+            train_y_se: A tensor of new training noise observations
+            keep_params: If True, keep the parameter values (speeds up refitting
+                on similar data)
 
         Note: this does not refit the model.
         """
-        assert train_Y_se is not None
-        self.__init__(
-            train_X=train_X,
-            train_Y=train_Y,
-            train_Y_se=train_Y_se,
-            phi_idcs=self._phi_idcs,
-            phi_func=self.likelihood.noise_covar._phi_func,
-        )
+        if train_Y_se is None:
+            raise RuntimeError("FidelityAwareSingleTaskGP requires observation noise")
+        if keep_params:
+            train_phi = train_X[..., self._phi_idxr]
+            noise_covar = self.likelihood.noise_covar
+            train_y_log_var = (
+                2 * train_Y_se.log()
+                + noise_covar._phi_func(train_phi.view_as(train_Y_se)).log()
+            )
+            noise_covar.noise_model.set_train_data(
+                inputs=train_X, targets=train_y_log_var, strict=False
+            )
+            self.set_train_data(inputs=train_X, targets=train_Y, strict=False)
+        else:
+            self.__init__(
+                train_X=train_X,
+                train_Y=train_Y,
+                train_Y_se=train_Y_se,
+                phi_idcs=self._phi_idcs,
+                phi_func=self.likelihood.noise_covar._phi_func,
+            )
 
 
 def _make_phi_indexers(
