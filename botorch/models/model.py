@@ -29,6 +29,10 @@ class Model(ABC):
         raise NotImplementedError
 
     def reinitialize(
-        self, train_X: Tensor, train_Y: Tensor, train_Y_se: Optional[Tensor] = None
+        self,
+        train_X: Tensor,
+        train_Y: Tensor,
+        train_Y_se: Optional[Tensor] = None,
+        keep_params: bool = True,
     ) -> None:
         raise NotImplementedError

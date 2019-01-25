@@ -357,17 +357,14 @@ class TestGetFittedModel(unittest.TestCase):
             init_X = torch.rand((5, 2), dtype=dtype, device=device)
             init_Y = torch.rand(5, dtype=dtype, device=device)
             init_Y_se = torch.rand(5, dtype=dtype, device=device)
-            likelihood = GaussianLikelihood()
-            initial_model = SingleTaskGP(
-                train_X=init_X, train_Y=init_Y, likelihood=likelihood
-            )
+            initial_model = SingleTaskGP(train_X=init_X, train_Y=init_Y)
             train_X = torch.rand((5, 2), dtype=dtype, device=device)
             train_Y = torch.rand(5, dtype=dtype, device=device)
             train_Y_se = torch.rand(5, dtype=dtype, device=device)
             model = _get_fitted_model(
                 train_X=train_X,
                 train_Y=train_Y,
-                train_Y_se=train_Y_se,
+                train_Y_se=None,
                 model=initial_model,
                 maxiter=1,
             )
@@ -408,10 +405,7 @@ class TestFitModelAndGetBestPoint(unittest.TestCase):
             train_X = torch.rand((5, 2), dtype=dtype, device=device)
             train_Y = torch.rand(5, dtype=dtype, device=device)
             train_Y_se = torch.rand(5, dtype=dtype, device=device)
-            likelihood = GaussianLikelihood()
-            model = SingleTaskGP(
-                train_X=train_X, train_Y=train_Y, likelihood=likelihood
-            )
+            model = SingleTaskGP(train_X=train_X, train_Y=train_Y)
             mock_get_fitted_model.return_value = model
             exp_best_point = train_X[0]
             exp_obj = torch.tensor(2.0, dtype=dtype, device=device)

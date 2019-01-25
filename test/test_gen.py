@@ -7,7 +7,6 @@ import torch
 from botorch import fit_model, gen_candidates_scipy
 from botorch.acquisition import qExpectedImprovement
 from botorch.models import SingleTaskGP
-from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 
 from .test_fit import NOISE
@@ -31,10 +30,9 @@ class TestBaseCandidateGeneration(unittest.TestCase):
         else:
             self.initial_candidates = torch.tensor([[0.5]], device=device, dtype=dtype)
         self.f_best = self.train_y.max().item()
-        self.likelihood = GaussianLikelihood()
-        model = SingleTaskGP(self.train_x, self.train_y, self.likelihood)
+        model = SingleTaskGP(self.train_x, self.train_y)
         self.model = model.to(device=device, dtype=dtype)
-        self.mll = ExactMarginalLogLikelihood(self.likelihood, self.model)
+        self.mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         self.mll = fit_model(self.mll, options={"maxiter": 1})
 
 
