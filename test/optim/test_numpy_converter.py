@@ -13,6 +13,15 @@ from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikeliho
 from gpytorch.models.exact_gp import ExactGP
 
 
+def _get_index(property_dict, parameter_name):
+    idx = 0
+    for p_name, ta in property_dict.items():
+        if p_name == parameter_name:
+            break
+        idx += ta.shape.numel()
+    return idx
+
+
 class TestNumpyTorchParameterConversion(unittest.TestCase):
     def test_set_parameters_with_numpy(self):
         # Get an example module with parameters
@@ -22,10 +31,13 @@ class TestNumpyTorchParameterConversion(unittest.TestCase):
         )
         model.covar_module = RBFKernel(3)
         model.mean_module = ConstantMean()
+
+        model.parameter_bounds = {"mean_module.constant": (None, 10.0)}
+        bounds_dict = {"likelihood.noise_covar.raw_noise": (0.0, None)}
         mll = ExactMarginalLogLikelihood(likelihood, model)
 
-        bounds_dict = {"likelihood.noise_covar.raw_noise": (0.0, None)}
         x, property_dict, bounds = module_to_array(module=mll, bounds=bounds_dict)
+
         self.assertTrue(np.array_equal(x, np.zeros(5)))
         self.assertEqual(
             set(property_dict.keys()),
@@ -42,16 +54,15 @@ class TestNumpyTorchParameterConversion(unittest.TestCase):
             self.assertEqual(val.device, torch.device("cpu"))
 
         # check bound parsing
-        self.assertIsInstance(bounds, tuple)
+        self.assertIsInstance(bounds, np.ndarray)
+
         lower_exp = np.full_like(x, -np.inf)
-        idx = 0
-        for p_name, ta in property_dict.items():
-            if p_name == "likelihood.noise_covar.raw_noise":
-                break
-            idx += ta.shape.numel()
-        lower_exp[idx] = 0.0
+        lower_exp[_get_index(property_dict, "likelihood.noise_covar.raw_noise")] = 0.0
         self.assertTrue(np.equal(bounds[0], lower_exp).all())
-        self.assertTrue(np.equal(bounds[1], np.full_like(x, np.inf)).all())
+
+        upper_exp = np.full_like(x, np.inf)
+        upper_exp[_get_index(property_dict, "model.mean_module.constant")] = 10.0
+        self.assertTrue(np.equal(bounds[1], upper_exp).all())
 
         # Set parameters
         mll = set_params_with_array(
