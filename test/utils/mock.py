@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from collections import OrderedDict
 from typing import List, Optional
 
 import torch
@@ -77,6 +78,14 @@ class MockModel(Model):
         observation_noise: bool = False,
     ) -> MockPosterior:
         return self._posterior
+
+    def state_dict(self) -> None:
+        pass
+
+    def load_state_dict(
+        self, state_dict: Optional[OrderedDict] = None, strict: bool = False
+    ) -> None:
+        pass
 
 
 class MockBatchAcquisitionModule:
