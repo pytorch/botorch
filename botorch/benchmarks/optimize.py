@@ -422,6 +422,7 @@ def run_benchmark(
         )
         for method_name in acq_func_configs
     }
+    initial_model_state_dict = deepcopy(initial_model.state_dict())
     for run in range(num_runs):
         start_time = time()
         X = draw_sobol_samples(
@@ -431,17 +432,20 @@ def run_benchmark(
             seed=seed,
         ).squeeze(0)
         Y, Ycov = func(X)
+        initial_model.load_state_dict(initial_model_state_dict)
         model_and_best_point_output = _fit_model_and_get_best_point(
             train_X=X,
             train_Y=Y,
             train_Y_se=Ycov.sqrt(),
-            model=deepcopy(initial_model),
+            model=initial_model,
             max_retries=optim_config.max_retries,
             maxiter=optim_config.model_maxiter,
             verbose=verbose,
             objective=objective,
             constraints=constraints,
         )
+        model = model_and_best_point_output.model
+        fitted_model_state_dict = deepcopy(model.state_dict())
         runtime = time() - start_time
         for (method_name, acq_func_config) in acq_func_configs.items():
             if verbose:
@@ -457,11 +461,12 @@ def run_benchmark(
                 costs=[1.0],
                 runtimes=[runtime],
             )
+            model.load_state_dict(fitted_model_state_dict)
             run_output = run_closed_loop(
                 func=func,
                 acq_func_config=acq_func_config,
                 optim_config=optim_config,
-                model=deepcopy(model_and_best_point_output.model),
+                model=model,
                 output=run_output,
                 lower_bounds=lower_bounds,
                 upper_bounds=upper_bounds,
