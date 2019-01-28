@@ -30,24 +30,24 @@ class TestFitModel(unittest.TestCase):
         mll = fit_model(mll, options={"maxiter": 1})
         model = mll.model
         # Make sure all of the parameters changed
-        self.assertGreater(model.likelihood.log_noise.abs().item(), 1e-3)
+        self.assertGreater(model.likelihood.raw_noise.abs().item(), 1e-3)
         self.assertGreater(model.mean_module.constant.abs().item(), 1e-3)
         self.assertGreater(
-            model.covar_module.base_kernel.log_lengthscale.abs().item(), 1e-3
+            model.covar_module.base_kernel.raw_lengthscale.abs().item(), 1e-3
         )
-        self.assertGreater(model.covar_module.log_outputscale.abs().item(), 1e-3)
+        self.assertGreater(model.covar_module.raw_outputscale.abs().item(), 1e-3)
 
     def test_fit_model_torch(self, cuda=False):
         mll = self._getModel(cuda=cuda)
         mll = fit_model(mll, optimizer=fit_torch, maxiter=1)
         model = mll.model
         # Make sure all of the parameters changed
-        self.assertGreater(model.likelihood.log_noise.abs().item(), 1e-3)
+        self.assertGreater(model.likelihood.raw_noise.abs().item(), 1e-3)
         self.assertGreater(model.mean_module.constant.abs().item(), 1e-3)
         self.assertGreater(
-            model.covar_module.base_kernel.log_lengthscale.abs().item(), 1e-3
+            model.covar_module.base_kernel.raw_lengthscale.abs().item(), 1e-3
         )
-        self.assertGreater(model.covar_module.log_outputscale.abs().item(), 1e-3)
+        self.assertGreater(model.covar_module.raw_outputscale.abs().item(), 1e-3)
 
     def test_fit_model_scipy_cuda(self):
         if torch.cuda.is_available():
