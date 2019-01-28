@@ -12,6 +12,9 @@ from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikeliho
 from .test_fit import NOISE
 
 
+EPS = 1e-8
+
+
 class TestBaseCandidateGeneration(unittest.TestCase):
     def _setUp(self, double=False, cuda=False, expand=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
@@ -47,7 +50,7 @@ class TestGenCandidates(TestBaseCandidateGeneration):
                 lower_bounds=0,
                 upper_bounds=1,
             )
-            self.assertTrue(0 <= candidates <= 1)
+            self.assertTrue(-EPS <= candidates <= 1 + EPS)
 
     def test_gen_candidates_scipy_cuda(self):
         if torch.cuda.is_available():
@@ -65,7 +68,7 @@ class TestGenCandidates(TestBaseCandidateGeneration):
                 fixed_features={1: None},
             )
             candidates = candidates.squeeze(0)
-            self.assertTrue(0 <= candidates[0] <= 1)
+            self.assertTrue(-EPS <= candidates[0] <= 1 + EPS)
             self.assertTrue(candidates[1].item() == 1.0)
 
     def test_gen_candidates_scipy_with_none_fixed_features_cuda(self):
@@ -84,7 +87,7 @@ class TestGenCandidates(TestBaseCandidateGeneration):
                 fixed_features={1: 0.25},
             )
             candidates = candidates.squeeze(0)
-            self.assertTrue(0 <= candidates[0] <= 1)
+            self.assertTrue(-EPS <= candidates[0] <= 1 + EPS)
             self.assertTrue(candidates[1].item() == 0.25)
 
     def test_gen_candidates_scipy_with_fixed_features_cuda(self, cuda=False):
