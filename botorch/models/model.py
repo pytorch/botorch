@@ -19,15 +19,6 @@ class Model(ABC):
     ) -> Posterior:
         pass
 
-    def add_observation_noise(
-        self,
-        posterior: Posterior,
-        X: Tensor,
-        output_indices: Optional[List[int]] = None,
-        **kwargs
-    ) -> Posterior:
-        raise NotImplementedError
-
     def reinitialize(
         self,
         train_X: Tensor,
