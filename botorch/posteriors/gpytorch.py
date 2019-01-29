@@ -4,7 +4,8 @@ from typing import Optional
 
 import gpytorch
 import torch
-from gpytorch.distributions import MultivariateNormal
+from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
+from gpytorch.lazy.diag_lazy_tensor import DiagLazyTensor
 from torch import Tensor
 
 from .posterior import Posterior
@@ -31,6 +32,7 @@ class GPyTorchPosterior(Posterior):
         self,
         sample_shape: Optional[torch.Size] = None,
         base_samples: Optional[Tensor] = None,
+        eps: float = 1e-6,
     ) -> Tensor:
         """Sample from the posterior (with gradients)
 
@@ -42,7 +44,8 @@ class GPyTorchPosterior(Posterior):
                 appropriate dimension, typically obtained using `get_base_samples`.
                 If provided, takes priority over `sample_shape` (though it must
                 comply with `sample_shape`)
-
+            eps: A small value to add to the diagonal of the covariance matrix if
+                the covariance matrix is degenerate.
         Returns:
             A tensor of shape `sample_shape + event_shape`, where `event_shape`
                 is the shape of a single sample from the posterior.
@@ -57,8 +60,31 @@ class GPyTorchPosterior(Posterior):
             kwargs = {"base_samples": base_samples}
         elif sample_shape is not None:
             kwargs = {"sample_shape": sample_shape}
+        failed = False
+        samples = None
         with gpytorch.settings.fast_computations(covar_root_decomposition=False):
-            samples = self.mvn.rsample(**kwargs)
+            try:
+                samples = self.mvn.rsample(**kwargs)
+            except RuntimeError:
+                failed = True
+        # if the covariance matrix is degenerate, add eps to the diagonal
+        if failed or torch.any(torch.isnan(samples)):
+            covar = self.mvn.lazy_covariance_matrix
+            eps_diag = DiagLazyTensor(
+                torch.ones(
+                    (1, covar.shape[-1]),
+                    dtype=self.mvn.mean.dtype,
+                    device=self.mvn.mean.device,
+                )
+                * eps
+            )
+            if self.mvn.mean.dim() > 2:
+                mvn_class = MultitaskMultivariateNormal
+            else:
+                mvn_class = MultivariateNormal
+            mvn = mvn_class(self.mvn.mean, covar + eps_diag)
+            with gpytorch.settings.fast_computations(covar_root_decomposition=False):
+                samples = mvn.rsample(**kwargs)
         return samples
 
     @property
