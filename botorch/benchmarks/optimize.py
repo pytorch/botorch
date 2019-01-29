@@ -89,15 +89,16 @@ def greedy(
     batch_mode = X.dim() == 3
     if not batch_mode:
         X = X.unsqueeze(0)  # internal logic always operates in batch mode
-    with torch.no_grad(), gpytorch.settings.fast_pred_var():
+    with torch.no_grad():
         posterior = model.posterior(X)
         # mc_samples x b x q x (t)
         samples = posterior.rsample(sample_shape=torch.Size([mc_samples]))
     # TODO: handle non-positive definite objectives
-    obj = objective(samples).clamp_min_(0)  # pyre-ignore [16]
     obj_raw = objective(samples)
+    obj = obj_raw.clone()
     feas_raw = torch.ones_like(obj_raw)
     if constraints is not None:
+        obj.clamp_min_(0)  # pyre-ignore [16]
         for constraint in constraints:
             feas_raw.mul_((constraint(samples) < 0).type_as(obj))  # pyre-ignore [16]
         obj.mul_(feas_raw)
@@ -293,6 +294,8 @@ def run_closed_loop(
                 retry += 1
                 if verbose:
                     print("---- Failed {} times ----".format(retry))
+                if retry > optim_config.max_retries:
+                    raise
                 # The exception occured during evaluation time, so refit the model
                 # and recompute the best point using the model
                 model_and_best_point_output = _fit_model_and_get_best_point(
@@ -319,8 +322,6 @@ def run_closed_loop(
                 output.best_model_objective[-1] = model_and_best_point_output.obj
                 output.best_model_feasibility[-1] = model_and_best_point_output.feas
                 output.costs[-1] = 1.0
-                if retry > optim_config.max_retries:
-                    raise
         if verbose:
             print("---- evaluate")
         Y, Ycov = func(X)
