@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 
-from .normal import NormalQMCEngine
+from .normal import MultivariateNormalQMCEngine, NormalQMCEngine
 from .sobol import SobolEngine
 
 
