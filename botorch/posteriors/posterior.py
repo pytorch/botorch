@@ -34,6 +34,7 @@ class Posterior(ABC):
         self,
         sample_shape: Optional[torch.Size] = None,
         base_samples: Optional[Tensor] = None,
+        eps: float = 1e-6,
     ) -> Tensor:
         """
             If both optional arguments are included,
