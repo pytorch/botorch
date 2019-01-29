@@ -102,16 +102,23 @@ class NormalQMCTests(unittest.TestCase):
 
 
 class MultivariateNormalQMCTests(unittest.TestCase):
-    def testMultivariateNormalQMCEnginePSD(self):
-        # try with non-psd cov and expect an error
+    def testMultivariateNormalQMCEngineNonPSD(self):
+        # try with non-psd, non-pd cov and expect an assertion error
         self.assertRaises(
-            np.linalg.LinAlgError, MultivariateNormalQMCEngine, [0, 0], [[1, 2], [2, 1]]
+            ValueError, MultivariateNormalQMCEngine, [0, 0], [[1, 2], [2, 1]]
         )
+
+    def testMultivariateNormalQMCEngineNonPD(self):
+        # try with non-pd but psd cov; should work
+        engine = MultivariateNormalQMCEngine(
+            [0, 0, 0], [[1, 0, 1], [0, 1, 1], [1, 1, 2]]
+        )
+        self.assertTrue(engine._corr_matrix is not None)
 
     def testMultivariateNormalQMCEngineSymmetric(self):
         # try with non-symmetric cov and expect an error
         self.assertRaises(
-            AssertionError, MultivariateNormalQMCEngine, [0, 0], [[1, 0], [2, 1]]
+            ValueError, MultivariateNormalQMCEngine, [0, 0], [[1, 0], [2, 1]]
         )
 
     def testMultivariateNormalQMCEngine(self):
@@ -284,6 +291,29 @@ class MultivariateNormalQMCTests(unittest.TestCase):
         # check covariance
         cov = np.cov(samples.transpose())
         self.assertLess(np.abs(cov[0, 1] - 0.5), 1e-2)
+
+    def testMultivariateNormalQMCEngineDegenerate(self):
+        # X, Y iid standard Normal and Z = X + Y, random vector (X, Y, Z)
+        engine = MultivariateNormalQMCEngine(
+            mean=[0.0, 0.0, 0.0],
+            cov=[[1.0, 0.0, 1.0], [0.0, 1.0, 1.0], [1.0, 1.0, 2.0]],
+            seed=12345,
+        )
+        samples = engine.draw(n=2000)
+        self.assertTrue(all(np.abs(samples.mean(axis=0)) < 1e-2))
+        self.assertTrue(np.abs(np.std(samples[:, 0]) - 1) < 1e-2)
+        self.assertTrue(np.abs(np.std(samples[:, 1]) - 1) < 1e-2)
+        self.assertTrue(np.abs(np.std(samples[:, 2]) - np.sqrt(2)) < 1e-2)
+        for i in (0, 1, 2):
+            _, pval = shapiro(samples[:, i])
+            self.assertGreater(pval, 0.9)
+        cov = np.cov(samples.transpose())
+        self.assertLess(np.abs(cov[0, 1]), 1e-2)
+        self.assertLess(np.abs(cov[0, 2] - 1), 1e-2)
+        # check to see if X + Y = Z almost exactly
+        self.assertTrue(
+            all(np.abs(samples[:, 0] + samples[:, 1] - samples[:, 2]) < 1e-5)
+        )
 
 
 if __name__ == "__main__":

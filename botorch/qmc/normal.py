@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import math
-from typing import Optional
+from typing import List, Optional, Union
 
 import numpy as np
 from scipy.stats import norm
@@ -80,23 +80,40 @@ class MultivariateNormalQMCEngine:
     """
 
     def __init__(
-        self, mean, cov, seed: Optional[int] = None, inv_transform: bool = False
+        self,
+        mean: Union[float, List[float], np.ndarray],
+        cov: Union[float, List[List[float]], np.ndarray],
+        seed: Optional[int] = None,
+        inv_transform: bool = False,
     ) -> None:
         # check for square/symmetric cov matrix and mean vector has the same d
         mean = np.array(mean, copy=False, ndmin=1)
         cov = np.array(cov, copy=False, ndmin=2)
-        assert cov.shape[0] == cov.shape[1]
-        assert mean.shape[0] == cov.shape[0]
-        assert np.allclose(cov, cov.transpose())
+        if not cov.shape[0] == cov.shape[1]:
+            raise ValueError("Covariance matrix is not square.")
+        if not mean.shape[0] == cov.shape[0]:
+            raise ValueError("Dimension mismatch between mean and covariance.")
+        if not np.allclose(cov, cov.transpose()):
+            raise ValueError("Covariance matrix is not symmetric.")
 
         self._mean = mean
         self._normal_engine = NormalQMCEngine(
             d=mean.shape[0], seed=seed, inv_transform=inv_transform
         )
-        self._L = np.linalg.cholesky(cov)
+
+        # compute Cholesky decomp;
+        # if it fails, do the eigendecomposition
+        try:
+            self._corr_matrix = np.linalg.cholesky(cov).transpose()
+        except np.linalg.LinAlgError:
+            eigval, eigvec = np.linalg.eigh(cov)
+            if not np.all(eigval >= -1.0e-8):
+                raise ValueError("Covariance matrix not PSD.")
+            eigval = np.clip(eigval, 0.0, None)
+            self._corr_matrix = (eigvec * np.sqrt(eigval)).transpose()
 
     def draw(self, n: int = 1) -> np.ndarray:
         """Draw n qMC samples from the meanltivariate Normal."""
         base_samples = self._normal_engine.draw(n)
-        qmc_samples = base_samples @ self._L.transpose() + self._mean
+        qmc_samples = base_samples @ self._corr_matrix + self._mean
         return qmc_samples
