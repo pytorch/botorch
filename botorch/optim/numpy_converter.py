@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-
 from collections import OrderedDict
+from copy import copy
 from math import inf
 from typing import Dict, List, NamedTuple, Optional, Tuple
 
@@ -43,10 +43,17 @@ def module_to_array(
     upper: List[np.ndarray] = []
     property_dict = OrderedDict()
 
-    # extract parameter bounds from module.model.parameter_bounds (if present)
+    # extract parameter bounds from module.model.parameter_bounds and
+    # module.likelihood.parameter_bounds (if present)
     model_bounds = getattr(getattr(module, "model", None), "parameter_bounds", {})
     bounds_ = {".".join(["model", key]): val for key, val in model_bounds.items()}
-    # update with user-supplied bounds (overrides parameter_bounds)
+    likelihood_bounds = getattr(
+        getattr(module, "likelihood", None), "parameter_bounds", {}
+    )
+    bounds_.update(
+        {".".join(["likelihood", key]): val for key, val in likelihood_bounds.items()}
+    )
+    # update with user-supplied bounds
     if bounds is not None:
         bounds_.update(bounds)
 
