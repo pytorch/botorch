@@ -49,6 +49,7 @@ class SingleTaskGP(ExactGP, GPyTorchModel):
             likelihood = GaussianLikelihood(
                 noise_prior=GammaPrior(0.1, 0.01), batch_size=batch_size
             )
+            likelihood.parameter_bounds = {"noise_covar.raw_noise": (-15, None)}
         else:
             self._likelihood_state_dict = deepcopy(likelihood.state_dict())
         super().__init__(train_X, train_Y, likelihood)
@@ -100,6 +101,9 @@ class HeteroskedasticSingleTaskGP(SingleTaskGP):
             train_X=train_X, train_Y=train_Y_log_var, likelihood=noise_likelihood
         )
         likelihood = _GaussianLikelihoodBase(HeteroskedasticNoise(noise_model))
+        likelihood.parameter_bounds = {
+            "noise_covar.noise_model.likelihood.noise_covar.raw_noise": (-15, None)
+        }
         super().__init__(train_X=train_X, train_Y=train_Y, likelihood=likelihood)
 
     def reinitialize(

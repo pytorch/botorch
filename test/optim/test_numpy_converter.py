@@ -33,8 +33,9 @@ class TestNumpyTorchParameterConversion(unittest.TestCase):
         model.mean_module = ConstantMean()
 
         model.parameter_bounds = {"mean_module.constant": (None, 10.0)}
-        bounds_dict = {"likelihood.noise_covar.raw_noise": (0.0, None)}
+        likelihood.parameter_bounds = {"noise_covar.raw_noise": (0.0, None)}
         mll = ExactMarginalLogLikelihood(likelihood, model)
+        bounds_dict = {"model.covar_module.raw_lengthscale": (0.1, None)}
 
         x, property_dict, bounds = module_to_array(module=mll, bounds=bounds_dict)
 
@@ -47,6 +48,7 @@ class TestNumpyTorchParameterConversion(unittest.TestCase):
                 "model.mean_module.constant",
             },
         )
+
         sizes = [torch.Size([1, 1]), torch.Size([1, 1, 3]), torch.Size([1, 1])]
         for i, val in enumerate(property_dict.values()):
             self.assertEqual(val.dtype, torch.float32)
@@ -56,8 +58,9 @@ class TestNumpyTorchParameterConversion(unittest.TestCase):
         # check bound parsing
         self.assertIsInstance(bounds, np.ndarray)
 
-        lower_exp = np.full_like(x, -np.inf)
+        lower_exp = np.full_like(x, 0.1)
         lower_exp[_get_index(property_dict, "likelihood.noise_covar.raw_noise")] = 0.0
+        lower_exp[_get_index(property_dict, "model.mean_module.constant")] = -np.inf
         self.assertTrue(np.equal(bounds[0], lower_exp).all())
 
         upper_exp = np.full_like(x, np.inf)
