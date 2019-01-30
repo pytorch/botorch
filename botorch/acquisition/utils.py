@@ -59,7 +59,7 @@ def get_acquisition_function(
     if acquisition_function_name == "qEI":
         return qExpectedImprovement(
             model=model,
-            best_f=model.posterior(X_observed).mean.max().item(),
+            best_f=objective(model.posterior(X_observed).mean).max().item(),
             objective=objective,
             constraints=constraints,
             X_pending=X_pending,
@@ -69,7 +69,7 @@ def get_acquisition_function(
     elif acquisition_function_name == "qPI":
         return qProbabilityOfImprovement(
             model=model,
-            best_f=model.posterior(X_observed).mean.max().item(),
+            best_f=objective(model.posterior(X_observed).mean).max().item(),
             objective=objective,
             constraints=constraints,
             X_pending=X_pending,
