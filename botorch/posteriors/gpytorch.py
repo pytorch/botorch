@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 from typing import Optional
+from warnings import warn
 
 import gpytorch
 import torch
@@ -32,7 +33,7 @@ class GPyTorchPosterior(Posterior):
         self,
         sample_shape: Optional[torch.Size] = None,
         base_samples: Optional[Tensor] = None,
-        eps: float = 1e-6,
+        eps: float = 1e-8,
     ) -> Tensor:
         """Sample from the posterior (with gradients)
 
@@ -60,15 +61,16 @@ class GPyTorchPosterior(Posterior):
             kwargs = {"base_samples": base_samples}
         elif sample_shape is not None:
             kwargs = {"sample_shape": sample_shape}
-        failed = False
         samples = None
         with gpytorch.settings.fast_computations(covar_root_decomposition=False):
-            try:
-                samples = self.mvn.rsample(**kwargs)
-            except RuntimeError:
-                failed = True
+            samples = self.mvn.rsample(**kwargs)
         # if the covariance matrix is degenerate, add eps to the diagonal
-        if failed or torch.any(torch.isnan(samples)):
+        # and increase eps as necessary.
+        # TODO: replace with a more principled approach: T39802489
+        degenerate = False
+        if torch.any(torch.isnan(samples)):
+            degenerate = True
+        while torch.any(torch.isnan(samples)):
             covar = self.mvn.lazy_covariance_matrix
             eps_diag = DiagLazyTensor(
                 torch.ones(
@@ -85,6 +87,18 @@ class GPyTorchPosterior(Posterior):
             mvn = mvn_class(self.mvn.mean, covar + eps_diag)
             with gpytorch.settings.fast_computations(covar_root_decomposition=False):
                 samples = mvn.rsample(**kwargs)
+            eps *= 10
+            if eps > 0.1:
+                raise ValueError(
+                    f"The covariance matrix is degenerate. Adding {eps/10.0} to"
+                    " the diagonal did not make it PSD."
+                )
+        if degenerate:
+            warn(
+                f"The covariance matrix is degenerate. Adding {eps/10.0} for"
+                " numerical stability.",
+                RuntimeWarning,
+            )
         return samples
 
     @property
