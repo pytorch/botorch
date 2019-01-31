@@ -2,9 +2,8 @@
 
 from copy import deepcopy
 from time import time
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
-import gpytorch
 import torch
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from torch import Tensor
@@ -26,8 +25,8 @@ def _get_fitted_model(
     train_Y: Tensor,
     train_Y_se: Tensor,
     model: Model,
-    maxiter: int,
-    warm_start: bool = True,
+    options: Dict[str, Union[float, int]],
+    warm_start: bool,
 ) -> Model:
     """Helper function that returns a model fitted to the provided data.
 
@@ -37,7 +36,7 @@ def _get_fitted_model(
         train_Y_se: A `b x n x (t)` (or `b x n x (t)`) Tensor of observed standard
             errors for each outcome
         model: an initialized Model. This model must have a likelihood attribute.
-        maxiter: The maximum number of iterations
+        options: Dictionary of solver options, passed along to scipy.minimize.
         warm_start: If True, start optimizing the hyperparameters from their
             previous values without resetting them
 
@@ -49,7 +48,7 @@ def _get_fitted_model(
     )
     mll = ExactMarginalLogLikelihood(model.likelihood, model)
     mll.to(dtype=train_X.dtype, device=train_X.device)
-    mll = fit_model(mll, options={"maxiter": maxiter})
+    mll = fit_model(mll, options=options)
     return model
 
 
@@ -123,8 +122,9 @@ def _fit_model_and_get_best_point(
     train_Y_se: Tensor,
     model: Model,
     max_retries: int,
-    maxiter: int,
+    model_fit_options: Dict[str, Union[float, int]],
     verbose: bool,
+    warm_start: bool,
     objective: Callable[[Tensor], Tensor] = lambda Y: Y,
     constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
     retry: int = 0,
@@ -138,8 +138,10 @@ def _fit_model_and_get_best_point(
         train_Y_se: A `n x (t)` Tensor of observed standard errors for each outcome
         model: An initialized Model. This model must have a likelihood attribute.
         max_retries: Themaximum number of retries
-        maxiter: The maximum number of iterations
+        model_fit_options: Dictionary of solver options, passed along to scipy.minimize.
         verbose: whether to provide verbose output
+        warm_start: If True, start optimizing the hyperparameters from their
+            previous values without resetting them
         objective: A callable mapping a Tensor of size `b x q x (t)` to a Tensor
             of size `b x q`, where `t` is the number of outputs (tasks) of the
             model. Note: the callable must support broadcasting. If omitted, use
@@ -171,7 +173,8 @@ def _fit_model_and_get_best_point(
                 train_Y=train_Y,
                 train_Y_se=train_Y_se,
                 model=model,
-                maxiter=maxiter,
+                options=model_fit_options,
+                warm_start=warm_start,
             )
             if verbose:
                 print("---- identify")
@@ -274,6 +277,7 @@ def run_closed_loop(
                 candidates = optimize(
                     acq_func=acq_func,
                     q=optim_config.q,
+                    candidate_optim_options=optim_config.candidate_optim_options,
                     num_raw_samples=optim_config.num_raw_samples,
                     num_starting_points=optim_config.num_starting_points,
                     lower_bounds=lower_bounds,
@@ -286,6 +290,7 @@ def run_closed_loop(
                         acq_func=acq_func,
                         lower_bounds=lower_bounds,
                         upper_bounds=upper_bounds,
+                        candidate_optim_options=optim_config.candidate_optim_options,
                     )
 
                 X = acq_func.extract_candidates(candidates).detach()
@@ -304,8 +309,9 @@ def run_closed_loop(
                     train_Y_se=train_Y_se,
                     model=model,
                     max_retries=optim_config.max_retries,
-                    maxiter=optim_config.model_maxiter,
+                    model_fit_options=optim_config.model_fit_options,
                     verbose=verbose,
+                    warm_start=optim_config.warm_start,
                     objective=objective,
                     constraints=constraints,
                     retry=retry,
@@ -337,8 +343,9 @@ def run_closed_loop(
             train_Y_se=train_Y_se,
             model=model,
             max_retries=optim_config.max_retries,
-            maxiter=optim_config.model_maxiter,
+            model_fit_options=optim_config.model_fit_options,
             verbose=verbose,
+            warm_start=optim_config.warm_start,
             objective=objective,
             constraints=constraints,
             retry=retry,
@@ -440,8 +447,9 @@ def run_benchmark(
             train_Y_se=Ycov.sqrt(),
             model=initial_model,
             max_retries=optim_config.max_retries,
-            maxiter=optim_config.model_maxiter,
+            model_fit_options=optim_config.model_fit_options,
             verbose=verbose,
+            warm_start=optim_config.warm_start,
             objective=objective,
             constraints=constraints,
         )
@@ -526,6 +534,7 @@ def run_benchmark(
 def joint_optimize(
     acq_func: Module,
     q: int,
+    candidate_optim_options: Dict[str, Union[float, int, str]],
     num_raw_samples: int = 1,
     num_starting_points: int = 1,
     lower_bounds: Optional[Tensor] = None,
@@ -537,6 +546,8 @@ def joint_optimize(
     Args:
         acq_func:  An acquisition function Module
         q: The number of candidates in each q-batch
+        candidate_optim_options: options used to control the optimization including
+            "method" and "maxiter"
         num_raw_samples: number of samples for initialization
         num_starting_points:  Number of starting points for multistart acquisition
             function optimization.
@@ -563,6 +574,7 @@ def joint_optimize(
     return optimize_from_initialization(
         initial_candidates=batch_initial_conditions,
         acq_func=acq_func,
+        candidate_optim_options=candidate_optim_options,
         lower_bounds=lower_bounds,
         upper_bounds=upper_bounds,
     )
@@ -571,6 +583,7 @@ def joint_optimize(
 def optimize_from_initialization(
     initial_candidates: Tensor,
     acq_func: Module,
+    candidate_optim_options: Dict[str, Union[float, int, str]],
     lower_bounds: Optional[Tensor] = None,
     upper_bounds: Optional[Tensor] = None,
 ) -> Tensor:
@@ -580,6 +593,8 @@ def optimize_from_initialization(
     Args:
         initial_candidates: initial candidates to optimize from
         acq_func:  An acquisition function Module
+        candidate_optim_options: options used to control the optimization including
+            "method" and "maxiter"
         lower_bounds: minimum values for each column of initial_candidates
         upper_bounds: maximum values for each column of initial_candidates
 
@@ -592,6 +607,7 @@ def optimize_from_initialization(
         acquisition_function=acq_func,
         lower_bounds=lower_bounds,
         upper_bounds=upper_bounds,
+        options=candidate_optim_options,
     )
     return get_best_candidates(
         batch_candidates=batch_candidates, batch_values=batch_acq_values
@@ -601,6 +617,7 @@ def optimize_from_initialization(
 def sequential_optimize(
     acq_func: Module,
     q: int,
+    candidate_optim_options: Dict[str, Union[float, int, str]],
     num_raw_samples: int = 1,
     num_starting_points: int = 1,
     lower_bounds: Optional[Tensor] = None,
@@ -613,6 +630,8 @@ def sequential_optimize(
     Args:
         acq_func:  An acquisition function Module
         q: The number of candidates in each q-batch
+        candidate_optim_options: options used to control the optimization including
+            "method" and "maxiter"
         num_raw_samples: number of samples for initialization
         num_starting_points:  Number of starting points for multistart acquisition
             function optimization.
@@ -633,6 +652,7 @@ def sequential_optimize(
             joint_optimize(
                 acq_func=acq_func,
                 q=1,
+                candidate_optim_options=candidate_optim_options,
                 num_raw_samples=num_raw_samples,
                 num_starting_points=num_starting_points,
                 sim_measure=sim_measure,
