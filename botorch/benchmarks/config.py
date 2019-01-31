@@ -13,10 +13,15 @@ class OptimizeConfig(NamedTuple):
     initial_points: int = 10
     q: int = 5
     n_batch: int = 10
-    model_maxiter: int = 50
     num_starting_points: int = 1
     num_raw_samples: int = 500  # number of samples for random restart heuristic
     max_retries: int = 0  # number of retries, in the case of exceptions
+    warm_start: bool = True
+    candidate_optim_options: Dict[str, Union[float, int, str]] = {
+        "maxiter": 100,
+        "ftol": 1e-5,
+    }
+    model_fit_options: Dict[str, Union[float, int]] = {"maxiter": 50}
 
 
 class AcquisitionFunctionConfig(NamedTuple):

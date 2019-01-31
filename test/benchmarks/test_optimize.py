@@ -54,7 +54,7 @@ class TestRunClosedLoop(unittest.TestCase):
             initial_points=5,
             q=2,
             n_batch=1,
-            model_maxiter=3,
+            model_fit_options={"maxiter": 3},
             num_starting_points=1,
             num_raw_samples=2,
             max_retries=0,
@@ -144,7 +144,7 @@ class TestRunBenchmark(unittest.TestCase):
             initial_points=5,
             q=2,
             n_batch=2,
-            model_maxiter=3,
+            model_fit_options={"maxiter": 3},
             num_starting_points=1,
             num_raw_samples=2,
             max_retries=0,
@@ -366,7 +366,8 @@ class TestGetFittedModel(unittest.TestCase):
                 train_Y=train_Y,
                 train_Y_se=None,
                 model=initial_model,
-                maxiter=1,
+                options={"maxiter": 1},
+                warm_start=False,
             )
             self.assertIsInstance(model, SingleTaskGP)
             self.assertIsInstance(model.likelihood, GaussianLikelihood)
@@ -380,7 +381,8 @@ class TestGetFittedModel(unittest.TestCase):
                 train_Y=train_Y,
                 train_Y_se=train_Y_se,
                 model=initial_model2,
-                maxiter=1,
+                options={"maxiter": 1},
+                warm_start=False,
             )
             self.assertIsInstance(model2, HeteroskedasticSingleTaskGP)
             self.assertIsInstance(model2.likelihood, _GaussianLikelihoodBase)
@@ -416,13 +418,15 @@ class TestFitModelAndGetBestPoint(unittest.TestCase):
                 return lambda Y: Y
 
             constraints = [lambda Y: torch.ones_like(Y)]
+            model_fit_options = {"maxiter": 1}
             model_and_best_point_output = _fit_model_and_get_best_point(
                 train_X=train_X,
                 train_Y=train_Y,
                 train_Y_se=train_Y_se,
                 model=model,
                 max_retries=0,
-                maxiter=1,
+                model_fit_options={"maxiter": 1},
+                warm_start=False,
                 verbose=False,
                 objective=objective,
                 constraints=constraints,
@@ -434,7 +438,8 @@ class TestFitModelAndGetBestPoint(unittest.TestCase):
             self.assertTrue(torch.equal(call_args["train_Y"], train_Y))
             self.assertTrue(torch.equal(call_args["train_Y_se"], train_Y_se))
             self.assertEqual(call_args["model"], model)
-            self.assertEqual(call_args["maxiter"], 1)
+            self.assertEqual(call_args["options"], model_fit_options)
+            self.assertEqual(call_args["warm_start"], False)
             greedy_call_args = mock_greedy.call_args[-1]
             self.assertTrue(torch.equal(greedy_call_args["X"], train_X))
             self.assertEqual(greedy_call_args["model"], model)
