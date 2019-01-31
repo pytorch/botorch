@@ -8,6 +8,7 @@ import numpy as np
 import torch
 from torch import Tensor
 
+from ..exceptions import BadInitialCandidatesError
 from ..models.model import Model
 
 
@@ -189,3 +190,56 @@ def initialize_q_batch(
             xs.append(X[max_idx])
 
     return torch.stack(xs)
+
+
+def initialize_q_batch_simple(
+    X: Tensor,
+    Y: Tensor,
+    n: int,
+    options: Optional[Dict[str, Union[bool, float]]] = None,
+) -> Tensor:
+    """Heuristic for picking initial candidates for candidate generation.
+
+    Args:
+        X: A `b x q x d` tensor of `b` samples of `q`-batches from a `d`-dim.
+            feature space. Typically, these are generated using qMC.
+        Y: A tensor of `b` outcomes associated with the samples. Typically, this
+            is the value of the batch acquisition function to be maximized.
+        n: The number of initial condition to be generated. Must be smaller than `b`.
+        options: A dictionary for specifying options:
+            - alpha: The threshold (as a fraction of the maximum observed value)
+                under which to ignore samples. All samples for which
+                `Y < alpha max(Y)` will be ignored. Default: 1e-5
+            - eta: Temperature parameter for weighting samples. Default: 1.0
+                If `eta == 0`, any non-zero function values are equally likely
+                to be selected.
+
+    Returns:
+        A `n x q x d` tensor of `n` `q`-batch initial conditions.
+
+    """
+    options = options or {}
+    alpha = options.get("alpha", 1e-4)
+    eta = options.get("eta", 1.0)
+    n_samples = X.shape[0]
+
+    if n > n_samples:
+        raise RuntimeError("n cannot be larger than the number of provided samples")
+    elif n == n_samples:
+        return X
+
+    max_val, max_idx = torch.max(Y, dim=0)
+    if max_val <= 0:
+        raise BadInitialCandidatesError(
+            "Acquisition function value is non-positive for all candidates"
+        )
+    non_zero = Y >= alpha * max_val
+    while non_zero.sum() < n:
+        alpha = 0.1 * alpha
+        non_zero = Y >= alpha * max_val
+    non_zero_idcs = torch.arange(len(Y))[non_zero]
+    weights = torch.exp(eta * (Y[non_zero] / max_val - 1))
+    idcs = non_zero_idcs[torch.multinomial(weights, n)]
+    if max_idx not in idcs:
+        idcs[-1] = max_idx
+    return X[idcs]
