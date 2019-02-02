@@ -115,11 +115,12 @@ def initialize_q_batch(
             return (1 + gamma * distance).reciprocal()
 
     # push value through exp (w/ temperature) to get probabilities for sampling
-    Y_std = Y.std()
-    if Y_std > 0:
-        prob_vals = torch.exp(eta_Y * (Y - Y.mean()) / Y_std)
-    else:
-        prob_vals = torch.ones_like(Y)
+    Y_max = Y.max()
+    if Y_max <= 0:
+        raise BadInitialCandidatesError(
+            "Acquisition function value is non-positive for all candidates"
+        )
+    prob_vals = torch.exp(eta_Y * (Y / Y_max - 1))
     prob_vals /= prob_vals.mean()  # for numerical stabilty
 
     if eta_sim == 0:
@@ -183,7 +184,6 @@ def initialize_q_batch(
             prob = prob_vals * sim_weights
             prob[~available] = 0
             prob /= prob.sum()
-
             # pick the next candidate
             max_idx = torch.multinomial(prob, 1).item()
             available[max_idx] = 0

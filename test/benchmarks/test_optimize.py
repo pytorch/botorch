@@ -64,10 +64,15 @@ class TestRunClosedLoop(unittest.TestCase):
         )
         self.func = test_func
 
+    @mock.patch("botorch.benchmarks.optimize.initialize_q_batch")
     @mock.patch("botorch.benchmarks.optimize._get_fitted_model")
     @mock.patch("botorch.benchmarks.optimize.gen_candidates_scipy")
     def test_run_closed_loop(
-        self, mock_gen_candidates_scipy, mock_get_fitted_model, cuda=False
+        self,
+        mock_gen_candidates_scipy,
+        mock_get_fitted_model,
+        mock_initialize_q_batch,
+        cuda=False,
     ):
         for dtype in (torch.float, torch.double):
             bounds = get_bounds(cuda=cuda, dtype=dtype)
@@ -83,6 +88,9 @@ class TestRunClosedLoop(unittest.TestCase):
                 )
                 for _ in range(self.optim_config.n_batch)
             ]
+            mock_initialize_q_batch.return_value = gen_x(
+                self.optim_config.num_starting_points, self.optim_config.q
+            )
             X = torch.zeros((self.optim_config.initial_points, 1), **tkwargs)
             Y, Ycov = self.func(X)
             mean1 = torch.ones(self.optim_config.initial_points, **tkwargs)
