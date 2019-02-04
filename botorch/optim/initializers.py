@@ -237,7 +237,7 @@ def initialize_q_batch_simple(
     while non_zero.sum() < n:
         alpha = 0.1 * alpha
         non_zero = Y >= alpha * max_val
-    non_zero_idcs = torch.arange(len(Y))[non_zero]
+    non_zero_idcs = torch.arange(len(Y), device=Y.device)[non_zero]
     weights = torch.exp(eta * (Y[non_zero] / max_val - 1))
     idcs = non_zero_idcs[torch.multinomial(weights, n)]
     if max_idx not in idcs:
