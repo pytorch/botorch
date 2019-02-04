@@ -47,7 +47,7 @@ class TestAcquisitionModules(unittest.TestCase):
             X = torch.empty(2, 2, 1, device=device, dtype=dtype)  # dummy for shape
             ei = module(X)
             ei_expected = torch.tensor(
-                [[0.39894, 0.69780], [1.08332, 0.39894]], device=device, dtype=dtype
+                [[0.39894, 0.69780], [1.08332, 0.19780]], device=device, dtype=dtype
             )
             self.assertTrue(approx_equal(ei, ei_expected))
 

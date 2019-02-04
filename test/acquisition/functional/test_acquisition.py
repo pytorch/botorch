@@ -18,12 +18,14 @@ class TestFunctionalAcquisition(unittest.TestCase):
     def test_expected_improvement(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
-            mean = torch.tensor([0.0, 0.5], device=device, dtype=dtype)
-            variance = torch.ones(2, device=device, dtype=dtype)
+            mean = torch.tensor([-0.5, 0.0, 0.5], device=device, dtype=dtype)
+            variance = torch.ones(3, device=device, dtype=dtype)
             mm = MockModel(MockPosterior(mean=mean, variance=variance))
-            X = torch.empty(2, 1, device=device, dtype=dtype)  # dummy Tensor for shape
+            X = torch.empty(3, 1, device=device, dtype=dtype)  # dummy Tensor for shape
             ei = expected_improvement(X=X, model=mm, best_f=0.0)
-            ei_expected = torch.tensor([0.39894, 0.69780], device=device, dtype=dtype)
+            ei_expected = torch.tensor(
+                [0.19780, 0.39894, 0.69780], device=device, dtype=dtype
+            )
             self.assertTrue(approx_equal(ei, ei_expected))
 
     def test_expected_improvement_cuda(self, cuda=False):
@@ -33,15 +35,19 @@ class TestFunctionalAcquisition(unittest.TestCase):
     def test_expected_improvement_batch(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
-            mean = torch.tensor([[0.0, 0.5], [1.0, -0.5]], device=device, dtype=dtype)
+            mean = torch.tensor(
+                [[-0.5, 0.0, 0.5], [-0.25, 1.0, -0.5]], device=device, dtype=dtype
+            )
             variance = torch.ones_like(mean)
             mm = MockModel(MockPosterior(mean=mean, variance=variance))
             # dummy Tensor for shape
-            X = torch.empty(2, 2, 1, device=device, dtype=dtype)
+            X = torch.empty(2, 3, 1, device=device, dtype=dtype)
             best_f = torch.zeros(2, device=device, dtype=dtype)
             ei = expected_improvement(X=X, model=mm, best_f=best_f)
             ei_expected = torch.tensor(
-                [[0.39894, 0.69780], [1.08332, 0.39894]], device=device, dtype=dtype
+                [[0.19780, 0.39894, 0.69780], [0.28634, 1.08332, 0.19780]],
+                device=device,
+                dtype=dtype,
             )
             self.assertTrue(approx_equal(ei, ei_expected))
 
