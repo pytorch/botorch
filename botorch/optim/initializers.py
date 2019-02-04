@@ -3,12 +3,13 @@
 import math
 from itertools import permutations
 from typing import Callable, Dict, Optional, Union
+from warnings import warn
 
 import numpy as np
 import torch
 from torch import Tensor
 
-from ..exceptions import BadInitialCandidatesError
+from ..exceptions import BadInitialCandidatesWarning
 from ..models.model import Model
 
 
@@ -117,10 +118,14 @@ def initialize_q_batch(
     # push value through exp (w/ temperature) to get probabilities for sampling
     Y_max = Y.max()
     if Y_max <= 0:
-        raise BadInitialCandidatesError(
-            "Acquisition function value is non-positive for all candidates"
+        prob_vals = torch.ones_like(Y)
+        warn(
+            f"All acquisition values for raw sampled points are zero, so initial"
+            " conditions are being selected exclusively based on similarity.",
+            BadInitialCandidatesWarning,
         )
-    prob_vals = torch.exp(eta_Y * (Y / Y_max - 1))
+    else:
+        prob_vals = torch.exp(eta_Y * (Y / Y_max - 1))
     prob_vals /= prob_vals.mean()  # for numerical stabilty
 
     if eta_sim == 0:
@@ -230,9 +235,12 @@ def initialize_q_batch_simple(
 
     max_val, max_idx = torch.max(Y, dim=0)
     if max_val <= 0:
-        raise BadInitialCandidatesError(
-            "Acquisition function value is non-positive for all candidates"
+        warn(
+            f"All acquisition values for raw sampled points are zero, so initial"
+            " conditions are being selected randomly.",
+            BadInitialCandidatesWarning,
         )
+        return X[torch.randperm(n=n_samples, device=X.device)][:n]
     non_zero = Y >= alpha * max_val
     while non_zero.sum() < n:
         alpha = 0.1 * alpha
