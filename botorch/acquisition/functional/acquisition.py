@@ -8,6 +8,7 @@ from torch import Tensor
 from torch.distributions import Normal
 
 from ...models import Model
+from ..batch_utils import batch_mode_transform
 
 
 """
@@ -16,6 +17,7 @@ These functions use analytical expressions and do not rely on MC-sampling.
 """
 
 
+@batch_mode_transform
 def expected_improvement(
     X: Tensor, model: Model, best_f: Union[float, Tensor]
 ) -> Tensor:
@@ -36,12 +38,12 @@ def expected_improvement(
         points
 
     """
-    if isinstance(best_f, Number):
-        best_f = torch.tensor(best_f, dtype=X.dtype, device=X.device)
-    best = best_f.view(X.shape[:-2] + torch.Size([1]))
+    if isinstance(best_f, Tensor):
+        best_f = best_f.unsqueeze(-1)
     posterior = model.posterior(X)
     mean, sigma = posterior.mean, posterior.variance.sqrt()
-    u = (mean - best).clamp_min_(0) / sigma
+    sigma = sigma.clamp_min(1e-9)
+    u = (mean - best_f) / sigma
     normal = Normal(torch.zeros_like(u), torch.ones_like(u))
     ucdf = normal.cdf(u)
     updf = torch.exp(normal.log_prob(u))
@@ -67,6 +69,7 @@ def posterior_mean(X: Tensor, model: Model) -> Tensor:
     return model.posterior(X).mean
 
 
+@batch_mode_transform
 def probability_of_improvement(
     X: Tensor, model: Model, best_f: Union[float, Tensor]
 ) -> Tensor:
@@ -87,16 +90,16 @@ def probability_of_improvement(
         points
 
     """
-    if isinstance(best_f, Number):
-        best_f = torch.tensor(best_f, dtype=X.dtype, device=X.device)
-    best = best_f.view(X.shape[:-2] + torch.Size([1]))
+    if isinstance(best_f, Tensor):
+        best_f.unsqueeze(-1)
     posterior = model.posterior(X)
     mean, sigma = posterior.mean, posterior.variance.sqrt()
-    u = (mean - best) / sigma
+    u = (mean - best_f) / sigma
     normal = Normal(torch.zeros_like(u), torch.ones_like(u))
     return normal.cdf(u)
 
 
+@batch_mode_transform
 def upper_confidence_bound(
     X: Tensor, model: Model, beta: Union[float, Tensor]
 ) -> Tensor:
@@ -117,9 +120,8 @@ def upper_confidence_bound(
         points
 
     """
-    if isinstance(beta, Number):
-        beta = torch.tensor(beta, dtype=X.dtype, device=X.device)
-    beta = beta.view(X.shape[:-2] + torch.Size([1]))
+    if isinstance(beta, Tensor):
+        beta = beta.unsqueeze(-1)
     posterior = model.posterior(X)
     mean, variance = posterior.mean, posterior.variance
     return mean + (beta * variance).sqrt()
