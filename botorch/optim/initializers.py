@@ -120,8 +120,8 @@ def initialize_q_batch(
     if Y_max <= 0:
         prob_vals = torch.ones_like(Y)
         warn(
-            f"All acquisition values for raw sampled points are zero, so initial"
-            " conditions are being selected exclusively based on similarity.",
+            "All acquisition values for raw sampled points are zero, so initial "
+            "conditions are being selected exclusively based on similarity.",
             BadInitialCandidatesWarning,
         )
     else:
@@ -236,8 +236,8 @@ def initialize_q_batch_simple(
     max_val, max_idx = torch.max(Y, dim=0)
     if max_val <= 0:
         warn(
-            f"All acquisition values for raw sampled points are zero, so initial"
-            " conditions are being selected randomly.",
+            "All acquisition values for raw sampled points are zero, so initial "
+            "conditions are being selected randomly.",
             BadInitialCandidatesWarning,
         )
         return X[torch.randperm(n=n_samples, device=X.device)][:n]
