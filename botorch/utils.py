@@ -171,13 +171,14 @@ def get_objective_weights_transform(
     """
     Create a callable mapping a Tensor of size `b x q x t` to a Tensor of size
         `b x q`, where `t` is the number of outputs (tasks) of the model using
-        the objective weights. This callable supports broadcasting (e.g.
-        for calling on a tensor of shape `mc_samples x b x q x t`. For t=1, the
-        objective weight determines the optimization direction.
+        scalarization via the objective weights. This callable supports
+        broadcasting (e.g. for calling on a tensor of shape `mc_samples x b x q x t`).
+        For `t = 1`, the objective weight can be used to determine the optimization
+        direction.
 
     Args:
         objective_weights: a 1-dimensional Tensor containing a weight for each task.
-        If not provided, the identity mapping is used.
+            If not provided, the identity mapping is used.
 
     Returns:
         Callable[Tensor, Tensor]: transform function using the objective weights
@@ -186,11 +187,7 @@ def get_objective_weights_transform(
     if objective_weights is None:
         return lambda Y: Y
     weights = objective_weights.view(-1)
-    if weights.shape[0] == 0:
-        return lambda Y: Y
-    elif weights.shape[0] == 1:
-        return lambda Y: Y * weights[0]
-    # TODO: replace with einsum once performance issues are resolved upstream.
+    # TODO: replace with einsum once pytorch performance issues are resolved
     return lambda Y: torch.sum(Y * weights.view(1, 1, -1), dim=-1)
 
 
