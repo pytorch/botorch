@@ -166,34 +166,34 @@ class TestGenXUniform(unittest.TestCase):
 
 class TestGetObjectiveWeightsTransform(unittest.TestCase):
     def testNoWeights(self):
-        X = torch.ones((5, 2, 4), dtype=torch.float32)
+        Y = torch.ones(5, 2, 4)
         objective_transform = get_objective_weights_transform(None)
-        X_transformed = objective_transform(X)
-        self.assertTrue(torch.equal(X, X_transformed))
+        Y_transformed = objective_transform(Y)
+        self.assertTrue(torch.equal(Y, Y_transformed))
 
     def testOneWeightBroadcasting(self):
-        X = torch.ones((5, 2, 4))
-        objective_transform = get_objective_weights_transform(torch.tensor([1.0]))
-        X_transformed = objective_transform(X)
-        self.assertTrue(torch.equal(torch.sum(X, dim=-1), X_transformed))
+        Y = torch.ones(5, 2, 4)
+        objective_transform = get_objective_weights_transform(torch.tensor([0.5]))
+        Y_transformed = objective_transform(Y)
+        self.assertTrue(torch.equal(0.5 * Y, Y_transformed))
 
     def testIncompatibleNumberOfWeights(self):
-        X = torch.ones((5, 2, 4))
+        Y = torch.ones(5, 2, 4)
         objective_transform = get_objective_weights_transform(torch.tensor([1.0, 2.0]))
         with self.assertRaises(RuntimeError):
-            objective_transform(X)
+            objective_transform(Y)
 
     def testMultiTaskWeights(self):
-        X = torch.ones((5, 2, 4, 2))
+        Y = torch.ones(5, 2, 4, 2)
         objective_transform = get_objective_weights_transform(torch.tensor([1.0, 1.0]))
-        X_transformed = objective_transform(X)
-        self.assertTrue(torch.equal(torch.sum(X, dim=-1), X_transformed))
+        Y_transformed = objective_transform(Y)
+        self.assertTrue(torch.equal(torch.sum(Y, dim=-1), Y_transformed))
 
     def testNoMCSamples(self):
-        X = torch.ones((2, 4, 2))
+        Y = torch.ones(2, 4, 2)
         objective_transform = get_objective_weights_transform(torch.tensor([1.0, 1.0]))
-        X_transformed = objective_transform(X)
-        self.assertTrue(torch.equal(torch.sum(X, dim=-1), X_transformed))
+        Y_transformed = objective_transform(Y)
+        self.assertTrue(torch.equal(torch.sum(Y, dim=-1), Y_transformed))
 
 
 class TestGetOutcomeConstraintTransform(unittest.TestCase):

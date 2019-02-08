@@ -188,6 +188,9 @@ def get_objective_weights_transform(
     if objective_weights is None:
         return lambda Y: Y
     weights = objective_weights.view(-1)
+    if weights.shape[0] == 1:
+        # in case of a single output, we have one less dimension
+        return lambda Y: Y * weights[0]
     # TODO: replace with einsum once pytorch performance issues are resolved
     return lambda Y: torch.sum(Y * weights.view(1, 1, -1), dim=-1)
 
