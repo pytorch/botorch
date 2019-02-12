@@ -26,3 +26,10 @@ This is an alpha version under active development - expect things to break!
 (see the quick start instructions on https://pytorch.org/)
 - In 3. you **must** use ssh since the repo is private - for that to work, make
 sure your ssh public key is registered with GitHub, and is usable by ssh.
+
+
+## Contributing
+See the [CONTRIBUTING](CONTRIBUTING.md) file for how to help out.
+
+## License
+botorch is MIT licensed, as found in the LICENSE file.
