@@ -44,7 +44,7 @@ class BatchAcquisitionFunction(AcquisitionFunction):
         self.base_samples_q_batch_size = None
         self.qmc = qmc
 
-    def set_X_pending(self, X_pending: Tensor) -> None:
+    def set_X_pending(self, X_pending: Optional[Tensor] = None) -> None:
         self.X_pending = X_pending
         # Ensure we regenerate base_samples, which is stateful.
         self.base_samples_q_batch_size = None
