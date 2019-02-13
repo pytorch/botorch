@@ -35,7 +35,11 @@ class SingleTaskGP(ExactGP, GPyTorchModel):
     """
 
     def __init__(
-        self, train_X: Tensor, train_Y: Tensor, likelihood: Optional[Likelihood] = None
+        self,
+        train_X: Tensor,
+        train_Y: Tensor,
+        likelihood: Optional[Likelihood] = None,
+        fixed_noise_variance: Optional[float] = None,
     ) -> None:
         if train_X.ndimension() == 1:
             batch_size, ard_num_dims = 1, None
@@ -49,7 +53,13 @@ class SingleTaskGP(ExactGP, GPyTorchModel):
             likelihood = GaussianLikelihood(
                 noise_prior=GammaPrior(0.1, 0.01), batch_size=batch_size
             )
-            likelihood.parameter_bounds = {"noise_covar.raw_noise": (-15, None)}
+            if fixed_noise_variance is not None:
+                likelihood.noise = torch.full_like(
+                    likelihood.noise, fixed_noise_variance
+                )
+                likelihood.raw_noise.requires_grad_(False)
+            else:
+                likelihood.parameter_bounds = {"noise_covar.raw_noise": (-15, None)}
         else:
             self._likelihood_state_dict = deepcopy(likelihood.state_dict())
         super().__init__(train_X, train_Y, likelihood)
