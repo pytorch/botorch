@@ -68,10 +68,10 @@ class SingleTaskGP(ExactGP, GPyTorchModel):
             MaternKernel(
                 nu=2.5,
                 ard_num_dims=ard_num_dims,
-                lengthscale_prior=GammaPrior(2.0, 5.0),
+                lengthscale_prior=GammaPrior(3.0, 6.0),
             ),
             batch_size=batch_size,
-            outputscale_prior=GammaPrior(1.1, 0.05),
+            outputscale_prior=GammaPrior(2.0, 0.15),
         )
 
     def forward(self, x: Tensor) -> MultivariateNormal:
