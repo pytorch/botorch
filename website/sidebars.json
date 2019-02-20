@@ -1,0 +1,10 @@
+{
+  "about": {
+    "Introduction": ["philosophy"]
+  },
+  "docs": {
+    "General": ["installation"],
+    "API Reference": ["acquisition"],
+    "Examples": ["examples"]
+  }
+}
