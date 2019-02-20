@@ -13,7 +13,10 @@ from botorch.optim.numpy_converter import (
 )
 from botorch.optim.outcome_constraints import ParameterBounds
 from botorch.utils import check_convergence
+from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
+from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
+from gpytorch.mlls.variational_elbo import VariationalELBO
 from scipy.optimize import Bounds, minimize
 from torch import Tensor
 from torch.optim.adam import Adam
@@ -170,8 +173,16 @@ def _scipy_objective_and_grad(
     train_inputs, train_targets = mll.model.train_inputs, mll.model.train_targets
     mll.zero_grad()
     output = mll.model(*train_inputs)
+    if isinstance(mll, ExactMarginalLogLikelihood) or isinstance(
+        mll, SumMarginalLogLikelihood
+    ):
+        args = (output, train_targets, *train_inputs)
+    elif isinstance(mll, VariationalELBO):
+        args = (output, train_targets)
+    else:
+        raise ValueError("Do not know how to optimize MLL type.")
     with gpytorch.settings.max_preconditioner_size(max_preconditioner_size):
-        loss = -mll(output, train_targets, *train_inputs).sum()
+        loss = -mll(*args).sum()
     loss.backward()
     param_dict = OrderedDict(mll.named_parameters())
     grad = []
