@@ -78,3 +78,6 @@ ENV/
 
 # vim
 *.swp
+
+# cython
+botorch/qmc/sobol.c*
