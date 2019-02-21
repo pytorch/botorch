@@ -73,7 +73,3 @@ class TestBatchSolveLBFGSQP(unittest.TestCase):
     def test_batch_solve_lbfgs_qp_cuda_double(self):
         if torch.cuda.is_available():
             self.test_batch_solve_lbfgs_qp(cuda=True, double=True)
-
-
-if __name__ == "__main__":
-    unittest.main()

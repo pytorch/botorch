@@ -90,7 +90,3 @@ class TestNumpyTorchParameterConversion(unittest.TestCase):
         # Extract again
         x2, property_dict2, bounds2 = module_to_array(module=mll, bounds=bounds_dict)
         self.assertTrue(np.array_equal(x2, np.array([1.0, 2.0, 3.0, 4.0, 5.0])))
-
-
-if __name__ == "__main__":
-    unittest.main()

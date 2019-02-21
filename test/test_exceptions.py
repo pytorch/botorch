@@ -29,7 +29,3 @@ class TestBotorchWarnings(unittest.TestCase):
             self.assertEqual(len(w), 1)
             self.assertTrue(issubclass(w[-1].category, BadInitialCandidatesWarning))
             self.assertTrue("message" in str(w[-1].message))
-
-
-if __name__ == "__main__":
-    unittest.main()

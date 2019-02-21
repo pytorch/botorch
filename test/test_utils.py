@@ -251,7 +251,3 @@ class TestStandardize(unittest.TestCase):
         X3_stdized = standardize(X3)
         self.assertTrue(torch.equal(X3_stdized[:, 0], expected_X2_stdized))
         self.assertTrue(torch.equal(X3_stdized[:, 1], torch.zeros(4)))
-
-
-if __name__ == "__main__":
-    unittest.main()

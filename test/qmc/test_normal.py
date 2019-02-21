@@ -314,7 +314,3 @@ class MultivariateNormalQMCTests(unittest.TestCase):
         self.assertTrue(
             all(np.abs(samples[:, 0] + samples[:, 1] - samples[:, 2]) < 1e-5)
         )
-
-
-if __name__ == "__main__":
-    unittest.main()

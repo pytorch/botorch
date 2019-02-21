@@ -153,7 +153,3 @@ class TestAcquisitionModules(unittest.TestCase):
     def test_upper_confidence_bound_module_batch_cuda(self, cuda=False):
         if torch.cuda.is_available():
             self.test_upper_confidence_bound_module_batch(cuda=True)
-
-
-if __name__ == "__main__":
-    unittest.main()

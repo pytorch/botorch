@@ -73,7 +73,3 @@ class TestThompsonSamplingUtils(unittest.TestCase):
     def test_discrete_thompson_sample_cuda(self):
         if torch.cuda.is_available():
             self.test_discrete_thompson_sample(cuda=True)
-
-
-if __name__ == "__main__":
-    unittest.main()

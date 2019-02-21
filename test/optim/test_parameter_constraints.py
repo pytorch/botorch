@@ -102,7 +102,3 @@ class TestParameterConstraints(unittest.TestCase):
     def test_make_scipy_linear_constraints_cuda(self):
         if torch.cuda.is_available():
             self.test_make_scipy_linear_constraints(cuda=True)
-
-
-if __name__ == "__main__":
-    unittest.main()

@@ -88,7 +88,3 @@ class TestBatchAcquisitionModules(unittest.TestCase):
     def test_q_noisy_expected_improvement_cuda(self):
         if torch.cuda.is_available():
             self.test_q_noisy_expected_improvement(cuda=True)
-
-
-if __name__ == "__main__":
-    unittest.main()

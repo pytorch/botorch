@@ -230,7 +230,3 @@ class MultinomialQMCTests(unittest.TestCase):
         self.assertEqual(_test_find_index(p_cumulative, size, 0.44999), 2)
         self.assertEqual(_test_find_index(p_cumulative, size, 0.45001), 3)
         self.assertEqual(_test_find_index(p_cumulative, size, 1.0), size - 1)
-
-
-if __name__ == "__main__":
-    unittest.main()

@@ -87,7 +87,3 @@ class ConstantNoiseGPTest(unittest.TestCase):
     def testConstantNoiseGP_cuda(self):
         if torch.cuda.is_available():
             self.testConstantNoiseGP(cuda=True)
-
-
-if __name__ == "__main__":
-    unittest.main()
