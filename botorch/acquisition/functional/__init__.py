@@ -15,6 +15,7 @@ from .batch_acquisition import (
     batch_probability_of_improvement,
     batch_simple_regret,
     batch_upper_confidence_bound,
+    get_infeasible_cost,
 )
 
 
@@ -31,4 +32,5 @@ __all__ = [
     batch_probability_of_improvement,
     batch_upper_confidence_bound,
     batch_simple_regret,
+    get_infeasible_cost,
 ]

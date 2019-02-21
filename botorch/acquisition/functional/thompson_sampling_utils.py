@@ -7,7 +7,7 @@ from torch import Tensor
 
 from ...models import Model
 from ..batch_utils import batch_mode_transform
-from .batch_acquisition import apply_constraints_
+from .batch_acquisition import apply_constraints_nonnegative_soft_
 
 
 @batch_mode_transform
@@ -51,7 +51,11 @@ def discrete_thompson_sample(
     samples = posterior.rsample(torch.Size([mc_samples]))
     # Shape of samples is mc_samples x b x q x t
     obj = objective(samples)
-    apply_constraints_(obj=obj, constraints=constraints, samples=samples, eta=eta)
+
+    # TODO: Change this to apply_constraints_ in the future (T40798532).
+    apply_constraints_nonnegative_soft_(
+        obj=obj, constraints=constraints, samples=samples, eta=eta
+    )
     # Shape of obj is mc_samples x b x q
     best_indices = torch.max(obj, dim=-1)[1]
 
