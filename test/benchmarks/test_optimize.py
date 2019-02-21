@@ -40,12 +40,6 @@ def get_gen_x(bounds):
     return gen_x
 
 
-def test_func(X):
-    f_X = torch.sin(X)
-    f_X_noisy = f_X + torch.randn_like(f_X)
-    return f_X_noisy, torch.tensor([]).type_as(X)
-
-
 class TestRunClosedLoop(unittest.TestCase):
     def setUp(self):
         self.optim_config = OptimizeConfig(
@@ -62,6 +56,12 @@ class TestRunClosedLoop(unittest.TestCase):
         self.acq_func_config = AcquisitionFunctionConfig(
             name="qEI", args={"mc_samples": 20}
         )
+
+        def test_func(X):
+            f_X = torch.sin(X)
+            f_X_noisy = f_X + torch.randn_like(f_X)
+            return f_X_noisy, torch.tensor([]).type_as(X)
+
         self.func = test_func
 
     @mock.patch("botorch.benchmarks.optimize.initialize_q_batch")
