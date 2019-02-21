@@ -73,7 +73,7 @@ def posterior_mean(X: Tensor, model: Model) -> Tensor:
 def probability_of_improvement(
     X: Tensor, model: Model, best_f: Union[float, Tensor]
 ) -> Tensor:
-    """Single-outcome probabiltiy of improvement (assumes maximization)
+    """Single-outcome probability of improvement (assumes maximization)
 
     Args:
         X: Either a `n x d` or a `b x n x d` (batch mode) Tensor of `n` individual

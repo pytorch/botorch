@@ -23,7 +23,7 @@ with MC sampling as outlined in:
 """
 
 
-def apply_constraints_(
+def apply_constraints_nonnegative_soft_(
     obj: Tensor,
     constraints: List[Callable[[Tensor], Tensor]],
     samples: Tensor,
@@ -35,6 +35,61 @@ def apply_constraints_(
             obj.mul_(soft_eval_constraint(constraint(samples), eta=eta))
 
 
+def apply_constraints_(
+    obj: Tensor,
+    constraints: List[Callable[[Tensor], Tensor]],
+    samples: Tensor,
+    M: float,
+) -> None:
+    """Apply constraints by assigning a penalty of -M when not feasible, where
+    obj is modified in-place.
+
+    Args:
+        obj: A `b x q` Tensor of objective values.
+        constraints: A list of callables, each mapping a Tensor of size `b x q x t`
+            to a Tensor of size `b x q`, where negative values imply feasibility.
+            Note: the callable must support broadcasting.
+            Only relevant for multi-task models (`t` > 1).
+        samples: A `b x q x t` Tensor of samples drawn from the posterior
+        M: A float representing the infeasible value.
+
+    Returns:
+        None.
+
+    """
+    if constraints is not None:
+        # obj has dimensions n_samples x b x q
+        # all_feasible has dimensions n_samples x b x q and tracks whether or not
+        # each design point is feasible, i.e., for all constraints
+        all_con_feasible = torch.ones(obj.shape, dtype=torch.uint8, device=obj.device)
+        for constraint in constraints:
+            # con has dimensions n_samples x b x q
+            con = constraint(samples)
+            this_con_feasible = con <= 0
+            all_con_feasible.mul_(this_con_feasible)
+        obj[~all_con_feasible] = -M
+
+
+def get_infeasible_cost(
+    X: Tensor, model: Model, objective: Callable[[Tensor], Tensor] = lambda Y: Y
+) -> float:
+    """Get the infeasible cost M such that -M is almost always < min_x f(x)
+        so that feasible points are preferred.
+
+    Args:
+        X: A `m x d` Tensor of `m` design points to use in evaluating the minimum.
+        model: A fitted model.
+
+    Returns:
+        float: The infeasible cost M value.
+
+    """
+    posterior = model.posterior(X)
+    lb = objective(posterior.mean - 6 * posterior.variance.sqrt()).min()
+    M = -lb.clamp_max(0.0)
+    return M.item()
+
+
 @batch_mode_transform
 def batch_expected_improvement(
     X: Tensor,
@@ -42,8 +97,8 @@ def batch_expected_improvement(
     best_f: float,
     objective: Callable[[Tensor], Tensor] = lambda Y: Y,
     constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
+    M: float = 0.0,
     mc_samples: int = 5000,
-    eta: float = 1e-3,
     base_samples: Optional[Tensor] = None,
 ) -> Tensor:
     """q-EI with constraints, supporting t-batch mode.
@@ -53,7 +108,7 @@ def batch_expected_improvement(
             each. If X is two-dimensional, assume `b = 1`.
         model: A fitted model
         best_f: The best (feasible) function value observed so far (assumed
-            noiseless).
+            noiseless). -M if no feasible function value observed so far.
         objective: A callable mapping a Tensor of size `b x q x (t)` to a Tensor
         of size `b x q`, where `t` is the number of outputs (tasks) of the model.
             Note: the callable must support broadcasting.
@@ -63,11 +118,9 @@ def batch_expected_improvement(
             to a Tensor of size `b x q`, where negative values imply feasibility.
             Note: the callable must support broadcasting.
             Only relevant for multi-task models (`t` > 1).
+        M: The infeasibility cost; should be s.t. -M < min_x objective(x)
         mc_samples: The number of Monte-Carlo samples to draw from the model
             posterior. Only used if base_samples is not provided.
-        eta: The temperature parameter of the softmax function used in approximating
-            the constraints. As `eta -> 0`, the exact (discontinuous) constraint
-            is recovered.
         base_samples: A fixed Tensor of N(0,1) random variables used for
             deterministic optimization.
 
@@ -80,8 +133,11 @@ def batch_expected_improvement(
     samples = posterior.rsample(
         sample_shape=torch.Size([mc_samples]), base_samples=base_samples
     )
-    obj = (objective(samples) - best_f).clamp_min_(0)
-    apply_constraints_(obj=obj, constraints=constraints, samples=samples, eta=eta)
+    obj = objective(samples)
+    # apply the constraints to the objective first; then, compare with best_f
+    # (which could be -M if no feasible point has been found)
+    apply_constraints_(obj=obj, constraints=constraints, samples=samples, M=M)
+    obj = (obj - best_f).clamp_min_(0)
     q_ei = obj.max(dim=2)[0].mean(dim=0)
     return q_ei
 
@@ -93,8 +149,8 @@ def batch_noisy_expected_improvement(
     X_observed: Tensor,
     objective: Callable[[Tensor], Tensor] = lambda Y: Y,
     constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
+    M: float = 0.0,
     mc_samples: int = 5000,
-    eta: float = 1e-3,
     base_samples: Optional[Tensor] = None,
 ) -> Tensor:
     """q-NoisyEI with constraints, supporting t-batch mode.
@@ -114,11 +170,9 @@ def batch_noisy_expected_improvement(
             to a Tensor of size `b x q`, where negative values imply feasibility.
             Note: the callable must support broadcasting.
             Only relevant for multi-task models (`t` > 1).
+        M: The infeasibility cost; should be s.t. -M < min_x objective(x)
         mc_samples: The number of Monte-Carlo samples to draw from the model
             posterior.  Only used if base_samples is not provided.
-        eta: The temperature parameter of the softmax function used in approximating
-            the constraints. As `eta -> 0`, the exact (discontinuous) constraint
-            is recovered.
         base_samples: A Tensor of N(0,1) random variables used for
             deterministic optimization.
 
@@ -135,7 +189,7 @@ def batch_noisy_expected_improvement(
     )
     # compute objective value
     obj = objective(samples)
-    apply_constraints_(obj=obj, constraints=constraints, samples=samples, eta=eta)
+    apply_constraints_(obj=obj, constraints=constraints, samples=samples, M=M)
     diff = (
         (obj[:, :, :q].max(dim=2)[0] - obj[:, :, q:].max(dim=2)[0])
         .clamp_min_(0)
@@ -240,8 +294,10 @@ def batch_knowledge_gradient(
         )
     # Shape of samples is inner_mc_samples x q' x t
     old_obj = objective(old_samples)
-    apply_constraints_(
-        obj=old_obj, constraints=constraints, samples=old_samples, eta=eta
+
+    # TODO: Change this to apply_constraints_ in the future (T40798532).
+    apply_constraints_nonnegative_soft_(
+        obj=old_obj, constraints=constraints, samples=old_samples
     )
     # Shape of obj is inner_mc_samples x q'. First compute mean across inner
     # samples, then maximize across X_observed. Uses soft-max for maximization
@@ -273,8 +329,10 @@ def batch_knowledge_gradient(
 
     # Shape of new_samples is inner_mc_samples x mc_samples x (q + q') x t
     new_obj = objective(new_samples)
-    apply_constraints_(
-        obj=new_obj, constraints=constraints, samples=new_samples, eta=eta
+
+    # TODO: Change this to apply_constraints_ in the future (T40798532).
+    apply_constraints_nonnegative_soft_(
+        obj=new_obj, constraints=constraints, samples=new_samples
     )
     # Shape of obj is inner_mc_samples x mc_samples x (q + q'). First compute mean
     # across inner samples, then maximize across X_all, then compute mean across
@@ -374,8 +432,10 @@ def batch_knowledge_gradient_no_discretization(
         )
     # Shape of samples is inner_mc_samples x 1 x t
     old_obj = objective(old_samples)
-    apply_constraints_(
-        obj=old_obj, constraints=constraints, samples=old_samples, eta=eta
+
+    # TODO: Change this to apply_constraints_ in the future (T40798532).
+    apply_constraints_nonnegative_soft_(
+        obj=old_obj, constraints=constraints, samples=old_samples
     )
     # Shape of obj is inner_mc_samples x 1
     old_value = old_obj.mean()
@@ -409,8 +469,10 @@ def batch_knowledge_gradient_no_discretization(
     # Shape of new_samples is
     # inner_mc_samples x q' x 1 x t
     new_obj = objective(new_samples)
-    apply_constraints_(
-        obj=new_obj, constraints=constraints, samples=new_samples, eta=eta
+
+    # TODO: Change this to apply_constraints_ in the future (T40798532).
+    apply_constraints_nonnegative_soft_(
+        obj=new_obj, constraints=constraints, samples=new_samples
     )
 
     # Shape of new_obj is inner_mc_samples x q' x 1
