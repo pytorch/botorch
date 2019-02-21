@@ -5,7 +5,6 @@ from typing import Callable, List, Optional
 
 import torch
 from torch import Tensor
-from torch.nn.functional import sigmoid
 
 from ...models import Model
 from ...optim.outcome_constraints import soft_eval_constraint
@@ -455,7 +454,7 @@ def batch_probability_of_improvement(
     samples = posterior.rsample(
         sample_shape=torch.Size([mc_samples]), base_samples=base_samples
     ).max(dim=2)[0]
-    val = sigmoid(samples - best_f).mean(dim=0)
+    val = torch.sigmoid(samples - best_f).mean(dim=0)
     return val
 
 

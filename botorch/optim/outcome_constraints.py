@@ -2,8 +2,8 @@
 
 from typing import Dict, Optional, Tuple
 
+import torch
 from torch import Tensor
-from torch.nn.functional import sigmoid
 
 
 ParameterBounds = Dict[str, Tuple[Optional[float], Optional[float]]]
@@ -27,4 +27,4 @@ def soft_eval_constraint(lhs: Tensor, eta: float = 1e-3) -> Tensor:
     """
     if eta <= 0:
         raise ValueError("eta must be positive")
-    return sigmoid(-lhs / eta)
+    return torch.sigmoid(-lhs / eta)
