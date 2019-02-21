@@ -55,7 +55,7 @@ class SobolTests(unittest.TestCase):
 
     def testUnscrambled3DAsyncSobol(self):
         engine_unscrambled_3d = SobolEngine(3)
-        draws = np.vstack(engine_unscrambled_3d.draw() for i in range(10))
+        draws = np.vstack([engine_unscrambled_3d.draw() for i in range(10)])
         self.assertTrue(np.array_equal(self.draws_unscrambled_3d, draws))
 
     def testUnscrambledFastForwardAndResetSobol(self):
@@ -152,7 +152,7 @@ class SobolTests(unittest.TestCase):
 
     def testScrambled3DAsyncSobol(self):
         engine_unscrambled_3d = SobolEngine(3)
-        draws = np.vstack(engine_unscrambled_3d.draw() for i in range(10))
+        draws = np.vstack([engine_unscrambled_3d.draw() for i in range(10)])
         self.assertTrue(np.array_equal(self.draws_unscrambled_3d, draws))
 
     def testScrambledSobolBounds(self):
