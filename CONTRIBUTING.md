@@ -3,7 +3,16 @@ We want to make contributing to this project as easy and transparent as
 possible.
 
 ## Our Development Process
-TODO
+
+#### Testing
+To run the unit tests, you can either use `pytest` (if installed):
+```bash
+pytest -ra
+```
+or python's `unittest`:
+```bash
+python -m unittest
+```
 
 ## Pull Requests
 We actively welcome your pull requests.
