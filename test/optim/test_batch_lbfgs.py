@@ -194,7 +194,3 @@ class TestBatchCompactLBFGSUpdates(unittest.TestCase):
     def batch_compact_lbfgs_updates_no_local_curvature_cuda(self):
         if torch.cuda.is_available():
             self.batch_compact_lbfgs_updates_no_local_curvature(cuda=True)
-
-
-if __name__ == "__main__":
-    unittest.main()

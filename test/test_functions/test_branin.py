@@ -47,7 +47,3 @@ class TestNegBranin(unittest.TestCase):
     def test_neg_branin_gobal_minima_cuda(self):
         if torch.cuda.is_available():
             self.test_neg_branin_gobal_minima(cuda=True)
-
-
-if __name__ == "__main__":
-    unittest.main()

@@ -85,7 +85,3 @@ class MultiOutputGPTest(unittest.TestCase):
                     for key, val in model.state_dict().items()
                 )
             )
-
-
-if __name__ == "__main__":
-    unittest.main()

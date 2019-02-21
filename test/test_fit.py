@@ -56,7 +56,3 @@ class TestFitModel(unittest.TestCase):
     def test_fit_model_torch_cuda(self):
         if torch.cuda.is_available():
             self.test_fit_model_torch(cuda=True)
-
-
-if __name__ == "__main__":
-    unittest.main()

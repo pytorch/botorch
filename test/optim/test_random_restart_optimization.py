@@ -1,7 +1,5 @@
 #! /usr/bin/env python3
 
-import unittest
-
 import torch
 from botorch.acquisition import qExpectedImprovement
 from botorch.gen import gen_candidates_scipy, get_best_candidates
@@ -32,7 +30,3 @@ class TestRandomRestartOptimization(TestBaseCandidateGeneration):
     def test_random_restart_optimization_cuda(self):
         if torch.cuda.is_available():
             self.test_random_restart_optimization(cuda=True)
-
-
-if __name__ == "__main__":
-    unittest.main()

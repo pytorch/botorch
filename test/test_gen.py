@@ -93,7 +93,3 @@ class TestGenCandidates(TestBaseCandidateGeneration):
     def test_gen_candidates_scipy_with_fixed_features_cuda(self, cuda=False):
         if torch.cuda.is_available():
             self.test_gen_candidates_scipy_with_fixed_features(cuda=True)
-
-
-if __name__ == "__main__":
-    unittest.main()

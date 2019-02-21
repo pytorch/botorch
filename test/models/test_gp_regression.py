@@ -121,7 +121,3 @@ class HeteroskedasticSingleTaskGPTest(unittest.TestCase):
         fit_model(mll)
         # check that some of the parameters changed
         self.assertFalse(all(params[p].item() == 0.0 for p in params))
-
-
-if __name__ == "__main__":
-    unittest.main()

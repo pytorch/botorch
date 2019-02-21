@@ -54,7 +54,3 @@ class TestNegStyblinskiTang(unittest.TestCase):
     def test_neg_styblinski_tang_gobal_minimum_cuda(self):
         if torch.cuda.is_available():
             self.test_neg_styblinski_tang_gobal_minimum(cuda=True)
-
-
-if __name__ == "__main__":
-    unittest.main()

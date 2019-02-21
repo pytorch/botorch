@@ -24,7 +24,3 @@ class TestSoftEvalConstraint(unittest.TestCase):
     def test_invalid_temperature(self):
         with self.assertRaises(ValueError):
             soft_eval_constraint(torch.tensor([0.0]), -0.1)
-
-
-if __name__ == "__main__":
-    unittest.main()

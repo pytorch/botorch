@@ -67,7 +67,3 @@ class TestSimpleQBatchInitialization(unittest.TestCase):
     def test_initialize_q_batch_simple_cuda(self):
         if torch.cuda.is_available():
             self.test_initialize_q_batch_simple(cuda=True)
-
-
-if __name__ == "__main__":
-    unittest.main()
