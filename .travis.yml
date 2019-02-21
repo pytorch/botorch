@@ -1,9 +1,5 @@
 language: python
 
-branches:
-  only:
-    - master
-
 python:
   - "3.6"
 
