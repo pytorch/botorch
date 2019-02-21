@@ -106,6 +106,7 @@ def lin_constraint_jac(
 
 
 def _arrayify(X: Tensor) -> np.ndarray:
+    """Convert a torch tensor (any dtype or device) to a numpy (double) array"""
     return X.cpu().detach().contiguous().double().clone().numpy()
 
 
