@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
+
 from collections import OrderedDict
-from copy import copy
 from math import inf
 from typing import Dict, List, NamedTuple, Optional, Tuple
 
