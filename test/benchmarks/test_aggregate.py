@@ -92,14 +92,14 @@ class TestAggregateBenchMark(unittest.TestCase):
             )
             self.assertEqual(agg_results.var_best_model_feasibility.shape, ni_shape)
             self.assertLess(torch.norm(agg_results.var_best_model_feasibility), 1e-6)
-            bto = torch.tensor(best_true_objective[0], **tkwargs)
+            bto = best_true_objective[0]
             self.assertEqual(agg_results.mean_best_true_objective.shape, bto.shape)
             self.assertLess(
                 torch.norm(agg_results.mean_best_true_objective - bto), 1e-6
             )
             self.assertEqual(agg_results.var_best_true_objective.shape, ni_shape)
             self.assertLess(torch.norm(agg_results.var_best_true_objective), 1e-6)
-            mr = torch.tensor(regrets[0], **tkwargs)
+            mr = regrets[0]
             self.assertEqual(agg_results.mean_regret.shape, mr.shape)
             self.assertLess(torch.norm(agg_results.mean_regret - mr), 1e-6)
             self.assertEqual(agg_results.var_regret.shape, ni_shape)
