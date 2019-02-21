@@ -8,21 +8,16 @@ env:
   - GPYTORCH_VERSION=master
 
 install:
-  - pip install cython numpy scipy pytest
+  - pip install cython numpy scipy pytest black
   - if [[ $GPYTORCH_VERSION = "stable" ]]; then
-      pip install gpytorch;  # has pytorch as a dependency
+      pip install gpytorch;
     else
       pip install torch_nightly -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html;
       pip install git+https://github.com/cornellius-gp/gpytorch.git;
     fi
-  - pip install -e .;
+  - pip install -e .
 
 script:
-  - python -c "import gpytorch; print(f'GPyTorch version: {gpytorch.__version__}')"
+  - black --check --diff .
+  - python -c "import gpytorch; print('Testing with GPyTorch Version:' + ' ' +  gpytorch.__version__)"
   - pytest -ra
-
-matrix:
-  include:
-    - env: LINT_CHECK
-      install: pip install black
-      script: black --check --diff .
