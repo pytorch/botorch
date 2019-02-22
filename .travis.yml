@@ -10,12 +10,12 @@ env:
 install:
   - pip install cython numpy scipy pytest black
   - if [[ $GPYTORCH_VERSION = "stable" ]]; then
-      pip install gpytorch;
+      pip install -q gpytorch;
     else
-      pip install torch_nightly -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html;
-      pip install git+https://github.com/cornellius-gp/gpytorch.git;
+      pip install -q torch_nightly -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html;
+      pip install -q git+https://github.com/cornellius-gp/gpytorch.git;
     fi
-  - pip install -e .
+  - pip install -q -e .
 
 script:
   - black --check --diff .
