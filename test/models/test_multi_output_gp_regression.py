@@ -9,7 +9,7 @@ from botorch import fit_model
 from botorch.models import MultiOutputGP
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.posteriors import GPyTorchPosterior
-from gpytorch.distributions import MultitaskMultivariateNormal
+from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.kernels import MaternKernel, ScaleKernel
 from gpytorch.likelihoods import LikelihoodList
 from gpytorch.means import ConstantMean
@@ -85,3 +85,17 @@ class MultiOutputGPTest(unittest.TestCase):
                     for key, val in model.state_dict().items()
                 )
             )
+
+    def testMultiOutputGPSingle(self, cuda=False):
+        tkwargs = {
+            "device": torch.device("cuda") if cuda else torch.device("cpu"),
+            "dtype": torch.float,
+        }
+        train_x1, train_x2, train_y1, train_y2 = _get_random_data(**tkwargs)
+        model1 = SingleTaskGP(train_X=train_x1, train_Y=train_y1)
+        model = MultiOutputGP(gp_models=[model1])
+        model.to(**tkwargs)
+        test_x = (torch.tensor([0.25, 0.75]).type_as(model.train_targets[0]),)
+        posterior = model.posterior(test_x)
+        self.assertIsInstance(posterior, GPyTorchPosterior)
+        self.assertIsInstance(posterior.mvn, MultivariateNormal)
