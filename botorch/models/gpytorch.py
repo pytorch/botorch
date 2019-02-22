@@ -59,7 +59,10 @@ class MultiOutputGPyTorchModel(GPyTorchModel, ABC):
                 mvns = self(*[X for _ in range(self.num_outputs)])
                 if observation_noise:
                     mvns = self.likelihood(*[(mvn, X) for mvn in mvns])
-        mvn = MultitaskMultivariateNormal.from_independent_mvns(mvns=mvns)
+        if len(mvns) == 1:
+            mvn = mvns[0]
+        else:
+            mvn = MultitaskMultivariateNormal.from_independent_mvns(mvns=mvns)
         return GPyTorchPosterior(mvn=mvn)
 
 
