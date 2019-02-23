@@ -7,6 +7,9 @@ from botorch.gen import gen_candidates_scipy, get_best_candidates
 from ..test_gen import TestBaseCandidateGeneration
 
 
+EPS = 1e-8
+
+
 class TestRandomRestartOptimization(TestBaseCandidateGeneration):
     def test_random_restart_optimization(self, cuda=False):
         for double in (True, False):
@@ -25,7 +28,7 @@ class TestRandomRestartOptimization(TestBaseCandidateGeneration):
             candidates = get_best_candidates(
                 batch_candidates=batch_candidates, batch_values=batch_acq_values
             )
-            self.assertTrue(0 <= candidates <= 1)
+            self.assertTrue(-EPS <= candidates <= 1 + EPS)
 
     def test_random_restart_optimization_cuda(self):
         if torch.cuda.is_available():
