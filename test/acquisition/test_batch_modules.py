@@ -18,7 +18,9 @@ class TestBatchAcquisitionModules(unittest.TestCase):
             mm = MockModel(MockPosterior(samples=samples))
             X = torch.zeros((1, 1), device=device, dtype=dtype)  # dummy for typing
             # basic test
-            acq_module = qExpectedImprovement(model=mm, best_f=0, mc_samples=2)
+            acq_module = qExpectedImprovement(
+                model=mm, best_f=0, mc_samples=2, qmc=False
+            )
             res = acq_module(X)
             self.assertEqual(res.item(), 0)
             # test X_pending
@@ -26,7 +28,7 @@ class TestBatchAcquisitionModules(unittest.TestCase):
             mm = MockModel(MockPosterior(samples=samples))
             X_pending = torch.zeros((1, 1), device=device, dtype=dtype)
             acq_module = qExpectedImprovement(
-                model=mm, best_f=0, mc_samples=2, X_pending=X_pending
+                model=mm, best_f=0, mc_samples=2, X_pending=X_pending, qmc=False
             )
             res2 = acq_module(X)
             self.assertEqual(res2.item(), 0)
@@ -35,7 +37,7 @@ class TestBatchAcquisitionModules(unittest.TestCase):
             samples[0, 0, 0, 0] = 1
             mm = MockModel(MockPosterior(samples=samples))
             acq_module = qExpectedImprovement(
-                model=mm, best_f=0, mc_samples=2, X_pending=X_pending
+                model=mm, best_f=0, mc_samples=2, X_pending=X_pending, qmc=False
             )
             res3 = acq_module(X.unsqueeze(0).expand(2, -1, -1))
             self.assertEqual(res3[0].item(), 1)
@@ -56,7 +58,7 @@ class TestBatchAcquisitionModules(unittest.TestCase):
             X = torch.zeros((1, 1), device=device, dtype=dtype)
             # basic test
             acq_module = qNoisyExpectedImprovement(
-                model=mm_noisy, X_observed=X_observed, mc_samples=2
+                model=mm_noisy, X_observed=X_observed, mc_samples=2, qmc=False
             )
             res = acq_module(X)
             self.assertEqual(res.item(), 1)
@@ -68,7 +70,7 @@ class TestBatchAcquisitionModules(unittest.TestCase):
             mm_noisy = MockModel(MockPosterior(samples=samples_noisy))
             X_pending = torch.zeros((1, 1), device=device, dtype=dtype)
             acq_module = qExpectedImprovement(
-                model=mm_noisy, best_f=0, mc_samples=2, X_pending=X_pending
+                model=mm_noisy, best_f=0, mc_samples=2, X_pending=X_pending, qmc=False
             )
             res2 = acq_module(X)
             self.assertEqual(res2.item(), 1)
@@ -79,7 +81,7 @@ class TestBatchAcquisitionModules(unittest.TestCase):
             mm_noisy = MockModel(MockPosterior(samples=samples_noisy))
             X_pending = torch.zeros((1, 1), device=device, dtype=dtype)
             acq_module = qExpectedImprovement(
-                model=mm_noisy, best_f=0, mc_samples=2, X_pending=X_pending
+                model=mm_noisy, best_f=0, mc_samples=2, X_pending=X_pending, qmc=False
             )
             res3 = acq_module(X.unsqueeze(0).expand(2, -1, -1))
             self.assertEqual(res3[0].item(), 1)

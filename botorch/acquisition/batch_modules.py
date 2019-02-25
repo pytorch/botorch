@@ -120,7 +120,7 @@ class qExpectedImprovement(BatchAcquisitionFunction):
         mc_samples: int = 5000,
         X_pending: Optional[Tensor] = None,
         seed: Optional[int] = None,
-        qmc: Optional[bool] = False,
+        qmc: Optional[bool] = True,
     ) -> None:
         super().__init__(
             model=model, mc_samples=mc_samples, X_pending=X_pending, seed=seed, qmc=qmc
@@ -190,7 +190,7 @@ class qNoisyExpectedImprovement(BatchAcquisitionFunction):
         mc_samples: int = 5000,
         X_pending: Optional[Tensor] = None,
         seed: Optional[int] = None,
-        qmc: Optional[bool] = False,
+        qmc: Optional[bool] = True,
     ) -> None:
         super().__init__(
             model=model, mc_samples=mc_samples, X_pending=X_pending, seed=seed, qmc=qmc
@@ -297,7 +297,7 @@ class qKnowledgeGradient(BatchAcquisitionFunction):
         use_posterior_mean: Optional[bool] = False,
         X_pending: Optional[Tensor] = None,
         seed: Optional[int] = None,
-        qmc: Optional[bool] = False,
+        qmc: Optional[bool] = True,
     ) -> None:
         super().__init__(
             model=model, mc_samples=mc_samples, X_pending=X_pending, seed=seed, qmc=qmc
@@ -439,7 +439,7 @@ class qKnowledgeGradientNoDiscretization(BatchAcquisitionFunction):
         use_posterior_mean: Optional[bool] = False,
         X_pending: Optional[Tensor] = None,
         seed: Optional[int] = None,
-        qmc: Optional[bool] = False,
+        qmc: Optional[bool] = True,
     ) -> None:
         super().__init__(
             model=model, mc_samples=mc_samples, X_pending=X_pending, seed=seed, qmc=qmc
@@ -579,7 +579,7 @@ class qProbabilityOfImprovement(BatchAcquisitionFunction):
         mc_samples: int = 5000,
         X_pending: Optional[Tensor] = None,
         seed: Optional[int] = None,
-        qmc: Optional[bool] = False,
+        qmc: Optional[bool] = True,
     ) -> None:
         super().__init__(
             model=model, mc_samples=mc_samples, X_pending=X_pending, seed=seed, qmc=qmc
@@ -630,7 +630,7 @@ class qUpperConfidenceBound(BatchAcquisitionFunction):
         mc_samples: int = 5000,
         X_pending: Optional[Tensor] = None,
         seed: Optional[int] = None,
-        qmc: Optional[bool] = False,
+        qmc: Optional[bool] = True,
     ) -> None:
         super().__init__(
             model=model, mc_samples=mc_samples, X_pending=X_pending, seed=seed, qmc=qmc
@@ -677,7 +677,7 @@ class qSimpleRegret(BatchAcquisitionFunction):
         mc_samples: int = 5000,
         X_pending: Optional[Tensor] = None,
         seed: Optional[int] = None,
-        qmc: Optional[bool] = False,
+        qmc: Optional[bool] = True,
     ) -> None:
         super().__init__(
             model=model, mc_samples=mc_samples, X_pending=X_pending, seed=seed, qmc=qmc
