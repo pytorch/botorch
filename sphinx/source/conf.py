@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
-#
+#! /usr/bin/env python3
+
 # Configuration file for the Sphinx documentation builder.
 #
 # This file does only contain a selection of the most common options. For a
@@ -11,6 +11,7 @@
 
 import os
 import sys
+
 
 sys.path.append(os.path.abspath(os.path.join(__file__, "..", "..", "..")))
 
