@@ -54,7 +54,7 @@ class TestRunClosedLoop(unittest.TestCase):
             max_retries=0,
         )
         self.acq_func_config = AcquisitionFunctionConfig(
-            name="qEI", args={"mc_samples": 20}
+            name="qEI", args={"mc_samples": 20, "qmc": False}
         )
 
         def test_func(X):
@@ -158,7 +158,9 @@ class TestRunBenchmark(unittest.TestCase):
             max_retries=0,
         )
         self.acq_func_configs = {
-            "test_qEI": AcquisitionFunctionConfig(name="qEI", args={"mc_samples": 20})
+            "test_qEI": AcquisitionFunctionConfig(
+                name="qEI", args={"mc_samples": 20, "qmc": False}
+            )
         }
         self.func = lambda X: (X + 0.25, torch.tensor([]))
         self.global_optimum = 5.0
