@@ -84,4 +84,4 @@ ENV/
 botorch/qmc/sobol.c*
 
 # Sphinx documentation
-docs/_build/
+sphinx/build/
