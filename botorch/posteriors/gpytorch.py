@@ -1,12 +1,10 @@
 #! /usr/bin/env python3
 
 from typing import Optional
-from warnings import warn
 
 import gpytorch
 import torch
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
-from gpytorch.lazy.diag_lazy_tensor import DiagLazyTensor
 from torch import Tensor
 
 from .posterior import Posterior
@@ -27,13 +25,15 @@ class GPyTorchPosterior(Posterior):
     @property
     def event_shape(self) -> torch.Size:
         """Return the event shape (i.e. the shape of a single sample)"""
-        return self.mvn.event_shape
+        event_shape = self.mvn.event_shape
+        if not isinstance(self.mvn, MultitaskMultivariateNormal):
+            event_shape += torch.Size([1])
+        return event_shape
 
     def rsample(
         self,
         sample_shape: Optional[torch.Size] = None,
         base_samples: Optional[Tensor] = None,
-        eps: float = 1e-8,
     ) -> Tensor:
         """Sample from the posterior (with gradients)
 
@@ -45,8 +45,7 @@ class GPyTorchPosterior(Posterior):
                 appropriate dimension, typically obtained using `get_base_samples`.
                 If provided, takes priority over `sample_shape` (though it must
                 comply with `sample_shape`)
-            eps: A small value to add to the diagonal of the covariance matrix if
-                the covariance matrix is degenerate.
+
         Returns:
             A tensor of shape `sample_shape + event_shape`, where `event_shape`
                 is the shape of a single sample from the posterior.
@@ -58,61 +57,40 @@ class GPyTorchPosterior(Posterior):
         if sample_shape is None and base_samples is None:
             kwargs = {}
         elif base_samples is not None:
+            if (
+                not isinstance(self.mvn, MultitaskMultivariateNormal)
+                and base_samples.shape[-1] == 1
+            ):
+                base_samples = base_samples.squeeze(-1)
             kwargs = {"base_samples": base_samples}
         elif sample_shape is not None:
             kwargs = {"sample_shape": sample_shape}
         samples = None
         with gpytorch.settings.fast_computations(covar_root_decomposition=False):
             samples = self.mvn.rsample(**kwargs)
-        # if the covariance matrix is degenerate, add eps to the diagonal
-        # and increase eps as necessary.
-        # TODO: replace with a more principled approach: T39802489
-        degenerate = False
-        if torch.any(torch.isnan(samples)):
-            degenerate = True
-        while torch.any(torch.isnan(samples)):
-            covar = self.mvn.lazy_covariance_matrix
-            eps_diag = DiagLazyTensor(
-                torch.ones(
-                    (1, covar.shape[-1]),
-                    dtype=self.mvn.mean.dtype,
-                    device=self.mvn.mean.device,
-                )
-                * eps
-            )
-            if self.mvn.mean.dim() > 2:
-                mvn_class = MultitaskMultivariateNormal
-            else:
-                mvn_class = MultivariateNormal
-            mvn = mvn_class(self.mvn.mean, covar + eps_diag)
-            with gpytorch.settings.fast_computations(covar_root_decomposition=False):
-                samples = mvn.rsample(**kwargs)
-            eps *= 10
-            if eps > 0.1:
-                raise ValueError(
-                    f"The covariance matrix is degenerate. Adding {eps/10.0} to"
-                    " the diagonal did not make it PSD."
-                )
-        if degenerate:
-            warn(
-                f"The covariance matrix is degenerate. Adding {eps/10.0} for"
-                " numerical stability.",
-                RuntimeWarning,
-            )
+        # make sure there alwayas is an output dimension
+        if not isinstance(self.mvn, MultitaskMultivariateNormal):
+            samples = samples.unsqueeze(-1)
         return samples
 
     @property
     def mean(self):
         """Posterior mean"""
-        return self.mvn.mean
+        mean = self.mvn.mean
+        if not isinstance(self.mvn, MultitaskMultivariateNormal):
+            mean = mean.unsqueeze(-1)
+        return mean
 
     @property
     def variance(self):
         """Posterior variance"""
-        return self.mvn.variance
-
-    def zero_mean_mvn_samples(self, num_samples: int) -> Tensor:
-        return self.mvn.lazy_covariance_matrix.zero_mean_mvn_samples(num_samples)
+        variance = self.mvn.variance
+        if not isinstance(self.mvn, MultitaskMultivariateNormal):
+            variance = variance.unsqueeze(-1)
+        return variance
 
     def get_base_samples(self, sample_shape: Optional[torch.Size] = None) -> Tensor:
-        return self.mvn.get_base_samples(sample_shape=sample_shape)
+        base_samples = self.mvn.get_base_samples(sample_shape=sample_shape)
+        if not isinstance(self.mvn, MultitaskMultivariateNormal):
+            base_samples = base_samples.unsqueeze(-1)
+        return base_samples
