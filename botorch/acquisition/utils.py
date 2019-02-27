@@ -22,6 +22,7 @@ def get_acquisition_function(
     X_observed: Tensor,
     objective: Callable[[Tensor], Tensor] = lambda Y: Y,
     constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
+    infeasible_cost: float = 0.0,
     X_pending: Optional[Tensor] = None,
     seed: Optional[int] = None,
     acquisition_function_args: Optional[Dict[str, Union[bool, float, int]]] = None,
@@ -44,6 +45,7 @@ def get_acquisition_function(
             `b x q x t x mc_samples` to a Tensor of size `b x q x mc_samples`,
             where negative values imply feasibility. Only relevant for multi-task
             models (`t` > 1).
+        infeasible_cost: The infeasibility cost M; should be s.t. `-M < min_x obj(x)`
         X_pending:  A (k x d) feature tensor X for k pending
             observations.
         seed: if seed is provided, do deterministic optimization where the function to
@@ -62,6 +64,7 @@ def get_acquisition_function(
             best_f=objective(model.posterior(X_observed).mean).max().item(),
             objective=objective,
             constraints=constraints,
+            infeasible_cost=infeasible_cost,
             X_pending=X_pending,
             seed=seed,
             **acquisition_function_args,
@@ -82,6 +85,7 @@ def get_acquisition_function(
             X_observed=X_observed,
             objective=objective,
             constraints=constraints,
+            infeasible_cost=infeasible_cost,
             X_pending=X_pending,
             seed=seed,
             **acquisition_function_args,
