@@ -22,6 +22,7 @@ class TestGetAcquisitionFunction(unittest.TestCase):
         self.X_pending = torch.tensor([[1.0, 3.0, 4.0]])
         self.seed = 1
         self.constraints = [dummy_constraint]
+        self.infeasible_cost = 0.0
 
     @mock.patch(f"{utils.__name__}.qExpectedImprovement")
     def testGetQEI(self, mock_acquisition):
@@ -31,6 +32,7 @@ class TestGetAcquisitionFunction(unittest.TestCase):
             X_observed=self.X_observed,
             objective=dummy_objective,
             constraints=self.constraints,
+            infeasible_cost=self.infeasible_cost,
             X_pending=self.X_pending,
             seed=self.seed,
             acquisition_function_args=None,
@@ -41,6 +43,7 @@ class TestGetAcquisitionFunction(unittest.TestCase):
             best_f=self.model.posterior(self.X_observed).mean.max().item(),
             objective=dummy_objective,
             constraints=self.constraints,
+            infeasible_cost=self.infeasible_cost,
             X_pending=self.X_pending,
             seed=self.seed,
         )
@@ -75,6 +78,7 @@ class TestGetAcquisitionFunction(unittest.TestCase):
             X_observed=self.X_observed,
             objective=dummy_objective,
             constraints=self.constraints,
+            infeasible_cost=self.infeasible_cost,
             X_pending=self.X_pending,
             seed=self.seed,
             acquisition_function_args=None,
@@ -85,6 +89,7 @@ class TestGetAcquisitionFunction(unittest.TestCase):
             X_observed=self.X_observed,
             objective=dummy_objective,
             constraints=self.constraints,
+            infeasible_cost=self.infeasible_cost,
             X_pending=self.X_pending,
             seed=self.seed,
         )
@@ -178,6 +183,7 @@ class TestGetAcquisitionFunction(unittest.TestCase):
             X_observed=self.X_observed,
             objective=dummy_objective,
             constraints=self.constraints,
+            infeasible_cost=self.infeasible_cost,
             X_pending=self.X_pending,
             acquisition_function_args={"mc_samples": 2},
             seed=self.seed,
@@ -189,6 +195,7 @@ class TestGetAcquisitionFunction(unittest.TestCase):
             best_f=self.model.posterior(self.X_observed).mean.max().item(),
             objective=dummy_objective,
             constraints=self.constraints,
+            infeasible_cost=self.infeasible_cost,
             X_pending=self.X_pending,
             seed=self.seed,
         )

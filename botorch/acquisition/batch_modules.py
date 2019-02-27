@@ -102,6 +102,7 @@ class qExpectedImprovement(BatchAcquisitionFunction):
             to a Tensor of size `b x q`, where negative values imply feasibility.
             Note: the callable must support broadcasting.
             Only relevant for multi-task models (`t` > 1).
+        infeasible_cost: The infeasibility cost M; should be s.t. `-M < min_x obj(x)`
         mc_samples: The number of Monte-Carlo samples to draw from the model
             posterior.
         X_pending:  A `q' x d` Tensor with `q'` design points that are pending for
@@ -116,7 +117,7 @@ class qExpectedImprovement(BatchAcquisitionFunction):
         best_f: float,
         objective: Callable[[Tensor], Tensor] = lambda Y: Y,
         constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
-        M: float = 0.0,
+        infeasible_cost: float = 0.0,
         mc_samples: int = 5000,
         X_pending: Optional[Tensor] = None,
         seed: Optional[int] = None,
@@ -128,7 +129,7 @@ class qExpectedImprovement(BatchAcquisitionFunction):
         self.best_f = best_f
         self.objective = objective
         self.constraints = constraints
-        self.M = M
+        self.infeasible_cost = infeasible_cost
 
     def _forward(self, X: Tensor) -> Tensor:
         """
@@ -146,7 +147,7 @@ class qExpectedImprovement(BatchAcquisitionFunction):
             best_f=self.best_f,
             objective=self.objective,
             constraints=self.constraints,
-            M=self.M,
+            M=self.infeasible_cost,
             mc_samples=self.mc_samples,
             base_samples=self.base_samples,
         )
@@ -168,6 +169,7 @@ class qNoisyExpectedImprovement(BatchAcquisitionFunction):
             `b x q x t` to a Tensor of size `b x q`, where negative values imply
             feasibility. Note: the callable must support broadcasting. Only
             relevant for multi-task models (`t` > 1).
+        infeasible_cost: The infeasibility cost M; should be s.t. `-M < min_x obj(x)``
         mc_samples: The number of Monte-Carlo samples to draw from the model
             posterior.
         eta: The temperature parameter of the softmax function used in approximating
@@ -186,7 +188,7 @@ class qNoisyExpectedImprovement(BatchAcquisitionFunction):
         X_observed: Tensor,
         objective: Callable[[Tensor], Tensor] = lambda Y: Y,
         constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
-        M: float = 0.0,
+        infeasible_cost: float = 0.0,
         mc_samples: int = 5000,
         X_pending: Optional[Tensor] = None,
         seed: Optional[int] = None,
@@ -199,7 +201,7 @@ class qNoisyExpectedImprovement(BatchAcquisitionFunction):
         self.X_observed = X_observed
         self.objective = objective
         self.constraints = constraints
-        self.M = M
+        self.infeasible_cost = infeasible_cost
 
     def _construct_base_samples(self, X: Tensor) -> None:
         X_all = torch.cat([X, self.X_observed], dim=-2)
@@ -229,7 +231,7 @@ class qNoisyExpectedImprovement(BatchAcquisitionFunction):
             X_observed=self.X_observed,
             objective=self.objective,
             constraints=self.constraints,
-            M=self.M,
+            M=self.infeasible_cost,
             mc_samples=self.mc_samples,
             base_samples=self.base_samples,
         )
