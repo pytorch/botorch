@@ -50,8 +50,5 @@ class Posterior(ABC):
         with torch.no_grad():
             return self.rsample(sample_shape=sample_shape, base_samples=base_samples)
 
-    def zero_mean_mvn_samples(self, num_samples: int) -> Tensor:
-        raise NotImplementedError
-
     def get_base_samples(self, sample_shape: Optional[torch.Size] = None) -> Tensor:
         raise NotImplementedError

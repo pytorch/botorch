@@ -8,7 +8,6 @@ from torch import Tensor
 
 from ...models import Model
 from ...optim.outcome_constraints import soft_eval_constraint
-from ...utils import manual_seed
 from ..batch_utils import batch_mode_transform
 
 
@@ -560,7 +559,7 @@ def batch_upper_confidence_bound(
     model: Model,
     beta: float,
     mc_samples: int = 5000,
-    seed: Optional[int] = None,
+    base_samples: Optional[Tensor] = None,
 ) -> Tensor:
     """q-UCB, support t-batch mode.
 
@@ -578,11 +577,10 @@ def batch_upper_confidence_bound(
             the `b`t-batches.
 
     """
-    with manual_seed(seed=seed):
-        # TODO: remove manual_seed here
-        posterior = model.posterior(X)
-        samples = posterior.zero_mean_mvn_samples(mc_samples)
-        ucb_mc_samples = (
-            sqrt(beta * pi / 2) * samples.abs() + posterior.mean.view(1, -1)
-        ).max(dim=2)[0]
+    posterior = model.posterior(X)
+    samples = posterior.rsample(
+        sample_shape=torch.Size([mc_samples]), base_samples=base_samples
+    )
+    mean = posterior.mean
+    ucb_mc_samples = (sqrt(beta * pi / 2) * (samples - mean).abs() + mean).max(dim=2)[0]
     return ucb_mc_samples.mean(dim=0)
