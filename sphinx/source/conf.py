@@ -63,6 +63,8 @@ exclude_patterns = []
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "sphinx"
 
+# Default options for autodoc directives. Applied to all autodoc directives
+autodoc_default_options = {}
 
 # -- Options for HTML output -------------------------------------------------
 

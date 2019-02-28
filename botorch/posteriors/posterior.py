@@ -8,25 +8,31 @@ from torch import Tensor
 
 
 class Posterior(ABC):
+    """Abstract base class for botorch posteriors."""
+
     @abstractproperty
     def device(self) -> torch.device:
+        """The torch device this posterior lives on."""
         pass
 
     @abstractproperty
     def dtype(self) -> torch.dtype:
+        """The torch dtype of this posterior."""
         pass
 
     @abstractproperty
     def event_shape(self) -> torch.Size:
-        """Return the event shape (i.e. the shape of a single sample)"""
+        """The event shape (i.e. the shape of a single sample)."""
         pass
 
     @property
     def mean(self) -> Tensor:
+        """The mean of the posterior as a `(b) x n x t`-dim Tensor."""
         raise NotImplementedError
 
     @property
     def variance(self) -> Tensor:
+        """The variance of the posterior as a `(b) x n x t`-dim Tensor."""
         raise NotImplementedError
 
     @abstractmethod
@@ -34,11 +40,19 @@ class Posterior(ABC):
         self,
         sample_shape: Optional[torch.Size] = None,
         base_samples: Optional[Tensor] = None,
-        eps: float = 1e-6,
     ) -> Tensor:
-        """
-            If both optional arguments are included,
-            base_samples must take priority.
+        """Sample from the posterior (with gradients).
+
+        Args:
+            sample_shape: A `torch.Size` object specifying the sample shape. To
+                draw `n` samples, set to `torch.Size([n])`. To draw `b` batches
+                of `n` samples each, set to `torch.Size([b, n])`.
+            base_samples: An (optional) Tensor of `N(0, I)` base samples of
+                appropriate dimension, typically obtained using `get_base_samples`.
+                This is used for deterministic optimization, see TODO.
+
+        Returns:
+            A `sample_shape x event`-dim Tensor of samples from the posterior.
         """
         pass
 
@@ -47,6 +61,21 @@ class Posterior(ABC):
         sample_shape: Optional[torch.Size] = None,
         base_samples: Optional[Tensor] = None,
     ) -> Tensor:
+        """Sample from the posterior (without gradients).
+
+        This is a simple wrapper calling `rsample` using `with torch.no_grad()`.
+
+        Args:
+            sample_shape: A `torch.Size` object specifying the sample shape. To
+                draw `n` samples, set to `torch.Size([n])`. To draw `b` batches
+                of `n` samples each, set to `torch.Size([b, n])`.
+            base_samples: An (optional) Tensor of `N(0, I)` base samples of
+                appropriate dimension, typically obtained using `get_base_samples`.
+                This is used for deterministic optimization, see TODO.
+
+        Returns:
+            A `sample_shape x event`-dim Tensor of samples from the posterior.
+        """
         with torch.no_grad():
             return self.rsample(sample_shape=sample_shape, base_samples=base_samples)
 
