@@ -169,13 +169,13 @@ def gen_x_uniform(b: int, q: int, bounds: Tensor) -> Tensor:
 def get_objective_weights_transform(
     objective_weights: Optional[Tensor]
 ) -> Callable[[Tensor], Tensor]:
-    """
+    """Greate a linear objective callable froma set of weights.
+
     Create a callable mapping a Tensor of size `b x q x t` to a Tensor of size
-        `b x q`, where `t` is the number of outputs (tasks) of the model using
-        scalarization via the objective weights. This callable supports
-        broadcasting (e.g. for calling on a tensor of shape `mc_samples x b x q x t`).
-        For `t = 1`, the objective weight can be used to determine the optimization
-        direction.
+    `b x q`, where `t` is the number of outputs (tasks) of the model using
+    scalarization via the objective weights. This callable supports broadcasting
+    (e.g. for calling on a tensor of shape `mc_samples x b x q x t`). For `t = 1`,
+    the objective weight is used to determine the optimization direction.
 
     Args:
         objective_weights: a 1-dimensional Tensor containing a weight for each task.
@@ -185,14 +185,11 @@ def get_objective_weights_transform(
         Callable[Tensor, Tensor]: transform function using the objective weights
 
     """
+    # if no weights provided, just extract the single output
     if objective_weights is None:
-        return lambda Y: Y
-    weights = objective_weights.view(-1)
-    if weights.shape[0] == 1:
-        # in case of a single output, we have one less dimension
-        return lambda Y: Y * weights[0]
+        return lambda Y: Y.squeeze(-1)
     # TODO: replace with einsum once pytorch performance issues are resolved
-    return lambda Y: torch.sum(Y * weights.view(1, 1, -1), dim=-1)
+    return lambda Y: torch.sum(Y * objective_weights.view(1, 1, -1), dim=-1)
 
 
 def draw_sobol_samples(
