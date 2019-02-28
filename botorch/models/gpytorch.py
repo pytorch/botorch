@@ -13,6 +13,12 @@ from .model import Model
 
 
 class GPyTorchModel(Model, ABC):
+    """Abstract base class for models based on GPyTorch models.
+
+    The easiest way to use this is to subclass a model from a GPyTorch model
+    class (e.g. an `ExactGP`) and this `GPyTorchModel`. See e.g. `SingleTaskGP`.
+    """
+
     def posterior(
         self,
         X: Tensor,
@@ -20,6 +26,28 @@ class GPyTorchModel(Model, ABC):
         observation_noise: bool = False,
         detach_test_caches: bool = True,
     ) -> GPyTorchPosterior:
+        """Computes the posterior over model outputs at the provided points.
+
+        Args:
+            X: A `b x q x d`-dim Tensor, where `d` is the dimension of the
+                feature space, `q` is the number of points considered jointly,
+                and `b` is the batch dimension.
+            output_indices: A list of indices, corresponding to the outputs over
+                which to compute the posterior (if the model is multi-output).
+                Can be used to speed up computation if only a subset of the
+                model's outputs are required for optimization. If omitted,
+                computes the posterior over all model outputs.
+            observation_noise: If True, add observation noise to the posterior.
+            detach_test_caches: If True, detach GPyTorch test caches during
+                computation of the posterior. Required for being able to compute
+                derivatives with respect to training inputs at test time (used
+                e.g. by qNoisyExpectedImprovement).
+
+        Returns:
+            A `Posterior` object, representing a batch of `b` joint distributions
+                over `q` points and the outputs selected by `output_indices` each.
+                Includes measurement noise if `observation_noise=True`.
+        """
         if output_indices is not None and output_indices != [0]:
             raise RuntimeError(
                 "Cannot pass more than one output index to single-output model"
@@ -36,6 +64,8 @@ class GPyTorchModel(Model, ABC):
 
 
 class MultiOutputGPyTorchModel(GPyTorchModel, ABC):
+    """Abstract base class for models based on multi-output GPyTorch models."""
+
     def posterior(
         self,
         X: Tensor,
@@ -43,6 +73,28 @@ class MultiOutputGPyTorchModel(GPyTorchModel, ABC):
         observation_noise: bool = False,
         detach_test_caches: bool = True,
     ) -> GPyTorchPosterior:
+        """Computes the posterior over model outputs at the provided points.
+
+        Args:
+            X: A `b x q x d`-dim Tensor, where `d` is the dimension of the
+                feature space, `q` is the number of points considered jointly,
+                and `b` is the batch dimension.
+            output_indices: A list of indices, corresponding to the outputs over
+                which to compute the posterior (if the model is multi-output).
+                Can be used to speed up computation if only a subset of the
+                model's outputs are required for optimization. If omitted,
+                computes the posterior over all model outputs.
+            observation_noise: If True, add observation noise to the posterior.
+            detach_test_caches: If True, detach GPyTorch test caches during
+                computation of the posterior. Required for being able to compute
+                derivatives with respect to training inputs at test time (used
+                e.g. by qNoisyExpectedImprovement).
+
+        Returns:
+            A `Posterior` object, representing a batch of `b` joint distributions
+                over `q` points and the outputs selected by `output_indices` each.
+                Includes measurement noise if `observation_noise=True`.
+        """
         self.eval()  # pyre-ignore
         with ExitStack() as es:
             es.enter_context(gpytorch.settings.debug(False))
@@ -67,6 +119,8 @@ class MultiOutputGPyTorchModel(GPyTorchModel, ABC):
 
 
 class MultiTaskGPyTorchModel(MultiOutputGPyTorchModel, ABC):
+    """Abstract base class for models based on multi-task GPyTorch models."""
+
     def posterior(
         self,
         X: Tensor,
@@ -74,6 +128,28 @@ class MultiTaskGPyTorchModel(MultiOutputGPyTorchModel, ABC):
         observation_noise: bool = False,
         detach_test_caches: bool = True,
     ) -> GPyTorchPosterior:
+        """Computes the posterior over model outputs at the provided points.
+
+        Args:
+            X: A `b x q x d`-dim Tensor, where `d` is the dimension of the
+                feature space, `q` is the number of points considered jointly,
+                and `b` is the batch dimension.
+            output_indices: A list of indices, corresponding to the outputs over
+                which to compute the posterior (if the model is multi-output).
+                Can be used to speed up computation if only a subset of the
+                model's outputs are required for optimization. If omitted,
+                computes the posterior over all model outputs.
+            observation_noise: If True, add observation noise to the posterior.
+            detach_test_caches: If True, detach GPyTorch test caches during
+                computation of the posterior. Required for being able to compute
+                derivatives with respect to training inputs at test time (used
+                e.g. by qNoisyExpectedImprovement).
+
+        Returns:
+            A `Posterior` object, representing a batch of `b` joint distributions
+                over `q` points and the outputs selected by `output_indices` each.
+                Includes measurement noise if `observation_noise=True`.
+        """
         self.eval()  # pyre-ignore
         with ExitStack() as es:
             es.enter_context(gpytorch.settings.debug(False))

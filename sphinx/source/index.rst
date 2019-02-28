@@ -12,6 +12,7 @@ Welcome to botorch's documentation!
    :caption: Package Reference
 
    models
+   posteriors
 
 
 Indices and tables
