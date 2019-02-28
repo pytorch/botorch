@@ -11,7 +11,7 @@ from torch.nn import Module
 
 from .. import fit_model
 from ..acquisition.batch_modules import BatchAcquisitionFunction
-from ..acquisition.utils import get_acquisition_function
+from ..acquisition.utils import get_acquisition_function, squeeze_last_dim
 from ..gen import gen_candidates_scipy, get_best_candidates
 from ..models.model import Model
 from ..optim.initializers import get_similarity_measure, initialize_q_batch
@@ -55,7 +55,7 @@ def _get_fitted_model(
 def greedy(
     X: Tensor,
     model: Model,
-    objective: Callable[[Tensor], Tensor] = lambda Y: Y,
+    objective: Callable[[Tensor], Tensor] = squeeze_last_dim,
     constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
     mc_samples: int = 10000,
 ) -> Tuple[Tensor, Tensor, Tensor]:
@@ -125,7 +125,7 @@ def _fit_model_and_get_best_point(
     model_fit_options: Dict[str, Union[float, int]],
     verbose: bool,
     warm_start: bool,
-    objective: Callable[[Tensor], Tensor] = lambda Y: Y,
+    objective: Callable[[Tensor], Tensor] = squeeze_last_dim,
     constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
     retry: int = 0,
 ) -> _ModelBestPointOutput:
@@ -200,7 +200,7 @@ def run_closed_loop(
     output: ClosedLoopOutput,
     lower_bounds: Tensor,
     upper_bounds: Tensor,
-    objective: Callable[[Tensor], Tensor] = lambda Y: Y,
+    objective: Callable[[Tensor], Tensor] = squeeze_last_dim,
     constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
     verbose: bool = False,
     seed: Optional[int] = None,
@@ -372,7 +372,7 @@ def run_benchmark(
     initial_model: Model,
     lower_bounds: Tensor,
     upper_bounds: Tensor,
-    objective: Callable[[Tensor], Tensor] = lambda Y: Y,
+    objective: Callable[[Tensor], Tensor] = squeeze_last_dim,
     constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
     verbose: bool = False,
     seed: Optional[int] = None,
