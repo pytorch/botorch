@@ -4,7 +4,7 @@ python:
   - "3.6"
 
 env:
-  - GPYTORCH_VERSION=stable
+  # - GPYTORCH_VERSION=stable  # TODO: add back in when locked to a release
   - GPYTORCH_VERSION=master
 
 install:
