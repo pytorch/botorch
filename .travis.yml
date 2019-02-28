@@ -8,7 +8,7 @@ env:
   - GPYTORCH_VERSION=master
 
 install:
-  - pip install cython numpy scipy pytest black
+  - pip install cython numpy scipy pytest black sphinx sphinx_autodoc_typehints
   - if [[ $GPYTORCH_VERSION = "stable" ]]; then
       pip install -q gpytorch;
     else
@@ -21,3 +21,4 @@ script:
   - black --check --diff .
   - python -c "import gpytorch; print('Testing with GPyTorch Version:' + ' ' +  gpytorch.__version__)"
   - pytest -ra
+  - sphinx-build -nWT sphinx/source sphinx/build
