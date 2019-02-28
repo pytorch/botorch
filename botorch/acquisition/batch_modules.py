@@ -6,6 +6,7 @@ import torch
 from torch import Tensor
 
 from ..models.model import Model
+from ..utils import squeeze_last_dim
 from .batch_utils import construct_base_samples_from_posterior, match_batch_size
 from .functional.batch_acquisition import (
     batch_expected_improvement,
@@ -115,7 +116,7 @@ class qExpectedImprovement(BatchAcquisitionFunction):
         self,
         model: Model,
         best_f: float,
-        objective: Callable[[Tensor], Tensor] = lambda Y: Y,
+        objective: Callable[[Tensor], Tensor] = squeeze_last_dim,
         constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
         infeasible_cost: float = 0.0,
         mc_samples: int = 5000,
@@ -186,7 +187,7 @@ class qNoisyExpectedImprovement(BatchAcquisitionFunction):
         self,
         model: Model,
         X_observed: Tensor,
-        objective: Callable[[Tensor], Tensor] = lambda Y: Y,
+        objective: Callable[[Tensor], Tensor] = squeeze_last_dim,
         constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
         infeasible_cost: float = 0.0,
         mc_samples: int = 5000,
@@ -290,7 +291,7 @@ class qKnowledgeGradient(BatchAcquisitionFunction):
         self,
         model: Model,
         X_observed: Tensor,
-        objective: Callable[[Tensor], Tensor] = lambda Y: Y,
+        objective: Callable[[Tensor], Tensor] = squeeze_last_dim,
         constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
         mc_samples: int = 40,
         inner_mc_samples: int = 1000,
@@ -432,7 +433,7 @@ class qKnowledgeGradientNoDiscretization(BatchAcquisitionFunction):
     def __init__(
         self,
         model: Model,
-        objective: Callable[[Tensor], Tensor] = lambda Y: Y,
+        objective: Callable[[Tensor], Tensor] = squeeze_last_dim,
         constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
         mc_samples: int = 20,
         inner_mc_samples: int = 100,

@@ -8,6 +8,7 @@ from torch import Tensor
 
 from ...models import Model
 from ...optim.outcome_constraints import soft_eval_constraint
+from ...utils import squeeze_last_dim
 from ..batch_utils import batch_mode_transform
 
 
@@ -70,7 +71,7 @@ def apply_constraints_(
 
 
 def get_infeasible_cost(
-    X: Tensor, model: Model, objective: Callable[[Tensor], Tensor] = lambda Y: Y
+    X: Tensor, model: Model, objective: Callable[[Tensor], Tensor] = squeeze_last_dim
 ) -> float:
     """Get the infeasible cost M such that -M is almost always < min_x f(x)
         so that feasible points are preferred.
@@ -94,7 +95,7 @@ def batch_expected_improvement(
     X: Tensor,
     model: Model,
     best_f: float,
-    objective: Callable[[Tensor], Tensor] = lambda Y: Y,
+    objective: Callable[[Tensor], Tensor] = squeeze_last_dim,
     constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
     M: float = 0.0,
     mc_samples: int = 5000,
@@ -146,7 +147,7 @@ def batch_noisy_expected_improvement(
     X: Tensor,
     model: Model,
     X_observed: Tensor,
-    objective: Callable[[Tensor], Tensor] = lambda Y: Y,
+    objective: Callable[[Tensor], Tensor] = squeeze_last_dim,
     constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
     M: float = 0.0,
     mc_samples: int = 5000,
@@ -201,7 +202,7 @@ def batch_knowledge_gradient(
     X: Tensor,
     model: Model,
     X_observed: Tensor,
-    objective: Callable[[Tensor], Tensor] = lambda Y: Y,
+    objective: Callable[[Tensor], Tensor] = squeeze_last_dim,
     constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
     mc_samples: int = 40,
     inner_mc_samples: int = 1000,
@@ -353,7 +354,7 @@ def batch_knowledge_gradient_no_discretization(
     X_fantasies: Tensor,
     X_old: Tensor,
     model: Model,
-    objective: Callable[[Tensor], Tensor] = lambda Y: Y,
+    objective: Callable[[Tensor], Tensor] = squeeze_last_dim,
     constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
     inner_old_base_samples: Optional[Tensor] = None,
     inner_new_base_samples: Optional[Tensor] = None,

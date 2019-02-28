@@ -292,6 +292,10 @@ def get_outcome_constraint_transforms(
     return [partial(oc, a, rhs) for a, rhs in zip(A, b)]
 
 
+def squeeze_last_dim(Y: Tensor) -> Tensor:
+    return Y.squeeze(-1)
+
+
 def standardize(X: Tensor) -> Tensor:
     """
     Standardize a tensor by dim=0

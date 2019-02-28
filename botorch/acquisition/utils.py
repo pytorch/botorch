@@ -6,6 +6,7 @@ from torch import Tensor
 from torch.nn import Module
 
 from ..models import Model
+from ..utils import squeeze_last_dim
 from .batch_modules import (
     qExpectedImprovement,
     qKnowledgeGradient,
@@ -20,7 +21,7 @@ def get_acquisition_function(
     acquisition_function_name: str,
     model: Model,
     X_observed: Tensor,
-    objective: Callable[[Tensor], Tensor] = lambda Y: Y,
+    objective: Callable[[Tensor], Tensor] = squeeze_last_dim,
     constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
     infeasible_cost: float = 0.0,
     X_pending: Optional[Tensor] = None,

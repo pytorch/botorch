@@ -6,6 +6,7 @@ import torch
 from torch import Tensor
 
 from ...models import Model
+from ...utils import squeeze_last_dim
 from ..batch_utils import batch_mode_transform
 from .batch_acquisition import apply_constraints_nonnegative_soft_
 
@@ -14,7 +15,7 @@ from .batch_acquisition import apply_constraints_nonnegative_soft_
 def discrete_thompson_sample(
     X: Tensor,
     model: Model,
-    objective: Callable[[Tensor], Tensor] = lambda Y: Y,
+    objective: Callable[[Tensor], Tensor] = squeeze_last_dim,
     constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
     mc_samples: int = 5000,
     eta: float = 1e-3,

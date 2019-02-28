@@ -15,7 +15,7 @@ class TestFunctionalBatchAcquisition(unittest.TestCase):
     def test_batch_expected_improvement(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
-            samples = torch.zeros([1, 1, 1, 1], device=device, dtype=dtype)
+            samples = torch.zeros(1, 1, 1, 1, device=device, dtype=dtype)
             mm = MockModel(MockPosterior(samples=samples))
             X = torch.zeros(1, device=device, dtype=dtype)  # dummy for type checking
             # basic test
@@ -29,7 +29,7 @@ class TestFunctionalBatchAcquisition(unittest.TestCase):
                 X=X,
                 model=mm,
                 best_f=0,
-                objective=lambda Y: torch.ones_like(Y, device=device, dtype=dtype),
+                objective=lambda Y: torch.ones_like(Y).squeeze(-1),
                 mc_samples=2,
             )
             self.assertEqual(res3.item(), 1)
@@ -38,7 +38,7 @@ class TestFunctionalBatchAcquisition(unittest.TestCase):
                 X=X,
                 model=mm,
                 best_f=-1,
-                constraints=[lambda Y: torch.zeros_like(Y, device=device, dtype=dtype)],
+                constraints=[lambda Y: torch.zeros_like(Y).squeeze(-1)],
                 mc_samples=2,
             )
             # the constraint returns 0 (feasible), obj samples are 0, so the expected
@@ -69,7 +69,7 @@ class TestFunctionalBatchAcquisition(unittest.TestCase):
                 X=X,
                 model=mm_noisy,
                 X_observed=X_observed,
-                objective=lambda Y: torch.zeros_like(Y, device=device, dtype=dtype),
+                objective=lambda Y: torch.zeros_like(Y).squeeze(-1),
                 mc_samples=2,
             )
             self.assertEqual(res3.item(), 0)
@@ -78,7 +78,7 @@ class TestFunctionalBatchAcquisition(unittest.TestCase):
                 X=X,
                 model=mm_noisy,
                 X_observed=X_observed,
-                constraints=[lambda Y: torch.zeros_like(Y, device=device, dtype=dtype)],
+                constraints=[lambda Y: torch.zeros_like(Y).squeeze(-1)],
                 mc_samples=2,
             )
             # the constraint returns 0 (feasible), samples at X_observed are 0,
@@ -103,7 +103,9 @@ class TestFunctionalBatchAcquisition(unittest.TestCase):
             # means - 6 * std = [-0.8, -1, -0.6, 1, 3.2],
             # after applying objective, the minimum becomes -6.0
             # so 6.0 should be returned.
-            M = get_infeasible_cost(X=X, model=mm, objective=lambda Y: Y - 5)
+            M = get_infeasible_cost(
+                X=X, model=mm, objective=lambda Y: Y.squeeze(-1) - 5
+            )
             self.assertEqual(M, 6.0)
 
     def test_get_infeasible_cost_cuda(self):
