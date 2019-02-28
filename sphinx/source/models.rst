@@ -8,7 +8,7 @@ botorch.models
 .. currentmodule:: botorch.models
 
 
-Abstract API
+Abstract Model API
 -----------------------------------
 
 .. currentmodule:: botorch.models.model
@@ -24,9 +24,25 @@ Abstract API
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: botorch.models.gpytorch
-
 .. autoclass:: GPyTorchModel
    :members:
+
+
+:hidden:`MultiOutputGPyTorchModel`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: botorch.models.gpytorch
+.. autoclass:: MultiOutputGPyTorchModel
+  :members:
+
+
+:hidden:`MultiTaskGPyTorchModel`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: botorch.models.gpytorch
+.. autoclass:: MultiTaskGPyTorchModel
+  :members:
+
 
 
 GPyTorch Regression Models
@@ -38,6 +54,7 @@ GPyTorch Regression Models
 .. currentmodule:: botorch.models.gp_regression
 .. autoclass:: SingleTaskGP
   :members:
+  :exclude-members: forward
 
 
 :hidden:`HeteroskedasticSingleTaskGP`
@@ -61,4 +78,12 @@ GPyTorch Regression Models
 
 .. currentmodule:: botorch.models.multi_output_gp_regression
 .. autoclass:: MultiOutputGP
+  :members:
+
+
+:hidden:`FidelityAwareSingleTaskGP`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: botorch.models.fidelity_aware
+.. autoclass:: FidelityAwareSingleTaskGP
   :members:

@@ -23,22 +23,23 @@ from .gpytorch import GPyTorchModel
 
 
 class SingleTaskGP(ExactGP, GPyTorchModel):
-    """
+    """A single-task Exact GP model.
+
     Class implementing a single task exact GP using relatively strong priors on
     the Kernel hyperparameters, which work best when covariates are normalized
     to the unit cube and outcomes are standardized (zero mean, unit variance).
-
-    Args:
-        train_X: A `n x d` or `b x n x d` (batch mode) tensor of training data
-        train_Y: A `n` or `b x n` (batch mode) tensor of training observations
-        likelihood: A likelihood. If omitted, use a standard GaussianLikelihood
-            with inferred noise level.
-
     """
 
     def __init__(
         self, train_X: Tensor, train_Y: Tensor, likelihood: Optional[Likelihood] = None
     ) -> None:
+        """A single-task Exact GP model.
+        Args:
+            train_X: A `n x d` or `b x n x d` (batch mode) tensor of training data
+            train_Y: A `n` or `b x n` (batch mode) tensor of training observations
+            likelihood: A likelihood. If omitted, use a standard GaussianLikelihood
+                with inferred noise level.
+        """
         if train_X.ndimension() == 1:
             batch_size, ard_num_dims = 1, None
         elif train_X.ndimension() == 2:
