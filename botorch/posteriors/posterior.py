@@ -26,6 +26,11 @@ class Posterior(ABC):
         pass
 
     @property
+    def batch_shape(self) -> torch.Size:
+        """The t-batch shape."""
+        return self.event_shape[:-2]
+
+    @property
     def mean(self) -> Tensor:
         """The mean of the posterior as a `(b) x n x t`-dim Tensor."""
         raise NotImplementedError
@@ -79,5 +84,25 @@ class Posterior(ABC):
         with torch.no_grad():
             return self.rsample(sample_shape=sample_shape, base_samples=base_samples)
 
-    def get_base_samples(self, sample_shape: Optional[torch.Size] = None) -> Tensor:
+    def get_base_samples(
+        self,
+        sample_shape: Optional[torch.Size] = None,
+        collapse_batch_dims: bool = False,
+    ) -> Tensor:
+        """Get base samples.
+
+        Used for effectively fixing the seed of rsample without having to
+        re-draw samples each time.
+
+        Args:
+            sample_shape: The shape of the samples.
+            collapse_batch_dims: If True, constructed base samples have size 1
+                for each of the posterior's t-batch dimensions. This is used for
+                removing sampling variance across t-batches.
+
+        Returns:
+            A tensor of base samples of size
+                `sample_shape x event_shape` if `collapse_batch_dims=False`
+                `sample_shape x 1 ... x 1 x q x t` if `collapse_batch_dims=True`
+        """
         raise NotImplementedError

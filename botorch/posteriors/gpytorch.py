@@ -21,6 +21,7 @@ class GPyTorchPosterior(Posterior):
                 MultitaskMultivariateNormal (multi-output case).
         """
         self.mvn = mvn
+        self._is_mt = isinstance(mvn, MultitaskMultivariateNormal)
 
     @property
     def device(self) -> torch.device:
@@ -32,54 +33,62 @@ class GPyTorchPosterior(Posterior):
 
     @property
     def event_shape(self) -> torch.Size:
-        event_shape = self.mvn.event_shape
-        if not isinstance(self.mvn, MultitaskMultivariateNormal):
-            event_shape += torch.Size([1])
-        return event_shape
+        shape = self.mvn.batch_shape + self.mvn.event_shape
+        if not self._is_mt:
+            shape += torch.Size([1])
+        return shape
 
     def rsample(
         self,
         sample_shape: Optional[torch.Size] = None,
         base_samples: Optional[Tensor] = None,
     ) -> Tensor:
-        if sample_shape is not None and base_samples is not None:
-            if tuple(base_samples.shape[: len(sample_shape)]) != tuple(sample_shape):
-                raise RuntimeError("Sample shape disagrees with base_samples.")
-        if sample_shape is None and base_samples is None:
-            kwargs = {}
-        elif base_samples is not None:
-            if (
-                not isinstance(self.mvn, MultitaskMultivariateNormal)
-                and base_samples.shape[-1] == 1
-            ):
+        if sample_shape is None:
+            sample_shape = torch.Size([1])
+        if base_samples is not None:
+            if base_samples.shape[: len(sample_shape)] != sample_shape:
+                raise RuntimeError("sample_shape disagrees with shape of base_samples.")
+            # get base_samples to the correct shape
+            base_samples = base_samples.expand(sample_shape + self.event_shape)
+            # remove output dimension in single output case
+            if not self._is_mt:
                 base_samples = base_samples.squeeze(-1)
-            kwargs = {"base_samples": base_samples}
-        elif sample_shape is not None:
-            kwargs = {"sample_shape": sample_shape}
-        samples = None
         with gpytorch.settings.fast_computations(covar_root_decomposition=False):
-            samples = self.mvn.rsample(**kwargs)
+            samples = self.mvn.rsample(
+                sample_shape=sample_shape, base_samples=base_samples
+            )
         # make sure there alwayas is an output dimension
-        if not isinstance(self.mvn, MultitaskMultivariateNormal):
+        if not self._is_mt:
             samples = samples.unsqueeze(-1)
         return samples
 
     @property
     def mean(self):
         mean = self.mvn.mean
-        if not isinstance(self.mvn, MultitaskMultivariateNormal):
+        if not self._is_mt:
             mean = mean.unsqueeze(-1)
         return mean
 
     @property
     def variance(self):
         variance = self.mvn.variance
-        if not isinstance(self.mvn, MultitaskMultivariateNormal):
+        if not self._is_mt:
             variance = variance.unsqueeze(-1)
         return variance
 
-    def get_base_samples(self, sample_shape: Optional[torch.Size] = None) -> Tensor:
+    def get_base_samples(
+        self,
+        sample_shape: Optional[torch.Size] = None,
+        collapse_batch_dims: bool = False,
+    ) -> Tensor:
+        if sample_shape is None:
+            sample_shape = torch.Size()
         base_samples = self.mvn.get_base_samples(sample_shape=sample_shape)
-        if not isinstance(self.mvn, MultitaskMultivariateNormal):
+        if not self._is_mt:
             base_samples = base_samples.unsqueeze(-1)
+        # TODO: Push collapse_batch functionality upstream to gpytorch
+        if collapse_batch_dims and len(self.batch_shape) > 0:
+            # TODO: Figure out a cleaner way to do programmatic multi-indexing
+            for _ in self.batch_shape:
+                base_samples = base_samples.select(-3, 0).unsqueeze(-3)
         return base_samples

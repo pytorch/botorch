@@ -19,19 +19,17 @@ class TestBaseCandidateGeneration(unittest.TestCase):
     def _setUp(self, double=False, cuda=False, expand=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         dtype = torch.double if double else torch.float
-        train_x = torch.linspace(0, 1, 10, device=device, dtype=dtype)
-        train_y = torch.sin(train_x * (2 * math.pi))
+        train_x = torch.linspace(0, 1, 10, device=device, dtype=dtype).unsqueeze(-1)
+        train_y = torch.sin(train_x * (2 * math.pi)).squeeze(-1)
         noise = torch.tensor(NOISE, device=device, dtype=dtype)
-        self.train_x = train_x.unsqueeze(-1)
+        self.train_x = train_x
         self.train_y = train_y + noise
-
         if expand:
             self.train_x = self.train_x.expand(-1, 2)
-            self.initial_candidates = torch.tensor(
-                [[0.5, 1.0]], device=device, dtype=dtype
-            )
+            ics = torch.tensor([[0.5, 1.0]], device=device, dtype=dtype)
         else:
-            self.initial_candidates = torch.tensor([[0.5]], device=device, dtype=dtype)
+            ics = torch.tensor([[0.5]], device=device, dtype=dtype)
+        self.initial_candidates = ics
         self.f_best = self.train_y.max().item()
         model = SingleTaskGP(self.train_x, self.train_y)
         self.model = model.to(device=device, dtype=dtype)

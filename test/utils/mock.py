@@ -53,16 +53,12 @@ class MockPosterior(Posterior):
         sample_shape: Optional[torch.Size] = None,
         base_samples: Optional[Tensor] = None,
     ) -> Tensor:
-        """Mock sample by repeating only the 0th dimension of self._samples."""
+        """Mock sample by repeating self._samples."""
         if base_samples is not None:
             raise RuntimeError("base_samples are not supported in MockPosterior")
         if sample_shape is None:
             sample_shape = torch.Size()
-        # create list with a one for each dimension of self._samples
-        size = torch.ones(self._samples.ndimension(), dtype=torch.int).tolist()
-        # set the number of times to repeat the 0th dimension
-        size[0] = sample_shape.numel()
-        return self._samples.repeat(torch.Size(size))
+        return self._samples.expand(sample_shape + self._samples.shape)
 
 
 class MockModel(Model):
@@ -86,13 +82,3 @@ class MockModel(Model):
         self, state_dict: Optional[OrderedDict] = None, strict: bool = False
     ) -> None:
         pass
-
-
-class MockBatchAcquisitionModule:
-    """Mock batch acquisition module that returns the sum of the input."""
-
-    def __init__(self):
-        self.model = MockModel(None)
-
-    def __call__(self, X):
-        return X.sum((1, 2))

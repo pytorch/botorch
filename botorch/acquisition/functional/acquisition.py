@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-from numbers import Number
 from typing import Union
 
 import torch
@@ -28,7 +27,7 @@ def expected_improvement(
             design points in `d` dimensions each. Design points are evaluated
             independently (i.e. covariance across the different points is not
             considered)
-        model: A fitted model (must be in batch mode if X is)
+        model: A fitted single-output model (must be in batch mode if X is)
         best_f: Either a scalar or a one-dim tensor with `b` elements (batch mode)
             representing the best function value observed so far (assumed noiseless)
 
@@ -38,11 +37,14 @@ def expected_improvement(
         points
 
     """
-    if isinstance(best_f, Tensor):
+    if torch.is_tensor(best_f):
         best_f = best_f.unsqueeze(-1)
     posterior = model.posterior(X)
     mean, sigma = posterior.mean, posterior.variance.sqrt()
-    sigma = sigma.clamp_min(1e-9)
+    if mean.shape[-1] != 1:
+        raise RuntimeError("Analytical EI can only be used with single-outcome models")
+    mean = mean.squeeze(-1)
+    sigma = sigma.squeeze(-1).clamp_min(1e-9)
     u = (mean - best_f) / sigma
     normal = Normal(torch.zeros_like(u), torch.ones_like(u))
     ucdf = normal.cdf(u)
@@ -66,7 +68,10 @@ def posterior_mean(X: Tensor, model: Model) -> Tensor:
         corresponding to the posterior mean of the respective design points
 
     """
-    return model.posterior(X).mean
+    mean = model.posterior(X).mean
+    if mean.shape[-1] != 1:
+        raise RuntimeError("Posterior mean can only be used with single-outcome models")
+    return mean.squeeze(-1)
 
 
 @batch_mode_transform
@@ -90,10 +95,14 @@ def probability_of_improvement(
         points
 
     """
-    if isinstance(best_f, Tensor):
+    if torch.is_tensor(best_f):
         best_f.unsqueeze(-1)
     posterior = model.posterior(X)
     mean, sigma = posterior.mean, posterior.variance.sqrt()
+    if mean.shape[-1] != 1:
+        raise RuntimeError("Analytical PI can only be used with single-outcome models")
+    mean = mean.squeeze(-1)
+    sigma = sigma.squeeze(-1).clamp_min(1e-9)
     u = (mean - best_f) / sigma
     normal = Normal(torch.zeros_like(u), torch.ones_like(u))
     return normal.cdf(u)
@@ -120,11 +129,13 @@ def upper_confidence_bound(
         points
 
     """
-    if isinstance(beta, Tensor):
+    if torch.is_tensor(beta):
         beta = beta.unsqueeze(-1)
     posterior = model.posterior(X)
     mean, variance = posterior.mean, posterior.variance
-    return mean + (beta * variance).sqrt()
+    if mean.shape[-1] != 1:
+        raise RuntimeError("Analytical UCB can only be used with single-outcome models")
+    return mean.squeeze(-1) + (beta * variance.squeeze(-1)).sqrt()
 
 
 def max_value_entropy_search(X: Tensor, model: Model, num_samples: int) -> Tensor:
