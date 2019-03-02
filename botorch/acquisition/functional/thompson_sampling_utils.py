@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+"""
+Thompson Sampling utilities
+"""
+
 from typing import Callable, List, Optional
 
 import torch

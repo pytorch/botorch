@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+"""
+Utilities for batch acquisition functions
+"""
+
 from functools import wraps
 from typing import Any, Callable, Optional
 
@@ -21,10 +25,10 @@ def match_batch_shape(X: Tensor, Y: Tensor) -> Tensor:
         Y: A `batch_shape_Y x q' x d` tensor.
 
     Returns:
-        A `batch_shape_Y x q x d` tensor containing the data of `X` expanded to
-            the batch dimensions of `Y` (if compatible). For instance, if `X`
-            is `b'' x b' x q x d` and `Y` is `b x q x d`, then the returned
-            tensor is `b'' x b x q x d`.
+        Tensor: A `batch_shape_Y x q x d` tensor containing the data of `X`
+            expanded to the batch dimensions of `Y` (if compatible). For
+            instance, if `X` is `b'' x b' x q x d` and `Y` is `b x q x d`,
+            then the returned tensor is `b'' x b x q x d`.
     """
     return X.expand(X.shape[: -Y.dim()] + Y.shape[:-2] + X.shape[-2:])
 

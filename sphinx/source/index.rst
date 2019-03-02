@@ -11,6 +11,7 @@ Welcome to botorch's documentation!
    :maxdepth: 1
    :caption: Package Reference
 
+   acquisition
    models
    posteriors
 
