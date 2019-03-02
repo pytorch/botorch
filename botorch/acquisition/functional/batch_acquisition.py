@@ -4,9 +4,10 @@
 Batch acquisition functions using the reparameterization trick in combination
 with MC sampling.
 
-.. [Wilson2017reparam] Wilson, J. T., Moriconi, R., Hutter, F., & Deisenroth,
-    M. P. (2017). The reparameterization trick for acquisition functions.
-    arXiv preprint arXiv:1712.00424.
+.. [Wilson2017reparam]
+    Wilson, J. T., Moriconi, R., Hutter, F., & Deisenroth, M. P. (2017). The
+    reparameterization trick for acquisition functions. arXiv preprint
+    arXiv:1712.00424.
 """
 
 from math import pi, sqrt
@@ -28,7 +29,7 @@ def apply_constraints_nonnegative_soft_(
     eta: float,
 ) -> None:
     """Revise!
-    TODO: Get rid of this in favor of `apply_constraints_`.
+    TODO: Get rid of this in favor of `apply_constraints\_`.
     """
     if constraints is not None:
         obj.clamp_min_(0)  # Enforce non-negativity with constraints

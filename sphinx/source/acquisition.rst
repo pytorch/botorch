@@ -74,7 +74,6 @@ Acquisition Function Modules
    :members:
 
 
-
 botorch.acquisition.batch_modules
 =================================
 .. automodule:: botorch.acquisition.batch_modules

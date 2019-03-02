@@ -57,7 +57,8 @@ class Posterior(ABC):
                 This is used for deterministic optimization, see TODO.
 
         Returns:
-            A `sample_shape x event`-dim Tensor of samples from the posterior.
+            Tensor: A `sample_shape x event`-dim Tensor of samples from the
+            posterior.
         """
         pass
 
@@ -79,7 +80,8 @@ class Posterior(ABC):
                 This is used for deterministic optimization, see TODO.
 
         Returns:
-            A `sample_shape x event`-dim Tensor of samples from the posterior.
+            Tensor: A `sample_shape x event`-dim Tensor of samples from the
+                posterior.
         """
         with torch.no_grad():
             return self.rsample(sample_shape=sample_shape, base_samples=base_samples)
@@ -101,7 +103,7 @@ class Posterior(ABC):
                 removing sampling variance across t-batches.
 
         Returns:
-            A tensor of base samples of size
+            Tensor: base samples of size
                 `sample_shape x event_shape` if `collapse_batch_dims=False`
                 `sample_shape x 1 ... x 1 x q x t` if `collapse_batch_dims=True`
         """

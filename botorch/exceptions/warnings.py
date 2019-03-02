@@ -2,7 +2,7 @@
 
 
 class BotorchWarning(Warning):
-    """Base botorch warning"""
+    """Base botorch warning."""
 
     pass
 

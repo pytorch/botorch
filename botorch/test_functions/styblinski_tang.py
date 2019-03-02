@@ -8,19 +8,21 @@ GLOBAL_MAXIMUM = 39.166166
 
 
 def neg_styblinski_tang(X: Tensor) -> Tensor:
-    """Negative Styblinski-Tang synthetic test function supporting batch evaluation.
+    """Negative Styblinski-Tang test function.
 
-    d-dimensional function (usually evaluated on the hypercube [-5, 5]^d):
+    d-dimensional function (usually evaluated on the hypercube `[-5, 5]^d`):
 
         H(x) = 0.5 * sum_{i=1}^d (x_i^4 - 16 * x_i^2 + 5 * x_i)
 
-    H has a single global mininimum H(z) = -39.166166 * d at z = [-2.903534]^d
+    H has a single global mininimum `H(z) = -39.166166 * d` at
+    `z = [-2.903534]^d`
 
     Args:
-        X (Tensor): A Tensor of size d or k x d (k batch evaluations)
+        X: A Tensor of size `d` or `k x d` (`k` batch evaluations)
 
     Returns:
-        -H(X), the negative value of the standard Styblinski-Tang function
+        Tensor: `-H(X)`, the negative value of the standard Styblinski-Tang
+            function.
     """
     batch = X.ndimension() > 1
     X = X if batch else X.unsqueeze(0)
