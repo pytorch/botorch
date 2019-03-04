@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+"""
+Single-valued analytical acquisition functions.
+These functions do not rely on MC-sampling.
+"""
+
 from typing import Union
 
 import torch
@@ -8,12 +13,6 @@ from torch.distributions import Normal
 
 from ...models import Model
 from ..batch_utils import batch_mode_transform
-
-
-"""
-Single-valued acquisition functions supporting t-batch evaluation.
-These functions use analytical expressions and do not rely on MC-sampling.
-"""
 
 
 @batch_mode_transform

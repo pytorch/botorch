@@ -1,5 +1,15 @@
 #!/usr/bin/env python3
 
+"""
+Quasi Monte-Carlo sampling from Normal distributions.
+
+References:
+
+.. [Pages2018numprob]
+    G. Pages. Numerical Probability: An Introduction with Applications to
+    Finance. Universitext. Springer International Publishing, 2018.
+"""
+
 import math
 from typing import List, Optional, Union
 
@@ -10,26 +20,24 @@ from .sobol import SobolEngine
 
 
 class NormalQMCEngine:
-    """Engine for drawing qMC samples from a multivariate normal N(0, I_d)
-
-    Args:
-        d: The dimension of the samples
-        seed: The seed with which to seed the random number generator of the
-            underlying SobolEngine.
-        inv_transform: If True, use inverse transform instead of Box-Muller
+    """Engine for qMC sampling from a multivariate normal `N(0, I_d)`.
 
     By default, this implementation uses Box-Muller transformed Sobol samples
-    following pg. 123 in [1]. To use the inverse transform instead, set
-    inv_transform to True.
-
-    [1] G. Pages. Numerical Probability: An Introduction with Applications to Finance.
-        Universitext. Springer International Publishing, 2018.
-
+    following pg. 123 in [Pages2018numprob]_. To use the inverse transform
+    instead, set `inv_transform=True`.
     """
 
     def __init__(
         self, d: int, seed: Optional[int] = None, inv_transform: bool = False
     ) -> None:
+        """Engine for drawing qMC samples from a multivariate normal `N(0, I_d)`.
+
+        Args:
+            d: The dimension of the samples.
+            seed: The seed with which to seed the random number generator of the
+                underlying SobolEngine.
+            inv_transform: If True, use inverse transform instead of Box-Muller.
+        """
         self._d = d
         self._seed = seed
         self._inv_transform = inv_transform
@@ -41,7 +49,14 @@ class NormalQMCEngine:
         self._sobol_engine = SobolEngine(dimen=sobol_dim, scramble=True, seed=seed)
 
     def draw(self, n: int = 1) -> np.ndarray:
-        """Draw n qMC samples from the standard Normal."""
+        """Draw n qMC samples from the standard Normal.
+
+        Args:
+            n: The number of samples.
+
+        Returns:
+            np.ndarray: The samples.
+        """
         # get base samples
         samples = self._sobol_engine.draw(n)
         if self._inv_transform:
@@ -60,23 +75,11 @@ class NormalQMCEngine:
 
 
 class MultivariateNormalQMCEngine:
-    """Engine for drawing multivariate qMC samples from a
-       multivariate normal N(\mu, \Sigma)
-
-    Args:
-        mean: The mean vector
-        cov: The covariance matrix
-        seed: The seed with which to seed the random number generator of the
-            underlying SobolEngine
-        inv_transform: If True, use inverse transform instead of Box-Muller
+    """Engine for qMC sampling from a multivariate Normal `N(\mu, \Sigma)`.
 
     By default, this implementation uses Box-Muller transformed Sobol samples
-    following pg. 123 in [1]. To use the inverse transform instead, set
-    inv_transform to True.
-
-    [1] G. Pages. Numerical Probability: An Introduction with Applications to Finance.
-        Universitext. Springer International Publishing, 2018.
-
+    following pg. 123 in [Pages2018numprob]_. To use the inverse transform
+    instead, set `inv_transform=True`.
     """
 
     def __init__(
@@ -86,6 +89,15 @@ class MultivariateNormalQMCEngine:
         seed: Optional[int] = None,
         inv_transform: bool = False,
     ) -> None:
+        """Engine for qMC sampling from a multivariate Normal `N(\mu, \Sigma)`.
+
+        Args:
+            mean: The mean vector.
+            cov: The covariance matrix.
+            seed: The seed with which to seed the random number generator of the
+                underlying SobolEngine.
+            inv_transform: If True, use inverse transform instead of Box-Muller.
+        """
         # check for square/symmetric cov matrix and mean vector has the same d
         mean = np.array(mean, copy=False, ndmin=1)
         cov = np.array(cov, copy=False, ndmin=2)
@@ -95,14 +107,11 @@ class MultivariateNormalQMCEngine:
             raise ValueError("Dimension mismatch between mean and covariance.")
         if not np.allclose(cov, cov.transpose()):
             raise ValueError("Covariance matrix is not symmetric.")
-
         self._mean = mean
         self._normal_engine = NormalQMCEngine(
             d=mean.shape[0], seed=seed, inv_transform=inv_transform
         )
-
-        # compute Cholesky decomp;
-        # if it fails, do the eigendecomposition
+        # compute Cholesky decomp; if it fails, do the eigendecomposition
         try:
             self._corr_matrix = np.linalg.cholesky(cov).transpose()
         except np.linalg.LinAlgError:
@@ -113,7 +122,14 @@ class MultivariateNormalQMCEngine:
             self._corr_matrix = (eigvec * np.sqrt(eigval)).transpose()
 
     def draw(self, n: int = 1) -> np.ndarray:
-        """Draw n qMC samples from the meanltivariate Normal."""
+        """Draw n qMC samples from the multivariate Normal.
+
+        Args:
+            n: The number of samples.
+
+        Returns:
+            np.ndarray: The samples.
+        """
         base_samples = self._normal_engine.draw(n)
         qmc_samples = base_samples @ self._corr_matrix + self._mean
         return qmc_samples

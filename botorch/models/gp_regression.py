@@ -1,5 +1,9 @@
 #! /usr/bin/env python3
 
+"""
+Basic GP Regression models.
+"""
+
 from copy import deepcopy
 from typing import Optional
 
@@ -34,6 +38,7 @@ class SingleTaskGP(ExactGP, GPyTorchModel):
         self, train_X: Tensor, train_Y: Tensor, likelihood: Optional[Likelihood] = None
     ) -> None:
         """A single-task Exact GP model.
+
         Args:
             train_X: A `n x d` or `b x n x d` (batch mode) tensor of training data
             train_Y: A `n` or `b x n` (batch mode) tensor of training observations

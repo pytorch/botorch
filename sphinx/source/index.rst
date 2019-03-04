@@ -9,10 +9,14 @@ Welcome to botorch's documentation!
 
 .. toctree::
    :maxdepth: 1
-   :caption: Package Reference
+   :caption: API Reference
 
+   acquisition
    models
    posteriors
+   qmc
+   test_functions
+   exceptions
 
 
 Indices and tables

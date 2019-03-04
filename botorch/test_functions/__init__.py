@@ -6,4 +6,4 @@ from .holder_table import neg_holder_table
 from .styblinski_tang import neg_styblinski_tang
 
 
-__all__ = [neg_branin, neg_hartmann6, neg_holder_table, neg_styblinski_tang]
+__all__ = ["neg_branin", "neg_hartmann6", "neg_holder_table", "neg_styblinski_tang"]

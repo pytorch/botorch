@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+"""
+Utilities for dealing with acquisition functions.
+"""
+
 from typing import Callable, Dict, List, Optional, Union
 
 from torch import Tensor
