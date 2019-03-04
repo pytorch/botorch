@@ -65,10 +65,10 @@ def greedy(
     Args:
         X: `q x d` (or `b x q x d`)-dim (batch mode) tensor of points
         model: model: A fitted model.
-        objective: A callable mapping a Tensor of size `b x q x (t)` to a Tensor
+        objective: A callable mapping a Tensor of size `b x q x t` to a Tensor
             of size `b x q`, where `t` is the number of outputs (tasks) of the
-            model. Note: the callable must support broadcasting. If omitted, use
-            the identity map (applicable to single-task models only).
+            model. This callable must support broadcasting. If omitted, squeeze
+            the last dimension (applicable to single-task models only).
             Assumed to be non-negative when the constraints are used!
         constraints: A list of callables, each mapping a Tensor of size
             `b x q x t` to a Tensor of size `b x q`, where negative values imply
@@ -646,7 +646,7 @@ def sequential_optimize(
     candidate_list = []
     base_X_pending = acq_func.X_pending
     # Needed to clear base_samples
-    acq_func.set_X_pending(base_X_pending)
+    acq_func._set_X_pending(base_X_pending)
     for _ in range(q):
         candidate_list.append(
             joint_optimize(
@@ -661,11 +661,11 @@ def sequential_optimize(
             )
         )
         candidates = torch.cat(candidate_list, dim=-2)
-        acq_func.set_X_pending(
+        acq_func._set_X_pending(
             torch.cat([base_X_pending, candidates], dim=-2)
             if base_X_pending is not None
             else candidates
         )
     # Reset acq_func to previous X_pending state
-    acq_func.set_X_pending(base_X_pending)
+    acq_func._set_X_pending(base_X_pending)
     return candidates

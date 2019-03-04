@@ -51,10 +51,9 @@ class TestFunctionalBatchAcquisition(unittest.TestCase):
 
     def test_batch_noisy_expected_improvement(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
-
         for dtype in (torch.float, torch.double):
             samples_noisy = torch.tensor([1.0, 0.0], device=device, dtype=dtype)
-            samples_noisy = samples_noisy.view(1, 1, 2, 1)
+            samples_noisy = samples_noisy.view(1, 2, 1)
             X_observed = torch.zeros(1, 1, device=device, dtype=dtype)
             mm_noisy = MockModel(MockPosterior(samples=samples_noisy))
 
@@ -64,6 +63,7 @@ class TestFunctionalBatchAcquisition(unittest.TestCase):
                 X=X, model=mm_noisy, X_observed=X_observed, mc_samples=2
             )
             self.assertEqual(res.item(), 1)
+
             # test modifying the objective
             res3 = batch_noisy_expected_improvement(
                 X=X,

@@ -29,16 +29,39 @@ class TestGPyTorchPosterior(unittest.TestCase):
             samples2 = posterior.rsample(sample_shape=torch.Size([4, 2]))
             self.assertEqual(samples2.shape, torch.Size([4, 2, 3, 1]))
             # rsample w/ base samples
-            base_samples = posterior.get_base_samples(torch.Size([4]))
+            sample_shape = torch.Size([4])
+            base_samples = posterior.get_base_samples(sample_shape=sample_shape)
             self.assertEqual(base_samples.shape, torch.Size([4, 3, 1]))
-            samples_b1 = posterior.rsample(base_samples=base_samples)
-            samples_b2 = posterior.rsample(base_samples=base_samples)
+            samples_b1 = posterior.rsample(
+                sample_shape=sample_shape, base_samples=base_samples
+            )
+            samples_b2 = posterior.rsample(
+                sample_shape=sample_shape, base_samples=base_samples
+            )
             self.assertTrue(torch.allclose(samples_b1, samples_b2))
-            base_samples2 = posterior.get_base_samples(torch.Size([4, 2]))
+            sample_shape = torch.Size([4, 2])
+            base_samples2 = posterior.get_base_samples(sample_shape=sample_shape)
             self.assertEqual(base_samples2.shape, torch.Size([4, 2, 3, 1]))
-            samples2_b1 = posterior.rsample(base_samples=base_samples2)
-            samples2_b2 = posterior.rsample(base_samples=base_samples2)
+            samples2_b1 = posterior.rsample(
+                sample_shape=sample_shape, base_samples=base_samples2
+            )
+            samples2_b2 = posterior.rsample(
+                sample_shape=sample_shape, base_samples=base_samples2
+            )
             self.assertTrue(torch.allclose(samples2_b1, samples2_b2))
+            # collapse_batch_dims
+            b_mean = torch.rand(2, 3, dtype=dtype, device=device)
+            b_variance = 1 + torch.rand(2, 3, dtype=dtype, device=device)
+            b_covar = b_variance.unsqueeze(-1) * torch.eye(3).type_as(b_variance)
+            b_mvn = MultivariateNormal(b_mean, lazify(b_covar))
+            b_posterior = GPyTorchPosterior(mvn=b_mvn)
+            sample_shape = torch.Size([4])
+            b_base_samples = b_posterior.get_base_samples(sample_shape=sample_shape)
+            self.assertEqual(b_base_samples.shape, torch.Size([4, 2, 3, 1]))
+            b_base_samples_coll = b_posterior.get_base_samples(
+                sample_shape=sample_shape, collapse_batch_dims=True
+            )
+            self.assertEqual(b_base_samples_coll.shape, torch.Size([4, 1, 3, 1]))
 
     def test_GPyTorchPosterior_cuda(self):
         if torch.cuda.is_available():
@@ -64,16 +87,39 @@ class TestGPyTorchPosterior(unittest.TestCase):
             samples2 = posterior.rsample(sample_shape=torch.Size([4, 2]))
             self.assertEqual(samples2.shape, torch.Size([4, 2, 3, 2]))
             # rsample w/ base samples
-            base_samples = posterior.get_base_samples(torch.Size([4]))
+            sample_shape = torch.Size([4])
+            base_samples = posterior.get_base_samples(sample_shape=sample_shape)
             self.assertEqual(base_samples.shape, torch.Size([4, 3, 2]))
-            samples_b1 = posterior.rsample(base_samples=base_samples)
-            samples_b2 = posterior.rsample(base_samples=base_samples)
+            samples_b1 = posterior.rsample(
+                sample_shape=sample_shape, base_samples=base_samples
+            )
+            samples_b2 = posterior.rsample(
+                sample_shape=sample_shape, base_samples=base_samples
+            )
             self.assertTrue(torch.allclose(samples_b1, samples_b2))
-            base_samples2 = posterior.get_base_samples(torch.Size([4, 2]))
+            sample_shape = torch.Size([4, 2])
+            base_samples2 = posterior.get_base_samples(sample_shape=sample_shape)
             self.assertEqual(base_samples2.shape, torch.Size([4, 2, 3, 2]))
-            samples2_b1 = posterior.rsample(base_samples=base_samples2)
-            samples2_b2 = posterior.rsample(base_samples=base_samples2)
+            samples2_b1 = posterior.rsample(
+                sample_shape=sample_shape, base_samples=base_samples2
+            )
+            samples2_b2 = posterior.rsample(
+                sample_shape=sample_shape, base_samples=base_samples2
+            )
             self.assertTrue(torch.allclose(samples2_b1, samples2_b2))
+            # collapse_batch_dims
+            b_mean = torch.rand(2, 3, 2, dtype=dtype, device=device)
+            b_variance = 1 + torch.rand(2, 3, 2, dtype=dtype, device=device)
+            b_covar = b_variance.view(2, 6, 1) * torch.eye(6).type_as(b_variance)
+            b_mvn = MultitaskMultivariateNormal(b_mean, lazify(b_covar))
+            b_posterior = GPyTorchPosterior(mvn=b_mvn)
+            sample_shape = torch.Size([4])
+            b_base_samples = b_posterior.get_base_samples(sample_shape=sample_shape)
+            self.assertEqual(b_base_samples.shape, torch.Size([4, 2, 3, 2]))
+            b_base_samples_coll = b_posterior.get_base_samples(
+                sample_shape=sample_shape, collapse_batch_dims=True
+            )
+            self.assertEqual(b_base_samples_coll.shape, torch.Size([4, 1, 3, 2]))
 
     def test_GPyTorchPosterior_Multitask_cuda(self):
         if torch.cuda.is_available():
@@ -102,16 +148,38 @@ class TestGPyTorchPosterior(unittest.TestCase):
             samples2 = posterior.rsample(sample_shape=torch.Size([4, 2]))
             self.assertEqual(samples2.shape, torch.Size([4, 2, 3, 1]))
             # rsample w/ base samples
-            base_samples = posterior.get_base_samples(torch.Size([4]))
+            sample_shape = torch.Size([4])
+            base_samples = posterior.get_base_samples(sample_shape=sample_shape)
             self.assertEqual(base_samples.shape, torch.Size([4, 3, 1]))
-            samples_b1 = posterior.rsample(base_samples=base_samples)
-            samples_b2 = posterior.rsample(base_samples=base_samples)
+            samples_b1 = posterior.rsample(
+                sample_shape=sample_shape, base_samples=base_samples
+            )
+            samples_b2 = posterior.rsample(
+                sample_shape=sample_shape, base_samples=base_samples
+            )
             self.assertTrue(torch.allclose(samples_b1, samples_b2))
-            base_samples2 = posterior.get_base_samples(torch.Size([4, 2]))
+            sample_shape = torch.Size([4, 2])
+            base_samples2 = posterior.get_base_samples(sample_shape=sample_shape)
             self.assertEqual(base_samples2.shape, torch.Size([4, 2, 3, 1]))
-            samples2_b1 = posterior.rsample(base_samples=base_samples2)
-            samples2_b2 = posterior.rsample(base_samples=base_samples2)
-            torch.allclose(samples2_b1, samples2_b2)
+            samples2_b1 = posterior.rsample(
+                sample_shape=sample_shape, base_samples=base_samples2
+            )
+            samples2_b2 = posterior.rsample(
+                sample_shape=sample_shape, base_samples=base_samples2
+            )
+            self.assertTrue(torch.allclose(samples2_b1, samples2_b2))
+            # collapse_batch_dims
+            b_mean = torch.rand(2, 3, dtype=dtype, device=device)
+            b_degenerate_covar = degenerate_covar.expand(2, *degenerate_covar.shape)
+            b_mvn = MultivariateNormal(b_mean, lazify(b_degenerate_covar))
+            b_posterior = GPyTorchPosterior(mvn=b_mvn)
+            sample_shape = torch.Size([4])
+            b_base_samples = b_posterior.get_base_samples(sample_shape=sample_shape)
+            self.assertEqual(b_base_samples.shape, torch.Size([4, 2, 3, 1]))
+            b_base_samples_coll = b_posterior.get_base_samples(
+                sample_shape=sample_shape, collapse_batch_dims=True
+            )
+            self.assertEqual(b_base_samples_coll.shape, torch.Size([4, 1, 3, 1]))
 
     def test_degenerate_GPyTorchPosterior_cuda(self):
         if torch.cuda.is_available():
@@ -142,16 +210,39 @@ class TestGPyTorchPosterior(unittest.TestCase):
             samples2 = posterior.rsample(sample_shape=torch.Size([4, 2]))
             self.assertEqual(samples2.shape, torch.Size([4, 2, 3, 2]))
             # rsample w/ base samples
-            base_samples = posterior.get_base_samples(torch.Size([4]))
+            sample_shape = torch.Size([4])
+            base_samples = posterior.get_base_samples(sample_shape=sample_shape)
             self.assertEqual(base_samples.shape, torch.Size([4, 3, 2]))
-            samples_b1 = posterior.rsample(base_samples=base_samples)
-            samples_b2 = posterior.rsample(base_samples=base_samples)
+            samples_b1 = posterior.rsample(
+                sample_shape=sample_shape, base_samples=base_samples
+            )
+            samples_b2 = posterior.rsample(
+                sample_shape=sample_shape, base_samples=base_samples
+            )
             self.assertTrue(torch.allclose(samples_b1, samples_b2))
-            base_samples2 = posterior.get_base_samples(torch.Size([4, 2]))
+            sample_shape = torch.Size([4, 2])
+            base_samples2 = posterior.get_base_samples(sample_shape=sample_shape)
             self.assertEqual(base_samples2.shape, torch.Size([4, 2, 3, 2]))
-            samples2_b1 = posterior.rsample(base_samples=base_samples2)
-            samples2_b2 = posterior.rsample(base_samples=base_samples2)
-            torch.allclose(samples2_b1, samples2_b2)
+            samples2_b1 = posterior.rsample(
+                sample_shape=sample_shape, base_samples=base_samples2
+            )
+            samples2_b2 = posterior.rsample(
+                sample_shape=sample_shape, base_samples=base_samples2
+            )
+            self.assertTrue(torch.allclose(samples2_b1, samples2_b2))
+            # collapse_batch_dims
+            b_mean = torch.rand(2, 3, dtype=dtype, device=device)
+            b_degenerate_covar = degenerate_covar.expand(2, *degenerate_covar.shape)
+            b_mvn = MultivariateNormal(b_mean, lazify(b_degenerate_covar))
+            b_mvn = MultitaskMultivariateNormal.from_independent_mvns([b_mvn, b_mvn])
+            b_posterior = GPyTorchPosterior(mvn=b_mvn)
+            sample_shape = torch.Size([4])
+            b_base_samples = b_posterior.get_base_samples(sample_shape=sample_shape)
+            self.assertEqual(b_base_samples.shape, torch.Size([4, 2, 3, 2]))
+            b_base_samples_coll = b_posterior.get_base_samples(
+                sample_shape=sample_shape, collapse_batch_dims=True
+            )
+            self.assertEqual(b_base_samples_coll.shape, torch.Size([4, 1, 3, 2]))
 
     def test_degenerate_GPyTorchPosterior_Multitask_cuda(self):
         if torch.cuda.is_available():

@@ -94,9 +94,9 @@ class TestRunClosedLoop(unittest.TestCase):
             X = torch.zeros((self.optim_config.initial_points, 1), **tkwargs)
             Y, Ycov = self.func(X)
             mean1 = torch.ones(self.optim_config.initial_points, **tkwargs)
-            samples1 = torch.zeros(1, 1, self.optim_config.initial_points, **tkwargs)
+            samples1 = torch.zeros(1, self.optim_config.initial_points, **tkwargs)
             mm1 = MockModel(MockPosterior(mean=mean1, samples=samples1))
-            samples2 = torch.zeros(1, 1, self.optim_config.q, **tkwargs)
+            samples2 = torch.zeros(1, self.optim_config.q, **tkwargs)
             mm2 = MockModel(MockPosterior(samples=samples2))
             mock_get_fitted_model.side_effect = [mm1, mm2]
             # basic test for output shapes and types
@@ -297,7 +297,7 @@ class TestGreedy(unittest.TestCase):
         for dtype in (torch.float, torch.double):
             X = torch.tensor([1.0, 2.0, 3.0]).unsqueeze(-1)
             X = X.to(device=device, dtype=dtype)
-            model = MockModel(MockPosterior(samples=X.view(1, 1, -1) * 2))
+            model = MockModel(MockPosterior(samples=X.view(1, -1) * 2))
             # basic test
             best_point, best_obj, best_feas = greedy(X=X, model=model)
             best_point_exp = torch.tensor([3.0]).type_as(X)
@@ -330,7 +330,7 @@ class TestGreedy(unittest.TestCase):
         for dtype in (torch.float, torch.double):
             X = torch.tensor([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]).unsqueeze(-1)
             X = X.to(device=device, dtype=dtype)
-            model = MockModel(MockPosterior(samples=X.view(1, 2, -1) * 2))
+            model = MockModel(MockPosterior(samples=X.view(2, -1) * 2))
             # basic test
             best_point, best_obj, best_feas = greedy(X=X, model=model)
             best_point_exp = torch.tensor([[3.0], [6.0]]).type_as(X)
