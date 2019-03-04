@@ -14,7 +14,7 @@ class TestThompsonSamplingUtils(unittest.TestCase):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
             # Test with batch
-            samples = torch.zeros([1, 3, 1], device=device, dtype=dtype)
+            samples = torch.zeros(3, 1, device=device, dtype=dtype)
             res = discrete_thompson_sample(
                 X=torch.zeros(1, device=device, dtype=dtype),  # dummy for type checking
                 model=MockModel(MockPosterior(samples=samples)),
@@ -28,7 +28,7 @@ class TestThompsonSamplingUtils(unittest.TestCase):
             self.assertEqual(res.shape, (3, 1))
 
             # Test without a batch
-            samples = torch.zeros([1, 1, 1], device=device, dtype=dtype)
+            samples = torch.zeros(1, 1, device=device, dtype=dtype)
             res = discrete_thompson_sample(
                 X=torch.zeros(1, device=device, dtype=dtype),  # dummy for type checking
                 model=MockModel(MockPosterior(samples=samples)),
@@ -39,8 +39,8 @@ class TestThompsonSamplingUtils(unittest.TestCase):
             self.assertEqual(res.item(), 1)
 
             # Test with two different samples
-            samples = torch.zeros([1, 1, 2], device=device, dtype=dtype)
-            samples[:, :, 1] = samples[:, :, 1] + 1
+            samples = torch.zeros(1, 2, device=device, dtype=dtype)
+            samples[:, 1] = samples[:, 1] + 1
             res = discrete_thompson_sample(
                 X=torch.zeros(1, device=device, dtype=dtype),  # dummy for type checking
                 model=MockModel(MockPosterior(samples=samples)),
@@ -54,9 +54,9 @@ class TestThompsonSamplingUtils(unittest.TestCase):
             self.assertEqual(res[1], 1)
 
             # Test with two different samples, two batches
-            samples = torch.zeros([1, 2, 2], device=device, dtype=dtype)
-            samples[:, 1, 1] = samples[:, 1, 1] + 1
-            samples[:, 0, 0] = samples[:, 0, 0] + 1
+            samples = torch.zeros([2, 2], device=device, dtype=dtype)
+            samples[1, 1] = samples[1, 1] + 1
+            samples[0, 0] = samples[0, 0] + 1
             res = discrete_thompson_sample(
                 X=torch.zeros(1, device=device, dtype=dtype),  # dummy for type checking
                 model=MockModel(MockPosterior(samples=samples)),

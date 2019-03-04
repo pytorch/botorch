@@ -29,6 +29,7 @@ def apply_constraints_nonnegative_soft_(
     samples: Tensor,
     eta: float,
 ) -> None:
+    """TODO: Get rid of this in favor of apply_constraints_"""
     if constraints is not None:
         obj.clamp_min_(0)  # Enforce non-negativity with constraints
         for constraint in constraints:
@@ -41,21 +42,18 @@ def apply_constraints_(
     samples: Tensor,
     M: float,
 ) -> None:
-    """Apply constraints by assigning a penalty of -M when not feasible, where
-    obj is modified in-place.
+    """Apply constraints using an infeasiblity penalty.
+
+    Assigsn a penalty of `-M` when not feasible, where obj is modified in-place.
 
     Args:
         obj: A `b x q` Tensor of objective values.
         constraints: A list of callables, each mapping a Tensor of size `b x q x t`
             to a Tensor of size `b x q`, where negative values imply feasibility.
-            Note: the callable must support broadcasting.
-            Only relevant for multi-task models (`t` > 1).
-        samples: A `b x q x t` Tensor of samples drawn from the posterior
-        M: A float representing the infeasible value.
-
-    Returns:
-        None.
-
+            This callable must support broadcasting. Only relevant for multi-
+            output models (`t` > 1).
+        samples: A `b x q x t` Tensor of samples drawn from the posterior.
+        M: The infeasible value.
     """
     if constraints is not None:
         # obj has dimensions n_samples x b x q
@@ -73,7 +71,9 @@ def apply_constraints_(
 def get_infeasible_cost(
     X: Tensor, model: Model, objective: Callable[[Tensor], Tensor] = squeeze_last_dim
 ) -> float:
-    """Get the infeasible cost M such that -M is almost always < min_x f(x)
+    """Get infeasible cost for a model and objective.
+
+    Computes an infeasible cost M such that -M is almost always < min_x f(x),
         so that feasible points are preferred.
 
     Args:
@@ -81,8 +81,7 @@ def get_infeasible_cost(
         model: A fitted model.
 
     Returns:
-        float: The infeasible cost M value.
-
+        The infeasible cost M value.
     """
     posterior = model.posterior(X)
     lb = objective(posterior.mean - 6 * posterior.variance.sqrt()).min()
@@ -98,36 +97,34 @@ def batch_expected_improvement(
     objective: Callable[[Tensor], Tensor] = squeeze_last_dim,
     constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
     M: float = 0.0,
-    mc_samples: int = 5000,
+    mc_samples: int = 500,
     base_samples: Optional[Tensor] = None,
 ) -> Tensor:
-    """q-EI with constraints, supporting t-batch mode.
+    """q-Expected Improvement acquisition function.
 
     Args:
-        X: A `b x q x d` Tensor with `b` t-batches of `q` design points
-            each. If X is two-dimensional, assume `b = 1`.
-        model: A fitted model
+        X: A `(b) x q x d` Tensor with `b` t-batches of `q` design points each.
+            X is two-dimensional, assume `b = 1`.
+        model: A fitted model.
         best_f: The best (feasible) function value observed so far (assumed
-            noiseless). -M if no feasible function value observed so far.
-        objective: A callable mapping a Tensor of size `b x q x (t)` to a Tensor
-        of size `b x q`, where `t` is the number of outputs (tasks) of the model.
-            Note: the callable must support broadcasting.
-            If omitted, use the identity map (applicable to single-task models only).
-            Assumed to be non-negative when the constraints are used!
-        constraints: A list of callables, each mapping a Tensor of size `b x q x t`
-            to a Tensor of size `b x q`, where negative values imply feasibility.
-            Note: the callable must support broadcasting.
-            Only relevant for multi-task models (`t` > 1).
-        M: The infeasibility cost; should be s.t. -M < min_x objective(x)
-        mc_samples: The number of Monte-Carlo samples to draw from the model
-            posterior. Only used if base_samples is not provided.
+            noiseless).
+        objective: A callable mapping a Tensor of size `b x q x t` to a
+            Tensor of size `b x q`, where `t` is the number of outputs of
+            the model. Note: the callable must support broadcasting.
+            If omitted, squeeze the output dimension (applicable to single-
+            output models only).
+        constraints: A list of callables, each mapping a Tensor of size
+            `b x q x t` to a Tensor of size `b x q`, where negative values
+            imply feasibility. Note: the callable must support broadcasting.
+            Only relevant for multi-output models (`t` > 1).
+        M: The infeasibility cost. Should be set s.t. `-M < min_x obj(x)`.
+        mc_samples: The number of (quasi-) Monte-Carlo samples to use for
+            approximating the expectation.
         base_samples: A fixed Tensor of N(0,1) random variables used for
             deterministic optimization.
 
     Returns:
-        Tensor: The constrained q-EI value of the design X for each of the `b`
-            t-batches.
-
+        Tensor: The q-EI value of the design X for each of the `b` t-batches.
     """
     posterior = model.posterior(X)
     samples = posterior.rsample(
@@ -150,40 +147,39 @@ def batch_noisy_expected_improvement(
     objective: Callable[[Tensor], Tensor] = squeeze_last_dim,
     constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
     M: float = 0.0,
-    mc_samples: int = 5000,
+    mc_samples: int = 500,
     base_samples: Optional[Tensor] = None,
 ) -> Tensor:
-    """q-NoisyEI with constraints, supporting t-batch mode.
+    """q-Noisy Expected Improvement acquisition function.
 
     Args:
         X: A `b x q x d` Tensor with `b` t-batches of `q` design points each.
             If X is two-dimensional, assume `b = 1`.
-        model: A fitted model
-        X_observed: A q' x d Tensor of q' design points that have already been
-            observed and would be considered as the best design point.
-        objective: A callable mapping a Tensor of size `b x q x (t)`
-            to a Tensor of size `b x q`, where `t` is the number of outputs (tasks)
-            of the model. Note: the callable must support broadcasting.
-            If omitted, use the identity map (applicable to single-task models only).
-            Assumed to be non-negative when the constraints are used!
-        constraints: A list of callables, each mapping a Tensor of size `b x q x t`
-            to a Tensor of size `b x q`, where negative values imply feasibility.
-            Note: the callable must support broadcasting.
-            Only relevant for multi-task models (`t` > 1).
-        M: The infeasibility cost; should be s.t. -M < min_x objective(x)
-        mc_samples: The number of Monte-Carlo samples to draw from the model
-            posterior.  Only used if base_samples is not provided.
-        base_samples: A Tensor of N(0,1) random variables used for
+        model: A fitted model.
+        X_observed: A `q' x d`-dim Tensor of `q'` design points that have
+            already been observed and would be considered as the best design
+            point.
+        objective: A callable mapping a Tensor of size `b x q x t` to a
+            Tensor of size `b x q`, where `t` is the number of outputs of
+            the model. This callable must support broadcasting. If omitted,
+            squeeze the output dimension (applicable to single-output models
+            only).
+        constraints: A list of callables, each mapping a Tensor of size
+            `b x q x t` to a Tensor of size `b x q`, where negative values
+            imply feasibility. This callable must support broadcasting. Only
+            relevant for multi-output models (`t` > 1).
+        M: The infeasibility cost. Should be set s.t. `-M < min_x obj(x)`.
+        mc_samples: The number of (quasi-) Monte-Carlo samples to use for
+            approximating the expectation.
+        base_samples: A fixed Tensor of N(0,1) random variables used for
             deterministic optimization.
 
     Returns:
-        Tensor: The constrained q-NoisyEI value of the design X for each of the `b`
-            t-batches.
-
+        Tensor: The q-NoisyEI value of the design X for each of the `b` t-batches.
     """
-    q = X.shape[1]
+    q = X.shape[-2]
     # predict posterior (joint across points and tasks)
-    posterior = model.posterior(torch.cat([X, X_observed], dim=1))
+    posterior = model.posterior(torch.cat([X, X_observed], dim=-2))
     samples = posterior.rsample(
         sample_shape=torch.Size([mc_samples]), base_samples=base_samples
     )
@@ -215,7 +211,9 @@ def batch_knowledge_gradient(
     use_X_for_old_posterior: Optional[bool] = False,
     use_posterior_mean: Optional[bool] = False,
 ) -> Tensor:
-    """Constrained, multi-fidelity knowledge gradient supporting t-batch mode.
+    """TODO: Revise!
+
+    Constrained, multi-fidelity knowledge gradient supporting t-batch mode.
 
     Multifidelity optimization can be performed by using the
     optional project and cost callables.
@@ -365,7 +363,9 @@ def batch_knowledge_gradient_no_discretization(
     cost: Optional[Callable[[Tensor], Tensor]] = None,
     use_posterior_mean: Optional[bool] = False,
 ) -> Tensor:
-    """Constrained, multi-fidelity knowledge gradient supporting t-batch mode.
+    """TODO: Revise!
+
+    Constrained, multi-fidelity knowledge gradient supporting t-batch mode.
 
     Multifidelity optimization can be performed by using the
     optional project and cost callables.
@@ -491,26 +491,24 @@ def batch_probability_of_improvement(
     X: Tensor,
     model: Model,
     best_f: Tensor,
-    mc_samples: int = 5000,
+    mc_samples: int = 500,
     base_samples: Optional[Tensor] = None,
 ) -> Tensor:
-    """q-PI, supporting t-batch mode.
+    """q-Probability of Improvement acquisition function.
 
     Args:
-        X: A `b x q x d` Tensor with `b` t-batches of `q` design points
-            each. If X is two-dimensional, assume `b = 1`.
+        X: A `(b) x q x d` Tensor with `b` t-batches of `q` design points each.
+            If `X` is two-dimensional, assume `b = 1`.
         model: A fitted model.
         best_f: The best (feasible) function value observed so far (assumed
             noiseless).
-        mc_samples: The number of Monte-Carlo samples to draw from the model
-            posterior.  Only used if base_samples is not provided.
+        mc_samples: The number of (quasi-) Monte-Carlo samples to use for
+            approximating the probability of improvement.
         base_samples: A Tensor of N(0,1) random variables used for
             deterministic optimization.
 
     Returns:
-        Tensor: The constrained q-PI value of the design X for each of the `b`
-            t-batches.
-
+        Tensor: The q-PI value of the design X for each of the `b` t-batches.
     """
     posterior = model.posterior(X)
     samples = posterior.rsample(
@@ -524,24 +522,23 @@ def batch_probability_of_improvement(
 def batch_simple_regret(
     X: Tensor,
     model: Model,
-    mc_samples: int = 5000,
+    mc_samples: int = 500,
     base_samples: Optional[Tensor] = None,
 ) -> Tensor:
-    """q-simple regret, support t-batch mode.
+    """q-Simple Regret acquisition function.
 
     Args:
-        X: A `b x q x d` Tensor with `b` t-batches of `q` design points
-            each. If X is two-dimensional, assume `b = 1`.
+        X: A `(b) x q x d` Tensor with `b` t-batches of `q` design points each.
+            If `X` is two-dimensional, assume `b = 1`.
         model: A fitted model.
-        mc_samples: The number of Monte-Carlo samples to draw from the model
-            posterior.  Only used if base_samples is not provided.
+        mc_samples: The number of (quasi-) Monte-Carlo samples to use for
+            approximating the probability of improvement.
         base_samples: A Tensor of N(0,1) random variables used for
             deterministic optimization.
 
     Returns:
-        Tensor: The constrained q-simple regret value of the design X for each of
-            the `b`t-batches.
-
+        Tensor: The q-simple regret value of the design X for each of the `b`
+        t-batches.
     """
     posterior = model.posterior(X)
     val = (
@@ -559,19 +556,20 @@ def batch_upper_confidence_bound(
     X: Tensor,
     model: Model,
     beta: float,
-    mc_samples: int = 5000,
+    mc_samples: int = 500,
     base_samples: Optional[Tensor] = None,
 ) -> Tensor:
-    """q-UCB, support t-batch mode.
+    """q-Upper Confidence Bound acquisition function.
 
     Args:
-        X: A `b x q x d` Tensor with `b` t-batches of `q` design points
-            each. If X is two-dimensional, assume `b = 1`.
+        X: A `(b) x q x d` Tensor with `b` t-batches of `q` design points each.
+            If `X` is two-dimensional, assume `b = 1`.
         model: A fitted model.
-        beta:  controls tradeoff between mean and standard deviation in UCB
-        mc_samples: The number of Monte-Carlo samples to draw from the model
-            posterior.
-        seed: The random seed to use for sampling.
+        beta: Controls tradeoff between mean and standard deviation in UCB.
+        mc_samples: The number of (quasi-) Monte-Carlo samples to use for
+            approximating the probability of improvement.
+        base_samples: A Tensor of N(0,1) random variables used for
+            deterministic optimization.
 
     Returns:
         Tensor: The constrained q-UCB value of the design X for each of
