@@ -1,5 +1,15 @@
 #!/usr/bin/env python3
 
+"""
+Batch acquisition functions using the reparameterization trick in combination
+with MC sampling.
+
+.. [Wilson2017reparam]
+    Wilson, J. T., Moriconi, R., Hutter, F., & Deisenroth, M. P. (2017). The
+    reparameterization trick for acquisition functions. arXiv preprint
+    arXiv:1712.00424.
+"""
+
 from math import pi, sqrt
 from typing import Callable, List, Optional
 
@@ -12,24 +22,15 @@ from ...utils import squeeze_last_dim
 from ..batch_utils import batch_mode_transform
 
 
-"""
-Batch acquisition functions using the reparameterization trick in combination
-with MC sampling as outlined in:
-
-    Wilson, J. T., Moriconi, R., Hutter, F., & Deisenroth, M. P. (2017).
-    The reparameterization trick for acquisition functions.
-    arXiv preprint arXiv:1712.00424.
-
-"""
-
-
 def apply_constraints_nonnegative_soft_(
     obj: Tensor,
     constraints: List[Callable[[Tensor], Tensor]],
     samples: Tensor,
     eta: float,
 ) -> None:
-    """TODO: Get rid of this in favor of apply_constraints_"""
+    """Revise!
+    TODO: Get rid of this in favor of `apply_constraints\_`.
+    """
     if constraints is not None:
         obj.clamp_min_(0)  # Enforce non-negativity with constraints
         for constraint in constraints:
@@ -218,10 +219,10 @@ def batch_knowledge_gradient(
     Multifidelity optimization can be performed by using the
     optional project and cost callables.
 
-    *** NOTE: THIS FUNCTION DOES NOT YET SUPPORT t-BATCHES.***
-    *** This will require support for arbitrary batch shapes in gpytorch ***
+    ** NOTE: THIS FUNCTION DOES NOT YET SUPPORT t-BATCHES.**
+    ** This will require support for arbitrary batch shapes in gpytorch **
 
-    *** TODO: Check whether soft-maxes help the gradients **
+    ** TODO: Check whether soft-maxes help the gradients **
 
     Args:
         X: A `b x q x d` Tensor with `b` t-batches of `q` design points each.
@@ -373,9 +374,9 @@ def batch_knowledge_gradient_no_discretization(
     Unlike batch_knowledge_gradient, this function optimizes
     the knowledge gradient without discretization.
 
-    *** NOTE: THIS FUNCTION DOES NOT YET SUPPORT t-BATCHES. ***
+    ** NOTE: THIS FUNCTION DOES NOT YET SUPPORT t-BATCHES. **
 
-    *** TODO: Check whether soft-maxes help the gradients **
+    ** TODO: Check whether soft-maxes help the gradients **
 
     Args:
         X: A `b x q x d` Tensor with `b` t-batches of `q` design points each.
@@ -420,7 +421,6 @@ def batch_knowledge_gradient_no_discretization(
             batch within fantasy_model and X_old is chosen as the final selection
             for the previous model. The maximum across X_fantasies and X_old
             evaluated at design X is the true q-KG of X.
-
     """
     old_posterior = model.posterior(project(X_old))
     if use_posterior_mean:
@@ -538,7 +538,7 @@ def batch_simple_regret(
 
     Returns:
         Tensor: The q-simple regret value of the design X for each of the `b`
-        t-batches.
+            t-batches.
     """
     posterior = model.posterior(X)
     val = (
@@ -568,13 +568,12 @@ def batch_upper_confidence_bound(
         beta: Controls tradeoff between mean and standard deviation in UCB.
         mc_samples: The number of (quasi-) Monte-Carlo samples to use for
             approximating the probability of improvement.
-        base_samples: A Tensor of N(0,1) random variables used for
+        base_samples: A Tensor of `N(0,1)` random variables used for
             deterministic optimization.
 
     Returns:
-        Tensor: The constrained q-UCB value of the design X for each of
-            the `b`t-batches.
-
+        Tensor: The constrained q-UCB value of the design X for each of the
+            `b` t-batches.
     """
     posterior = model.posterior(X)
     samples = posterior.rsample(

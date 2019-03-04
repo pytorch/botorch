@@ -25,21 +25,23 @@ GLOBAL_MAXIMUM = 3.32237
 
 
 def neg_hartmann6(X: Tensor) -> Tensor:
-    """Negative Hartmann6 synthetic test function supporting batch evaluation.
+    """Negative Hartmann6 test function.
 
-    Six-dimensional function (typically evaluated on [0, 1]^6)
+    Six-dimensional function (typically evaluated on `[0, 1]^6`)
 
         H(x) = - sum_{i=1}^4 ALPHA_i exp( - sum_{j=1}^6 A_ij (x_j - P_ij)**2 )
 
     H has a 6 local minima and a global minimum at
+
         z = (0.20169, 0.150011, 0.476874, 0.275332, 0.311652, 0.6573)
-    with H(z) = -3.32237
+
+    with `H(z) = -3.32237`
 
     Args:
-        X (Tensor): A Tensor of size 6 or k x 6 (k batch evaluations)
+        X: A Tensor of size `6` or `k x 6` (k batch evaluations).
 
     Returns:
-        -H(X), the negative value of the standard Hartmann6 function
+        Tensor: `-H(X)`, the negative value of the standard Hartmann6 function.
     """
     batch = X.ndimension() > 1
     X = X if batch else X.unsqueeze(0)

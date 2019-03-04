@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+"""
+Wraps the batch acquisition functions defined in botorch.acquisition.functional
+into BatchAcquisitionFunction gpytorch modules.
+"""
+
 from abc import ABC, abstractmethod
 from typing import Callable, List, Optional
 
@@ -23,12 +28,6 @@ from .functional.batch_acquisition import (
     batch_upper_confidence_bound,
 )
 from .modules import AcquisitionFunction
-
-
-"""
-Wraps the batch acquisition functions defined in botorch.acquisition.functional
-into BatchAcquisitionFunction gpytorch modules.
-"""
 
 
 class BatchAcquisitionFunction(AcquisitionFunction, ABC):
