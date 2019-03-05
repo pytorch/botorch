@@ -53,11 +53,14 @@ class MockPosterior(Posterior):
         sample_shape: Optional[torch.Size] = None,
         base_samples: Optional[Tensor] = None,
     ) -> Tensor:
-        """Mock sample by repeating self._samples."""
-        if base_samples is not None:
-            raise RuntimeError("base_samples are not supported in MockPosterior")
+        """Mock sample by repeating self._samples. If base_samples is provided,
+        do a shape check but return the same mock samples."""
         if sample_shape is None:
             sample_shape = torch.Size()
+        if sample_shape is not None and base_samples is not None:
+            # check the base_samples shape is consistent with the sample_shape
+            if base_samples.shape[: len(sample_shape)] != sample_shape:
+                raise RuntimeError("sample_shape disagrees with base_samples.")
         return self._samples.expand(sample_shape + self._samples.shape)
 
 
