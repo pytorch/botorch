@@ -15,9 +15,11 @@ class TestFunctionalBatchAcquisition(unittest.TestCase):
     def test_batch_expected_improvement(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
-            samples = torch.zeros(1, 1, 1, 1, device=device, dtype=dtype)
+            samples = torch.zeros(1, 1, 1, device=device, dtype=dtype)
+            # the event shape in MockPosterior will be `b x q x t` = 1 x 1 x 1
             mm = MockModel(MockPosterior(samples=samples))
-            X = torch.zeros(1, device=device, dtype=dtype)  # dummy for type checking
+            # X is `q x d` = 1 x 1
+            X = torch.zeros(1, 1, device=device, dtype=dtype)  # dummy for type checking
             # basic test
             res = batch_expected_improvement(X=X, model=mm, best_f=0, mc_samples=2)
             self.assertEqual(res.item(), 0)
@@ -52,11 +54,13 @@ class TestFunctionalBatchAcquisition(unittest.TestCase):
     def test_batch_noisy_expected_improvement(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
+            # the event shape is `b x q x t` = 1 x 2 x 1
             samples_noisy = torch.tensor([1.0, 0.0], device=device, dtype=dtype)
             samples_noisy = samples_noisy.view(1, 2, 1)
+            # X_observed is `q' x d` = 1 x 1
             X_observed = torch.zeros(1, 1, device=device, dtype=dtype)
             mm_noisy = MockModel(MockPosterior(samples=samples_noisy))
-
+            # X is `q x d` = 1 x 1
             X = torch.zeros(1, 1, device=device, dtype=dtype)
             # basic test
             res = batch_noisy_expected_improvement(
