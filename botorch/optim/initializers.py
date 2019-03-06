@@ -19,8 +19,10 @@ def get_similarity_measure(
     """
     Creates a similiarity measure function using the model's covar_module,
         if available.
+
     Args:
         model: A Model
+
     Returns:
         Optional[Callable[[Tensor, Tensor], Tensor]: A callable `(X, x) -> C`,
             where `X`, `x`, and `C` are Tensorsof size `b x q x d`, `q x d`, and
@@ -92,7 +94,6 @@ def initialize_q_batch(
 
     Returns:
         A `n x q x d` tensor of `n` `q`-batch initial conditions.
-
     """
     options = options or {}
     eta_Y = options.get("eta_Y", 2.0)
@@ -221,7 +222,6 @@ def initialize_q_batch_simple(
 
     Returns:
         A `n x q x d` tensor of `n` `q`-batch initial conditions.
-
     """
     options = options or {}
     alpha = options.get("alpha", 1e-4)

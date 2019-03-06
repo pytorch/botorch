@@ -4,12 +4,13 @@ from typing import Any, Dict, NamedTuple, Optional, Type
 
 import gpytorch
 import torch
-from botorch.fit import fit_model
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.models import ExactGP
 from torch import Tensor
 from torch.distributions import Distribution
+
+from .fit import fit_model
 
 
 class CVFolds(NamedTuple):

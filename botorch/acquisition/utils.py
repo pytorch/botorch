@@ -10,11 +10,9 @@ from torch import Tensor
 from torch.nn import Module
 
 from ..models import Model
-from ..utils import squeeze_last_dim
+from ..utils.transforms import squeeze_last_dim
 from .batch_modules import (
     qExpectedImprovement,
-    qKnowledgeGradient,
-    qKnowledgeGradientNoDiscretization,
     qNoisyExpectedImprovement,
     qProbabilityOfImprovement,
     qUpperConfidenceBound,
@@ -95,16 +93,6 @@ def get_acquisition_function(
             seed=seed,
             **acquisition_function_args,
         )
-    elif acquisition_function_name == "qKG":
-        return qKnowledgeGradient(
-            model=model,
-            X_observed=X_observed,
-            objective=objective,
-            constraints=constraints,
-            X_pending=X_pending,
-            seed=seed,
-            **acquisition_function_args,
-        )
     elif acquisition_function_name == "qUCB":
         if "beta" not in acquisition_function_args:
             raise ValueError(
@@ -112,16 +100,6 @@ def get_acquisition_function(
             )
         return qUpperConfidenceBound(
             model=model, X_pending=X_pending, seed=seed, **acquisition_function_args
-        )
-
-    elif acquisition_function_name == "qKGNoDiscretization":
-        return qKnowledgeGradientNoDiscretization(
-            model=model,
-            objective=objective,
-            constraints=constraints,
-            X_pending=X_pending,
-            seed=seed,
-            **acquisition_function_args,
         )
     else:
         raise NotImplementedError(

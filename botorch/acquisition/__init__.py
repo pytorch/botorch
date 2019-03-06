@@ -2,8 +2,6 @@
 
 from .batch_modules import (
     qExpectedImprovement,
-    qKnowledgeGradient,
-    qKnowledgeGradientNoDiscretization,
     qNoisyExpectedImprovement,
     qProbabilityOfImprovement,
     qUpperConfidenceBound,
@@ -20,18 +18,16 @@ from .utils import get_acquisition_function
 
 
 __all__ = [
-    AcquisitionFunction,
-    ExpectedImprovement,
-    PosteriorMean,
-    ProbabilityOfImprovement,
-    UpperConfidenceBound,
-    batch_mode_transform,
-    match_batch_shape,
-    get_acquisition_function,
-    qExpectedImprovement,
-    qKnowledgeGradient,
-    qKnowledgeGradientNoDiscretization,
-    qNoisyExpectedImprovement,
-    qProbabilityOfImprovement,
-    qUpperConfidenceBound,
+    "AcquisitionFunction",
+    "ExpectedImprovement",
+    "PosteriorMean",
+    "ProbabilityOfImprovement",
+    "UpperConfidenceBound",
+    "batch_mode_transform",
+    "match_batch_shape",
+    "get_acquisition_function",
+    "qExpectedImprovement",
+    "qNoisyExpectedImprovement",
+    "qProbabilityOfImprovement",
+    "qUpperConfidenceBound",
 ]

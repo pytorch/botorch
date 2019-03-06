@@ -6,13 +6,6 @@ from typing import Any, Dict, List, NamedTuple, Optional, Tuple
 
 import gpytorch
 import numpy as np
-from botorch.optim.numpy_converter import (
-    TorchAttr,
-    module_to_array,
-    set_params_with_array,
-)
-from botorch.optim.outcome_constraints import ParameterBounds
-from botorch.utils import check_convergence
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
@@ -21,6 +14,12 @@ from scipy.optimize import Bounds, minimize
 from torch import Tensor
 from torch.optim.adam import Adam
 from torch.optim.optimizer import Optimizer
+
+from .numpy_converter import TorchAttr, module_to_array, set_params_with_array
+from .utils import check_convergence
+
+
+ParameterBounds = Dict[str, Tuple[Optional[float], Optional[float]]]
 
 
 class OptimizationIteration(NamedTuple):

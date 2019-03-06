@@ -18,14 +18,32 @@ from botorch.benchmarks.output import (
     _ModelBestPointOutput,
 )
 from botorch.models.gp_regression import HeteroskedasticSingleTaskGP, SingleTaskGP
-from botorch.utils import gen_x_uniform
 from gpytorch.likelihoods import (
     GaussianLikelihood,
     HeteroskedasticNoise,
     _GaussianLikelihoodBase,
 )
+from torch import Tensor
 
-from ..utils.mock import MockModel, MockPosterior
+from ..mock import MockModel, MockPosterior
+
+
+def gen_x_uniform(b: int, q: int, bounds: Tensor) -> Tensor:
+    """Generate `b` random `q`-batches with elements within the specified bounds.
+
+    Args:
+        n: The number of `q`-batches to sample.
+        q: The size of the `q`-batches.
+        bounds: A `2 x d` tensor where bounds[0] (bounds[1]) contains the lower
+            (upper) bounds for each column.
+
+    Returns:
+        A `b x q x d` tensor with elements uniformly sampled from the box
+            specified by bounds.
+
+    """
+    x_ranges = torch.sum(bounds * torch.tensor([[-1.0], [1.0]]).type_as(bounds), dim=0)
+    return bounds[0] + torch.rand((b, q, bounds.shape[1])).type_as(bounds) * x_ranges
 
 
 def get_bounds(cuda, dtype):
@@ -38,6 +56,26 @@ def get_gen_x(bounds):
         return gen_x_uniform(b, q, bounds=bounds)
 
     return gen_x
+
+
+class TestGenXUniform(unittest.TestCase):
+    def setUp(self):
+        self.bounds = torch.tensor([[0.0, 1.0, 2.0, 3.0], [1.0, 4.0, 5.0, 7.0]])
+        self.d = self.bounds.shape[-1]
+
+    def testGenXUniform(self, cuda=False):
+        device = torch.device("cuda") if cuda else torch.device("cpu")
+        for dtype in (torch.float, torch.double):
+            bnds = self.bounds.to(dtype=dtype, device=device)
+            X = gen_x_uniform(2, 3, bnds)
+            self.assertTrue(X.shape == torch.Size([2, 3, self.d]))
+            X_flat = X.view(-1, self.d)
+            self.assertTrue(torch.all(X_flat.max(0)[0] <= bnds[1]))
+            self.assertTrue(torch.all(X_flat.min(0)[0] >= bnds[0]))
+
+    def testGenXUniform_cuda(self):
+        if torch.cuda.is_available():
+            self.testGenXUniform(cuda=True)
 
 
 class TestRunClosedLoop(unittest.TestCase):

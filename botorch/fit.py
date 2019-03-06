@@ -2,8 +2,9 @@
 
 from typing import Callable
 
-from botorch.optim.fit import fit_scipy
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
+
+from .optim.fit import fit_scipy
 
 
 def fit_model(
@@ -20,7 +21,6 @@ def fit_model(
 
     Returns:
         mll with optimized parameters.
-
     """
     mll.model.train()
     mll.likelihood.train()

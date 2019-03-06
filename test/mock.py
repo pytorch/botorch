@@ -78,6 +78,11 @@ class MockModel(Model):
     ) -> MockPosterior:
         return self._posterior
 
+    @property
+    def num_outputs(self) -> int:
+        event_shape = self._posterior.event_shape
+        return event_shape[-1] if len(event_shape) > 0 else 0
+
     def state_dict(self) -> None:
         pass
 

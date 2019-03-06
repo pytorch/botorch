@@ -1,13 +1,14 @@
 #! /usr/bin/env python3
 
 import unittest
-from test.utils.mock import MockModel, MockPosterior
 
 import torch
 from botorch.acquisition.batch_modules import (
     qExpectedImprovement,
     qNoisyExpectedImprovement,
 )
+
+from ..mock import MockModel, MockPosterior
 
 
 class TestQExpectedImprovement(unittest.TestCase):
@@ -144,8 +145,12 @@ class TestQNoisyExpectedImprovement(unittest.TestCase):
             mm_noisy = MockModel(MockPosterior(samples=samples_noisy))
             # X_pending is `m x d` = 1 x 1
             X_pending = torch.zeros(1, 1, device=device, dtype=dtype)
-            acq_module = qExpectedImprovement(
-                model=mm_noisy, best_f=0, mc_samples=2, X_pending=X_pending, qmc=False
+            acq_module = qNoisyExpectedImprovement(
+                model=mm_noisy,
+                X_observed=X_observed,
+                mc_samples=2,
+                X_pending=X_pending,
+                qmc=False,
             )
             self.assertIsNone(acq_module._base_samples_q_batch_size)
             res2 = acq_module(X)
@@ -159,8 +164,12 @@ class TestQNoisyExpectedImprovement(unittest.TestCase):
             mm_noisy = MockModel(MockPosterior(samples=samples_noisy))
             # X_pending is `m x d` = 1 x 1
             X_pending = torch.zeros(1, 1, device=device, dtype=dtype)
-            acq_module = qExpectedImprovement(
-                model=mm_noisy, best_f=0, mc_samples=2, X_pending=X_pending, qmc=True
+            acq_module = qNoisyExpectedImprovement(
+                model=mm_noisy,
+                X_observed=X_observed,
+                mc_samples=2,
+                X_pending=X_pending,
+                qmc=True,
             )
             res2 = acq_module(X)
             self.assertEqual(res2.item(), 1)
@@ -172,8 +181,12 @@ class TestQNoisyExpectedImprovement(unittest.TestCase):
             samples_noisy[0, 0, 0] = 1.0
             mm_noisy = MockModel(MockPosterior(samples=samples_noisy))
             X_pending = torch.zeros(1, 1, device=device, dtype=dtype)
-            acq_module = qExpectedImprovement(
-                model=mm_noisy, best_f=0, mc_samples=2, X_pending=X_pending, qmc=False
+            acq_module = qNoisyExpectedImprovement(
+                model=mm_noisy,
+                X_observed=X_observed,
+                mc_samples=2,
+                X_pending=X_pending,
+                qmc=False,
             )
             self.assertIsNone(acq_module._base_samples_q_batch_size)
             res3 = acq_module(X.unsqueeze(0))
@@ -186,9 +199,9 @@ class TestQNoisyExpectedImprovement(unittest.TestCase):
             samples_noisy[0, 0, 0] = 1.0
             mm_noisy = MockModel(MockPosterior(samples=samples_noisy))
             X_pending = torch.zeros(1, 1, device=device, dtype=dtype)
-            acq_module = qExpectedImprovement(
+            acq_module = qNoisyExpectedImprovement(
                 model=mm_noisy,
-                best_f=0,
+                X_observed=X_observed,
                 mc_samples=2,
                 X_pending=X_pending,
                 qmc=True,
