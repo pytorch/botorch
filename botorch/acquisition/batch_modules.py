@@ -82,38 +82,43 @@ class BatchAcquisitionFunction(AcquisitionFunction, ABC):
             # rely upon the order of points in this torch.cat. It must remain
             # [X_pending, X], not [X, X_pending] for this code to work properly.
             X = torch.cat([match_batch_shape(self.X_pending, X), X], dim=-2)
-        # We need to construct base_samples if
-        # (i) we do QMC without a fixed seed
-        # (ii) if the seed is fixed but the shape of the base samples is
-        #      incompatible with the input - this happens if (a) we haven't
-        #      constructed any base_samples yet, or (b) the q-size of the input
-        #      has changed between evaluations.
-        if (self.qmc and self.seed is None) or (
-            self.seed is not None and self._base_samples_q_batch_size != X.shape[-2]
-        ):
-            self._construct_base_samples(X)
+        # construct base samples (if necessary)
+        self._construct_base_samples(X)
         return self._forward(X)
 
     @batch_mode_instance_method
     def _construct_base_samples(self, X: Tensor) -> None:
         """Construct base samples (for QMC and/or fixed seed).
 
+        We need to construct base_samples if
+            (i) we do QMC without a fixed seed
+            (ii) if the seed is fixed, but the shape of the base samples is
+                incompatible with the input - this happens if (a) we haven't
+                constructed any base_samples yet, or (b) the q-size of the input
+                (possibly augmented) has changed between evaluations.
+
         Args:
             X: A `batch_shape x q x d`-dim Tensor of features.
         """
-        output_shape = torch.Size([X.shape[-2], self.model.num_outputs])
-        # TODO: Support batch evaluation of batached models
-        batch_shape = torch.Size([1 for _ in X.shape[:-2]])  # collapse batch dimensions
-        base_samples = construct_base_samples(
-            batch_shape=batch_shape,
-            output_shape=output_shape,
-            sample_shape=torch.Size([self.mc_samples]),
-            qmc=self.qmc,
-            seed=self.seed,
-            device=X.device,
-            dtype=X.dtype,
-        )
-        self.base_samples = base_samples
+        q_batch_size = X.shape[-2]
+        if (self.qmc and self.seed is None) or (
+            self.seed is not None and self._base_samples_q_batch_size != q_batch_size
+        ):
+            output_shape = torch.Size([q_batch_size, self.model.num_outputs])
+            # TODO: Support batch evaluation of batached models
+            batch_shape = torch.Size(
+                [1 for _ in X.shape[:-2]]
+            )  # collapse batch dimensions
+            base_samples = construct_base_samples(
+                batch_shape=batch_shape,
+                output_shape=output_shape,
+                sample_shape=torch.Size([self.mc_samples]),
+                qmc=self.qmc,
+                seed=self.seed,
+                device=X.device,
+                dtype=X.dtype,
+            )
+            self.base_samples = base_samples
 
 
 class qExpectedImprovement(BatchAcquisitionFunction):
@@ -239,24 +244,15 @@ class qNoisyExpectedImprovement(BatchAcquisitionFunction):
     def _construct_base_samples(self, X: Tensor) -> None:
         """Construct base samples (for QMC and/or fixed seed).
 
+        For noisyEI, we need to take into account the fact that we concatenate
+        `X` with the previously observed points.
+
         Args:
             X: A `batch_shape x q x d`-dim Tensor of features.
         """
-        # need to construct samples for the observed points as well
-        n = X.shape[-2] + self.X_observed.shape[-2]
-        output_shape = torch.Size([n, self.model.num_outputs])
-        # TODO: Support batch evaluation of batached models
-        batch_shape = torch.Size([1 for _ in X.shape[:-2]])  # collapse batch dimensions
-        base_samples = construct_base_samples(
-            batch_shape=batch_shape,
-            output_shape=output_shape,
-            sample_shape=torch.Size([self.mc_samples]),
-            qmc=self.qmc,
-            seed=self.seed,
-            device=X.device,
-            dtype=X.dtype,
-        )
-        self.base_samples = base_samples
+        # we need to construct samples for the observed points as well
+        _X = torch.cat([X, match_batch_shape(self.X_observed, X)], dim=-2)
+        super()._construct_base_samples(X=_X)
 
     def _forward(self, X: Tensor) -> Tensor:
         """Evaluate q-NEI at design X.
@@ -267,6 +263,9 @@ class qNoisyExpectedImprovement(BatchAcquisitionFunction):
         Returns:
             The q-NoisyEI value of the design X for each of the `b` t-batches.
         """
+        # TODO: Be much smarter about re-using computations from previous
+        # iterations if the model does not change (e.g. the train-train part of
+        # the full covariance matrix)
         return batch_noisy_expected_improvement(
             X=X,
             model=self.model,
