@@ -8,6 +8,12 @@ class BotorchWarning(Warning):
 
 
 class BadInitialCandidatesWarning(BotorchWarning):
-    """Warning issues if set of initial candidates for optimziation is bad."""
+    """Warning issued if set of initial candidates for optimziation is bad."""
+
+    pass
+
+
+class SamplingWarning(BotorchWarning):
+    """Sampling releated warnings."""
 
     pass

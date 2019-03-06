@@ -8,7 +8,8 @@ import numpy as np
 import torch
 from torch.nn import Module
 
-from .outcome_constraints import ParameterBounds
+
+ParameterBounds = Dict[str, Tuple[Optional[float], Optional[float]]]
 
 
 class TorchAttr(NamedTuple):

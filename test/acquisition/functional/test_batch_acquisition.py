@@ -1,7 +1,6 @@
 #! /usr/bin/env python3
 
 import unittest
-from test.utils.mock import MockModel, MockPosterior
 
 import torch
 from botorch.acquisition.functional.batch_acquisition import (
@@ -9,6 +8,8 @@ from botorch.acquisition.functional.batch_acquisition import (
     batch_noisy_expected_improvement,
     get_infeasible_cost,
 )
+
+from ...mock import MockModel, MockPosterior
 
 
 class TestFunctionalBatchAcquisition(unittest.TestCase):

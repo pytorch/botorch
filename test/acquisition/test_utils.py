@@ -112,47 +112,6 @@ class TestGetAcquisitionFunction(unittest.TestCase):
             model=self.model, beta=2.0, X_pending=self.X_pending, seed=self.seed
         )
 
-    @mock.patch(f"{utils.__name__}.qKnowledgeGradient")
-    def testGetQKG(self, mock_acquisition):
-        acquisition_function = utils.get_acquisition_function(
-            acquisition_function_name="qKG",
-            model=self.model,
-            X_observed=self.X_observed,
-            objective=dummy_objective,
-            constraints=self.constraints,
-            X_pending=self.X_pending,
-            seed=self.seed,
-        )
-        self.assertTrue(acquisition_function == mock_acquisition.return_value)
-        mock_acquisition.assert_called_once_with(
-            model=self.model,
-            X_observed=self.X_observed,
-            objective=dummy_objective,
-            constraints=self.constraints,
-            X_pending=self.X_pending,
-            seed=self.seed,
-        )
-
-    @mock.patch(f"{utils.__name__}.qKnowledgeGradientNoDiscretization")
-    def testGetQKGNoDiscretization(self, mock_acquisition):
-        acquisition_function = utils.get_acquisition_function(
-            acquisition_function_name="qKGNoDiscretization",
-            model=self.model,
-            X_observed=self.X_observed,
-            objective=dummy_objective,
-            constraints=self.constraints,
-            X_pending=self.X_pending,
-            seed=self.seed,
-        )
-        self.assertTrue(acquisition_function == mock_acquisition.return_value)
-        mock_acquisition.assert_called_once_with(
-            model=self.model,
-            objective=dummy_objective,
-            constraints=self.constraints,
-            X_pending=self.X_pending,
-            seed=self.seed,
-        )
-
     def testGetQUCBNoBeta(self):
         self.assertRaises(
             ValueError,

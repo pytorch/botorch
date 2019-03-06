@@ -138,6 +138,10 @@ class FidelityAwareSingleTaskGP(ExactGP, GPyTorchModel):
             outputscale_prior=GammaPrior(2.0, 0.15),
         )
 
+    @property
+    def num_outputs(self) -> int:
+        return 1
+
     def forward(self, z: Tensor) -> MultivariateNormal:
         x = z[..., self._x_idxr]
         mean_x = self.mean_module(x)

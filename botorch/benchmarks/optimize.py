@@ -15,7 +15,7 @@ from ..acquisition.utils import get_acquisition_function, squeeze_last_dim
 from ..gen import gen_candidates_scipy, get_best_candidates
 from ..models.model import Model
 from ..optim.initializers import get_similarity_measure, initialize_q_batch
-from ..utils import draw_sobol_samples
+from ..utils.sampling import draw_sobol_samples
 from .config import AcquisitionFunctionConfig, OptimizeConfig
 from .output import BenchmarkOutput, ClosedLoopOutput, _ModelBestPointOutput
 

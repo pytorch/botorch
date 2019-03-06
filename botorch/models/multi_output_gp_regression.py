@@ -13,6 +13,10 @@ class MultiOutputGP(IndependentModelList, MultiOutputGPyTorchModel):
     def __init__(self, gp_models: List[Model]) -> None:
         super().__init__(*gp_models)
 
+    @property
+    def num_outputs(self) -> int:
+        return len(self.models)
+
     def reinitialize(
         self,
         train_Xs: List[Tensor],

@@ -11,7 +11,7 @@ from botorch.acquisition.modules import (
     UpperConfidenceBound,
 )
 
-from ..utils.mock import MockModel, MockPosterior
+from ..mock import MockModel, MockPosterior
 
 
 class TestAcquisitionModules(unittest.TestCase):

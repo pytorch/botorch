@@ -10,7 +10,7 @@ from botorch.acquisition.functional.acquisition import (
     upper_confidence_bound,
 )
 
-from ...utils.mock import MockModel, MockPosterior
+from ...mock import MockModel, MockPosterior
 
 
 class TestFunctionalAcquisition(unittest.TestCase):
