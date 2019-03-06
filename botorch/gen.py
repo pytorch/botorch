@@ -66,7 +66,7 @@ def gen_candidates_scipy(
     def f(x):
         X = (
             torch.from_numpy(x)
-            .type_as(initial_candidates)
+            .to(device=initial_candidates.device, dtype=initial_candidates.dtype)
             .view(shapeX)
             .contiguous()
             .requires_grad_(True)
@@ -96,7 +96,10 @@ def gen_candidates_scipy(
     )
 
     candidates = fix_features(
-        X=torch.from_numpy(res.x).type_as(initial_candidates).view(shapeX).contiguous(),
+        X=torch.from_numpy(res.x)
+        .to(device=initial_candidates.device, dtype=initial_candidates.dtype)
+        .view(shapeX)
+        .contiguous(),
         fixed_features=fixed_features,
     )
     batch_acquisition = acquisition_function(candidates)
