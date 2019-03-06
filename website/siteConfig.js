@@ -15,7 +15,7 @@ const users = [
 const siteConfig = {
   title: 'botorch',
   tagline: 'Bayesian Optimization in PyTorch',
-  url: 'http://botorch.io',
+  url: 'http://botorch.org',
   baseUrl: '/', // Base URL for your project */
   // For github.io type URLs, you would set the url and baseUrl like:
   //   url: 'https://facebook.github.io',
@@ -26,8 +26,8 @@ const siteConfig = {
   organizationName: 'facebookexternal',
 
   headerLinks: [
-    {doc: 'philosophy', label: 'About'},
-    {doc: 'installation', label: 'Docs'},
+    {doc: 'introduction', label: 'About'},
+    {doc: 'installation', label: 'Get Started'},
     {blog: true, label: 'Blog'},
     // Search can be enabled when site is online and indexed
     // {search: true},
@@ -65,10 +65,10 @@ const siteConfig = {
   twitterImage: 'img/docusaurus.png',
 
   // Show documentation's last contributor's name.
-  // enableUpdateBy: true,
+  enableUpdateBy: true,
 
   // Show documentation's last update time.
-  // enableUpdateTime: true,
+  enableUpdateTime: true,
 
 };
 

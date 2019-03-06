@@ -1,10 +1,12 @@
 {
   "about": {
-    "Introduction": ["philosophy"]
+    "Introduction": ["introduction"],
+    "Design Philosophy": ["design_philosophy"]
   },
   "docs": {
     "General": ["installation"],
-    "API Reference": ["acquisition"],
+    "Tutorials": ["tutorials"],
+    "API Reference": ["api_reference"],
     "Examples": ["examples"]
   }
 }
