@@ -102,16 +102,6 @@ Batch Acquisition Function Modules
 .. autoclass:: qNoisyExpectedImprovement
    :members:
 
-:hidden:`qKnowledgeGradient`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: qKnowledgeGradient
-   :members:
-
-:hidden:`qKnowledgeGradientNoDiscretization`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: qKnowledgeGradientNoDiscretization
-   :members:
-
 :hidden:`qProbabilityOfImprovement`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autoclass:: qProbabilityOfImprovement
