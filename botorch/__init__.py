@@ -8,14 +8,14 @@ from .utils import manual_seed
 
 
 __all__ = [
-    acquisition,
-    batch_cross_validation,
-    exceptions,
-    fit_model,
-    gen_candidates_scipy,
-    manual_seed,
-    models,
-    optim,
-    posteriors,
-    test_functions,
+    "acquisition",
+    "batch_cross_validation",
+    "exceptions",
+    "fit_model",
+    "gen_candidates_scipy",
+    "manual_seed",
+    "models",
+    "optim",
+    "posteriors",
+    "test_functions",
 ]

@@ -7,13 +7,13 @@ from .output import AggregatedBenchmarkOutput, BenchmarkOutput, ClosedLoopOutput
 
 
 __all__ = [
-    AcquisitionFunctionConfig,
-    AggregatedBenchmarkOutput,
-    BenchmarkOutput,
-    ClosedLoopOutput,
-    OptimizeConfig,
-    aggregate_benchmark,
-    greedy,
-    run_closed_loop,
-    run_benchmark,
+    "AcquisitionFunctionConfig",
+    "AggregatedBenchmarkOutput",
+    "BenchmarkOutput",
+    "ClosedLoopOutput",
+    "OptimizeConfig",
+    "aggregate_benchmark",
+    "greedy",
+    "run_closed_loop",
+    "run_benchmark",
 ]

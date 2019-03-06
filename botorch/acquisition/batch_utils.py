@@ -1,18 +1,14 @@
 #!/usr/bin/env python3
 
 """
-Utilities for batch acquisition functions
+Utilities for batch acquisition functions.
 """
 
 from functools import wraps
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 import torch
-from torch import Size, Tensor
-
-from ..posteriors.posterior import Posterior
-from ..qmc.sobol import SobolEngine
-from ..utils import draw_sobol_normal_samples, manual_seed
+from torch import Tensor
 
 
 def match_batch_shape(X: Tensor, Y: Tensor) -> Tensor:
@@ -95,42 +91,3 @@ def batch_mode_instance_method(
         return instance_method(cls, X)
 
     return decorated
-
-
-def construct_base_samples_from_posterior(
-    posterior: Posterior, num_samples: int, qmc: bool, seed: Optional[int] = None
-) -> Tensor:
-    """Construct a tensor of normally distributed base samples.
-
-    Args:
-        posterior: A Posterior object.
-        num_samples: The number of base_samples to draw.
-        qmc: If True, use quasi-MC sampling (instead of iid draws).
-        seed: If provided, use as a seed for the RNG.
-
-    Returns:
-        base_samples: A `num_samples x 1 x q x t` dimensional Tensor of base
-            samples, drawn from a N(0, I_qt) distribution (using QMC if
-            `qmc=True`). Here `q` and `t` are the same as in the posterior's
-            `event_shape` `b x q x t`. Importantly, this only obtain a single
-            t-batch of samples, so as to not introduce any sampling variance
-            across t-batches.
-    """
-    output_shape = posterior.event_shape[-2:]  # shape of joint output: q x t
-    base_sample_shape = torch.Size([1] * len(posterior.batch_shape)) + output_shape
-    output_dim = output_shape.numel()
-    if qmc and output_dim < SobolEngine.MAXDIM:
-        base_samples = draw_sobol_normal_samples(
-            d=output_dim,
-            n=num_samples,
-            device=posterior.device,
-            dtype=posterior.dtype,
-            seed=seed,
-        )
-        base_samples = base_samples.view(num_samples, *base_sample_shape)
-    else:
-        with manual_seed(seed=seed):
-            base_samples = posterior.get_base_samples(
-                sample_shape=Size([num_samples]), collapse_batch_dims=True
-            )
-    return base_samples

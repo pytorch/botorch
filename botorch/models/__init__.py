@@ -8,10 +8,10 @@ from .multi_output_gp_regression import MultiOutputGP
 
 
 __all__ = [
-    ConstantNoiseGP,
-    FidelityAwareSingleTaskGP,
-    HeteroskedasticSingleTaskGP,
-    Model,
-    MultiOutputGP,
-    SingleTaskGP,
+    "ConstantNoiseGP",
+    "FidelityAwareSingleTaskGP",
+    "HeteroskedasticSingleTaskGP",
+    "Model",
+    "MultiOutputGP",
+    "SingleTaskGP",
 ]

@@ -3,7 +3,6 @@
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 import torch
-from botorch.utils import check_convergence, columnwise_clamp, fix_features
 from scipy.optimize import minimize
 from torch import Tensor
 from torch.nn import Module
@@ -14,6 +13,7 @@ from .optim.parameter_constraints import (
     make_scipy_bounds,
     make_scipy_linear_constraints,
 )
+from .optim.utils import check_convergence, columnwise_clamp, fix_features
 
 
 def gen_candidates_scipy(
@@ -66,7 +66,7 @@ def gen_candidates_scipy(
     def f(x):
         X = (
             torch.from_numpy(x)
-            .type_as(initial_candidates)
+            .to(device=initial_candidates.device, dtype=initial_candidates.dtype)
             .view(shapeX)
             .contiguous()
             .requires_grad_(True)
@@ -96,7 +96,10 @@ def gen_candidates_scipy(
     )
 
     candidates = fix_features(
-        X=torch.from_numpy(res.x).type_as(initial_candidates).view(shapeX).contiguous(),
+        X=torch.from_numpy(res.x)
+        .to(device=initial_candidates.device, dtype=initial_candidates.dtype)
+        .view(shapeX)
+        .contiguous(),
         fixed_features=fixed_features,
     )
     batch_acquisition = acquisition_function(candidates)

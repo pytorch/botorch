@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 
-from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod, abstractproperty
 from typing import List, Optional
 
 from torch import Tensor
@@ -36,6 +36,11 @@ class Model(ABC):
             A `Posterior` object, representing a batch of `b` joint distributions
                 over `q` points and `t` outputs each.
         """
+        pass
+
+    @abstractproperty
+    def num_outputs(self) -> int:
+        """The number of outputs of the model."""
         pass
 
     def reinitialize(
