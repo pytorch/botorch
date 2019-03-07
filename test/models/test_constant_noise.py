@@ -19,7 +19,7 @@ from gpytorch.priors import GammaPrior
 def _get_random_data(**tkwargs):
     train_x = torch.linspace(0, 0.95, 10, **tkwargs) + 0.05 * torch.rand(10, **tkwargs)
     train_y = torch.sin(train_x * (2 * math.pi)) + 0.2 * torch.randn_like(train_x)
-    train_y_se = torch.tensor(0.01, **tkwargs)
+    train_y_se = torch.tensor(0.1, **tkwargs)
     return train_x.view(-1, 1), train_y, train_y_se
 
 
@@ -30,7 +30,7 @@ def _get_model(**tkwargs):
 
 
 class ConstantNoiseGPTest(unittest.TestCase):
-    def testConstantNoiseGP(self, cuda=False):
+    def test_ConstantNoiseGP(self, cuda=False):
         for double in (False, True):
             tkwargs = {
                 "device": torch.device("cuda") if cuda else torch.device("cpu"),
@@ -50,7 +50,7 @@ class ConstantNoiseGPTest(unittest.TestCase):
             mll = fit_model(mll, options={"maxiter": 1})
 
             # test posterior
-            test_x = torch.tensor([[0.25], [0.75]]).type_as(model.train_targets[0])
+            test_x = torch.tensor([[0.25], [0.75]]).to(**tkwargs)
             posterior_f = model.posterior(test_x)
             self.assertIsInstance(posterior_f, GPyTorchPosterior)
             self.assertIsInstance(posterior_f.mvn, MultivariateNormal)
@@ -76,7 +76,6 @@ class ConstantNoiseGPTest(unittest.TestCase):
                 train_Y_se=train_y_se_,
                 keep_params=False,
             )
-            model.to(**tkwargs)  # TODO: Fix incorporate this into reinitialize
             self.assertFalse(
                 all(
                     val == old_state_dict[key]
@@ -84,6 +83,6 @@ class ConstantNoiseGPTest(unittest.TestCase):
                 )
             )
 
-    def testConstantNoiseGP_cuda(self):
+    def test_ConstantNoiseGP_cuda(self):
         if torch.cuda.is_available():
-            self.testConstantNoiseGP(cuda=True)
+            self.test_ConstantNoiseGP(cuda=True)

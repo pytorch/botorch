@@ -24,7 +24,11 @@ class MultiOutputGP(IndependentModelList, MultiOutputGPyTorchModel):
         train_Y_ses: Optional[List[Tensor]] = None,
         keep_params: bool = True,
     ) -> None:
-        """Reinitialize model and likelihood.
+        """Reinitialize model and likelihood given new data.
+
+        This does not refit the model.
+        If device/dtype of the new training data are different from that of the
+        model, then the model is moved to the new device/dtype.
 
         Args:
             train_Xs: A list of tensors of new training data
@@ -32,8 +36,6 @@ class MultiOutputGP(IndependentModelList, MultiOutputGPyTorchModel):
             train_Y_ses: A list of tensors of new training noise observations
             keep_params: If True, keep the parameter values (speeds up refitting
                 on similar data)
-
-        Note: this does not refit the model.
         """
         if train_Y_ses is None:
             train_Y_ses = [None for _ in range(len(train_Xs))]
