@@ -8,7 +8,7 @@ from scipy.stats import shapiro
 
 
 class NormalQMCTests(unittest.TestCase):
-    def testNormalQMCEngine(self):
+    def test_NormalQMCEngine(self):
         # d = 1
         engine = NormalQMCEngine(d=1)
         samples = engine.draw()
@@ -22,7 +22,7 @@ class NormalQMCTests(unittest.TestCase):
         samples = engine.draw(n=5)
         self.assertEqual(samples.shape, (5, 2))
 
-    def testNormalQMCEngineInvTransform(self):
+    def test_NormalQMCEngineInvTransform(self):
         # d = 1
         engine = NormalQMCEngine(d=1, inv_transform=True)
         samples = engine.draw()
@@ -36,7 +36,7 @@ class NormalQMCTests(unittest.TestCase):
         samples = engine.draw(n=5)
         self.assertEqual(samples.shape, (5, 2))
 
-    def testNormalQMCEngineSeeded(self):
+    def test_NormalQMCEngineSeeded(self):
         # test even dimension
         engine = NormalQMCEngine(d=2, seed=12345)
         samples = engine.draw(n=2)
@@ -55,7 +55,7 @@ class NormalQMCTests(unittest.TestCase):
         )
         self.assertTrue(np.allclose(samples, samples_expected))
 
-    def testNormalQMCEngineSeededInvTransform(self):
+    def test_NormalQMCEngineSeededInvTransform(self):
         # test even dimension
         engine = NormalQMCEngine(d=2, seed=12345, inv_transform=True)
         samples = engine.draw(n=2)
@@ -74,7 +74,7 @@ class NormalQMCTests(unittest.TestCase):
         )
         self.assertTrue(np.allclose(samples, samples_expected))
 
-    def testNormalQMCEngineShapiro(self):
+    def test_NormalQMCEngineShapiro(self):
         engine = NormalQMCEngine(d=2, seed=12345)
         samples = engine.draw(n=250)
         self.assertTrue(all(np.abs(samples.mean(axis=0)) < 1e-2))
@@ -87,7 +87,7 @@ class NormalQMCTests(unittest.TestCase):
         cov = np.cov(samples.transpose())
         self.assertLess(np.abs(cov[0, 1]), 1e-2)
 
-    def testNormalQMCEngineShapiroInvTransform(self):
+    def test_NormalQMCEngineShapiroInvTransform(self):
         engine = NormalQMCEngine(d=2, seed=12345, inv_transform=True)
         samples = engine.draw(n=250)
         self.assertTrue(all(np.abs(samples.mean(axis=0)) < 1e-2))
@@ -102,26 +102,26 @@ class NormalQMCTests(unittest.TestCase):
 
 
 class MultivariateNormalQMCTests(unittest.TestCase):
-    def testMultivariateNormalQMCEngineNonPSD(self):
+    def test_MultivariateNormalQMCEngineNonPSD(self):
         # try with non-psd, non-pd cov and expect an assertion error
         self.assertRaises(
             ValueError, MultivariateNormalQMCEngine, [0, 0], [[1, 2], [2, 1]]
         )
 
-    def testMultivariateNormalQMCEngineNonPD(self):
+    def test_MultivariateNormalQMCEngineNonPD(self):
         # try with non-pd but psd cov; should work
         engine = MultivariateNormalQMCEngine(
             [0, 0, 0], [[1, 0, 1], [0, 1, 1], [1, 1, 2]]
         )
         self.assertTrue(engine._corr_matrix is not None)
 
-    def testMultivariateNormalQMCEngineSymmetric(self):
+    def test_MultivariateNormalQMCEngineSymmetric(self):
         # try with non-symmetric cov and expect an error
         self.assertRaises(
             ValueError, MultivariateNormalQMCEngine, [0, 0], [[1, 0], [2, 1]]
         )
 
-    def testMultivariateNormalQMCEngine(self):
+    def test_MultivariateNormalQMCEngine(self):
         # d = 1 scalar
         engine = MultivariateNormalQMCEngine(mean=0, cov=5)
         samples = engine.draw()
@@ -145,7 +145,7 @@ class MultivariateNormalQMCTests(unittest.TestCase):
         samples = engine.draw(n=5)
         self.assertEqual(samples.shape, (5, 3))
 
-    def testMultivariateNormalQMCEngineInvTransform(self):
+    def test_MultivariateNormalQMCEngineInvTransform(self):
         # d = 1 scalar
         engine = MultivariateNormalQMCEngine(mean=0, cov=5, inv_transform=True)
         samples = engine.draw()
@@ -171,7 +171,7 @@ class MultivariateNormalQMCTests(unittest.TestCase):
         samples = engine.draw(n=5)
         self.assertEqual(samples.shape, (5, 3))
 
-    def testMultivariateNormalQMCEngineSeeded(self):
+    def test_MultivariateNormalQMCEngineSeeded(self):
         # test even dimension
         np.random.seed(54321)
         a = np.random.randn(2, 2)
@@ -197,7 +197,7 @@ class MultivariateNormalQMCTests(unittest.TestCase):
         )
         self.assertTrue(np.allclose(samples, samples_expected))
 
-    def testMultivariateNormalQMCEngineSeededInvTransform(self):
+    def test_MultivariateNormalQMCEngineSeededInvTransform(self):
         # test even dimension
         np.random.seed(54321)
         a = np.random.randn(2, 2)
@@ -227,7 +227,7 @@ class MultivariateNormalQMCTests(unittest.TestCase):
         )
         self.assertTrue(np.allclose(samples, samples_expected))
 
-    def testMultivariateNormalQMCEngineShapiro(self):
+    def test_MultivariateNormalQMCEngineShapiro(self):
         # test the standard case
         engine = MultivariateNormalQMCEngine(
             mean=[0, 0], cov=[[1, 0], [0, 1]], seed=12345
@@ -258,7 +258,7 @@ class MultivariateNormalQMCTests(unittest.TestCase):
         cov = np.cov(samples.transpose())
         self.assertLess(np.abs(cov[0, 1] - 0.5), 1e-2)
 
-    def testMultivariateNormalQMCEngineShapiroInvTransform(self):
+    def test_MultivariateNormalQMCEngineShapiroInvTransform(self):
         # test the standard case
         engine = MultivariateNormalQMCEngine(
             mean=[0, 0], cov=[[1, 0], [0, 1]], seed=12345, inv_transform=True
@@ -292,7 +292,7 @@ class MultivariateNormalQMCTests(unittest.TestCase):
         cov = np.cov(samples.transpose())
         self.assertLess(np.abs(cov[0, 1] - 0.5), 1e-2)
 
-    def testMultivariateNormalQMCEngineDegenerate(self):
+    def test_MultivariateNormalQMCEngineDegenerate(self):
         # X, Y iid standard Normal and Z = X + Y, random vector (X, Y, Z)
         engine = MultivariateNormalQMCEngine(
             mean=[0.0, 0.0, 0.0],

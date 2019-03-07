@@ -21,7 +21,7 @@ class SobolTests(unittest.TestCase):
         engine_scrambled_3d = SobolEngine(3, scramble=True, seed=12345)
         self.draws_scrambled_3d = engine_scrambled_3d.draw(10)
 
-    def testUnscrambled1DSobol(self):
+    def test_Unscrambled1DSobol(self):
         expected = [0.5, 0.75, 0.25, 0.375, 0.875, 0.625, 0.125, 0.1875, 0.6875, 0.9375]
         self.assertEqual(self.draws_unscrambled_1d.shape[0], 10)
         self.assertEqual(self.draws_unscrambled_1d.shape[1], 1)
@@ -29,7 +29,7 @@ class SobolTests(unittest.TestCase):
             np.array_equal(self.draws_unscrambled_1d.flatten(), np.array(expected))
         )
 
-    def testUnscrambled3DSobol(self):
+    def test_Unscrambled3DSobol(self):
         expected_dim3 = [
             0.5,
             0.75,
@@ -53,12 +53,12 @@ class SobolTests(unittest.TestCase):
             )
         )
 
-    def testUnscrambled3DAsyncSobol(self):
+    def test_Unscrambled3DAsyncSobol(self):
         engine_unscrambled_3d = SobolEngine(3)
         draws = np.vstack([engine_unscrambled_3d.draw() for i in range(10)])
         self.assertTrue(np.array_equal(self.draws_unscrambled_3d, draws))
 
-    def testUnscrambledFastForwardAndResetSobol(self):
+    def test_UnscrambledFastForwardAndResetSobol(self):
         engine_unscrambled_3d = SobolEngine(3).fast_forward(5)
         draws = engine_unscrambled_3d.draw(5)
         self.assertTrue(np.array_equal(self.draws_unscrambled_3d[5:10, :], draws))
@@ -77,7 +77,7 @@ class SobolTests(unittest.TestCase):
             )
         )
 
-    def testUnscrambledHighDimSobol(self):
+    def test_UnscrambledHighDimSobol(self):
         engine = SobolEngine(1111)
         count1 = Counter(engine.draw().flatten().tolist())
         count2 = Counter(engine.draw().flatten().tolist())
@@ -86,13 +86,13 @@ class SobolTests(unittest.TestCase):
         self.assertEqual(count2, Counter({0.25: 580, 0.75: 531}))
         self.assertEqual(count3, Counter({0.25: 531, 0.75: 580}))
 
-    def testUnscrambledSobolBounds(self):
+    def test_UnscrambledSobolBounds(self):
         engine = SobolEngine(1111)
         draws = engine.draw(1000)
         self.assertTrue(np.all(draws >= 0))
         self.assertTrue(np.all(draws <= 1))
 
-    def testUnscrambledDistributionSobol(self):
+    def test_UnscrambledDistributionSobol(self):
         engine = SobolEngine(1111)
         draws = engine.draw(1000)
         self.assertTrue(
@@ -109,7 +109,7 @@ class SobolTests(unittest.TestCase):
             )
         )
 
-    def testScrambled1DSobol(self):
+    def test_Scrambled1DSobol(self):
         expected = [
             0.46784395,
             0.03562005,
@@ -129,7 +129,7 @@ class SobolTests(unittest.TestCase):
             np.allclose(self.draws_scrambled_1d.flatten(), np.array(expected))
         )
 
-    def testScrambled3DSobol(self):
+    def test_Scrambled3DSobol(self):
         expected_dim3 = [
             0.19711632,
             0.43653634,
@@ -150,18 +150,18 @@ class SobolTests(unittest.TestCase):
             )
         )
 
-    def testScrambled3DAsyncSobol(self):
+    def test_Scrambled3DAsyncSobol(self):
         engine_unscrambled_3d = SobolEngine(3)
         draws = np.vstack([engine_unscrambled_3d.draw() for i in range(10)])
         self.assertTrue(np.array_equal(self.draws_unscrambled_3d, draws))
 
-    def testScrambledSobolBounds(self):
+    def test_ScrambledSobolBounds(self):
         engine = SobolEngine(100, scramble=True)
         draws = engine.draw(1000)
         self.assertTrue(np.all(draws >= 0))
         self.assertTrue(np.all(draws <= 1))
 
-    def testScrambledFastForwardAndResetSobol(self):
+    def test_ScrambledFastForwardAndResetSobol(self):
         engine_scrambled_3d = SobolEngine(3, scramble=True, seed=12345).fast_forward(5)
         draws = engine_scrambled_3d.draw(5)
         self.assertTrue(np.array_equal(self.draws_scrambled_3d[5:10,], draws))
@@ -180,7 +180,7 @@ class SobolTests(unittest.TestCase):
             )
         )
 
-    def testScrambledDistributionSobol(self):
+    def test_ScrambledDistributionSobol(self):
         engine = SobolEngine(10, scramble=True, seed=12345)
         draws = engine.draw(1000)
         self.assertTrue(
@@ -197,32 +197,32 @@ class SobolTests(unittest.TestCase):
             )
         )
 
-    def test0Dim(self):
+    def test_0Dim(self):
         engine = SobolEngine(0)
         draws = engine.draw(5)
         self.assertTrue(np.array_equal(np.empty((5, 0)), draws))
 
 
 class MultinomialQMCTests(unittest.TestCase):
-    def testMultinomialNegativePs(self):
+    def test_MultinomialNegativePs(self):
         p = np.array([0.12, 0.26, -0.05, 0.35, 0.22])
         self.assertRaises(ValueError, multinomial_qmc, 10, p)
 
-    def testMultinomialSumOfPTooLarge(self):
+    def test_MultinomialSumOfPTooLarge(self):
         p = np.array([0.12, 0.26, 0.1, 0.35, 0.22])
         self.assertRaises(ValueError, multinomial_qmc, 10, p)
 
-    def testMultinomialBasicDraw(self):
+    def test_MultinomialBasicDraw(self):
         p = np.array([0.12, 0.26, 0.05, 0.35, 0.22])
         expected = np.array([12, 25, 6, 34, 23])
         self.assertTrue(np.array_equal(multinomial_qmc(100, p, seed=12345), expected))
 
-    def testMultinomialDistribution(self):
+    def test_MultinomialDistribution(self):
         p = np.array([0.12, 0.26, 0.05, 0.35, 0.22])
         draws = multinomial_qmc(10000, p, seed=12345)
         np.testing.assert_almost_equal(draws / np.sum(draws), p, decimal=4)
 
-    def testFindIndex(self):
+    def test_FindIndex(self):
         p_cumulative = np.array([0.1, 0.4, 0.45, 0.6, 0.75, 0.9, 0.99, 1.0])
         size = len(p_cumulative)
         self.assertEqual(_test_find_index(p_cumulative, size, 0.0), 0)

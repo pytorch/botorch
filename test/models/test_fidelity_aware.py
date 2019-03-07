@@ -32,7 +32,7 @@ class FidelityAwareSingleTaskGPTest(unittest.TestCase):
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_model(mll, options={"maxiter": 1})
 
-    def testInit(self):
+    def test_Init(self):
         self.assertIsInstance(self.model.mean_module, ConstantMean)
         self.assertIsInstance(self.model.covar_module, ScaleKernel)
         kernel = self.model.covar_module.base_kernel
@@ -42,12 +42,12 @@ class FidelityAwareSingleTaskGPTest(unittest.TestCase):
         self.assertFalse(isinstance(likelihood, GaussianLikelihood))
         self.assertIsInstance(likelihood.noise_covar, FidelityAwareHeteroskedasticNoise)
 
-    def testForward(self):
+    def test_Forward(self):
         test_x = torch.rand(3, 2)
         posterior = self.model(test_x)
         self.assertIsInstance(posterior, MultivariateNormal)
 
-    def testReinitialize(self):
+    def test_Reinitialize(self):
         train_x = torch.stack([torch.linspace(0, 1, 11), torch.ones(11)], -1)
         noise = torch.tensor(NOISE + [0.1])
         train_y = torch.sin(train_x[:, 0] * (2 * math.pi)) + noise

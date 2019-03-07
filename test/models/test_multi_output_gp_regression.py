@@ -35,7 +35,7 @@ def _get_model(**tkwargs):
 
 
 class MultiOutputGPTest(unittest.TestCase):
-    def testMultiOutputGP(self, cuda=False):
+    def test_MultiOutputGP(self, cuda=False):
         for double in (False, True):
             tkwargs = {
                 "device": torch.device("cuda") if cuda else torch.device("cpu"),
@@ -85,7 +85,11 @@ class MultiOutputGPTest(unittest.TestCase):
                 )
             )
 
-    def testMultiOutputGPSingle(self, cuda=False):
+    def test_MultiOutputGP_cuda(self):
+        if torch.cuda.is_available():
+            self.test_MultiOutputGP(cuda=True)
+
+    def test_MultiOutputGPSingle(self, cuda=False):
         tkwargs = {
             "device": torch.device("cuda") if cuda else torch.device("cpu"),
             "dtype": torch.float,
@@ -98,3 +102,7 @@ class MultiOutputGPTest(unittest.TestCase):
         posterior = model.posterior(test_x)
         self.assertIsInstance(posterior, GPyTorchPosterior)
         self.assertIsInstance(posterior.mvn, MultivariateNormal)
+
+    def test_MultiOutputGPSingle_cuda(self):
+        if torch.cuda.is_available():
+            self.test_MultiOutputGPSingle(cuda=True)

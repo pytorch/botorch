@@ -63,7 +63,7 @@ class TestGenXUniform(unittest.TestCase):
         self.bounds = torch.tensor([[0.0, 1.0, 2.0, 3.0], [1.0, 4.0, 5.0, 7.0]])
         self.d = self.bounds.shape[-1]
 
-    def testGenXUniform(self, cuda=False):
+    def test_GenXUniform(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
             bnds = self.bounds.to(dtype=dtype, device=device)
@@ -73,9 +73,9 @@ class TestGenXUniform(unittest.TestCase):
             self.assertTrue(torch.all(X_flat.max(0)[0] <= bnds[1]))
             self.assertTrue(torch.all(X_flat.min(0)[0] >= bnds[0]))
 
-    def testGenXUniform_cuda(self):
+    def test_GenXUniform_cuda(self):
         if torch.cuda.is_available():
-            self.testGenXUniform(cuda=True)
+            self.test_GenXUniform(cuda=True)
 
 
 class TestRunClosedLoop(unittest.TestCase):
