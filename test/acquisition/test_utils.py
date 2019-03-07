@@ -25,7 +25,7 @@ class TestGetAcquisitionFunction(unittest.TestCase):
         self.infeasible_cost = 0.0
 
     @mock.patch(f"{utils.__name__}.qExpectedImprovement")
-    def testGetQEI(self, mock_acquisition):
+    def test_GetQEI(self, mock_acquisition):
         acquisition_function = utils.get_acquisition_function(
             acquisition_function_name="qEI",
             model=self.model,
@@ -49,7 +49,7 @@ class TestGetAcquisitionFunction(unittest.TestCase):
         )
 
     @mock.patch(f"{utils.__name__}.qProbabilityOfImprovement")
-    def testGetQPI(self, mock_acquisition):
+    def test_GetQPI(self, mock_acquisition):
         acquisition_function = utils.get_acquisition_function(
             acquisition_function_name="qPI",
             model=self.model,
@@ -71,7 +71,7 @@ class TestGetAcquisitionFunction(unittest.TestCase):
         )
 
     @mock.patch(f"{utils.__name__}.qNoisyExpectedImprovement")
-    def testGetQNEI(self, mock_acquisition):
+    def test_GetQNEI(self, mock_acquisition):
         acquisition_function = utils.get_acquisition_function(
             acquisition_function_name="qNEI",
             model=self.model,
@@ -95,7 +95,7 @@ class TestGetAcquisitionFunction(unittest.TestCase):
         )
 
     @mock.patch(f"{utils.__name__}.qUpperConfidenceBound")
-    def testGetQUCB(self, mock_acquisition):
+    def test_GetQUCB(self, mock_acquisition):
 
         acquisition_function = utils.get_acquisition_function(
             acquisition_function_name="qUCB",
@@ -112,7 +112,7 @@ class TestGetAcquisitionFunction(unittest.TestCase):
             model=self.model, beta=2.0, X_pending=self.X_pending, seed=self.seed
         )
 
-    def testGetQUCBNoBeta(self):
+    def test_GetQUCBNoBeta(self):
         self.assertRaises(
             ValueError,
             utils.get_acquisition_function,
@@ -123,7 +123,7 @@ class TestGetAcquisitionFunction(unittest.TestCase):
             X_pending=self.X_pending,
         )
 
-    def testGetAcquisitionNotImplemented(self):
+    def test_GetAcquisitionNotImplemented(self):
         self.assertRaises(
             NotImplementedError,
             utils.get_acquisition_function,
@@ -135,7 +135,7 @@ class TestGetAcquisitionFunction(unittest.TestCase):
         )
 
     @mock.patch(f"{utils.__name__}.qExpectedImprovement")
-    def testAcquisitionFunctionArgs(self, mock_acquisition):
+    def test_AcquisitionFunctionArgs(self, mock_acquisition):
         acquisition_function = utils.get_acquisition_function(
             acquisition_function_name="qEI",
             model=self.model,

@@ -31,19 +31,19 @@ class SingleTaskGPTest(unittest.TestCase):
         fit_model(mll, options={"maxiter": 1})
         self.model = model
 
-    def testInit(self):
+    def test_Init(self):
         self.assertIsInstance(self.model.mean_module, ConstantMean)
         self.assertIsInstance(self.model.covar_module, ScaleKernel)
         matern_kernel = self.model.covar_module.base_kernel
         self.assertIsInstance(matern_kernel, MaternKernel)
         self.assertIsInstance(matern_kernel.lengthscale_prior, GammaPrior)
 
-    def testForward(self):
+    def test_Forward(self):
         test_x = torch.tensor([6.0, 7.0, 8.0]).view(-1, 1)
         posterior = self.model(test_x)
         self.assertIsInstance(posterior, MultivariateNormal)
 
-    def testReinitialize(self):
+    def test_Reinitialize(self):
         train_x = torch.linspace(0, 1, 11).unsqueeze(1)
         noise = torch.tensor(NOISE + [0.1])
         train_y = torch.sin(train_x * (2 * math.pi)).view(-1) + noise
@@ -81,7 +81,7 @@ class HeteroskedasticSingleTaskGPTest(unittest.TestCase):
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_model(mll, options={"maxiter": 1})
 
-    def testInit(self):
+    def test_Init(self):
         self.assertIsInstance(self.model.mean_module, ConstantMean)
         self.assertIsInstance(self.model.covar_module, ScaleKernel)
         matern_kernel = self.model.covar_module.base_kernel
@@ -92,12 +92,12 @@ class HeteroskedasticSingleTaskGPTest(unittest.TestCase):
         self.assertFalse(isinstance(likelihood, GaussianLikelihood))
         self.assertIsInstance(likelihood.noise_covar, HeteroskedasticNoise)
 
-    def testForward(self):
+    def test_Forward(self):
         test_x = torch.tensor([6.0, 7.0, 8.0]).view(-1, 1)
         posterior = self.model(test_x)
         self.assertIsInstance(posterior, MultivariateNormal)
 
-    def testReinitialize(self):
+    def test_Reinitialize(self):
         train_x = torch.linspace(0, 1, 11).unsqueeze(1)
         noise = torch.tensor(NOISE + [0.1])
         train_y = torch.sin(train_x * (2 * math.pi)).view(-1) + noise
