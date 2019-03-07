@@ -78,7 +78,6 @@ class MultiOutputGPTest(unittest.TestCase):
                 train_Ys=[train_y1_, train_y2_],
                 keep_params=False,
             )
-            model.to(**tkwargs)  # TODO: Fix incorporate this into reinitialize
             self.assertFalse(
                 all(
                     val == old_state_dict[key]

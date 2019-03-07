@@ -74,7 +74,7 @@ class ConstantNoiseGP(ExactGP, GPyTorchModel):
             raise ValueError(
                 "train_Y and train_Y_se must have the same (t-)batch shape"
             )
-        noise_covar = ConstantNoise(noise=train_Y_se)
+        noise_covar = ConstantNoise(noise=train_Y_se ** 2)
         likelihood = _GaussianLikelihoodBase(noise_covar=noise_covar)
         super().__init__(
             train_inputs=train_X, train_targets=train_Y, likelihood=likelihood
@@ -106,7 +106,11 @@ class ConstantNoiseGP(ExactGP, GPyTorchModel):
         train_Y_se: Optional[Tensor] = None,
         keep_params: bool = True,
     ) -> None:
-        """Reinitialize model and the likelihood.
+        """Reinitialize model and the likelihood given new data.
+
+        This does not refit the model.
+        If device/dtype of the new training data are different from that of the
+        model, then the model is moved to the new device/dtype.
 
         Args:
             train_X: A tensor of new training data
@@ -114,14 +118,14 @@ class ConstantNoiseGP(ExactGP, GPyTorchModel):
             train_y_se: A tensor of new training noise observations
             keep_params: If True, keep the parameter values (speeds up refitting
                 on similar data)
-
-        Note: this does not refit the model.
         """
         if train_Y_se is None:
             raise RuntimeError("ConstantNoiseGP requires observation noise")
         if keep_params:
-            noise = train_Y_se.mean(dim=-1, keepdim=True)
+            noise = train_Y_se.mean(dim=-1, keepdim=True) ** 2
             self.likelihood.noise_covar = ConstantNoise(noise=noise)
             self.set_train_data(inputs=train_X, targets=train_Y, strict=False)
         else:
             self.__init__(train_X=train_X, train_Y=train_Y, train_Y_se=train_Y_se)
+        # move to new device / dtype if necessary
+        self.to(device=train_X.device, dtype=train_X.dtype)

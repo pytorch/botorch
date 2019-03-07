@@ -84,15 +84,17 @@ class SingleTaskGP(ExactGP, GPyTorchModel):
     def reinitialize(
         self, train_X: Tensor, train_Y: Tensor, keep_params: bool = True, **kwargs
     ) -> None:
-        """Reinitialize model and the likelihood.
+        """Reinitialize model and the likelihood givennew data.
+
+        This does not refit the model.
+        If device/dtype of the new training data are different from that of the
+        model, then the model is moved to the new device/dtype.
 
         Args:
             train_X: A tensor of new training data
             train_Y: A tensor of new training observations
             keep_params: If True, keep the parameter values (speeds up refitting
                 on similar data)
-
-        Note: this does not refit the model.
         """
         if keep_params:
             self.set_train_data(inputs=train_X, targets=train_Y, strict=False)
@@ -101,6 +103,8 @@ class SingleTaskGP(ExactGP, GPyTorchModel):
             self.__init__(train_X=train_X, train_Y=train_Y, likelihood=self.likelihood)
         else:
             self.__init__(train_X=train_X, train_Y=train_Y)
+        # move to new device / dtype if necessary
+        self.to(device=train_X.device, dtype=train_X.dtype)
 
 
 class HeteroskedasticSingleTaskGP(SingleTaskGP):
@@ -125,7 +129,11 @@ class HeteroskedasticSingleTaskGP(SingleTaskGP):
         train_Y_se: Optional[Tensor] = None,
         keep_params: bool = True,
     ) -> None:
-        """Reinitialize model and the likelihood.
+        """Reinitialize model and the likelihood given new data.
+
+        This does not refit the model.
+        If device/dtype of the new training data are different from that of the
+        model, then the model is moved to the new device/dtype.
 
         Args:
             train_X: A tensor of new training data
@@ -133,8 +141,6 @@ class HeteroskedasticSingleTaskGP(SingleTaskGP):
             train_y_se: A tensor of new training noise observations
             keep_params: If True, keep the parameter values (speeds up refitting
                 on similar data)
-
-        Note: this does not refit the model.
         """
         if train_Y_se is None:
             raise RuntimeError("HeteroskedasticSingleTaskGP requires observation noise")
@@ -146,3 +152,5 @@ class HeteroskedasticSingleTaskGP(SingleTaskGP):
             self.set_train_data(inputs=train_X, targets=train_Y, strict=False)
         else:
             self.__init__(train_X=train_X, train_Y=train_Y, train_Y_se=train_Y_se)
+        # move to new device / dtype if necessary
+        self.to(device=train_X.device, dtype=train_X.dtype)

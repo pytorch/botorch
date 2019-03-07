@@ -50,14 +50,18 @@ class Model(ABC):
         train_Y_se: Optional[Tensor] = None,
         keep_params: bool = True,
     ) -> None:
-        """Re-initializes a model given new data
+        """Re-initializes a model given new data.
+
+        This does not refit the model.
+        If device/dtype of the new training data are different from that of the
+        model, then the model is moved to the new device/dtype.
 
         Args:
             train_X: A `n x d`-dim (or `b x n x d`) Tensor containing the new
                 training inputs.
             train_Y: A `n x t`-dim (or `b x n x d`) Tensor containing the new
                 training outputs.
-            train_Y_se: An `n x t`-dim (or `b x n x t`) Tensor containing the
+            train_Y_se: A `n x t`-dim (or `b x n x t`) Tensor containing the
                 observed measurement noise at the training outputs.
             keep_params: If True, do not reset the model hyperparameters.
         """

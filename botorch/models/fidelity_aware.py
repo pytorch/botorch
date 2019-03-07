@@ -155,7 +155,11 @@ class FidelityAwareSingleTaskGP(ExactGP, GPyTorchModel):
         train_Y_se: Optional[Tensor] = None,
         keep_params: bool = True,
     ) -> None:
-        """Reinitialize model and the likelihood.
+        """Reinitialize model and the likelihood given new data.
+
+        This does not refit the model.
+        If device/dtype of the new training data are different from that of the
+        model, then the model is moved to the new device/dtype.
 
         Args:
             train_X: A tensor of new training data
@@ -163,8 +167,6 @@ class FidelityAwareSingleTaskGP(ExactGP, GPyTorchModel):
             train_y_se: A tensor of new training noise observations
             keep_params: If True, keep the parameter values (speeds up refitting
                 on similar data)
-
-        Note: this does not refit the model.
         """
         if train_Y_se is None:
             raise RuntimeError("FidelityAwareSingleTaskGP requires observation noise")
@@ -187,6 +189,8 @@ class FidelityAwareSingleTaskGP(ExactGP, GPyTorchModel):
                 phi_idcs=self._phi_idcs,
                 phi_func=self.likelihood.noise_covar._phi_func,
             )
+        # move to new device / dtype if necessary
+        self.to(device=train_X.device, dtype=train_X.dtype)
 
 
 def _make_phi_indexers(
