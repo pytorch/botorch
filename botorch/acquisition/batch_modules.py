@@ -61,7 +61,7 @@ class BatchAcquisitionFunction(AcquisitionFunction, ABC):
             A `b x m x d`-dim tensor of pending points.
         """
         return self._X_pending
-            
+
     def _set_X_pending(self, X_pending: Optional[Tensor] = None) -> None:
         """Set pending points.
 
