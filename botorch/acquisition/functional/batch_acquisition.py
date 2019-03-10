@@ -27,9 +27,9 @@ def apply_constraints_(
     samples: Tensor,
     M: float,
 ) -> None:
-    """Apply constraints using an infeasiblity penalty.
+    """Applies constraints using an infeasiblity penalty.
 
-    Assigsn a penalty of `-M` when not feasible, where obj is modified in-place.
+    Assigns a penalty of `-M` when not feasible, where obj is modified in-place.
 
     Args:
         obj: A `b x q` Tensor of objective values.
@@ -48,8 +48,7 @@ def apply_constraints_(
         for constraint in constraints:
             # con has dimensions n_samples x b x q
             con = constraint(samples)
-            this_con_feasible = con <= 0
-            all_con_feasible.mul_(this_con_feasible)
+            all_con_feasible.mul_(con <= 0)
         obj[~all_con_feasible] = -M
 
 
