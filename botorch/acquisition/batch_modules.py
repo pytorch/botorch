@@ -38,9 +38,7 @@ class BatchAcquisitionFunction(AcquisitionFunction, ABC):
     ) -> None:
         super().__init__(model=model)
         self.mc_samples = mc_samples
-        self.X_pending = X_pending
-        if self.X_pending is not None:
-            self.X_pending.requires_grad_(False)
+        self._set_X_pending(X_pending)
         self.seed = seed
         self.qmc = qmc
         self.base_samples = None
@@ -56,13 +54,23 @@ class BatchAcquisitionFunction(AcquisitionFunction, ABC):
         if self.base_samples is not None:
             return self.base_samples.shape[-2]
 
+    def get_X_pending(self) -> Tensor:
+        """Get pending points.
+
+        Returns:
+            A `b x m x d`-dim tensor of pending points.
+        """
+        return self._X_pending
+            
     def _set_X_pending(self, X_pending: Optional[Tensor] = None) -> None:
         """Set pending points.
 
         Args:
             X_pending: A `b x m x d`-dim tensor of pending points.
         """
-        self.X_pending = X_pending
+        self._X_pending = X_pending
+        if self._X_pending is not None:
+            self._X_pending.requires_grad_(False)
         # Ensure we regenerate base_samples, which is stateful.
         self.base_samples = None
 
@@ -75,20 +83,19 @@ class BatchAcquisitionFunction(AcquisitionFunction, ABC):
 
     def forward(self, X: Tensor) -> Tensor:
         """Takes in a `(b) x q x d` X Tensor of `b` t-batches with `q` `d`-dim
-        design points each, expands and concatenates `self.X_pending` and
+        design points each, expands and concatenates `self._X_pending` and
         returns a one-dimensional Tensor with `b` elements."""
-        if self.X_pending is not None:
-            # Some batch acquisition functions like qKG without discretization
-            # rely upon the order of points in this torch.cat. It must remain
-            # [X_pending, X], not [X, X_pending] for this code to work properly.
-            X = torch.cat([match_batch_shape(self.X_pending, X), X], dim=-2)
+        if self._X_pending is not None:
+            # Some batch acquisition functions may rely upon the order of
+            # points in this torch.cat.  Do not change the ordering here.
+            X = torch.cat([match_batch_shape(self._X_pending, X), X], dim=-2)
         # construct base samples (if necessary)
         self._construct_base_samples(X)
         return self._forward(X)
 
     @batch_mode_instance_method
     def _construct_base_samples(self, X: Tensor) -> None:
-        """Construct base samples (for QMC and/or fixed seed).
+        """Construct base samples (when for QMC and/or fixed seed are enabled).
 
         We need to construct base_samples if
             (i) we do QMC without a fixed seed
