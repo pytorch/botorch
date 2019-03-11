@@ -16,19 +16,26 @@ This is an alpha version under active development - expect things to break!
 - cython
 - scipy
 
+
 #### Install using conda
 
 1. Create the base environment using `conda env create -f botorch_base.yml`
 
 2. Activate the environment using `conda activate botorch_base`
 
-3. Install via pip: `pip install git+ssh://git@github.com/facebookexternal/botorch.git`
+3. Install via pip:
+  - current master: `pip install git+ssh://git@github.com/facebookexternal/botorch.git`
+  - local checkout:
+    1. `git clone git@github.com:facebookexternal/botorch.git`
+    2. `pip install -e .`
+
 
 *Notes:*
 - To use **CUDA on MacOS**, pytorch needs to be built from source instead
 (see the quick start instructions on https://pytorch.org/)
 - In 3. you **must** use ssh since the repo is private - for that to work, make
 sure your ssh public key is registered with GitHub, and is usable by ssh.
+
 
 
 ## Contributing
