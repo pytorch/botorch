@@ -38,7 +38,7 @@ class BatchAcquisitionFunction(AcquisitionFunction, ABC):
     ) -> None:
         super().__init__(model=model)
         self.mc_samples = mc_samples
-        self._set_X_pending(X_pending)
+        self.X_pending = X_pending
         self.seed = seed
         self.qmc = qmc
         self.base_samples = None
