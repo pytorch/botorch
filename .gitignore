@@ -87,6 +87,10 @@ botorch/qmc/sobol.c*
 sphinx/build/
 
 # Docusaurus
+website/yarn.lock
+website/build/
 website/i18n/
 website/node_modules/
-website/yarn.lock
+website/pages/api/
+website/static/js/
+website/static/_sphinx-sources/

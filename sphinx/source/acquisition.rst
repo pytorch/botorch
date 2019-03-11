@@ -20,12 +20,6 @@ Batch Acquisition Functions
    :members:
 
 
-Thompson Sampling Utilities
----------------------------
-.. automodule:: botorch.acquisition.functional.thompson_sampling_utils
-   :members:
-
-
 botorch.acquisition.modules
 ===========================
 .. automodule:: botorch.acquisition.modules
