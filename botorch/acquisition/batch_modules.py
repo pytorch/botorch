@@ -54,7 +54,8 @@ class BatchAcquisitionFunction(AcquisitionFunction, ABC):
         if self.base_samples is not None:
             return self.base_samples.shape[-2]
 
-    def get_X_pending(self) -> Tensor:
+    @property
+    def X_pending(self) -> Tensor:
         """Get pending points.
 
         Returns:
@@ -62,7 +63,8 @@ class BatchAcquisitionFunction(AcquisitionFunction, ABC):
         """
         return self._X_pending
 
-    def _set_X_pending(self, X_pending: Optional[Tensor] = None) -> None:
+    @X_pending.setter
+    def X_pending(self, X_pending: Optional[Tensor] = None) -> None:
         """Set pending points.
 
         Args:

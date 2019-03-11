@@ -644,7 +644,7 @@ def sequential_optimize(
     """
 
     candidate_list = []
-    base_X_pending = acq_func.get_X_pending()
+    base_X_pending = acq_func.X_pending
     # Needed to clear base_samples
     acq_func._set_X_pending(base_X_pending)
     for _ in range(q):
