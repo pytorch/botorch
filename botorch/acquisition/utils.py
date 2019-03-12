@@ -47,7 +47,7 @@ def get_acquisition_function(
             imply feasibility. Note: the callable must support broadcasting.
             Only relevant for multi-output models (`t` > 1).
         infeasible_cost: The infeasibility cost `M`. Should be set s.t.
-            `-M < min_x obj(x)`.
+            `-M < min_x obj(x)`. Used for qNEI only.
         X_pending: A `m x d`-dim Tensor with `m` design points that are
             pending for evaluation.
         seed: If provided, perform deterministic optimization (i.e. the
@@ -67,7 +67,6 @@ def get_acquisition_function(
             best_f=objective(model.posterior(X_observed).mean).max().item(),
             objective=objective,
             constraints=constraints,
-            infeasible_cost=infeasible_cost,
             X_pending=X_pending,
             seed=seed,
             **acquisition_function_args,
