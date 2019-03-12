@@ -130,7 +130,6 @@ class qExpectedImprovement(BatchAcquisitionFunction):
         best_f: float,
         objective: Callable[[Tensor], Tensor] = squeeze_last_dim,
         constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
-        infeasible_cost: float = 0.0,
         mc_samples: int = 500,
         X_pending: Optional[Tensor] = None,
         qmc: Optional[bool] = True,
@@ -151,8 +150,6 @@ class qExpectedImprovement(BatchAcquisitionFunction):
                 `b x q x t` to a Tensor of size `b x q`, where negative values
                 imply feasibility. This callable must support broadcasting.
                 Only relevant for multi-output models (`t` > 1).
-            infeasible_cost: The infeasibility cost `M`. Should be set s.t.
-                `-M < min_x obj(x)`.
             mc_samples: The number of (quasi-) Monte-Carlo samples to use for
                 approximating the expectation.
             X_pending: A `m x d`-dim Tensor with `m` design points that are
@@ -167,7 +164,6 @@ class qExpectedImprovement(BatchAcquisitionFunction):
         self.best_f = best_f
         self.objective = objective
         self.constraints = constraints
-        self.infeasible_cost = infeasible_cost
 
     def _forward(self, X: Tensor) -> Tensor:
         """Evaluate q-EI at design X.
@@ -184,7 +180,6 @@ class qExpectedImprovement(BatchAcquisitionFunction):
             best_f=self.best_f,
             objective=self.objective,
             constraints=self.constraints,
-            M=self.infeasible_cost,
             mc_samples=self.mc_samples,
             base_samples=self.base_samples,
         )

@@ -21,18 +21,64 @@ from ...utils.transforms import squeeze_last_dim
 from ..batch_utils import batch_mode_transform
 
 
+def apply_constraints_nonnegative_soft_(
+    obj: Tensor,
+    constraints: List[Callable[[Tensor], Tensor]],
+    samples: Tensor,
+    eta: float,
+) -> None:
+    """Applies constraints to a nonnegative objective using a sigmoid approximation
+    to an indicator function for each constraint. `obj` is modified in-place.
+
+    Args:
+        obj: A `n_samples x b x q` Tensor of objective values.
+        constraints: A list of callables, each mapping a Tensor of size `b x q x t`
+            to a Tensor of size `b x q`, where negative values imply feasibility.
+            This callable must support broadcasting. Only relevant for multi-
+            output models (`t` > 1).
+        samples: A `b x q x t` Tensor of samples drawn from the posterior.
+        eta: The temperature parameter for the sigmoid function.
+    """
+    if constraints is not None:
+        obj.clamp_min_(0)  # Enforce non-negativity with constraints
+        for constraint in constraints:
+            obj.mul_(soft_eval_constraint(constraint(samples), eta=eta))
+
+
+def soft_eval_constraint(lhs: Tensor, eta: float = 1e-3) -> Tensor:
+    """Element-wise evaluation of a constraint in a 'soft' fashion
+
+    `value(x) = 1 / (1 + exp(x / eta))`
+
+    Args:
+        lhs (Tensor): The left hand side of the constraint `lhs <= 0`.
+        eta (float): The temperature parameter of the softmax function. As eta
+            grows larger, this approximates the Heaviside step function.
+
+    Returns:
+        Tensor: element-wise 'soft' feasibility indicator of the same shape as lhs.
+            For each element x, value(x) -> 0 as x becomes positive, and value(x) -> 1
+            as x becomes negative.
+
+    """
+    if eta <= 0:
+        raise ValueError("eta must be positive")
+    return torch.sigmoid(-lhs / eta)
+
+
 def apply_constraints_(
     obj: Tensor,
     constraints: List[Callable[[Tensor], Tensor]],
     samples: Tensor,
     M: float,
 ) -> None:
-    """Apply constraints using an infeasiblity penalty.
-
-    Assigsn a penalty of `-M` when not feasible, where obj is modified in-place.
+    """Apply constraints using an infeasiblity penalty `M` for the case where
+    the objective can be negative via the strategy: (1) add M to make obj nonnegative,
+    (2) apply constraints using the sigmoid approximation, (3) shift by -M. `obj`
+    is modified in-place.
 
     Args:
-        obj: A `b x q` Tensor of objective values.
+        obj: A `n_samples x b x q` Tensor of objective values.
         constraints: A list of callables, each mapping a Tensor of size `b x q x t`
             to a Tensor of size `b x q`, where negative values imply feasibility.
             This callable must support broadcasting. Only relevant for multi-
@@ -42,15 +88,10 @@ def apply_constraints_(
     """
     if constraints is not None:
         # obj has dimensions n_samples x b x q
-        # all_feasible has dimensions n_samples x b x q and tracks whether or not
-        # each design point is feasible, i.e., for all constraints
-        all_con_feasible = torch.ones(obj.shape, dtype=torch.uint8, device=obj.device)
-        for constraint in constraints:
-            # con has dimensions n_samples x b x q
-            con = constraint(samples)
-            this_con_feasible = con <= 0
-            all_con_feasible.mul_(this_con_feasible)
-        obj[~all_con_feasible] = -M
+        obj = obj + M  # now it is nonnegative
+        apply_constraints_nonnegative_soft_(
+            obj=obj, constraints=constraints, samples=samples, eta=1e-3
+        )
 
 
 def get_infeasible_cost(
@@ -81,7 +122,6 @@ def batch_expected_improvement(
     best_f: float,
     objective: Callable[[Tensor], Tensor] = squeeze_last_dim,
     constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
-    M: float = 0.0,
     mc_samples: int = 500,
     base_samples: Optional[Tensor] = None,
 ) -> Tensor:
@@ -102,7 +142,6 @@ def batch_expected_improvement(
             `b x q x t` to a Tensor of size `b x q`, where negative values
             imply feasibility. Note: the callable must support broadcasting.
             Only relevant for multi-output models (`t` > 1).
-        M: The infeasibility cost. Should be set s.t. `-M < min_x obj(x)`.
         mc_samples: The number of (quasi-) Monte-Carlo samples to use for
             approximating the expectation.
         base_samples: A fixed Tensor of N(0,1) random variables used for
@@ -116,10 +155,10 @@ def batch_expected_improvement(
         sample_shape=torch.Size([mc_samples]), base_samples=base_samples
     )
     obj = objective(samples)
-    # apply the constraints to the objective first; then, compare with best_f
-    # (which could be -M if no feasible point has been found)
-    apply_constraints_(obj=obj, constraints=constraints, samples=samples, M=M)
+    # since best_f is assumed to be a feasible observation, no need to worry about
+    # infeasible cost or negative values of objective; set M = 0.0.
     obj = (obj - best_f).clamp_min_(0)
+    apply_constraints_(obj=obj, constraints=constraints, samples=samples, M=0.0)
     q_ei = obj.max(dim=2)[0].mean(dim=0)
     return q_ei
 
