@@ -1,16 +1,62 @@
 #!/usr/bin/env python3
 
-import numpy
-from Cython.Build import cythonize
+import sys
+
 from setuptools import find_packages, setup
 from setuptools.extension import Extension
 
 
+REQUIRED_MAJOR = 3
+REQUIRED_MINOR = 6
+
+fatals = []
+
+
+if sys.version_info < (REQUIRED_MAJOR, REQUIRED_MINOR):
+    fatals.append(
+        (
+            "Your version of python ({major}.{minor}) is too old. You need "
+            "python >= {required_major}.{required_minor}."
+        ).format(
+            major=sys.version_info.major,
+            minor=sys.version_info.minor,
+            required_minor=REQUIRED_MINOR,
+            required_major=REQUIRED_MAJOR,
+        )
+    )
+
+
+def missing(package_name):
+    fatals.append(
+        "The '{}' package is missing. Please install it before "
+        "running the setup script.".format(package_name)
+    )
+
+
+try:
+    import numpy
+except ImportError:
+    missing("numpy")
+
+try:
+    from Cython.Build import cythonize
+except ImportError:
+    missing("cython")
+
+
+if fatals:
+    sys.exit(
+        "You need to fix the following issues before you can install botorch:\n - "
+        + "\n - ".join(fatals)
+    )
+
+
+# TODO: Use torch Sobol when available: https://github.com/pytorch/pytorch/pull/10505
 extensions = [Extension("botorch.qmc.sobol", ["botorch/qmc/sobol.pyx"])]
 
 setup(
     name="botorch",
-    version="pre-alpha",
+    version="alpha",
     description="Bayesian Optimization in PyTorch",
     author="Facebook, Inc.",
     license="MIT",
