@@ -75,20 +75,3 @@ class GPyTorchPosterior(Posterior):
         if not self._is_mt:
             variance = variance.unsqueeze(-1)
         return variance
-
-    def get_base_samples(
-        self,
-        sample_shape: Optional[torch.Size] = None,
-        collapse_batch_dims: bool = False,
-    ) -> Tensor:
-        if sample_shape is None:
-            sample_shape = torch.Size()
-        base_samples = self.mvn.get_base_samples(sample_shape=sample_shape)
-        if not self._is_mt:
-            base_samples = base_samples.unsqueeze(-1)
-        # TODO: Push collapse_batch functionality upstream to gpytorch
-        if collapse_batch_dims and len(self.batch_shape) > 0:
-            # TODO: Figure out a cleaner way to do programmatic multi-indexing
-            for _ in self.batch_shape:
-                base_samples = base_samples.select(-3, 0).unsqueeze(-3)
-        return base_samples

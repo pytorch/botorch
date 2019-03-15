@@ -4,11 +4,12 @@ from abc import ABC, abstractmethod, abstractproperty
 from typing import List, Optional
 
 from torch import Tensor
+from torch.nn import Module
 
 from ..posteriors import Posterior
 
 
-class Model(ABC):
+class Model(Module, ABC):
     """Abstract base class for botorch models."""
 
     @abstractmethod

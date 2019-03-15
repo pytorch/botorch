@@ -38,6 +38,10 @@ class MockPosterior(Posterior):
     def event_shape(self) -> torch.Size:
         if self._samples is not None:
             return self._samples.shape
+        if self._mean is not None:
+            return self._mean.shape
+        if self._variance is not None:
+            return self._variance.shape
         return torch.Size()
 
     @property

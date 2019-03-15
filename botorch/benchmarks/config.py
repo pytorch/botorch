@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from typing import Dict, List, NamedTuple, Optional, Union
+from typing import Dict, NamedTuple, Optional, Union
 
 
 class OptimizeConfig(NamedTuple):

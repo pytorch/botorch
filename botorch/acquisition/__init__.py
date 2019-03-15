@@ -1,33 +1,50 @@
 #!/usr/bin/env python3
 
-from .batch_modules import (
+from .acquisition import AcquisitionFunction
+from .analytic import (
+    ExpectedImprovement,
+    NoisyExpectedImprovement,
+    PosteriorMean,
+    ProbabilityOfImprovement,
+    SingleOutcomeAcquisitionFunction,
+    UpperConfidenceBound,
+)
+from .monte_carlo import (
     qExpectedImprovement,
     qNoisyExpectedImprovement,
     qProbabilityOfImprovement,
+    qSimpleRegret,
     qUpperConfidenceBound,
 )
-from .batch_utils import batch_mode_transform, match_batch_shape
-from .modules import (
-    AcquisitionFunction,
-    ExpectedImprovement,
-    PosteriorMean,
-    ProbabilityOfImprovement,
-    UpperConfidenceBound,
+from .objective import (
+    ConstrainedMCObjective,
+    GenericMCObjective,
+    IdentityMCObjective,
+    MCAcquisitionObjective,
 )
+from .sampler import IIDNormalSampler, MCSampler, SobolQMCNormalSampler
 from .utils import get_acquisition_function
 
 
 __all__ = [
     "AcquisitionFunction",
     "ExpectedImprovement",
+    "NoisyExpectedImprovement",
     "PosteriorMean",
     "ProbabilityOfImprovement",
+    "SingleOutcomeAcquisitionFunction",
     "UpperConfidenceBound",
-    "batch_mode_transform",
-    "match_batch_shape",
-    "get_acquisition_function",
     "qExpectedImprovement",
     "qNoisyExpectedImprovement",
     "qProbabilityOfImprovement",
+    "qSimpleRegret",
     "qUpperConfidenceBound",
+    "ConstrainedMCObjective",
+    "GenericMCObjective",
+    "IdentityMCObjective",
+    "MCAcquisitionObjective",
+    "IIDNormalSampler",
+    "MCSampler",
+    "SobolQMCNormalSampler",
+    "get_acquisition_function",
 ]
