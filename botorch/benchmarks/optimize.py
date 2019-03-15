@@ -5,12 +5,18 @@ from time import time
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import torch
-from botorch.acquisition.utils import get_acquisition_function
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from torch import Tensor
 from torch.nn import Module
 
 from .. import fit_model
+from ..acquisition.objective import (
+    ConstrainedMCObjective,
+    IdentityMCObjective,
+    MCAcquisitionObjective,
+)
+from ..acquisition.sampler import MCSampler, SobolQMCNormalSampler
+from ..acquisition.utils import get_acquisition_function
 from ..gen import gen_candidates_scipy, get_best_candidates
 from ..models.model import Model
 from ..optim.initializers import get_similarity_measure, initialize_q_batch
@@ -52,12 +58,37 @@ def _get_fitted_model(
     return model
 
 
+def _get_raw_objective_and_feasibility(
+    samples: Tensor, objective: MCAcquisitionObjective
+) -> Tuple[Tensor, Tensor]:
+    """
+    Get the raw objective and feasibility.
+
+    Args:
+        samples: A `sample_shape x batch_shape x q x t` tensor of
+            samples from a model posterior.
+        objective: a MCAcquisitionObjective
+    Returns:
+        Tensor: `sample_shape x batch_shape x q` tensor of the raw objectives
+            (not feasibility-weighted)
+        Tensor: `sample_shape x batch_shape x q` tensor of the raw feasibilities
+    """
+    # TODO: handle non-positive definite objectives
+    feas_raw = torch.ones_like(samples[..., 0])
+    if isinstance(objective, ConstrainedMCObjective):
+        obj_raw = objective.objective(samples)
+        feas_raw = torch.ones_like(obj_raw)
+        # TODO: update this when we allow backprop through constraints
+        for constraint in objective.constraints:
+            # pyre-ignore [16]
+            feas_raw.mul_((constraint(samples) < 0).type_as(obj_raw))
+    else:
+        obj_raw = objective(samples)
+    return obj_raw, feas_raw
+
+
 def greedy(
-    X: Tensor,
-    model: Model,
-    objective: Callable[[Tensor], Tensor] = squeeze_last_dim,
-    constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
-    mc_samples: int = 10000,
+    X: Tensor, model: Model, objective: MCAcquisitionObjective, sampler: MCSampler
 ) -> Tuple[Tensor, Tensor, Tensor]:
     """Fetch the best point, best objective, and feasibility based on the joint
     posterior of the evaluated points.
@@ -65,17 +96,8 @@ def greedy(
     Args:
         X: `q x d` (or `b x q x d`)-dim (batch mode) tensor of points
         model: model: A fitted model.
-        objective: A callable mapping a Tensor of size `b x q x t` to a Tensor
-            of size `b x q`, where `t` is the number of outputs (tasks) of the
-            model. This callable must support broadcasting. If omitted, squeeze
-            the last dimension (applicable to single-task models only).
-            Assumed to be non-negative when the constraints are used!
-        constraints: A list of callables, each mapping a Tensor of size
-            `b x q x t` to a Tensor of size `b x q`, where negative values imply
-            feasibility. Note: the callable must support broadcasting. Only
-            relevant for multi-task models (`t` > 1).
-        mc_samples: The number of Monte-Carlo samples to draw from the model
-            posterior.
+        objective: A MCAcquisitionObjective
+        sampler: The sampler used to draw base samples.
 
     Returns:
         Tensor: `d` (or `b x d`)-dim (batch mode) best point(s)
@@ -90,22 +112,18 @@ def greedy(
         X = X.unsqueeze(0)  # internal logic always operates in batch mode
     with torch.no_grad():
         posterior = model.posterior(X)
-        # mc_samples x b x q x (t)
-        samples = posterior.rsample(sample_shape=torch.Size([mc_samples]))
-    # TODO: handle non-positive definite objectives
-    obj_raw = objective(samples)
-    obj = obj_raw.clone()
-    feas_raw = torch.ones_like(obj_raw)
-    if constraints is not None:
-        obj.clamp_min_(0)  # pyre-ignore [16]
-        for constraint in constraints:
-            feas_raw.mul_((constraint(samples) < 0).type_as(obj))  # pyre-ignore [16]
-        obj.mul_(feas_raw)
+        # mc_samples x b x q x t
+        samples = sampler(posterior)
+    obj_raw, feas_raw = _get_raw_objective_and_feasibility(
+        samples=samples, objective=objective
+    )
+    obj = obj_raw * feas_raw
     # get max index of weighted objective along the q-batch dimension
     _, best_idcs = torch.max(obj.mean(dim=0), dim=-1)
     # extract corresponding values of X, raw objective, and feasibility
     batch_idxr = torch.arange(best_idcs.numel(), device=best_idcs.device)
     X_best = X[batch_idxr, best_idcs, :].detach()
+
     obj_best = obj_raw.mean(dim=0)[batch_idxr, best_idcs]
     feas_best = feas_raw.mean(dim=0)[batch_idxr, best_idcs]
     if not batch_mode:
@@ -125,8 +143,8 @@ def _fit_model_and_get_best_point(
     model_fit_options: Dict[str, Union[float, int]],
     verbose: bool,
     warm_start: bool,
-    objective: Callable[[Tensor], Tensor] = squeeze_last_dim,
-    constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
+    objective: MCAcquisitionObjective,
+    sampler: Optional[MCSampler] = None,
     retry: int = 0,
 ) -> _ModelBestPointOutput:
     """Fit model and fetch the best point, best objective, and feasibility based
@@ -142,15 +160,8 @@ def _fit_model_and_get_best_point(
         verbose: whether to provide verbose output
         warm_start: If True, start optimizing the hyperparameters from their
             previous values without resetting them
-        objective: A callable mapping a Tensor of size `b x q x (t)` to a Tensor
-            of size `b x q`, where `t` is the number of outputs (tasks) of the
-            model. Note: the callable must support broadcasting. If omitted, use
-            the identity map (applicable to single-task models only).
-            Assumed to be non-negative when the constraints are used!
-        constraints: A list of callables, each mapping a Tensor of size
-            `b x q x t` to a Tensor of size `b x q`, where negative values imply
-            feasibility. Note: the callable must support broadcasting. Only
-            relevant for multi-task models (`t` > 1).
+        objective: A MCAcquisitionObjective
+        sampler: The sampler used to draw base samples.
         retry: current retry count
 
     Returns:
@@ -163,6 +174,8 @@ def _fit_model_and_get_best_point(
             - retry (int): the current retry count
 
     """
+    if sampler is None:
+        sampler = SobolQMCNormalSampler(num_samples=500, collapse_batch_dims=True)
     # handle errors in model fitting and evaluation (when selecting best point)
     while retry <= max_retries:
         try:
@@ -179,7 +192,7 @@ def _fit_model_and_get_best_point(
             if verbose:
                 print("---- identify")
             best_point, obj, feas = greedy(
-                X=train_X, model=model, objective=objective, constraints=constraints
+                X=train_X, model=model, objective=objective, sampler=sampler
             )
             return _ModelBestPointOutput(
                 model=model, best_point=best_point, obj=obj, feas=feas, retry=retry
@@ -200,8 +213,7 @@ def run_closed_loop(
     output: ClosedLoopOutput,
     lower_bounds: Tensor,
     upper_bounds: Tensor,
-    objective: Callable[[Tensor], Tensor] = squeeze_last_dim,
-    constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
+    objective: Optional[MCAcquisitionObjective] = None,
     verbose: bool = False,
     seed: Optional[int] = None,
 ) -> ClosedLoopOutput:
@@ -214,15 +226,7 @@ def run_closed_loop(
         model: an initialized Model. This model must have a likelihood attribute.
         output: a ClosedLoopOutput containing the initial points and observations
             and the best point, objective, and feasibility from the initial batch.
-        objective: A callable mapping a Tensor of size `b x q x (t)`
-            to a Tensor of size `b x q`, where `t` is the number of
-            outputs (tasks) of the model. Note: the callable must support broadcasting.
-            If omitted, use the identity map (applicable to single-task models only).
-            Assumed to be non-negative when the constraints are used!
-        constraints: A list of callables, each mapping a Tensor of size
-            `b x q x t` to a Tensor of size `b x q`, where negative values imply
-            feasibility. Note: the callable must support broadcasting. Only
-            relevant for multi-task models (`t` > 1).
+        objective: A MCAcquisitionObjective. (Default: IdentityMCObjective)
         lower_bounds: minimum values for each column of initial_candidates
         upper_bounds: maximum values for each column of initial_candidates
         verbose: whether to provide verbose output
@@ -234,6 +238,8 @@ def run_closed_loop(
 
     # TODO: Add support for multi-task / multi-output models.
     """
+    if objective is None:
+        objective = IdentityMCObjective()
     # TODO: remove exception handling wrappers when model fitting is stabilized
     retry = 0
     train_X = torch.cat(output.Xs, dim=0)
@@ -256,7 +262,6 @@ def run_closed_loop(
                     model=model,
                     X_observed=train_X,
                     objective=objective,
-                    constraints=constraints,
                     X_pending=None,
                     # TODO: check appropriate limits for this seed
                     seed=seed
@@ -313,7 +318,7 @@ def run_closed_loop(
                     verbose=verbose,
                     warm_start=optim_config.warm_start,
                     objective=objective,
-                    constraints=constraints,
+                    sampler=acq_func.sampler,
                     retry=retry,
                 )
                 model = model_and_best_point_output.model
@@ -347,7 +352,7 @@ def run_closed_loop(
             verbose=verbose,
             warm_start=optim_config.warm_start,
             objective=objective,
-            constraints=constraints,
+            sampler=acq_func.sampler,
             retry=retry,
         )
         model = model_and_best_point_output.model
@@ -372,8 +377,7 @@ def run_benchmark(
     initial_model: Model,
     lower_bounds: Tensor,
     upper_bounds: Tensor,
-    objective: Callable[[Tensor], Tensor] = squeeze_last_dim,
-    constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
+    objective: Optional[MCAcquisitionObjective] = None,
     verbose: bool = False,
     seed: Optional[int] = None,
     num_runs: Optional[int] = 1,
@@ -388,15 +392,7 @@ def run_benchmark(
             acquisition functions
         optim_config: configuration for the optimization
         model: an initialized Model. This model must have a likelihood attribute.
-        objective: A callable mapping a Tensor of size `b x q x (t)`
-            to a Tensor of size `b x q`, where `t` is the number of
-            outputs (tasks) of the model. Note: the callable must support broadcasting.
-            If omitted, use the identity map (applicable to single-task models only).
-            Assumed to be non-negative when the constraints are used!
-        constraints: A list of callables, each mapping a Tensor of size
-            `b x q x t` to a Tensor of size `b x q`, where negative values imply
-            feasibility. Note: the callable must support broadcasting. Only
-            relevant for multi-task models (`t` > 1).
+        objective: A MCAcquisitionObjective. (Default: IdentityMCObjective)
         lower_bounds: minimum values for each column of initial_candidates
         upper_bounds: maximum values for each column of initial_candidates
         verbose: whether to provide verbose output
@@ -412,6 +408,8 @@ def run_benchmark(
         Dict[str, BenchmarkOutput]: dictionary mapping each key of acq_func_configs
             to its corresponding output.
     """
+    if objective is None:
+        objective = IdentityMCObjective()
     outputs = {
         method_name: BenchmarkOutput(
             Xs=[],
@@ -451,7 +449,6 @@ def run_benchmark(
             verbose=verbose,
             warm_start=optim_config.warm_start,
             objective=objective,
-            constraints=constraints,
         )
         model = model_and_best_point_output.model
         fitted_model_state_dict = deepcopy(model.state_dict())
@@ -480,7 +477,6 @@ def run_benchmark(
                 lower_bounds=lower_bounds,
                 upper_bounds=upper_bounds,
                 objective=objective,
-                constraints=constraints,
                 verbose=verbose,
                 seed=seed,
             )
@@ -490,15 +486,12 @@ def run_benchmark(
             best = torch.cat(run_output.best, dim=0)
             if true_func is not None:
                 f_best = true_func(best)[0]
-                best_true_objective = objective(f_best).view(-1)
-                best_true_feasibility = torch.ones_like(best_true_objective)
-                if constraints is not None:
-                    for constraint in constraints:
-                        best_true_feasibility.mul_(  # pyre-ignore [16]
-                            (constraint(f_best) < 0)  # pyre-ignore [16]
-                            .type_as(best)
-                            .view(-1)
-                        )
+                # FIX THE SHAPE OF f_best
+                obj, feas = _get_raw_objective_and_feasibility(
+                    samples=f_best, objective=objective
+                )
+                best_true_objective = obj.view(-1)
+                best_true_feasibility = feas.view(-1)
                 acquisition_function_output.best_true_objective.append(
                     best_true_objective
                 )
