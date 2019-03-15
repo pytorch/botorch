@@ -1,5 +1,10 @@
 #! /usr/bin/env python3
 
+"""
+Abstract base module for all botorch posteriors.
+"""
+
+
 from abc import ABC, abstractmethod, abstractproperty
 from typing import Optional
 

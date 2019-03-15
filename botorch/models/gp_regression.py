@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 """
-Basic GP Regression models.
+Basic GP Regression models based on GPyTorch GP models.
 """
 
 from copy import deepcopy

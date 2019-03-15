@@ -2,89 +2,68 @@
     :class: hidden-section
 
 
-botorch.acquisition.functional
-==============================
-.. automodule:: botorch.acquisition.functional
-.. currentmodule:: botorch.acquisition.functional
+botorch.acquisition
+===============================
 
 
-Analytical Acquisition Functions
---------------------------------
-.. automodule:: botorch.acquisition.functional.acquisition
+:hidden:`botorch.acquisition.acquisition`
+-----------------------------------------
+.. automodule:: botorch.acquisition.acquisition
    :members:
 
 
-Batch Acquisition Functions
----------------------------
-.. automodule:: botorch.acquisition.functional.batch_acquisition
-   :members:
 
-
-botorch.acquisition.modules
-===========================
-.. automodule:: botorch.acquisition.modules
-.. currentmodule:: botorch.acquisition.modules
-
-
-Abstract Acquisition Function Module API
-----------------------------------------
-
-:hidden:`AcquisitionFunction`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: AcquisitionFunction
-   :members:
-
-
-Acquisition Function Modules
+botorch.acquisition.analytic
 ----------------------------
+Analytic acquisition functions (not using (q-)MC sampling).
+
+.. automodule:: botorch.acquisition.analytic
+   :members:
+
+
+:hidden:`SingleOutcomeAcquisitionFunction`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autoclass:: SingleOutcomeAcquisitionFunction
+   :members:
+
 
 :hidden:`ExpectedImprovement`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autoclass:: ExpectedImprovement
    :members:
 
-
 :hidden:`PosteriorMean`
 ~~~~~~~~~~~~~~~~~~~~~~~
 .. autoclass:: PosteriorMean
    :members:
-
 
 :hidden:`ProbabilityOfImprovement`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autoclass:: ProbabilityOfImprovement
    :members:
 
-
 :hidden:`UpperConfidenceBound`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autoclass:: UpperConfidenceBound
    :members:
 
-
-:hidden:`MaxValueEntropySearch`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: MaxValueEntropySearch
-   :members:
-
-
-botorch.acquisition.batch_modules
-=================================
-.. automodule:: botorch.acquisition.batch_modules
-.. currentmodule:: botorch.acquisition.batch_modules
-
-
-Abstract Batch Acquisition Function Module API
-----------------------------------------------
-
-:hidden:`BatchAcquisitionFunction`
+:hidden:`NoisyExpectedImprovement`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: BatchAcquisitionFunction
+.. autoclass:: NoisyExpectedImprovement
    :members:
 
 
-Batch Acquisition Function Modules
-----------------------------------
+
+botorch.acquisition.monte_carlo
+-------------------------------
+.. automodule:: botorch.acquisition.monte_carlo
+   :members:
+
+
+:hidden:`MCAcquisitionFunction`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autoclass:: MCAcquisitionFunction
+   :members:
 
 :hidden:`qExpectedImprovement`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -112,7 +91,61 @@ Batch Acquisition Function Modules
    :members:
 
 
-botorch.acquisition.batch_utils
-===============================
-.. automodule:: botorch.acquisition.batch_utils
+botorch.acquisition.objective
+-----------------------------
+.. automodule:: botorch.acquisition.objective
+   :members:
+
+:hidden:`MCAcquisitionObjective`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autoclass:: MCAcquisitionObjective
+   :members:
+
+:hidden:`GenericMCObjective`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autoclass:: GenericMCObjective
+   :members:
+
+:hidden:`ConstrainedMCObjective`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autoclass:: ConstrainedMCObjective
+   :members:
+
+:hidden:`IdentityMCObjective`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autoclass:: IdentityMCObjective
+   :members:
+
+:hidden:`LinearMCObjective`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autoclass:: LinearMCObjective
+   :members:
+
+
+
+botorch.acquisition.sampler
+---------------------------
+.. automodule:: botorch.acquisition.sampler
+   :members:
+
+:hidden:`MCSampler`
+~~~~~~~~~~~~~~~~~~~
+.. autoclass:: MCSampler
+   :members:
+
+:hidden:`IIDNormalSampler`
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autoclass:: IIDNormalSampler
+   :members:
+
+:hidden:`SobolQMCNormalSampler`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autoclass:: SobolQMCNormalSampler
+   :members:
+
+
+
+botorch.acquisition.utils
+-------------------------
+.. automodule:: botorch.acquisition.utils
    :members:

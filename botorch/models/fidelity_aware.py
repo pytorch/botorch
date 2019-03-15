@@ -1,5 +1,10 @@
 #! /usr/bin/env python3
 
+"""
+Fidelity-aware heteroskedastic GP model.
+"""
+
+
 from typing import Callable, Iterable, Optional, Tuple, Union
 
 import torch

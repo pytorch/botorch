@@ -1,5 +1,13 @@
 #! /usr/bin/env python3
 
+"""
+Abstract class for all GPyTorch-based botorch models.
+
+To implement your own, simply inherit from both the provided classes and a
+GPyTorch Model class such as an ExactGP.
+"""
+
+
 from abc import ABC
 from contextlib import ExitStack
 from typing import List, Optional

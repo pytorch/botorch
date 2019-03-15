@@ -49,6 +49,13 @@ cp "sphinx/build/html/searchindex.js" "${DOCUSAURUS_JS_DIR}searchindex.js"
 # copy module sources
 cp -r "sphinx/build/html/_sources/" "website/static/_sphinx-sources/"
 
+echo "-----------------------------------"
+echo "Generating tutorials"
+echo "-----------------------------------"
+mkdir -p "website/_tutorials"
+mkdir -p "website/static/files"
+python3 scripts/parse_tutorials.py -w "${cwd}"
+
 # Starting local server
 echo "-----------------------------------"
 echo "Starting local server"
