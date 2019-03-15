@@ -4,6 +4,12 @@ import unittest
 from unittest import mock
 
 import torch
+from botorch.acquisition.objective import (
+    ConstrainedMCObjective,
+    IdentityMCObjective,
+    LinearMCObjective,
+)
+from botorch.acquisition.sampler import IIDNormalSampler
 from botorch.benchmarks.config import AcquisitionFunctionConfig, OptimizeConfig
 from botorch.benchmarks.optimize import (
     _fit_model_and_get_best_point,
@@ -18,6 +24,7 @@ from botorch.benchmarks.output import (
     _ModelBestPointOutput,
 )
 from botorch.models.gp_regression import HeteroskedasticSingleTaskGP, SingleTaskGP
+from botorch.utils.transforms import squeeze_last_dim
 from gpytorch.likelihoods import (
     GaussianLikelihood,
     HeteroskedasticNoise,
@@ -42,8 +49,8 @@ def gen_x_uniform(b: int, q: int, bounds: Tensor) -> Tensor:
             specified by bounds.
 
     """
-    x_ranges = torch.sum(bounds * torch.tensor([[-1.0], [1.0]]).type_as(bounds), dim=0)
-    return bounds[0] + torch.rand((b, q, bounds.shape[1])).type_as(bounds) * x_ranges
+    x_ranges = torch.sum(bounds * torch.tensor([[-1.0], [1.0]]).to(bounds), dim=0)
+    return bounds[0] + torch.rand((b, q, bounds.shape[1])).to(bounds) * x_ranges
 
 
 def get_bounds(cuda, dtype):
@@ -98,7 +105,7 @@ class TestRunClosedLoop(unittest.TestCase):
         def test_func(X):
             f_X = torch.sin(X)
             f_X_noisy = f_X + torch.randn_like(f_X)
-            return f_X_noisy, torch.tensor([]).type_as(X)
+            return f_X_noisy, torch.tensor([]).to(X)
 
         self.func = test_func
 
@@ -132,9 +139,9 @@ class TestRunClosedLoop(unittest.TestCase):
             X = torch.zeros((self.optim_config.initial_points, 1), **tkwargs)
             Y, Ycov = self.func(X)
             mean1 = torch.ones(self.optim_config.initial_points, **tkwargs)
-            samples1 = torch.zeros(1, self.optim_config.initial_points, **tkwargs)
+            samples1 = torch.zeros(1, self.optim_config.initial_points, 1, **tkwargs)
             mm1 = MockModel(MockPosterior(mean=mean1, samples=samples1))
-            samples2 = torch.zeros(1, self.optim_config.q, **tkwargs)
+            samples2 = torch.zeros(1, self.optim_config.q, 1, **tkwargs)
             mm2 = MockModel(MockPosterior(samples=samples2))
             mock_get_fitted_model.side_effect = [mm1, mm2]
             # basic test for output shapes and types
@@ -276,7 +283,7 @@ class TestRunBenchmark(unittest.TestCase):
             )
             expected_regrets_trial = torch.tensor(
                 [(self.global_optimum - self.func(X)[0]).sum().item() for X in Xs]
-            ).type_as(Xs[0])
+            ).to(Xs[0])
             self.assertEqual(len(outputs.regrets[0]), len(expected_regrets_trial))
             self.assertTrue(
                 torch.equal(outputs.regrets[0][0], expected_regrets_trial[0])
@@ -288,17 +295,18 @@ class TestRunBenchmark(unittest.TestCase):
                 )
             )
             # test modifying the objective
+            weights = torch.full((1,), 0.1, **tkwargs)
             outputs_dict2 = run_benchmark(
                 func=self.func,
                 acq_func_configs=self.acq_func_configs,
                 optim_config=self.optim_config,
                 initial_model=model,
-                objective=lambda Y: Y + 0.1,
+                objective=LinearMCObjective(weights),
                 lower_bounds=bounds[0],
                 upper_bounds=bounds[1],
                 true_func=self.func,
             )
-            expected_best_true_objective2 = torch.tensor([0.35, 1.35], **tkwargs)
+            expected_best_true_objective2 = torch.tensor([0.025, 0.125], **tkwargs)
             self.assertTrue(
                 torch.equal(
                     outputs_dict2["test_qEI"].best_true_objective[0],
@@ -306,12 +314,16 @@ class TestRunBenchmark(unittest.TestCase):
                 )
             )
             # test constraints
+            objective = ConstrainedMCObjective(
+                objective=squeeze_last_dim,
+                constraints=[lambda Y: torch.ones_like(Y[..., 0])],
+            )
             outputs_dict3 = run_benchmark(
                 func=self.func,
                 acq_func_configs=self.acq_func_configs,
                 optim_config=self.optim_config,
                 initial_model=model,
-                constraints=[lambda Y: torch.ones_like(Y)],
+                objective=objective,
                 lower_bounds=bounds[0],
                 upper_bounds=bounds[1],
                 true_func=self.func,
@@ -332,31 +344,44 @@ class TestRunBenchmark(unittest.TestCase):
 class TestGreedy(unittest.TestCase):
     def test_greedy(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
+        sampler = IIDNormalSampler(num_samples=2)
         for dtype in (torch.float, torch.double):
             X = torch.tensor([1.0, 2.0, 3.0]).unsqueeze(-1)
             X = X.to(device=device, dtype=dtype)
-            model = MockModel(MockPosterior(samples=X.view(1, -1) * 2))
+            model = MockModel(MockPosterior(samples=X.view(1, -1, 1) * 2))
             # basic test
-            best_point, best_obj, best_feas = greedy(X=X, model=model)
-            best_point_exp = torch.tensor([3.0]).type_as(X)
-            best_obj_exp = torch.tensor(6.0).type_as(X)
-            best_feas_exp = torch.tensor(1.0).type_as(X)
+            best_point, best_obj, best_feas = greedy(
+                X=X, model=model, objective=IdentityMCObjective(), sampler=sampler
+            )
+            best_point_exp = torch.tensor([3.0]).to(X)
+            best_obj_exp = torch.tensor(6.0).to(X)
+            best_feas_exp = torch.tensor(1.0).to(X)
             self.assertTrue(torch.equal(best_point, best_point_exp))
             # interestingly, these are not exactly the same on the GPU
+            print(f"best_obj: {best_obj}")
+            print(f"best_obj_exp: {best_obj_exp}")
             self.assertTrue(torch.allclose(best_obj, best_obj_exp))
             self.assertTrue(torch.allclose(best_feas, best_feas_exp))
             # test objective
+            weights = torch.full((1,), 0.5).to(X)
             best_point2, best_obj2, best_feas2 = greedy(
-                X=X, model=model, objective=lambda Y: 0.5 * Y
+                X=X,
+                model=model,
+                objective=LinearMCObjective(weights=weights),
+                sampler=sampler,
             )
             self.assertTrue(torch.equal(best_point2, best_point_exp))
             self.assertTrue(torch.allclose(best_obj2, 0.5 * best_obj_exp))
             self.assertTrue(torch.allclose(best_feas2, best_feas_exp))
             # test constraints
-            _, _, best_feas3 = greedy(
-                X=X, model=model, constraints=[lambda Y: torch.ones_like(Y)]
+            objective = ConstrainedMCObjective(
+                objective=squeeze_last_dim,
+                constraints=[lambda Y: torch.ones_like(Y[..., 0])],
             )
-            best_feas3_exp = torch.tensor(0.0).type_as(X)
+            _, _, best_feas3 = greedy(
+                X=X, model=model, objective=objective, sampler=sampler
+            )
+            best_feas3_exp = torch.tensor(0.0).to(X)
             self.assertTrue(torch.allclose(best_feas3, best_feas3_exp))
 
     def test_greedy_cuda(self):
@@ -365,31 +390,43 @@ class TestGreedy(unittest.TestCase):
 
     def test_greedy_batch(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
+        sampler = IIDNormalSampler(num_samples=2)
         for dtype in (torch.float, torch.double):
             X = torch.tensor([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]).unsqueeze(-1)
             X = X.to(device=device, dtype=dtype)
-            model = MockModel(MockPosterior(samples=X.view(2, -1) * 2))
+            model = MockModel(MockPosterior(samples=X.view(2, -1, 1) * 2))
             # basic test
-            best_point, best_obj, best_feas = greedy(X=X, model=model)
-            best_point_exp = torch.tensor([[3.0], [6.0]]).type_as(X)
-            best_obj_exp = torch.tensor([6.0, 12.0]).type_as(X)
-            best_feas_exp = torch.tensor([1.0, 1.0]).type_as(X)
+            best_point, best_obj, best_feas = greedy(
+                X=X, model=model, objective=IdentityMCObjective(), sampler=sampler
+            )
+            best_point_exp = torch.tensor([[3.0], [6.0]]).to(X)
+            best_obj_exp = torch.tensor([6.0, 12.0]).to(X)
+            best_feas_exp = torch.tensor([1.0, 1.0]).to(X)
             self.assertTrue(torch.equal(best_point, best_point_exp))
             # interestingly, these are not exactly the same on the GPU
             self.assertTrue(torch.allclose(best_obj, best_obj_exp))
             self.assertTrue(torch.allclose(best_feas, best_feas_exp))
             # test objective
+            weights = torch.full((1,), 0.5).to(X)
+
             best_point2, best_obj2, best_feas2 = greedy(
-                X=X, model=model, objective=lambda Y: 0.5 * Y
+                X=X,
+                model=model,
+                objective=LinearMCObjective(weights=weights),
+                sampler=sampler,
             )
             self.assertTrue(torch.equal(best_point2, best_point_exp))
             self.assertTrue(torch.allclose(best_obj2, 0.5 * best_obj_exp))
             self.assertTrue(torch.allclose(best_feas2, best_feas_exp))
             # test constraints
-            _, _, best_feas3 = greedy(
-                X=X, model=model, constraints=[lambda Y: torch.ones_like(Y)]
+            objective = ConstrainedMCObjective(
+                objective=squeeze_last_dim,
+                constraints=[lambda Y: torch.ones_like(Y[..., 0])],
             )
-            best_feas3_exp = torch.tensor([0.0, 0.0]).type_as(X)
+            _, __, best_feas3 = greedy(
+                X=X, model=model, objective=objective, sampler=sampler
+            )
+            best_feas3_exp = torch.tensor([0.0, 0.0]).to(X)
             self.assertTrue(torch.allclose(best_feas3, best_feas3_exp))
 
     def test_greedy_batch_cuda(self):
@@ -450,6 +487,7 @@ class TestFitModelAndGetBestPoint(unittest.TestCase):
     def test_fit_model_and_get_best_point(
         self, mock_get_fitted_model, mock_greedy, cuda=False
     ):
+        objective = IdentityMCObjective()
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
             train_X = torch.rand((5, 2), dtype=dtype, device=device)
@@ -461,11 +499,6 @@ class TestFitModelAndGetBestPoint(unittest.TestCase):
             exp_obj = torch.tensor(2.0, dtype=dtype, device=device)
             exp_feas = torch.tensor(1.0, dtype=dtype, device=device)
             mock_greedy.return_value = (exp_best_point, exp_obj, exp_feas)
-
-            def objective(Y):
-                return lambda Y: Y
-
-            constraints = [lambda Y: torch.ones_like(Y)]
             model_fit_options = {"maxiter": 1}
             model_and_best_point_output = _fit_model_and_get_best_point(
                 train_X=train_X,
@@ -477,7 +510,6 @@ class TestFitModelAndGetBestPoint(unittest.TestCase):
                 warm_start=False,
                 verbose=False,
                 objective=objective,
-                constraints=constraints,
                 retry=0,
             )
 
@@ -492,7 +524,6 @@ class TestFitModelAndGetBestPoint(unittest.TestCase):
             self.assertTrue(torch.equal(greedy_call_args["X"], train_X))
             self.assertEqual(greedy_call_args["model"], model)
             self.assertEqual(greedy_call_args["objective"], objective)
-            self.assertEqual(greedy_call_args["constraints"], constraints)
             self.assertTrue(
                 torch.equal(model_and_best_point_output.best_point, exp_best_point)
             )
