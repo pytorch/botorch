@@ -3,26 +3,27 @@
 
 botorch.posteriors
 ===================================
-
 .. automodule:: botorch.posteriors
 .. currentmodule:: botorch.posteriors
 
 
-Abstract Posterior API
------------------------------------
+botorch.posteriors.posterior
+----------------------------
+.. automodule:: botorch.posteriors.posterior
 
-.. currentmodule:: botorch.posteriors.posterior
 
 :hidden:`Posterior`
 ~~~~~~~~~~~~~~~~~~~~~~
-
 .. autoclass:: Posterior
    :members:
 
 
+botorch.posteriors.gpytorch
+---------------------------
+.. automodule:: botorch.posteriors.gpytorch
+
+
 :hidden:`GPyTorchPosterior`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. currentmodule:: botorch.posteriors.gpytorch
 .. autoclass:: GPyTorchPosterior
    :members:

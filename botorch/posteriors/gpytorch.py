@@ -1,5 +1,10 @@
 #! /usr/bin/env python3
 
+"""
+Posterior Module to be used with GPyTorch models.
+"""
+
+
 from typing import Optional
 
 import gpytorch

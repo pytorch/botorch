@@ -1,5 +1,9 @@
 #! /usr/bin/env python3
 
+"""
+Abstract base module for all botorch models.
+"""
+
 from abc import ABC, abstractmethod, abstractproperty
 from typing import List, Optional
 

@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+"""
+Botorch Warnings.
+"""
+
 
 class BotorchWarning(Warning):
     """Base botorch warning."""

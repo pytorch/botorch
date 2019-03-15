@@ -22,6 +22,11 @@ Errors
 .. autoclass:: CandidateGenerationError
    :members:
 
+:hidden:`UnsupportedError`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autoclass:: UnsupportedError
+   :members:
+
 
 Warnings
 --------

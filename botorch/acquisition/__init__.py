@@ -20,6 +20,7 @@ from .objective import (
     ConstrainedMCObjective,
     GenericMCObjective,
     IdentityMCObjective,
+    LinearMCObjective,
     MCAcquisitionObjective,
 )
 from .sampler import IIDNormalSampler, MCSampler, SobolQMCNormalSampler
@@ -42,6 +43,7 @@ __all__ = [
     "ConstrainedMCObjective",
     "GenericMCObjective",
     "IdentityMCObjective",
+    "LinearMCObjective",
     "MCAcquisitionObjective",
     "IIDNormalSampler",
     "MCSampler",

@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+"""
+Abstract base module for all botorch acquisition functions.
+"""
+
 from abc import ABC, abstractmethod
 
 from torch import Tensor

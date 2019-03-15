@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+"""
+Botorch Errors.
+"""
+
 
 class BotorchError(Exception):
     """Base botorch exception."""

@@ -1,5 +1,9 @@
 #! /usr/bin/env python3
 
+"""
+Multi-output GP Regression models.
+"""
+
 from typing import List, Optional
 
 from gpytorch.models import IndependentModelList

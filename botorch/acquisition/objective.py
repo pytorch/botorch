@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Objective Modules
+Objective Modules to be used with acquisition functions.
 """
 
 from abc import ABC, abstractmethod

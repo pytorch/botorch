@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+"""
+Sampler modules to be used with MC acquisition functions.
+"""
+
 from abc import ABC, abstractmethod
 from typing import Optional
 
@@ -18,7 +22,7 @@ class MCSampler(Module, ABC):
 
     Subclasses must implement the `_construct_base_samples` method.
 
-    Attrs:
+    Attributes:
         sample_shape: The shape of each sample.
         collapse_batch_dims: If True, collapse the t-batch dimensions of the
             produced samples to size 1. This is useful for preventing sampling
