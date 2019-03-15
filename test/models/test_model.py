@@ -5,11 +5,7 @@ import unittest
 from botorch.models.model import Model
 
 
-class AbstractTestModel(Model):
-    pass
-
-
-class BaseModelTest(unittest.TestCase):
+class AbstractBaseModelTest(unittest.TestCase):
     def test_abstract_base_model(self):
         with self.assertRaises(TypeError):
-            AbstractTestModel()
+            Model()

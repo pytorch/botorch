@@ -5,17 +5,17 @@ from time import time
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import torch
+from botorch.acquisition.utils import get_acquisition_function
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from torch import Tensor
 from torch.nn import Module
 
 from .. import fit_model
-from ..acquisition.batch_modules import BatchAcquisitionFunction
-from ..acquisition.utils import get_acquisition_function, squeeze_last_dim
 from ..gen import gen_candidates_scipy, get_best_candidates
 from ..models.model import Model
 from ..optim.initializers import get_similarity_measure, initialize_q_batch
 from ..utils.sampling import draw_sobol_samples
+from ..utils.transforms import squeeze_last_dim
 from .config import AcquisitionFunctionConfig, OptimizeConfig
 from .output import BenchmarkOutput, ClosedLoopOutput, _ModelBestPointOutput
 
@@ -251,7 +251,7 @@ def run_closed_loop(
         failed = True
         while retry <= optim_config.max_retries and failed:
             try:
-                acq_func: BatchAcquisitionFunction = get_acquisition_function(
+                acq_func = get_acquisition_function(
                     acquisition_function_name=acq_func_config.name,
                     model=model,
                     X_observed=train_X,
@@ -293,7 +293,7 @@ def run_closed_loop(
                         candidate_optim_options=optim_config.candidate_optim_options,
                     )
 
-                X = acq_func.extract_candidates(candidates).detach()
+                X = candidates.detach()
                 failed = False
             except Exception:
                 retry += 1

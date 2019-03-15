@@ -7,7 +7,7 @@ from torch import Tensor
 
 
 def get_objective_weights_transform(
-    objective_weights: Optional[Tensor]
+    weights: Optional[Tensor]
 ) -> Callable[[Tensor], Tensor]:
     """Greate a linear objective callable froma set of weights.
 
@@ -18,7 +18,7 @@ def get_objective_weights_transform(
     the objective weight is used to determine the optimization direction.
 
     Args:
-        objective_weights: a 1-dimensional Tensor containing a weight for each task.
+        weights: a 1-dimensional Tensor containing a weight for each task.
             If not provided, the identity mapping is used.
 
     Returns:
@@ -26,7 +26,7 @@ def get_objective_weights_transform(
 
     """
     # if no weights provided, just extract the single output
-    if objective_weights is None:
+    if weights is None:
         return lambda Y: Y.squeeze(-1)
     # TODO: replace with einsum once pytorch performance issues are resolved
-    return lambda Y: torch.sum(Y * objective_weights.view(1, 1, -1), dim=-1)
+    return lambda Y: torch.sum(Y * weights.view(1, 1, -1), dim=-1)
