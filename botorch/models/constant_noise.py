@@ -1,5 +1,10 @@
 #! /usr/bin/env python3
 
+"""
+GP model for problems with known constant observation noise level.
+"""
+
+
 from typing import Optional
 
 import torch

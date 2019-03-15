@@ -91,6 +91,14 @@ website/yarn.lock
 website/build/
 website/i18n/
 website/node_modules/
+
+## Generated for tutorials
+website/_tutorials/
+website/static/files/
+# website/pages/tutorials
+# !website/pages/tutorials/index.js
+
+## Generated for Sphinx
 website/pages/api/
 website/static/js/
 website/static/_sphinx-sources/

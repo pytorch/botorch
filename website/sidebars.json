@@ -6,7 +6,6 @@
   "docs": {
     "General": ["installation"],
     "Tutorials": ["tutorials"],
-    "API Reference": ["api_reference"],
     "Examples": ["examples"]
   }
 }

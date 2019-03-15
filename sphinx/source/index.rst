@@ -1,6 +1,6 @@
 :github_url: https://github.com/facebookexternal/botorch
 
-Welcome to botorch's documentation!
+Welcome to botorch's API reference!
 ===================================
 
 .. toctree::
