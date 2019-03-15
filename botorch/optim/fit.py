@@ -6,17 +6,14 @@ from typing import Any, Dict, List, NamedTuple, Optional, Tuple
 
 import gpytorch
 import numpy as np
-from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
-from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
-from gpytorch.mlls.variational_elbo import VariationalELBO
 from scipy.optimize import Bounds, minimize
 from torch import Tensor
 from torch.optim.adam import Adam
 from torch.optim.optimizer import Optimizer
 
 from .numpy_converter import TorchAttr, module_to_array, set_params_with_array
-from .utils import check_convergence
+from .utils import _get_extra_mll_args, check_convergence
 
 
 ParameterBounds = Dict[str, Tuple[Optional[float], Optional[float]]]
@@ -36,10 +33,12 @@ def fit_torch(
     optimizer_args: Optional[Dict[str, float]] = None,
     disp: bool = True,
     track_iterations: bool = True,
-) -> Tuple[MarginalLogLikelihood, Optional[List[OptimizationIteration]]]:
+) -> Tuple[MarginalLogLikelihood, List[OptimizationIteration]]:
     """Fit a gpytorch model by maximizing MLL with a torch optimizer.
 
     The model and likelihood in mll must already be in train mode.
+
+    Note: this method requires that the model has `train_inputs` and `train_targets`.
 
     Args:
         mll: MarginalLogLikelihood to be maximized.
@@ -76,7 +75,8 @@ def fit_torch(
         optimizer.zero_grad()
         output = mll.model(*train_inputs)
         # we sum here to support batch mode
-        loss = -mll(output, train_targets, *train_inputs).sum()
+        args = [output, train_targets] + _get_extra_mll_args(mll)
+        loss = -mll(*args).sum()
         loss.backward()
         loss_trajectory.append(loss.item())
         for name, param in mll.named_parameters():
@@ -92,7 +92,7 @@ def fit_torch(
             param_trajectory=param_trajectory,
             options={"maxiter": maxiter},
         )
-    return mll, iterations if track_iterations else None
+    return mll, iterations
 
 
 def fit_scipy(
@@ -101,11 +101,12 @@ def fit_scipy(
     method: str = "L-BFGS-B",
     options: Optional[Dict[str, Any]] = None,
     track_iterations: bool = True,
-    max_preconditioner_size: int = 10,
-) -> Tuple[MarginalLogLikelihood, Optional[List[OptimizationIteration]]]:
+) -> Tuple[MarginalLogLikelihood, List[OptimizationIteration]]:
     """Fit a gpytorch model by maximizing MLL with a scipy optimizer.
 
     The model and likelihood in mll must already be in train mode.
+
+    Note: this method requires that the model has `train_inputs` and `train_targets`.
 
     Args:
         mll: MarginalLogLikelihood to be maximized.
@@ -115,8 +116,6 @@ def fit_scipy(
         options: Dictionary of solver options, passed along to scipy.minimize.
         track_iterations: Track the function values and wall time for each
             iteration.
-        max_preconditioner_size: Size of gpytorch preconditioner, for improving
-            stability of the MLL estimate.
 
     Returns:
         mll: mll with parameters optimized in-place.
@@ -141,7 +140,7 @@ def fit_scipy(
     res = minimize(
         _scipy_objective_and_grad,
         x0,
-        args=(mll, property_dict, max_preconditioner_size),
+        args=(mll, property_dict),
         bounds=bounds,
         method=method,
         jac=True,
@@ -152,9 +151,7 @@ def fit_scipy(
     iterations = []
     if track_iterations:
         for i, xk in enumerate(xs):
-            obj, _ = _scipy_objective_and_grad(
-                xk, mll, property_dict, max_preconditioner_size
-            )
+            obj, _ = _scipy_objective_and_grad(xk, mll, property_dict)
             iterations.append(OptimizationIteration(i, obj, ts[i]))
 
     # Set to optimum
@@ -163,25 +160,14 @@ def fit_scipy(
 
 
 def _scipy_objective_and_grad(
-    x: np.ndarray,
-    mll: MarginalLogLikelihood,
-    property_dict: Dict[str, TorchAttr],
-    max_preconditioner_size: int,
+    x: np.ndarray, mll: MarginalLogLikelihood, property_dict: Dict[str, TorchAttr]
 ) -> Tuple[float, np.ndarray]:
     mll = set_params_with_array(mll, x, property_dict)
     train_inputs, train_targets = mll.model.train_inputs, mll.model.train_targets
     mll.zero_grad()
     output = mll.model(*train_inputs)
-    if isinstance(mll, ExactMarginalLogLikelihood) or isinstance(
-        mll, SumMarginalLogLikelihood
-    ):
-        args = (output, train_targets, *train_inputs)
-    elif isinstance(mll, VariationalELBO):
-        args = (output, train_targets)
-    else:
-        raise ValueError("Do not know how to optimize MLL type.")
-    with gpytorch.settings.max_preconditioner_size(max_preconditioner_size):
-        loss = -mll(*args).sum()
+    args = [output, train_targets] + _get_extra_mll_args(mll)
+    loss = -mll(*args).sum()
     loss.backward()
     param_dict = OrderedDict(mll.named_parameters())
     grad = []

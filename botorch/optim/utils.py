@@ -3,6 +3,10 @@
 from typing import Dict, List, Optional, Union
 
 import torch
+from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
+from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
+from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
+from gpytorch.mlls.variational_elbo import VariationalELBO
 from torch import Tensor
 
 
@@ -126,3 +130,27 @@ def _fix_feature(Z: Tensor, value: Optional[float]) -> Tensor:
     if value is None:
         return Z.detach()
     return torch.full_like(Z, value)
+
+
+def _get_extra_mll_args(
+    mll: MarginalLogLikelihood
+) -> Union[List[Tensor], List[List[Tensor]]]:
+    """
+    Get extra arguments (beyond the model output and training targets) required
+        for the particular type of MarginalLogLikelihood for a forward pass.
+
+    Args:
+        mll: MarginalLogLikelihood
+
+    Returns:
+        Union[List[Tensor], List[List[Tensor]]]: extra arguments
+    """
+    if isinstance(mll, ExactMarginalLogLikelihood):
+        return list(mll.model.train_inputs)
+    elif isinstance(mll, SumMarginalLogLikelihood):
+        return [list(x) for x in mll.model.train_inputs]
+
+    elif isinstance(mll, VariationalELBO):
+        return []
+    else:
+        raise ValueError("Do not know how to optimize MLL type.")
