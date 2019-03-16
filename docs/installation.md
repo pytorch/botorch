@@ -30,7 +30,7 @@ After installing the dependencies,
 * Download botorch from the [Git repository](https://github.com/facebookexternal/botorch).
 * `cd` into the `botorch` project and run:
 
-```
+```bash
 pip3 install -e .
 ```
 
