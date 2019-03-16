@@ -9,7 +9,6 @@ class OptimizeConfig(NamedTuple):
     """
 
     joint_optimization: bool = True  # whether to do joint or sequential optimization
-    fine_tune: bool = False  # whether to perform a secondary joint optimization
     initial_points: int = 10
     q: int = 5
     n_batch: int = 10
