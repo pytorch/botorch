@@ -2,7 +2,11 @@
   "Basic optimization loops": [
     {
       "id": "qEI_Hartmann6_noisy",
-      "title": "qEI, Noisy Hartmann6"
+      "title": "qEI, Hartmann6 (noisy)"
+    },
+    {
+      "id": "qEI_Hartmann6_noiselesss",
+      "title": "qEI, Hartmann6 (noiseless)"
     }
   ]
 }

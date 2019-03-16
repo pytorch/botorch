@@ -4,8 +4,10 @@
     "Design Philosophy": ["design_philosophy"]
   },
   "docs": {
+    "About": ["introduction", "design_philosophy"],
     "General": ["installation"],
-    "Tutorials": ["tutorials"],
-    "Examples": ["examples"]
+    "Basic Concepts": ["basic_concepts"],
+    "Examples": ["examples"],
+    "Advanced Use": ["advanced_use"]
   }
 }
