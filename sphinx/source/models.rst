@@ -59,9 +59,3 @@ GPyTorch Regression Models
 .. currentmodule:: botorch.models.multi_output_gp_regression
 .. autoclass:: MultiOutputGP
   :members:
-
-:hidden:`FidelityAwareSingleTaskGP`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. currentmodule:: botorch.models.fidelity_aware
-.. autoclass:: FidelityAwareSingleTaskGP
-  :members:
