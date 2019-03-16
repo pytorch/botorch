@@ -95,8 +95,8 @@ website/node_modules/
 ## Generated for tutorials
 website/_tutorials/
 website/static/files/
-# website/pages/tutorials
-# !website/pages/tutorials/index.js
+website/pages/tutorials/*
+!website/pages/tutorials/index.js
 
 ## Generated for Sphinx
 website/pages/api/
