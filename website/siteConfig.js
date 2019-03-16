@@ -27,8 +27,7 @@ const siteConfig = {
   organizationName: 'facebookexternal',
 
   headerLinks: [
-    {doc: 'introduction', label: 'About'},
-    {doc: 'installation', label: 'Get Started'},
+    {doc: 'introduction', label: 'Docs'},
     {href: '/tutorials/index', label: 'Tutorials'},
     {href: '/api/index', label: 'API Reference'},
     {blog: true, label: 'Blog'},
@@ -58,9 +57,13 @@ const siteConfig = {
   // Custom scripts that are placed in <head></head> of each page
   scripts: [
     'https://buttons.github.io/buttons.js',
+    '/js/code_block_buttons.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js',
     '/js/mathjax.js',
     'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML',
   ],
+
+  stylesheets: ['/css/code_block_buttons.css'],
 
   // On page navigation for the current documentation page.
   onPageNav: 'separate',

@@ -3,6 +3,8 @@
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
+ *
+ * @format
  */
 
 const React = require('react');
@@ -51,9 +53,6 @@ class Footer extends React.Component {
             </a>
             <a href={this.docUrl('api_reference.html', this.props.language)}>
               API Reference
-            </a>
-            <a href={this.docUrl('examples.html', this.props.language)}>
-              Examples
             </a>
           </div>
           <div>
