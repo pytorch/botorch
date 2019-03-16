@@ -100,5 +100,6 @@ website/pages/tutorials/*
 
 ## Generated for Sphinx
 website/pages/api/
-website/static/js/
+website/static/js/*
+!website/static/js/mathjax.js
 website/static/_sphinx-sources/
