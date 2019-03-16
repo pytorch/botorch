@@ -55,8 +55,12 @@ const siteConfig = {
     theme: 'default',
   },
 
-  // Add custom scripts here that would be placed in <script> tags.
-  scripts: ['https://buttons.github.io/buttons.js'],
+  // Custom scripts that are placed in <head></head> of each page
+  scripts: [
+    'https://buttons.github.io/buttons.js',
+    '/js/mathjax.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML',
+  ],
 
   // On page navigation for the current documentation page.
   onPageNav: 'separate',
