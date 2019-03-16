@@ -89,7 +89,6 @@ class TestRunClosedLoop(unittest.TestCase):
     def setUp(self):
         self.optim_config = OptimizeConfig(
             joint_optimization=True,
-            fine_tune=False,
             initial_points=5,
             q=2,
             n_batch=1,
@@ -109,15 +108,10 @@ class TestRunClosedLoop(unittest.TestCase):
 
         self.func = test_func
 
-    @mock.patch("botorch.benchmarks.optimize.initialize_q_batch")
+    @mock.patch("botorch.benchmarks.optimize.joint_optimize")
     @mock.patch("botorch.benchmarks.optimize._get_fitted_model")
-    @mock.patch("botorch.benchmarks.optimize.gen_candidates_scipy")
     def test_run_closed_loop(
-        self,
-        mock_gen_candidates_scipy,
-        mock_get_fitted_model,
-        mock_initialize_q_batch,
-        cuda=False,
+        self, mock_get_fitted_model, mock_joint_optimize, cuda=False
     ):
         for dtype in (torch.float, torch.double):
             bounds = get_bounds(cuda=cuda, dtype=dtype)
@@ -126,16 +120,10 @@ class TestRunClosedLoop(unittest.TestCase):
             def gen_x(b, q):
                 return gen_x_uniform(b, q, bounds=bounds)
 
-            mock_gen_candidates_scipy.side_effect = [
-                (
-                    gen_x(self.optim_config.num_starting_points, self.optim_config.q),
-                    torch.ones(self.optim_config.num_starting_points, **tkwargs),
-                )
+            mock_joint_optimize.side_effect = [
+                gen_x(self.optim_config.num_starting_points, self.optim_config.q)
                 for _ in range(self.optim_config.n_batch)
             ]
-            mock_initialize_q_batch.return_value = gen_x(
-                self.optim_config.num_starting_points, self.optim_config.q
-            )
             X = torch.zeros((self.optim_config.initial_points, 1), **tkwargs)
             Y, Ycov = self.func(X)
             mean1 = torch.ones(self.optim_config.initial_points, **tkwargs)
@@ -193,7 +181,6 @@ class TestRunBenchmark(unittest.TestCase):
     def setUp(self):
         self.optim_config = OptimizeConfig(
             joint_optimization=True,
-            fine_tune=False,
             initial_points=5,
             q=2,
             n_batch=2,
