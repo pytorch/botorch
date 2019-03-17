@@ -3,8 +3,9 @@
   https://travis-ci.com/facebookexternal/botorch.svg?token=esFvpzSw7sLSsfe1PAr1&branch=master
 )](https://travis-ci.com/facebookexternal/botorch)
 
-botorch is a library for Bayesian Optimization in pytorch.
-This is an alpha version under active development - expect things to break!
+botorch is a library for Bayesian Optimization in PyTorch.
+
+It is currently an alpha version under active development - expect things to break!
 
 
 ## Installation
@@ -17,7 +18,7 @@ This is an alpha version under active development - expect things to break!
 - scipy
 
 
-#### Install using conda
+#### Install into a clean conda environment
 
 1. Create the base environment using `conda env create -f botorch_base.yml`
 
