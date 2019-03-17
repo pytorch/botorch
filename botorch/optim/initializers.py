@@ -236,18 +236,32 @@ def initialize_q_batch_simple(
     max_val, max_idx = torch.max(Y, dim=0)
     if max_val <= 0:
         warn(
-            "All acquisition values for raw sampled points are zero, so initial "
-            "conditions are being selected randomly.",
+            "All acquisition values for raw sampled points are nonpositive, so "
+            "initial conditions are being selected randomly.",
             BadInitialCandidatesWarning,
         )
         return X[torch.randperm(n=n_samples, device=X.device)][:n]
-    non_zero = Y >= alpha * max_val
-    while non_zero.sum() < n:
+
+    # make sure there are at least `n` points with positive acquisition values
+    positive = Y > 0
+    num_positive = positive.sum()
+    if num_positive < n:
+        # select all positive points and then fill remaining quota with randomly
+        # selected points
+        remaining_indices = (~positive).nonzero().view(-1)
+        rand_indices = torch.randperm(remaining_indices.shape[0], device=Y.device)
+        sampled_remaining_indices = remaining_indices[rand_indices[: n - num_positive]]
+        positive[sampled_remaining_indices] = 1
+        return X[positive]
+    # select points within alpha of max_val, iteratively decreasing alpha by a
+    # factor of 10 as necessary
+    alpha_positive = Y >= alpha * max_val
+    while alpha_positive.sum() < n:
         alpha = 0.1 * alpha
-        non_zero = Y >= alpha * max_val
-    non_zero_idcs = torch.arange(len(Y), device=Y.device)[non_zero]
-    weights = torch.exp(eta * (Y[non_zero] / max_val - 1))
-    idcs = non_zero_idcs[torch.multinomial(weights, n)]
+        alpha_positive = Y >= alpha * max_val
+    alpha_positive_idcs = torch.arange(len(Y), device=Y.device)[alpha_positive]
+    weights = torch.exp(eta * (Y[alpha_positive] / max_val - 1))
+    idcs = alpha_positive_idcs[torch.multinomial(weights, n)]
     if max_idx not in idcs:
         idcs[-1] = max_idx
     return X[idcs]
