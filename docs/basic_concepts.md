@@ -65,32 +65,64 @@ from this distribution, the qMC-based acquisition functions can work with it.
 
 ## Objectives
 
-Objectives are modules that can be applied to model outputs, allowing for an
-easy way to transform model outputs. When using traditional analytic
-formulations of acquisition functions, one has to be quite careful to make
-sure that the transformation results in a posterior distribution of the
-transformed outputs that still satisfies the assumptions of the analytic
-formulation. For instance, to use standard Expected Improvement on a transformed
-output of a model, the transformation needs to be affine (this is because
-Gaussians are closed under affine distributions).
+Objectives are modules that allow for transforming model outputs. Typical use
+cases for this are scalarization of the outputs of a multi-output model
+(e.g. to explore the Pareto Frontier of multiple outcomes in a ParEGO-like
+fashion [^ParEGO]), or optimization subject to outcome constraints (in a noisy
+setting this is typically achieved by weighting the objective by the probability
+of feasibility [^NoisyEI]).
 
-When using (q)MC-based acquisition functions, however, this kind of care is not
-required and once can apply general transformations (as long as one makes sure
-that gradients can be back-propagated through this transformations).
+When using traditional analytic formulations of acquisition functions, one has
+to be quite careful to make sure that the transformation results in a posterior
+distribution of the transformed outputs that still satisfies the assumptions of
+the analytic formulation. For instance, to use standard Expected Improvement on
+a transformed output of a model, the transformation needs to be affine (this is
+because Gaussians are closed under affine transformations).
+
+When using (q)MC-based acquisition functions, however, much fewer assumptions
+are required, and one can apply general transformations to the model outputs
+with relative impunity (as long as one makes sure that gradients can be
+back-propagated through the transformation).
 
 Instead of passing the model output through an objective, one could of course
 also model the transformed objective directly. But this would potentially
 involve refitting the model numerous times to try different objectives on the
-outputs. Typical use cases for this are scalarization of the outputs of a
-multi-output model (e.g. to explore the Pareto Frontier of multiple outcomes in
-a ParEGO-like fashion), or optimization subject to outcome constraints,
-where one may want to try out different bounds on some of the outputs.
+outputs.
+
+[^ParEGO]: J. Knowles. *ParEGO: A hybrid algorithm with on-line landscape
+approximation for expensive multiobjective optimization problems.*
+IEEE Transactions on Evolutionary Computation, 2006.
+
+[^NoisyEI]: B. Letham, B. Karrer, G. Ottoni and Bakshy, E. *Constrained Bayesian
+Optimization with Noisy Experiments.* Bayesian Analysis, 2018.
 
 
 ## Acquisition Functions
 
+In Bayesian Optimization, acquisition functions are heuristics employed to
+evaluate the usefulness of one of more design points for achieving the objective
+of maximizing the underlying black box function.
+
+Some of these acquisition functions have closed-form solutions under typical
+Gaussian posteriors, but many of them (especially when assessing the joint
+value of multiple points) do not. botorch supports both analytic as well as
+(quasi-) Monte-Carlo based acquisition functions. It comes bundled with the
+most common ones out of the box, and makes it very easy to implement and test
+new ones.
 
 ### Analytic
+
+Analytic acquisition functions are simple enough to allow an explicit expression
+in terms of the summary statistics of the posterior distribution at the
+evaluated point(s).
+
+A classic such acuqisition funciton is Expected Improvement, given by
+
+$$ EI(x) = \mathbb{E}[\max(f(x) - f_{max}, 0) | ] $$
+
+where $f(x) \sim \mathcal{N}(\mu(x), \sigma^2(x))$ with $\mu(x)$ and $\sigma(x)$
+the posterior mean and variance of $f$ at the point $x$, and where $f_{max}$ is
+the best function value observed so far (assuming noiseless observations).
 
 **TODO**
 
