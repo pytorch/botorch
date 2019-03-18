@@ -18,35 +18,35 @@ class CNN(nn.Module):
 
     def __init__(self):
         super().__init__()
-        self.conv1 = nn.Conv2d(1, 20, 5, 1)
-        self.conv2 = nn.Conv2d(20, 50, 5, 1)
-        self.fc1 = nn.Linear(4 * 4 * 50, 500)
-        self.fc2 = nn.Linear(500, 10)
+        self.conv1 = nn.Conv2d(1, 20, kernel_size=5, stride=1)
+        self.fc1 = nn.Linear(8 * 8 * 20, 64)
+        self.fc2 = nn.Linear(64, 10)
 
     def forward(self, x):
         x = F.relu(self.conv1(x))
-        x = F.max_pool2d(x, 2, 2)
-        x = F.relu(self.conv2(x))
-        x = F.max_pool2d(x, 2, 2)
-        x = x.view(-1, 4 * 4 * 50)
+        x = F.max_pool2d(x, 3, 3)
+        x = x.view(-1, 8 * 8 * 20)
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
-        return F.log_softmax(x)
+        return F.log_softmax(x, dim=-1)
 
 
-def load_mnist() -> Tuple[DataLoader, DataLoader, DataLoader]:
+def load_mnist(
+    downsample_pct: float = 0.5, train_pct: float = 0.8
+) -> Tuple[DataLoader, DataLoader, DataLoader]:
     """
     Load MNIST dataset (download if necessary) and split data into training,
         validation, and test sets.
 
     Args:
-        None
+        downsample_pct: the proportion of the dataset to use for training,
+            validation, and test
+        train_pct: the proportion of the downsampled data to use for training
     Returns:
         DataLoader: training data
         DataLoader: validation data
         DataLoader: test data
     """
-    TRAIN_PCT = 0.8
     # Specify transforms
     transform = transforms.Compose(
         [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
@@ -57,19 +57,34 @@ def load_mnist() -> Tuple[DataLoader, DataLoader, DataLoader]:
     )
 
     # Partition into training/validation
-    n_train_examples = int(TRAIN_PCT * len(train_valid_set))
-    n_valid_examples = len(train_valid_set) - n_train_examples
-    train_set, valid_set = torch.utils.data.random_split(
-        train_valid_set, lengths=[n_train_examples, n_valid_examples]
+    downsampled_num_examples = int(downsample_pct * len(train_valid_set))
+    n_train_examples = int(train_pct * downsampled_num_examples)
+    n_valid_examples = downsampled_num_examples - n_train_examples
+    train_set, valid_set, _ = torch.utils.data.random_split(
+        train_valid_set,
+        lengths=[
+            n_train_examples,
+            n_valid_examples,
+            len(train_valid_set) - downsampled_num_examples,
+        ],
     )
-    train_loader = DataLoader(train_set, batch_size=4, shuffle=True, num_workers=2)
-    valid_loader = DataLoader(valid_set, batch_size=4, shuffle=True, num_workers=2)
+    train_loader = DataLoader(train_set, batch_size=128, shuffle=True, num_workers=2)
+    valid_loader = DataLoader(valid_set, batch_size=128, shuffle=True, num_workers=2)
 
     # Load test set
-    test_set = torchvision.datasets.MNIST(
+    test_set_all = torchvision.datasets.MNIST(
         root="./data", train=False, download=True, transform=transform
     )
-    test_loader = DataLoader(test_set, batch_size=4, shuffle=False, num_workers=2)
+    downsampled_num_test_examples = int(downsample_pct * len(test_set_all))
+    test_set, _ = torch.utils.data.random_split(
+        test_set_all,
+        lengths=[
+            downsampled_num_test_examples,
+            len(test_set_all) - downsampled_num_test_examples,
+        ],
+    )
+    test_loader = DataLoader(test_set, batch_size=128, shuffle=False, num_workers=2)
+
     return train_loader, valid_loader, test_loader
 
 
