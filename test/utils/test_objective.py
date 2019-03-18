@@ -3,7 +3,48 @@
 import unittest
 
 import torch
-from botorch.utils import get_objective_weights_transform
+from botorch.utils import apply_constraints_, get_objective_weights_transform
+from torch import Tensor
+
+
+def ones_f(samples: Tensor) -> Tensor:
+    return torch.ones(samples.shape[0:-1], device=samples.device, dtype=samples.dtype)
+
+
+def zeros_f(samples: Tensor) -> Tensor:
+    return torch.zeros(samples.shape[0:-1], device=samples.device, dtype=samples.dtype)
+
+
+def minus_one_f(samples: Tensor) -> Tensor:
+    return -torch.ones(samples.shape[0:-1], device=samples.device, dtype=samples.dtype)
+
+
+class TestApplyConstraints(unittest.TestCase):
+    def test_apply_constraints(self):
+        # nonnegative objective, one constraint
+        samples = torch.randn(1)
+        obj = ones_f(samples)
+        apply_constraints_(
+            obj=obj, constraints=[zeros_f], samples=samples, infeasible_cost=0.0
+        )
+        self.assertTrue(torch.equal(obj, ones_f(samples) * 0.5))
+        # nonnegative objective, two constraint
+        samples = torch.randn(1)
+        obj = ones_f(samples)
+        apply_constraints_(
+            obj=obj,
+            constraints=[zeros_f, zeros_f],
+            samples=samples,
+            infeasible_cost=0.0,
+        )
+        self.assertTrue(torch.equal(obj, ones_f(samples) * 0.5 * 0.5))
+        # negative objective, one constraint, infeasible_cost
+        samples = torch.randn(1)
+        obj = minus_one_f(samples)
+        apply_constraints_(
+            obj=obj, constraints=[zeros_f], samples=samples, infeasible_cost=2.0
+        )
+        self.assertTrue(torch.equal(obj, ones_f(samples) * 0.5 - 2.0))
 
 
 class TestGetObjectiveWeightsTransform(unittest.TestCase):

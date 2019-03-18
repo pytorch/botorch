@@ -8,6 +8,7 @@ from abc import ABC, abstractmethod
 from typing import Callable, List
 
 import torch
+from botorch.utils import apply_constraints_
 from torch import Tensor
 from torch.nn import Module
 
@@ -94,7 +95,7 @@ class ConstrainedMCObjective(GenericMCObjective):
         self.register_buffer("infeasible_cost", torch.tensor(infeasible_cost))
 
     def forward(self, samples: Tensor) -> Tensor:
-        """Evaluate the feasibility-weigthed objective on the samples.
+        """Evaluate the feasibility-weighted objective on the samples.
 
         Args:
             samples: A `sample_shape x batch_shape x q x t`-dim Tensors of
@@ -105,16 +106,12 @@ class ConstrainedMCObjective(GenericMCObjective):
                 values weighted by feasibility (assuming maximization).
         """
         obj = super().forward(samples=samples)
-        # apply the constraints to the objective first; then, compare with
-        # best_f (which could be -M if no feasible point has been found)
-        # TODO (T41447357): Fix this so we can backprop
-        all_con_feasible = torch.ones(obj.shape, dtype=torch.uint8, device=obj.device)
-        for constraint in self.constraints:
-            # con has dimensions n_samples x b x q
-            con = constraint(samples)
-            this_con_feasible = con <= 0
-            all_con_feasible.mul_(this_con_feasible)
-        obj[~all_con_feasible] = -self.infeasible_cost
+        apply_constraints_(
+            obj=obj,
+            constraints=self.constraints,
+            samples=samples,
+            infeasible_cost=self.infeasible_cost,
+        )
         return obj
 
 

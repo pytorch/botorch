@@ -4,16 +4,26 @@ import unittest
 
 import torch
 from botorch.acquisition.objective import (
+    ConstrainedMCObjective,
     GenericMCObjective,
     IdentityMCObjective,
     LinearMCObjective,
     MCAcquisitionObjective,
 )
+from botorch.utils import apply_constraints_
 from torch import Tensor
 
 
 def generic_obj(samples: Tensor) -> Tensor:
     return torch.log(torch.sum(samples ** 2, dim=-1))
+
+
+def infeasible_con(samples: Tensor) -> Tensor:
+    return torch.ones(samples.shape[0:-1], device=samples.device, dtype=samples.dtype)
+
+
+def feasible_con(samples: Tensor) -> Tensor:
+    return -torch.ones(samples.shape[0:-1], device=samples.device, dtype=samples.dtype)
 
 
 class TestMCAcquisitionObjective(unittest.TestCase):
@@ -43,8 +53,77 @@ class TestGenericMCObjective(unittest.TestCase):
 
 class TestConstrainedMCObjective(unittest.TestCase):
     def test_constrained_mc_objective(self, cuda=False):
-        # TODO: T41739872 Implement test for ConstrainedMCObjective
-        pass
+        device = torch.device("cuda") if cuda else torch.device("cpu")
+        for dtype in (torch.float, torch.double):
+            # one feasible constraint
+            obj = ConstrainedMCObjective(
+                objective=generic_obj, constraints=[feasible_con]
+            )
+            samples = torch.randn(1, device=device, dtype=dtype)
+            constrained_obj = generic_obj(samples)
+            apply_constraints_(
+                obj=constrained_obj,
+                constraints=[feasible_con],
+                samples=samples,
+                infeasible_cost=0.0,
+            )
+            self.assertTrue(torch.equal(obj(samples), constrained_obj))
+            # one infeasible constraint
+            obj = ConstrainedMCObjective(
+                objective=generic_obj, constraints=[infeasible_con]
+            )
+            samples = torch.randn(2, device=device, dtype=dtype)
+            constrained_obj = generic_obj(samples)
+            apply_constraints_(
+                obj=constrained_obj,
+                constraints=[infeasible_con],
+                samples=samples,
+                infeasible_cost=0.0,
+            )
+            self.assertTrue(torch.equal(obj(samples), constrained_obj))
+            # one feasible, one infeasible
+            obj = ConstrainedMCObjective(
+                objective=generic_obj, constraints=[feasible_con, infeasible_con]
+            )
+            samples = torch.randn(2, 1, device=device, dtype=dtype)
+            constrained_obj = generic_obj(samples)
+            apply_constraints_(
+                obj=constrained_obj,
+                constraints=[feasible_con, infeasible_con],
+                samples=samples,
+                infeasible_cost=0.0,
+            )
+            self.assertTrue(torch.equal(obj(samples), constrained_obj))
+            # one feasible, one infeasible, infeasible_cost
+            obj = ConstrainedMCObjective(
+                objective=generic_obj,
+                constraints=[feasible_con, infeasible_con],
+                infeasible_cost=5.0,
+            )
+            samples = torch.randn(3, 2, device=device, dtype=dtype)
+            constrained_obj = generic_obj(samples)
+            apply_constraints_(
+                obj=constrained_obj,
+                constraints=[feasible_con, infeasible_con],
+                samples=samples,
+                infeasible_cost=5.0,
+            )
+            self.assertTrue(torch.equal(obj(samples), constrained_obj))
+            # one feasible, one infeasible, infeasible_cost, higher dimension
+            obj = ConstrainedMCObjective(
+                objective=generic_obj,
+                constraints=[feasible_con, infeasible_con],
+                infeasible_cost=5.0,
+            )
+            samples = torch.randn(4, 3, 2, device=device, dtype=dtype)
+            constrained_obj = generic_obj(samples)
+            apply_constraints_(
+                obj=constrained_obj,
+                constraints=[feasible_con, infeasible_con],
+                samples=samples,
+                infeasible_cost=5.0,
+            )
+            self.assertTrue(torch.equal(obj(samples), constrained_obj))
 
     def test_constrained_mc_objective_cuda(self, cuda=False):
         if torch.cuda.is_available():
