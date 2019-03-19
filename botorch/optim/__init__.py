@@ -6,11 +6,11 @@ from .initializers import (
     initialize_q_batch_simple,
 )
 from .numpy_converter import module_to_array, set_params_with_array
-from .optimize import gen_batch_initial_arms, joint_optimize, sequential_optimize
+from .optimize import gen_batch_initial_candidates, joint_optimize, sequential_optimize
 
 
 __all__ = [
-    "gen_batch_initial_arms",
+    "gen_batch_initial_candidates",
     "get_similarity_measure",
     "initialize_q_batch",
     "initialize_q_batch_simple",
