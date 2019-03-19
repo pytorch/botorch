@@ -277,7 +277,7 @@ def run_closed_loop(
                 candidates = optimize(
                     acq_function=acq_function,
                     bounds=torch.stack([lower_bounds, upper_bounds]),
-                    n=optim_config.q,
+                    q=optim_config.q,
                     num_restarts=optim_config.num_starting_points,
                     raw_samples=optim_config.num_raw_samples,
                     options=optim_config.candidate_optim_options,

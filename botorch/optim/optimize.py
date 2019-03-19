@@ -21,7 +21,7 @@ from .initializers import (
 def sequential_optimize(
     acq_function: MCAcquisitionFunction,
     bounds: Tensor,
-    n: int,
+    q: int,
     num_restarts: int,
     raw_samples: int,
     options: Dict[str, Union[bool, float, int]],
@@ -34,7 +34,7 @@ def sequential_optimize(
     Args:
         acq_function: A qNoisyExpectedImprovement acquisition function.
         bounds: A `2 x d` tensor of lower and upper bounds for each column of X.
-        n: The number of candidates.
+        q: The number of candidates.
         num_restarts:  Number of starting points for multistart acquisition
             function optimization.
         raw_samples: number of samples for initialization
@@ -55,11 +55,11 @@ def sequential_optimize(
     candidate_list = []
     candidates = torch.tensor([])
     base_X_baseline = acq_function.X_baseline  # pyre-ignore: [16]
-    for _ in range(n):
+    for _ in range(q):
         candidate = joint_optimize(
             acq_function=acq_function,
             bounds=bounds,
-            n=1,
+            q=1,
             num_restarts=num_restarts,
             raw_samples=raw_samples,
             options=options,
@@ -83,7 +83,7 @@ def sequential_optimize(
 def joint_optimize(
     acq_function: MCAcquisitionFunction,
     bounds: Tensor,
-    n: int,
+    q: int,
     num_restarts: int,
     raw_samples: int,
     options: Dict[str, Union[bool, float, int]],
@@ -96,7 +96,7 @@ def joint_optimize(
     Args:
         acq_function:  An acquisition function Module
         bounds: A `2 x d` tensor of lower and upper bounds for each column of X.
-        n: The number of candidates
+        q: The number of candidates
         num_restarts:  Number of starting points for multistart acquisition
             function optimization.
         raw_samples: number of samples for initialization
@@ -111,17 +111,17 @@ def joint_optimize(
     Returns:
         The set of generated candidates
     """
-    batch_initial_arms = gen_batch_initial_arms(
+    batch_initial_candidates = gen_batch_initial_candidates(
         acq_function=acq_function,
         bounds=bounds,
-        n=n,
+        q=q,
         num_restarts=num_restarts,
         raw_samples=raw_samples,
         options=options,
     )
     # optimize using random restart optimization
     batch_candidates, batch_acq_values = gen_candidates_scipy(
-        initial_candidates=batch_initial_arms,
+        initial_candidates=batch_initial_candidates,
         acquisition_function=acq_function,
         lower_bounds=bounds[0],
         upper_bounds=bounds[1],
@@ -133,10 +133,10 @@ def joint_optimize(
     )
 
 
-def gen_batch_initial_arms(
+def gen_batch_initial_candidates(
     acq_function: Module,
     bounds: Tensor,
-    n: int,
+    q: int,
     num_restarts: int,
     raw_samples: int,
     options: Dict[str, Union[bool, float, int]],
@@ -147,17 +147,17 @@ def gen_batch_initial_arms(
     while factor < max_factor:
         with warnings.catch_warnings(record=True) as ws:
             X_rnd = draw_sobol_samples(
-                bounds=bounds, n=raw_samples * factor, q=n, seed=seed
+                bounds=bounds, n=raw_samples * factor, q=q, seed=seed
             )
             with torch.no_grad():
                 Y_rnd = acq_function(X_rnd)
             if options.get("simple_init", True):
-                batch_initial_arms = initialize_q_batch_simple(
+                batch_initial_candidates = initialize_q_batch_simple(
                     X=X_rnd, Y=Y_rnd, n=num_restarts, options=options
                 )
             else:
                 sim_measure = get_similarity_measure(model=acq_function.model)
-                batch_initial_arms = initialize_q_batch(
+                batch_initial_candidates = initialize_q_batch(
                     X=X_rnd,
                     Y=Y_rnd,
                     n=num_restarts,
@@ -169,7 +169,7 @@ def gen_batch_initial_arms(
                 issubclass(w.category, BadInitialCandidatesWarning)  # pyre-ignore: [16]
                 for w in ws  # pyre-ignore: [16]
             ):
-                return batch_initial_arms
+                return batch_initial_candidates
             if factor < max_factor:
                 factor += 1
     warnings.warn(
@@ -177,4 +177,4 @@ def gen_batch_initial_arms(
         "are being selected randomly.",
         BadInitialCandidatesWarning,  # pyre-ignore: [16]
     )
-    return batch_initial_arms
+    return batch_initial_candidates
