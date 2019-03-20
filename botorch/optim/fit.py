@@ -147,7 +147,6 @@ def fit_scipy(
         options=options,
         callback=cb,
     )
-
     iterations = []
     if track_iterations:
         for i, xk in enumerate(xs):

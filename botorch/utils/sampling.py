@@ -134,7 +134,9 @@ def draw_sobol_samples(
     rng = bounds[1] - bounds[0]
     sobol_engine = SobolEngine(d, scramble=True, seed=seed)
     samples_np = sobol_engine.draw(n * q).reshape(n, q, d)
-    samples_raw = torch.from_numpy(samples_np).type_as(lower)
+    samples_raw = torch.from_numpy(samples_np).to(
+        device=lower.device, dtype=lower.dtype
+    )
     return lower + rng * samples_raw
 
 

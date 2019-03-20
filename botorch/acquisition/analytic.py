@@ -17,7 +17,13 @@ from ..models.model import Model
 from .acquisition import AcquisitionFunction
 
 
-class SingleOutcomeAcquisitionFunction(AcquisitionFunction, ABC):
+class AnalyticAcquisitionFunction(AcquisitionFunction, ABC):
+    """Base class for analytic acquisition functions."""
+
+    pass
+
+
+class SingleOutcomeAcquisitionFunction(AnalyticAcquisitionFunction, ABC):
     """Base class for single-outcome Acquistion functions."""
 
     def __init__(self, model: Model) -> None:
