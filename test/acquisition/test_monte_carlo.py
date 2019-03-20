@@ -40,14 +40,17 @@ class TestQExpectedImprovement(unittest.TestCase):
             res = acqf(X)
             self.assertEqual(res.item(), 1.0)
 
-            # basic test, fixed seed
+            # basic test, no resample
             sampler = IIDNormalSampler(num_samples=2, seed=12345)
             acqf = qExpectedImprovement(model=mm, best_f=0, sampler=sampler)
             res = acqf(X)
             self.assertEqual(res.item(), 0.0)
             self.assertEqual(acqf.sampler.base_samples.shape, torch.Size([2, 1, 1, 1]))
+            bs = acqf.sampler.base_samples.clone()
+            res = acqf(X)
+            self.assertTrue(torch.equal(acqf.sampler.base_samples, bs))
 
-            # basic test, qmc
+            # basic test, qmc, no resample
             sampler = SobolQMCNormalSampler(num_samples=2)
             acqf = qExpectedImprovement(model=mm, best_f=0, sampler=sampler)
             res = acqf(X)
@@ -55,17 +58,17 @@ class TestQExpectedImprovement(unittest.TestCase):
             self.assertEqual(acqf.sampler.base_samples.shape, torch.Size([2, 1, 1, 1]))
             bs = acqf.sampler.base_samples.clone()
             acqf(X)
-            self.assertFalse(torch.equal(acqf.sampler.base_samples, bs))
+            self.assertTrue(torch.equal(acqf.sampler.base_samples, bs))
 
-            # basic test, qmc, fixed seed
-            sampler = SobolQMCNormalSampler(num_samples=2, seed=12345)
+            # basic test, qmc, resample
+            sampler = SobolQMCNormalSampler(num_samples=2, resample=True)
             acqf = qExpectedImprovement(model=mm, best_f=0, sampler=sampler)
             res = acqf(X)
             self.assertEqual(res.item(), 0.0)
             self.assertEqual(acqf.sampler.base_samples.shape, torch.Size([2, 1, 1, 1]))
             bs = acqf.sampler.base_samples.clone()
             acqf(X)
-            self.assertTrue(torch.equal(acqf.sampler.base_samples, bs))
+            self.assertFalse(torch.equal(acqf.sampler.base_samples, bs))
 
     def test_q_expected_improvement_cuda(self):
         if torch.cuda.is_available():
@@ -95,7 +98,7 @@ class TestQExpectedImprovement(unittest.TestCase):
             self.assertEqual(res[0].item(), 2.0)
             self.assertEqual(res[1].item(), 1.0)
 
-            # test batch mode, fixed seed
+            # test batch mode, no resample
             sampler = IIDNormalSampler(num_samples=2, seed=12345)
             acqf = qExpectedImprovement(model=mm, best_f=0, sampler=sampler)
             res = acqf(X)  # 1-dim batch
@@ -114,7 +117,7 @@ class TestQExpectedImprovement(unittest.TestCase):
             acqf(X.expand(2, 1, 1))
             self.assertTrue(torch.equal(acqf.sampler.base_samples, bs))
 
-            # test batch mode, qmc
+            # test batch mode, qmc, no resample
             sampler = SobolQMCNormalSampler(num_samples=2)
             acqf = qExpectedImprovement(model=mm, best_f=0, sampler=sampler)
             res = acqf(X)
@@ -123,10 +126,10 @@ class TestQExpectedImprovement(unittest.TestCase):
             self.assertEqual(acqf.sampler.base_samples.shape, torch.Size([2, 1, 2, 1]))
             bs = acqf.sampler.base_samples.clone()
             acqf(X)
-            self.assertFalse(torch.equal(acqf.sampler.base_samples, bs))
+            self.assertTrue(torch.equal(acqf.sampler.base_samples, bs))
 
-            # test batch mode, qmc, fixed seed
-            sampler = SobolQMCNormalSampler(num_samples=2, seed=12345)
+            # test batch mode, qmc, resample
+            sampler = SobolQMCNormalSampler(num_samples=2, resample=True)
             acqf = qExpectedImprovement(model=mm, best_f=0, sampler=sampler)
             res = acqf(X)  # 1-dim batch
             self.assertEqual(res[0].item(), 1.0)
@@ -134,7 +137,7 @@ class TestQExpectedImprovement(unittest.TestCase):
             self.assertEqual(acqf.sampler.base_samples.shape, torch.Size([2, 1, 2, 1]))
             bs = acqf.sampler.base_samples.clone()
             acqf(X)
-            self.assertTrue(torch.equal(acqf.sampler.base_samples, bs))
+            self.assertFalse(torch.equal(acqf.sampler.base_samples, bs))
             res = acqf(X.expand(2, 1, 1))  # 2-dim batch
             self.assertEqual(res[0].item(), 1.0)
             self.assertEqual(res[1].item(), 0.0)
@@ -142,7 +145,7 @@ class TestQExpectedImprovement(unittest.TestCase):
             self.assertEqual(acqf.sampler.base_samples.shape, torch.Size([2, 1, 2, 1]))
             bs = acqf.sampler.base_samples.clone()
             acqf(X.expand(2, 1, 1))
-            self.assertTrue(torch.equal(acqf.sampler.base_samples, bs))
+            self.assertFalse(torch.equal(acqf.sampler.base_samples, bs))
 
     def test_q_expected_improvement_batch_cuda(self):
         if torch.cuda.is_available():
@@ -172,29 +175,8 @@ class TestQNoisyExpectedImprovement(unittest.TestCase):
             res = acqf(X)
             self.assertEqual(res.item(), 1.0)
 
-            # basic test, fixed seed
+            # basic test, no resample
             sampler = IIDNormalSampler(num_samples=2, seed=12345)
-            acqf = qNoisyExpectedImprovement(
-                model=mm_noisy, X_baseline=X_baseline, sampler=sampler
-            )
-            res = acqf(X)
-            self.assertEqual(res.item(), 1.0)
-            self.assertEqual(acqf.sampler.base_samples.shape, torch.Size([2, 1, 2, 1]))
-
-            # basic test, qmc
-            sampler = SobolQMCNormalSampler(num_samples=2)
-            acqf = qNoisyExpectedImprovement(
-                model=mm_noisy, X_baseline=X_baseline, sampler=sampler
-            )
-            res = acqf(X)
-            self.assertEqual(res.item(), 1.0)
-            self.assertEqual(acqf.sampler.base_samples.shape, torch.Size([2, 1, 2, 1]))
-            bs = acqf.sampler.base_samples.clone()
-            acqf(X)
-            self.assertFalse(torch.equal(acqf.sampler.base_samples, bs))
-
-            # basic test, qmc, fixed seed
-            sampler = SobolQMCNormalSampler(num_samples=2, seed=12345)
             acqf = qNoisyExpectedImprovement(
                 model=mm_noisy, X_baseline=X_baseline, sampler=sampler
             )
@@ -204,6 +186,30 @@ class TestQNoisyExpectedImprovement(unittest.TestCase):
             bs = acqf.sampler.base_samples.clone()
             acqf(X)
             self.assertTrue(torch.equal(acqf.sampler.base_samples, bs))
+
+            # basic test, qmc, no resample
+            sampler = SobolQMCNormalSampler(num_samples=2)
+            acqf = qNoisyExpectedImprovement(
+                model=mm_noisy, X_baseline=X_baseline, sampler=sampler
+            )
+            res = acqf(X)
+            self.assertEqual(res.item(), 1.0)
+            self.assertEqual(acqf.sampler.base_samples.shape, torch.Size([2, 1, 2, 1]))
+            bs = acqf.sampler.base_samples.clone()
+            acqf(X)
+            self.assertTrue(torch.equal(acqf.sampler.base_samples, bs))
+
+            # basic test, qmc, resample
+            sampler = SobolQMCNormalSampler(num_samples=2, resample=True, seed=12345)
+            acqf = qNoisyExpectedImprovement(
+                model=mm_noisy, X_baseline=X_baseline, sampler=sampler
+            )
+            res = acqf(X)
+            self.assertEqual(res.item(), 1.0)
+            self.assertEqual(acqf.sampler.base_samples.shape, torch.Size([2, 1, 2, 1]))
+            bs = acqf.sampler.base_samples.clone()
+            acqf(X)
+            self.assertFalse(torch.equal(acqf.sampler.base_samples, bs))
 
     def test_q_noisy_expected_improvement_cuda(self):
         if torch.cuda.is_available():
@@ -230,7 +236,7 @@ class TestQNoisyExpectedImprovement(unittest.TestCase):
             self.assertEqual(res[0].item(), 1.0)
             self.assertEqual(res[1].item(), 0.0)
 
-            # test batch mode, fixed seed
+            # test batch mode, no resample
             sampler = IIDNormalSampler(num_samples=2, seed=12345)
             acqf = qNoisyExpectedImprovement(
                 model=mm_noisy, X_baseline=X_baseline, sampler=sampler
@@ -251,7 +257,7 @@ class TestQNoisyExpectedImprovement(unittest.TestCase):
             acqf(X.expand(2, 1, 1))
             self.assertTrue(torch.equal(acqf.sampler.base_samples, bs))
 
-            # test batch mode, qmc
+            # test batch mode, qmc, no resample
             sampler = SobolQMCNormalSampler(num_samples=2)
             acqf = qNoisyExpectedImprovement(
                 model=mm_noisy, X_baseline=X_baseline, sampler=sampler
@@ -262,10 +268,10 @@ class TestQNoisyExpectedImprovement(unittest.TestCase):
             self.assertEqual(acqf.sampler.base_samples.shape, torch.Size([2, 1, 3, 1]))
             bs = acqf.sampler.base_samples.clone()
             acqf(X)
-            self.assertFalse(torch.equal(acqf.sampler.base_samples, bs))
+            self.assertTrue(torch.equal(acqf.sampler.base_samples, bs))
 
-            # test X_pending w/ batch mode, qmc, fixed seed
-            sampler = SobolQMCNormalSampler(num_samples=2, seed=12345)
+            # test X_pending w/ batch mode, qmc, resample
+            sampler = SobolQMCNormalSampler(num_samples=2, resample=True, seed=12345)
             acqf = qNoisyExpectedImprovement(
                 model=mm_noisy, X_baseline=X_baseline, sampler=sampler
             )
@@ -275,7 +281,7 @@ class TestQNoisyExpectedImprovement(unittest.TestCase):
             self.assertEqual(acqf.sampler.base_samples.shape, torch.Size([2, 1, 3, 1]))
             bs = acqf.sampler.base_samples.clone()
             acqf(X)
-            self.assertTrue(torch.equal(acqf.sampler.base_samples, bs))
+            self.assertFalse(torch.equal(acqf.sampler.base_samples, bs))
             res = acqf(X.expand(2, 1, 1))  # 2-dim batch
             self.assertEqual(res[0].item(), 1.0)
             self.assertEqual(res[1].item(), 0.0)
@@ -283,7 +289,7 @@ class TestQNoisyExpectedImprovement(unittest.TestCase):
             self.assertEqual(acqf.sampler.base_samples.shape, torch.Size([2, 1, 3, 1]))
             bs = acqf.sampler.base_samples.clone()
             acqf(X.expand(2, 1, 1))
-            self.assertTrue(torch.equal(acqf.sampler.base_samples, bs))
+            self.assertFalse(torch.equal(acqf.sampler.base_samples, bs))
 
     def test_q_noisy_expected_improvement_batch_cuda(self):
         if torch.cuda.is_available():
