@@ -37,9 +37,9 @@ class TestBaseMCSampler(unittest.TestCase):
 class TestIIDNormalSampler(unittest.TestCase):
     def test_get_base_sample_shape(self):
         sampler = IIDNormalSampler(num_samples=4)
+        self.assertFalse(sampler.resample)
         self.assertEqual(sampler.sample_shape, torch.Size([4]))
         self.assertTrue(sampler.collapse_batch_dims)
-        self.assertIsNone(sampler.seed)
         # check sample shape non-batched
         posterior = _get_posterior()
         bss = sampler._get_base_sample_shape(posterior=posterior)
@@ -51,9 +51,9 @@ class TestIIDNormalSampler(unittest.TestCase):
 
     def test_get_base_sample_shape_no_collapse(self):
         sampler = IIDNormalSampler(num_samples=4, collapse_batch_dims=False)
+        self.assertFalse(sampler.resample)
         self.assertEqual(sampler.sample_shape, torch.Size([4]))
         self.assertFalse(sampler.collapse_batch_dims)
-        self.assertIsNone(sampler.seed)
         # check sample shape non-batched
         posterior = _get_posterior()
         bss = sampler._get_base_sample_shape(posterior=posterior)
@@ -66,33 +66,45 @@ class TestIIDNormalSampler(unittest.TestCase):
     def test_forward(self, cuda=False):
         for dtype in (torch.float, torch.double):
 
-            # no fixed seed
-            sampler = IIDNormalSampler(num_samples=4)
+            # no resample
+            sampler = IIDNormalSampler(num_samples=4, seed=1234)
+            self.assertFalse(sampler.resample)
+            self.assertEqual(sampler.seed, 1234)
+            self.assertTrue(sampler.collapse_batch_dims)
             # check samples non-batched
             posterior = _get_posterior(cuda=cuda, dtype=dtype)
             samples = sampler(posterior)
             self.assertEqual(samples.shape, torch.Size([4, 2, 1]))
-            # ensure samples are different
-            samples2 = sampler(posterior)
-            self.assertFalse(torch.allclose(samples, samples2))
-            # ensure this works with a differently shaped posterior
-            posterior_batched = _get_posterior_batched(cuda=cuda, dtype=dtype)
-            samples_batched = sampler(posterior_batched)
-            self.assertEqual(samples_batched.shape, torch.Size([4, 3, 2, 1]))
-
-            # fixed seed
-            sampler = IIDNormalSampler(num_samples=4, seed=1234)
-            # check samples non-batched
-            posterior = _get_posterior(cuda=cuda, dtype=dtype)
-            samples = sampler(posterior=posterior)
-            self.assertEqual(samples.shape, torch.Size([4, 2, 1]))
+            self.assertEqual(sampler.seed, 1235)
             # ensure samples are the same
             samples2 = sampler(posterior)
             self.assertTrue(torch.allclose(samples, samples2))
+            self.assertEqual(sampler.seed, 1235)
             # ensure this works with a differently shaped posterior
             posterior_batched = _get_posterior_batched(cuda=cuda, dtype=dtype)
             samples_batched = sampler(posterior_batched)
             self.assertEqual(samples_batched.shape, torch.Size([4, 3, 2, 1]))
+            self.assertEqual(sampler.seed, 1236)
+
+            # resample
+            sampler = IIDNormalSampler(num_samples=4, resample=True, seed=None)
+            self.assertTrue(sampler.resample)
+            self.assertTrue(sampler.collapse_batch_dims)
+            initial_seed = sampler.seed
+            # check samples non-batched
+            posterior = _get_posterior(cuda=cuda, dtype=dtype)
+            samples = sampler(posterior)
+            self.assertEqual(samples.shape, torch.Size([4, 2, 1]))
+            self.assertEqual(sampler.seed, initial_seed + 1)
+            # ensure samples are different
+            samples2 = sampler(posterior)
+            self.assertFalse(torch.allclose(samples, samples2))
+            self.assertEqual(sampler.seed, initial_seed + 2)
+            # ensure this works with a differently shaped posterior
+            posterior_batched = _get_posterior_batched(cuda=cuda, dtype=dtype)
+            samples_batched = sampler(posterior_batched)
+            self.assertEqual(samples_batched.shape, torch.Size([4, 3, 2, 1]))
+            self.assertEqual(sampler.seed, initial_seed + 3)
 
     def test_forward_cuda(self):
         if torch.cuda.is_available():
@@ -101,35 +113,49 @@ class TestIIDNormalSampler(unittest.TestCase):
     def test_forward_no_collapse(self, cuda=False):
         for dtype in (torch.float, torch.double):
 
-            # no fixed seed
-            sampler = IIDNormalSampler(num_samples=4, collapse_batch_dims=False)
+            # no resample
+            sampler = IIDNormalSampler(
+                num_samples=4, seed=1234, collapse_batch_dims=False
+            )
+            self.assertFalse(sampler.resample)
+            self.assertEqual(sampler.seed, 1234)
+            self.assertFalse(sampler.collapse_batch_dims)
             # check samples non-batched
             posterior = _get_posterior(cuda=cuda, dtype=dtype)
             samples = sampler(posterior)
             self.assertEqual(samples.shape, torch.Size([4, 2, 1]))
-            # ensure samples are different
+            self.assertEqual(sampler.seed, 1235)
+            # ensure samples are the same
             samples2 = sampler(posterior)
-            self.assertFalse(torch.allclose(samples, samples2))
+            self.assertTrue(torch.allclose(samples, samples2))
+            self.assertEqual(sampler.seed, 1235)
             # ensure this works with a differently shaped posterior
             posterior_batched = _get_posterior_batched(cuda=cuda, dtype=dtype)
             samples_batched = sampler(posterior_batched)
             self.assertEqual(samples_batched.shape, torch.Size([4, 3, 2, 1]))
+            self.assertEqual(sampler.seed, 1236)
 
-            # fixed seed
+            # resample
             sampler = IIDNormalSampler(
-                num_samples=4, seed=1234, collapse_batch_dims=False
+                num_samples=4, resample=True, collapse_batch_dims=False
             )
+            self.assertTrue(sampler.resample)
+            self.assertFalse(sampler.collapse_batch_dims)
+            initial_seed = sampler.seed
             # check samples non-batched
             posterior = _get_posterior(cuda=cuda, dtype=dtype)
             samples = sampler(posterior=posterior)
             self.assertEqual(samples.shape, torch.Size([4, 2, 1]))
-            # ensure samples are the same
+            self.assertEqual(sampler.seed, initial_seed + 1)
+            # ensure samples are not the same
             samples2 = sampler(posterior)
-            self.assertTrue(torch.allclose(samples, samples2))
+            self.assertFalse(torch.allclose(samples, samples2))
+            self.assertEqual(sampler.seed, initial_seed + 2)
             # ensure this works with a differently shaped posterior
             posterior_batched = _get_posterior_batched(cuda=cuda, dtype=dtype)
             samples_batched = sampler(posterior_batched)
             self.assertEqual(samples_batched.shape, torch.Size([4, 3, 2, 1]))
+            self.assertEqual(sampler.seed, initial_seed + 3)
 
     def test_forward_no_collapse_cuda(self):
         if torch.cuda.is_available():
@@ -139,9 +165,9 @@ class TestIIDNormalSampler(unittest.TestCase):
 class TestSobolQMCNormalSampler(unittest.TestCase):
     def test_get_base_sample_shape(self):
         sampler = SobolQMCNormalSampler(num_samples=4)
+        self.assertFalse(sampler.resample)
         self.assertEqual(sampler.sample_shape, torch.Size([4]))
         self.assertTrue(sampler.collapse_batch_dims)
-        self.assertIsNone(sampler.seed)
         # check sample shape non-batched
         posterior = _get_posterior()
         bss = sampler._get_base_sample_shape(posterior=posterior)
@@ -153,9 +179,9 @@ class TestSobolQMCNormalSampler(unittest.TestCase):
 
     def test_get_base_sample_shape_no_collapse(self):
         sampler = SobolQMCNormalSampler(num_samples=4, collapse_batch_dims=False)
+        self.assertFalse(sampler.resample)
         self.assertEqual(sampler.sample_shape, torch.Size([4]))
         self.assertFalse(sampler.collapse_batch_dims)
-        self.assertIsNone(sampler.seed)
         # check sample shape non-batched
         posterior = _get_posterior()
         bss = sampler._get_base_sample_shape(posterior=posterior)
@@ -168,33 +194,45 @@ class TestSobolQMCNormalSampler(unittest.TestCase):
     def test_forward(self, cuda=False):
         for dtype in (torch.float, torch.double):
 
-            # no fixed seed
-            sampler = SobolQMCNormalSampler(num_samples=4)
+            # no resample
+            sampler = SobolQMCNormalSampler(num_samples=4, seed=1234)
+            self.assertFalse(sampler.resample)
+            self.assertEqual(sampler.seed, 1234)
+            self.assertTrue(sampler.collapse_batch_dims)
             # check samples non-batched
             posterior = _get_posterior(cuda=cuda, dtype=dtype)
             samples = sampler(posterior)
             self.assertEqual(samples.shape, torch.Size([4, 2, 1]))
-            # ensure samples are different
-            samples2 = sampler(posterior)
-            self.assertFalse(torch.allclose(samples, samples2))
-            # ensure this works with a differently shaped posterior
-            posterior_batched = _get_posterior_batched(cuda=cuda, dtype=dtype)
-            samples_batched = sampler(posterior_batched)
-            self.assertEqual(samples_batched.shape, torch.Size([4, 3, 2, 1]))
-
-            # fixed seed
-            sampler = SobolQMCNormalSampler(num_samples=4, seed=1234)
-            # check samples non-batched
-            posterior = _get_posterior(cuda=cuda, dtype=dtype)
-            samples = sampler(posterior=posterior)
-            self.assertEqual(samples.shape, torch.Size([4, 2, 1]))
+            self.assertEqual(sampler.seed, 1235)
             # ensure samples are the same
             samples2 = sampler(posterior)
             self.assertTrue(torch.allclose(samples, samples2))
+            self.assertEqual(sampler.seed, 1235)
             # ensure this works with a differently shaped posterior
             posterior_batched = _get_posterior_batched(cuda=cuda, dtype=dtype)
             samples_batched = sampler(posterior_batched)
             self.assertEqual(samples_batched.shape, torch.Size([4, 3, 2, 1]))
+            self.assertEqual(sampler.seed, 1236)
+
+            # resample
+            sampler = SobolQMCNormalSampler(num_samples=4, resample=True, seed=None)
+            self.assertTrue(sampler.resample)
+            self.assertTrue(sampler.collapse_batch_dims)
+            initial_seed = sampler.seed
+            # check samples non-batched
+            posterior = _get_posterior(cuda=cuda, dtype=dtype)
+            samples = sampler(posterior)
+            self.assertEqual(samples.shape, torch.Size([4, 2, 1]))
+            self.assertEqual(sampler.seed, initial_seed + 1)
+            # ensure samples are different
+            samples2 = sampler(posterior)
+            self.assertFalse(torch.allclose(samples, samples2))
+            self.assertEqual(sampler.seed, initial_seed + 2)
+            # ensure this works with a differently shaped posterior
+            posterior_batched = _get_posterior_batched(cuda=cuda, dtype=dtype)
+            samples_batched = sampler(posterior_batched)
+            self.assertEqual(samples_batched.shape, torch.Size([4, 3, 2, 1]))
+            self.assertEqual(sampler.seed, initial_seed + 3)
 
     def test_forward_cuda(self):
         if torch.cuda.is_available():
@@ -203,35 +241,49 @@ class TestSobolQMCNormalSampler(unittest.TestCase):
     def test_forward_no_collapse(self, cuda=False):
         for dtype in (torch.float, torch.double):
 
-            # no fixed seed
-            sampler = SobolQMCNormalSampler(num_samples=4, collapse_batch_dims=False)
+            # no resample
+            sampler = SobolQMCNormalSampler(
+                num_samples=4, seed=1234, collapse_batch_dims=False
+            )
+            self.assertFalse(sampler.resample)
+            self.assertEqual(sampler.seed, 1234)
+            self.assertFalse(sampler.collapse_batch_dims)
             # check samples non-batched
             posterior = _get_posterior(cuda=cuda, dtype=dtype)
             samples = sampler(posterior)
             self.assertEqual(samples.shape, torch.Size([4, 2, 1]))
-            # ensure samples are different
+            self.assertEqual(sampler.seed, 1235)
+            # ensure samples are the same
             samples2 = sampler(posterior)
-            self.assertFalse(torch.allclose(samples, samples2))
+            self.assertTrue(torch.allclose(samples, samples2))
+            self.assertEqual(sampler.seed, 1235)
             # ensure this works with a differently shaped posterior
             posterior_batched = _get_posterior_batched(cuda=cuda, dtype=dtype)
             samples_batched = sampler(posterior_batched)
             self.assertEqual(samples_batched.shape, torch.Size([4, 3, 2, 1]))
+            self.assertEqual(sampler.seed, 1236)
 
-            # fixed seed
+            # resample
             sampler = SobolQMCNormalSampler(
-                num_samples=4, seed=1234, collapse_batch_dims=False
+                num_samples=4, resample=True, collapse_batch_dims=False
             )
+            self.assertTrue(sampler.resample)
+            self.assertFalse(sampler.collapse_batch_dims)
+            initial_seed = sampler.seed
             # check samples non-batched
             posterior = _get_posterior(cuda=cuda, dtype=dtype)
             samples = sampler(posterior=posterior)
             self.assertEqual(samples.shape, torch.Size([4, 2, 1]))
-            # ensure samples are the same
+            self.assertEqual(sampler.seed, initial_seed + 1)
+            # ensure samples are not the same
             samples2 = sampler(posterior)
-            self.assertTrue(torch.allclose(samples, samples2))
+            self.assertFalse(torch.allclose(samples, samples2))
+            self.assertEqual(sampler.seed, initial_seed + 2)
             # ensure this works with a differently shaped posterior
             posterior_batched = _get_posterior_batched(cuda=cuda, dtype=dtype)
             samples_batched = sampler(posterior_batched)
             self.assertEqual(samples_batched.shape, torch.Size([4, 3, 2, 1]))
+            self.assertEqual(sampler.seed, initial_seed + 3)
 
     def test_forward_no_collapse_cuda(self):
         if torch.cuda.is_available():

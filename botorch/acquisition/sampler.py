@@ -4,6 +4,7 @@
 Sampler modules to be used with MC acquisition functions.
 """
 
+import random
 from abc import ABC, abstractmethod
 from typing import Optional
 
@@ -24,6 +25,9 @@ class MCSampler(Module, ABC):
 
     Attributes:
         sample_shape: The shape of each sample.
+        resample: If `True`, re-draw samples in each `forward` evaluation -
+            this results in stochastic acquisition functions (and thus should
+            not be used with deterministic optimization algorithms).
         collapse_batch_dims: If True, collapse the t-batch dimensions of the
             produced samples to size 1. This is useful for preventing sampling
             variance across t-batches.
@@ -76,11 +80,11 @@ class MCSampler(Module, ABC):
 
         This function will generate a new set of base samples and register the
         `base_samples` buffer if one of the following is true:
+          - `resample=True`
           - the MCSampler has no `base_samples` attribute.
           - `shape` is different than `self.base_samples.shape`.
           - device and/or dtype of posterior are different than those of
             `self.base_samples`.
-          - the MCSampler does not use a fixed seed.
 
         Args:
             posterior: The Posterior for which to generate base samples.
@@ -95,6 +99,7 @@ class IIDNormalSampler(MCSampler):
     def __init__(
         self,
         num_samples: int,
+        resample: bool = False,
         seed: Optional[int] = None,
         collapse_batch_dims: bool = True,
     ) -> None:
@@ -102,6 +107,9 @@ class IIDNormalSampler(MCSampler):
 
         Args:
             num_samples: The number of samples to use.
+            resample: If `True`, re-draw samples in each `forward` evaluation -
+                this results in stochastic acquisition functions (and thus should
+                not be used with deterministic optimization algorithms).
             seed: The seed for the RNG. If omitted, use a random seed.
             collapse_batch_dims: If True, collapse the t-batch dimensions to
                 size 1. This is useful for preventing sampling variance across
@@ -110,26 +118,27 @@ class IIDNormalSampler(MCSampler):
         super().__init__()
         self._sample_shape = torch.Size([num_samples])
         self.collapse_batch_dims = collapse_batch_dims
-        self.seed = seed
+        self.resample = resample
+        self.seed = seed if seed is not None else random.randint(0, 1_000_000)
 
     def _construct_base_samples(self, posterior: Posterior, shape: torch.Size) -> None:
         """Generate iid N(0,1) base samples if necessary.
 
         This function will generate a new set of base samples and set the
         `base_samples` buffer if one of the following is true:
+          - `resample=True`
           - the MCSampler has no `base_samples` attribute.
           - `shape` is different than `self.base_samples.shape`.
           - device and/or dtype of posterior ar different than those of
             `self.base_samples`.
-          - the MCSampler does not use a fixed seed.
 
         Args:
             posterior: The Posterior for which to generate base samples.
             shape: The shape of the base samples to construct.
         """
         if (
-            not hasattr(self, "base_samples")
-            or self.seed is None
+            self.resample
+            or not hasattr(self, "base_samples")
             or self.base_samples.shape != shape
             or self.base_samples.device != posterior.device
             or self.base_samples.dtype != posterior.dtype
@@ -138,6 +147,7 @@ class IIDNormalSampler(MCSampler):
                 base_samples = torch.randn(
                     shape, device=posterior.device, dtype=posterior.dtype
                 )
+            self.seed += 1
             self.register_buffer("base_samples", base_samples)
 
 
@@ -147,6 +157,7 @@ class SobolQMCNormalSampler(MCSampler):
     def __init__(
         self,
         num_samples: int,
+        resample: bool = False,
         seed: Optional[int] = None,
         collapse_batch_dims: bool = True,
     ) -> None:
@@ -154,6 +165,9 @@ class SobolQMCNormalSampler(MCSampler):
 
         Args:
             num_samples: The number of samples to use.
+            resample: If `True`, re-draw samples in each `forward` evaluation -
+                this results in stochastic acquisition functions (and thus should
+                not be used with deterministic optimization algorithms).
             seed: The seed for the RNG. If omitted, use a random seed.
             collapse_batch_dims: If True, collapse the t-batch dimensions to
                 size 1. This is useful for preventing sampling variance across
@@ -162,26 +176,27 @@ class SobolQMCNormalSampler(MCSampler):
         super().__init__()
         self._sample_shape = torch.Size([num_samples])
         self.collapse_batch_dims = collapse_batch_dims
-        self.seed = seed
+        self.resample = resample
+        self.seed = seed if seed is not None else random.randint(0, 1_000_000)
 
     def _construct_base_samples(self, posterior: Posterior, shape: torch.Size) -> None:
         """Generate quasi-random Normal base samples if necessary.
 
         This function will generate a new set of base samples and set the
         `base_samples` buffer if one of the following is true:
+          - `resample=True`
           - the MCSampler has no `base_samples` attribute.
           - `self.sample_shape` is different than `self.base_samples.shape`.
           - device and/or dtype of posterior ar different than those of
             `self.base_samples`.
-          - the MCSampler does not use a fixed seed.
 
         Args:
             posterior: The Posterior for which to generate base samples.
             shape: The shape of the base samples to construct.
         """
         if (
-            not hasattr(self, "base_samples")
-            or self.seed is None
+            self.resample
+            or not hasattr(self, "base_samples")
             or self.base_samples.shape != shape
             or self.base_samples.device != posterior.device
             or self.base_samples.dtype != posterior.dtype
@@ -199,5 +214,6 @@ class SobolQMCNormalSampler(MCSampler):
                 dtype=posterior.dtype,
                 seed=self.seed,
             )
+            self.seed += 1
             base_samples = base_samples.view(shape)
             self.register_buffer("base_samples", base_samples)
