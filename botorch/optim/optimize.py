@@ -7,6 +7,8 @@ import torch
 from torch import Tensor
 from torch.nn import Module
 
+from ..acquisition import AcquisitionFunction
+from ..acquisition.analytic import AnalyticAcquisitionFunction
 from ..acquisition.monte_carlo import MCAcquisitionFunction
 from ..exceptions import BadInitialCandidatesWarning, UnsupportedError
 from ..gen import gen_candidates_scipy, get_best_candidates
@@ -81,7 +83,7 @@ def sequential_optimize(
 
 
 def joint_optimize(
-    acq_function: MCAcquisitionFunction,
+    acq_function: AcquisitionFunction,
     bounds: Tensor,
     q: int,
     num_restarts: int,
@@ -111,6 +113,10 @@ def joint_optimize(
     Returns:
         The set of generated candidates
     """
+    if isinstance(acq_function, AnalyticAcquisitionFunction):
+        # TODO: use tensor metadata (e.g. NamedTensors) when available
+        q = None
+
     batch_initial_candidates = gen_batch_initial_candidates(
         acq_function=acq_function,
         bounds=bounds,
@@ -125,7 +131,7 @@ def joint_optimize(
         acquisition_function=acq_function,
         lower_bounds=bounds[0],
         upper_bounds=bounds[1],
-        options=None,
+        options=options,
         fixed_features=fixed_features,
     )
     return get_best_candidates(
@@ -136,7 +142,7 @@ def joint_optimize(
 def gen_batch_initial_candidates(
     acq_function: Module,
     bounds: Tensor,
-    q: int,
+    q: Optional[int],
     num_restarts: int,
     raw_samples: int,
     options: Dict[str, Union[bool, float, int]],
@@ -147,8 +153,13 @@ def gen_batch_initial_candidates(
     while factor < max_factor:
         with warnings.catch_warnings(record=True) as ws:
             X_rnd = draw_sobol_samples(
-                bounds=bounds, n=raw_samples * factor, q=q, seed=seed
+                bounds=bounds,
+                n=raw_samples * factor,
+                q=1 if q is None else q,
+                seed=seed,
             )
+            if q is None:
+                X_rnd = X_rnd.squeeze(dim=-2)
             with torch.no_grad():
                 Y_rnd = acq_function(X_rnd)
             if options.get("simple_init", True):

@@ -94,7 +94,6 @@ def gen_candidates_scipy(
         constraints=constraints,
         options=options,
     )
-
     candidates = fix_features(
         X=torch.from_numpy(res.x)
         .to(device=initial_candidates.device, dtype=initial_candidates.dtype)

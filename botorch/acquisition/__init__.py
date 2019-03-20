@@ -2,6 +2,7 @@
 
 from .acquisition import AcquisitionFunction
 from .analytic import (
+    AnalyticAcquisitionFunction,
     ExpectedImprovement,
     NoisyExpectedImprovement,
     PosteriorMean,
@@ -29,6 +30,7 @@ from .utils import get_acquisition_function
 
 __all__ = [
     "AcquisitionFunction",
+    "AnalyticAcquisitionFunction",
     "ExpectedImprovement",
     "NoisyExpectedImprovement",
     "PosteriorMean",
