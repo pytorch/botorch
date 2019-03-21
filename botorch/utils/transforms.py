@@ -26,6 +26,34 @@ def standardize(X: Tensor) -> Tensor:
     return (X - X.mean(dim=0)) / X_std
 
 
+def normalize(X: Tensor, bounds: Tensor) -> Tensor:
+    """
+    Min-max normalize X to [0,1] using the provided bounds.
+
+    Args:
+        X: `... x d` tensor of data
+        bounds: `2 x d` tensor of lower and upper bounds for each of the X's d
+            columns.
+    Returns:
+        Tensor `... x d` tensor of normalized data
+    """
+    return (X - bounds[0]) / (bounds[1] - bounds[0])
+
+
+def unnormalize(X: Tensor, bounds: Tensor) -> Tensor:
+    """
+    Unscale X from [0,1] to the original scale.
+
+    Args:
+        X: `... x d` tensor of data
+        bounds: `2 x d` tensor of lower and upper bounds for each of the X's d
+            columns.
+    Returns:
+        Tensor `... x d` tensor of unnormalized data
+    """
+    return X * (bounds[1] - bounds[0]) + bounds[0]
+
+
 def batch_mode_transform(
     method: Callable[[Any, Tensor], Any]
 ) -> Callable[[Any, Tensor], Any]:
