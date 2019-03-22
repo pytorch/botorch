@@ -29,7 +29,7 @@ class TestNumpyTorchParameterConversion(unittest.TestCase):
         model = ExactGP(
             torch.tensor([[1.0, 2.0, 3.0]]), torch.tensor([4.0]), likelihood
         )
-        model.covar_module = RBFKernel(3)
+        model.covar_module = RBFKernel(ard_num_dims=3)
         model.mean_module = ConstantMean()
 
         model.parameter_bounds = {"mean_module.constant": (None, 10.0)}
