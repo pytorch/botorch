@@ -4,6 +4,7 @@ import unittest
 
 import torch
 from botorch.acquisition.analytic import (
+    ConstrainedExpectedImprovement,
     ExpectedImprovement,
     PosteriorMean,
     ProbabilityOfImprovement,
@@ -32,12 +33,6 @@ class TestExpectedImprovement(unittest.TestCase):
             ei = module(X)
             ei_expected = torch.tensor(0.19780, device=device, dtype=dtype)
             self.assertTrue(torch.allclose(ei, ei_expected, atol=1e-4))
-            # check for proper error if multi-output model
-            mean2 = torch.rand(1, 2, device=device, dtype=dtype)
-            variance2 = torch.rand(1, 2, device=device, dtype=dtype)
-            mm2 = MockModel(MockPosterior(mean=mean2, variance=variance2))
-            with self.assertRaises(RuntimeError):
-                ExpectedImprovement(model=mm2, best_f=0.0)
 
     def test_expected_improvement_cuda(self, cuda=False):
         if torch.cuda.is_available():
@@ -66,6 +61,96 @@ class TestExpectedImprovement(unittest.TestCase):
     def test_expected_improvement_batch_cuda(self, cuda=False):
         if torch.cuda.is_available():
             self.test_expected_improvement_batch(cuda=True)
+
+
+class TestConstrainedExpectedImprovement(unittest.TestCase):
+    def test_constrained_expected_improvement(self, cuda=False):
+        device = torch.device("cuda") if cuda else torch.device("cpu")
+        for dtype in (torch.float, torch.double):
+            # one constraint
+            mean = torch.tensor([[-0.5, 0.0]], device=device, dtype=dtype).unsqueeze(
+                dim=-2
+            )
+            variance = torch.ones(1, 2, device=device, dtype=dtype).unsqueeze(dim=-2)
+            mm = MockModel(MockPosterior(mean=mean, variance=variance))
+            module = ConstrainedExpectedImprovement(
+                model=mm, best_f=0.0, objective_index=0, constraints={1: [None, 0]}
+            )
+            X = torch.empty(1, 1, device=device, dtype=dtype)  # dummy
+            ei = module(X)
+            ei_expected_unconstrained = torch.tensor(
+                0.19780, device=device, dtype=dtype
+            )
+            ei_expected = ei_expected_unconstrained * 0.5
+            self.assertTrue(torch.allclose(ei, ei_expected, atol=1e-4))
+
+            # check that error raised if no constraints
+            with self.assertRaises(ValueError):
+                module = ConstrainedExpectedImprovement(
+                    model=mm, best_f=0.0, objective_index=0, constraints={}
+                )
+
+            # check that error raised if objective is a constraint
+            with self.assertRaises(ValueError):
+                module = ConstrainedExpectedImprovement(
+                    model=mm, best_f=0.0, objective_index=0, constraints={0: [None, 0]}
+                )
+
+            # three constraints
+            N = torch.distributions.Normal(loc=0.0, scale=1.0)
+            a = N.icdf(torch.tensor(0.75))  # get a so that P(-a <= N <= a) = 0.5
+            mean = torch.tensor(
+                [[-0.5, 0.0, 5.0, 0.0]], device=device, dtype=dtype
+            ).unsqueeze(dim=-2)
+            variance = torch.ones(1, 4, device=device, dtype=dtype).unsqueeze(dim=-2)
+            mm = MockModel(MockPosterior(mean=mean, variance=variance))
+            module = ConstrainedExpectedImprovement(
+                model=mm,
+                best_f=0.0,
+                objective_index=0,
+                constraints={1: [None, 0], 2: [5.0, None], 3: [-a, a]},
+            )
+            X = torch.empty(1, 1, device=device, dtype=dtype)  # dummy
+            ei = module(X)
+            ei_expected_unconstrained = torch.tensor(
+                0.19780, device=device, dtype=dtype
+            )
+            ei_expected = ei_expected_unconstrained * 0.5 * 0.5 * 0.5
+            self.assertTrue(torch.allclose(ei, ei_expected, atol=1e-4))
+
+    def test_constrained_expected_improvement_cuda(self, cuda=False):
+        if torch.cuda.is_available():
+            self.test_constrained_expected_improvement(cuda=True)
+
+    def test_constrained_expected_improvement_batch(self, cuda=False):
+        device = torch.device("cuda") if cuda else torch.device("cpu")
+        for dtype in (torch.float, torch.double):
+            mean = torch.tensor(
+                [[-0.5, 0.0, 5.0, 0.0], [0.0, 0.0, 5.0, 0.0], [0.5, 0.0, 5.0, 0.0]],
+                device=device,
+                dtype=dtype,
+            ).unsqueeze(dim=-2)
+            variance = torch.ones(3, 4, device=device, dtype=dtype).unsqueeze(dim=-2)
+            N = torch.distributions.Normal(loc=0.0, scale=1.0)
+            a = N.icdf(torch.tensor(0.75))  # get a so that P(-a <= N <= a) = 0.5
+            mm = MockModel(MockPosterior(mean=mean, variance=variance))
+            module = ConstrainedExpectedImprovement(
+                model=mm,
+                best_f=0.0,
+                objective_index=0,
+                constraints={1: [None, 0], 2: [5.0, None], 3: [-a, a]},
+            )
+            X = torch.empty(3, 1, device=device, dtype=dtype)  # dummy
+            ei = module(X)
+            ei_expected_unconstrained = torch.tensor(
+                [0.19780, 0.39894, 0.69780], device=device, dtype=dtype
+            )
+            ei_expected = ei_expected_unconstrained * 0.5 * 0.5 * 0.5
+            self.assertTrue(torch.allclose(ei, ei_expected, atol=1e-4))
+
+    def test_constrained_expected_improvement_batch_cuda(self, cuda=False):
+        if torch.cuda.is_available():
+            self.test_constrained_expected_improvement_batch(cuda=True)
 
 
 class TestPosteriorMean(unittest.TestCase):
