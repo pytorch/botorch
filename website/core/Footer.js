@@ -10,7 +10,6 @@
 const React = require('react');
 
 class Footer extends React.Component {
-
   docUrl(doc, language) {
     const baseUrl = this.props.config.baseUrl;
     const docsUrl = this.props.config.docsUrl;
@@ -51,9 +50,7 @@ class Footer extends React.Component {
             <a href={this.docUrl('tutorials.html', this.props.language)}>
               Tutorials
             </a>
-            <a href={this.docUrl('api_reference.html', this.props.language)}>
-              API Reference
-            </a>
+            <a href={`${this.props.config.baseUrl}api/`}>API Reference</a>
           </div>
           <div>
             <h5>Community</h5>
