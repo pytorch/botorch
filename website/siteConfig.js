@@ -10,6 +10,8 @@
 // See https://docusaurus.io/docs/site-config for all the possible
 // site configuration options.
 
+const baseUrl = '/';
+
 // List of projects/orgs using your project for the users page.
 const users = [];
 
@@ -17,7 +19,7 @@ const siteConfig = {
   title: 'botorch',
   tagline: 'Bayesian Optimization in PyTorch',
   url: 'http://botorch.org',
-  baseUrl: '/', // Base URL for your project */
+  baseUrl: baseUrl,
   // For github.io type URLs, you would set the url and baseUrl like:
   //   url: 'https://facebook.github.io',
   //   baseUrl: '/test-site/',
@@ -28,8 +30,8 @@ const siteConfig = {
 
   headerLinks: [
     {doc: 'introduction', label: 'Docs'},
-    {href: '/tutorials/index', label: 'Tutorials'},
-    {href: '/api/index', label: 'API Reference'},
+    {href: `${baseUrl}tutorials/`, label: 'Tutorials'},
+    {href: `${baseUrl}api/`, label: 'API Reference'},
     {blog: true, label: 'Blog'},
     // Search can be enabled when site is online and indexed
     // {search: true},

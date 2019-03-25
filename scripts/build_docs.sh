@@ -1,5 +1,32 @@
 #!/bin/bash
 
+usage() {
+  echo "Usage: $0 [-b]"
+  echo ""
+  echo "Build Ax documentation."
+  echo ""
+  echo "  -b   Build static version of documentation (otherwise start server)"
+  echo ""
+  exit 1
+}
+
+BUILD_STATIC=false
+
+while getopts 'hb' flag; do
+  case "${flag}" in
+    h)
+      usage
+      ;;
+    b)
+      BUILD_STATIC=true
+      ;;
+    *)
+      usage
+      ;;
+  esac
+done
+
+
 echo "-----------------------------------"
 echo "Building Cython modules"
 echo "-----------------------------------"
@@ -57,8 +84,16 @@ mkdir -p "website/static/files"
 python3 scripts/parse_tutorials.py -w "${cwd}"
 
 # Starting local server
-echo "-----------------------------------"
-echo "Starting local server"
-echo "-----------------------------------"
 cd website || exit
-yarn start
+
+if [[ $BUILD_STATIC == true ]]; then
+  echo "-----------------------------------"
+  echo "Building static site"
+  echo "-----------------------------------"
+  yarn build
+else
+  echo "-----------------------------------"
+  echo "Starting local server"
+  echo "-----------------------------------"
+  yarn start
+fi
