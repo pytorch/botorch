@@ -1,12 +1,28 @@
 {
   "Basic optimization loops": [
     {
+      "id": "analytic_EI_Hartmann6_noiseless",
+      "title": "Analytic EI on Hartmann6"
+    },
+    {
       "id": "qEI_Hartmann6_noisy",
       "title": "qEI, Hartmann6 (noisy)"
     },
     {
       "id": "qEI_Hartmann6_noiseless",
       "title": "qEI, Hartmann6 (noiseless)"
+    }
+  ],
+  "Common Tasks": [
+    {
+      "id": "fit_model_with_torch_optimizer",
+      "title": "Fit a model using `torch.optim`"
+    }
+  ],
+  "Advanced Usage": [
+    {
+      "id": "meta_learning_with_rgpe",
+      "title": "Meta-Learning with RGPE"
     }
   ]
 }
