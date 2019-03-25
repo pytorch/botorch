@@ -25,7 +25,7 @@ class TutorialHome extends React.Component {
           <Container className="mainContainer documentContainer postContainer">
                 <div className="post">
                   <header className="postHeader">
-                    <h1 className="postHeaderTitle">Welcome to botorch's tutorials</h1>
+                    <h1 className="postHeaderTitle">Welcome to the botorch tutorials</h1>
                   </header>
                 </div>
         </Container>
