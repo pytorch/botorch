@@ -183,7 +183,7 @@ def gen_batch_initial_candidates(
             if factor < max_factor:
                 factor += 1
     warnings.warn(
-        "Unable to find non-zero acquistion function values - initial arms"
+        "Unable to find non-zero acquistion function values - initial arms "
         "are being selected randomly.",
         BadInitialCandidatesWarning,  # pyre-ignore: [16]
     )
