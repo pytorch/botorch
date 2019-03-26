@@ -17,6 +17,10 @@
     {
       "id": "fit_model_with_torch_optimizer",
       "title": "Fit a model using `torch.optim`"
+    },
+    {
+      "id": "optimize_with_cmaes",
+      "title": "Optimize an acq. func. using a custom optimizer (CMA-EA)"
     }
   ],
   "Advanced Usage": [
