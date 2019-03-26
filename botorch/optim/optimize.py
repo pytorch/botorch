@@ -9,7 +9,6 @@ from torch.nn import Module
 
 from ..acquisition import AcquisitionFunction
 from ..acquisition.analytic import AnalyticAcquisitionFunction
-from ..acquisition.monte_carlo import MCAcquisitionFunction
 from ..exceptions import BadInitialCandidatesWarning, UnsupportedError
 from ..gen import gen_candidates_scipy, get_best_candidates
 from ..utils.sampling import draw_sobol_samples
@@ -21,7 +20,7 @@ from .initializers import (
 
 
 def sequential_optimize(
-    acq_function: MCAcquisitionFunction,
+    acq_function: AcquisitionFunction,
     bounds: Tensor,
     q: int,
     num_restarts: int,
