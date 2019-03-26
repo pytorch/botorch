@@ -6,7 +6,8 @@
   "docs": {
     "About": ["introduction", "design_philosophy"],
     "General": ["installation"],
-    "Basic Concepts": ["basic_concepts"],
+    "Basic Concepts": ["basic_concepts", "acquisition"],
+    "Optimization": ["optimization"],
     "Examples": ["examples"],
     "Advanced Use": ["advanced_use"]
   }
