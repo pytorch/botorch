@@ -7,12 +7,12 @@ To implement your own, simply inherit from both the provided classes and a
 GPyTorch Model class such as an ExactGP.
 """
 
-
 from abc import ABC
 from contextlib import ExitStack
 from typing import List, Optional
 
-import gpytorch
+import torch
+from gpytorch import settings
 from gpytorch.distributions import MultitaskMultivariateNormal
 from torch import Tensor
 
@@ -33,6 +33,7 @@ class GPyTorchModel(Model, ABC):
         output_indices: Optional[List[int]] = None,
         observation_noise: bool = False,
         detach_test_caches: bool = True,
+        **kwargs,
     ) -> GPyTorchPosterior:
         """Computes the posterior over model outputs at the provided points.
 
@@ -60,11 +61,11 @@ class GPyTorchModel(Model, ABC):
             raise RuntimeError(
                 "Cannot pass more than one output index to single-output model"
             )
-        self.eval()  # pyre-ignore
+        self.eval()
         with ExitStack() as es:
-            es.enter_context(gpytorch.settings.debug(False))
-            es.enter_context(gpytorch.settings.fast_pred_var())
-            es.enter_context(gpytorch.settings.detach_test_caches(detach_test_caches))
+            es.enter_context(settings.debug(False))
+            es.enter_context(settings.fast_pred_var())
+            es.enter_context(settings.detach_test_caches(detach_test_caches))
             mvn = self(X)
             if observation_noise:
                 mvn = self.likelihood(mvn, X)
@@ -80,6 +81,7 @@ class MultiOutputGPyTorchModel(GPyTorchModel, ABC):
         output_indices: Optional[List[int]] = None,
         observation_noise: bool = False,
         detach_test_caches: bool = True,
+        **kwargs,
     ) -> GPyTorchPosterior:
         """Computes the posterior over model outputs at the provided points.
 
@@ -103,11 +105,11 @@ class MultiOutputGPyTorchModel(GPyTorchModel, ABC):
                 over `q` points and the outputs selected by `output_indices` each.
                 Includes measurement noise if `observation_noise=True`.
         """
-        self.eval()  # pyre-ignore
+        self.eval()
         with ExitStack() as es:
-            es.enter_context(gpytorch.settings.debug(False))
-            es.enter_context(gpytorch.settings.fast_pred_var())
-            es.enter_context(gpytorch.settings.detach_test_caches(detach_test_caches))
+            es.enter_context(settings.debug(False))
+            es.enter_context(settings.fast_pred_var())
+            es.enter_context(settings.detach_test_caches(detach_test_caches))
             if output_indices is not None:
                 mvns = [self.forward_i(i, X) for i in output_indices]
                 if observation_noise:
@@ -126,7 +128,7 @@ class MultiOutputGPyTorchModel(GPyTorchModel, ABC):
         return GPyTorchPosterior(mvn=mvn)
 
 
-class MultiTaskGPyTorchModel(MultiOutputGPyTorchModel, ABC):
+class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
     """Abstract base class for models based on multi-task GPyTorch models."""
 
     def posterior(
@@ -135,13 +137,15 @@ class MultiTaskGPyTorchModel(MultiOutputGPyTorchModel, ABC):
         output_indices: Optional[List[int]] = None,
         observation_noise: bool = False,
         detach_test_caches: bool = True,
+        **kwargs,
     ) -> GPyTorchPosterior:
         """Computes the posterior over model outputs at the provided points.
 
         Args:
-            X: A `b x q x d`-dim Tensor, where `d` is the dimension of the
-                feature space, `q` is the number of points considered jointly,
-                and `b` is the batch dimension.
+            X: A `q x d` or `b x q x d` (batch mode) tensor, where `d` is the
+                dimension of the feature space (not including task indices),
+                `q` is the number of points considered jointly, and `b` is the
+                (optional) batch dimension.
             output_indices: A list of indices, corresponding to the outputs over
                 which to compute the posterior (if the model is multi-output).
                 Can be used to speed up computation if only a subset of the
@@ -155,18 +159,40 @@ class MultiTaskGPyTorchModel(MultiOutputGPyTorchModel, ABC):
 
         Returns:
             A `Posterior` object, representing a batch of `b` joint distributions
-                over `q` points and the outputs selected by `output_indices` each.
+                over `q` points and the outputs selected by `output_indices`.
                 Includes measurement noise if `observation_noise=True`.
         """
-        self.eval()  # pyre-ignore
+        n_out = len(self._output_tasks)
+        if output_indices is None:
+            output_indices = list(range(n_out))
+        elif isinstance(output_indices, int):
+            output_indices = [output_indices]
+        if any(i > n_out for i in output_indices):
+            raise ValueError("Too many output indices")
+        # construct evaluation X
+        tidx = torch.arange(len(output_indices))
+        rep_shape = [1 for _ in X.shape]
+        rep_shape[-2] = len(output_indices)
+        X_aug = X.repeat(*rep_shape)
+        tidx_aug = tidx.repeat(X.shape[-2]).unsqueeze(-1)
+        tidx_aug = tidx_aug.expand(X_aug.shape[:-2] + tidx_aug.shape)
+        X_full = torch.cat([X_aug, tidx_aug.to(X_aug)], dim=-1)
+
+        self.eval()
         with ExitStack() as es:
-            es.enter_context(gpytorch.settings.debug(False))
-            es.enter_context(gpytorch.settings.fast_pred_var())
-            es.enter_context(gpytorch.settings.detach_test_caches(detach_test_caches))
-            if output_indices is not None:
-                # we just need to properly subset the covariance matrix here
-                raise NotImplementedError
-            mvn = self(X)
+            es.enter_context(settings.debug(False))
+            es.enter_context(settings.fast_pred_var())
+            es.enter_context(settings.detach_test_caches(detach_test_caches))
+            mvn = self(X_full)
             if observation_noise:
-                mvn = self.likelihood(mvn, X)
-        return GPyTorchPosterior(mvn=mvn)
+                mvn = self.likelihood(mvn, X_full)
+        # If single-output, return the posterior of a single-output model
+        if len(output_indices) == 1:
+            return GPyTorchPosterior(mvn=mvn)
+        # Otherwise, make a MultitaskMultivariateNormal out of this
+        mtmvn = MultitaskMultivariateNormal(
+            mean=mvn.mean.view(*X.shape[:-1], len(output_indices)),
+            covariance_matrix=mvn.lazy_covariance_matrix,
+            interleaved=True,
+        )
+        return GPyTorchPosterior(mvn=mtmvn)
