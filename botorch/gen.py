@@ -78,25 +78,18 @@ def gen_candidates_scipy(
         gradf = _arrayify(X.grad.view(-1))
         return fval, gradf
 
-    method = options.get("method")
-    if method is None:
-        if inequality_constraints is None and equality_constraints is None:
-            method = "L-BFGS-B"
-        else:
-            method = "SLSQP"
-
     res = minimize(
         f,
         x0,
-        method=method,
+        method=options.get("method", "SLSQP"),
         jac=True,
         bounds=bounds,
         constraints=constraints,
         options=options,
     )
     candidates = fix_features(
-        X=torch.from_numpy(res.x)
-        .to(device=initial_candidates.device, dtype=initial_candidates.dtype)
+        X=torch.from_numpy(res.x)  # pyre-ignore [16]
+        .to(initial_candidates)
         .view(shapeX)
         .contiguous(),
         fixed_features=fixed_features,
@@ -164,7 +157,7 @@ def gen_candidates_torch(
             loss.backward()
             return loss
 
-        bayes_optimizer.step(closure)
+        bayes_optimizer.step(closure)  # pyre-ignore
         clamped_candidates.data = columnwise_clamp(
             clamped_candidates, lower_bounds, upper_bounds
         )
