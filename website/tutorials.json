@@ -21,6 +21,10 @@
     {
       "id": "optimize_with_cmaes",
       "title": "Acquisition function optimization with CMA-ES"
+    },
+    {
+      "id": "optimize_stochastic",
+      "title": "Acquisition function optimization with torch.optim "
     }
   ],
   "Advanced Usage": [
