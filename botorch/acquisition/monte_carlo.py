@@ -102,7 +102,7 @@ class qExpectedImprovement(MCAcquisitionFunction):
         posterior = self.model.posterior(X)
         samples = self.sampler(posterior)
         obj = self.objective(samples)
-        obj = (obj - self.best_f).clamp_min_(0)
+        obj = (obj - self.best_f).clamp_min(0)
         q_ei = obj.max(dim=2)[0].mean(dim=0)
         return q_ei
 
@@ -155,7 +155,7 @@ class qNoisyExpectedImprovement(MCAcquisitionFunction):
         samples = self.sampler(posterior)
         obj = self.objective(samples)
         diffs = obj[:, :, :q].max(dim=2)[0] - obj[:, :, q:].max(dim=2)[0]
-        return diffs.clamp_min_(0).mean(dim=0)
+        return diffs.clamp_min(0).mean(dim=0)
 
 
 class qProbabilityOfImprovement(MCAcquisitionFunction):

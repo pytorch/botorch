@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 from typing import Callable, List
 
 import torch
-from botorch.utils import apply_constraints_
+from botorch.utils import apply_constraints
 from torch import Tensor
 from torch.nn import Module
 
@@ -106,13 +106,12 @@ class ConstrainedMCObjective(GenericMCObjective):
                 values weighted by feasibility (assuming maximization).
         """
         obj = super().forward(samples=samples)
-        apply_constraints_(
+        return apply_constraints(
             obj=obj,
             constraints=self.constraints,
             samples=samples,
             infeasible_cost=self.infeasible_cost,
         )
-        return obj
 
 
 class IdentityMCObjective(MCAcquisitionObjective):
