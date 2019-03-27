@@ -32,14 +32,14 @@ def get_objective_weights_transform(
     return lambda Y: torch.sum(Y * weights.view(1, 1, -1), dim=-1)
 
 
-def apply_constraints_nonnegative_soft_(
+def apply_constraints_nonnegative_soft(
     obj: Tensor,
     constraints: List[Callable[[Tensor], Tensor]],
     samples: Tensor,
     eta: float,
-) -> None:
+) -> Tensor:
     """Applies constraints to a nonnegative objective using a sigmoid approximation
-    to an indicator function for each constraint. `obj` is modified in-place.
+    to an indicator function for each constraint.
 
     Args:
         obj: A `n_samples x b x q` Tensor of objective values.
@@ -49,11 +49,13 @@ def apply_constraints_nonnegative_soft_(
             output models (`t` > 1).
         samples: A `b x q x t` Tensor of samples drawn from the posterior.
         eta: The temperature parameter for the sigmoid function.
+    Returns:
+        Tensor: `n_samples x b x q` tensor of feasibility-weighted objectives.
     """
-    if constraints is not None:
-        obj.clamp_min_(0)  # Enforce non-negativity with constraints
-        for constraint in constraints:
-            obj.mul_(soft_eval_constraint(constraint(samples), eta=eta))
+    obj = obj.clamp_min(0)  # Enforce non-negativity with constraints
+    for constraint in constraints:
+        obj = obj.mul(soft_eval_constraint(constraint(samples), eta=eta))
+    return obj
 
 
 def soft_eval_constraint(lhs: Tensor, eta: float = 1e-3) -> Tensor:
@@ -77,16 +79,15 @@ def soft_eval_constraint(lhs: Tensor, eta: float = 1e-3) -> Tensor:
     return torch.sigmoid(-lhs / eta)
 
 
-def apply_constraints_(
+def apply_constraints(
     obj: Tensor,
     constraints: List[Callable[[Tensor], Tensor]],
     samples: Tensor,
     infeasible_cost: float,
-) -> None:
+) -> Tensor:
     """Apply constraints using an infeasible_cost `M` for the case where
     the objective can be negative via the strategy: (1) add `M` to make obj nonnegative,
-    (2) apply constraints using the sigmoid approximation, (3) shift by `-M`. `obj`
-    is modified in-place.
+    (2) apply constraints using the sigmoid approximation, (3) shift by `-M`.
 
     Args:
         obj: A `n_samples x b x q` Tensor of objective values.
@@ -96,11 +97,12 @@ def apply_constraints_(
             output models (`t` > 1).
         samples: A `b x q x t` Tensor of samples drawn from the posterior.
         infeasible_cost: The infeasible value.
+    Returns:
+        Tensor: `n_samples x b x q` tensor of feasibility-weighted objectives.
     """
-    if constraints is not None:
-        # obj has dimensions n_samples x b x q
-        obj.add_(infeasible_cost)  # now it is nonnegative
-        apply_constraints_nonnegative_soft_(
-            obj=obj, constraints=constraints, samples=samples, eta=1e-3
-        )
-        obj.add_(-infeasible_cost)
+    # obj has dimensions n_samples x b x q
+    obj = obj.add(infeasible_cost)  # now it is nonnegative
+    obj = apply_constraints_nonnegative_soft(
+        obj=obj, constraints=constraints, samples=samples, eta=1e-3
+    )
+    return obj.add(-infeasible_cost)
