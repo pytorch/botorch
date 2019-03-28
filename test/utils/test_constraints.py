@@ -10,8 +10,8 @@ class TestGetOutcomeConstraintTransform(unittest.TestCase):
     def setUp(self):
         self.A = torch.tensor([[-1.0, 0.0, 0.0], [0.0, 1.0, 1.0]])
         self.b = torch.tensor([[-0.5], [1.0]])
-        self.Ys = torch.tensor([[0.75, 1.0, 0.5], [0.25, 1.5, 1.0]])
-        self.results = torch.tensor([[-0.25, 0.5], [0.25, 1.5]]).view(2, 2, 1, 1)
+        self.Ys = torch.tensor([[0.75, 1.0, 0.5], [0.25, 1.5, 1.0]]).unsqueeze(0)
+        self.results = torch.tensor([[-0.25, 0.5], [0.25, 1.5]]).view(1, 2, 2)
 
     def test_None(self):
         self.assertIsNone(get_outcome_constraint_transforms(None))
@@ -27,7 +27,9 @@ class TestGetOutcomeConstraintTransform(unittest.TestCase):
             self.assertEqual(len(ocs), 2)
             for i in (0, 1):
                 for j in (0, 1):
-                    self.assertTrue(torch.equal(ocs[j](Ys[i]), results[i, j]))
+                    print(f"Actual: {ocs[j](Ys[:,i])}")
+                    print(f"Expected: {results[:, i, j]}")
+                    self.assertTrue(torch.equal(ocs[j](Ys[:, i]), results[:, i, j]))
 
     def test_BasicEvaluation_cuda(self):
         if torch.cuda.is_available():

@@ -30,7 +30,22 @@ def get_outcome_constraint_transforms(
         return None
     A, b = outcome_constraints
 
-    def oc(a: Tensor, rhs: Tensor, Y: Tensor) -> Tensor:
-        return torch.sum(Y * a.view(1, 1, -1), dim=-1) - rhs
+    def _oc(a: Tensor, rhs: Tensor, Y: Tensor) -> Tensor:
+        """
+        Evaluate constraints.
 
-    return [partial(oc, a, rhs) for a, rhs in zip(A, b)]
+        Note: einsum multiples Y by a and sums over the `t`-dimension. Einsum
+            is ~2x faster than using `(Y * a.view(1, 1, -1)).sum(dim-1)`.
+
+        Args:
+            a: `t`-dim tensor of weights for the outcomes
+            rhs: Singleton tensor containing the outcome constraint value
+            Y: `... x b x q x t` tensor of function values
+
+        Returns:
+            Tensor: `... x b x q`-dim tensor where negative values imply feasibility
+        """
+        lhs = torch.einsum("...t, t", [Y, a])
+        return lhs - rhs
+
+    return [partial(_oc, a, rhs) for a, rhs in zip(A, b)]
