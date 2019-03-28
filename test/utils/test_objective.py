@@ -3,7 +3,7 @@
 import unittest
 
 import torch
-from botorch.utils import apply_constraints_, get_objective_weights_transform
+from botorch.utils import apply_constraints, get_objective_weights_transform
 from torch import Tensor
 
 
@@ -24,14 +24,14 @@ class TestApplyConstraints(unittest.TestCase):
         # nonnegative objective, one constraint
         samples = torch.randn(1)
         obj = ones_f(samples)
-        apply_constraints_(
+        obj = apply_constraints(
             obj=obj, constraints=[zeros_f], samples=samples, infeasible_cost=0.0
         )
         self.assertTrue(torch.equal(obj, ones_f(samples) * 0.5))
         # nonnegative objective, two constraint
         samples = torch.randn(1)
         obj = ones_f(samples)
-        apply_constraints_(
+        obj = apply_constraints(
             obj=obj,
             constraints=[zeros_f, zeros_f],
             samples=samples,
@@ -41,7 +41,7 @@ class TestApplyConstraints(unittest.TestCase):
         # negative objective, one constraint, infeasible_cost
         samples = torch.randn(1)
         obj = minus_one_f(samples)
-        apply_constraints_(
+        obj = apply_constraints(
             obj=obj, constraints=[zeros_f], samples=samples, infeasible_cost=2.0
         )
         self.assertTrue(torch.equal(obj, ones_f(samples) * 0.5 - 2.0))

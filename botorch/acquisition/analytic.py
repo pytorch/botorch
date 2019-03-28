@@ -152,7 +152,7 @@ class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
         ei_cdf = normal.cdf(u)
         ei = sigma_obj * (ei_pdf + u * ei_cdf)
         prob_feas = self._compute_prob_feas(X, means, sigmas)
-        ei.mul_(prob_feas)
+        ei = ei.mul(prob_feas)
         return ei.squeeze(dim=-1)
 
     def _preprocess_bounds(
@@ -200,21 +200,21 @@ class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
         prob_feas = torch.ones(output_shape, device=X.device, dtype=X.dtype)
         if len(self.constraint_lower_inds) > 0:
             normal_lower = _construct_dist(means, sigmas, self.constraint_lower_inds)
-            prob_feas.mul_(
+            prob_feas = prob_feas.mul(
                 torch.prod(
                     1 - normal_lower.cdf(self.constraint_lower), dim=-1, keepdim=True
                 )
             )
         if len(self.constraint_upper_inds) > 0:
             normal_upper = _construct_dist(means, sigmas, self.constraint_upper_inds)
-            prob_feas.mul_(
+            prob_feas = prob_feas.mul(
                 torch.prod(
                     normal_upper.cdf(self.constraint_upper), dim=-1, keepdim=True
                 )
             )
         if len(self.constraint_both_inds) > 0:
             normal_both = _construct_dist(means, sigmas, self.constraint_both_inds)
-            prob_feas.mul_(
+            prob_feas = prob_feas.mul(
                 torch.prod(
                     normal_both.cdf(self.constraint_both[:, 1])
                     - normal_both.cdf(self.constraint_both[:, 0]),

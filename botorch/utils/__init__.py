@@ -2,7 +2,7 @@
 
 # from .acquisition import get_acquisition_function
 from .constraints import get_outcome_constraint_transforms
-from .objective import apply_constraints_, get_objective_weights_transform
+from .objective import apply_constraints, get_objective_weights_transform
 from .sampling import (
     construct_base_samples,
     construct_base_samples_from_posterior,
@@ -14,7 +14,7 @@ from .transforms import squeeze_last_dim, standardize
 
 
 __all__ = [
-    "apply_constraints_",
+    "apply_constraints",
     "construct_base_samples",
     "construct_base_samples_from_posterior",
     "draw_sobol_normal_samples",

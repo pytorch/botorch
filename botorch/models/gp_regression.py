@@ -104,7 +104,7 @@ class SingleTaskGP(ExactGP, GPyTorchModel):
         else:
             self.__init__(train_X=train_X, train_Y=train_Y)
         # move to new device / dtype if necessary
-        self.to(device=train_X.device, dtype=train_X.dtype)
+        self.to(train_X)
 
 
 class HeteroskedasticSingleTaskGP(SingleTaskGP):
@@ -128,6 +128,7 @@ class HeteroskedasticSingleTaskGP(SingleTaskGP):
         train_Y: Tensor,
         train_Y_se: Optional[Tensor] = None,
         keep_params: bool = True,
+        **kwargs,
     ) -> None:
         """Reinitialize model and the likelihood given new data.
 
@@ -153,4 +154,4 @@ class HeteroskedasticSingleTaskGP(SingleTaskGP):
         else:
             self.__init__(train_X=train_X, train_Y=train_Y, train_Y_se=train_Y_se)
         # move to new device / dtype if necessary
-        self.to(device=train_X.device, dtype=train_X.dtype)
+        self.to(train_X)

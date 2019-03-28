@@ -10,7 +10,7 @@ from botorch.acquisition.objective import (
     LinearMCObjective,
     MCAcquisitionObjective,
 )
-from botorch.utils import apply_constraints_
+from botorch.utils import apply_constraints
 from torch import Tensor
 
 
@@ -61,7 +61,7 @@ class TestConstrainedMCObjective(unittest.TestCase):
             )
             samples = torch.randn(1, device=device, dtype=dtype)
             constrained_obj = generic_obj(samples)
-            apply_constraints_(
+            constrained_obj = apply_constraints(
                 obj=constrained_obj,
                 constraints=[feasible_con],
                 samples=samples,
@@ -74,7 +74,7 @@ class TestConstrainedMCObjective(unittest.TestCase):
             )
             samples = torch.randn(2, device=device, dtype=dtype)
             constrained_obj = generic_obj(samples)
-            apply_constraints_(
+            constrained_obj = apply_constraints(
                 obj=constrained_obj,
                 constraints=[infeasible_con],
                 samples=samples,
@@ -87,7 +87,7 @@ class TestConstrainedMCObjective(unittest.TestCase):
             )
             samples = torch.randn(2, 1, device=device, dtype=dtype)
             constrained_obj = generic_obj(samples)
-            apply_constraints_(
+            constrained_obj = apply_constraints(
                 obj=constrained_obj,
                 constraints=[feasible_con, infeasible_con],
                 samples=samples,
@@ -102,7 +102,7 @@ class TestConstrainedMCObjective(unittest.TestCase):
             )
             samples = torch.randn(3, 2, device=device, dtype=dtype)
             constrained_obj = generic_obj(samples)
-            apply_constraints_(
+            constrained_obj = apply_constraints(
                 obj=constrained_obj,
                 constraints=[feasible_con, infeasible_con],
                 samples=samples,
@@ -117,7 +117,7 @@ class TestConstrainedMCObjective(unittest.TestCase):
             )
             samples = torch.randn(4, 3, 2, device=device, dtype=dtype)
             constrained_obj = generic_obj(samples)
-            apply_constraints_(
+            constrained_obj = apply_constraints(
                 obj=constrained_obj,
                 constraints=[feasible_con, infeasible_con],
                 samples=samples,
