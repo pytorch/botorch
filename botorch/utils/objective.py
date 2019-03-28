@@ -28,8 +28,23 @@ def get_objective_weights_transform(
     # if no weights provided, just extract the single output
     if weights is None:
         return lambda Y: Y.squeeze(-1)
-    # TODO: replace with einsum once pytorch performance issues are resolved
-    return lambda Y: torch.sum(Y * weights.view(1, 1, -1), dim=-1)
+
+    def _objective(Y):
+        """
+        Evaluate objective.
+
+        Note: einsum multiples Y by weights and sums over the `t`-dimension. Einsum
+            is ~2x faster than using `(Y * weights.view(1, 1, -1)).sum(dim-1)`.
+
+        Args:
+            Y: `... x b x q x t` tensor of function values
+
+        Returns:
+            Tensor: `... x b x q`-dim tensor of objective values
+        """
+        return torch.einsum("...t, t", [Y, weights])
+
+    return _objective
 
 
 def apply_constraints_nonnegative_soft(
