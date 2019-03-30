@@ -117,7 +117,7 @@ class Index extends React.Component {
                 <li>
                   Download botorch from the Github repo and install with pip:
                   <MarkdownBlock>
-                    {bash`cd botorch && pip3 install -e .`}
+                    {bash`cd botorch && pip install -e .`}
                   </MarkdownBlock>
                 </li>
               </ol>

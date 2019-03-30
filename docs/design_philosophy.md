@@ -27,44 +27,39 @@ components together.
 
 ## Batching, Batching, Batching
 
-**batch** - noun [C] /bætʃ/ : A quantity (as of persons or things) considered as a group.
+**batch** - noun [C] /bætʃ/ :
+*A quantity (as of persons or things) considered as a group.*
+
+Batching (as in batching data, batching computations) is a central component to
+all modern deep learning platforms. Hence it should come as no surprise that it
+also plays a critical role in the design of botorch.
 
 In botorch, we deal with various different kinds of batches:
 
-1. A batch of candidate points to be jointly evaluated. We refer to this kind of
-   batch as a "`q`-batch".
-2. A batch of `q`-batches to be evaluated in parallel on the surrogate model.
-   This is used for efficient parallelized evaluation of multiple points on
-   the same model. We refer to these batches as "`t`-batches".
-3. A batched model, each batch of which models a separate output.
+1. A batch of candidate points `X` to be evaluated in parallel on the black-box
+   function we are trying optimize. In botorch, we refer to this kind of batch
+   as a "`q`-batch".
+2. A batch of `q`-batches to be evaluated in parallel on the surrogate model of
+   the black-box function. These facilitate fast evaluation on modern hardware
+   such as GPUs. botorch refer to these batches as "`t`-batches" (as in
+   "torch-batches").
+3. A batched surrogate model, each batch of which models a different output.
+   This kind of batching also aims to exploit modern hardware architecture.
 
-Note that none of these notions of batch pertains to the batching of training
-data, which is commonly done in training Machine Learning models (sometimes
+Note that none of these notions of batch pertains to the batching of *training
+data*, which is commonly done in training Neural Network models (sometimes
 called "mini-batching"). botorch aims to be agnostic with regards to the
 particular model used - so while model fitting may indeed be performed using
-batch training, botorch abstracts away from this.
+batch training, botorch itself abstracts away from this.
 
-For the purposes of botorch, batching is two things:
-- a way of logically grouping multiple designs that are to be evaluated in
-  parallel on the underlying black-box function.
-- a powerful design principle that allows botorch to automatically harness
-  highly efficient implementations in PyTorch while allowing for device-agnostic
-  code.
+For the purposes of botorch, batching is primarily two things:
+- a way of logically grouping multiple design configurations that are to be
+  evaluated in parallel on the underlying black-box function
+- a powerful design principle that allows harnessing highly efficient
+  computations in PyTorch while allowing for device-agnostic code
 
-
-The different batch notions in botorch are described in more detail below.
-
-#### Batch Acquisition Functions
-**TODO**
-
-#### Batched Models
-**TODO**
-
-#### Batched Evaluation of Models and Acquisition Functions
-**TODO**
-
-#### Batched Optimization of Random Restarts
-**TODO**
+For more detail on the different batch notions in botorch, take a look at the
+[More on Batching](#more_on_batching) section.
 
 
 

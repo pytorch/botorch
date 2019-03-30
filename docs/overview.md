@@ -1,6 +1,6 @@
 ---
-id: basic_concepts
-title: Basic Concepts
+id: overview
+title: Overview
 ---
 
 For a high-level view of what botorch tries to be, see our

@@ -5,10 +5,8 @@
   },
   "docs": {
     "About": ["introduction", "design_philosophy"],
-    "General": ["installation"],
-    "Basic Concepts": ["basic_concepts", "acquisition"],
-    "Optimization": ["optimization"],
-    "Examples": ["examples"],
-    "Advanced Use": ["advanced_use"]
+    "General": ["installation", "contributing"],
+    "Basic Concepts": ["overview", "acquisition", "optimization"],
+    "Advanced Topics": ["more_on_batching"]
   }
 }

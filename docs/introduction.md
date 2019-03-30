@@ -4,7 +4,7 @@ title: Introduction
 ---
 
 
-`botorch` (“Bayesian Optimization in PyTorch”) is a library for Bayesian
+botorch (“Bayesian Optimization in PyTorch”) is a library for Bayesian
 Optimization research built on top of PyTorch, and is part of the PyTorch
 ecosystem.
 
