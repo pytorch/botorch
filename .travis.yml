@@ -21,4 +21,4 @@ script:
   - black --check --diff .
   - python -c "import gpytorch; print('Testing with GPyTorch Version:' + ' ' +  gpytorch.__version__)"
   - pytest -ra
-  - sphinx-build -T sphinx/source sphinx/build
+  - sphinx-build -TW --keep-going sphinx/source sphinx/build
