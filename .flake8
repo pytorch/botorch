@@ -1,8 +1,6 @@
 [flake8]
 
-# E704: the linter doesn't parse types properly
-# T499, T484: We don't need to run pyre and mypy
-# W503: black and flake8 disagree on how to place operators)
-ignore = T484, T499, W503, E704
-# Black really wants lines to be 88 chars....
+# ignore = T484, T499, W503, E704
+
+# make line length the same as for black
 max-line-length = 88

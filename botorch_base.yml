@@ -3,7 +3,7 @@ channels:
   - pytorch
   - gpytorch
 dependencies:
-  - python=3.6
+  - python>=3.6
   - pytorch
   - gpytorch
   - cython

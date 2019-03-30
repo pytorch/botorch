@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css?family=Montserrat');
+@import url('https://fonts.googleapis.com/css?family=IBM+Plex+Mono');
 
 html body {
   font-family: 'Montserrat', sans-serif;
@@ -76,6 +77,77 @@ div#quickstart  {
 
 div#quickstart ol {
   margin-bottom: 0px;
+}
+
+p a {
+  color: #f29837;
+}
+
+p a:hover {
+  color: #f29837;
+  border-bottom: 1px dotted #f29837;
+}
+
+/* Style tutorials */
+.tutorialBody {
+  margin-top: -20px;
+}
+
+.tutorialBody h1 {
+  margin: 0px;
+}
+
+.tutorialBody pre {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 14px;
+  margin: 0px;
+}
+
+.tutorialBody .input_prompt, .tutorialBody .output_prompt {
+  color: darkred;
+  font-size: 12px;
+}
+
+.tutorialBody .highlight {
+  background: #f3f4f7;
+  padding: 10px 20px;
+  border: lightgray 1px solid;
+  border-radius: 3px;
+}
+
+.tutorialBody .cell {
+  margin: 20px;
+}
+
+.tutorialBody .output_stderr {
+  background-color: #fdede9;
+}
+
+.tutorialBody .anchor-link {
+  color: lightgray;
+}
+
+.tutorialButtonWrapper {
+  margin: 20px;
+}
+
+.tutorialButton {
+  color: #f29837;
+}
+
+.tutorialButton svg {
+  height: 15px;
+  margin-right: 5px;
+  fill: #f29837;
+}
+
+.tutorialButton:hover {
+  background-color: #353d47;
+  color: #dc3b26;
+}
+
+.tutorialButton:hover svg path {
+  fill: #dc3b26;
 }
 
 @media only screen and (min-device-width: 360px) and (max-device-width: 736px) {
