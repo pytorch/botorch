@@ -11,7 +11,9 @@ pip using `pip install black`, and run locally by calling
 ```bash
 black .
 ```
-from the repository root. See the [black documentation](https://black.readthedocs.io/en/stable/installation_and_usage.html#usage) for more advanced usage.
+from the repository root. No additional configuration should be needed (see the
+[black documentation](https://black.readthedocs.io/en/stable/installation_and_usage.html#usage)
+for advanced usage).
 
 We feel strongly that having a consistent code style is extremely important, so
 Travis will fail on your PR if it does not adhere to the black formatting style.
@@ -20,9 +22,10 @@ Travis will fail on your PR if it does not adhere to the black formatting style.
 #### Type Hints
 botorch is fully typed using python 3.6+
 [type hints](https://www.python.org/dev/peps/pep-0484/).
-While we currently do not enforce full consistency of these annotations in
-Travis, it is good practice to do so locally. For this, we recommend using
-[pyre](https://pyre-check.org/).
+We expect any contributions to also use proper type annotations. While we
+currently do not enforce full consistency of these in Travis (type checkers can
+be buggy at times), you should strive to type check your code locally. For this
+we recommend using [pyre](https://pyre-check.org/).
 
 
 #### Unit Tests
@@ -38,22 +41,23 @@ python -m unittest
 #### Documentation
 
 botorch's website is also open source, and is part of this very repository (the
-code can be found in the `website` folder).
-It is built on [Docusaurus](https://docusaurus.io/), and consists of three main
-elements:
+code can be found in the [website](../website/) folder).
+It is built using [Docusaurus](https://docusaurus.io/), and consists of three
+main elements:
+
 1. The documentation in Docusaurus itself (if you know Markdown, you can
-  already contribute!). This lives in `docs/`.
-2. The API reference, auto-generated from the docstrings by
-  [Sphinx](http://www.sphinx-doc.org), and embedded into the Docusaurus website.
-  The sphinx .rst source files for this live in `sphinx/source/`.
+   already contribute!). This lives in the [docs](../docs/).
+2. The API reference, auto-generated from the docstrings using
+   [Sphinx](http://www.sphinx-doc.org), and embedded into the Docusaurus website.
+   The sphinx .rst source files for this live in [sphinx/source](../sphinx/source/).
 3. The Jupyter notebook tutorials, parsed by nbconvert, and embedded into the
-  Docusaurus website. These live in `tutorials/`.
+   Docusaurus website. These live in [tutorials](../tutorials).
 
 To build the documentation you will need [Node](https://nodejs.org/en/) >= 8.x
 and [Yarn](https://yarnpkg.com/en/) >= 1.5.
 
 The following command will both build the docs and serve the site locally:
-```
+```bash
 cd scripts
 ./build_docs.sh
 ```
@@ -67,14 +71,13 @@ We actively welcome your pull requests.
 3. If you have changed APIs, update the documentation. Make sure the
    documentation builds.
 4. Ensure the test suite passes.
-5. Make sure your code lints under black.
+5. Make sure your code passes black's formatting checks.
 6. If you haven't already, complete the Contributor License Agreement ("CLA").
 
 ## Contributor License Agreement ("CLA")
 In order to accept your pull request, we need you to submit a CLA. You only need
-to do this once to work on any of Facebook's open source projects.
-
-Complete your CLA here: <https://code.facebook.com/cla>
+to do this once to work on any of Facebook's open source projects. You can
+complete your CLA here: <https://code.facebook.com/cla>
 
 ## Issues
 We use GitHub issues to track public bugs. Please ensure your description is
