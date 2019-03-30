@@ -36,12 +36,12 @@ also plays a critical role in the design of botorch.
 
 In botorch, we deal with various different kinds of batches:
 
-1. A batch of candidate points `X` to be evaluated in parallel on the black-box
+1. A batch of candidate points $X$ to be evaluated in parallel on the black-box
    function we are trying optimize. In botorch, we refer to this kind of batch
-   as a "`q`-batch".
-2. A batch of `q`-batches to be evaluated in parallel on the surrogate model of
+   as a "q-batch".
+2. A batch of q-batches to be evaluated in parallel on the surrogate model of
    the black-box function. These facilitate fast evaluation on modern hardware
-   such as GPUs. botorch refer to these batches as "`t`-batches" (as in
+   such as GPUs. botorch refer to these batches as "t-batches" (as in
    "torch-batches").
 3. A batched surrogate model, each batch of which models a different output.
    This kind of batching also aims to exploit modern hardware architecture.
@@ -80,9 +80,9 @@ because the amount of input data cannot be processes at once. Thus one typically
 subsets ("mini-batches") the data, and by doing so is left with a stochastic
 approximation of the empirical loss function (with each data-batch a sample).
 
-In botorch, `AcquisitionFunction` modules map an input design `X` to the
+In botorch, `AcquisitionFunction` modules map an input design $X$ to the
 acquisition function value. Optimizing the acquisition function means optimizing
-the output over the possible values of `X`. If the acquisition function is
+the output over the possible values of $X$. If the acquisition function is
 deterministic, so is the optimization problem.
 
 For large Neural Network models, the number of optimization variables is very
@@ -95,13 +95,13 @@ with these algorithms is by extracting the module's parameters (e.g. using
 a torch optimizer.
 
 The problem of optimizing acquisition functions is different in that quite often
-the dimensionality is much smaller. Indeed, optimizing over `q` design points in
-a `d`-dimensional feature space results in `qd` scalar parameters to optimize
-over. Both `q` and `d` are often quite small, and hence is the dimensionality of
+the dimensionality is much smaller. Indeed, optimizing over $q$ design points in
+a $d$-dimensional feature space results in $qd$ scalar parameters to optimize
+over. Both $q$ and $d$ are often quite small, and hence is the dimensionality of
 the problem. Moreover, the optimization problem can be cast as a deterministic
 one (either because an analytic acquisition function is used, or because the
 reparameterization trick is employed to render the MC-based evaluation of the
-acquisition function deterministic in terms of the input tensor `X`). As a
+acquisition function deterministic in terms of the input tensor $X$). As a
 result, optimization algorithms that are typically inadmissible for problems
 such as training Neural Networks become promising alternatives to standard SGD
 methods. In particular, this includes quasi-second order methods (such as

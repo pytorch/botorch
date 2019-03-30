@@ -58,14 +58,17 @@ const siteConfig = {
 
   // Custom scripts that are placed in <head></head> of each page
   scripts: [
+    // Github buttons
     'https://buttons.github.io/buttons.js',
-    '/js/code_block_buttons.js',
+    // Copy-to-clipboard button for code blocks
+    `${baseUrl}js/code_block_buttons.js`,
     'https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js',
-    '/js/mathjax.js',
+    // Mathjax for rendering math content
+    `${baseUrl}js/mathjax.js`,
     'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML',
   ],
 
-  stylesheets: ['/css/code_block_buttons.css'],
+  stylesheets: [`${baseUrl}css/code_block_buttons.css`],
 
   // On page navigation for the current documentation page.
   onPageNav: 'separate',

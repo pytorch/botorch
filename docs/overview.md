@@ -16,6 +16,13 @@ botorch works with the following primitives;
 
 **TODO: Illustration of how things work together**
 
+![Black Box Optimization](assets/overview_blackbox.png)
+
+![Bayesian Optimization](assets/overview_bayesopt.png)
+
+![Monte-Carlo Acquisition Functions](assets/overview_mcacquisition.png)
+
+![Reparameterization Trick](assets/overview_reparameterization.png)
 
 Models play an essential role in Bayesian Optimization. They provide a surrogate
 function for the actual underlying black box function that one is trying to
