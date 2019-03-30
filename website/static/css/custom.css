@@ -78,6 +78,34 @@ div#quickstart ol {
   margin-bottom: 0px;
 }
 
+p a {
+  color: #f29837;
+}
+
+p a:hover {
+  color: #f29837;
+  border-bottom: 1px dotted #f29837;
+}
+
+.tutorialButton {
+  color: #f29837;
+}
+
+.tutorialButton svg {
+  height: 15px;
+  margin-right: 5px;
+  fill: #f29837;
+}
+
+.tutorialButton:hover {
+  background-color: #353d47;
+  color: #dc3b26;
+}
+
+.tutorialButton:hover svg path {
+  fill: #dc3b26;
+}
+
 @media only screen and (min-device-width: 360px) and (max-device-width: 736px) {
 }
 
