@@ -36,7 +36,7 @@ def gen_loo_cv_folds(train_x: Tensor, train_y: Tensor) -> CVFolds:
     Returns:
         CVFolds tuple with the following fields:
             train_x: A `n x (n-1) x p` tensor of training features
-            train_y: A `n x (n-1)` (or `n x (n-1) x t`) tensor of traiing observations
+            train_y: A `n x (n-1)` (or `n x (n-1) x t`) tensor of training observations
             test_x: A `n x 1 x p` tensor of test features
             test_y: A `n` or `n x t` tensor of test observations
 
