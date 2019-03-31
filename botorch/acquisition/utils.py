@@ -4,8 +4,7 @@
 Utilities for acquisition functions.
 """
 
-from functools import wraps
-from typing import Any, Callable, Optional
+from typing import Callable, Optional
 
 import torch
 from torch import Tensor
@@ -22,47 +21,6 @@ from .monte_carlo import (
 )
 from .objective import MCAcquisitionObjective
 from .sampler import IIDNormalSampler, SobolQMCNormalSampler
-
-
-def batch_mode_transform(
-    method: Callable[[Any, Tensor], Any]
-) -> Callable[[Any, Tensor], Any]:
-    """Decorates instance functions to always receive a t-batched tensor.
-
-    Decorator for instance methods that transforms an an input tensor `X` to
-    t-batch mode (i.e. with at least 3 dimensions).
-
-    Args:
-        method: The (instance) method to be wrapped in the batch mode transform.
-
-    Returns:
-        Callable[..., Any]: The decorated instance method.
-    """
-
-    @wraps(method)
-    def decorated(cls: Any, X: Tensor) -> Any:
-        X = X if X.dim() > 2 else X.unsqueeze(0)
-        return method(cls, X)
-
-    return decorated
-
-
-def match_batch_shape(X: Tensor, Y: Tensor) -> Tensor:
-    """Matches the batch dimension of a tensor to that of anther tensor.
-
-    Args:
-        X: A `batch_shape_X x q x d` tensor, whose batch dimensions that
-            correspond to batch dimensions of `Y` are to be matched to those
-            (if compatible).
-        Y: A `batch_shape_Y x q' x d` tensor.
-
-    Returns:
-        Tensor: A `batch_shape_Y x q x d` tensor containing the data of `X`
-            expanded to the batch dimensions of `Y` (if compatible). For
-            instance, if `X` is `b'' x b' x q x d` and `Y` is `b x q x d`,
-            then the returned tensor is `b'' x b x q x d`.
-    """
-    return X.expand(X.shape[: -Y.dim()] + Y.shape[:-2] + X.shape[-2:])
 
 
 def get_acquisition_function(
