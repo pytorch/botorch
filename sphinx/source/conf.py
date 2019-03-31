@@ -10,10 +10,12 @@
 # -- Path setup --------------------------------------------------------------
 
 import os
+import re
 import sys
 
 
-sys.path.append(os.path.abspath(os.path.join(__file__, "..", "..", "..")))
+base_path = os.path.abspath(os.path.join(__file__, "..", "..", ".."))
+sys.path.append(base_path)
 
 
 # -- Project information -----------------------------------------------------
@@ -22,10 +24,15 @@ project = "botorch"
 copyright = "2019, Facebook, Inc."
 author = "Facebook, Inc."
 
-# The short X.Y version
-version = ""
+
+# get version string from setup.py
+with open(os.path.join(base_path, "setup.py"), "r") as f:
+    match = re.search(r"version=['\"]([^'\"]*)['\"]", f.read(), re.M)
+
 # The full version, including alpha/beta/rc tags
-release = ""
+release = match.group(1)
+# The short X.Y version
+version = ".".join(release.split(".")[:2])
 
 
 # -- General configuration ---------------------------------------------------
@@ -47,7 +54,8 @@ extensions = [
 templates_path = ["_templates"]
 
 # The suffix(es) of source filenames
-source_suffix = [".rst", ".md"]
+# source_suffix = [".rst", ".md"]
+source_suffix = ".rst"
 
 # The master toctree document.
 master_doc = "index"
@@ -97,6 +105,12 @@ html_static_path = []  # for now we have no static files to track
 # 'searchbox.html']``.
 #
 # html_sidebars = {}
+
+# If true, "Created using Sphinx" is shown in the HTML footer. Default is True.
+html_show_sphinx = False
+
+# If true, "(C) Copyright ..." is shown in the HTML footer. Default is True.
+html_show_copyright = False
 
 
 # -- Options for HTMLHelp output ---------------------------------------------
