@@ -2,12 +2,16 @@
 
 """
 Batch acquisition functions using the reparameterization trick in combination
-with (quasi) Monte-Carlo sampling.
+with (quasi) Monte-Carlo sampling. See [Rezende2014reparam]_ and
+[Wilson2017reparam]_
+
+.. [Rezende2014reparam]
+    D. J. Rezende, S. Mohamed, and D. Wierstra. Stochastic backpropagation and
+    approximate inference in deep generative models. ICML 2014.
 
 .. [Wilson2017reparam]
-    Wilson, J. T., Moriconi, R., Hutter, F., & Deisenroth, M. P. (2017). The
-    reparameterization trick for acquisition functions. arXiv preprint
-    arXiv:1712.00424.
+    J. T. Wilson, R. Moriconi, F. Hutter, and M. P. Deisenroth.
+    The reparameterization trick for acquisition functions. ArXiv 2017.
 """
 
 import math

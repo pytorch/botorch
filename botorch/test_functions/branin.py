@@ -11,7 +11,7 @@ GLOBAL_MAXIMUM = -0.397887
 
 
 def neg_branin(X: Tensor) -> Tensor:
-    """Negative Branin test function.
+    r"""Negative Branin test function.
 
     Two-dimensional function (usually evaluated on `[-5, 10] x [0, 15]`):
 
