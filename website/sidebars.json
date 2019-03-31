@@ -3,6 +3,6 @@
     "About": ["introduction", "design_philosophy"],
     "General": ["installation", "contributing"],
     "Basic Concepts": ["overview", "models", "posteriors", "acquisition", "optimization"],
-    "Advanced Topics": ["more_on_batching", "objectives", "samplers"]
+    "Advanced Topics": ["more_on_batching", "objectives", "samplers", "multi_x_models"]
   }
 }
