@@ -3,6 +3,7 @@
 import torch
 from botorch.acquisition import qExpectedImprovement
 from botorch.gen import gen_candidates_scipy, get_best_candidates
+from gpytorch import settings
 
 from ..test_gen import TestBaseCandidateGeneration
 
@@ -14,7 +15,8 @@ class TestRandomRestartOptimization(TestBaseCandidateGeneration):
     def test_random_restart_optimization(self, cuda=False):
         for double in (True, False):
             self._setUp(double=double, cuda=cuda)
-            best_f = self.model(self.train_x).mean.max().item()
+            with settings.debug(False):
+                best_f = self.model(self.train_x).mean.max().item()
             qEI = qExpectedImprovement(self.model, best_f=best_f)
             bounds = torch.tensor([[0.0], [1.0]]).type_as(self.train_x)
             batch_ics = torch.rand(2, 1).type_as(self.train_x)
