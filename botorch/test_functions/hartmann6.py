@@ -25,7 +25,7 @@ GLOBAL_MAXIMUM = 3.32237
 
 
 def neg_hartmann6(X: Tensor) -> Tensor:
-    """Negative Hartmann6 test function.
+    r"""Negative Hartmann6 test function.
 
     Six-dimensional function (typically evaluated on `[0, 1]^6`)
 
