@@ -3,8 +3,13 @@
 import unittest
 
 import torch
-from botorch.acquisition.utils import batch_mode_transform, match_batch_shape
-from botorch.utils.transforms import normalize, standardize, unnormalize
+from botorch.utils.transforms import (
+    batch_mode_transform,
+    match_batch_shape,
+    normalize,
+    standardize,
+    unnormalize,
+)
 from torch import Tensor
 
 
