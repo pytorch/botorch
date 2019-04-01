@@ -3,13 +3,28 @@ id: installation
 title: Installation
 ---
 
-### Installation Requirements
+#### Setup Requirements
+
+The following are required to run the setup:
 
 - Python >= 3.6
-- PyTorch >= 1.0.1  (**TODO**: Update to 1.1)
+- numpy
+- cython
+
+**TODO:** Remove Setup Requirements once we use torch Sobol
+
+
+#### Dependencies
+
+These will be automatically installed (if not present) when running the setup:
+
+- PyTorch >= 1.0.1 [^MacOSCuda]  (**TODO**: Update to 1.1)
 - gpytorch >= 0.2.1
-- cython  (**TODO**: Remove once using torch Sobol)
 - scipy
+
+[^MacOSCuda]: To use CUDA on Mac OS, pytorch needs to be built from source
+instead (see the quick start instructions on https://pytorch.org/)
+
 
 
 ### Installing from private repo
@@ -33,12 +48,18 @@ make sure your ssh public key is registered with GitHub, and is usable by ssh.
 #### Manual install
 
 * Download botorch from the [Git repository](https://github.com/facebookexternal/botorch).
-* Install all [dependencies](#installation-requirements)
-* Run the following:
+* Install all [build dependencies](#setup-requirements)
+* Run the following to get the default installation:
 ```bash
 cd botorch
 pip install -e .
 ```
+
+Alternatively, you can also do the following:
+* `pip install -e .[dev]`: Also installs all tools necessary for development
+  (testing, linting, docs building).
+* `pip install -e .[tutorial]`: Also installs jupyter for running the tutorial
+  notebooks
 
 
 ### Install using pip
@@ -64,5 +85,4 @@ conda install botorch
 
 ### Notes
 
-1. To use **CUDA on MacOS**, pytorch needs to be built from source instead
-  (see the quick start instructions on https://pytorch.org/)
+[^CudaOnMac]

@@ -1,5 +1,15 @@
 {
-  "Basic optimization loops": [
+  "Using botorch with Ax": [
+    {
+      "id": "custom_botorch_model_in_ax",
+      "title": "Using a custom botorch model"
+    }
+  ],
+  "Full Optimization Loops": [
+    {
+      "id": "closed_loop_botorch_only",
+      "title": "q-Noisy EI on Hartmann6"
+    },
     {
       "id": "analytic_EI_Hartmann6_noiseless",
       "title": "Analytic EI on Hartmann6"
@@ -7,16 +17,16 @@
     {
       "id": "qEI_Hartmann6_noisy",
       "title": "qEI, Hartmann6 (noisy)"
-    },
-    {
-      "id": "qEI_Hartmann6_noiseless",
-      "title": "qEI, Hartmann6 (noiseless)"
     }
   ],
-  "Common Tasks": [
+  "Bite-Size Tutorials": [
     {
       "id": "fit_model_with_torch_optimizer",
-      "title": "Fit a model using `torch.optim`"
+      "title": "Fit a model using torch.optim"
+    },
+    {
+      "id": "acquisition_tutorial",
+      "title": "Comparing analytic and MC Expected Improvement"
     },
     {
       "id": "optimize_with_cmaes",
@@ -24,7 +34,11 @@
     },
     {
       "id": "optimize_stochastic",
-      "title": "Acquisition function optimization with torch.optim "
+      "title": "Acquisition function optimization with torch.optim"
+    },
+    {
+      "id": "batch_mode_cross_validation",
+      "title": "Using batch evaluation for fast cross-validation"
     }
   ],
   "Advanced Usage": [

@@ -3,4 +3,4 @@ id: contributing
 title: Contributing
 ---
 
-**TODO**
+**TODO:** Add information from CONTRIBUTING.md
