@@ -18,9 +18,13 @@ generate a q-batch of candidates is `gen_candidates_scipy`. Given a set of
 starting points (for multiple restarts) and an acquisition function,
 `gen_candidates_scipy` makes use of `scipy.optimize.minimize` for optimization,
 via either the `L-BFGS-B` or `SLSQP` routines. A custom `numpy` to `torch`
-converter is used in the following way: Wwhen the optimizer calls for the acquisition value and its gradient at a candidate q-batch `numpy` array `x`, the point `x` is first converted to a `torch` tensor and passed to the acquisition function for evaluation.
+converter is used in the following way: Wwhen the optimizer calls for the
+acquisition value and its gradient at a candidate q-batch `numpy` array `x`,
+the point `x` is first converted to a `torch` tensor and passed to the
+acquisition function for evaluation.
 PyTorch's autograd capability is then used to obtain the gradient via back-
-propagation, and both the acquisition value and gradient are converted back to `numpy` arrays and returned to the optimizer.
+propagation, and both the acquisition value and gradient are converted back to
+`numpy` arrays and returned to the optimizer.
 
 
 #### Using `torch.optim` optimizers
@@ -81,5 +85,5 @@ discussion relating the effectiveness of sequential optimization of acquisition
 functions to greedy maximization of submodular functions.
 
 
-[^Wilson2018]: J. Wilson, F. Hutter, M. Deisenroth.
-*Maximizing Acquisition Functions for Bayesian Optimization.* NeurIPS, 2018.
+[^Wilson2018]: J. Wilson, F. Hutter, M. Deisenroth. Maximizing Acquisition
+Functions for Bayesian Optimization. NeurIPS, 2018.

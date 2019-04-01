@@ -132,22 +132,22 @@ class Index extends React.Component {
         className="productShowcaseSection"
         style={{textAlign: 'center'}}>
         <h2>Key Features</h2>
-      <Block layout="fourColumn">
+      <Block layout="threeColumn">
         {[
           {
-            content: 'Easy to plug in new models & extend acquisition functions',
+            content: 'Plug in new models & acquisition functions.',
             image: `${baseUrl}img/th-large-solid.svg`,
             imageAlign: 'top',
             title: 'Modular',
           },
           {
-            content: 'Native GPU support and autograd',
+            content: 'Easily Integrate Neural Network models. Native GPU & autograd support.',
             image: `${baseUrl}img/pytorch-logo.png`,
             imageAlign: 'top',
             title: 'Built on PyTorch',
           },
           {
-            content: 'Support for scalable GPs (e.g., through gpytorch) and other models',
+            content: 'Support for scalable GPs. Run code on multiple devices.',
             image: `${baseUrl}img/expand-arrows-alt-solid.svg`,
             imageAlign: 'top',
             title: 'Scalable',

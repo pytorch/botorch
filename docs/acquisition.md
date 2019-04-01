@@ -60,12 +60,11 @@ sequences are more evenly distributed than i.i.d. uniform samples and tend to
 improve the convergence rate of MC estimates of integrals/expectations.
 botorch makes it easy to implement and use custom sampling techniques.
 
-[^KingmaWelling2014]: D. P. Kingma, M. Welling.
-*Auto-Encoding Variational Bayes.* ICLR, 2013.
+[^KingmaWelling2014]: D. P. Kingma, M. Welling. Auto-Encoding Variational Bayes.
+ICLR, 2013.
 
-[^Rezende2014]: D. J. Rezende, S. Mohamed, D. Wierstra.
-*Stochastic Backpropagation and Approximate Inference in Deep Generative Models.*
-ICML, 2014.
+[^Rezende2014]: D. J. Rezende, S. Mohamed, D. Wierstra. Stochastic
+Backpropagation and Approximate Inference in Deep Generative Models. ICML, 2014.
 
 
 ## Analytic Acquisition Functions

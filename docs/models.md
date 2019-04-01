@@ -3,8 +3,14 @@ id: models
 title: Models
 ---
 
-**TODO: Describe the basic Model API**
+**TODO:** Describe the role of models
+* botorch is model-agnostic (made easy b/c of pytorch backpropping)
+* botorch comes with gpytorch models covering standard use cases
+* explain the basics of the model API
+* illustrate how to implement custom models (link to tutorial)
 
+
+# Draft Content
 
 Models play an essential role in Bayesian Optimization. They provide a surrogate
 function for the actual underlying black box function that one is trying to

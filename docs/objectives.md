@@ -3,9 +3,20 @@ id: objectives
 title: Objectives
 ---
 
+**TODO:** Describe the role of objectives
+* objectives transform outcomes
+* only particular (e.g. affine) transforms can be used with analytic acquisition
+  functions, but pretty much any (differentiable) objective can be used with
+  MC acquisition functions
+* botorch `Objective` objects are a convenient way to perform Bayesian
+  Optimization on transformed model outputs
+
+
+## Draft Content
+
 Objectives are modules that allow for transforming model outputs. Typical use
 cases for this are scalarization of the outputs of a multi-output model (see
-e.g.[^RandScal]), or optimization subject to outcome constraints (in a noisy
+e.g. [^RandScal]), or optimization subject to outcome constraints (in a noisy
 setting this is typically achieved by weighting the objective by the probability
 of feasibility [^NoisyEI]).
 
@@ -26,8 +37,8 @@ also model the transformed objective directly. But this would potentially
 involve refitting the model numerous times to try different objectives on the
 outputs.
 
-[^RandScal]: B. Paria, K. Kandasamy, and B. Póczos. *Flexible Multi-Objective
-Bayesian Optimization Approach using Random Scalarizations.* ArXiv e-prints, 2018.
+[^RandScal]: B. Paria, K. Kandasamy, and B. Póczos. A Flexible Multi-Objective
+Bayesian Optimization Approach using Random Scalarizations. ArXiv, 2018.
 
-[^NoisyEI]: B. Letham, B. Karrer, G. Ottoni and Bakshy, E. *Constrained Bayesian
-Optimization with Noisy Experiments.* Bayesian Analysis, 2018.
+[^NoisyEI]: B. Letham, B. Karrer, G. Ottoni and Bakshy, E. Constrained Bayesian
+Optimization with Noisy Experiments. Bayesian Analysis, 2018.
