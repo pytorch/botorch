@@ -14,12 +14,19 @@ from .model import Model
 
 
 class MultiOutputGP(IndependentModelList, MultiOutputGPyTorchModel):
-    def __init__(self, gp_models: List[Model]) -> None:
-        super().__init__(*gp_models)
+    r"""A multi-output GP model with independent GPs for the outputs.
 
-    @property
-    def num_outputs(self) -> int:
-        return len(self.models)
+    This model supports different-shaped training inputs for each of its
+    sub-models.
+    """
+
+    def __init__(self, gp_models: List[Model]) -> None:
+        r"""A multi-output GP model with independent GPs for the outputs.
+
+        Args:
+            gp_models: A list of single-output botorch models.
+        """
+        super().__init__(*gp_models)
 
     def reinitialize(
         self,

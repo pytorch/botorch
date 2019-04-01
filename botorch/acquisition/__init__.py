@@ -8,7 +8,6 @@ from .analytic import (
     NoisyExpectedImprovement,
     PosteriorMean,
     ProbabilityOfImprovement,
-    SingleOutcomeAcquisitionFunction,
     UpperConfidenceBound,
 )
 from .monte_carlo import (
@@ -37,7 +36,6 @@ __all__ = [
     "NoisyExpectedImprovement",
     "PosteriorMean",
     "ProbabilityOfImprovement",
-    "SingleOutcomeAcquisitionFunction",
     "UpperConfidenceBound",
     "qExpectedImprovement",
     "qNoisyExpectedImprovement",

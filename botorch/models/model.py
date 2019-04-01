@@ -4,7 +4,7 @@
 Abstract base module for all botorch models.
 """
 
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
 from typing import List, Optional
 
 from torch import Tensor
@@ -39,13 +39,8 @@ class Model(Module, ABC):
 
         Returns:
             A `Posterior` object, representing a batch of `b` joint distributions
-                over `q` points and `t` outputs each.
+                over `q` points and `o` outputs each.
         """
-        pass
-
-    @abstractproperty
-    def num_outputs(self) -> int:
-        """The number of outputs of the model."""
         pass
 
     def reinitialize(
@@ -66,7 +61,7 @@ class Model(Module, ABC):
                 training inputs.
             train_Y: A `n x t`-dim (or `b x n x d`) Tensor containing the new
                 training outputs.
-            train_Y_se: A `n x t`-dim (or `b x n x t`) Tensor containing the
+            train_Y_se: A `n x t`-dim (or `b x n x o`) Tensor containing the
                 observed measurement noise at the training outputs.
             keep_params: If True, do not reset the model hyperparameters.
         """

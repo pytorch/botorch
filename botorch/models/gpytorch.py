@@ -7,7 +7,7 @@ To implement your own, simply inherit from both the provided classes and a
 GPyTorch Model class such as an ExactGP.
 """
 
-from abc import ABC
+from abc import ABC, abstractproperty
 from contextlib import ExitStack
 from typing import List, Optional
 
@@ -74,6 +74,11 @@ class GPyTorchModel(Model, ABC):
 
 class MultiOutputGPyTorchModel(GPyTorchModel, ABC):
     """Abstract base class for models based on multi-output GPyTorch models."""
+
+    @abstractproperty
+    def num_outputs(self) -> int:
+        """The number of outputs of the model."""
+        pass
 
     def posterior(
         self,

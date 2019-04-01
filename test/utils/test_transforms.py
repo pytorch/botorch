@@ -4,10 +4,10 @@ import unittest
 
 import torch
 from botorch.utils.transforms import (
-    batch_mode_transform,
     match_batch_shape,
     normalize,
     standardize,
+    t_batch_mode_transform,
     unnormalize,
 )
 from torch import Tensor
@@ -63,13 +63,13 @@ class TestNormalizeAndUnnormalize(unittest.TestCase):
 
 
 class BMIMTestClass:
-    @batch_mode_transform
+    @t_batch_mode_transform
     def method(self, X: Tensor) -> None:
         return X
 
 
 class TestBatchModeTransform(unittest.TestCase):
-    def test_batch_mode_transform(self):
+    def test_t_batch_mode_transform(self):
         c = BMIMTestClass()
         # non-batch
         X = torch.rand(3, 2)
