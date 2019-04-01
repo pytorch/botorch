@@ -54,13 +54,14 @@ def unnormalize(X: Tensor, bounds: Tensor) -> Tensor:
     return X * (bounds[1] - bounds[0]) + bounds[0]
 
 
-def batch_mode_transform(
+def t_batch_mode_transform(
     method: Callable[[Any, Tensor], Any]
 ) -> Callable[[Any, Tensor], Any]:
     """Decorates instance functions to always receive a t-batched tensor.
 
-    Decorator for instance methods that transforms an an input tensor `X` to
-    t-batch mode (i.e. with at least 3 dimensions).
+    Decorator for instance methods that transforms an input tensor `X` to
+    t-batch mode (i.e. with at least 3 dimensions). This assumes the tensor
+    has a q-batch dimension.
 
     Args:
         method: The (instance) method to be wrapped in the batch mode transform.
@@ -73,6 +74,28 @@ def batch_mode_transform(
     def decorated(cls: Any, X: Tensor) -> Any:
         X = X if X.dim() > 2 else X.unsqueeze(0)
         return method(cls, X)
+
+    return decorated
+
+
+def q_batch_mode_transform(
+    method: Callable[[Any, Tensor], Any]
+) -> Callable[[Any, Tensor], Any]:
+    """Decorates instance functions to always receive a q-batched tensor.
+
+    Decorator for instance methods that transforms an input tensor `X` to
+    q-batch mode. Assumes that the tensor does not have a q-batch dimension.
+
+    Args:
+        method: The (instance) method to be wrapped in the batch mode transform.
+
+    Returns:
+        Callable[..., Any]: The decorated instance method.
+    """
+
+    @wraps(method)
+    def decorated(cls: Any, X: Tensor) -> Any:
+        return method(cls, X.unsqueeze(-2))
 
     return decorated
 
@@ -93,3 +116,8 @@ def match_batch_shape(X: Tensor, Y: Tensor) -> Tensor:
             then the returned tensor is `b'' x b x q x d`.
     """
     return X.expand(X.shape[: -Y.dim()] + Y.shape[:-2] + X.shape[-2:])
+
+
+def convert_to_target_pre_hook(module, *args):
+    """Pre-hook for automatically calling `.to(X)` on module prior to `forward`"""
+    module.to(args[0][0])

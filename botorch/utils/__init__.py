@@ -10,7 +10,12 @@ from .sampling import (
     draw_sobol_samples,
     manual_seed,
 )
-from .transforms import squeeze_last_dim, standardize
+from .transforms import (
+    q_batch_mode_transform,
+    squeeze_last_dim,
+    standardize,
+    t_batch_mode_transform,
+)
 
 
 __all__ = [
@@ -24,4 +29,6 @@ __all__ = [
     "manual_seed",
     "squeeze_last_dim",
     "standardize",
+    "t_batch_mode_transform",
+    "q_batch_mode_transform",
 ]

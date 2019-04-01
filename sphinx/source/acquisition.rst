@@ -21,9 +21,9 @@ Analytic acquisition functions (not using (q-)MC sampling).
    :members:
 
 
-:hidden:`SingleOutcomeAcquisitionFunction`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: SingleOutcomeAcquisitionFunction
+:hidden:`AnalyticAcquisitionFunction`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autoclass:: AnalyticAcquisitionFunction
    :members:
 
 
