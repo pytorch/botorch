@@ -8,15 +8,11 @@
   "Full Optimization Loops": [
     {
       "id": "closed_loop_botorch_only",
-      "title": "q-Noisy EI on Hartmann6"
+      "title": "q-Noisy Constrained EI"
     },
     {
       "id": "analytic_EI_Hartmann6_noiseless",
       "title": "Analytic EI on Hartmann6"
-    },
-    {
-      "id": "qEI_Hartmann6_noisy",
-      "title": "qEI, Hartmann6 (noisy)"
     }
   ],
   "Bite-Sized Tutorials": [
