@@ -19,13 +19,13 @@
       "title": "qEI, Hartmann6 (noisy)"
     }
   ],
-  "Bite-Size Tutorials": [
+  "Bite-Sized Tutorials": [
     {
       "id": "fit_model_with_torch_optimizer",
-      "title": "Fit a model using torch.optim"
+      "title": "Fitting a model using torch.optim"
     },
     {
-      "id": "acquisition_tutorial",
+      "id": "compare_mc_analytic_acquisition",
       "title": "Comparing analytic and MC Expected Improvement"
     },
     {
@@ -39,6 +39,10 @@
     {
       "id": "batch_mode_cross_validation",
       "title": "Using batch evaluation for fast cross-validation"
+    },
+    {
+      "id": "custom_acquisition",
+      "title": "Writing a custom acquisition function"
     }
   ],
   "Advanced Usage": [
