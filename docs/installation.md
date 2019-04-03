@@ -16,15 +16,14 @@ The following are required to run the setup:
 
 #### Dependencies
 
-These will be automatically installed (if not present) when running the setup:
-
-- PyTorch >= 1.0.1 [^MacOSCuda]  (**TODO**: Update to 1.1)
+- PyTorch >= 1.0.1 [^pytorch_build]  (**TODO**: Update to 1.1)
 - gpytorch >= 0.2.1
 - scipy
 
-[^MacOSCuda]: To use CUDA on Mac OS, pytorch needs to be built from source
-instead (see the quick start instructions on https://pytorch.org/)
-
+[^pytorch_build]: You will want to have PyTorch link against MKL. This can be
+  kind of finicky, to make sure this works use the conda install as described in
+  the quick start instructions on https://pytorch.org/). To use CUDA on Mac OS,
+  you need to build PyTorch from source (also see quickstart instructions).
 
 
 ### Installing from private repo
@@ -81,8 +80,3 @@ To install the latest official release, run
 ```bash
 conda install botorch
 ```
-
-
-### Notes
-
-[^CudaOnMac]
