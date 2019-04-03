@@ -3,25 +3,16 @@ id: posteriors
 title: Posteriors
 ---
 
-**TODO:** Describe the role of posteriors
-* botorch is semi-agnostic to form of posterior
-  - for analytic acq. functions we assume multivariate Gaussian (could possibly
-    use others though)
-  - for MC-based acquisition functions, the only thing we need to be able to do
-  is sample from the posterior
-* botorch comes with GPyTorchPosterior implementations - in most cases you
-  won't have to worry about implementing a new Posterior
-* show how an implicit posterior could be used (e.g. by simply wrapping the
-  model)
 
+## Posteriors in botorch
 
-## Draft Content
+A botorch `Posterior` object is a layer of abstraction that separates the specific model used from the evaluation (and subsequent optimization) of acquisition functions. In the simplest case, a posterior is a lightweight wrapper around an explicit distribution object from `torch.distributions` (or `gpytorch.distributions`). However, a botorch `Posterior` can be any implicit or explict distribution that, so long as one can sample from the distribution. For example, a posterior could be represented implicitly by some base distribution mapped through some Neural Network. 
 
-botorch `Posterior` objects are a layer of abstraction that allow to separate
-the specific model used from the evaluation (and subsequent optimization) of
-acquisition functions. In the simplest case, posteriors are a lightweight
-wrapper around explicit distribution objects from `torch.distributions` (or
-`gpytorch.distributions`). However, they may be much more complex than that.
-For instance, a posterior could be represented implicitly by some base
-distribution mapped through some Neural Network. As long as one can sample
-from this distribution, the qMC-based acquisition functions can work with it.
+Although the analytic acquisition functions assume that the posterior is a multivariate Gaussian, the MC-based acquisition functions do not make assumptions about the underlying distribution. Rather, the MC-based acquisition functions only require that the posterior can be sampled from. As long as posterior implements the `Posterior` interface, the MC-based acquisition functions can work with it.
+
+## botorch `Posterior` for Standard Use Cases
+
+Traditionally in Bayesian optimization, the posterior distribution is a multivariate Gaussian. botorch includes a multivariate Gaussian `GPyTorchPosterior` class that wraps a gpytorch.distributions.MultivariateNormal`, so for standard uses cases, it is not necessary to implement a new `Posterior`.
+
+## Implementing a Custom Posterior
+**TODO**: show how an implicit posterior could be used (e.g. by simply wrapping the model)
