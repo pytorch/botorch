@@ -19,14 +19,15 @@ batch-evaluation sense as "t-batches".
 
 Internally, q-batch acquisition functions operate on input tensors of shape
 $b \times q \times d$, where $b$ is the number of t-batches, $q$ is the number
-of design points to be considered concurrently, and $d$ is the dimension of the parameter space.
-Their output is a one-dimensional tensor with $b$ elements, with the $i$-th
-element corresponding to the $i$-th t-batch. Always requiring an explicit batch
-dimension makes it much easier and less ambiguous to work with samples from the
-posterior in a consistent fashion.
+of design points to be considered concurrently, and $d$ is the dimension of the
+parameter space. Their output is a one-dimensional tensor with $b$ elements,
+with the $i$-th element corresponding to the $i$-th t-batch. Always requiring a
+explicit batch dimension makes it much easier and less ambiguous to work with
+samples from the posterior in a consistent fashion.
 
 *Note:* To simplify the user-facing API for non-batch evaluation, botorch
-implements the `@batch_mode_transform` decorator. If applied to an acquisition function, non-batch Tensor arguments (i.e. of shape $q \times d$) to that function
+implements the `@batch_mode_transform` decorator. If applied to an acquisition
+function, non-batch Tensor arguments (i.e. of shape $q \times d$) to that function
 will be automatically converted to a t-batch of size 1, and the function's output
 is returned as a scalar Tensor.
 
