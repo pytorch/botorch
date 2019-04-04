@@ -21,7 +21,7 @@ from .acquisition import AcquisitionFunction
 
 
 class AnalyticAcquisitionFunction(AcquisitionFunction, ABC):
-    """Base class for analytic acquisition functions."""
+    r"""Base class for analytic acquisition functions."""
 
     def _validate_single_output_posterior(self, posterior: Posterior) -> None:
         # Validates that the computed posterior is single-output and raises
@@ -34,9 +34,11 @@ class AnalyticAcquisitionFunction(AcquisitionFunction, ABC):
 
 
 class ExpectedImprovement(AnalyticAcquisitionFunction):
-    r"""Single-outcome Expected Improvement.
+    r"""Single-outcome Expected Improvement over the current best observed value,
+    computed using the analytic formula for a Normal posterior distribution. Only
+    supports the case of q=1. The model must be single-outcome.
 
-    TODO: Add description + math
+    EI(x) = E(max(y - best_f, 0)), y ~ f(x)
     """
 
     def __init__(
@@ -85,9 +87,8 @@ class ExpectedImprovement(AnalyticAcquisitionFunction):
 
 
 class PosteriorMean(AnalyticAcquisitionFunction):
-    r"""Single-outcome posterior mean.
-
-    TODO: Add description
+    r"""Single-outcome posterior mean. Only supports the case of q=1.
+    The model must be single-outcome.
     """
 
     @q_batch_mode_transform
@@ -108,9 +109,12 @@ class PosteriorMean(AnalyticAcquisitionFunction):
 
 
 class ProbabilityOfImprovement(AnalyticAcquisitionFunction):
-    r"""Single-outcome Probability of Improvement.
+    r"""Single-outcome Probability of Improvement over the current best
+    observed value, computed using the analytic formula under
+    a Normal posterior distribution. Only supports the case of q=1. The model
+    must be single-outcome.
 
-    TODO: Add description + math
+    PI(x) = P(y >= best_f), y ~ f(x)
     """
 
     def __init__(
@@ -157,9 +161,13 @@ class ProbabilityOfImprovement(AnalyticAcquisitionFunction):
 
 
 class UpperConfidenceBound(AnalyticAcquisitionFunction):
-    r"""Single-outcome Upper Confidence Bound.
+    r"""Single-outcome Upper Confidence Bound, which comprises of the posterior
+    mean plus a bonus term: the posterior standard deviation weighted by
+    a trade-off parameter, beta. Only supports the case of q=1. The model must be
+    single-outcome.
 
-    TODO: Add description + math
+    UCB(x) = mu(x) + sqrt(beta) * sigma(x), where mu and sigma are the posterior
+    mean and standard deviation, respectively.
     """
 
     def __init__(
@@ -182,7 +190,7 @@ class UpperConfidenceBound(AnalyticAcquisitionFunction):
 
     @q_batch_mode_transform
     def forward(self, X: Tensor) -> Tensor:
-        """Evaluate the Upper Confidence Bound on the candidate set X.
+        r"""Evaluate the Upper Confidence Bound on the candidate set X.
 
         Args:
             X: A `(b) x d`-dim Tensor of `(b)` t-batches of `d`-dim design
@@ -206,9 +214,15 @@ class UpperConfidenceBound(AnalyticAcquisitionFunction):
 
 
 class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
-    """Single-outcome Expected Improvement.
+    r"""Constrained Expected Improvement. Computes the analytic expected improvement
+    for a Normal posterior distribution, weighted by a probability of feasibility.
+    The objective and constraints are assumed to be independent. Only supports the
+    case of q=1. The model should be multi-outcome, with the index of the objective
+    and constraints passed to the constructor.
 
-    TODO: Add description + math
+    Constrained_EI(x) = EI(x) * Product_i P(y_i \in [lower_i, upper_i]),
+    where y_i ~ constraint_i(x) and lower_i, upper_i are the lower and upper
+    bounds for the i-th constraint.
     """
 
     def __init__(
@@ -219,7 +233,7 @@ class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
         constraints: Dict[int, Tuple[Optional[float], Optional[float]]],
         maximize: bool = True,
     ) -> None:
-        """Single-outcome analytic Expected Improvement.
+        r"""Analytic Constrained Expected Improvement.
 
         Args:
             model: A fitted single-outcome model.
@@ -242,7 +256,7 @@ class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
         self.register_forward_pre_hook(convert_to_target_pre_hook)
 
     def forward(self, X: Tensor) -> Tensor:
-        """Evaluate Expected Improvement on the candidate set X.
+        r"""Evaluate Constrained Expected Improvement on the candidate set X.
 
         Args:
             X: A `(b) x d`-dim Tensor of `(b)` t-batches of `d`-dim design
@@ -312,7 +326,7 @@ class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
         # This function does casework for upper bound, lower bound, and both-sided
         # bounds. Another way to do it would be to use 'inf' and -'inf' for the
         # one-sided bounds and use the logic for the both-sided case. But this
-        # causes issue with autograd since we get 0 * inf. Investigate later.
+        # causes an issue with autograd since we get 0 * inf. Investigate later.
 
         output_shape = list(X.shape)
         output_shape[-1] = 1
@@ -346,11 +360,14 @@ class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
 
 
 class NoisyExpectedImprovement(ExpectedImprovement):
-    r"""Single-outcome Noisy Expected Improvement.
+    r"""Single-outcome Noisy Expected Improvement, computed by averaging over
+    the ExpectedImprovement over a number of fantasy models. Only supports the
+    case of q=1. The model must be single-outcome.
 
-    THIS FUNCTION CURRENTLY RELIES ON USING A GPYTORCH ExactGP
+    NEI(x) = E(max(y - max Y_baseline), 0)), (y, Y_baseline) ~ f((x, X_baseline)),
+    where X_baseline are previously observed points.
 
-    TODO: Add description + math
+    Note: This function currently relies on using a GPyTorch ExactGP.
     """
 
     def __init__(
