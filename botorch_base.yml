@@ -1,10 +1,8 @@
 name: botorch_base
 channels:
   - pytorch
-  - gpytorch
 dependencies:
   - python>=3.6
   - pytorch
-  - gpytorch
   - cython
   - scipy
