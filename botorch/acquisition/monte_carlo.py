@@ -29,7 +29,7 @@ from .sampler import MCSampler, SobolQMCNormalSampler
 
 
 class MCAcquisitionFunction(AcquisitionFunction, ABC):
-    """Abstract base class for Monte-Carlo based batch acquisition functions."""
+    r"""Abstract base class for Monte-Carlo based batch acquisition functions."""
 
     def __init__(
         self,
@@ -37,7 +37,7 @@ class MCAcquisitionFunction(AcquisitionFunction, ABC):
         sampler: Optional[MCSampler] = None,
         objective: Optional[MCAcquisitionObjective] = None,
     ) -> None:
-        """Constructor for the MCAcquisitionFunction base class.
+        r"""Constructor for the MCAcquisitionFunction base class.
 
         Args:
             model: A fitted model.
@@ -56,16 +56,18 @@ class MCAcquisitionFunction(AcquisitionFunction, ABC):
 
     @abstractmethod
     def forward(self, X: Tensor) -> Tensor:
-        """Takes in a `(b) x q x d` X Tensor of `b` t-batches with `q` `d`-dim
+        r"""Takes in a `(b) x q x d` X Tensor of `b` t-batches with `q` `d`-dim
         design points each, expands and concatenates `self.X_pending` and
         returns a one-dimensional Tensor with `b` elements."""
         pass
 
 
 class qExpectedImprovement(MCAcquisitionFunction):
-    """MC-based batch Expected Improvement
+    r"""MC-based batch Expected Improvement, which computes the qEI by (1) sampling
+    the joint posterior over q points, (2) evaluating the improvement over the current
+    best for each sample, (3) maximizing over q, and (4) averaging over the samples.
 
-    TODO: description + math
+    qEI(X) = E(max(max Y - best_f, 0)), Y ~ f(X), where X = (x_1,...,x_q)
     """
 
     def __init__(
@@ -75,7 +77,7 @@ class qExpectedImprovement(MCAcquisitionFunction):
         sampler: Optional[MCSampler] = None,
         objective: Optional[MCAcquisitionObjective] = None,
     ) -> None:
-        """q-Expected Improvement.
+        r"""q-Expected Improvement.
 
         Args:
             model: A fitted model.
@@ -93,7 +95,7 @@ class qExpectedImprovement(MCAcquisitionFunction):
 
     @t_batch_mode_transform
     def forward(self, X: Tensor) -> Tensor:
-        """Evaluate qExpectedImprovement on the candidate set `X`.
+        r"""Evaluate qExpectedImprovement on the candidate set `X`.
 
         Args:
             X: A `(b) x q x d`-dim Tensor of `(b)` t-batches with `q` `d`-dim
@@ -112,9 +114,14 @@ class qExpectedImprovement(MCAcquisitionFunction):
 
 
 class qNoisyExpectedImprovement(MCAcquisitionFunction):
-    """q-Noisy Expected Improvement with constraints.
+    r"""MC-based batch Noisy Expected Improvement. Does not assume a best_f is
+    known (which requires the noiseless assumption). Instead, uses samples from the
+    joint posterior over the q test points and previously observed points. The
+    improvement over previously observed points is computed for each sample and
+    averaged.
 
-    TODO: description + math
+    qNEI(X) = E(max(max Y - max Y_baseline, 0)), where
+    (Y, Y_baseline) ~ f((X, X_baseline)), X = (x_1,...,x_q)
     """
 
     def __init__(
@@ -124,7 +131,7 @@ class qNoisyExpectedImprovement(MCAcquisitionFunction):
         sampler: Optional[MCSampler] = None,
         objective: Optional[MCAcquisitionObjective] = None,
     ) -> None:
-        """q-Noisy Expected Improvement.
+        r"""q-Noisy Expected Improvement.
 
         Args:
             model: A fitted model.
@@ -141,7 +148,7 @@ class qNoisyExpectedImprovement(MCAcquisitionFunction):
 
     @t_batch_mode_transform
     def forward(self, X: Tensor) -> Tensor:
-        """Evaluate qNoisyExpectedImprovement on the candidate set `X`.
+        r"""Evaluate qNoisyExpectedImprovement on the candidate set `X`.
 
         Args:
             X: A `(b) x q x d`-dim Tensor of `(b)` t-batches with `q` `d`-dim
@@ -163,9 +170,13 @@ class qNoisyExpectedImprovement(MCAcquisitionFunction):
 
 
 class qProbabilityOfImprovement(MCAcquisitionFunction):
-    """q-Probability of Improvement.
+    r"""MC-based batch Probability of Improvement. Estimates the probability of
+    improvement over the current best observed value by sampling from the joint
+    posterior distribution of the q-batch. MC-based estimates of a probability
+    involves taking expectation of an indicator function; to support autograd,
+    the indicator is replaced with a sigmoid function with temperature tau.
 
-    TODO: description + math
+    qPI(X) = P(max Y >= best_f), Y ~ f(X), X = (x_1,...,x_q)
     """
 
     def __init__(
@@ -176,7 +187,7 @@ class qProbabilityOfImprovement(MCAcquisitionFunction):
         objective: Optional[MCAcquisitionObjective] = None,
         tau: float = 1e-3,
     ) -> None:
-        """q-Expected Improvement.
+        r"""q-Probability of Improvement.
 
         Args:
             model: A fitted model.
@@ -201,7 +212,7 @@ class qProbabilityOfImprovement(MCAcquisitionFunction):
 
     @t_batch_mode_transform
     def forward(self, X: Tensor) -> Tensor:
-        """Evaluate qProbabilityOfImprovement on the candidate set `X`.
+        r"""Evaluate qProbabilityOfImprovement on the candidate set `X`.
 
         Args:
             X: A `(b) x q x d`-dim Tensor of `(b)` t-batches with `q` `d`-dim
@@ -219,14 +230,15 @@ class qProbabilityOfImprovement(MCAcquisitionFunction):
 
 
 class qSimpleRegret(MCAcquisitionFunction):
-    """q-Simple Regret.
+    r"""MC-based batch Simple Regret. Samples from the joint posterior over the
+    q-batch and computes the simple regret.
 
-    TODO: description + math
+    qSR(X) = E(max Y), Y ~ f(X), X = (x_1,...,x_q)
     """
 
     @t_batch_mode_transform
     def forward(self, X: Tensor) -> Tensor:
-        """Evaluate qSimpleRegret on the candidate set `X`.
+        r"""Evaluate qSimpleRegret on the candidate set `X`.
 
         Args:
             X: A `(b) x q x d`-dim Tensor of `(b)` t-batches with `q` `d`-dim
@@ -243,9 +255,12 @@ class qSimpleRegret(MCAcquisitionFunction):
 
 
 class qUpperConfidenceBound(MCAcquisitionFunction):
-    """q-Upper Confidence Bound.
+    r"""MC-based batch Upper Confidence Bound. Uses a reparameterization to extend
+    UCB to qUCB for q > 1.
 
-    TODO: description + math
+    qUCB = E(max(mu + |Y_tilde - mu|)), where Y_tilde ~ N(mu, beta pi/2 Sigma) and
+    f(X) has distribution N(mu, Sigma). The derivation of qUCB can be found in
+    Appendix A of [Wilson2017reparam].
     """
 
     def __init__(
@@ -255,7 +270,7 @@ class qUpperConfidenceBound(MCAcquisitionFunction):
         sampler: Optional[MCSampler] = None,
         objective: Optional[MCAcquisitionObjective] = None,
     ) -> None:
-        """q-Upper Confidence Bound.
+        r"""q-Upper Confidence Bound.
 
         Args:
             model: A fitted model.
@@ -270,7 +285,7 @@ class qUpperConfidenceBound(MCAcquisitionFunction):
 
     @t_batch_mode_transform
     def forward(self, X: Tensor) -> Tensor:
-        """Evaluate qUpperConfidenceBound on the candidate set `X`.
+        r"""Evaluate qUpperConfidenceBound on the candidate set `X`.
 
         Args:
             X: A `(b) x q x d`-dim Tensor of `(b)` t-batches with `q` `d`-dim
