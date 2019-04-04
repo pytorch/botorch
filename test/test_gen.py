@@ -4,7 +4,7 @@ import math
 import unittest
 
 import torch
-from botorch import fit_model, gen_candidates_scipy
+from botorch import fit_gpytorch_model, gen_candidates_scipy
 from botorch.acquisition import qExpectedImprovement
 from botorch.models import SingleTaskGP
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
@@ -34,7 +34,7 @@ class TestBaseCandidateGeneration(unittest.TestCase):
         model = SingleTaskGP(self.train_x, self.train_y)
         self.model = model.to(device=device, dtype=dtype)
         self.mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
-        self.mll = fit_model(self.mll, options={"maxiter": 1})
+        self.mll = fit_gpytorch_model(self.mll, options={"maxiter": 1})
 
 
 class TestGenCandidates(TestBaseCandidateGeneration):
