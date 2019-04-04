@@ -26,7 +26,7 @@ should allow back-propagating gradients through the samples to the model input.
 ## botorch `Model` Inferface
 botorch models are PyTorch modules that implement the lightweight `Model` inferface. A botorch `Model` requires two only methods:
 * A `posterior` method that returns a `botorch.posteriors.Posterior` over the provided points.
-* A `reinitialize` method that provides a way to reinitialize a model. 
+* A `reinitialize` method that provides a way to reinitialize a model.
 
 A botorch model's `forward` method should take in a Tensor `X` of design points, and return a
 `Posterior` object (which would typically describe the (joint) probability distribution of the
@@ -35,7 +35,7 @@ model output(s) over the design points in `X`).
 ## botorch Models for Standard Use Cases
 botorch provides several GPyTorch models to cover the standard Bayesian optimization use cases. All of these models use Matern 5/2 ARD kernels:
 * `SingleTaskGP`: a single-task, single-output exact GP that infers the the homoskedastic noise level (no noise observations)
-* `ConstantNoiseGP`: a single task, single-output exact GP that uses a constant observed noise level (requires noise observations)
+* `FixedNoiseGP`: a single task, single-output exact GP that uses fixed observation noise level (requires noise observations)
 * `HeteroskedasticSingleTaskGP`: a single task, single-output exact GP that models heteroskedastic noise (requires noise observations)
 
 * `MultiOutputGP`: A single-task, multi-output model where outcomes are modeled independently (the outcomes can be modeled using any of the single-output GPs)

@@ -43,15 +43,14 @@ GPyTorch Regression Models
   :members:
   :exclude-members: forward
 
+:hidden:`FixedNoiseGP`
+~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autoclass:: FixedNoiseGP
+  :members:
+
 :hidden:`HeteroskedasticSingleTaskGP`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autoclass:: HeteroskedasticSingleTaskGP
-  :members:
-
-:hidden:`ConstantNoiseGP`
-~~~~~~~~~~~~~~~~~~~~~~~~~
-.. currentmodule:: botorch.models.constant_noise
-.. autoclass:: ConstantNoiseGP
   :members:
 
 :hidden:`MultiOutputGP`
