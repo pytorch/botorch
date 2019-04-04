@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 
-"""
+r"""
 Abstract class for all GPyTorch-based botorch models.
 
 To implement your own, simply inherit from both the provided classes and a
@@ -21,7 +21,7 @@ from .model import Model
 
 
 class GPyTorchModel(Model, ABC):
-    """Abstract base class for models based on GPyTorch models.
+    r"""Abstract base class for models based on GPyTorch models.
 
     The easiest way to use this is to subclass a model from a GPyTorch model
     class (e.g. an `ExactGP`) and this `GPyTorchModel`. See e.g. `SingleTaskGP`.
@@ -75,7 +75,11 @@ class GPyTorchModel(Model, ABC):
 
 
 class MultiOutputGPyTorchModel(GPyTorchModel, ABC):
-    """Abstract base class for models based on multi-output GPyTorch models."""
+    r"""Abstract base class for models based on multi-output GPyTorch models.
+
+    This is meant to be used with a gpytorch ModelList wrapper for independent
+    evaluation of submodels.
+    """
 
     @abstractproperty
     def num_outputs(self) -> int:
@@ -89,7 +93,7 @@ class MultiOutputGPyTorchModel(GPyTorchModel, ABC):
         observation_noise: bool = False,
         **kwargs: Any,
     ) -> GPyTorchPosterior:
-        """Computes the posterior over model outputs at the provided points.
+        r"""Computes the posterior over model outputs at the provided points.
 
         Args:
             X: A `b x q x d`-dim Tensor, where `d` is the dimension of the
@@ -139,16 +143,20 @@ class MultiOutputGPyTorchModel(GPyTorchModel, ABC):
 
 
 class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
-    """Abstract base class for models based on multi-task GPyTorch models."""
+    r"""Abstract base class for multi-task models baed on GPyTorch models.
+
+    This class provides the `posterior` method to models that implement a
+    "long-format" multi-task GP in the style of `MultiTaskGP`.
+    """
 
     def posterior(
         self,
         X: Tensor,
         output_indices: Optional[List[int]] = None,
         observation_noise: bool = False,
-        **kwargs,
+        **kwargs: Any,
     ) -> GPyTorchPosterior:
-        """Computes the posterior over model outputs at the provided points.
+        r"""Computes the posterior over model outputs at the provided points.
 
         Args:
             X: A `q x d` or `b x q x d` (batch mode) tensor, where `d` is the
@@ -172,21 +180,15 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
                 `output_indices`. Includes measurement noise if
                 `observation_noise=True`.
         """
-        n_out = len(self._output_tasks)
         if output_indices is None:
-            output_indices = list(range(n_out))
+            output_indices = self._output_tasks
         elif isinstance(output_indices, int):
             output_indices = [output_indices]
-        if any(i > n_out for i in output_indices):
+        if any(i not in self._output_tasks for i in output_indices):
             raise ValueError("Too many output indices")
+
         # construct evaluation X
-        tidx = torch.arange(len(output_indices))
-        rep_shape = [1 for _ in X.shape]
-        rep_shape[-2] = len(output_indices)
-        X_aug = X.repeat(*rep_shape)
-        tidx_aug = tidx.repeat(X.shape[-2]).unsqueeze(-1)
-        tidx_aug = tidx_aug.expand(X_aug.shape[:-2] + tidx_aug.shape)
-        X_full = torch.cat([X_aug, tidx_aug.to(X_aug)], dim=-1)
+        X_full = _make_X_full(X=X, output_indices=output_indices, tf=self._task_feature)
 
         self.eval()  # make sure model is in eval mode
         detach_test_caches = kwargs.get("detach_test_caches", True)
@@ -205,6 +207,18 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
         mtmvn = MultitaskMultivariateNormal(
             mean=mvn.mean.view(*X.shape[:-1], len(output_indices)),
             covariance_matrix=mvn.lazy_covariance_matrix,
-            interleaved=True,
+            interleaved=False,
         )
         return GPyTorchPosterior(mvn=mtmvn)
+
+
+def _make_X_full(X: Tensor, output_indices: List[int], tf: int) -> Tensor:
+    index_shape = X.shape[:-1] + torch.Size([1])
+    indexers = (
+        torch.full(index_shape, fill_value=i, device=X.device, dtype=X.dtype)
+        for i in output_indices
+    )
+    X_l, X_r = X[..., :tf], X[..., tf:]
+    return torch.cat(
+        [torch.cat([X_l, indexer, X_r], dim=-1) for indexer in indexers], dim=0
+    )
