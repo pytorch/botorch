@@ -10,7 +10,7 @@ from gpytorch.models import ExactGP
 from torch import Tensor
 from torch.distributions import Distribution
 
-from .fit import fit_model
+from .fit import fit_gpytorch_model
 
 
 class CVFolds(NamedTuple):
@@ -66,7 +66,7 @@ def batch_cross_validation(
             non-batch and in batch mode, and take a "batch_size" kwarg in its
             constructor
         cv_folds: A CVFolds tuple
-        fit_args: Arguments passed along to fit_model
+        fit_args: Arguments passed along to fit_gpytorch_model
 
     Returns:
         A CVResults tuple with the following fields:
@@ -89,7 +89,7 @@ def batch_cross_validation(
         model_cv.double()
 
     mll_cv = ExactMarginalLogLikelihood(likelihood_cv, model_cv)
-    mll_cv = fit_model(mll_cv, **fit_args)
+    mll_cv = fit_gpytorch_model(mll_cv, **fit_args)
 
     # Evaluate on the hold-out set in batch mode
     with torch.no_grad(), gpytorch.settings.fast_pred_var():

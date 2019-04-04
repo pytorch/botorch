@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 
-from typing import Callable
+from typing import Any, Callable
 
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 
-from .optim.fit import fit_scipy
+from .optim.fit import fit_gpytorch_scipy
 
 
-def fit_model(
-    mll: MarginalLogLikelihood, optimizer: Callable = fit_scipy, **kwargs
+def fit_gpytorch_model(
+    mll: MarginalLogLikelihood, optimizer: Callable = fit_gpytorch_scipy, **kwargs: Any
 ) -> MarginalLogLikelihood:
     """Fit hyperparameters of a gpytorch model.
 
@@ -22,11 +22,7 @@ def fit_model(
     Returns:
         mll with optimized parameters.
     """
-    mll.model.train()
-    mll.likelihood.train()
-
+    mll.train()
     mll, _ = optimizer(mll, track_iterations=False, **kwargs)
-
-    mll.model.eval()
-    mll.likelihood.eval()
+    mll.eval()
     return mll
