@@ -10,7 +10,7 @@ from torch import Tensor
 def get_outcome_constraint_transforms(
     outcome_constraints: Optional[Tuple[Tensor, Tensor]],
 ) -> Optional[List[Callable[[Tensor], Tensor]]]:
-    """
+    r"""
     Create outcome constraint callables from outcome constraint tensors
 
     Args:

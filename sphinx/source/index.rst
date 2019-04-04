@@ -17,6 +17,7 @@ Welcome to botorch's API reference!
    qmc
    test_functions
    exceptions
+   utils
 
 
 Indices and tables

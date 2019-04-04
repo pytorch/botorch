@@ -28,7 +28,7 @@ def construct_base_samples(
     device: Optional[torch.device] = None,
     dtype: Optional[torch.dtype] = None,
 ) -> Tensor:
-    """Construct a tensor of normally distributed base samples.
+    r"""Construct a tensor of normally distributed base samples.
 
     Args:
         batch_shape: The batch shape of the base samples to generate. Typically,
@@ -74,7 +74,7 @@ def construct_base_samples_from_posterior(
     collapse_batch_dims: bool = True,
     seed: Optional[int] = None,
 ) -> Tensor:
-    """Construct a tensor of normally distributed base samples.
+    r"""Construct a tensor of normally distributed base samples.
 
     Args:
         posterior: A Posterior object.
@@ -110,7 +110,7 @@ def construct_base_samples_from_posterior(
 def draw_sobol_samples(
     bounds: Tensor, n: int, q: int, seed: Optional[int] = None
 ) -> Tensor:
-    """Draw qMC samples from the box defined by bounds
+    r"""Draw qMC samples from the box defined by bounds
 
     NOTE: This currently uses botorch's own cython SobolEngine. In the future
         (once perf issues are resolved), this will instead use the native torch
@@ -147,7 +147,7 @@ def draw_sobol_normal_samples(
     dtype: Optional[torch.dtype] = None,
     seed: Optional[int] = None,
 ) -> Tensor:
-    """Draw qMC samples from a multi-variate standard normal N(0, I_d)
+    r"""Draw qMC samples from a multi-variate standard normal N(0, I_d)
 
     A primary use-case for this functionality is to compute an QMC average
     of f(X) over X where each element of X is drawn N(0, 1).
