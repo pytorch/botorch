@@ -5,7 +5,7 @@ import unittest
 from copy import deepcopy
 
 import torch
-from botorch import fit_model
+from botorch import fit_gpytorch_model
 from botorch.models.constant_noise import ConstantNoiseGP
 from botorch.posteriors import GPyTorchPosterior
 from gpytorch.distributions import MultivariateNormal
@@ -47,7 +47,7 @@ class ConstantNoiseGPTest(unittest.TestCase):
 
             # test model fitting
             mll = ExactMarginalLogLikelihood(model.likelihood, model)
-            mll = fit_model(mll, options={"maxiter": 1})
+            mll = fit_gpytorch_model(mll, options={"maxiter": 1})
 
             # test posterior
             test_x = torch.tensor([[0.25], [0.75]]).to(**tkwargs)

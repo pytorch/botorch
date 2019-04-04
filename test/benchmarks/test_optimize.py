@@ -422,7 +422,7 @@ class TestGreedy(unittest.TestCase):
 
 
 class TestGetFittedModel(unittest.TestCase):
-    @mock.patch("botorch.benchmarks.optimize.fit_model")
+    @mock.patch("botorch.benchmarks.optimize.fit_gpytorch_model")
     def test_get_fitted_model(self, mock_fit_model, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):

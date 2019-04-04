@@ -4,7 +4,6 @@ import time
 from collections import OrderedDict
 from typing import Any, Dict, List, NamedTuple, Optional, Tuple
 
-import gpytorch
 import numpy as np
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from scipy.optimize import Bounds, minimize
@@ -25,7 +24,7 @@ class OptimizationIteration(NamedTuple):
     time: float
 
 
-def fit_torch(
+def fit_gpytorch_torch(
     mll: MarginalLogLikelihood,
     optimizer_cls: Optimizer = Adam,
     lr: float = 0.05,
@@ -95,7 +94,7 @@ def fit_torch(
     return mll, iterations
 
 
-def fit_scipy(
+def fit_gpytorch_scipy(
     mll: MarginalLogLikelihood,
     bounds: Optional[ParameterBounds] = None,
     method: str = "L-BFGS-B",

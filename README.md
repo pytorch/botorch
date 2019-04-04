@@ -14,7 +14,7 @@ It is currently an alpha version under active development - expect things to bre
 - Python >= 3.6
 - PyTorch >= 1.0.1
 - gpytorch >= 0.2.1
-- cython
+- cython (to be removed with PyTorch 1.1 release)
 - scipy
 
 
@@ -32,10 +32,13 @@ It is currently an alpha version under active development - expect things to bre
 
 
 *Notes:*
-- To use **CUDA on MacOS**, pytorch needs to be built from source instead
-(see the quick start instructions on https://pytorch.org/)
 - In 3. you **must** use ssh since the repo is private - for that to work, make
-sure your ssh public key is registered with GitHub, and is usable by ssh.
+  sure your ssh public key is registered with GitHub, and is usable by ssh.
+- You will want to have PyTorch link against MKL. This can be kind of finicky,
+  to make sure this works use the conda install (see the quick start
+  instructions on https://pytorch.org/)
+- To use **CUDA on MacOS**, pytorch needs to be built from source instead
+  (also the quick start instructions)
 
 
 

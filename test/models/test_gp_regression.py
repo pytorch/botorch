@@ -4,7 +4,7 @@ import math
 import unittest
 
 import torch
-from botorch import fit_model
+from botorch import fit_gpytorch_model
 from botorch.models.gp_regression import HeteroskedasticSingleTaskGP, SingleTaskGP
 from gpytorch.distributions import MultivariateNormal
 from gpytorch.kernels import MaternKernel, ScaleKernel
@@ -28,7 +28,7 @@ class SingleTaskGPTest(unittest.TestCase):
             train_x.cuda() if cuda else train_x, train_y.cuda() if cuda else train_y
         )
         mll = ExactMarginalLogLikelihood(model.likelihood, model)
-        fit_model(mll, options={"maxiter": 1})
+        fit_gpytorch_model(mll, options={"maxiter": 1})
         self.model = model
 
     def test_Init(self):
@@ -63,7 +63,7 @@ class SingleTaskGPTest(unittest.TestCase):
         for p in params:
             self.assertEqual(params[p].item(), 0.0)
         mll = ExactMarginalLogLikelihood(model.likelihood, self.model)
-        fit_model(mll)
+        fit_gpytorch_model(mll)
         # check that some of the parameters changed
         self.assertFalse(all(params[p].item() == 0.0 for p in params))
 
@@ -79,7 +79,7 @@ class HeteroskedasticSingleTaskGPTest(unittest.TestCase):
             train_y_sem.cuda() if cuda else train_y_sem,
         )
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
-        fit_model(mll, options={"maxiter": 1})
+        fit_gpytorch_model(mll, options={"maxiter": 1})
 
     def test_Init(self):
         self.assertIsInstance(self.model.mean_module, ConstantMean)
@@ -118,6 +118,6 @@ class HeteroskedasticSingleTaskGPTest(unittest.TestCase):
         for p in params:
             self.assertEqual(params[p].item(), 0.0)
         mll = ExactMarginalLogLikelihood(model.likelihood, self.model)
-        fit_model(mll)
+        fit_gpytorch_model(mll)
         # check that some of the parameters changed
         self.assertFalse(all(params[p].item() == 0.0 for p in params))
