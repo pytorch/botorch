@@ -9,7 +9,7 @@ from torch import Tensor
 def get_objective_weights_transform(
     weights: Optional[Tensor]
 ) -> Callable[[Tensor], Tensor]:
-    """Greate a linear objective callable froma set of weights.
+    r"""Greate a linear objective callable froma set of weights.
 
     Create a callable mapping a Tensor of size `b x q x t` to a Tensor of size
     `b x q`, where `t` is the number of outputs (tasks) of the model using
@@ -53,7 +53,7 @@ def apply_constraints_nonnegative_soft(
     samples: Tensor,
     eta: float,
 ) -> Tensor:
-    """Applies constraints to a nonnegative objective using a sigmoid approximation
+    r"""Applies constraints to a nonnegative objective using a sigmoid approximation
     to an indicator function for each constraint.
 
     Args:
@@ -74,13 +74,13 @@ def apply_constraints_nonnegative_soft(
 
 
 def soft_eval_constraint(lhs: Tensor, eta: float = 1e-3) -> Tensor:
-    """Element-wise evaluation of a constraint in a 'soft' fashion
+    r"""Element-wise evaluation of a constraint in a 'soft' fashion
 
     `value(x) = 1 / (1 + exp(x / eta))`
 
     Args:
-        lhs (Tensor): The left hand side of the constraint `lhs <= 0`.
-        eta (float): The temperature parameter of the softmax function. As eta
+        lhs: The left hand side of the constraint `lhs <= 0`.
+        eta: The temperature parameter of the softmax function. As eta
             grows larger, this approximates the Heaviside step function.
 
     Returns:
@@ -100,7 +100,7 @@ def apply_constraints(
     samples: Tensor,
     infeasible_cost: float,
 ) -> Tensor:
-    """Apply constraints using an infeasible_cost `M` for the case where
+    r"""Apply constraints using an infeasible_cost `M` for the case where
     the objective can be negative via the strategy: (1) add `M` to make obj nonnegative,
     (2) apply constraints using the sigmoid approximation, (3) shift by `-M`.
 

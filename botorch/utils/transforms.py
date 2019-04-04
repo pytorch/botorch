@@ -13,7 +13,7 @@ def squeeze_last_dim(Y: Tensor) -> Tensor:
 
 
 def standardize(X: Tensor) -> Tensor:
-    """Standardize a tensor by dim=0.
+    r"""Standardize a tensor by dim=0.
 
     Args:
         X: tensor `n x (d)`
@@ -27,7 +27,7 @@ def standardize(X: Tensor) -> Tensor:
 
 
 def normalize(X: Tensor, bounds: Tensor) -> Tensor:
-    """
+    r"""
     Min-max normalize X to [0,1] using the provided bounds.
 
     Args:
@@ -41,7 +41,7 @@ def normalize(X: Tensor, bounds: Tensor) -> Tensor:
 
 
 def unnormalize(X: Tensor, bounds: Tensor) -> Tensor:
-    """
+    r"""
     Unscale X from [0,1] to the original scale.
 
     Args:
@@ -57,7 +57,7 @@ def unnormalize(X: Tensor, bounds: Tensor) -> Tensor:
 def t_batch_mode_transform(
     method: Callable[[Any, Tensor], Any]
 ) -> Callable[[Any, Tensor], Any]:
-    """Decorates instance functions to always receive a t-batched tensor.
+    r"""Decorates instance functions to always receive a t-batched tensor.
 
     Decorator for instance methods that transforms an input tensor `X` to
     t-batch mode (i.e. with at least 3 dimensions). This assumes the tensor
@@ -81,7 +81,7 @@ def t_batch_mode_transform(
 def q_batch_mode_transform(
     method: Callable[[Any, Tensor], Any]
 ) -> Callable[[Any, Tensor], Any]:
-    """Decorates instance functions to always receive a q-batched tensor.
+    r"""Decorates instance functions to always receive a q-batched tensor.
 
     Decorator for instance methods that transforms an input tensor `X` to
     q-batch mode. Assumes that the tensor does not have a q-batch dimension.
@@ -101,7 +101,7 @@ def q_batch_mode_transform(
 
 
 def match_batch_shape(X: Tensor, Y: Tensor) -> Tensor:
-    """Matches the batch dimension of a tensor to that of anther tensor.
+    r"""Matches the batch dimension of a tensor to that of anther tensor.
 
     Args:
         X: A `batch_shape_X x q x d` tensor, whose batch dimensions that
@@ -119,5 +119,5 @@ def match_batch_shape(X: Tensor, Y: Tensor) -> Tensor:
 
 
 def convert_to_target_pre_hook(module, *args):
-    """Pre-hook for automatically calling `.to(X)` on module prior to `forward`"""
+    r"""Pre-hook for automatically calling `.to(X)` on module prior to `forward`"""
     module.to(args[0][0])
