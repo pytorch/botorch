@@ -58,12 +58,12 @@ class Posterior(ABC):
                 draw `n` samples, set to `torch.Size([n])`. To draw `b` batches
                 of `n` samples each, set to `torch.Size([b, n])`.
             base_samples: An (optional) Tensor of `N(0, I)` base samples of
-                appropriate dimension, typically obtained using `get_base_samples`.
-                This is used for deterministic optimization, see TODO.
+                appropriate dimension, typically obtained from a `Sampler`.
+                This is used for deterministic optimization.
 
         Returns:
             Tensor: A `sample_shape x event`-dim Tensor of samples from the
-            posterior.
+                posterior.
         """
         pass
 
@@ -81,8 +81,8 @@ class Posterior(ABC):
                 draw `n` samples, set to `torch.Size([n])`. To draw `b` batches
                 of `n` samples each, set to `torch.Size([b, n])`.
             base_samples: An (optional) Tensor of `N(0, I)` base samples of
-                appropriate dimension, typically obtained using `get_base_samples`.
-                This is used for deterministic optimization, see TODO.
+                appropriate dimension, typically obtained from a `Sampler`.
+                This is used for deterministic optimization.
 
         Returns:
             Tensor: A `sample_shape x event`-dim Tensor of samples from the

@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 
-"""
+r"""
 Multi-output GP Regression models.
 """
 
@@ -35,18 +35,18 @@ class MultiOutputGP(IndependentModelList, MultiOutputGPyTorchModel):
         train_Y_ses: Optional[List[Tensor]] = None,
         keep_params: bool = True,
     ) -> None:
-        """Reinitialize model and likelihood given new data.
-
-        This does not refit the model.
-        If device/dtype of the new training data are different from that of the
-        model, then the model is moved to the new device/dtype.
+        r"""Reinitialize model and likelihood given new data.
 
         Args:
-            train_Xs: A list of tensors of new training data
-            train_Ys: A list of tensors of new training observations
-            train_Y_ses: A list of tensors of new training noise observations
-            keep_params: If True, keep the parameter values (speeds up refitting
-                on similar data)
+            train_Xs: A list of tensors of new training data.
+            train_Ys: A list of tensors of new training observation.
+            train_Y_ses: A list of tensors of new training noise observations.
+            keep_params: If True, keep the model's hyperparameter values (speeds
+                up refitting on similar data).
+
+        This does not refit the model(s).
+        If device/dtype of the new training data are different from that of the
+        model, then the model is moved to the new device/dtype.
         """
         if train_Y_ses is None:
             train_Y_ses = [None for _ in range(len(train_Xs))]

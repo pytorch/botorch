@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 
-"""
+r"""
 Abstract base module for all botorch models.
 """
 
@@ -53,17 +53,17 @@ class Model(Module, ABC):
     ) -> None:
         r"""Re-initializes a model given new data.
 
+        Args:
+            train_X: A `n x d`-dim (or `b x n x d`) Tensor containing the new
+                training inputs.
+            train_Y: A `n x o`-dim (or `b x n x d`) Tensor containing the new
+                training outputs.
+            train_Y_se: A `n x o`-dim (or `b x n x o`) Tensor containing the
+                observed measurement noise at the training outputs.
+            keep_params: If True, do not reset the model hyperparameters.
+
         This does not refit the model.
         If device/dtype of the new training data are different from that of the
         model, then the model is moved to the new device/dtype.
-
-        Args:
-            train_X: A `n x d`-dim (or `b x n x d`) Tensor containing the new
-                training features.
-            train_Y: A `n x t`-dim (or `b x n x d`) Tensor containing the new
-                training outputs.
-            train_Y_se: A `n x t`-dim (or `b x n x o`) Tensor containing the
-                observed measurement noise at the training outputs.
-            keep_params: If True, do not reset the model hyperparameters.
         """
         raise NotImplementedError

@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 
-"""
+r"""
 Posterior Module to be used with GPyTorch models.
 """
 
@@ -19,7 +19,7 @@ class GPyTorchPosterior(Posterior):
     """A posterior based on GPyTorch's multi-variate Normal distributions."""
 
     def __init__(self, mvn: MultivariateNormal) -> None:
-        """A posterior based on GPyTorch's multi-variate Normal distributions.
+        r"""A posterior based on GPyTorch's multi-variate Normal distributions.
 
         Args:
             mvn: A GPyTorch MultivariateNormal (single-output case) or
@@ -48,6 +48,20 @@ class GPyTorchPosterior(Posterior):
         sample_shape: Optional[torch.Size] = None,
         base_samples: Optional[Tensor] = None,
     ) -> Tensor:
+        """Sample from the posterior (with gradients).
+
+        Args:
+            sample_shape: A `torch.Size` object specifying the sample shape. To
+                draw `n` samples, set to `torch.Size([n])`. To draw `b` batches
+                of `n` samples each, set to `torch.Size([b, n])`.
+            base_samples: An (optional) Tensor of `N(0, I)` base samples of
+                appropriate dimension, typically obtained from a `Sampler`.
+                This is used for deterministic optimization.
+
+        Returns:
+            Tensor: A `sample_shape x event`-dim Tensor of samples from the
+                posterior.
+        """
         if sample_shape is None:
             sample_shape = torch.Size([1])
         if base_samples is not None:
@@ -68,14 +82,16 @@ class GPyTorchPosterior(Posterior):
         return samples
 
     @property
-    def mean(self):
+    def mean(self) -> Tensor:
+        """The posterior mean."""
         mean = self.mvn.mean
         if not self._is_mt:
             mean = mean.unsqueeze(-1)
         return mean
 
     @property
-    def variance(self):
+    def variance(self) -> Tensor:
+        """The posterior variance."""
         variance = self.mvn.variance
         if not self._is_mt:
             variance = variance.unsqueeze(-1)
