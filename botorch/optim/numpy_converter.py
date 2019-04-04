@@ -97,10 +97,16 @@ def set_params_with_array(
     start_idx = 0
     for p_name, attrs in property_dict.items():
         # Construct the new tensor
-        end_idx = start_idx + np.prod(attrs.shape)
-        new_data = torch.tensor(
-            x[start_idx:end_idx], dtype=attrs.dtype, device=attrs.device
-        ).view(*attrs.shape)
+        if len(attrs.shape) == 0:  # deal with scalar tensors
+            end_idx = start_idx + 1
+            new_data = torch.tensor(
+                x[start_idx], dtype=attrs.dtype, device=attrs.device
+            )
+        else:
+            end_idx = start_idx + np.prod(attrs.shape)
+            new_data = torch.tensor(
+                x[start_idx:end_idx], dtype=attrs.dtype, device=attrs.device
+            ).view(*attrs.shape)
         start_idx = end_idx
         # Update corresponding parameter in-place. Disable autograd to update.
         param_dict[p_name].requires_grad_(False)
