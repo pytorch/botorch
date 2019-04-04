@@ -120,8 +120,8 @@ class qNoisyExpectedImprovement(MCAcquisitionFunction):
     improvement over previously observed points is computed for each sample and
     averaged.
 
-    qNEI(X) = E(max(max Y - max Y_baseline, 0)), where
-    (Y, Y_baseline) ~ f((X, X_baseline)), X = (x_1,...,x_q)
+    `qNEI(X) = E(max(max Y - max Y_baseline, 0))`, where
+    `(Y, Y_baseline) ~ f((X, X_baseline)), X = (x_1,...,x_q)`
     """
 
     def __init__(
@@ -176,7 +176,7 @@ class qProbabilityOfImprovement(MCAcquisitionFunction):
     involves taking expectation of an indicator function; to support autograd,
     the indicator is replaced with a sigmoid function with temperature tau.
 
-    qPI(X) = P(max Y >= best_f), Y ~ f(X), X = (x_1,...,x_q)
+    `qPI(X) = P(max Y >= best_f), Y ~ f(X), X = (x_1,...,x_q)``
     """
 
     def __init__(
@@ -258,9 +258,8 @@ class qUpperConfidenceBound(MCAcquisitionFunction):
     r"""MC-based batch Upper Confidence Bound. Uses a reparameterization to extend
     UCB to qUCB for q > 1.
 
-    qUCB = E(max(mu + |Y_tilde - mu|)), where Y_tilde ~ N(mu, beta pi/2 Sigma) and
-    f(X) has distribution N(mu, Sigma). The derivation of qUCB can be found in
-    Appendix A of [Wilson2017reparam].
+    `qUCB = E(max(mu + |Y_tilde - mu|))`, where `Y_tilde ~ N(mu, beta pi/2 Sigma)`
+    and `f(X)` has distribution `N(mu, Sigma)`. See Appendix A of [Wilson2017reparam].
     """
 
     def __init__(
