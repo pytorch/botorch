@@ -5,7 +5,7 @@ import unittest
 from copy import deepcopy
 
 import torch
-from botorch import fit_model
+from botorch import fit_gpytorch_model
 from botorch.models import MultiOutputGP
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.posteriors import GPyTorchPosterior
@@ -55,7 +55,7 @@ class MultiOutputGPTest(unittest.TestCase):
             mll = SumMarginalLogLikelihood(model.likelihood, model)
             for mll_ in mll.mlls:
                 self.assertIsInstance(mll_, ExactMarginalLogLikelihood)
-            mll = fit_model(mll, options={"maxiter": 1})
+            mll = fit_gpytorch_model(mll, options={"maxiter": 1})
 
             # test posterior
             test_x = (torch.tensor([0.25, 0.75]).type_as(model.train_targets[0]),)

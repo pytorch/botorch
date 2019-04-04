@@ -8,7 +8,7 @@ import torch
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from torch import Tensor
 
-from .. import fit_model
+from .. import fit_gpytorch_model
 from ..acquisition.objective import (
     ConstrainedMCObjective,
     IdentityMCObjective,
@@ -51,7 +51,7 @@ def _get_fitted_model(
     )
     mll = ExactMarginalLogLikelihood(model.likelihood, model)
     mll.to(dtype=train_X.dtype, device=train_X.device)
-    mll = fit_model(mll, options=options)
+    mll = fit_gpytorch_model(mll, options=options)
     return model
 
 
