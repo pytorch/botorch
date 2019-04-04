@@ -2,13 +2,20 @@
 
 import math
 import unittest
+from copy import deepcopy
 
 import torch
 from botorch import fit_gpytorch_model
-from botorch.models.gp_regression import HeteroskedasticSingleTaskGP, SingleTaskGP
+from botorch.models.gp_regression import (
+    FixedNoiseGP,
+    HeteroskedasticSingleTaskGP,
+    SingleTaskGP,
+)
+from botorch.posteriors import GPyTorchPosterior
 from gpytorch.distributions import MultivariateNormal
 from gpytorch.kernels import MaternKernel, ScaleKernel
 from gpytorch.likelihoods import (
+    FixedNoiseGaussianLikelihood,
     GaussianLikelihood,
     HeteroskedasticNoise,
     _GaussianLikelihoodBase,
@@ -66,6 +73,79 @@ class SingleTaskGPTest(unittest.TestCase):
         fit_gpytorch_model(mll)
         # check that some of the parameters changed
         self.assertFalse(all(params[p].item() == 0.0 for p in params))
+
+
+class FixedNoiseGPTest(unittest.TestCase):
+    def _get_random_data(self, **tkwargs):
+        train_x = torch.linspace(0, 0.95, 10, **tkwargs) + 0.05 * torch.rand(
+            10, **tkwargs
+        )
+        train_y = torch.sin(train_x * (2 * math.pi)) + 0.2 * torch.randn_like(train_x)
+        train_y_se = torch.full_like(train_y, 0.1)
+        return train_x.view(-1, 1), train_y, train_y_se
+
+    def _get_model(self, **tkwargs):
+        train_x, train_y, train_y_se = self._get_random_data(**tkwargs)
+        model = FixedNoiseGP(train_X=train_x, train_Y=train_y, train_Y_se=train_y_se)
+        return model.to(**tkwargs)
+
+    def test_FixedNoiseGP(self, cuda=False):
+        for double in (False, True):
+            tkwargs = {
+                "device": torch.device("cuda") if cuda else torch.device("cpu"),
+                "dtype": torch.double if double else torch.float,
+            }
+            model = self._get_model(**tkwargs)
+            self.assertIsInstance(model, FixedNoiseGP)
+            self.assertIsInstance(model.likelihood, FixedNoiseGaussianLikelihood)
+            self.assertIsInstance(model.mean_module, ConstantMean)
+            self.assertIsInstance(model.covar_module, ScaleKernel)
+            matern_kernel = model.covar_module.base_kernel
+            self.assertIsInstance(matern_kernel, MaternKernel)
+            self.assertIsInstance(matern_kernel.lengthscale_prior, GammaPrior)
+
+            # test model fitting
+            mll = ExactMarginalLogLikelihood(model.likelihood, model)
+            mll = fit_gpytorch_model(mll, options={"maxiter": 1})
+
+            # test posterior
+            test_x = torch.tensor([[0.25], [0.75]]).to(**tkwargs)
+            posterior_f = model.posterior(test_x)
+            self.assertIsInstance(posterior_f, GPyTorchPosterior)
+            self.assertIsInstance(posterior_f.mvn, MultivariateNormal)
+            # TODO: Pass observation noise into posterior
+            # posterior_obs = model.posterior(test_x, observation_noise=True)
+            # self.assertTrue(
+            #     torch.allclose(posterior_f.variance + 0.01, posterior_obs.variance)
+            # )
+
+            # test reinitialization
+            train_x_, train_y_, train_y_se_ = self._get_random_data(**tkwargs)
+            old_state_dict = deepcopy(model.state_dict())
+            model.reinitialize(
+                train_X=train_x_,
+                train_Y=train_y_,
+                train_Y_se=train_y_se_,
+                keep_params=True,
+            )
+            for key, val in model.state_dict().items():
+                self.assertTrue(torch.equal(val, old_state_dict[key]))
+            model.reinitialize(
+                train_X=train_x_,
+                train_Y=train_y_,
+                train_Y_se=train_y_se_,
+                keep_params=False,
+            )
+            self.assertFalse(
+                all(
+                    torch.equal(val, old_state_dict[key])
+                    for key, val in model.state_dict().items()
+                )
+            )
+
+    def test_FixedNoiseGP_cuda(self):
+        if torch.cuda.is_available():
+            self.test_FixedNoiseGP(cuda=True)
 
 
 class HeteroskedasticSingleTaskGPTest(unittest.TestCase):
