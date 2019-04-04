@@ -5,7 +5,7 @@ Abstract base module for all botorch models.
 """
 
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from torch import Tensor
 from torch.nn import Module
@@ -22,9 +22,9 @@ class Model(Module, ABC):
         X: Tensor,
         output_indices: Optional[List[int]] = None,
         observation_noise: bool = False,
-        **kwargs
+        **kwargs: Any,
     ) -> Posterior:
-        """Computes the posterior over model outputs at the provided points.
+        r"""Computes the posterior over model outputs at the provided points.
 
         Args:
             X: A `b x q x d`-dim Tensor, where `d` is the dimension of the
@@ -49,8 +49,9 @@ class Model(Module, ABC):
         train_Y: Tensor,
         train_Y_se: Optional[Tensor] = None,
         keep_params: bool = True,
+        **kwargs: Any,
     ) -> None:
-        """Re-initializes a model given new data.
+        r"""Re-initializes a model given new data.
 
         This does not refit the model.
         If device/dtype of the new training data are different from that of the
@@ -58,7 +59,7 @@ class Model(Module, ABC):
 
         Args:
             train_X: A `n x d`-dim (or `b x n x d`) Tensor containing the new
-                training inputs.
+                training features.
             train_Y: A `n x t`-dim (or `b x n x d`) Tensor containing the new
                 training outputs.
             train_Y_se: A `n x t`-dim (or `b x n x o`) Tensor containing the

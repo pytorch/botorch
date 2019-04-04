@@ -9,7 +9,7 @@ GPyTorch Model class such as an ExactGP.
 
 from abc import ABC, abstractproperty
 from contextlib import ExitStack
-from typing import List, Optional
+from typing import Any, List, Optional
 
 import torch
 from gpytorch import settings
@@ -32,10 +32,9 @@ class GPyTorchModel(Model, ABC):
         X: Tensor,
         output_indices: Optional[List[int]] = None,
         observation_noise: bool = False,
-        detach_test_caches: bool = True,
-        **kwargs,
+        **kwargs: Any,
     ) -> GPyTorchPosterior:
-        """Computes the posterior over model outputs at the provided points.
+        r"""Computes the posterior over model outputs at the provided points.
 
         Args:
             X: A `b x q x d`-dim Tensor, where `d` is the dimension of the
@@ -50,24 +49,27 @@ class GPyTorchModel(Model, ABC):
             detach_test_caches: If True, detach GPyTorch test caches during
                 computation of the posterior. Required for being able to compute
                 derivatives with respect to training inputs at test time (used
-                e.g. by qNoisyExpectedImprovement).
+                e.g. by qNoisyExpectedImprovement). Defaults to `True`.
 
         Returns:
-            A `Posterior` object, representing a batch of `b` joint distributions
-                over `q` points and the outputs selected by `output_indices` each.
-                Includes measurement noise if `observation_noise=True`.
+            A `GPyTorchPosterior` object, representing a batch of `b` joint
+                distributions over `q` points and the outputs selected by
+                `output_indices` each. Includes observation noise if
+                `observation_noise=True`.
         """
         if output_indices is not None and output_indices != [0]:
             raise RuntimeError(
                 "Cannot pass more than one output index to single-output model"
             )
-        self.eval()
+        self.eval()  # make sure model is in eval mode
+        detach_test_caches = kwargs.get("detach_test_caches", True)
         with ExitStack() as es:
             es.enter_context(settings.debug(False))
             es.enter_context(settings.fast_pred_var())
             es.enter_context(settings.detach_test_caches(detach_test_caches))
             mvn = self(X)
             if observation_noise:
+                # TODO: Allow passing in observation noise via kwarg
                 mvn = self.likelihood(mvn, X)
         return GPyTorchPosterior(mvn=mvn)
 
@@ -85,8 +87,7 @@ class MultiOutputGPyTorchModel(GPyTorchModel, ABC):
         X: Tensor,
         output_indices: Optional[List[int]] = None,
         observation_noise: bool = False,
-        detach_test_caches: bool = True,
-        **kwargs,
+        **kwargs: Any,
     ) -> GPyTorchPosterior:
         """Computes the posterior over model outputs at the provided points.
 
@@ -106,11 +107,13 @@ class MultiOutputGPyTorchModel(GPyTorchModel, ABC):
                 e.g. by qNoisyExpectedImprovement).
 
         Returns:
-            A `Posterior` object, representing a batch of `b` joint distributions
-                over `q` points and the outputs selected by `output_indices` each.
-                Includes measurement noise if `observation_noise=True`.
+            A `GPyTorchPosterior` object, representing a batch of `b` joint
+                distributions over `q` points and the outputs selected by
+                `output_indices` each. Includes measurement noise if
+                `observation_noise=True`.
         """
-        self.eval()
+        detach_test_caches = kwargs.get("detach_test_caches", True)
+        self.eval()  # make sure model is in eval mode
         with ExitStack() as es:
             es.enter_context(settings.debug(False))
             es.enter_context(settings.fast_pred_var())
@@ -125,12 +128,14 @@ class MultiOutputGPyTorchModel(GPyTorchModel, ABC):
             else:
                 mvns = self(*[X for _ in range(self.num_outputs)])
                 if observation_noise:
+                    # TODO: Allow passing in observation noise via kwarg
                     mvns = self.likelihood(*[(mvn, X) for mvn in mvns])
         if len(mvns) == 1:
-            mvn = mvns[0]
+            return GPyTorchPosterior(mvn=mvns[0])
         else:
-            mvn = MultitaskMultivariateNormal.from_independent_mvns(mvns=mvns)
-        return GPyTorchPosterior(mvn=mvn)
+            return GPyTorchPosterior(
+                mvn=MultitaskMultivariateNormal.from_independent_mvns(mvns=mvns)
+            )
 
 
 class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
@@ -141,7 +146,6 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
         X: Tensor,
         output_indices: Optional[List[int]] = None,
         observation_noise: bool = False,
-        detach_test_caches: bool = True,
         **kwargs,
     ) -> GPyTorchPosterior:
         """Computes the posterior over model outputs at the provided points.
@@ -163,9 +167,10 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
                 e.g. by qNoisyExpectedImprovement).
 
         Returns:
-            A `Posterior` object, representing a batch of `b` joint distributions
-                over `q` points and the outputs selected by `output_indices`.
-                Includes measurement noise if `observation_noise=True`.
+            A `GPyTorchPosterior` object, representing a batch of `b` joint
+                distributions over `q` points and the outputs selected by
+                `output_indices`. Includes measurement noise if
+                `observation_noise=True`.
         """
         n_out = len(self._output_tasks)
         if output_indices is None:
@@ -183,13 +188,15 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
         tidx_aug = tidx_aug.expand(X_aug.shape[:-2] + tidx_aug.shape)
         X_full = torch.cat([X_aug, tidx_aug.to(X_aug)], dim=-1)
 
-        self.eval()
+        self.eval()  # make sure model is in eval mode
+        detach_test_caches = kwargs.get("detach_test_caches", True)
         with ExitStack() as es:
             es.enter_context(settings.debug(False))
             es.enter_context(settings.fast_pred_var())
             es.enter_context(settings.detach_test_caches(detach_test_caches))
             mvn = self(X_full)
             if observation_noise:
+                # TODO: Allow passing in observation noise via kwarg
                 mvn = self.likelihood(mvn, X_full)
         # If single-output, return the posterior of a single-output model
         if len(output_indices) == 1:
