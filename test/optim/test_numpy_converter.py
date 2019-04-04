@@ -49,7 +49,7 @@ class TestNumpyTorchParameterConversion(unittest.TestCase):
             },
         )
 
-        sizes = [torch.Size([1, 1]), torch.Size([1, 1, 3]), torch.Size([1, 1])]
+        sizes = [torch.Size([1, 1]), torch.Size([1, 3]), torch.Size([1, 1])]
         for i, val in enumerate(property_dict.values()):
             self.assertEqual(val.dtype, torch.float32)
             self.assertEqual(val.shape, sizes[i])
@@ -80,7 +80,7 @@ class TestNumpyTorchParameterConversion(unittest.TestCase):
         self.assertTrue(
             torch.equal(
                 z["model.covar_module.raw_lengthscale"].data,
-                torch.tensor([[[2.0, 3.0, 4.0]]]),
+                torch.tensor([[2.0, 3.0, 4.0]]),
             )
         )
         self.assertTrue(
