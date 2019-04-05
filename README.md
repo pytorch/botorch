@@ -21,8 +21,8 @@ The following are required to run the setup:
 
 #### Dependencies
 
-- PyTorch >= 1.0.1 [^pytorch_build]  (**TODO:**: Update to 1.1 when release)
-- gpytorch latest (**TODO:** lock beta to 0.3.0 release)
+- PyTorch >= 1.0.1 [^pytorch_build]
+- gpytorch `db889f1eaa1be3206e57f5a1494ef3fb7f2e3524` (**TODO:** pin beta to 0.3.0 release)
 - scipy
 
 [^pytorch_build]: You will want to have PyTorch link against MKL. This can be
@@ -43,9 +43,14 @@ This will simplify once botorch is fully open-sourced.
 * Activate the environment using `conda activate botorch_base`
 
 
-#### Install the gpytorch latest using pip
+#### Install gpytorch using pip
+
+botorch uses the latest gpytorch features. There is no current release that
+includes these, so we pin gpytorch to a specific version. This will be unnecessary
+for the beta release.
+
 ```bash
-pip install git+https://github.com/cornellius-gp/gpytorch.git
+pip install git+https://github.com/cornellius-gp/gpytorch.git@db889f1eaa1be3206e57f5a1494ef3fb7f2e3524
 ```
 
 #### Install botorch using pip via ssh (recommended):
