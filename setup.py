@@ -74,7 +74,7 @@ TUTORIAL_REQUIRES = ["jupyter", "matplotlib"]
 
 setup(
     name="botorch",
-    version="alpha",
+    version="0.1a0",
     description="Bayesian Optimization in PyTorch",
     author="Facebook, Inc.",
     license="MIT",
