@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+r"""
+Methods for optimizing acquisition functions.
+"""
+
+
 import warnings
 from typing import Callable, Dict, Optional, Union
 
@@ -29,12 +34,11 @@ def sequential_optimize(
     fixed_features: Optional[Dict[int, float]] = None,
     post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
 ) -> Tensor:
-    """
-    Returns a set of candidates via sequential multi-start optimization.
+    r"""Generate a set of candidates via sequential multi-start optimization.
 
     Args:
         acq_function: A qNoisyExpectedImprovement acquisition function.
-        bounds: A `2 x d` tensor of lower and upper bounds for each column of X.
+        bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.
         q: The number of candidates.
         num_restarts:  Number of starting points for multistart acquisition
             function optimization.
@@ -91,19 +95,18 @@ def joint_optimize(
     fixed_features: Optional[Dict[int, float]] = None,
     post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
 ) -> Tensor:
-    """
-    Returns a set of candidates via joint multi-start optimization.
+    r"""Generate a set of candidates via joint multi-start optimization.
 
     Args:
-        acq_function:  An acquisition function Module
-        bounds: A `2 x d` tensor of lower and upper bounds for each column of X.
+        acq_function: An acquisition function Module
+        bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.
         q: The number of candidates
-        num_restarts:  Number of starting points for multistart acquisition
+        num_restarts: Number of starting points for multistart acquisition
             function optimization.
         raw_samples: number of samples for initialization
         options: options for candidate generation
-        fixed_features: A map {feature_index: value} for features that
-            should be fixed to a particular value during generation.
+        fixed_features: A map {feature_index: value} for features that should be
+            fixed to a particular value during generation.
         post_processing_func: A function that post processes an optimization result
             appropriately (i.e., according to `round-trip` transformations).
             Note: post_processing_func is not used by _joint_optimize and is only

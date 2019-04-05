@@ -21,7 +21,7 @@ class TorchAttr(NamedTuple):
 def module_to_array(
     module: Module, bounds: Optional[ParameterBounds] = None
 ) -> Tuple[np.ndarray, Dict[str, TorchAttr], Optional[np.ndarray]]:
-    """Extract named parameters from a module into a numpy array.
+    r"""Extract named parameters from a module into a numpy array.
 
     Only extracts parameters with requires_grad, since it is meant for optimizing.
 
@@ -33,11 +33,11 @@ def module_to_array(
             bounds specified in the `parameter_bounds` attribute of the module.
 
     Returns:
-        A numpy array with parameter values
-        An ordered dictionary with the name and tensor attributes of each parameter.
-        A `2 x n_params` numpy array with lower and upper bounds if at least one
-            constraint is finite, and None otherwise
-
+        np.ndarray: The parameter values
+        Dict: An ordered dictionary with the name and tensor attributes of each
+            parameter.
+        np.ndarray: A `2 x n_params` numpy array with lower and upper bounds if
+            at least one constraint is finite, and None otherwise.
     """
     x: List[np.ndarray] = []
     lower: List[np.ndarray] = []
@@ -82,7 +82,7 @@ def module_to_array(
 def set_params_with_array(
     module: Module, x: np.ndarray, property_dict: Dict[str, TorchAttr]
 ) -> Module:
-    """Set module parameters with values from numpy array.
+    r"""Set module parameters with values from numpy array.
 
     Args:
         module: Module with parameters to be set
@@ -91,7 +91,7 @@ def set_params_with_array(
             returned by module_to_array.
 
     Returns:
-        module with parameters updated in-place.
+        Module: module with parameters updated in-place.
     """
     param_dict = OrderedDict(module.named_parameters())
     start_idx = 0

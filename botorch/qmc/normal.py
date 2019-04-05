@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""
+r"""
 Quasi Monte-Carlo sampling from Normal distributions.
 
 References:
@@ -20,7 +20,7 @@ from .sobol import SobolEngine
 
 
 class NormalQMCEngine:
-    """Engine for qMC sampling from a multivariate normal `N(0, I_d)`.
+    r"""Engine for qMC sampling from a multivariate normal `N(0, I_d)`.
 
     By default, this implementation uses Box-Muller transformed Sobol samples
     following pg. 123 in [Pages2018numprob]_. To use the inverse transform
@@ -30,7 +30,7 @@ class NormalQMCEngine:
     def __init__(
         self, d: int, seed: Optional[int] = None, inv_transform: bool = False
     ) -> None:
-        """Engine for drawing qMC samples from a multivariate normal `N(0, I_d)`.
+        r"""Engine for drawing qMC samples from a multivariate normal `N(0, I_d)`.
 
         Args:
             d: The dimension of the samples.
@@ -49,7 +49,7 @@ class NormalQMCEngine:
         self._sobol_engine = SobolEngine(dimen=sobol_dim, scramble=True, seed=seed)
 
     def draw(self, n: int = 1) -> np.ndarray:
-        """Draw n qMC samples from the standard Normal.
+        r"""Draw n qMC samples from the standard Normal.
 
         Args:
             n: The number of samples.
@@ -75,7 +75,7 @@ class NormalQMCEngine:
 
 
 class MultivariateNormalQMCEngine:
-    """Engine for qMC sampling from a multivariate Normal `N(\mu, \Sigma)`.
+    r"""Engine for qMC sampling from a multivariate Normal `N(\mu, \Sigma)`.
 
     By default, this implementation uses Box-Muller transformed Sobol samples
     following pg. 123 in [Pages2018numprob]_. To use the inverse transform
@@ -89,7 +89,7 @@ class MultivariateNormalQMCEngine:
         seed: Optional[int] = None,
         inv_transform: bool = False,
     ) -> None:
-        """Engine for qMC sampling from a multivariate Normal `N(\mu, \Sigma)`.
+        r"""Engine for qMC sampling from a multivariate Normal `N(\mu, \Sigma)`.
 
         Args:
             mean: The mean vector.
@@ -122,7 +122,7 @@ class MultivariateNormalQMCEngine:
             self._corr_matrix = (eigvec * np.sqrt(eigval)).transpose()
 
     def draw(self, n: int = 1) -> np.ndarray:
-        """Draw n qMC samples from the multivariate Normal.
+        r"""Draw n qMC samples from the multivariate Normal.
 
         Args:
             n: The number of samples.
