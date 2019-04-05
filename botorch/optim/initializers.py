@@ -16,9 +16,7 @@ from ..models.model import Model
 def get_similarity_measure(
     model: Model
 ) -> Optional[Callable[[Tensor, Tensor], Tensor]]:
-    """
-    Creates a similiarity measure function using the model's covar_module,
-        if available.
+    r"""Creates a similiarity measure function using the model's covar_module.
 
     Args:
         model: A Model
@@ -46,7 +44,7 @@ def initialize_q_batch(
     sim_measure: Optional[Callable[[Tensor, Tensor], Tensor]] = None,
     options: Optional[Dict[str, Union[bool, float]]] = None,
 ) -> Tensor:
-    """Heuristic for picking initial candidates for candidate generation.
+    r"""Heuristic for picking initial candidates for candidate generation.
 
     Picks initial (q-batch) conditions by trading off high function values `Y`
     with a uniform distribution of the candidates in the feature space.
@@ -204,7 +202,7 @@ def initialize_q_batch_simple(
     n: int,
     options: Optional[Dict[str, Union[bool, float]]] = None,
 ) -> Tensor:
-    """Heuristic for picking initial candidates for candidate generation.
+    r"""Heuristic for picking initial candidates for candidate generation.
 
     Args:
         X: A `b x q x d` tensor of `b` samples of `q`-batches from a `d`-dim.

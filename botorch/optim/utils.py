@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+r"""
+Utilites for optimization.
+"""
+
 from typing import Dict, List, Optional, Union
 
 import torch
@@ -15,7 +19,7 @@ def check_convergence(
     param_trajectory: Dict[str, List[Tensor]],
     options: Dict[str, Union[float, str]],
 ) -> bool:
-    """Check convergence of optimization for pytorch optimizers.
+    r"""Check convergence of optimization for pytorch optimizers.
 
     Right now this is just a dummy function and only checks for maxiter.
     """
@@ -33,20 +37,19 @@ def columnwise_clamp(
     lower: Optional[Union[float, Tensor]] = None,
     upper: Optional[Union[float, Tensor]] = None,
 ) -> Tensor:
-    """Clamp values of a Tensor in column-wise fashion (with support for t-batches).
+    r"""Clamp values of a Tensor in column-wise fashion (with support for t-batches).
 
     This function is useful in conjunction with optimizers from the torch.optim
     package, which don't natively handle constraints. If you apply this after
     a gradient step you can be fancy and call it "projected gradient descent".
 
     Args:
-        X: The `b x n x d` input tensor. If 2-dimensional, b is assumed to be 1.
+        X: The `b x n x d` input tensor. If 2-dimensional, `b` is assumed to be 1.
         lower: The column-wise lower bounds. If scalar, apply bound to all columns.
         upper: The column-wise upper bounds. If scalar, apply bound to all columns.
 
     Returns:
-        The clamped tensor.
-
+        Tensor: The clamped tensor.
     """
     min_bounds = _expand_bounds(lower, X)
     max_bounds = _expand_bounds(upper, X)
@@ -64,15 +67,16 @@ def columnwise_clamp(
 def fix_features(
     X: Tensor, fixed_features: Optional[Dict[int, Optional[float]]] = None
 ) -> Tensor:
-    """Fix feature values in a Tensor.  These fixed features
-        will have zero gradient in downstream calculations.
+    r"""Fix feature values in a Tensor.
+
+    The fixed features will have zero gradient in downstream calculations.
 
     Args:
-        X: input Tensor with shape (..., p) where p is the number of features
-        fixed_features:  A dictionary with keys as column
-            indices and values equal to what the feature should be set to
-            in X.  If the value is None, that column is just
-            considered fixed.  Keys should be in the range [0, p - 1].
+        X: input Tensor with shape `... x p`, where `p` is the number of features
+        fixed_features:  A dictionary with keys as column indices and values
+            equal to what the feature should be set to in `X`. If the value is
+            None, that column is just considered fixed. Keys should be in the
+            range `[0, p - 1]`.
 
     Returns:
         Tensor X with fixed features.
@@ -94,19 +98,19 @@ def fix_features(
 def _expand_bounds(
     bounds: Optional[Union[float, Tensor]], X: Tensor
 ) -> Optional[Tensor]:
-    """
+    r"""Expands a tensor representing bounds.
+
     Expand the dimension of bounds if necessary such that the 1st dimension of
         bounds is the same as the last dimension of `X`.
 
     Args:
         bounds: a bound (either upper or lower) of each column (last dimension)
-            of X. If this is a single float, then all columns have the same bound.
+            of `X`. If this is a single float, then all columns have the same bound.
         X: `... x d` tensor
 
     Returns:
         A tensor of bounds expanded to be compatible with the size of `X` if
             bounds is not None, and None if bounds is None
-
     """
     if bounds is not None:
         if not torch.is_tensor(bounds):
@@ -135,12 +139,13 @@ def _fix_feature(Z: Tensor, value: Optional[float]) -> Tensor:
 def _get_extra_mll_args(
     mll: MarginalLogLikelihood
 ) -> Union[List[Tensor], List[List[Tensor]]]:
-    """
+    r"""Obtain extra arguments for MarginalLogLikelihood objects.
+
     Get extra arguments (beyond the model output and training targets) required
-        for the particular type of MarginalLogLikelihood for a forward pass.
+    for the particular type of MarginalLogLikelihood for a forward pass.
 
     Args:
-        mll: MarginalLogLikelihood
+        mll: The MarginalLogLikelihood module.
 
     Returns:
         Union[List[Tensor], List[List[Tensor]]]: extra arguments
@@ -149,7 +154,6 @@ def _get_extra_mll_args(
         return list(mll.model.train_inputs)
     elif isinstance(mll, SumMarginalLogLikelihood):
         return [list(x) for x in mll.model.train_inputs]
-
     elif isinstance(mll, VariationalELBO):
         return []
     else:
