@@ -8,7 +8,9 @@ botorch is a library for Bayesian Optimization in PyTorch.
 It is currently an alpha version under active development - be warned!
 
 
-#### Setup Requirements
+## Installation
+
+##### Setup Requirements (TODO: Remove once we can use torch Sobol)
 
 The following are required to run the setup:
 
@@ -16,34 +18,21 @@ The following are required to run the setup:
 - numpy
 - cython
 
-**TODO:** Remove Setup Requirements altogether once we can use torch Sobol
 
+##### Installation Requirements
 
-#### Dependencies
-
-- PyTorch >= 1.0.1 [^pytorch_build]
+- PyTorch >= 1.0.1
 - gpytorch `db889f1eaa1be3206e57f5a1494ef3fb7f2e3524` (**TODO:** pin beta to 0.3.0 release)
 - scipy
 
-[^pytorch_build]: You will want to have PyTorch link against MKL. This can be
-  kind of finicky, to make sure this works use the conda install as described in
-  the quick start instructions on https://pytorch.org/). If you set up a clean
-  conda environment as described below you won't have to worry about this.
-  To use CUDA on Mac OS, you need to build PyTorch from source.
+**Important:**
+You will want to have you PyTorch build link against **MKL** (the non-optimized
+version of botorch can be up to an order of magnitude slower). Setting this up
+manually can be tricky - to make sure this works please use the Anaconda
+installation instructions on https://pytorch.org/.
 
 
-### Installing from private repo
-
-The botorch repo is currently private, so you'll need to do a little more work.
-This will simplify once botorch is fully open-sourced.
-
-#### Set up a clean conda environment (optional)
-* Download the `botorch_base.yml` file
-* Create the base environment using `conda env create -f botorch_base.yml`
-* Activate the environment using `conda activate botorch_base`
-
-
-#### Install gpytorch using pip
+### Install gpytorch using pip
 
 botorch uses the latest gpytorch features. There is no current release that
 includes these, so we pin gpytorch to a specific version. This will be unnecessary
@@ -52,33 +41,42 @@ for the beta release.
 ```bash
 pip install git+https://github.com/cornellius-gp/gpytorch.git@db889f1eaa1be3206e57f5a1494ef3fb7f2e3524
 ```
+**Note:** The botorch 0.1a0 alpha release has been tested with the above commit
+of gpytorch - if you already have a version of gpytorch installed, make sure
+you uninstall that (using `pip uninstall gpytorch`) before running the above
+command.
 
-#### Install botorch using pip via ssh (recommended):
+
+### Install botorch
+
+To run the botorch setup, you'll need cython (**TODO:** Remove)
+```bash
+pip install cython
+```
+
+We recommend installing botorch using pip via ssh:
 ```bash
 pip install git+ssh://git@github.com/facebookexternal/botorch.git
 ```
 
-*Note:* You **must** use ssh here since the repo is private - for this to work,
+*Note:* You must use **ssh** here since the repo is private - for this to work,
 make sure your ssh public key is registered with GitHub, and is usable by ssh.
 
-#### Manual install
-
-* Download botorch from the [Git repository](https://github.com/facebookexternal/botorch).
-* Install all [build dependencies](#setup-requirements)
-* Run the following to get the default installation:
+Alternatively, you can do a manual install. To do a basic install, run:
 ```bash
 cd botorch
 pip install -e .
 ```
 
-Alternatively, you can also do the following:
+To customize the installation, you can also run the following instead:
 * `pip install -e .[dev]`: Also installs all tools necessary for development
   (testing, linting, docs building).
 * `pip install -e .[tutorial]`: Also installs jupyter for running the tutorial
-  notebooks
+  notebooks.
 
 
-### Install using conda
+
+## Installation using conda
 
 **TODO: conda install is unsupported until the repo is public**
 
@@ -86,6 +84,7 @@ Alternatively, you can also do the following:
 
 ## Contributing
 See the [CONTRIBUTING](CONTRIBUTING.md) file for how to help out.
+
 
 ## License
 botorch is MIT licensed, as found in the LICENSE file.

@@ -1,8 +1,0 @@
-name: botorch_base
-channels:
-  - pytorch
-dependencies:
-  - python>=3.6
-  - pytorch
-  - cython
-  - scipy
