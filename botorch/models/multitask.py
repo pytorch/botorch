@@ -74,7 +74,7 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
         self._output_tasks = output_tasks
 
         # TODO (T41270962): Support task-specific noise levels in likelihood
-        likelihood = GaussianLikelihood(noise_prior=GammaPrior(0.1, 0.01))
+        likelihood = GaussianLikelihood(noise_prior=GammaPrior(1.1, 0.05))
 
         # construct indexer to be used in forward
         self._task_feature = task_feature

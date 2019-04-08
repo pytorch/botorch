@@ -58,7 +58,7 @@ class SingleTaskGP(ExactGP, GPyTorchModel):
             raise ValueError(f"Unsupported shape {train_X.shape} for train_X.")
         if likelihood is None:
             likelihood = GaussianLikelihood(
-                noise_prior=GammaPrior(0.1, 0.01), batch_size=batch_size
+                noise_prior=GammaPrior(1.1, 0.05), batch_size=batch_size
             )
             # TODO: Use gpytorch constraints
             likelihood.parameter_bounds = {"noise_covar.raw_noise": (-15, None)}
