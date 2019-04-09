@@ -77,10 +77,6 @@ class SingleTaskGP(ExactGP, GPyTorchModel):
         )
         self.to(train_X)
 
-    @property
-    def num_outputs(self) -> int:
-        return 1
-
     def forward(self, x: Tensor) -> MultivariateNormal:
         mean_x = self.mean_module(x)
         covar_x = self.covar_module(x)
