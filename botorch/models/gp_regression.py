@@ -176,7 +176,7 @@ class FixedNoiseGP(ExactGP, GPyTorchModel):
         """
         if keep_params:
             self.set_train_data(inputs=train_X, targets=train_Y, strict=False)
-            self.likelihood.noise = train_Y_se ** 2
+            self.likelihood.noise_covar.register_buffer("noise", train_Y_se ** 2)
         else:
             self.__init__(train_X=train_X, train_Y=train_Y, train_Y_se=train_Y_se)
         # move to new device / dtype if necessary
