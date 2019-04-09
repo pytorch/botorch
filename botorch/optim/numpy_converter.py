@@ -2,7 +2,7 @@
 
 from collections import OrderedDict
 from math import inf
-from typing import Dict, List, NamedTuple, Optional, Tuple
+from typing import Dict, List, NamedTuple, Optional, Set, Tuple
 
 import numpy as np
 import torch
@@ -19,7 +19,9 @@ class TorchAttr(NamedTuple):
 
 
 def module_to_array(
-    module: Module, bounds: Optional[ParameterBounds] = None
+    module: Module,
+    bounds: Optional[ParameterBounds] = None,
+    exclude: Optional[Set[str]] = None,
 ) -> Tuple[np.ndarray, Dict[str, TorchAttr], Optional[np.ndarray]]:
     r"""Extract named parameters from a module into a numpy array.
 
@@ -27,10 +29,12 @@ def module_to_array(
 
     Args:
         module: A module with parameters. May specify parameter constraints in
-            a `parameter_bounds` attribute.
-        bounds: A ParameterBounds dictionary mapping parameter names to tuples of
-            lower and upper bounds. Bounds specified here take precedence over
-            bounds specified in the `parameter_bounds` attribute of the module.
+            a `named_parameters_and_constraints` method.
+        bounds: A ParameterBounds dictionary mapping parameter names to tuples
+            of lower and upper bounds. Bounds specified here take precedence
+            over bounds on the same parameters specified in the constraints
+            registered with the module.
+        exclude: A list of parameter names that are to be excluded from extraction.
 
     Returns:
         np.ndarray: The parameter values
@@ -43,23 +47,21 @@ def module_to_array(
     lower: List[np.ndarray] = []
     upper: List[np.ndarray] = []
     property_dict = OrderedDict()
+    exclude = set() if exclude is None else exclude
 
-    # extract parameter bounds from module.model.parameter_bounds and
-    # module.likelihood.parameter_bounds (if present)
-    model_bounds = getattr(getattr(module, "model", None), "parameter_bounds", {})
-    bounds_ = {".".join(["model", key]): val for key, val in model_bounds.items()}
-    likelihood_bounds = getattr(
-        getattr(module, "likelihood", None), "parameter_bounds", {}
-    )
-    bounds_.update(
-        {".".join(["likelihood", key]): val for key, val in likelihood_bounds.items()}
-    )
-    # update with user-supplied bounds
+    # get bounds specified in model (if any)
+    bounds_: ParameterBounds = {}
+    if hasattr(module, "named_parameters_and_constraints"):
+        for param_name, _, constraint in module.named_parameters_and_constraints():
+            if constraint is not None and not constraint.enforced:
+                bounds_[param_name] = constraint.lower_bound, constraint.upper_bound
+
+    # update with user-supplied bounds (overwrites if already exists)
     if bounds is not None:
         bounds_.update(bounds)
 
     for p_name, t in module.named_parameters():
-        if t.requires_grad:
+        if p_name not in exclude and t.requires_grad:
             property_dict[p_name] = TorchAttr(
                 shape=t.shape, dtype=t.dtype, device=t.device
             )
