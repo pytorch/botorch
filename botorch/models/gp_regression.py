@@ -8,6 +8,7 @@ from copy import deepcopy
 from typing import Any, Optional
 
 import torch
+from gpytorch.constraints.constraints import GreaterThan
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels.matern_kernel import MaternKernel
 from gpytorch.kernels.scale_kernel import ScaleKernel
@@ -25,6 +26,9 @@ from gpytorch.priors.torch_priors import GammaPrior
 from torch import Tensor
 
 from .gpytorch import GPyTorchModel
+
+
+MIN_INFERRED_NOISE_LEVEL = 1e-6
 
 
 class SingleTaskGP(ExactGP, GPyTorchModel):
@@ -58,10 +62,10 @@ class SingleTaskGP(ExactGP, GPyTorchModel):
             raise ValueError(f"Unsupported shape {train_X.shape} for train_X.")
         if likelihood is None:
             likelihood = GaussianLikelihood(
-                noise_prior=GammaPrior(1.1, 0.05), batch_size=batch_size
+                noise_prior=GammaPrior(1.1, 0.05),
+                batch_size=batch_size,
+                noise_constraint=GreaterThan(MIN_INFERRED_NOISE_LEVEL, transform=None),
             )
-            # TODO: Use gpytorch constraints
-            likelihood.parameter_bounds = {"noise_covar.raw_noise": (-15, None)}
         else:
             self._likelihood_state_dict = deepcopy(likelihood.state_dict())
         super().__init__(train_X, train_Y, likelihood)
@@ -183,15 +187,13 @@ class HeteroskedasticSingleTaskGP(SingleTaskGP):
     def __init__(self, train_X: Tensor, train_Y: Tensor, train_Y_se: Tensor) -> None:
         train_Y_log_var = 2 * torch.log(train_Y_se)
         noise_likelihood = GaussianLikelihood(
-            noise_prior=SmoothedBoxPrior(-3, 5, 0.5, transform=torch.log)
+            noise_prior=SmoothedBoxPrior(-3, 5, 0.5, transform=torch.log),
+            noise_constraint=GreaterThan(MIN_INFERRED_NOISE_LEVEL, transform=None),
         )
         noise_model = SingleTaskGP(
             train_X=train_X, train_Y=train_Y_log_var, likelihood=noise_likelihood
         )
         likelihood = _GaussianLikelihoodBase(HeteroskedasticNoise(noise_model))
-        likelihood.parameter_bounds = {
-            "noise_covar.noise_model.likelihood.noise_covar.raw_noise": (-15, None)
-        }
         super().__init__(train_X=train_X, train_Y=train_Y, likelihood=likelihood)
         self.to(train_X)
 

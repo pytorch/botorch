@@ -14,40 +14,46 @@ NOISE = [0.127, -0.113, -0.345, -0.034, -0.069, -0.272, 0.013, 0.056, 0.087, -0.
 
 
 class TestFitGPyTorchModel(unittest.TestCase):
-    def setUp(self):
-        self.train_x = torch.linspace(0, 1, 10)
-        self.train_y = torch.sin(self.train_x * (2 * math.pi)) + torch.tensor(NOISE)
-
-    def _getModel(self, cuda=False):
-        train_x = self.train_x.cuda() if cuda else self.train_x
-        train_y = self.train_y.cuda() if cuda else self.train_y
-        model = SingleTaskGP(train_x.detach(), train_y.detach())
+    def _getModel(self, double=False, cuda=False):
+        device = torch.device("cuda") if cuda else torch.device("cpu")
+        dtype = torch.double if double else torch.float
+        train_x = torch.linspace(0, 1, 10, device=device, dtype=dtype)
+        noise = torch.tensor(NOISE, device=device, dtype=dtype)
+        train_y = torch.sin(train_x * (2 * math.pi)) + noise
+        model = SingleTaskGP(train_x, train_y)
         mll = ExactMarginalLogLikelihood(model.likelihood, model)
-        return mll.cuda() if cuda else mll
+        return mll.to(device=device, dtype=dtype)
 
     def test_fit_gpytorch_model_scipy(self, cuda=False):
-        mll = self._getModel(cuda=cuda)
-        mll = fit_gpytorch_model(mll, options={"maxiter": 1})
-        model = mll.model
-        # Make sure all of the parameters changed
-        self.assertGreater(model.likelihood.raw_noise.abs().item(), 1e-3)
-        self.assertGreater(model.mean_module.constant.abs().item(), 1e-3)
-        self.assertGreater(
-            model.covar_module.base_kernel.raw_lengthscale.abs().item(), 1e-3
-        )
-        self.assertGreater(model.covar_module.raw_outputscale.abs().item(), 1e-3)
+        for double in (False, True):
+            mll = self._getModel(double=double, cuda=cuda)
+            mll = fit_gpytorch_model(mll, options={"maxiter": 5})
+            model = mll.model
+            # Make sure all of the parameters changed
+            self.assertGreater(model.likelihood.raw_noise.abs().item(), 1e-2)
+            self.assertLess(model.mean_module.constant.abs().item(), 0.1)
+            self.assertGreater(
+                model.covar_module.base_kernel.raw_lengthscale.abs().item(), 0.1
+            )
+            self.assertGreater(model.covar_module.raw_outputscale.abs().item(), 1e-3)
 
     def test_fit_gpytorch_model_torch(self, cuda=False):
-        mll = self._getModel(cuda=cuda)
-        mll = fit_gpytorch_model(mll, optimizer=fit_gpytorch_torch, maxiter=1)
-        model = mll.model
-        # Make sure all of the parameters changed
-        self.assertGreater(model.likelihood.raw_noise.abs().item(), 1e-3)
-        self.assertGreater(model.mean_module.constant.abs().item(), 1e-3)
-        self.assertGreater(
-            model.covar_module.base_kernel.raw_lengthscale.abs().item(), 1e-3
-        )
-        self.assertGreater(model.covar_module.raw_outputscale.abs().item(), 1e-3)
+        for double in (False, True):
+            mll = self._getModel(double=double, cuda=cuda)
+            # TODO: remove when default initialization honors constraints:
+            # https://github.com/cornellius-gp/gpytorch/issues/629
+            mll.model.likelihood.noise_covar.noise = 0.1
+            mll = fit_gpytorch_model(
+                mll, optimizer=fit_gpytorch_torch, disp=False, maxiter=5
+            )
+            model = mll.model
+            # Make sure all of the parameters changed
+            self.assertGreater(model.likelihood.raw_noise.abs().item(), 1e-2)
+            self.assertLess(model.mean_module.constant.abs().item(), 0.1)
+            self.assertGreater(
+                model.covar_module.base_kernel.raw_lengthscale.abs().item(), 0.1
+            )
+            self.assertGreater(model.covar_module.raw_outputscale.abs().item(), 1e-3)
 
     def test_fit_gpytorch_model_scipy_cuda(self):
         if torch.cuda.is_available():

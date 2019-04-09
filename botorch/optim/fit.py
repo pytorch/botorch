@@ -26,6 +26,7 @@ class OptimizationIteration(NamedTuple):
 
 def fit_gpytorch_torch(
     mll: MarginalLogLikelihood,
+    bounds: Optional[ParameterBounds] = None,
     optimizer_cls: Optimizer = Adam,
     lr: float = 0.05,
     maxiter: int = 100,
@@ -41,6 +42,10 @@ def fit_gpytorch_torch(
 
     Args:
         mll: MarginalLogLikelihood to be maximized.
+        bounds: A ParameterBounds dictionary mapping parameter names to tuples
+            of lower and upper bounds. Bounds specified here take precedence
+            over bounds on the same parameters specified in the constraints
+            registered with the module.
         optimizer_cls: Torch optimizer to use. Must not need a closure.
             Defaults to Adam.
         lr: Starting learning rate.
@@ -59,6 +64,17 @@ def fit_gpytorch_torch(
     optimizer = optimizer_cls(
         params=[{"params": mll.parameters()}], lr=lr, **optimizer_args
     )
+
+    # get bounds specified in model (if any)
+    bounds_: ParameterBounds = {}
+    if hasattr(mll, "named_parameters_and_constraints"):
+        for param_name, _, constraint in mll.named_parameters_and_constraints():
+            if constraint is not None and not constraint.enforced:
+                bounds_[param_name] = constraint.lower_bound, constraint.upper_bound
+
+    # update with user-supplied bounds (overwrites if already exists)
+    if bounds is not None:
+        bounds_.update(bounds)
 
     iterations = []
     t1 = time.time()
@@ -80,11 +96,16 @@ def fit_gpytorch_torch(
         loss_trajectory.append(loss.item())
         for name, param in mll.named_parameters():
             param_trajectory[name].append(param.detach().clone())
-        if disp and (i % 10 == 0 or i == (maxiter - 1)):
-            print(f"Iter {i +1}/{maxiter}: {loss.item()}")
+        if disp and ((i + 1) % 10 == 0 or i == (maxiter - 1)):
+            print(f"Iter {i + 1}/{maxiter}: {loss.item()}")
         if track_iterations:
             iterations.append(OptimizationIteration(i, loss.item(), time.time() - t1))
         optimizer.step()
+        # project onto bounds:
+        if bounds_:
+            for pname, param in mll.named_parameters():
+                if pname in bounds_:
+                    param.data = param.data.clamp(*bounds_[pname])
         i += 1
         converged = check_convergence(
             loss_trajectory=loss_trajectory,
