@@ -10,7 +10,7 @@ matrix:
       python: "3.6"
       install:
         - pip install -q cython numpy
-        - pip install -q git+https://github.com/cornellius-gp/gpytorch.git@db889f1eaa1be3206e57f5a1494ef3fb7f2e3524
+        - pip install -q git+https://github.com/cornellius-gp/gpytorch.git@eb96db228b9a1aeb8314ec1d8bc448d11d4cc46c
         - pip install -q -e .[dev]
       script:
         - pytest -ra --cov=.
@@ -22,7 +22,7 @@ matrix:
       dist: xenial
       install:
         - pip install -q cython numpy
-        - pip install -q git+https://github.com/cornellius-gp/gpytorch.git@db889f1eaa1be3206e57f5a1494ef3fb7f2e3524
+        - pip install -q git+https://github.com/cornellius-gp/gpytorch.git@eb96db228b9a1aeb8314ec1d8bc448d11d4cc46c
         - pip install -q -e .[dev]
       script:
         - pytest -ra --cov=.
@@ -56,7 +56,7 @@ matrix:
       python: "3.6"
       install:
         - pip install -q cython numpy
-        - pip install -q git+https://github.com/cornellius-gp/gpytorch.git@db889f1eaa1be3206e57f5a1494ef3fb7f2e3524
+        - pip install -q git+https://github.com/cornellius-gp/gpytorch.git@eb96db228b9a1aeb8314ec1d8bc448d11d4cc46c
         - pip install -q -e .[dev]
       script:
         # warnings treated as errors

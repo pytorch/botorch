@@ -22,7 +22,7 @@ The following are required to run the setup:
 ##### Installation Requirements
 
 - PyTorch >= 1.0.1
-- gpytorch `db889f1eaa1be3206e57f5a1494ef3fb7f2e3524` (**TODO:** pin beta to 0.3.0 release)
+- gpytorch `eb96db228b9a1aeb8314ec1d8bc448d11d4cc46c` (**TODO:** pin beta to 0.3.0 release)
 - scipy
 
 **Important:**
@@ -39,7 +39,7 @@ includes these, so we pin gpytorch to a specific version. This will be unnecessa
 for the beta release.
 
 ```bash
-pip install git+https://github.com/cornellius-gp/gpytorch.git@db889f1eaa1be3206e57f5a1494ef3fb7f2e3524
+pip install git+https://github.com/cornellius-gp/gpytorch.git@eb96db228b9a1aeb8314ec1d8bc448d11d4cc46c
 ```
 **Note:** The botorch 0.1a0 alpha release has been tested with the above commit
 of gpytorch - if you already have a version of gpytorch installed, make sure
