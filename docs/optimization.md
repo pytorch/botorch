@@ -3,19 +3,16 @@ id: optimization
 title: Optimization
 ---
 
-## Optimizing Hyperparameters (Model Fitting)
+## Model fitting
 
-**TODO: Fill in more**
-
-botorch provides the `fit_gpytorch_model()` for fitting GPs using L-BFGS-B via `scipy.optimize.minimize()`.  We recommend using this method for exact GPs, but other optimizers may be necessary for models with thousands or parameters or observations.
+botorch provides the `fit_gpytorch_model()` for fitting GPs (optimizing model hyperparameters) using L-BFGS-B via `scipy.optimize.minimize()`.  We recommend using this method for exact GPs, but other optimizers may be necessary for models with thousands or parameters or observations.
 
 ## Optimizing Acquisition Functions
 
 #### Using `scipy` optimization methods on `torch` tensors
 
-The default method used by botorch to optimize the acquisition functions and
-generate a q-batch of candidates is `gen_candidates_scipy()`. Given a set of
-starting points (for multiple restarts) and an acquisition function,
+The default method used by botorch to optimize acquisition functions is
+`gen_candidates_scipy()`. Given a set of starting points (for multiple restarts) and an acquisition function,
 this optimizer makes use of `scipy.optimize.minimize()` for optimization,
 via either the `L-BFGS-B` or `SLSQP` routines.  `gen_candidates_scipy()` handles conversion between `torch` and `numpy` types, and utilizes PyTorch's autograd capabilities to obtain the gradient of the acquisition function.
 

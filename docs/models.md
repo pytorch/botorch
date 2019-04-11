@@ -25,6 +25,7 @@ should allow back-propagating gradients through the samples to the model input.
 
 ## botorch `Model` Inferface
 botorch models are PyTorch modules that implement the lightweight `Model` inferface. A botorch `Model` requires two only methods:
+
 * A `posterior` method that returns a `botorch.posteriors.Posterior` over the provided points.
 * A `reinitialize` method that provides a way to reinitialize a model.
 
@@ -34,12 +35,11 @@ model output(s) over the design points in `X`).
 
 ## botorch Models for Standard Use Cases
 botorch provides several GPyTorch models to cover the standard Bayesian optimization use cases. All of these models use Matern 5/2 ARD kernels:
-* `SingleTaskGP`: a single-task, single-output exact GP that infers the the homoskedastic noise level (no noise observations)
-* `FixedNoiseGP`: a single task, single-output exact GP that uses fixed observation noise level (requires noise observations)
+* `SingleTaskGP`: a single-task, single-output exact GP that infers a homoskedastic noise level (no noise observations)
+* `FixedNoiseGP`: a single task, single-output exact GP that uses a fixed observation noise level (requires noise observations)
 * `HeteroskedasticSingleTaskGP`: a single task, single-output exact GP that models heteroskedastic noise (requires noise observations)
-
-* `MultiOutputGP`: A single-task, multi-output model where outcomes are modeled independently (the outcomes can be modeled using any of the single-output GPs)
+* `MultiOutputGP`: A single-task, multi-output model where outcomes are modeled independently, given a list of any type of single-task GP.
 * `MultiTaskGP`: A Hadamard multi-task, multi-output model using an ICM kernel.
 
 ## Implementing Custom Models
-It's easy to implement new models in botorch. See the [Using a custom botorch model in Ax](../tutorials/custom_botorch_model_in_ax) tutorial for an example.
+See the [Using a custom botorch model in Ax](../tutorials/custom_botorch_model_in_ax) tutorial on how to define your own custom models.

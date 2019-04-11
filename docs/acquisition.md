@@ -3,7 +3,6 @@ id: acquisition
 title: Acquisition Functions
 ---
 
-
 ## Monte Carlo (MC) evaluation of q-batch acquisition functions
 
 Many common acquisition functions can be expressed as the expectation of some

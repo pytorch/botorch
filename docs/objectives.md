@@ -3,39 +3,26 @@ id: objectives
 title: Objectives
 ---
 
-**TODO:** Describe the role of objectives
-* objectives transform outcomes
-* only particular (e.g. affine) transforms can be used with analytic acquisition
-  functions, but pretty much any (differentiable) objective can be used with
-  MC acquisition functions
-* botorch `Objective` objects are a convenient way to perform Bayesian
-  Optimization on transformed model outputs
 
+An `Objective` is a `Module` that allows for convenient transformation model outputs.
+Typical use cases for this are scalarization of the outputs of a multi-output model (see
+e.g. [^RandScal]), or optimization subject to outcome constraints, which can be
+achieved by weighting the objective by the probability of feasibility [^NoisyEI].
 
-## Draft Content
-
-Objectives are modules that allow for transforming model outputs. Typical use
-cases for this are scalarization of the outputs of a multi-output model (see
-e.g. [^RandScal]), or optimization subject to outcome constraints (in a noisy
-setting this is typically achieved by weighting the objective by the probability
-of feasibility [^NoisyEI]).
-
-When using traditional analytic formulations of acquisition functions, one has
+When using classic analytic formulations of acquisition functions, one has
 to be quite careful to make sure that the transformation results in a posterior
 distribution of the transformed outputs that still satisfies the assumptions of
 the analytic formulation. For instance, to use standard Expected Improvement on
-a transformed output of a model, the transformation needs to be affine (this is
-because Gaussians are closed under affine transformations).
+a transformed output of a model, the transformation needs to be affine
+ (because Gaussians are closed under affine transformations).
 
-When using (q)MC-based acquisition functions, however, much fewer assumptions
+When using MC-based acquisition functions, however, much fewer assumptions
 are required, and one can apply general transformations to the model outputs
-with relative impunity (as long as one makes sure that gradients can be
-back-propagated through the transformation).
+with relative impunity so long as one makes sure that gradients can be
+back-propagated through the transformation.
 
-Instead of passing the model output through an objective, one could of course
-also model the transformed objective directly. But this would potentially
-involve refitting the model numerous times to try different objectives on the
-outputs.
+**TODO: Talk about using softmax for constraints, and/or give example implementations
+for scalarizations and constraints?**
 
 [^RandScal]: B. Paria, K. Kandasamy, and B. Póczos. A Flexible Multi-Objective
 Bayesian Optimization Approach using Random Scalarizations. ArXiv, 2018.
