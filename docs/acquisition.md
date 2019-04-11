@@ -25,8 +25,8 @@ $$ H(X) \approx \frac{1}{N} \sum_{j=1}^N h(y_j) $$
 where $y_j \sim \mathbb{P}_Y(X)$.
 
 
-botorch relies on the re-parameterization trick and (quasi)-MC sampling for
-optimization and estimation of the batch acquisition functions.
+botorch relies on the re-parameterization trick and MC sampling for
+optimization and estimation of the batch acquisition functions [^Wilson2017].
 
 - The re-parameterization trick (see e.g. [^KingmaWelling2014], [^Rezende2014])
 can be used to write the posterior distribution as a deterministic
@@ -54,11 +54,11 @@ optimizer should be used.
 - Base samples are constructed using an `MCSampler` object, which provides an
 interface that allows for different sampling techniques. `IIDNormalSampler`
 utilizes independent standard normal draws, while `SobolQMCNormalSampler` uses
-quasi-random, low-discrepancy "Sobol" sequences as uniform samples. These
-uniform samples are then transformed to construct normal samples. Sobol
-sequences are more evenly distributed than i.i.d. uniform samples and tend to
+quasi-random, low-discrepancy "Sobol" sequences as uniform samples which are
+then transformed to construct normal samples. Sobol sequences are more evenly distributed than i.i.d. uniform samples and tend to
 improve the convergence rate of MC estimates of integrals/expectations.
-botorch makes it easy to implement and use custom sampling techniques.
+We find that Sobol sequences substantially improve the performance of MC-based acquisition
+functions, and so `SobolQMCNormalSampler` is used by default.
 
 [^KingmaWelling2014]: D. P. Kingma, M. Welling. Auto-Encoding Variational Bayes.
 ICLR, 2013.
@@ -66,6 +66,7 @@ ICLR, 2013.
 [^Rezende2014]: D. J. Rezende, S. Mohamed, D. Wierstra. Stochastic
 Backpropagation and Approximate Inference in Deep Generative Models. ICML, 2014.
 
+[^Wilson2017]: J. T. Wilson, R. Moriconi, F. Hutter, M. P. Deisenroth. The Reparameterization Trick for Acquisition Functions. NeurIPS Workshop on Bayesian Optimization, 2017.
 
 ## Analytic Acquisition Functions
 

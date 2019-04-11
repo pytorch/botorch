@@ -1,9 +1,9 @@
 ---
 id: samplers
-title: MC Samplers
+title: Monte Carlo Samplers
 ---
 
-**TODO:** Describe the role of MC samplers
+**TODO:** Describe the role of Monte Carlo samplers
 * The reparameterization trick relies on transforming samples $\epsilon$ from
   some base distribution.
 * A Sampler is an object that provides these base samples in a convenient way.
@@ -13,4 +13,4 @@ title: MC Samplers
   $L(x)L(x)^T = \Sigma(x)$).
 * botorch comes with both MC (`IIDNormalSampler`) and qMC
   (`SobolQMCNormalSampler`) samplers for `N(0, I)` samples.
-* if you need other base samples, it's easy to implement a custom sampler.
+* If you'd like to experiment with other more efficient base sampling techniques, please see the source code for `SobolQMCNormalSampler` as an example.
