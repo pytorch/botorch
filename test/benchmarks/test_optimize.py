@@ -428,15 +428,15 @@ class TestGetFittedModel(unittest.TestCase):
         for dtype in (torch.float, torch.double):
             init_X = torch.rand((5, 2), dtype=dtype, device=device)
             init_Y = torch.rand(5, dtype=dtype, device=device)
-            init_Y_se = torch.rand(5, dtype=dtype, device=device)
+            init_Yvar = (torch.rand(5, dtype=dtype, device=device)) ** 2
             initial_model = SingleTaskGP(train_X=init_X, train_Y=init_Y)
             train_X = torch.rand((5, 2), dtype=dtype, device=device)
             train_Y = torch.rand(5, dtype=dtype, device=device)
-            train_Y_se = torch.rand(5, dtype=dtype, device=device)
+            train_Yvar = (torch.rand(5, dtype=dtype, device=device)) ** 2
             model = _get_fitted_model(
                 train_X=train_X,
                 train_Y=train_Y,
-                train_Y_se=None,
+                train_Yvar=None,
                 model=initial_model,
                 options={"maxiter": 1},
                 warm_start=False,
@@ -446,12 +446,12 @@ class TestGetFittedModel(unittest.TestCase):
             self.assertTrue(torch.equal(model.train_inputs[0], train_X))
             self.assertTrue(torch.equal(model.train_targets, train_Y))
             initial_model2 = HeteroskedasticSingleTaskGP(
-                train_X=init_X, train_Y=init_Y, train_Y_se=init_Y_se
+                train_X=init_X, train_Y=init_Y, train_Yvar=init_Yvar
             )
             model2 = _get_fitted_model(
                 train_X=train_X,
                 train_Y=train_Y,
-                train_Y_se=train_Y_se,
+                train_Yvar=train_Yvar,
                 model=initial_model2,
                 options={"maxiter": 1},
                 warm_start=False,
@@ -479,7 +479,7 @@ class TestFitModelAndGetBestPoint(unittest.TestCase):
         for dtype in (torch.float, torch.double):
             train_X = torch.rand((5, 2), dtype=dtype, device=device)
             train_Y = torch.rand(5, dtype=dtype, device=device)
-            train_Y_se = torch.rand(5, dtype=dtype, device=device)
+            train_Yvar = (torch.rand(5, dtype=dtype, device=device)) ** 2
             model = SingleTaskGP(train_X=train_X, train_Y=train_Y)
             mock_get_fitted_model.return_value = model
             exp_best_point = train_X[0]
@@ -490,7 +490,7 @@ class TestFitModelAndGetBestPoint(unittest.TestCase):
             model_and_best_point_output = _fit_model_and_get_best_point(
                 train_X=train_X,
                 train_Y=train_Y,
-                train_Y_se=train_Y_se,
+                train_Yvar=train_Yvar,
                 model=model,
                 max_retries=0,
                 model_fit_options={"maxiter": 1},
@@ -503,7 +503,7 @@ class TestFitModelAndGetBestPoint(unittest.TestCase):
             call_args = mock_get_fitted_model.call_args[-1]
             self.assertTrue(torch.equal(call_args["train_X"], train_X))
             self.assertTrue(torch.equal(call_args["train_Y"], train_Y))
-            self.assertTrue(torch.equal(call_args["train_Y_se"], train_Y_se))
+            self.assertTrue(torch.equal(call_args["train_Yvar"], train_Yvar))
             self.assertEqual(call_args["model"], model)
             self.assertEqual(call_args["options"], model_fit_options)
             self.assertEqual(call_args["warm_start"], False)

@@ -26,28 +26,28 @@ from .output import BenchmarkOutput, ClosedLoopOutput, _ModelBestPointOutput
 def _get_fitted_model(
     train_X: Tensor,
     train_Y: Tensor,
-    train_Y_se: Tensor,
+    train_Yvar: Tensor,
     model: Model,
     options: Dict[str, Union[float, int]],
     warm_start: bool,
 ) -> Model:
-    """Helper function that returns a model fitted to the provided data.
+    r"""Helper function that returns a model fitted to the provided data.
 
     Args:
-        train_X: A `n x d` (or `b x n x d`) Tensor of points
-        train_Y: A `n x (t)` (or `b x n x (t)`) Tensor of outcomes
-        train_Y_se: A `b x n x (t)` (or `b x n x (t)`) Tensor of observed standard
-            errors for each outcome
+        train_X: A `n x d` (or `b x n x d`) Tensor of points.
+        train_Y: A `n x (t)` (or `b x n x (t)`) Tensor of outcomes.
+        train_Yvar: A `b x n x (t)` (or `b x n x (t)`) Tensor of observation.
+            noises observed for each outcome.
         model: an initialized Model. This model must have a likelihood attribute.
         options: Dictionary of solver options, passed along to scipy.minimize.
         warm_start: If True, start optimizing the hyperparameters from their
-            previous values without resetting them
+            previous values without resetting them.
 
     Returns:
         Model: a fitted model
     """
     model.reinitialize(
-        train_X=train_X, train_Y=train_Y, train_Y_se=train_Y_se, keep_params=warm_start
+        train_X=train_X, train_Y=train_Y, train_Yvar=train_Yvar, keep_params=warm_start
     )
     mll = ExactMarginalLogLikelihood(model.likelihood, model)
     mll.to(dtype=train_X.dtype, device=train_X.device)
@@ -58,17 +58,17 @@ def _get_fitted_model(
 def _get_raw_objective_and_feasibility(
     samples: Tensor, objective: MCAcquisitionObjective
 ) -> Tuple[Tensor, Tensor]:
-    """
-    Get the raw objective and feasibility.
+    r"""Get the raw objective and feasibility.
 
     Args:
         samples: A `sample_shape x batch_shape x q x t` tensor of
             samples from a model posterior.
-        objective: a MCAcquisitionObjective
+        objective: a MCAcquisitionObjective.
+
     Returns:
         Tensor: `sample_shape x batch_shape x q` tensor of the raw objectives
-            (not feasibility-weighted)
-        Tensor: `sample_shape x batch_shape x q` tensor of the raw feasibilities
+            (not feasibility-weighted).
+        Tensor: `sample_shape x batch_shape x q` tensor of the raw feasibilities.
     """
     # TODO: handle non-positive definite objectives
     feas_raw = torch.ones_like(samples[..., 0])
@@ -87,20 +87,19 @@ def _get_raw_objective_and_feasibility(
 def greedy(
     X: Tensor, model: Model, objective: MCAcquisitionObjective, sampler: MCSampler
 ) -> Tuple[Tensor, Tensor, Tensor]:
-    """Fetch the best point, best objective, and feasibility based on the joint
+    r"""Fetch the best point, best objective, and feasibility based on the joint
     posterior of the evaluated points.
 
     Args:
         X: `q x d` (or `b x q x d`)-dim (batch mode) tensor of points
         model: model: A fitted model.
-        objective: A MCAcquisitionObjective
+        objective: A MCAcquisitionObjective.
         sampler: The sampler used to draw base samples.
 
     Returns:
-        Tensor: `d` (or `b x d`)-dim (batch mode) best point(s)
-        Tensor: `0` (or `b`)-dim (batch mode) tensor of best objective(s)
-        Tensor: `0` (or `b`)-dim (batch mode) tensor of feasibility of best point(s)
-
+        Tensor: `d` (or `b x d`)-dim (batch mode) best point(s).
+        Tensor: `0` (or `b`)-dim (batch mode) tensor of best objective(s).
+        Tensor: `0` (or `b`)-dim (batch mode) tensor of feasibility of best point(s).
     """
     if X.dim() < 2 or X.dim() > 3:
         raise ValueError("X must have two or three dimensions")
@@ -134,7 +133,7 @@ def greedy(
 def _fit_model_and_get_best_point(
     train_X: Tensor,
     train_Y: Tensor,
-    train_Y_se: Tensor,
+    train_Yvar: Tensor,
     model: Model,
     max_retries: int,
     model_fit_options: Dict[str, Union[float, int]],
@@ -144,13 +143,13 @@ def _fit_model_and_get_best_point(
     sampler: Optional[MCSampler] = None,
     retry: int = 0,
 ) -> _ModelBestPointOutput:
-    """Fit model and fetch the best point, best objective, and feasibility based
+    r"""Fit model and fetch the best point, best objective, and feasibility based
     on the joint posterior of the evaluated points.
 
     Args:
         train_X: A `n x d` Tensor of points
         train_Y: A `n x (t)` Tensor of outcomes
-        train_Y_se: A `n x (t)` Tensor of observed standard errors for each outcome
+        train_Yvar: A `n x (t)` Tensor of observed standard errors for each outcome
         model: An initialized Model. This model must have a likelihood attribute.
         max_retries: Themaximum number of retries
         model_fit_options: Dictionary of solver options, passed along to scipy.minimize.
@@ -169,7 +168,6 @@ def _fit_model_and_get_best_point(
             - feas (Tensor): `0` (or `b`)-dim (batch mode) tensor of feasibility
                 of best point(s)
             - retry (int): the current retry count
-
     """
     if sampler is None:
         sampler = SobolQMCNormalSampler(num_samples=500, collapse_batch_dims=True)
@@ -181,7 +179,7 @@ def _fit_model_and_get_best_point(
             model = _get_fitted_model(
                 train_X=train_X,
                 train_Y=train_Y,
-                train_Y_se=train_Y_se,
+                train_Yvar=train_Yvar,
                 model=model,
                 options=model_fit_options,
                 warm_start=warm_start,
@@ -214,7 +212,7 @@ def run_closed_loop(
     verbose: bool = False,
     seed: Optional[int] = None,
 ) -> ClosedLoopOutput:
-    """Uses Bayesian Optimization to optimize func.
+    r"""Uses Bayesian Optimization to optimize func.
 
     Args:
         func: function to optimize (maximize by default)
@@ -233,7 +231,7 @@ def run_closed_loop(
     Returns:
         ClosedLoopOutput: results of closed loop
 
-    # TODO: Add support for multi-task / multi-output models.
+    TODO: Add support for multi-task / multi-output models.
     """
     if objective is None:
         objective = IdentityMCObjective()
@@ -241,7 +239,7 @@ def run_closed_loop(
     retry = 0
     train_X = torch.cat(output.Xs, dim=0)
     train_Y = torch.cat(output.Ys, dim=0)
-    train_Y_se = torch.cat(output.Ycovs, dim=0).sqrt()
+    train_Yvar = torch.cat(output.Ycovs, dim=0).sqrt()
     if train_X.dim() < 2 or train_X.dim() > 3:
         raise ValueError(
             "Xs must contain tensors with two or three dimensions (batch_mode)"
@@ -297,7 +295,7 @@ def run_closed_loop(
                 model_and_best_point_output = _fit_model_and_get_best_point(
                     train_X=train_X,
                     train_Y=train_Y,
-                    train_Y_se=train_Y_se,
+                    train_Yvar=train_Yvar,
                     model=model,
                     max_retries=optim_config.max_retries,
                     model_fit_options=optim_config.model_fit_options,
@@ -327,11 +325,11 @@ def run_closed_loop(
         output.Ycovs.append(Ycov)
         train_X = torch.cat(output.Xs, dim=0)
         train_Y = torch.cat(output.Ys, dim=0)
-        train_Y_se = torch.cat(output.Ycovs, dim=0).sqrt()
+        train_Yvar = torch.cat(output.Ycovs, dim=0).sqrt()
         model_and_best_point_output = _fit_model_and_get_best_point(
             train_X=train_X,
             train_Y=train_Y,
-            train_Y_se=train_Y_se,
+            train_Yvar=train_Yvar,
             model=model,
             max_retries=optim_config.max_retries,
             model_fit_options=optim_config.model_fit_options,
@@ -370,7 +368,7 @@ def run_benchmark(
     true_func: Optional[Callable[[Tensor], List[Tensor]]] = None,
     global_optimum: Optional[float] = None,
 ) -> Dict[str, BenchmarkOutput]:
-    """Uses Bayesian Optimization to optimize func multiple times.
+    r"""Uses Bayesian Optimization to optimize func multiple times.
 
     Args:
         func: function to optimize (maximize by default)
@@ -391,8 +389,8 @@ def run_benchmark(
             transformation. If provided, this is used to compute regret.
 
     Returns:
-        Dict[str, BenchmarkOutput]: dictionary mapping each key of acq_func_configs
-            to its corresponding output.
+        Dict: A dictionary mapping each key of acq_func_configs to its
+            corresponding output.
     """
     if objective is None:
         objective = IdentityMCObjective()
@@ -428,7 +426,7 @@ def run_benchmark(
         model_and_best_point_output = _fit_model_and_get_best_point(
             train_X=X,
             train_Y=Y,
-            train_Y_se=Ycov.sqrt(),
+            train_Yvar=Ycov.sqrt(),
             model=initial_model,
             max_retries=optim_config.max_retries,
             model_fit_options=optim_config.model_fit_options,

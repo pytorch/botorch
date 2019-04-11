@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 
-"""
+r"""
 Basic GP Regression models based on GPyTorch GP models.
 """
 
@@ -114,7 +114,7 @@ class SingleTaskGP(ExactGP, GPyTorchModel):
 class FixedNoiseGP(ExactGP, GPyTorchModel):
     """A model using fixed noise levels."""
 
-    def __init__(self, train_X: Tensor, train_Y: Tensor, train_Y_se: Tensor) -> None:
+    def __init__(self, train_X: Tensor, train_Y: Tensor, train_Yvar: Tensor) -> None:
         r"""A model using fixed noise levels.
 
         Args:
@@ -122,7 +122,7 @@ class FixedNoiseGP(ExactGP, GPyTorchModel):
                 inputs.
             train_Y: A `n` or `b x n` (batch mode) tensor of training
                 observations.
-            train_Y_se: A `n` or `b x n` (batch mode) tensor of observed
+            train_Yvar: A `n` or `b x n` (batch mode) tensor of observed
                 measurement noise.
         """
         # TODO: Use batch_shape arg once consistently used in gpytorch
@@ -134,7 +134,7 @@ class FixedNoiseGP(ExactGP, GPyTorchModel):
             batch_size, ard_num_dims = train_X.shape[0], train_X.shape[-1]
         else:
             raise ValueError(f"Unsupported shape {train_X.shape} for train_X.")
-        likelihood = FixedNoiseGaussianLikelihood(noise=train_Y_se ** 2)
+        likelihood = FixedNoiseGaussianLikelihood(noise=train_Yvar)
         super().__init__(
             train_inputs=train_X, train_targets=train_Y, likelihood=likelihood
         )
@@ -158,7 +158,7 @@ class FixedNoiseGP(ExactGP, GPyTorchModel):
         self,
         train_X: Tensor,
         train_Y: Tensor,
-        train_Y_se: Tensor,
+        train_Yvar: Tensor,
         keep_params: bool = True,
     ) -> None:
         r"""Reinitialize model and the likelihood given new data.
@@ -166,7 +166,7 @@ class FixedNoiseGP(ExactGP, GPyTorchModel):
         Args:
             train_X: A tensor of new training data
             train_Y: A tensor of new training observations
-            train_y_se: A tensor of new training noise observations
+            train_Yvar: A tensor of new training noise observations
             keep_params: If True, keep the model's hyperparameter values (speeds
                 up refitting on similar data)
 
@@ -176,16 +176,16 @@ class FixedNoiseGP(ExactGP, GPyTorchModel):
         """
         if keep_params:
             self.set_train_data(inputs=train_X, targets=train_Y, strict=False)
-            self.likelihood.noise_covar.register_buffer("noise", train_Y_se ** 2)
+            self.likelihood.noise_covar.register_buffer("noise", train_Yvar)
         else:
-            self.__init__(train_X=train_X, train_Y=train_Y, train_Y_se=train_Y_se)
+            self.__init__(train_X=train_X, train_Y=train_Y, train_Yvar=train_Yvar)
         # move to new device / dtype if necessary
         self.to(train_X)
 
 
 class HeteroskedasticSingleTaskGP(SingleTaskGP):
-    def __init__(self, train_X: Tensor, train_Y: Tensor, train_Y_se: Tensor) -> None:
-        train_Y_log_var = 2 * torch.log(train_Y_se)
+    def __init__(self, train_X: Tensor, train_Y: Tensor, train_Yvar: Tensor) -> None:
+        train_Y_log_var = torch.log(train_Yvar)
         noise_likelihood = GaussianLikelihood(
             noise_prior=SmoothedBoxPrior(-3, 5, 0.5, transform=torch.log),
             noise_constraint=GreaterThan(MIN_INFERRED_NOISE_LEVEL, transform=None),
@@ -201,7 +201,7 @@ class HeteroskedasticSingleTaskGP(SingleTaskGP):
         self,
         train_X: Tensor,
         train_Y: Tensor,
-        train_Y_se: Tensor,
+        train_Yvar: Tensor,
         keep_params: bool = True,
         **kwargs,
     ) -> None:
@@ -214,16 +214,16 @@ class HeteroskedasticSingleTaskGP(SingleTaskGP):
         Args:
             train_X: A tensor of new training features
             train_Y: A tensor of new training observations
-            train_y_se: A tensor of new training noise observations
+            train_Yvar: A tensor of new training noise observations
             keep_params: If True, keep the parameter values (speeds up refitting
                 on similar data)
         """
         if keep_params:
-            train_Y_log_var = 2 * torch.log(train_Y_se)
+            train_Y_log_var = torch.log(train_Yvar)
             self.likelihood.noise_covar.noise_model.reinitialize(
                 train_X=train_X, train_Y=train_Y_log_var, keep_params=True
             )
             self.set_train_data(inputs=train_X, targets=train_Y, strict=False)
             self.to(train_X)
         else:
-            self.__init__(train_X=train_X, train_Y=train_Y, train_Y_se=train_Y_se)
+            self.__init__(train_X=train_X, train_Y=train_Y, train_Yvar=train_Yvar)
