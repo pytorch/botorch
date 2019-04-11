@@ -81,12 +81,12 @@ class TestFixedNoiseGP(unittest.TestCase):
             10, **tkwargs
         )
         train_y = torch.sin(train_x * (2 * math.pi)) + 0.2 * torch.randn_like(train_x)
-        train_y_se = torch.full_like(train_y, 0.1)
-        return train_x.view(-1, 1), train_y, train_y_se
+        train_yvar = torch.full_like(train_y, 0.01)
+        return train_x.view(-1, 1), train_y, train_yvar
 
     def _get_model(self, **tkwargs):
-        train_x, train_y, train_y_se = self._get_random_data(**tkwargs)
-        model = FixedNoiseGP(train_X=train_x, train_Y=train_y, train_Y_se=train_y_se)
+        train_x, train_y, train_yvar = self._get_random_data(**tkwargs)
+        model = FixedNoiseGP(train_X=train_x, train_Y=train_y, train_Yvar=train_yvar)
         return model.to(**tkwargs)
 
     def test_FixedNoiseGP(self, cuda=False):
@@ -120,12 +120,12 @@ class TestFixedNoiseGP(unittest.TestCase):
             # )
 
             # test reinitialization
-            train_x_, train_y_, train_y_se_ = self._get_random_data(**tkwargs)
+            train_x_, train_y_, train_yvar_ = self._get_random_data(**tkwargs)
             old_state_dict = deepcopy(model.state_dict())
             model.reinitialize(
                 train_X=train_x_,
                 train_Y=train_y_,
-                train_Y_se=train_y_se_,
+                train_Yvar=train_yvar_,
                 keep_params=True,
             )
             for key, val in model.state_dict().items():
@@ -133,7 +133,7 @@ class TestFixedNoiseGP(unittest.TestCase):
             model.reinitialize(
                 train_X=train_x_,
                 train_Y=train_y_,
-                train_Y_se=train_y_se_,
+                train_Yvar=train_yvar_,
                 keep_params=False,
             )
             self.assertFalse(
@@ -152,11 +152,11 @@ class TestHeteroskedasticSingleTaskGP(unittest.TestCase):
     def setUp(self, cuda=False):
         train_x = torch.linspace(0, 1, 10).unsqueeze(1)
         train_y = torch.sin(train_x * (2 * math.pi)).view(-1) + torch.tensor(NOISE)
-        train_y_sem = 0.1 + 0.1 * torch.rand_like(train_y)
+        train_yvar = (0.1 + 0.1 * torch.rand_like(train_y)) ** 2
         self.model = HeteroskedasticSingleTaskGP(
             train_x.cuda() if cuda else train_x,
             train_y.cuda() if cuda else train_y,
-            train_y_sem.cuda() if cuda else train_y_sem,
+            train_yvar.cuda() if cuda else train_yvar,
         )
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_gpytorch_model(mll, options={"maxiter": 1})
@@ -181,19 +181,19 @@ class TestHeteroskedasticSingleTaskGP(unittest.TestCase):
         train_x = torch.linspace(0, 1, 11).unsqueeze(1)
         noise = torch.tensor(NOISE + [0.1])
         train_y = torch.sin(train_x * (2 * math.pi)).view(-1) + noise
-        train_y_sem = 0.1 + 0.1 * torch.rand_like(train_y)
+        train_yvar = (0.1 + 0.1 * torch.rand_like(train_y)) ** 2
 
         model = self.model
 
         # check reinitializing while keeping param values
         old_params = dict(model.named_parameters())
-        model.reinitialize(train_x, train_y, train_y_sem, keep_params=True)
+        model.reinitialize(train_x, train_y, train_yvar, keep_params=True)
         params = dict(model.named_parameters())
         for p in params:
             self.assertEqual(params[p].item(), old_params[p].item())
 
         # check reinitializing, resetting param values
-        model.reinitialize(train_x, train_y, train_y_sem, keep_params=False)
+        model.reinitialize(train_x, train_y, train_yvar, keep_params=False)
         params = dict(model.named_parameters())
         for p in params:
             self.assertEqual(params[p].item(), 0.0)

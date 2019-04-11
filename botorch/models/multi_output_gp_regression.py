@@ -32,7 +32,7 @@ class MultiOutputGP(IndependentModelList, MultiOutputGPyTorchModel):
         self,
         train_Xs: List[Tensor],
         train_Ys: List[Tensor],
-        train_Y_ses: Optional[List[Tensor]] = None,
+        train_Yvars: Optional[List[Tensor]] = None,
         keep_params: bool = True,
     ) -> None:
         r"""Reinitialize model and likelihood given new data.
@@ -40,7 +40,7 @@ class MultiOutputGP(IndependentModelList, MultiOutputGPyTorchModel):
         Args:
             train_Xs: A list of tensors of new training data.
             train_Ys: A list of tensors of new training observation.
-            train_Y_ses: A list of tensors of new training noise observations.
+            train_Yvars: A list of tensors of new training noise observations.
             keep_params: If True, keep the model's hyperparameter values (speeds
                 up refitting on similar data).
 
@@ -48,14 +48,14 @@ class MultiOutputGP(IndependentModelList, MultiOutputGPyTorchModel):
         If device/dtype of the new training data are different from that of the
         model, then the model is moved to the new device/dtype.
         """
-        if train_Y_ses is None:
-            train_Y_ses = [None for _ in range(len(train_Xs))]
-        for model, train_X, train_Y, train_Y_se in zip(
-            self.models, train_Xs, train_Ys, train_Y_ses
+        if train_Yvars is None:
+            train_Yvars = [None for _ in range(len(train_Xs))]
+        for model, train_X, train_Y, train_Yvar in zip(
+            self.models, train_Xs, train_Ys, train_Yvars
         ):
             model.reinitialize(
                 train_X=train_X,
                 train_Y=train_Y,
-                train_Y_se=train_Y_se,
+                train_Yvar=train_Yvar,
                 keep_params=keep_params,
             )

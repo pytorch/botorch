@@ -47,7 +47,7 @@ class Model(Module, ABC):
         self,
         train_X: Tensor,
         train_Y: Tensor,
-        train_Y_se: Optional[Tensor] = None,
+        train_Yvar: Optional[Tensor] = None,
         keep_params: bool = True,
         **kwargs: Any,
     ) -> None:
@@ -58,7 +58,7 @@ class Model(Module, ABC):
                 training inputs.
             train_Y: A `n x o`-dim (or `b x n x d`) Tensor containing the new
                 training outputs.
-            train_Y_se: A `n x o`-dim (or `b x n x o`) Tensor containing the
+            train_Yvar: A `n x o`-dim (or `b x n x o`) Tensor containing the
                 observed measurement noise at the training outputs.
             keep_params: If True, do not reset the model hyperparameters.
 

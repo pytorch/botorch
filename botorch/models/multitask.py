@@ -177,7 +177,7 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
         self,
         train_X: Tensor,
         train_Y: Tensor,
-        train_Y_se: Tensor,
+        train_Yvar: Tensor,
         task_feature: int,
         output_tasks: Optional[List[int]] = None,
         rank: Optional[int] = None,
@@ -190,7 +190,7 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
                 features (see `task_feature` argument).
             train_Y: A `n` or `b x n` (batch mode) tensor of training
                 observations.
-            train_Y_se: A `n` or `b x n` (batch mode) tensor of observation
+            train_Yvar: A `n` or `b x n` (batch mode) tensor of observation
                 noise standard errors.
             task_feature: The index of the task feature
                 (`-(d+1) <= task_feature <= d+1`).
@@ -210,7 +210,7 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
             output_tasks = all_tasks
         self._output_tasks = output_tasks
 
-        likelihood = FixedNoiseGaussianLikelihood(noise=train_Y_se ** 2)
+        likelihood = FixedNoiseGaussianLikelihood(noise=train_Yvar)
 
         # construct indexer to be used in forward
         self._task_feature = task_feature
@@ -236,15 +236,15 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
         self,
         train_X: Tensor,
         train_Y: Tensor,
-        train_Y_se: Tensor,
+        train_Yvar: Tensor,
         keep_params: bool = True,
     ) -> None:
-        """Reinitialize model and the likelihood given new data.
+        r"""Reinitialize model and the likelihood given new data.
 
         Args:
             train_X: A tensor of new training data
             train_Y: A tensor of new training observations
-            train_Y_se: A tensor of new observation noises
+            train_Yvar: A tensor of new observation noises
             keep_params: If True, keep the model's hyperparameter values (speeds
                 up refitting on similar data)
 
@@ -254,12 +254,12 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
         """
         if keep_params:
             self.set_train_data(inputs=train_X, targets=train_Y, strict=False)
-            self.likelihood.noise = train_Y_se ** 2
+            self.likelihood.noise = train_Yvar
         else:
             self.__init__(
                 train_X=train_X,
                 train_Y=train_Y,
-                train_Y_se=train_Y_se,
+                train_Yvar=train_Yvar,
                 task_feature=self._task_feature,
                 output_tasks=self._output_tasks,
                 rank=self._rank,
