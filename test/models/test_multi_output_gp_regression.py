@@ -34,7 +34,7 @@ def _get_model(**tkwargs):
     return model.to(**tkwargs)
 
 
-class MultiOutputGPTest(unittest.TestCase):
+class TestMultiOutputGP(unittest.TestCase):
     def test_MultiOutputGP(self, cuda=False):
         for double in (False, True):
             tkwargs = {
