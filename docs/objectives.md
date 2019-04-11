@@ -19,10 +19,7 @@ a transformed output of a model, the transformation needs to be affine
 When using MC-based acquisition functions, however, much fewer assumptions
 are required, and one can apply general transformations to the model outputs
 with relative impunity so long as one makes sure that gradients can be
-back-propagated through the transformation.
-
-**TODO: Talk about using softmax for constraints, and/or give example implementations
-for scalarizations and constraints?**
+back-propagated through the transformation. botorch implements several MC-based objectives, including `LinearMCObjective` for linear combinations of objectives, and `ConstrainedMCObjective` for constrained objectives (via softmax).
 
 [^RandScal]: B. Paria, K. Kandasamy, and B. Póczos. A Flexible Multi-Objective
 Bayesian Optimization Approach using Random Scalarizations. ArXiv, 2018.
