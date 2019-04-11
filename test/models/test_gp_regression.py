@@ -27,7 +27,7 @@ from gpytorch.priors import GammaPrior
 from ..test_fit import NOISE
 
 
-class SingleTaskGPTest(unittest.TestCase):
+class TestSingleTaskGP(unittest.TestCase):
     def setUp(self, cuda=False):
         train_x = torch.linspace(0, 1, 10).unsqueeze(1)
         train_y = torch.sin(train_x * (2 * math.pi)).view(-1) + torch.tensor(NOISE)
@@ -75,7 +75,7 @@ class SingleTaskGPTest(unittest.TestCase):
         self.assertFalse(all(params[p].item() == 0.0 for p in params))
 
 
-class FixedNoiseGPTest(unittest.TestCase):
+class TestFixedNoiseGP(unittest.TestCase):
     def _get_random_data(self, **tkwargs):
         train_x = torch.linspace(0, 0.95, 10, **tkwargs) + 0.05 * torch.rand(
             10, **tkwargs
@@ -148,7 +148,7 @@ class FixedNoiseGPTest(unittest.TestCase):
             self.test_FixedNoiseGP(cuda=True)
 
 
-class HeteroskedasticSingleTaskGPTest(unittest.TestCase):
+class TestHeteroskedasticSingleTaskGP(unittest.TestCase):
     def setUp(self, cuda=False):
         train_x = torch.linspace(0, 1, 10).unsqueeze(1)
         train_y = torch.sin(train_x * (2 * math.pi)).view(-1) + torch.tensor(NOISE)

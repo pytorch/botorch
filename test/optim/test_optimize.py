@@ -26,7 +26,7 @@ def rounding_func(X: Tensor) -> Tensor:
     return X.round()
 
 
-class GenBatchInitialcandidatesTest(TestCase):
+class TestGenBatchInitialcandidates(TestCase):
     def test_gen_batch_initial_candidates(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):

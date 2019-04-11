@@ -42,7 +42,7 @@ def _get_model_single_output(**tkwargs):
     return model.to(**tkwargs)
 
 
-class MultiTaskGPTest(unittest.TestCase):
+class TestMultiTaskGP(unittest.TestCase):
     def test_MultiTaskGP(self, cuda=False):
         for double in (False, True):
             tkwargs = {
