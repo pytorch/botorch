@@ -6,57 +6,35 @@ title: Design Philosophy
 ## Main Tenets
 
 botorch adheres to the following main design tenets:
+- Modularity & Simplicity
+  - Make it easy for researchers to develop and implement new ideas by following
+  an "unframework" design philosophy & making heavy use of auto-differentiation. Most botorch components are `torch.nn.Module` instances, so that users familiar with PyTorch can easily implement new implement new differentiable components.
+  - Facilitate model-agnostic Bayesian optimization by maintaining lightweight
+  APIs and first-class support for monte carlo-based acquisition functions.
+- Performance & Scalability
+  - Achieve high levels of performance across different platforms while using the  device-agnostic code by using highly parallelized batch operations.
+  - Extend the applicability of Bayesian Optimization to very large problems by
+  harnessing scalable modeling frameworks such as [gpytorch](https://gpytorch.ai/).
 
-#### Modularity & Simplicity
-- make it easy for researchers to develop and implement new ideas (by following
-  an "unframework" design philosophy & making heavy use of auto-differentiation)
-- facilitate model-agnostic Bayesian Optimization (by maintaining lightweight
-  APIs and first-class support for Monte-Carlo evaluated acquisition functions)
-
-Most botorch components are `torch.nn.Module` instances, and so it is very easy
-for users familiar with PyTorch to implement new components and combine existing
-components together.
-
-#### Performance & Scalability
-- achieve high levels of performance across different platforms while using the
-  same device-agnostic code (by using highly parallelized batch operations in
-  conjunction with native support for modern hardware such as GPUs)
-- extend the applicability of Bayesian Optimization to very large problems (by
-  harnessing scalable modeling frameworks such as [gpytorch](https://gpytorch.ai/))
-
-
-## Batching, Batching, Batching
-
-**batch** - noun [C] /bætʃ/ :
-*A quantity (as of persons or things) considered as a group.*
+## Parallelism through batched computation
 
 Batching (as in batching data, batching computations) is a central component to
-all modern deep learning platforms. Hence it should come as no surprise that it
-also plays a critical role in the design of botorch.
-
-In botorch, we deal with various different kinds of batches:
+all modern deep learning platforms and plays a critical role in the design of botorch.  Examples of batch computations in botorch include:
 
 1. A batch of candidate points $X$ to be evaluated in parallel on the black-box
    function we are trying optimize. In botorch, we refer to this kind of batch
-   as a "q-batch".
+   as a *"q-batch"*.
 2. A batch of q-batches to be evaluated in parallel on the surrogate model of
    the black-box function. These facilitate fast evaluation on modern hardware
-   such as GPUs. botorch refer to these batches as "t-batches" (as in
+   such as GPUs. botorch refer to these batches as *"t-batches"* (as in
    "torch-batches").
-3. A batched surrogate model, each batch of which models a different output.
+3. A batched surrogate model, each batch of which models a different output (NOTE: is there more we can say here, like this is useful for multi-objective or multi-task modeling?).
    This kind of batching also aims to exploit modern hardware architecture.
 
 Note that none of these notions of batch pertains to the batching of *training
 data*, which is commonly done in training Neural Network models (sometimes
 called "mini-batching"). botorch aims to be agnostic with regards to the
-particular model used - so while model fitting may indeed be performed using
-batch training, botorch itself abstracts away from this.
-
-For the purposes of botorch, batching is primarily two things:
-- a way of logically grouping multiple design configurations that are to be
-  evaluated in parallel on the underlying black-box function
-- a powerful design principle that allows harnessing highly efficient
-  computations in PyTorch while allowing for device-agnostic code
+particular model used - so while model fitting may indeed be performed via stochastic gradient descent using mini-batch training, botorch itself abstracts away from this.
 
 For more detail on the different batch notions in botorch, take a look at the
 [More on Batching](#more_on_batching) section.

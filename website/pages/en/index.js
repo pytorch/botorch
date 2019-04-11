@@ -135,13 +135,13 @@ class Index extends React.Component {
       <Block layout="threeColumn">
         {[
           {
-            content: 'Plug in new models & acquisition functions.',
+            content: 'Plug in new models, acquisition functions, and optimizers.',
             image: `${baseUrl}img/th-large-solid.svg`,
             imageAlign: 'top',
             title: 'Modular',
           },
           {
-            content: 'Easily Integrate Neural Network models. Native GPU & autograd support.',
+            content: 'Easily integrate neural network modules. Native GPU & autograd support.',
             image: `${baseUrl}img/pytorch-logo.png`,
             imageAlign: 'top',
             title: 'Built on PyTorch',
