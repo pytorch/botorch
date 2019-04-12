@@ -44,7 +44,11 @@
   "Advanced Usage": [
     {
       "id": "meta_learning_with_rgpe",
-      "title": "Meta-Learning with RGPE"
+      "title": "Meta-learning with RGPE"
+    },
+    {
+      "id": "vae_mnist",
+      "title": "High-dimensional optimization with VAEs"
     }
   ]
 }
