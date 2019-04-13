@@ -20,11 +20,15 @@ from .sobol import SobolEngine
 
 
 class NormalQMCEngine:
-    r"""Engine for qMC sampling from a multivariate normal `N(0, I_d)`.
+    r"""Engine for qMC sampling from a Multivariate Normal `N(0, I_d)`.
 
     By default, this implementation uses Box-Muller transformed Sobol samples
     following pg. 123 in [Pages2018numprob]_. To use the inverse transform
     instead, set `inv_transform=True`.
+
+    Example:
+        >>> engine = NormalQMCEngine(3, inv_transform=True)
+        >>> samples = engine.draw(10)
     """
 
     def __init__(
@@ -80,6 +84,12 @@ class MultivariateNormalQMCEngine:
     By default, this implementation uses Box-Muller transformed Sobol samples
     following pg. 123 in [Pages2018numprob]_. To use the inverse transform
     instead, set `inv_transform=True`.
+
+    Example:
+        >>> mean = torch.tensor([1.0, 2.0])
+        >>> cov = torch.tensor([[1.0, 0.25]. [0.25, 2.0]])
+        >>> engine = MultivariateNormalQMCEngine(mean, cov)
+        >>> samples = engine.draw(10)
     """
 
     def __init__(

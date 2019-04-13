@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+r"""
+Some basic data transformation helpers.
+"""
+
 from functools import wraps
 from typing import Any, Callable
 

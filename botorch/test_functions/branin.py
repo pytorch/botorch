@@ -15,11 +15,11 @@ def neg_branin(X: Tensor) -> Tensor:
 
     Two-dimensional function (usually evaluated on `[-5, 10] x [0, 15]`):
 
-        B(x) = (x2 - b x_1^2 + c x_1 - r)^2 + 10 (1-t) cos(x_1) + 10
+        `B(x) = (x2 - b x_1^2 + c x_1 - r)^2 + 10 (1-t) cos(x_1) + 10`
 
     B has 3 minimizers for its global minimum at
 
-        z_1 = (-pi, 12.275), z_2 = (pi, 2.275), z_3 = (9.42478, 2.475)
+        `z_1 = (-pi, 12.275), z_2 = (pi, 2.275), z_3 = (9.42478, 2.475)`
 
     with `B(z_i) = -0.397887`
 

@@ -1,9 +1,8 @@
 #! /usr/bin/env python3
 
-"""
+r"""
 Abstract base module for all botorch posteriors.
 """
-
 
 from abc import ABC, abstractmethod, abstractproperty
 from typing import Optional
@@ -13,36 +12,36 @@ from torch import Tensor
 
 
 class Posterior(ABC):
-    """Abstract base class for botorch posteriors."""
+    r"""Abstract base class for botorch posteriors."""
 
     @abstractproperty
     def device(self) -> torch.device:
-        """The torch device this posterior lives on."""
+        r"""The torch device this posterior lives on."""
         pass
 
     @abstractproperty
     def dtype(self) -> torch.dtype:
-        """The torch dtype of this posterior."""
+        r"""The torch dtype of this posterior."""
         pass
 
     @abstractproperty
     def event_shape(self) -> torch.Size:
-        """The event shape (i.e. the shape of a single sample)."""
+        r"""The event shape (i.e. the shape of a single sample)."""
         pass
 
     @property
     def batch_shape(self) -> torch.Size:
-        """The t-batch shape."""
+        r"""The t-batch shape."""
         return self.event_shape[:-2]
 
     @property
     def mean(self) -> Tensor:
-        """The mean of the posterior as a `(b) x n x t`-dim Tensor."""
+        r"""The mean of the posterior as a `(b) x n x o`-dim Tensor."""
         raise NotImplementedError
 
     @property
     def variance(self) -> Tensor:
-        """The variance of the posterior as a `(b) x n x t`-dim Tensor."""
+        r"""The variance of the posterior as a `(b) x n x o`-dim Tensor."""
         raise NotImplementedError
 
     @abstractmethod
@@ -51,7 +50,7 @@ class Posterior(ABC):
         sample_shape: Optional[torch.Size] = None,
         base_samples: Optional[Tensor] = None,
     ) -> Tensor:
-        """Sample from the posterior (with gradients).
+        r"""Sample from the posterior (with gradients).
 
         Args:
             sample_shape: A `torch.Size` object specifying the sample shape. To
@@ -72,7 +71,7 @@ class Posterior(ABC):
         sample_shape: Optional[torch.Size] = None,
         base_samples: Optional[Tensor] = None,
     ) -> Tensor:
-        """Sample from the posterior (without gradients).
+        r"""Sample from the posterior (without gradients).
 
         This is a simple wrapper calling `rsample` using `with torch.no_grad()`.
 
