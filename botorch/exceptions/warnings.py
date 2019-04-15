@@ -1,23 +1,23 @@
 #!/usr/bin/env python3
 
-"""
+r"""
 Botorch Warnings.
 """
 
 
 class BotorchWarning(Warning):
-    """Base botorch warning."""
+    r"""Base botorch warning."""
 
     pass
 
 
 class BadInitialCandidatesWarning(BotorchWarning):
-    """Warning issued if set of initial candidates for optimziation is bad."""
+    r"""Warning issued if set of initial candidates for optimziation is bad."""
 
     pass
 
 
 class SamplingWarning(BotorchWarning):
-    """Sampling releated warnings."""
+    r"""Sampling releated warnings."""
 
     pass
