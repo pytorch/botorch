@@ -4,7 +4,6 @@ r"""
 Posterior Module to be used with GPyTorch models.
 """
 
-
 from typing import Optional
 
 import gpytorch
@@ -16,7 +15,7 @@ from .posterior import Posterior
 
 
 class GPyTorchPosterior(Posterior):
-    """A posterior based on GPyTorch's multi-variate Normal distributions."""
+    r"""A posterior based on GPyTorch's multi-variate Normal distributions."""
 
     def __init__(self, mvn: MultivariateNormal) -> None:
         r"""A posterior based on GPyTorch's multi-variate Normal distributions.
@@ -30,14 +29,17 @@ class GPyTorchPosterior(Posterior):
 
     @property
     def device(self) -> torch.device:
+        r"""The torch device or the posterior"""
         return self.mvn.loc.device
 
     @property
     def dtype(self) -> torch.dtype:
+        r"""The torch dtype or the posterior"""
         return self.mvn.loc.dtype
 
     @property
     def event_shape(self) -> torch.Size:
+        r"""The event shape (i.e. the shape of a single sample) of the posterior."""
         shape = self.mvn.batch_shape + self.mvn.event_shape
         if not self._is_mt:
             shape += torch.Size([1])
@@ -48,7 +50,7 @@ class GPyTorchPosterior(Posterior):
         sample_shape: Optional[torch.Size] = None,
         base_samples: Optional[Tensor] = None,
     ) -> Tensor:
-        """Sample from the posterior (with gradients).
+        r"""Sample from the posterior (with gradients).
 
         Args:
             sample_shape: A `torch.Size` object specifying the sample shape. To
@@ -83,7 +85,7 @@ class GPyTorchPosterior(Posterior):
 
     @property
     def mean(self) -> Tensor:
-        """The posterior mean."""
+        r"""The posterior mean."""
         mean = self.mvn.mean
         if not self._is_mt:
             mean = mean.unsqueeze(-1)
@@ -91,7 +93,7 @@ class GPyTorchPosterior(Posterior):
 
     @property
     def variance(self) -> Tensor:
-        """The posterior variance."""
+        r"""The posterior variance."""
         variance = self.mvn.variance
         if not self._is_mt:
             variance = variance.unsqueeze(-1)

@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 
+r"""
+A converter that simplifies using numpy-based optimizers with generic torch
+`nn.Module` classes. This enables using a `scipy.optim.minimize` optimizer
+for optimizing module parameters.
+"""
+
 from collections import OrderedDict
 from math import inf
 from typing import Dict, List, NamedTuple, Optional, Set, Tuple

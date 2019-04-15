@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-"""
-Utilities for sampling.
+r"""
+Utilities for MC and qMC sampling.
 """
 
 import warnings
@@ -15,7 +15,7 @@ from ..exceptions.warnings import SamplingWarning
 from ..posteriors.posterior import Posterior
 from ..qmc.normal import NormalQMCEngine
 
-# TODO: Use torch Sobol engine: https://github.com/pytorch/pytorch/pull/10505
+# TODO: Use torch Sobol engine in torch 1.1
 from ..qmc.sobol import SobolEngine
 
 
@@ -34,15 +34,15 @@ def construct_base_samples(
         batch_shape: The batch shape of the base samples to generate. Typically,
             this is used with each dimension of size 1, so as to eliminate
             sampling variance across batches.
-        output_shape: The output shape (`q x t`) of the base samples to generate.
+        output_shape: The output shape (`q x o`) of the base samples to generate.
         sample_shape: The sample shape of the samples to draw.
         qmc: If True, use quasi-MC sampling (instead of iid draws).
         seed: If provided, use as a seed for the RNG.
 
     Returns:
         base_samples: A `sample_shape x batch_shape x output_shape` dimensional
-            Tensor of base samples, drawn from a N(0, I_qt) distribution (using
-            QMC if `qmc=True`). Here `output_shape = q x t`.
+            Tensor of base samples, drawn from a N(0, I_qo) distribution (using
+            QMC if `qmc=True`). Here `output_shape = q x o`.
     """
     base_sample_shape = batch_shape + output_shape
     output_dim = output_shape.numel()
@@ -83,14 +83,14 @@ def construct_base_samples_from_posterior(
         seed: If provided, use as a seed for the RNG.
 
     Returns:
-        base_samples: A `num_samples x 1 x q x t` dimensional Tensor of base
-            samples, drawn from a N(0, I_qt) distribution (using QMC if
-            `qmc=True`). Here `q` and `t` are the same as in the posterior's
-            `event_shape` `b x q x t`. Importantly, this only obtain a single
+        base_samples: A `num_samples x 1 x q x o` dimensional Tensor of base
+            samples, drawn from a N(0, I_qo) distribution (using QMC if
+            `qmc=True`). Here `q` and `o` are the same as in the posterior's
+            `event_shape` `b x q x o`. Importantly, this only obtain a single
             t-batch of samples, so as to not introduce any sampling variance
             across t-batches.
     """
-    output_shape = posterior.event_shape[-2:]  # shape of joint output: q x t
+    output_shape = posterior.event_shape[-2:]  # shape of joint output: q x o
     if collapse_batch_dims:
         batch_shape = torch.Size([1] * len(posterior.event_shape[:-2]))
     else:
@@ -110,11 +110,7 @@ def construct_base_samples_from_posterior(
 def draw_sobol_samples(
     bounds: Tensor, n: int, q: int, seed: Optional[int] = None
 ) -> Tensor:
-    r"""Draw qMC samples from the box defined by bounds
-
-    NOTE: This currently uses botorch's own cython SobolEngine. In the future
-        (once perf issues are resolved), this will instead use the native torch
-        implementation from https://github.com/pytorch/pytorch/pull/10505
+    r"""Draw qMC samples from the box defined by bounds.
 
     Args:
         bounds: A `2 x d` dimensional tensor specifying box constraints on a
@@ -127,7 +123,6 @@ def draw_sobol_samples(
 
     Returns:
         An `n x q x d` tensor `X` of qMC samples from the box defined by bounds
-
     """
     d = bounds.shape[-1]
     lower = bounds[0]
@@ -152,10 +147,6 @@ def draw_sobol_normal_samples(
     A primary use-case for this functionality is to compute an QMC average
     of f(X) over X where each element of X is drawn N(0, 1).
 
-    NOTE: This currently uses botorch's own cython SobolEngine. In the future
-        (once perf issues are resolved), this will instead use the native torch
-        implementation from https://github.com/pytorch/pytorch/pull/10505
-
     Args:
         d: The dimension of the normal distribution
         n: The number of samples to return
@@ -168,6 +159,8 @@ def draw_sobol_normal_samples(
         An tensor of qMC standard normal samples with dimension `n x d` with device
         and dtype specified by the input.
 
+    Example:
+        >>> samples = draw_sobol_samples(2, 10, seed=1234)
     """
     normal_qmc_engine = NormalQMCEngine(d=d, seed=seed, inv_transform=True)
     samples_np = normal_qmc_engine.draw(n)
@@ -179,7 +172,15 @@ def draw_sobol_normal_samples(
 
 @contextmanager
 def manual_seed(seed: Optional[int] = None) -> Generator:
-    """Contextmanager for manual setting the torch.random seed"""
+    r"""Contextmanager for manual setting the torch.random seed.
+
+    Args:
+        seed: The seed to set the random number generator to.
+
+    Example:
+        >>> with manual_seed(1234):
+        >>>     torch.randn(3)
+    """
     old_state = torch.random.get_rng_state()
     try:
         if seed is not None:

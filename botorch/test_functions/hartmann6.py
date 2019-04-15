@@ -29,11 +29,11 @@ def neg_hartmann6(X: Tensor) -> Tensor:
 
     Six-dimensional function (typically evaluated on `[0, 1]^6`)
 
-        H(x) = - sum_{i=1}^4 ALPHA_i exp( - sum_{j=1}^6 A_ij (x_j - P_ij)**2 )
+        `H(x) = - sum_{i=1}^4 ALPHA_i exp( - sum_{j=1}^6 A_ij (x_j - P_ij)**2 )`
 
     H has a 6 local minima and a global minimum at
 
-        z = (0.20169, 0.150011, 0.476874, 0.275332, 0.311652, 0.6573)
+        `z = (0.20169, 0.150011, 0.476874, 0.275332, 0.311652, 0.6573)`
 
     with `H(z) = -3.32237`
 
