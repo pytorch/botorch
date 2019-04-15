@@ -37,6 +37,8 @@ class SingleTaskGP(ExactGP, GPyTorchModel):
     Class implementing a single task exact GP using relatively strong priors on
     the Kernel hyperparameters, which work best when covariates are normalized
     to the unit cube and outcomes are standardized (zero mean, unit variance).
+
+    This model works in batch mode (each batch having its own hyperparameters).
     """
 
     def __init__(
@@ -52,31 +54,26 @@ class SingleTaskGP(ExactGP, GPyTorchModel):
             likelihood: A likelihood. If omitted, use a standard
                 GaussianLikelihood with inferred noise level.
         """
-        if train_X.ndimension() == 1:
-            batch_size, ard_num_dims = 1, None
-        elif train_X.ndimension() == 2:
-            batch_size, ard_num_dims = 1, train_X.shape[-1]
-        elif train_X.ndimension() == 3:
-            batch_size, ard_num_dims = train_X.shape[0], train_X.shape[-1]
-        else:
-            raise ValueError(f"Unsupported shape {train_X.shape} for train_X.")
+        batch_shape = train_X.shape[:-2]
+        ard_num_dims = train_X.shape[-1] if train_X.dim() > 1 else None
         if likelihood is None:
             likelihood = GaussianLikelihood(
                 noise_prior=GammaPrior(1.1, 0.05),
-                batch_size=batch_size,
+                batch_shape=batch_shape,
                 noise_constraint=GreaterThan(MIN_INFERRED_NOISE_LEVEL, transform=None),
             )
         else:
             self._likelihood_state_dict = deepcopy(likelihood.state_dict())
         super().__init__(train_X, train_Y, likelihood)
-        self.mean_module = ConstantMean(batch_size=batch_size)
+        self.mean_module = ConstantMean(batch_shape=batch_shape)
         self.covar_module = ScaleKernel(
             MaternKernel(
                 nu=2.5,
                 ard_num_dims=ard_num_dims,
+                batch_shape=batch_shape,
                 lengthscale_prior=GammaPrior(3.0, 6.0),
             ),
-            batch_size=batch_size,
+            batch_shape=batch_shape,
             outputscale_prior=GammaPrior(2.0, 0.15),
         )
         self.to(train_X)
@@ -125,29 +122,24 @@ class FixedNoiseGP(ExactGP, GPyTorchModel):
             train_Yvar: A `n` or `b x n` (batch mode) tensor of observed
                 measurement noise.
         """
-        # TODO: Use batch_shape arg once consistently used in gpytorch
-        if train_X.ndimension() == 1:
-            batch_size, ard_num_dims = 1, None
-        if train_X.ndimension() == 2:
-            batch_size, ard_num_dims = 1, train_X.shape[-1]
-        elif train_X.ndimension() == 3:
-            batch_size, ard_num_dims = train_X.shape[0], train_X.shape[-1]
-        else:
-            raise ValueError(f"Unsupported shape {train_X.shape} for train_X.")
+        batch_shape = train_X.shape[:-2]
+        ard_num_dims = train_X.shape[-1] if train_X.dim() > 1 else None
         likelihood = FixedNoiseGaussianLikelihood(noise=train_Yvar)
         super().__init__(
             train_inputs=train_X, train_targets=train_Y, likelihood=likelihood
         )
-        self.mean_module = ConstantMean(batch_size=batch_size)
+        self.mean_module = ConstantMean(batch_shape=batch_shape)
         self.covar_module = ScaleKernel(
             base_kernel=MaternKernel(
                 nu=2.5,
                 ard_num_dims=ard_num_dims,
+                batch_shape=batch_shape,
                 lengthscale_prior=GammaPrior(3.0, 6.0),
             ),
-            batch_size=batch_size,
+            batch_shape=batch_shape,
             outputscale_prior=GammaPrior(2.0, 0.15),
         )
+        self.to(train_X)
 
     def forward(self, x: Tensor) -> MultivariateNormal:
         mean_x = self.mean_module(x)
