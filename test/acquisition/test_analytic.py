@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 
+import math
 import unittest
 
 import torch
@@ -7,13 +8,18 @@ from botorch.acquisition.analytic import (
     AnalyticAcquisitionFunction,
     ConstrainedExpectedImprovement,
     ExpectedImprovement,
+    NoisyExpectedImprovement,
     PosteriorMean,
     ProbabilityOfImprovement,
     UpperConfidenceBound,
 )
 from botorch.exceptions import UnsupportedError
+from botorch.models import FixedNoiseGP
 
 from ..mock import MockModel, MockPosterior
+
+
+NEI_NOISE = [-0.099, -0.004, 0.227, -0.182, 0.018, 0.334, -0.270, 0.156, -0.237, 0.052]
 
 
 class TestAnalyticAcquisitionFunction(unittest.TestCase):
@@ -291,3 +297,61 @@ class TestConstrainedExpectedImprovement(unittest.TestCase):
     def test_constrained_expected_improvement_batch_cuda(self, cuda=False):
         if torch.cuda.is_available():
             self.test_constrained_expected_improvement_batch(cuda=True)
+
+
+class TestNosiyExpectedImprovement(unittest.TestCase):
+    def _get_model(self, cuda=False, dtype=torch.float):
+        device = torch.device("cuda") if cuda else torch.device("cpu")
+        state_dict = {
+            "likelihood.noise_covar.noise": torch.full((10,), 0.0625),
+            "mean_module.constant": torch.tensor([-0.0066]),
+            "covar_module.raw_outputscale": torch.tensor(1.0143),
+            "covar_module.base_kernel.raw_lengthscale": torch.tensor([[-0.99]]),
+            "covar_module.base_kernel.lengthscale_prior.concentration": torch.tensor(
+                3.0
+            ),
+            "covar_module.base_kernel.lengthscale_prior.rate": torch.tensor(6.0),
+            "covar_module.outputscale_prior.concentration": torch.tensor(2.0),
+            "covar_module.outputscale_prior.rate": torch.tensor(0.1500),
+        }
+        train_x = torch.linspace(0, 1, 10, device=device, dtype=dtype)
+        train_y = torch.sin(train_x * (2 * math.pi))
+        noise = torch.tensor(NEI_NOISE, device=device, dtype=dtype)
+        train_y += noise
+        train_yvar = torch.full_like(train_y, 0.25 ** 2)
+        train_x = train_x.view(-1, 1)
+        model = FixedNoiseGP(train_X=train_x, train_Y=train_y, train_Yvar=train_yvar)
+        model.load_state_dict(state_dict)
+        model.to(train_x)
+        model.eval()
+        return model
+
+    def test_noisy_expected_improvement(self, cuda=False):
+        for dtype in (torch.float, torch.double):
+            model = self._get_model(cuda=cuda, dtype=dtype)
+            X_observed = model.train_inputs[0]
+            nEI = NoisyExpectedImprovement(model, X_observed, num_fantasies=5)
+            X_test = torch.tensor(
+                [[0.25], [0.75]],
+                device=X_observed.device,
+                dtype=dtype,
+                requires_grad=True,
+            )
+            val = nEI(X_test)
+            # test basics
+            self.assertEqual(val.dtype, dtype)
+            self.assertEqual(val.device.type, X_observed.device.type)
+            self.assertEqual(val.shape, torch.Size([2]))
+            # test values
+            self.assertGreater(val[0].item(), 1e-4)
+            self.assertLess(val[1].item(), 1e-6)
+            # test gradient
+            val.sum().backward()
+            self.assertGreater(X_test.grad.norm().item(), 1e-3)
+            # test without gradient
+            with torch.no_grad():
+                val = nEI(X_test)
+
+    def test_noisy_expected_improvement_cuda(self, cuda=False):
+        if torch.cuda.is_available():
+            self.test_noisy_expected_improvement(cuda=True)

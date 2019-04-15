@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""
+r"""
 Analytic Acquisition Functions that evaluate the posterior without performing
 Monte-Carlo sampling.
 """
@@ -18,6 +18,7 @@ from ..models.model import Model
 from ..posteriors.posterior import Posterior
 from ..utils.transforms import convert_to_target_pre_hook, q_batch_mode_transform
 from .acquisition import AcquisitionFunction
+from .sampler import SobolQMCNormalSampler
 
 
 class AnalyticAcquisitionFunction(AcquisitionFunction, ABC):
@@ -63,19 +64,20 @@ class ExpectedImprovement(AnalyticAcquisitionFunction):
         r"""Evaluate Expected Improvement on the candidate set X.
 
         Args:
-            X: A `(b) x d`-dim Tensor of `(b)` t-batches of `d`-dim design
-                points each.
+            X: A `b1 x ... bk x d`-dim batched tensor of `d`-dim design points.
 
         Returns:
-            A `(b)`-dim Tensor of Expected Improvement values at the given
-                design points `X`.
+            A `b1 x ... bk`-dim tensor of Expected Improvement values at the
+                given design points `X`.
         """
         self.best_f = self.best_f.to(X)
-        batch_shape = X.shape[:-2]
         posterior = self.model.posterior(X)
         self._validate_single_output_posterior(posterior)
-        mean = posterior.mean.view(batch_shape)
-        sigma = posterior.variance.sqrt().clamp_min(1e-9).view(batch_shape)
+        mean = posterior.mean
+        # deal with batch evaluation and broadcasting
+        view_shape = mean.shape[:-2] if mean.dim() >= X.dim() else X.shape[:-2]
+        mean = mean.view(view_shape)
+        sigma = posterior.variance.clamp_min(1e-9).sqrt().view(view_shape)
         u = (mean - self.best_f.expand_as(mean)) / sigma
         if not self.maximize:
             u = -u
@@ -364,10 +366,10 @@ class NoisyExpectedImprovement(ExpectedImprovement):
     the ExpectedImprovement over a number of fantasy models. Only supports the
     case of q=1. The model must be single-outcome.
 
-    NEI(x) = E(max(y - max Y_baseline), 0)), (y, Y_baseline) ~ f((x, X_baseline)),
+    `NEI(x) = E(max(y - max Y_baseline), 0)), (y, Y_baseline) ~ f((x, X_baseline))`,
     where X_baseline are previously observed points.
 
-    Note: This function currently relies on using a GPyTorch ExactGP.
+    Note: This acquisition function currently relies on using a GPyTorch ExactGP.
     """
 
     def __init__(
@@ -388,33 +390,35 @@ class NoisyExpectedImprovement(ExpectedImprovement):
                 complexity and performance).
             maximize: If True, consider the problem a maximization problem.
         """
-        self.num_fantasies = num_fantasies
-        self.register_buffer("X_observed", X_observed)
-        # construct fantasy model
+        # construct fantasy model (batch mode)
         posterior = model.posterior(X_observed)
-        # TODO: Use qMC sampling here
-        Y_fantasized = posterior.sample(torch.Size([num_fantasies]))
-        # TODO (see T40723547): these observations should be noiseless
-        fantasy_model = model.get_fantasy_model(X_observed, Y_fantasized)
-        # TODO: get Tensor of best_f values from fantasies
-        # best_f = _get_best_f(...)
-        best_f = 0.0  # temp hack
+        self._validate_single_output_posterior(posterior=posterior)
+        sampler = SobolQMCNormalSampler(num_fantasies)
+        Y_fantasized = sampler(posterior).squeeze(-1)
+        noise = torch.full_like(Y_fantasized, 1e-7)  # "noiseless" fantasies
+        batch_X_observed = X_observed.expand(num_fantasies, *X_observed.shape)
+        # The fantasy model will operate in batch mode
+        fantasy_model = model.get_fantasy_model(
+            batch_X_observed, Y_fantasized, noise=noise
+        )
+        best_f = Y_fantasized.max(dim=-1)[0]
         super().__init__(model=fantasy_model, best_f=best_f, maximize=maximize)
 
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate Expected Improvement on the candidate set X.
 
         Args:
-            X: A `(b) x d`-dim Tensor of `(b)` t-batches of `d`-dim design
-                points each.
+            X: A `b1 x ... bk x d`-dim batched tensor of `d`-dim design points.
 
         Returns:
-            A `(b)`-dim Tensor of Noisy Expected Improvement values at the given
-                design points `X`.
+            A `b1 x ... bk`-dim tensor of Noisy Expected Improvement values at
+                the given design points `X`.
         """
-        # evaluate all fantasy models (i.e. batches of the model) at the same points
-        X = X.expand(X.shape[:-2] + torch.Size([self.num_fantasies]) + X.shape[-2:])
-        return super().forward(X).mean(dim=-1)
+        # add a single-element batch dimension to be broadcasted against the
+        # batch dimension of the fantasy model. This will be in addition to the
+        # single-element q-batch dimension added by the forward method of
+        # ExpectedImprovement
+        return super().forward(X.unsqueeze(-2)).mean(dim=-1)
 
 
 def _construct_dist(means: Tensor, sigmas: Tensor, inds: Tensor):
