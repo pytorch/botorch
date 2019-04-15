@@ -76,6 +76,10 @@ def module_to_array(
             # construct bounds
             if bounds_:
                 l, u = bounds_.get(p_name, (-inf, inf))
+                if torch.is_tensor(l):
+                    l = l.cpu().detach()
+                if torch.is_tensor(u):
+                    u = u.cpu().detach()
                 # check for Nones here b/c it may be passed in manually in bounds
                 lower.append(np.full(t.nelement(), l if l is not None else -inf))
                 upper.append(np.full(t.nelement(), u if u is not None else inf))
