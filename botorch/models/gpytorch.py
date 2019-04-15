@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 r"""
-Abstract class for all GPyTorch-based botorch models.
+Abstract model class for all GPyTorch-based botorch models.
 
 To implement your own, simply inherit from both the provided classes and a
 GPyTorch Model class such as an ExactGP.
@@ -11,13 +11,13 @@ from abc import ABC, abstractproperty
 from contextlib import ExitStack
 from typing import Any, List, Optional
 
-import torch
 from gpytorch import settings
 from gpytorch.distributions import MultitaskMultivariateNormal
 from torch import Tensor
 
 from ..posteriors.gpytorch import GPyTorchPosterior
 from .model import Model
+from .utils import _make_X_full
 
 
 class GPyTorchModel(Model, ABC):
@@ -83,7 +83,7 @@ class MultiOutputGPyTorchModel(GPyTorchModel, ABC):
 
     @abstractproperty
     def num_outputs(self) -> int:
-        """The number of outputs of the model."""
+        r"""The number of outputs of the model."""
         pass
 
     def posterior(
@@ -210,15 +210,3 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
             interleaved=False,
         )
         return GPyTorchPosterior(mvn=mtmvn)
-
-
-def _make_X_full(X: Tensor, output_indices: List[int], tf: int) -> Tensor:
-    index_shape = X.shape[:-1] + torch.Size([1])
-    indexers = (
-        torch.full(index_shape, fill_value=i, device=X.device, dtype=X.dtype)
-        for i in output_indices
-    )
-    X_l, X_r = X[..., :tf], X[..., tf:]
-    return torch.cat(
-        [torch.cat([X_l, indexer, X_r], dim=-1) for indexer in indexers], dim=0
-    )

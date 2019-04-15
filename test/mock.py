@@ -4,7 +4,7 @@ from collections import OrderedDict
 from typing import List, Optional
 
 import torch
-from botorch.models import Model
+from botorch.models.model import Model
 from botorch.posteriors import Posterior
 from torch import Tensor
 

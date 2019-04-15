@@ -14,7 +14,7 @@ from ..posteriors import Posterior
 
 
 class Model(Module, ABC):
-    """Abstract base class for botorch models."""
+    r"""Abstract base class for botorch models."""
 
     @abstractmethod
     def posterior(
@@ -62,8 +62,10 @@ class Model(Module, ABC):
                 observed measurement noise at the training outputs.
             keep_params: If True, do not reset the model hyperparameters.
 
-        This does not refit the model.
-        If device/dtype of the new training data are different from that of the
-        model, then the model is moved to the new device/dtype.
+        This does not refit the model. If device/dtype of the new training data
+        are different from that of the model, then the model is moved to the new
+        device/dtype.
         """
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"Method `reinitialize` not implemented for {self.__name__}"
+        )
