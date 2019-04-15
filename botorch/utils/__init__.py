@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-# from .acquisition import get_acquisition_function
 from .constraints import get_outcome_constraint_transforms
 from .objective import apply_constraints, get_objective_weights_transform
 from .sampling import (

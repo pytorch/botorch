@@ -4,7 +4,6 @@ r"""
 Methods for optimizing acquisition functions.
 """
 
-
 import warnings
 from typing import Callable, Dict, Optional, Union
 
