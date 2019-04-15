@@ -31,8 +31,8 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
     hyperparameters, which work best when covariates are normalized to the unit
     cube and outcomes are standardized (zero mean, unit variance).
 
-    WARNING: This model currently does not support inferring different noise
-    levels for the different tasks (work ongoing). If you have known observation
+    This model infers the noise level. WARNING: It currently does not support
+    different noise levels for the different tasks. If you have known observation
     noise, please use `FixedNoiseMultiTaskGP` instead.
     """
 
@@ -95,6 +95,7 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
         self._rank = rank if rank is not None else num_tasks
         # TODO: Add LKJ prior for the index kernel
         self.task_covar_module = IndexKernel(num_tasks=num_tasks, rank=self._rank)
+        self.to(train_X)
 
     @property
     def num_outputs(self) -> int:
@@ -160,17 +161,18 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
                 output_tasks=self._output_tasks,
                 rank=self._rank,
             )
-        # move to new device / dtype if necessary
         self.to(train_X)
 
 
 class FixedNoiseMultiTaskGP(MultiTaskGP):
-    r"""Basic Multi-Task GP model using an ICM kernel.
+    r"""Basic Multi-Task GP model using an ICM kernel, known observation noise.
 
-    Multi-task exact GP using a simple ICM kernel. This
-    model uses relatively strong priors on the base Kernel hyperparameters, which
-    work best when covariates are normalized to the unit cube and outcomes are
-    standardized (zero mean, unit variance).
+    Multi-task exact GP that uses a simple ICM kernel. Can be single-output or
+    multi-output. This model uses relatively strong priors on the base Kernel
+    hyperparameters, which work best when covariates are normalized to the unit
+    cube and outcomes are standardized (zero mean, unit variance).
+
+    This model requires observation noise data (specified in `train_Yvar`).
     """
 
     def __init__(
@@ -199,38 +201,16 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
             rank: The rank to be used for the index kernel. If omitted, use a
                 full rank (i.e. number of tasks) kernel.
         """
-        if train_X.ndimension() != 2:
-            # Currently, batch mode MTGPs are blocked upstream in GPyTorch
-            raise ValueError(f"Unsupported shape {train_X.shape} for train_X.")
-        d = train_X.shape[-1] - 1
-        if not (-(d + 1) <= task_feature <= d + 1):
-            raise ValueError(f"Must have that -({d+1}) <= task_feature <= {d+1}")
-        all_tasks = train_X[:, task_feature].unique().tolist()
-        if output_tasks is None:
-            output_tasks = all_tasks
-        self._output_tasks = output_tasks
-
-        likelihood = FixedNoiseGaussianLikelihood(noise=train_Yvar)
-
-        # construct indexer to be used in forward
-        self._task_feature = task_feature
-        self._base_idxr = torch.arange(d)
-        self._base_idxr[task_feature:] += 1
-
-        super(MultiTaskGP, self).__init__(
-            train_inputs=train_X, train_targets=train_Y, likelihood=likelihood
+        # We'll instatiate a MultiTaskGP and simply override the likelihood
+        super().__init__(
+            train_X=train_X,
+            train_Y=train_Y,
+            task_feature=task_feature,
+            output_tasks=output_tasks,
+            rank=rank,
         )
-        self.mean_module = ConstantMean()
-        self.covar_module = ScaleKernel(
-            base_kernel=MaternKernel(
-                nu=2.5, ard_num_dims=d, lengthscale_prior=GammaPrior(3.0, 6.0)
-            ),
-            outputscale_prior=GammaPrior(2.0, 0.15),
-        )
-        num_tasks = len(all_tasks)
-        self._rank = rank if rank is not None else num_tasks
-        # TODO: Add LKJ prior for the index kernel
-        self.task_covar_module = IndexKernel(num_tasks=num_tasks, rank=self._rank)
+        self.likelihood = FixedNoiseGaussianLikelihood(noise=train_Yvar)
+        self.to(train_X)
 
     def reinitialize(
         self,
@@ -242,11 +222,11 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
         r"""Reinitialize model and the likelihood given new data.
 
         Args:
-            train_X: A tensor of new training data
-            train_Y: A tensor of new training observations
-            train_Yvar: A tensor of new observation noises
+            train_X: A tensor of new training data.
+            train_Y: A tensor of new training observations.
+            train_Yvar: A tensor of new observation noises.
             keep_params: If True, keep the model's hyperparameter values (speeds
-                up refitting on similar data)
+                up refitting on similar data).
 
         This does not refit the model.
         If device/dtype of the new training data are different from that of the
@@ -264,5 +244,4 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
                 output_tasks=self._output_tasks,
                 rank=self._rank,
             )
-        # move to new device / dtype if necessary
         self.to(train_X)

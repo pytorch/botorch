@@ -39,9 +39,9 @@ class TestModuleToArray(unittest.TestCase):
             x, pdict, bounds = module_to_array(module=mll)
             self.assertTrue(np.array_equal(x, np.zeros(5)))
             expected_sizes = {
-                "likelihood.noise_covar.raw_noise": torch.Size([1, 1]),
+                "likelihood.noise_covar.raw_noise": torch.Size([1]),
                 "model.covar_module.raw_lengthscale": torch.Size([1, 3]),
-                "model.mean_module.constant": torch.Size([1, 1]),
+                "model.mean_module.constant": torch.Size([1]),
             }
             self.assertEqual(set(pdict.keys()), set(expected_sizes.keys()))
             for pname, val in pdict.items():
@@ -68,7 +68,7 @@ class TestModuleToArray(unittest.TestCase):
             )
             self.assertTrue(np.array_equal(x, np.zeros(4)))
             expected_sizes = {
-                "likelihood.noise_covar.raw_noise": torch.Size([1, 1]),
+                "likelihood.noise_covar.raw_noise": torch.Size([1]),
                 "model.covar_module.raw_lengthscale": torch.Size([1, 3]),
             }
             self.assertEqual(set(pdict.keys()), set(expected_sizes.keys()))
@@ -96,9 +96,9 @@ class TestModuleToArray(unittest.TestCase):
             )
             self.assertTrue(np.array_equal(x, np.zeros(5)))
             expected_sizes = {
-                "likelihood.noise_covar.raw_noise": torch.Size([1, 1]),
+                "likelihood.noise_covar.raw_noise": torch.Size([1]),
                 "model.covar_module.raw_lengthscale": torch.Size([1, 3]),
-                "model.mean_module.constant": torch.Size([1, 1]),
+                "model.mean_module.constant": torch.Size([1]),
             }
             self.assertEqual(set(pdict.keys()), set(expected_sizes.keys()))
             for pname, val in pdict.items():
@@ -131,9 +131,9 @@ class TestModuleToArray(unittest.TestCase):
             )
             self.assertTrue(np.array_equal(x, np.zeros(5)))
             expected_sizes = {
-                "likelihood.noise_covar.raw_noise": torch.Size([1, 1]),
+                "likelihood.noise_covar.raw_noise": torch.Size([1]),
                 "model.covar_module.raw_lengthscale": torch.Size([1, 3]),
-                "model.mean_module.constant": torch.Size([1, 1]),
+                "model.mean_module.constant": torch.Size([1]),
             }
             self.assertEqual(set(pdict.keys()), set(expected_sizes.keys()))
             for pname, val in pdict.items():
@@ -176,7 +176,7 @@ class TestSetParamsWithArray(unittest.TestCase):
             self.assertTrue(
                 torch.equal(
                     z["likelihood.noise_covar.raw_noise"],
-                    torch.tensor([[1.0]], device=device, dtype=dtype),
+                    torch.tensor([1.0], device=device, dtype=dtype),
                 )
             )
             self.assertTrue(
@@ -188,7 +188,7 @@ class TestSetParamsWithArray(unittest.TestCase):
             self.assertTrue(
                 torch.equal(
                     z["model.mean_module.constant"],
-                    torch.tensor([[5.0]], device=device, dtype=dtype),
+                    torch.tensor([5.0], device=device, dtype=dtype),
                 )
             )
 
