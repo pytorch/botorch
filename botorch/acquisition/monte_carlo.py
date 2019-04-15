@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""
+r"""
 Batch acquisition functions using the reparameterization trick in combination
 with (quasi) Monte-Carlo sampling. See [Rezende2014reparam]_ and
 [Wilson2017reparam]_
@@ -42,7 +42,7 @@ class MCAcquisitionFunction(AcquisitionFunction, ABC):
         Args:
             model: A fitted model.
             sampler: The sampler used to draw base samples. Defaults to
-                `SobolQMCNormalSampler(num_samples=500, collapse_batch_dims=True)`
+                `SobolQMCNormalSampler(num_samples=500, collapse_batch_dims=True)`.
             objective: THe MCAcquisitionObjective under which the samples are
                 evaluated. Defaults to `IdentityMCObjective()`.
         """
@@ -63,11 +63,15 @@ class MCAcquisitionFunction(AcquisitionFunction, ABC):
 
 
 class qExpectedImprovement(MCAcquisitionFunction):
-    r"""MC-based batch Expected Improvement, which computes the qEI by (1) sampling
-    the joint posterior over q points, (2) evaluating the improvement over the current
-    best for each sample, (3) maximizing over q, and (4) averaging over the samples.
+    r"""MC-based batch Expected Improvement.
 
-    qEI(X) = E(max(max Y - best_f, 0)), Y ~ f(X), where X = (x_1,...,x_q)
+    This computes qEI by
+    (1) sampling the joint posterior over q points
+    (2) evaluating the improvement over the current best for each sample
+    (3) maximizing over q
+    (4) averaging over the samples
+
+    `qEI(X) = E(max(max Y - best_f, 0)), Y ~ f(X), where X = (x_1,...,x_q)`
     """
 
     def __init__(
@@ -87,6 +91,12 @@ class qExpectedImprovement(MCAcquisitionFunction):
                 `SobolQMCNormalSampler(num_samples=500, collapse_batch_dims=True)`
             objective: The MCAcquisitionObjective under which the samples are
                 evaluated. Defaults to `IdentityMCObjective()`.
+
+        Example:
+            >>> model = SingleTaskGP(train_X, train_Y)
+            >>> best_f = train_Y.max()[0]
+            >>> sampler = SobolQMCNormalSampler(1000)
+            >>> qEI = qExpectedImprovement(model, best_f, sampler)
         """
         super().__init__(model=model, sampler=sampler, objective=objective)
         if not torch.is_tensor(best_f):
@@ -114,11 +124,12 @@ class qExpectedImprovement(MCAcquisitionFunction):
 
 
 class qNoisyExpectedImprovement(MCAcquisitionFunction):
-    r"""MC-based batch Noisy Expected Improvement. Does not assume a best_f is
-    known (which requires the noiseless assumption). Instead, uses samples from the
-    joint posterior over the q test points and previously observed points. The
-    improvement over previously observed points is computed for each sample and
-    averaged.
+    r"""MC-based batch Noisy Expected Improvement.
+
+    This function does not assume a `best_f` is known (which would require
+    noiseless observations). Instead, it uses samples from the joint posterior
+    over the `q` test points and previously observed points. The improvement
+    over previously observed points is computed for each sample and averaged.
 
     `qNEI(X) = E(max(max Y - max Y_baseline, 0))`, where
     `(Y, Y_baseline) ~ f((X, X_baseline)), X = (x_1,...,x_q)`
@@ -139,9 +150,14 @@ class qNoisyExpectedImprovement(MCAcquisitionFunction):
                 either already been observed or whose evaluation is pending.
                 These points are considered as the potential best design point.
             sampler: The sampler used to draw base samples. Defaults to
-                `SobolQMCNormalSampler(num_samples=500, collapse_batch_dims=True)`
+                `SobolQMCNormalSampler(num_samples=500, collapse_batch_dims=True)`.
             objective: The MCAcquisitionObjective under which the samples are
                 evaluated. Defaults to `IdentityMCObjective()`.
+
+        Example:
+            >>> model = SingleTaskGP(train_X, train_Y)
+            >>> sampler = SobolQMCNormalSampler(1000)
+            >>> qNEI = qNoisyExpectedImprovement(model, train_X, sampler)
         """
         super().__init__(model=model, sampler=sampler, objective=objective)
         self.register_buffer("X_baseline", X_baseline)
@@ -170,11 +186,13 @@ class qNoisyExpectedImprovement(MCAcquisitionFunction):
 
 
 class qProbabilityOfImprovement(MCAcquisitionFunction):
-    r"""MC-based batch Probability of Improvement. Estimates the probability of
-    improvement over the current best observed value by sampling from the joint
-    posterior distribution of the q-batch. MC-based estimates of a probability
-    involves taking expectation of an indicator function; to support autograd,
-    the indicator is replaced with a sigmoid function with temperature tau.
+    r"""MC-based batch Probability of Improvement.
+
+    Estimates the probability of improvement over the current best observed
+    value by sampling from the joint posterior distribution of the q-batch.
+    MC-based estimates of a probability involves taking expectation of an
+    indicator function; to support auto-differntiation, the indicator is
+    replaced with a sigmoid function with temperature parameter `tau`.
 
     `qPI(X) = P(max Y >= best_f), Y ~ f(X), X = (x_1,...,x_q)`
     """
@@ -201,6 +219,12 @@ class qProbabilityOfImprovement(MCAcquisitionFunction):
                 of the step function. Smaller values yield more accurate
                 approximations of the function, but result in gradients
                 estimates with higher variance.
+
+        Example:
+            >>> model = SingleTaskGP(train_X, train_Y)
+            >>> best_f = train_Y.max()[0]
+            >>> sampler = SobolQMCNormalSampler(1000)
+            >>> qEI = qProbabilityOfImprovement(model, best_f, sampler)
         """
         super().__init__(model=model, sampler=sampler, objective=objective)
         if not torch.is_tensor(best_f):
@@ -230,10 +254,12 @@ class qProbabilityOfImprovement(MCAcquisitionFunction):
 
 
 class qSimpleRegret(MCAcquisitionFunction):
-    r"""MC-based batch Simple Regret. Samples from the joint posterior over the
-    q-batch and computes the simple regret.
+    r"""MC-based batch Simple Regret.
 
-    qSR(X) = E(max Y), Y ~ f(X), X = (x_1,...,x_q)
+    Samples from the joint posterior over the q-batch and computes the simple
+    regret.
+
+    `qSR(X) = E(max Y), Y ~ f(X), X = (x_1,...,x_q)`
     """
 
     @t_batch_mode_transform
@@ -255,11 +281,13 @@ class qSimpleRegret(MCAcquisitionFunction):
 
 
 class qUpperConfidenceBound(MCAcquisitionFunction):
-    r"""MC-based batch Upper Confidence Bound. Uses a reparameterization to extend
-    UCB to qUCB for q > 1.
+    r"""MC-based batch Upper Confidence Bound.
+
+    Uses a reparameterization to extend UCB to qUCB for q > 1 (See Appendix A
+    of [Wilson2017reparam].)
 
     `qUCB = E(max(mu + |Y_tilde - mu|))`, where `Y_tilde ~ N(mu, beta pi/2 Sigma)`
-    and `f(X)` has distribution `N(mu, Sigma)`. See Appendix A of [Wilson2017reparam].
+    and `f(X)` has distribution `N(mu, Sigma)`.
     """
 
     def __init__(
@@ -278,6 +306,11 @@ class qUpperConfidenceBound(MCAcquisitionFunction):
                 `SobolQMCNormalSampler(num_samples=500, collapse_batch_dims=True)`
             objective: The MCAcquisitionObjective under which the samples are
                 evaluated. Defaults to `IdentityMCObjective()`.
+
+        Example:
+            >>> model = SingleTaskGP(train_X, train_Y)
+            >>> sampler = SobolQMCNormalSampler(1000)
+            >>> qUCB = qUpperConfidenceBound(model, 0.1, sampler)
         """
         super().__init__(model=model, sampler=sampler, objective=objective)
         self.register_buffer("beta", torch.tensor(float(beta)))

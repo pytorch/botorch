@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""
+r"""
 Abstract base module for all botorch acquisition functions.
 """
 
@@ -13,10 +13,10 @@ from ..models.model import Model
 
 
 class AcquisitionFunction(Module, ABC):
-    """Abstract base class for acquisition functions."""
+    r"""Abstract base class for acquisition functions."""
 
     def __init__(self, model: Model) -> None:
-        """Constructor for the AcquisitionFunction base class.
+        r"""Constructor for the AcquisitionFunction base class.
 
         Args:
             model: A fitted model.
@@ -26,7 +26,7 @@ class AcquisitionFunction(Module, ABC):
 
     @abstractmethod
     def forward(self, X: Tensor) -> Tensor:
-        """Evaluate the acquisition function on the candidate set X.
+        r"""Evaluate the acquisition function on the candidate set X.
 
         Args:
             X: A `(b) x q x d`-dim Tensor of `(b)` t-batches with `q` `d`-dim

@@ -25,8 +25,10 @@ class AnalyticAcquisitionFunction(AcquisitionFunction, ABC):
     r"""Base class for analytic acquisition functions."""
 
     def _validate_single_output_posterior(self, posterior: Posterior) -> None:
-        # Validates that the computed posterior is single-output and raises
-        # an UnsupportedError if not.
+        r"""Validates that the computed posterior is single-output.
+
+        Raises an UnsupportedError if not.
+        """
         if posterior.event_shape[-1] != 1:
             raise UnsupportedError(
                 "Multi-Output posteriors are not supported for acquisition "
@@ -35,23 +37,33 @@ class AnalyticAcquisitionFunction(AcquisitionFunction, ABC):
 
 
 class ExpectedImprovement(AnalyticAcquisitionFunction):
-    r"""Single-outcome Expected Improvement over the current best observed value,
-    computed using the analytic formula for a Normal posterior distribution. Only
-    supports the case of q=1. The model must be single-outcome.
+    r"""Single-outcome Expected Improvement (analytic).
 
-    EI(x) = E(max(y - best_f, 0)), y ~ f(x)
+    Computes classic Expected Improvement over the current best observed value,
+    using the analytic formula for a Normal posterior distribution. Unlike the
+    MC-based acquisition functions, this relies on the posterior at single test
+    point being Gaussian (and require the posterior to implement `mean` and
+    `variance` properties). Only supports the case of `q=1`. The model must be
+    single-outcome.
+
+    `EI(x) = E(max(y - best_f, 0)), y ~ f(x)`
     """
 
     def __init__(
         self, model: Model, best_f: Union[float, Tensor], maximize: bool = True
     ) -> None:
-        r"""Single-outcome analytic Expected Improvement.
+        r"""Single-outcome Expected Improvement (analytic).
 
         Args:
             model: A fitted single-outcome model.
             best_f: Either a scalar or a `b`-dim Tensor (batch mode) representing
                 the best function value observed so far (assumed noiseless).
             maximize: If True, consider the problem a maximization problem.
+
+        Example:
+            >>> gp = SingleTaskGP(train_X, train_Y)
+            >>> EI = ExpectedImprovement(gp)
+            >>> ei = EI(test_X)
         """
         super().__init__(model=model)
         self.maximize = maximize
@@ -65,6 +77,9 @@ class ExpectedImprovement(AnalyticAcquisitionFunction):
 
         Args:
             X: A `b1 x ... bk x d`-dim batched tensor of `d`-dim design points.
+                Expected Improvement is computed for each point individually,
+                i.e., what is considered are the marginal posteriors, not the
+                joint.
 
         Returns:
             A `b1 x ... bk`-dim tensor of Expected Improvement values at the
@@ -89,8 +104,10 @@ class ExpectedImprovement(AnalyticAcquisitionFunction):
 
 
 class PosteriorMean(AnalyticAcquisitionFunction):
-    r"""Single-outcome posterior mean. Only supports the case of q=1.
-    The model must be single-outcome.
+    r"""Single-outcome Posterior Mean.
+
+    Only supports the case of q=1. Requires the model's posterior to have a
+    `mean` property. The model must be single-outcome.
     """
 
     @q_batch_mode_transform
@@ -111,12 +128,14 @@ class PosteriorMean(AnalyticAcquisitionFunction):
 
 
 class ProbabilityOfImprovement(AnalyticAcquisitionFunction):
-    r"""Single-outcome Probability of Improvement over the current best
+    r"""Single-outcome Probability of Improvement.
+
+     over the current best
     observed value, computed using the analytic formula under
     a Normal posterior distribution. Only supports the case of q=1. The model
     must be single-outcome.
 
-    PI(x) = P(y >= best_f), y ~ f(x)
+    `PI(x) = P(y >= best_f), y ~ f(x)`
     """
 
     def __init__(
@@ -163,7 +182,9 @@ class ProbabilityOfImprovement(AnalyticAcquisitionFunction):
 
 
 class UpperConfidenceBound(AnalyticAcquisitionFunction):
-    r"""Single-outcome Upper Confidence Bound, which comprises of the posterior
+    r"""Single-outcome Upper Confidence Bound (UCB).
+
+     which comprises of the posterior
     mean plus a bonus term: the posterior standard deviation weighted by
     a trade-off parameter, beta. Only supports the case of q=1. The model must be
     single-outcome.
@@ -216,7 +237,9 @@ class UpperConfidenceBound(AnalyticAcquisitionFunction):
 
 
 class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
-    r"""Constrained Expected Improvement. Computes the analytic expected improvement
+    r"""Constrained Expected Improvement (feasibility-weighted).
+
+    Computes the analytic expected improvement
     for a Normal posterior distribution, weighted by a probability of feasibility.
     The objective and constraints are assumed to be independent. Only supports the
     case of q=1. The model should be multi-outcome, with the index of the objective
@@ -362,12 +385,15 @@ class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
 
 
 class NoisyExpectedImprovement(ExpectedImprovement):
-    r"""Single-outcome Noisy Expected Improvement, computed by averaging over
-    the ExpectedImprovement over a number of fantasy models. Only supports the
-    case of q=1. The model must be single-outcome.
+    r"""Single-outcome Noisy Expected Improvement (via fantasies).
+
+    This computes Noisy Expected Improvement by averaging over the Expected
+    Improvemnt values of a number of fantasy models. Only supports the case
+    `q=1`. Assumes that the posterior distribution of the model is Gaussian.
+    The model must be single-outcome.
 
     `NEI(x) = E(max(y - max Y_baseline), 0)), (y, Y_baseline) ~ f((x, X_baseline))`,
-    where X_baseline are previously observed points.
+    where `X_baseline` are previously observed points.
 
     Note: This acquisition function currently relies on using a GPyTorch ExactGP.
     """
@@ -379,7 +405,7 @@ class NoisyExpectedImprovement(ExpectedImprovement):
         num_fantasies: int = 20,
         maximize: bool = True,
     ) -> None:
-        r"""Single-outcome analytic Noisy Expected Improvement.
+        r"""Single-outcome Noisy Expected Improvement (via fantasies).
 
         Args:
             model: A fitted single-outcome model.
