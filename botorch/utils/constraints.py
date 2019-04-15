@@ -23,11 +23,10 @@ def get_outcome_constraint_transforms(
             that `A f(x) <= b`.
 
     Returns:
-        List: A list of callables, each mapping a Tensor of size `b x q x o` to
-            a tensor of size `b x q`, where `o` is the number of outputs of the
-            model. Negative values imply feasibility. The callables support
-            broadcasting (e.g. for calling on a tensor of shape
-            `mc_samples x b x q x o`).
+        A list of callables, each mapping a Tensor of size `b x q x o` to a
+        tensor of size `b x q`, where `o` is the number of outputs of the model.
+        Negative values imply feasibility. The callables support broadcasting
+        (e.g. for calling on a tensor of shape `mc_samples x b x q x o`).
     """
     if outcome_constraints is None:
         return None
@@ -46,7 +45,7 @@ def get_outcome_constraint_transforms(
             Y: `... x b x q x t` tensor of function values
 
         Returns:
-            Tensor: `... x b x q`-dim tensor where negative values imply feasibility
+            A `... x b x q`-dim tensor where negative values imply feasibility
         """
         lhs = torch.einsum("...t, t", [Y, a])
         return lhs - rhs

@@ -59,7 +59,7 @@ class NormalQMCEngine:
             n: The number of samples.
 
         Returns:
-            np.ndarray: The samples.
+            The samples as a numpy array.
         """
         # get base samples
         samples = self._sobol_engine.draw(n)
@@ -138,7 +138,7 @@ class MultivariateNormalQMCEngine:
             n: The number of samples.
 
         Returns:
-            np.ndarray: The samples.
+            The samples as a numpy array.
         """
         base_samples = self._normal_engine.draw(n)
         qmc_samples = base_samples @ self._corr_matrix + self._mean

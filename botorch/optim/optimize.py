@@ -49,7 +49,7 @@ def sequential_optimize(
             appropriately (i.e., according to `round-trip` transformations).
 
     Returns:
-        The set of generated candidates.,
+        The set of generated candidates.
     """
     if not hasattr(acq_function, "X_baseline"):
         raise UnsupportedError(  # pyre-ignore: [16]
@@ -112,7 +112,7 @@ def joint_optimize(
             included to match _sequential_optimize.
 
     Returns:
-        The set of generated candidates
+        The set of generated candidates.
     """
     if isinstance(acq_function, AnalyticAcquisitionFunction):
         # TODO: use tensor metadata (e.g. NamedTensors) when available

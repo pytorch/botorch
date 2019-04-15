@@ -40,9 +40,9 @@ def construct_base_samples(
         seed: If provided, use as a seed for the RNG.
 
     Returns:
-        base_samples: A `sample_shape x batch_shape x output_shape` dimensional
-            Tensor of base samples, drawn from a N(0, I_qo) distribution (using
-            QMC if `qmc=True`). Here `output_shape = q x o`.
+        A `sample_shape x batch_shape x output_shape` dimensional tensor of base
+        samples, drawn from a N(0, I_qo) distribution (using QMC if `qmc=True`).
+        Here `output_shape = q x o`.
     """
     base_sample_shape = batch_shape + output_shape
     output_dim = output_shape.numel()
@@ -83,12 +83,11 @@ def construct_base_samples_from_posterior(
         seed: If provided, use as a seed for the RNG.
 
     Returns:
-        base_samples: A `num_samples x 1 x q x o` dimensional Tensor of base
-            samples, drawn from a N(0, I_qo) distribution (using QMC if
-            `qmc=True`). Here `q` and `o` are the same as in the posterior's
-            `event_shape` `b x q x o`. Importantly, this only obtain a single
-            t-batch of samples, so as to not introduce any sampling variance
-            across t-batches.
+        A `num_samples x 1 x q x o` dimensional Tensor of base samples, drawn
+        from a N(0, I_qo) distribution (using QMC if `qmc=True`). Here `q` and
+        `o` are the same as in the posterior's `event_shape` `b x q x o`.
+        Importantly, this only obtain a single t-batch of samples, so as to not
+        introduce any sampling variance across t-batches.
     """
     output_shape = posterior.event_shape[-2:]  # shape of joint output: q x o
     if collapse_batch_dims:
@@ -122,7 +121,7 @@ def draw_sobol_samples(
             use a random seed.
 
     Returns:
-        An `n x q x d` tensor `X` of qMC samples from the box defined by bounds
+        A `n x q x d`-dim tensor of qMC samples from the box defined by bounds.
     """
     d = bounds.shape[-1]
     lower = bounds[0]
@@ -156,7 +155,7 @@ def draw_sobol_normal_samples(
             use a random seed.
 
     Returns:
-        An tensor of qMC standard normal samples with dimension `n x d` with device
+        A tensor of qMC standard normal samples with dimension `n x d` with device
         and dtype specified by the input.
 
     Example:
@@ -179,7 +178,7 @@ def manual_seed(seed: Optional[int] = None) -> Generator:
 
     Example:
         >>> with manual_seed(1234):
-        >>>     torch.randn(3)
+        >>>     x = torch.randn(3)
     """
     old_state = torch.random.get_rng_state()
     try:

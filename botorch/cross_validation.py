@@ -38,11 +38,13 @@ def gen_loo_cv_folds(train_x: Tensor, train_y: Tensor) -> CVFolds:
             where `t` the number of outputs)
 
     Returns:
-        CVFolds tuple with the following fields:
-            train_x: A `n x (n-1) x p` tensor of training features
-            train_y: A `n x (n-1)` (or `n x (n-1) x t`) tensor of training observations
-            test_x: A `n x 1 x p` tensor of test features
-            test_y: A `n` or `n x t` tensor of test observations
+        CVFolds tuple with the following fields
+
+        - train_x: A `n x (n-1) x p` tensor of training features
+        - train_y: A `n x (n-1)` (or `n x (n-1) x t`) tensor of training
+        observations
+        - test_x: A `n x 1 x p` tensor of test features
+        - test_y: A `n` or `n x t` tensor of test observations
     """
     masks = torch.eye(len(train_x), dtype=torch.uint8, device=train_x.device)
     train_x_cv = torch.cat([train_x[~m].unsqueeze(0) for m in masks])
@@ -72,10 +74,11 @@ def batch_cross_validation(
         fit_args: Arguments passed along to fit_gpytorch_model
 
     Returns:
-        A CVResults tuple with the following fields:
-            - posterior: A batched torch Distribution, each batch representing
-                the posteriors of the model on the assocoated test point(s).
-            - observations: A `n` or `n x t` tensor of test observations
+        A CVResults tuple with the following fields
+
+        - posterior: A batched torch Distribution, each batch representing
+        the posteriors of the model on the assocoated test point(s).
+        - observations: A `n` or `n x t` tensor of test observations.
 
     WARNING: This function is currently very memory inefficient, use it only
         for problems of small size.

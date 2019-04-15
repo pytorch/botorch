@@ -112,8 +112,8 @@ class qExpectedImprovement(MCAcquisitionFunction):
                 design points each.
 
         Returns:
-            Tensor: A `(b)`-dim Tensor of Expected Improvement values at the
-                given design points `X`.
+            A `(b)`-dim Tensor of Expected Improvement values at the given
+            design points `X`.
         """
         posterior = self.model.posterior(X)
         samples = self.sampler(posterior)
@@ -171,8 +171,8 @@ class qNoisyExpectedImprovement(MCAcquisitionFunction):
                 design points each.
 
         Returns:
-            Tensor: A `(b)`-dim Tensor of Noisy Expected Improvement values at
-                the given design points `X`.
+            A `(b)`-dim Tensor of Noisy Expected Improvement values at the given
+            design points `X`.
         """
         q = X.shape[-2]
         X_full = torch.cat([X, match_batch_shape(self.X_baseline, X)], dim=-2)
@@ -243,8 +243,8 @@ class qProbabilityOfImprovement(MCAcquisitionFunction):
                 design points each.
 
         Returns:
-            Tensor: A `(b)`-dim Tensor of Probability of Improvement values at
-                the given design points `X`.
+            A `(b)`-dim Tensor of Probability of Improvement values at the given
+            design points `X`.
         """
         posterior = self.model.posterior(X)
         samples = self.sampler(posterior)
@@ -271,8 +271,8 @@ class qSimpleRegret(MCAcquisitionFunction):
                 design points each.
 
         Returns:
-            Tensor: A `(b)`-dim Tensor of Simple Regret values at the given
-                design points `X`.
+            A `(b)`-dim Tensor of Simple Regret values at the given design
+            points `X`.
         """
         posterior = self.model.posterior(X)
         samples = self.sampler(posterior)
@@ -324,8 +324,8 @@ class qUpperConfidenceBound(MCAcquisitionFunction):
                 design points each.
 
         Returns:
-            Tensor: A `(b)`-dim Tensor of Upper Confidence Bound values at the
-                given design points `X`.
+            A `(b)`-dim Tensor of Upper Confidence Bound values at the given
+            design points `X`.
         """
         posterior = self.model.posterior(X)
         samples = self.sampler(posterior)

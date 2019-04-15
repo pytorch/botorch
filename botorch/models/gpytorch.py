@@ -53,9 +53,9 @@ class GPyTorchModel(Model, ABC):
 
         Returns:
             A `GPyTorchPosterior` object, representing a batch of `b` joint
-                distributions over `q` points and the outputs selected by
-                `output_indices` each. Includes observation noise if
-                `observation_noise=True`.
+            distributions over `q` points and the outputs selected by
+            `output_indices` each. Includes observation noise if
+            `observation_noise=True`.
         """
         if output_indices is not None and output_indices != [0]:
             raise RuntimeError(
@@ -112,9 +112,9 @@ class MultiOutputGPyTorchModel(GPyTorchModel, ABC):
 
         Returns:
             A `GPyTorchPosterior` object, representing a batch of `b` joint
-                distributions over `q` points and the outputs selected by
-                `output_indices` each. Includes measurement noise if
-                `observation_noise=True`.
+            distributions over `q` points and the outputs selected by
+            `output_indices` each. Includes measurement noise if
+            `observation_noise=True`.
         """
         detach_test_caches = kwargs.get("detach_test_caches", True)
         self.eval()  # make sure model is in eval mode
@@ -176,9 +176,9 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
 
         Returns:
             A `GPyTorchPosterior` object, representing a batch of `b` joint
-                distributions over `q` points and the outputs selected by
-                `output_indices`. Includes measurement noise if
-                `observation_noise=True`.
+            distributions over `q` points and the outputs selected by
+            `output_indices`. Includes measurement noise if
+            `observation_noise=True`.
         """
         if output_indices is None:
             output_indices = self._output_tasks

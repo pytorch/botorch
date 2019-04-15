@@ -39,7 +39,7 @@ class Model(Module, ABC):
 
         Returns:
             A `Posterior` object, representing a batch of `b` joint distributions
-                over `q` points and `o` outputs each.
+            over `q` points and `o` outputs each.
         """
         pass
 
