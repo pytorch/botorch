@@ -1,23 +1,23 @@
 #!/usr/bin/env python3
 
-"""
+r"""
 Botorch Errors.
 """
 
 
 class BotorchError(Exception):
-    """Base botorch exception."""
+    r"""Base botorch exception."""
 
     pass
 
 
 class CandidateGenerationError(BotorchError):
-    """Exception raised during generating candidates."""
+    r"""Exception raised during generating candidates."""
 
     pass
 
 
 class UnsupportedError(BotorchError):
-    """Currently unsupported feature."""
+    r"""Currently unsupported feature."""
 
     pass

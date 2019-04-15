@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 r"""
-Basic GP Regression models based on GPyTorch GP models.
+Gaussian Process Regression models based on GPyTorch models.
 """
 
 from copy import deepcopy
@@ -34,9 +34,9 @@ MIN_INFERRED_NOISE_LEVEL = 1e-6
 class SingleTaskGP(ExactGP, GPyTorchModel):
     r"""A single-task Exact GP model.
 
-    Class implementing a single task exact GP using relatively strong priors on
-    the Kernel hyperparameters, which work best when covariates are normalized
-    to the unit cube and outcomes are standardized (zero mean, unit variance).
+    A single-task exact GP using relatively strong priors on the Kernel
+    hyperparameters, which work best when covariates are normalized to the unit
+    cube and outcomes are standardized (zero mean, unit variance).
 
     This model works in batch mode (each batch having its own hyperparameters).
     """
@@ -53,6 +53,11 @@ class SingleTaskGP(ExactGP, GPyTorchModel):
                 observations.
             likelihood: A likelihood. If omitted, use a standard
                 GaussianLikelihood with inferred noise level.
+
+        Example:
+            >>> train_X = torch.rand(20, 2)
+            >>> train_Y = torch.sin(train_X[:, 0]]) + torch.cos(train_X[:, 1])
+            >>> model = SingleTaskGP(train_X, train_Y)
         """
         batch_shape = train_X.shape[:-2]
         ard_num_dims = train_X.shape[-1] if train_X.dim() > 1 else None
@@ -88,15 +93,20 @@ class SingleTaskGP(ExactGP, GPyTorchModel):
     ) -> None:
         r"""Reinitialize model and the likelihood given new training data.
 
-        This does not refit the model.
-        If device/dtype of the new training data are different from that of the
-        model, then the model is moved to the new device/dtype.
-
         Args:
             train_X: A tensor of new training features.
             train_Y: A tensor of new training observations.
             keep_params: If True, keep the parameter values (speeds up refitting
                 on similar data).
+
+        This does not refit the model. If device/dtype of the new training data
+        are different from that of the model, then the model is moved to the new
+        device/dtype.
+
+        Example:
+            >>> new_train_X = torch.cat([train_X, Xnew], -2)
+            >>> new_train_Y = torch.cat([train_Y, Ynew], -1)
+            >>> model.reinitialize(new_train_X, new_train_Y)
         """
         if keep_params:
             self.set_train_data(inputs=train_X, targets=train_Y, strict=False)
@@ -109,10 +119,18 @@ class SingleTaskGP(ExactGP, GPyTorchModel):
 
 
 class FixedNoiseGP(ExactGP, GPyTorchModel):
-    """A model using fixed noise levels."""
+    r"""A single-task Exact GP model using fixed noise levels.
+
+    A single-task exact GP that uses fixed observation noise levels. This model
+    also uses relatively strong priors on the Kernel hyperparameters, which work
+    best when covariates are normalized to the unit cube and outcomes are
+    standardized (zero mean, unit variance).
+
+    This model works in batch mode (each batch having its own hyperparameters).
+    """
 
     def __init__(self, train_X: Tensor, train_Y: Tensor, train_Yvar: Tensor) -> None:
-        r"""A model using fixed noise levels.
+        r"""A single-task Exact GP model using fixed noise levels.
 
         Args:
             train_X: A `n x d` or `b x n x d` (batch mode) tensor of training
@@ -121,6 +139,12 @@ class FixedNoiseGP(ExactGP, GPyTorchModel):
                 observations.
             train_Yvar: A `n` or `b x n` (batch mode) tensor of observed
                 measurement noise.
+
+        Example:
+            >>> train_X = torch.rand(20, 2)
+            >>> train_Y = torch.sin(train_X[:, 0]]) + torch.cos(train_X[:, 1])
+            >>> train_Yvar = torch.full_like(train_Y, 0.2)
+            >>> model = FixedNoiseGP(train_X, train_Y, train_Yvar)
         """
         batch_shape = train_X.shape[:-2]
         ard_num_dims = train_X.shape[-1] if train_X.dim() > 1 else None
@@ -152,6 +176,7 @@ class FixedNoiseGP(ExactGP, GPyTorchModel):
         train_Y: Tensor,
         train_Yvar: Tensor,
         keep_params: bool = True,
+        **kwargs: Any,
     ) -> None:
         r"""Reinitialize model and the likelihood given new data.
 
@@ -162,9 +187,15 @@ class FixedNoiseGP(ExactGP, GPyTorchModel):
             keep_params: If True, keep the model's hyperparameter values (speeds
                 up refitting on similar data)
 
-        This does not refit the model.
-        If device/dtype of the new training data are different from that of the
-        model, then the model is moved to the new device/dtype.
+        This does not refit the model. If device/dtype of the new training data
+        are different from that of the model, then the model is moved to the new
+        device/dtype.
+
+        Example:
+            >>> new_train_X = torch.cat([train_X, Xnew], -2)
+            >>> new_train_Y = torch.cat([train_Y, Ynew], -1)
+            >>> new_train_Yvar = torch.full_like(new_train_Y, 0.2)
+            >>> model.reinitialize(new_train_X, new_train_Y, new_train_Yvar)
         """
         if keep_params:
             self.set_train_data(inputs=train_X, targets=train_Y, strict=False)
@@ -176,7 +207,30 @@ class FixedNoiseGP(ExactGP, GPyTorchModel):
 
 
 class HeteroskedasticSingleTaskGP(SingleTaskGP):
+    r"""A single-task Exact GP model using a heteroskeastic noise model.
+
+    This model internally wraps another GP to model the observation noise. This
+    allows the likelihood to make out-of-sample predictions for the observation
+    noise levels.
+    """
+
     def __init__(self, train_X: Tensor, train_Y: Tensor, train_Yvar: Tensor) -> None:
+        r"""A single-task Exact GP model using a heteroskeastic noise model.
+
+        Args:
+            train_X: A `n x d` or `b x n x d` (batch mode) tensor of training
+                inputs.
+            train_Y: A `n` or `b x n` (batch mode) tensor of training
+                observations.
+            train_Yvar: A `n` or `b x n` (batch mode) tensor of observed
+                measurement noise.
+
+        Example:
+            >>> train_X = torch.rand(20, 2)
+            >>> train_Y = torch.sin(train_X[:, 0]]) + torch.cos(train_X[:, 1])
+            >>> train_Yvar = 0.1 + (train_X - 0.5).norm(dim=-1) * torch.rand_like(train_Y)
+            >>> model = HeteroskedasticSingleTaskGP(train_X, train_Y, train_Yvar)
+        """
         train_Y_log_var = torch.log(train_Yvar)
         noise_likelihood = GaussianLikelihood(
             noise_prior=SmoothedBoxPrior(-3, 5, 0.5, transform=torch.log),
@@ -195,13 +249,9 @@ class HeteroskedasticSingleTaskGP(SingleTaskGP):
         train_Y: Tensor,
         train_Yvar: Tensor,
         keep_params: bool = True,
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         r"""Reinitialize model and the likelihood given new data.
-
-        This does not refit the model.
-        If device/dtype of the new training data are different from that of the
-        model, then the model is moved to the new device/dtype.
 
         Args:
             train_X: A tensor of new training features
@@ -209,6 +259,16 @@ class HeteroskedasticSingleTaskGP(SingleTaskGP):
             train_Yvar: A tensor of new training noise observations
             keep_params: If True, keep the parameter values (speeds up refitting
                 on similar data)
+
+        This does not refit the model. If device/dtype of the new training data
+        are different from that of the model, then the model is moved to the new
+        device/dtype.
+
+        Example:
+            >>> new_train_X = torch.cat([train_X, Xnew], -2)
+            >>> new_train_Y = torch.cat([train_Y, Ynew], -1)
+            >>> new_train_Yvar = 0.1 + 0.1 * torch.rand_like(new_train_Y)
+            >>> model.reinitialize(new_train_X, new_train_Y, new_train_Yvar)
         """
         if keep_params:
             train_Y_log_var = torch.log(train_Yvar)
