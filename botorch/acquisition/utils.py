@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""
+r"""
 Utilities for acquisition functions.
 """
 
@@ -34,7 +34,7 @@ def get_acquisition_function(
     seed: Optional[int] = None,
     **kwargs,
 ) -> MCAcquisitionFunction:
-    """Convenience function for initializing Acquisition Functions.
+    r"""Convenience function for initializing botorch acquisition functions.
 
     Args:
         acquisition_function_name: Name of the acquisition function.
@@ -51,7 +51,12 @@ def get_acquisition_function(
             function to optimize is fixed and not stochastic).
 
     Returns:
-        AcquisitionFunction: the acquisition function
+        AcquisitionFunction: The requested acquisition function.
+
+    Example:
+        >>> gp = SingleTaskGP(train_X, train_Y)
+        >>> obj = LinearMCObjective(weights=torch.tensor([1.0, 2.0]))
+        >>> acqf = get_acquisition_function("qEI", gp, obj, train_X)
     """
     # initialize the sampler
     if qmc:
@@ -97,20 +102,25 @@ def get_acquisition_function(
 def get_infeasible_cost(
     X: Tensor, model: Model, objective: Callable[[Tensor], Tensor] = squeeze_last_dim
 ) -> float:
-    """Get infeasible cost for a model and objective.
+    r"""Get infeasible cost for a model and objective.
 
-    Computes an infeasible cost M such that -M is almost always < min_x f(x),
+    Computes an infeasible cost `M` such that `-M < min_x f(x)` almost always,
         so that feasible points are preferred.
 
     Args:
         X: A `m x d` Tensor of `m` design points to use in evaluating the
             minimum. These points should cover the design space well. The more
             points the better the estimate, at the expense of added computation.
-        model: A fitted model.
+        model: A fitted botorch model.
         objective: The objective with which to evaluate the model output.
 
     Returns:
-        The infeasible cost M value.
+        The infeasible cost `M` value.
+
+    Example:
+        >>> gp = SingleTaskGP(train_X, train_Y)
+        >>> objective = lambda Y: Y[..., -1] ** 2
+        >>> M = get_infeasible_cost(train_X, gp, obj)
     """
     posterior = model.posterior(X)
     lb = objective(posterior.mean - 6 * posterior.variance.clamp_min(0).sqrt()).min()
