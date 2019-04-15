@@ -70,7 +70,7 @@ class TestSingleTaskGP(unittest.TestCase):
         for p in params:
             self.assertEqual(params[p].item(), 0.0)
         mll = ExactMarginalLogLikelihood(model.likelihood, self.model)
-        fit_gpytorch_model(mll)
+        fit_gpytorch_model(mll, options={"maxiter": 1})
         # check that some of the parameters changed
         self.assertFalse(all(params[p].item() == 0.0 for p in params))
 
@@ -198,6 +198,6 @@ class TestHeteroskedasticSingleTaskGP(unittest.TestCase):
         for p in params:
             self.assertEqual(params[p].item(), 0.0)
         mll = ExactMarginalLogLikelihood(model.likelihood, self.model)
-        fit_gpytorch_model(mll)
+        fit_gpytorch_model(mll, options={"maxiter": 1})
         # check that some of the parameters changed
         self.assertFalse(all(params[p].item() == 0.0 for p in params))
