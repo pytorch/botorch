@@ -24,7 +24,7 @@ def fit_gpytorch_model(
         kwargs: Arguments passed along to the optimizer function.
 
     Returns:
-        MarginalLogLikelihood: MarginalLogLikelihood with optimized parameters.
+        MarginalLogLikelihood with optimized parameters.
     """
     mll.train()
     mll, _ = optimizer(mll, track_iterations=False, **kwargs)

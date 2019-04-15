@@ -23,7 +23,7 @@ def standardize(X: Tensor) -> Tensor:
         X: tensor `n x (d)`
 
     Returns:
-        Tensor: standardized X
+        The standardized `X`.
     """
     X_std = X.std(dim=0)
     X_std = X_std.where(X_std >= 1e-9, torch.full_like(X_std, 1.0))
@@ -39,7 +39,7 @@ def normalize(X: Tensor, bounds: Tensor) -> Tensor:
         bounds: `2 x d` tensor of lower and upper bounds for each of the X's d
             columns.
     Returns:
-        Tensor `... x d` tensor of normalized data
+        A `... x d`-dim tensor of normalized data.
     """
     return (X - bounds[0]) / (bounds[1] - bounds[0])
 
@@ -53,7 +53,7 @@ def unnormalize(X: Tensor, bounds: Tensor) -> Tensor:
         bounds: `2 x d` tensor of lower and upper bounds for each of the X's d
             columns.
     Returns:
-        Tensor `... x d` tensor of unnormalized data
+        A `... x d`-dim tensor of unnormalized data.
     """
     return X * (bounds[1] - bounds[0]) + bounds[0]
 
@@ -71,7 +71,7 @@ def t_batch_mode_transform(
         method: The (instance) method to be wrapped in the batch mode transform.
 
     Returns:
-        Callable[..., Any]: The decorated instance method.
+        The decorated instance method.
     """
 
     @wraps(method)
@@ -94,7 +94,7 @@ def q_batch_mode_transform(
         method: The (instance) method to be wrapped in the batch mode transform.
 
     Returns:
-        Callable[..., Any]: The decorated instance method.
+        The decorated instance method.
     """
 
     @wraps(method)
@@ -114,10 +114,10 @@ def match_batch_shape(X: Tensor, Y: Tensor) -> Tensor:
         Y: A `batch_shape_Y x q' x d` tensor.
 
     Returns:
-        Tensor: A `batch_shape_Y x q x d` tensor containing the data of `X`
-            expanded to the batch dimensions of `Y` (if compatible). For
-            instance, if `X` is `b'' x b' x q x d` and `Y` is `b x q x d`,
-            then the returned tensor is `b'' x b x q x d`.
+        A `batch_shape_Y x q x d` tensor containing the data of `X` expanded to
+        the batch dimensions of `Y` (if compatible). For instance, if `X` is
+        `b'' x b' x q x d` and `Y` is `b x q x d`, then the returned tensor is
+        `b'' x b x q x d`.
     """
     return X.expand(X.shape[: -Y.dim()] + Y.shape[:-2] + X.shape[-2:])
 

@@ -34,6 +34,6 @@ class AcquisitionFunction(Module, ABC):
 
         Returns:
             A `(b)`-dim Tensor of acquisition funciton values at the given
-                design points `X`.
+            design points `X`.
         """
         pass

@@ -119,12 +119,14 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
                 Should be of float/double data type.
 
         Returns:
-            Tensor: A `q x d` or `b x q x d` (batch mode) tensor with trailing
-                dimension made up of the `d` non-task-index columns of `x`,
-                arranged in the order as specified by the indexer generated
-                during model instantiation.
-            Tensor: A `q` or `b x q` (batch mode) tensor of long data type
-                containing the task indices.
+            2-element tuple containin
+
+            - A `q x d` or `b x q x d` (batch mode) tensor with trailing
+            dimension made up of the `d` non-task-index columns of `x`, arranged
+            in the order as specified by the indexer generated during model
+            instantiation.
+            - A `q` or `b x q` (batch mode) tensor of long data type containing
+            the task indices.
         """
         batch_shape, d = x.shape[:-2], x.shape[-1]
         x_basic = x[..., self._base_idxr].view(batch_shape + torch.Size([-1, d - 1]))

@@ -43,11 +43,12 @@ def module_to_array(
         exclude: A list of parameter names that are to be excluded from extraction.
 
     Returns:
-        np.ndarray: The parameter values
-        Dict: An ordered dictionary with the name and tensor attributes of each
-            parameter.
-        np.ndarray: A `2 x n_params` numpy array with lower and upper bounds if
-            at least one constraint is finite, and None otherwise.
+        3-element tuple containing
+        - The parameter values as a numpy array.
+        - An ordered dictionary with the name and tensor attributes of each
+        parameter.
+        - A `2 x n_params` numpy array with lower and upper bounds if at least
+        one constraint is finite, and None otherwise.
     """
     x: List[np.ndarray] = []
     lower: List[np.ndarray] = []

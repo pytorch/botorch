@@ -44,7 +44,7 @@ GPyTorch Regression Models
   :exclude-members: forward
 
 :hidden:`FixedNoiseGP`
-~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 .. autoclass:: FixedNoiseGP
   :members:
 
@@ -58,3 +58,15 @@ GPyTorch Regression Models
 .. currentmodule:: botorch.models.multi_output_gp_regression
 .. autoclass:: MultiOutputGP
   :members:
+
+:hidden:`MultiTaskGP`
+~~~~~~~~~~~~~~~~~~~~~
+.. currentmodule:: botorch.models.multitask
+.. autoclass:: MultiTaskGP
+  :members:
+
+:hidden:`FixedNoiseMultiTaskGP`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. currentmodule:: botorch.models.multitask
+.. autoclass:: FixedNoiseMultiTaskGP
+   :members:

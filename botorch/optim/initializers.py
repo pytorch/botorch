@@ -22,10 +22,10 @@ def get_similarity_measure(
         model: A Model
 
     Returns:
-        Optional[Callable[[Tensor, Tensor], Tensor]: A callable `(X, x) -> C`,
-            where `X`, `x`, and `C` are Tensorsof size `b x q x d`, `q x d`, and
-             `n_samples x q x q`, respectively, where `C[k, i, j]` characterizes
-             the similiarity betweem the points `X[k, i]` and `x[j]`.
+        Callable: A callable `(X, x) -> C`, where `X`, `x`, and `C` are Tensors
+            of size `b x q x d`, `q x d`, and `n_samples x q x q`, respectively,
+            where `C[k, i, j]` characterizes the similiarity betweem the points
+            `X[k, i]` and `x[j]`.
     """
     covar_module = getattr(model, "covar_module", None)
     if covar_module is None:
@@ -52,12 +52,11 @@ def initialize_q_batch(
     computed from the pair-wise similarity between points (as measured by
     sim_measure, if provided, otherwise by the euclidean distance).
     `eta_Y` and `eta_sim` are temperature parameters:
-        - As `eta_Y -> inf`, the heuristic becomes greedy w.r.t. the outcome
-            values. If `eta_Y == 0`, outcome values are ignored.
-        - As `eta_sim -> inf`, the heuristic becomes greedy w.r.t. "diversity",
-            i.e. favoring points whose similarity to previous points is small.
-            If `eta_sim == 0`, similarity between points is ignored (this is
-            typically much faster).
+    - As `eta_Y -> inf`, the heuristic becomes greedy w.r.t. the outcome
+    values. If `eta_Y == 0`, outcome values are ignored.
+    - As `eta_sim -> inf`, the heuristic becomes greedy w.r.t. "diversity", i.e.
+    favoring points whose similarity to previous points is small. If `eta_sim == 0`,
+    similarity between points is ignored (this is typically much faster).
 
     Args:
         X: A `b x q x d` tensor of `b` samples of `q`-batches from a `d`-dim.
@@ -77,18 +76,16 @@ def initialize_q_batch(
         options: A dictionary for specifying options:
             - eta_Y: The temperature parameter for the outcomes Y. Default: 2.0
             - eta_sim: The temperature parameter for the (negative) covariances.
-                Default: 2.0. Note: If `eta_sim == 0`, no distances will be
-                computed, and points will be selected only based on their
-                function values `Y`.
+            Default: 2.0. Note: If `eta_sim == 0`, no distances will be computed,
+            and points will be selected only based on their function values `Y`.
             - max_perms: Maximum number of permutataions to use for computing
-                the similarity measure (the maximum of the sum of point-wise
-                covariances over all permutations of the `q` points). Complexity
-                (space and time) is linear in max_perms. If `max_perms > q!`,
-                this function computes the maximum across all possible `q!`
-                permutations, otherwise it uses `max_perms` random permutations.
-                Default: `4! = 24`
+            the similarity measure (the maximum of the sum of point-wise
+            covariances over all permutations of the `q` points). Complexity
+            (space and time) is linear in max_perms. If `max_perms > q!`, this
+            function computes the maximum across all possible `q!` permutations,
+            otherwise it uses `max_perms` random permutations. Default: `4! = 24`
             - gamma: The parameter in 1 / (1 + gamma * ||x - x'||_2)` used as
-                similarity measure in cas sim_measure is not provided.
+            similarity measure in cas sim_measure is not provided.
 
     Returns:
         A `n x q x d` tensor of `n` `q`-batch initial conditions.
@@ -212,11 +209,11 @@ def initialize_q_batch_simple(
         n: The number of initial condition to be generated. Must be smaller than `b`.
         options: A dictionary for specifying options:
             - alpha: The threshold (as a fraction of the maximum observed value)
-                under which to ignore samples. All samples for which
-                `Y < alpha max(Y)` will be ignored. Default: 1e-5
-            - eta: Temperature parameter for weighting samples. Default: 1.0
-                If `eta == 0`, any non-zero function values are equally likely
-                to be selected.
+            under which to ignore samples. All samples for which `Y < alpha max(Y)`
+            will be ignored. Default: 1e-5
+            - eta: Temperature parameter for weighting samples. Default: 1.0.
+            If `eta == 0`, any non-zero function values are equally likely to be
+            selected.
 
     Returns:
         A `n x q x d` tensor of `n` `q`-batch initial conditions.

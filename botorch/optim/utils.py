@@ -49,7 +49,7 @@ def columnwise_clamp(
         upper: The column-wise upper bounds. If scalar, apply bound to all columns.
 
     Returns:
-        Tensor: The clamped tensor.
+        The clamped tensor.
     """
     min_bounds = _expand_bounds(lower, X)
     max_bounds = _expand_bounds(upper, X)
@@ -79,7 +79,7 @@ def fix_features(
             range `[0, p - 1]`.
 
     Returns:
-        Tensor X with fixed features.
+        The tensor X with fixed features.
     """
     if fixed_features is None:
         return X
@@ -110,7 +110,7 @@ def _expand_bounds(
 
     Returns:
         A tensor of bounds expanded to be compatible with the size of `X` if
-            bounds is not None, and None if bounds is None
+        bounds is not None, and None if bounds is None
     """
     if bounds is not None:
         if not torch.is_tensor(bounds):
@@ -148,7 +148,7 @@ def _get_extra_mll_args(
         mll: The MarginalLogLikelihood module.
 
     Returns:
-        Union[List[Tensor], List[List[Tensor]]]: extra arguments
+        Extra argumentsfor the MarginalLogLikelihood.
     """
     if isinstance(mll, ExactMarginalLogLikelihood):
         return list(mll.model.train_inputs)

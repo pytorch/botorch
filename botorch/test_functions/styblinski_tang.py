@@ -20,8 +20,7 @@ def neg_styblinski_tang(X: Tensor) -> Tensor:
         X: A Tensor of size `d` or `k x d` (`k` batch evaluations)
 
     Returns:
-        Tensor: `-H(X)`, the negative value of the standard Styblinski-Tang
-            function.
+        `-H(X)`, the negative value of the standard Styblinski-Tang function.
     """
     batch = X.ndimension() > 1
     X = X if batch else X.unsqueeze(0)

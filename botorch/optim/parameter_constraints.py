@@ -33,8 +33,8 @@ def make_scipy_bounds(
         X: `... x d` tensor
 
     Returns:
-        Bounds: A scipy `Bounds` object if either lower_bounds or upper_bounds is
-            not None, and None otherwise.
+        A scipy `Bounds` object if either lower_bounds or upper_bounds is not
+        None, and None otherwise.
     """
     if lower_bounds is None and upper_bounds is None:
         return None
@@ -70,9 +70,9 @@ def make_scipy_linear_constraints(
             `\sum_i (X[indices[i]] * coefficients[i]) = rhs`
 
     Returns:
-        constraints: A list of dictionaries with callables for function value
-            and Jacobian as expected by scipy.minimize, together with their
-            associated constraint types ("eq", "ineq")
+        A list of dictionaries with callables for function value and Jacobian as
+        expected by `scipy.minimieze`, together with their associated constraint
+        types ("eq", "ineq")
     """
     constraints = []
     if inequality_constraints is not None:
@@ -142,11 +142,10 @@ def _make_lin_constraint(
         shapeX: The shape of the torch tensor to optimze over (i.e. `b x q x d`)
 
     Returns:
-        constraint_dict: A dictionary with keys "fun" and "jac", each with the
-            appropriately constructed callable on a single-dimensional input `x`
-            (the flattened, numpyified version of the optimization variable `X`).
-            This does not contain the "type" key indicating the constraint type
-            ("eq" or "ineq").
+        A dictionary with keys "fun" and "jac", each with the appropriately
+        constructed callable on a single-dimensional input `x` (the flattened,
+        numpyified version of the optimization variable `X`). This does not
+        contain the "type" key indicating the constraint type ("eq" or "ineq").
     """
     d = shapeX[-1]
     if indices.max() >= d:

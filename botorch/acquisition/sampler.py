@@ -40,7 +40,7 @@ class MCSampler(Module, ABC):
             posterior: The Posterior to sample from.
 
         Returns:
-            Tensor: The samples drawn from the posterior.
+            The samples drawn from the posterior.
 
         Example:
             This method is usually not called directly, but via the sampler's
@@ -62,10 +62,10 @@ class MCSampler(Module, ABC):
             posterior: The Posterior to sample from.
 
         Returns:
-            torch.Size: The shape of the base samples expected by the posterior.
-                If `collapse_batch_dims=True`, the t-batch dimensions of the
-                base samples are collapsed to size 1. This is useful to prevent
-                sampling variance across t-batches.
+            The shape of the base samples expected by the posterior. If
+            `collapse_batch_dims=True`, the t-batch dimensions of the base
+            samples are collapsed to size 1. This is useful to prevent sampling
+            variance across t-batches.
 
         Example:
             >>> posterior = model.posterior(test_X)
@@ -91,11 +91,12 @@ class MCSampler(Module, ABC):
 
         This function will generate a new set of base samples and register the
         `base_samples` buffer if one of the following is true:
-          - `resample=True`
-          - the MCSampler has no `base_samples` attribute.
-          - `shape` is different than `self.base_samples.shape`.
-          - device and/or dtype of posterior are different than those of
-            `self.base_samples`.
+
+         - `resample=True`
+         - the MCSampler has no `base_samples` attribute.
+         - `shape` is different than `self.base_samples.shape`.
+         - device and/or dtype of posterior are different than those of
+          `self.base_samples`.
 
         Args:
             posterior: The Posterior for which to generate base samples.
