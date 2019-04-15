@@ -62,10 +62,15 @@ class SingleTaskGP(ExactGP, GPyTorchModel):
         batch_shape = train_X.shape[:-2]
         ard_num_dims = train_X.shape[-1] if train_X.dim() > 1 else None
         if likelihood is None:
+            noise_prior = GammaPrior(1.1, 0.05)
             likelihood = GaussianLikelihood(
-                noise_prior=GammaPrior(1.1, 0.05),
+                noise_prior=noise_prior,
                 batch_shape=batch_shape,
-                noise_constraint=GreaterThan(MIN_INFERRED_NOISE_LEVEL, transform=None),
+                noise_constraint=GreaterThan(
+                    MIN_INFERRED_NOISE_LEVEL,
+                    transform=None,
+                    initial_value=noise_prior.mean,
+                ),
             )
         else:
             self._likelihood_state_dict = deepcopy(likelihood.state_dict())

@@ -68,7 +68,10 @@ class TestSingleTaskGP(unittest.TestCase):
         model.reinitialize(train_x, train_y, keep_params=False)
         params = dict(model.named_parameters())
         for p in params:
-            self.assertEqual(params[p].item(), 0.0)
+            if p == "likelihood.noise_covar.raw_noise":
+                self.assertEqual(params[p].item(), 22.0)
+            else:
+                self.assertEqual(params[p].item(), 0.0)
         mll = ExactMarginalLogLikelihood(model.likelihood, self.model)
         fit_gpytorch_model(mll, options={"maxiter": 1})
         # check that some of the parameters changed
