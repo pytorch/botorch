@@ -228,7 +228,8 @@ class HeteroskedasticSingleTaskGP(SingleTaskGP):
         Example:
             >>> train_X = torch.rand(20, 2)
             >>> train_Y = torch.sin(train_X[:, 0]]) + torch.cos(train_X[:, 1])
-            >>> train_Yvar = 0.1 + (train_X - 0.5).norm(dim=-1) * torch.rand_like(train_Y)
+            >>> se = torch.norm(train_X - 0.5, dim=-1)
+            >>> train_Yvar = 0.1 + se * torch.rand_like(train_Y)
             >>> model = HeteroskedasticSingleTaskGP(train_X, train_Y, train_Yvar)
         """
         train_Y_log_var = torch.log(train_Yvar)

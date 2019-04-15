@@ -130,9 +130,9 @@ class PosteriorMean(AnalyticAcquisitionFunction):
 class ProbabilityOfImprovement(AnalyticAcquisitionFunction):
     r"""Single-outcome Probability of Improvement.
 
-     over the current best
-    observed value, computed using the analytic formula under
-    a Normal posterior distribution. Only supports the case of q=1. The model
+    Probability of improvment over the current best observed value, computed
+    using the analytic formula under a Normal posterior distribution. Only
+    supports the case of q=1. Requires the posterior to be Gaussian. The model
     must be single-outcome.
 
     `PI(x) = P(y >= best_f), y ~ f(x)`
@@ -184,13 +184,13 @@ class ProbabilityOfImprovement(AnalyticAcquisitionFunction):
 class UpperConfidenceBound(AnalyticAcquisitionFunction):
     r"""Single-outcome Upper Confidence Bound (UCB).
 
-     which comprises of the posterior
-    mean plus a bonus term: the posterior standard deviation weighted by
-    a trade-off parameter, beta. Only supports the case of q=1. The model must be
+    Classic upper confidence bound that comprises of the posterior mean plus an
+    additional term: the posterior standard deviation weighted by a trade-off
+    parameter, `beta`. Only supports the case of `q=1`. The model must be
     single-outcome.
 
-    UCB(x) = mu(x) + sqrt(beta) * sigma(x), where mu and sigma are the posterior
-    mean and standard deviation, respectively.
+    `UCB(x) = mu(x) + sqrt(beta) * sigma(x)`, where `mu` and `sigma` are the
+    posteriorn mean and standard deviation, respectively.
     """
 
     def __init__(
@@ -239,15 +239,16 @@ class UpperConfidenceBound(AnalyticAcquisitionFunction):
 class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
     r"""Constrained Expected Improvement (feasibility-weighted).
 
-    Computes the analytic expected improvement
-    for a Normal posterior distribution, weighted by a probability of feasibility.
-    The objective and constraints are assumed to be independent. Only supports the
-    case of q=1. The model should be multi-outcome, with the index of the objective
-    and constraints passed to the constructor.
+    Computes the analytic expected improvement for a Normal posterior
+    distribution, weighted by a probability of feasibility. The objective and
+    constraints are assumed to be independent and have Gaussian posterior
+    distributions. Only supports the case `q=1`. The model should be
+    multi-outcome, with the index of the objective and constraints passed to
+    the constructor.
 
-    Constrained_EI(x) = EI(x) * Product_i P(y_i \in [lower_i, upper_i]),
-    where y_i ~ constraint_i(x) and lower_i, upper_i are the lower and upper
-    bounds for the i-th constraint.
+    `Constrained_EI(x) = EI(x) * Product_i P(y_i \in [lower_i, upper_i])`,
+    where `y_i ~ constraint_i(x)` and `lower_i`, `upper_i` are the lower and
+    upper bounds for the i-th constraint, respectively.
     """
 
     def __init__(
