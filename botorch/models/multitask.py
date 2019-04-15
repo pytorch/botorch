@@ -226,7 +226,7 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
             >>> ])
             >>> train_Y = torch.cat(f1(X1), f2(X2))
             >>> train_Yvar = 0.1 + 0.1 * torch.rand_like(train_Y)
-            >>> model = FixedNoiseMultiTaskGP(train_X, train_Y, train_Yvar, task_feature=-1)
+            >>> model = FixedNoiseMultiTaskGP(train_X, train_Y, train_Yvar, -1)
         """
         # We'll instatiate a MultiTaskGP and simply override the likelihood
         super().__init__(
