@@ -12,7 +12,7 @@ def neg_styblinski_tang(X: Tensor) -> Tensor:
 
     d-dimensional function (usually evaluated on the hypercube `[-5, 5]^d`):
 
-        H(x) = 0.5 * sum_{i=1}^d (x_i^4 - 16 * x_i^2 + 5 * x_i)
+        `H(x) = 0.5 * sum_{i=1}^d (x_i^4 - 16 * x_i^2 + 5 * x_i)`
 
     H has a single global mininimum `H(z) = -39.166166 * d` at `z = [-2.903534]^d`
 

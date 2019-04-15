@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+r"""
+Tools for model fitting.
+"""
+
 import time
 from collections import OrderedDict
 from typing import Any, Dict, List, NamedTuple, Optional, Tuple
