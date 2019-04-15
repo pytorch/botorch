@@ -22,7 +22,7 @@ The following are required to run the setup:
 ##### Installation Requirements
 
 - PyTorch >= 1.0.1
-- gpytorch `eb96db228b9a1aeb8314ec1d8bc448d11d4cc46c` (**TODO:** pin beta to 0.3.0 release)
+- gpytorch >= 0.3.0
 - scipy
 
 **Important:**
@@ -30,21 +30,6 @@ You will want to have you PyTorch build link against **MKL** (the non-optimized
 version of botorch can be up to an order of magnitude slower). Setting this up
 manually can be tricky - to make sure this works please use the Anaconda
 installation instructions on https://pytorch.org/.
-
-
-### Install gpytorch using pip
-
-botorch uses the latest gpytorch features. There is no current release that
-includes these, so we pin gpytorch to a specific version. This will be unnecessary
-for the beta release.
-
-```bash
-pip install git+https://github.com/cornellius-gp/gpytorch.git@eb96db228b9a1aeb8314ec1d8bc448d11d4cc46c
-```
-**Note:** The botorch 0.1a0 alpha release has been tested with the above commit
-of gpytorch - if you already have a version of gpytorch installed, make sure
-you uninstall that (using `pip uninstall gpytorch`) before running the above
-command.
 
 
 ### Install botorch
