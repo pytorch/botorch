@@ -104,6 +104,7 @@ def apply_constraints(
     constraints: List[Callable[[Tensor], Tensor]],
     samples: Tensor,
     infeasible_cost: float,
+    eta: float = 1e-3,
 ) -> Tensor:
     r"""Apply constraints using an infeasible_cost `M` for negative objectives.
 
@@ -111,7 +112,7 @@ def apply_constraints(
     objective can be negative by usingthe following strategy:
     (1) add `M` to make obj nonnegative
     (2) apply constraints using the sigmoid approximation
-    (3) shift by `-M`.
+    (3) shift by `-M`
 
     Args:
         obj: A `n_samples x b x q` Tensor of objective values.
@@ -121,6 +122,7 @@ def apply_constraints(
             output models (`o` > 1).
         samples: A `b x q x o` Tensor of samples drawn from the posterior.
         infeasible_cost: The infeasible value.
+        eta: The temperature parameter of the sigmoid function.
 
     Returns:
         Tensor: `n_samples x b x q` tensor of feasibility-weighted objectives.
@@ -128,6 +130,6 @@ def apply_constraints(
     # obj has dimensions n_samples x b x q
     obj = obj.add(infeasible_cost)  # now it is nonnegative
     obj = apply_constraints_nonnegative_soft(
-        obj=obj, constraints=constraints, samples=samples, eta=1e-3
+        obj=obj, constraints=constraints, samples=samples, eta=eta
     )
     return obj.add(-infeasible_cost)

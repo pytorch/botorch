@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-"""
-Sampler modules to be used with MC acquisition functions.
+r"""
+Sampler modules to be used with MC-evaluated acquisition functions.
 """
 
 import random
@@ -19,7 +19,7 @@ from ..utils.sampling import draw_sobol_normal_samples, manual_seed
 
 
 class MCSampler(Module, ABC):
-    """Abstract base class for Samplers
+    r"""Abstract base class for Samplers.
 
     Subclasses must implement the `_construct_base_samples` method.
 
@@ -34,13 +34,19 @@ class MCSampler(Module, ABC):
     """
 
     def forward(self, posterior: Posterior) -> Tensor:
-        """Draws MC samples from the posterior.
+        r"""Draws MC samples from the posterior.
 
         Args:
             posterior: The Posterior to sample from.
 
         Returns:
-            Tensor: The samples drawn from the posterior
+            Tensor: The samples drawn from the posterior.
+
+        Example:
+            This method is usually not called directly, but via the sampler's
+            `__call__` method:
+            >>> posterior = model.posterior(test_X)
+            >>> samples = sampler(posterior)
         """
         base_sample_shape = self._get_base_sample_shape(posterior=posterior)
         self._construct_base_samples(posterior=posterior, shape=base_sample_shape)
@@ -50,7 +56,7 @@ class MCSampler(Module, ABC):
         return samples
 
     def _get_base_sample_shape(self, posterior: Posterior) -> torch.Size:
-        """Get the shape of the base samples.
+        r"""Get the shape of the base samples.
 
         Args:
             posterior: The Posterior to sample from.
@@ -60,6 +66,10 @@ class MCSampler(Module, ABC):
                 If `collapse_batch_dims=True`, the t-batch dimensions of the
                 base samples are collapsed to size 1. This is useful to prevent
                 sampling variance across t-batches.
+
+        Example:
+            >>> posterior = model.posterior(test_X)
+            >>> shape = _get_base_sample_shape(posterior)
         """
         event_shape = posterior.event_shape
         if self.collapse_batch_dims:
@@ -68,6 +78,7 @@ class MCSampler(Module, ABC):
 
     @property
     def sample_shape(self) -> torch.Size:
+        r"""The shape of a single sample"""
         return self._sample_shape
 
     @sample_shape.setter
@@ -76,7 +87,7 @@ class MCSampler(Module, ABC):
 
     @abstractmethod
     def _construct_base_samples(self, posterior: Posterior, shape: torch.Size) -> None:
-        """Generate base samples if necessary.
+        r"""Generate base samples (if necessary).
 
         This function will generate a new set of base samples and register the
         `base_samples` buffer if one of the following is true:
@@ -103,7 +114,7 @@ class IIDNormalSampler(MCSampler):
         seed: Optional[int] = None,
         collapse_batch_dims: bool = True,
     ) -> None:
-        """Sampler for MC base samples using iid N(0,1) samples.
+        r"""Sampler for MC base samples using iid `N(0,1)` samples.
 
         Args:
             num_samples: The number of samples to use.
@@ -114,15 +125,18 @@ class IIDNormalSampler(MCSampler):
             collapse_batch_dims: If True, collapse the t-batch dimensions to
                 size 1. This is useful for preventing sampling variance across
                 t-batches.
+
+        Example:
+            >>> sampler = IIDNormalSampler(1000, seed=1234)
         """
         super().__init__()
         self._sample_shape = torch.Size([num_samples])
         self.collapse_batch_dims = collapse_batch_dims
         self.resample = resample
-        self.seed = seed if seed is not None else random.randint(0, 1_000_000)
+        self.seed = seed if seed is not None else random.randint(0, 1000000)
 
     def _construct_base_samples(self, posterior: Posterior, shape: torch.Size) -> None:
-        """Generate iid N(0,1) base samples if necessary.
+        r"""Generate iid `N(0,1)` base samples (if necessary).
 
         This function will generate a new set of base samples and set the
         `base_samples` buffer if one of the following is true:
@@ -135,6 +149,11 @@ class IIDNormalSampler(MCSampler):
         Args:
             posterior: The Posterior for which to generate base samples.
             shape: The shape of the base samples to construct.
+
+        Example:
+            >>> posterior = model.posterior(test_X)
+            >>> shape = sampler._get_base_sample_shape(posterior)
+            >>> sampler._construct_base_samples(posterior, shape)
         """
         if (
             self.resample
@@ -152,7 +171,7 @@ class IIDNormalSampler(MCSampler):
 
 
 class SobolQMCNormalSampler(MCSampler):
-    """Sampler for QMC base samples using Sobol sequences."""
+    r"""Sampler for quasi-MC base samples using Sobol sequences."""
 
     def __init__(
         self,
@@ -161,7 +180,7 @@ class SobolQMCNormalSampler(MCSampler):
         seed: Optional[int] = None,
         collapse_batch_dims: bool = True,
     ) -> None:
-        """Sampler for QMC base samples using Sobol sequences.
+        r"""Sampler for quasi-MC base samples using Sobol sequences.
 
         Args:
             num_samples: The number of samples to use.
@@ -172,6 +191,9 @@ class SobolQMCNormalSampler(MCSampler):
             collapse_batch_dims: If True, collapse the t-batch dimensions to
                 size 1. This is useful for preventing sampling variance across
                 t-batches.
+
+        Example:
+            >>> sampler = SobolQMCNormalSampler(1000, seed=1234)
         """
         super().__init__()
         self._sample_shape = torch.Size([num_samples])
@@ -180,7 +202,7 @@ class SobolQMCNormalSampler(MCSampler):
         self.seed = seed if seed is not None else random.randint(0, 1_000_000)
 
     def _construct_base_samples(self, posterior: Posterior, shape: torch.Size) -> None:
-        """Generate quasi-random Normal base samples if necessary.
+        r"""Generate quasi-random Normal base samples (if necessary).
 
         This function will generate a new set of base samples and set the
         `base_samples` buffer if one of the following is true:
@@ -193,6 +215,11 @@ class SobolQMCNormalSampler(MCSampler):
         Args:
             posterior: The Posterior for which to generate base samples.
             shape: The shape of the base samples to construct.
+
+        Example:
+            >>> posterior = model.posterior(test_X)
+            >>> shape = sampler._get_base_sample_shape(posterior)
+            >>> sampler._construct_base_samples(posterior, shape)
         """
         if (
             self.resample
