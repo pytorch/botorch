@@ -11,10 +11,14 @@ For a high-level view of what botorch tries to be, see our
 
 ![Black Box Optimization](assets/overview_blackbox.png)
 
-On a high level, the problem that Bayesian Optimization is trying to solve is
-to optimize some expensive-to-evaluate black box function $f$. The only thing we
-can do is evaluate this function on a sequence of test points (and possibly also
-on multiple test points in parallel).
+At a high level, the problem underlying Bayesian optimization (BO) is to maximize
+some expensive-to-evaluate black box function $f$. In other words, we do not have
+access to the functional form of $f$ and our only recourse is to evaluate $f$ at
+a sequence of test points, with the hope of determining a near-optimal value after
+a small number of evaluations. BO is a general approach to adaptively select these
+test points (or batches of test points to be evaluated in parallel) that allows
+for a principled trade-off between evaluating $f$ at regions of high uncertainty
+and regions of good performance.
 
 
 ## Bayesian Optimization
@@ -23,18 +27,24 @@ on multiple test points in parallel).
 
 #### Models
 
-In order to be able to perform this optimization, we need a way of extrapolating
-our belief about what $f$ looks like at points we have not yet evaluated. In
-Bayesian Optimization this is referred to as the *Surrogate Model*. Importantly,
+In order to optimize $f$ within a small number of evaluations, we need a way of
+extrapolating our belief about what $f$ looks like at points we have not yet
+evaluated. In BO, this is referred to as the *surrogate model*. Importantly,
 the surrogate model should be able to quantifying the uncertainty of its
-predictions in form of a **Posterior** distribution over function values $f(x)$
+predictions in form of a **posterior** distribution over function values $f(x)$
 at points $x$.
 
-In Bayesian Optimization, the model typically used is a Gaussian Process (GP),
-in which case the posterior is a multi-variate Gaussian.
-**TODO: Say a few things about GPs**
-However, while GPs have been a very successful modeling approach, it's also
-possible to use other model types (**TODO: Expand on this**).
+The surrogate model for $f$ is typically a Gaussian Process (GP), in which case
+the posterior distribution on any finite collection of points is a multivariate
+normal distribution. A GP is usually specified using a mean function $\mu(x)$
+and a covariance kernel $k(x,x')$, from which a mean vector
+$(\mu(x_0), \ldots, \mu(x_k))$ and covariance matrix $\Sigma$ with
+$\Sigma_{ij} = k(x_i, x_j)$ can be computed for any set of points
+$(x_1, \ldots x_k)$. Using a GP surrogate model for $f$ means that we assume
+$(f(x_1), \ldots, f(x_k))$ is multivariate normal with a mean vector and covariance
+matrix determined by $\mu(x)$ and $k(x,x')$. However, while GPs have been a very
+successful modeling approach, it is also possible to use other model types within
+botorch (**TODO: Expand on this**).
 
 botorch makes no general assumptions on what kind of model is being used,
 so long as is able to produce a posterior over outputs given an input $x$.
@@ -77,19 +87,49 @@ on the same objects.
 
 ![Monte-Carlo Acquisition Functions](assets/overview_mcacquisition.png)
 
-**TODO**
+The idea behind using Monte-Carlo sampling for evaluating acquisition functions
+is simple: instead of computing the (intractable) expectation over the posterior,
+we sample from the posterior and use the sample average as an approximation.
 
 #### Objectives
 
-[Objectives](objectives.md#objectives)
+To give additional flexibility in the case of MC-based acquisition functions,
+botorch gives the option of transforming the output(s) of the model through an
+`Objective` module, which returns a one-dimensional output that is passed to the
+acquisition function. The `MCAcquisitionFunction` class defaults its objective to
+`IdentityMCObjective()`, which simply returns the last dimension of the model output.
+Thus, for the standard use case of a single-output GP that directly models the black
+box function $f$, no special objective module needs to be defined. For more details
+on the advanced features enabled by the `Objective` module, see
+[Objectives](objectives.md#objectives).
 
-**TODO**
-
-
-## The Reparameterization Trick
+## The Re-parameterization Trick
 
 ![Reparameterization Trick](assets/overview_reparameterization.png)
 
-**TODO**
+The re-parameterization trick (see e.g. [^KingmaWelling2014], [^Rezende2014])
+can be used to write the posterior distribution as a deterministic
+transformation of an auxiliary random variable $\epsilon$. For example, a
+normally distributed random variable $X$ with mean $\mu$ and standard deviation
+$\theta$ has the same distribution as $\mu + \sigma \epsilon$ where $\epsilon$
+is a standard normal. Therefore, an expectation with respect to $X$ can be
+approximated using samples from $\epsilon$. In the case where $\mu$ and $\sigma$
+are parameters of an optimization problem, MC approximations of the objective at
+different values of $\mu$ and $\sigma$ can be computed using a single set of
+"base samples."
 
-More about [Samplers](samplers.md).
+Base samples are constructed using an `MCSampler` object, which provides an
+interface that allows for different sampling techniques. `IIDNormalSampler`
+utilizes independent standard normal draws, while `SobolQMCNormalSampler` uses
+quasi-random, low-discrepancy "Sobol" sequences as uniform samples which are
+then transformed to construct normal samples. Sobol sequences are more evenly
+distributed than i.i.d. uniform samples and tend to improve the convergence rate
+of MC estimates of integrals/expectations. We find that Sobol sequences substantially
+improve the performance of MC-based acquisition functions, and so
+`SobolQMCNormalSampler` is used by default. For more details, see [Monte-Carlo samplers](samplers.md).
+
+[^KingmaWelling2014]: D. P. Kingma, M. Welling. Auto-Encoding Variational Bayes.
+ICLR, 2013.
+
+[^Rezende2014]: D. J. Rezende, S. Mohamed, D. Wierstra. Stochastic
+Backpropagation and Approximate Inference in Deep Generative Models. ICML, 2014.
