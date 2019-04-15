@@ -20,14 +20,14 @@ def neg_holder_table(X: Tensor) -> Tensor:
 
     Two-dimensional function (typically evaluated on `[0, 10] x [0, 10]`):
 
-        H(x) = - | sin(x_1) * cos(x_2) * exp(| 1 - ||x|| / pi | ) |
+        `H(x) = - | sin(x_1) * cos(x_2) * exp(| 1 - ||x|| / pi | ) |`
 
     H has 4 global minima with `H(z_i) = -19.2085` at
 
-        z_1 = ( 8.05502,  9.66459)
-        z_2 = (-8.05502, -9.66459)
-        z_3 = (-8.05502,  9.66459)
-        z_4 = ( 8.05502, -9.66459)
+        `z_1 = ( 8.05502,  9.66459)`
+        `z_2 = (-8.05502, -9.66459)`
+        `z_3 = (-8.05502,  9.66459)`
+        `z_4 = ( 8.05502, -9.66459)`
 
     Args:
         X: A Tensor of size `2` or `k x 2` (`k` batch evaluations).

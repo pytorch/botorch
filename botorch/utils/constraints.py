@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+r"""
+Helpers for handling outcome constraints.
+"""
+
 from functools import partial
 from typing import Callable, List, Optional, Tuple
 
@@ -19,19 +23,18 @@ def get_outcome_constraint_transforms(
             that `A f(x) <= b`.
 
     Returns:
-        A list of callables, each mapping a Tensor of size `b x q x t` to a
-        Tensor of size `b x q`, where `t` is the number of outputs (tasks) of
-        the model. Negative values imply feasibility. The callables support
-        broadcasting (e.g. for calling on a tensor of shape
-        `mc_samples x b x q x t`).
-
+        List: A list of callables, each mapping a Tensor of size `b x q x o` to
+            a tensor of size `b x q`, where `o` is the number of outputs of the
+            model. Negative values imply feasibility. The callables support
+            broadcasting (e.g. for calling on a tensor of shape
+            `mc_samples x b x q x o`).
     """
     if outcome_constraints is None:
         return None
     A, b = outcome_constraints
 
     def _oc(a: Tensor, rhs: Tensor, Y: Tensor) -> Tensor:
-        """
+        r"""
         Evaluate constraints.
 
         Note: einsum multiples Y by a and sums over the `t`-dimension. Einsum
