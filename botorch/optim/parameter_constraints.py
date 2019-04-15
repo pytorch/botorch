@@ -4,7 +4,6 @@ r"""
 Utility functions for constrained optimization.
 """
 
-
 from functools import partial
 from typing import Callable, Dict, List, Optional, Tuple, Union
 

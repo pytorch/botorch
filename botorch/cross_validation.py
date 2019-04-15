@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+r"""
+Cross-validation utilities using batch evaluation mode.
+"""
+
 from typing import Any, Dict, NamedTuple, Optional, Type
 
 import gpytorch
@@ -26,7 +30,7 @@ class CVResults(NamedTuple):
 
 
 def gen_loo_cv_folds(train_x: Tensor, train_y: Tensor) -> CVFolds:
-    """Generate LOO CV folds
+    r"""Generate LOO CV folds.
 
     Args:
         train_x: An `n x p` tensor
@@ -39,7 +43,6 @@ def gen_loo_cv_folds(train_x: Tensor, train_y: Tensor) -> CVFolds:
             train_y: A `n x (n-1)` (or `n x (n-1) x t`) tensor of training observations
             test_x: A `n x 1 x p` tensor of test features
             test_y: A `n` or `n x t` tensor of test observations
-
     """
     masks = torch.eye(len(train_x), dtype=torch.uint8, device=train_x.device)
     train_x_cv = torch.cat([train_x[~m].unsqueeze(0) for m in masks])
@@ -57,7 +60,7 @@ def batch_cross_validation(
     cv_folds: CVFolds,
     fit_args: Optional[Dict[str, Any]] = None,
 ) -> CVResults:
-    """Perform cross validation by using gpytorch batch mode
+    r"""Perform cross validation by using gpytorch batch mode
 
     Args:
         model_cls: An ExactGP class. Must be able to work both in non-batch and
@@ -76,7 +79,6 @@ def batch_cross_validation(
 
     WARNING: This function is currently very memory inefficient, use it only
         for problems of small size.
-
     """
     num_folds = cv_folds.train_x.shape[0]
     likelihood_cv = likelihood_cls(batch_size=num_folds)

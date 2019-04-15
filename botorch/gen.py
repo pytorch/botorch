@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+r"""
+Candidate generation utilities.
+"""
+
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 import torch
@@ -26,15 +30,22 @@ def gen_candidates_scipy(
     options: Optional[Dict[str, Any]] = None,
     fixed_features: Optional[Dict[int, Optional[float]]] = None,
 ) -> Tuple[Tensor, Tensor]:
-    """Generate a set of candidates via optimization from a given set of
+    r"""Generate a set of candidates using `scipy.optimize.minimize`.
 
-    starting points using scipy.optim.minimize via a numpy converter.
+    Optimizes an acquisition function starting from a set of initial candidates
+    using `scipy.optimize.minimize` via a numpy converter.
 
     Args:
         initial_candidates: Starting points for optimization.
         acquisition_function: Acquisition function to be used.
         lower_bounds: Minimum values for each column of initial_candidates.
         upper_bounds: Maximum values for each column of initial_candidates.
+        inequality constraints: A list of tuples (indices, coefficients, rhs),
+            with each tuple encoding an inequality constraint of the form
+            `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`
+        equality constraints: A list of tuples (indices, coefficients, rhs),
+            with each tuple encoding an inequality constraint of the form
+            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`
         options: options used to control the optimization including "method"
             and "maxiter"
         fixed_features: This is a dictionary of feature indices to values, where
@@ -108,8 +119,10 @@ def gen_candidates_torch(
     verbose: bool = True,
     fixed_features: Optional[Dict[int, Optional[float]]] = None,
 ) -> Tuple[Tensor, Tensor]:
-    """Generate a set of candidates via optimization from a given set of
-    starting points.
+    r"""Generate a set of candidates using a `torch.optim` optimizer.
+
+    Optimizes an acquisition function starting from a set of initial candidates
+    using an optimizer from `torch.optim`.
 
     Args:
         initial_candidates: Starting points for optimization.
@@ -172,7 +185,7 @@ def gen_candidates_torch(
 
 
 def get_best_candidates(batch_candidates: Tensor, batch_values: Tensor) -> Tensor:
-    """Extract best (q-batch) candidate from batch of candidates
+    r"""Extract best (q-batch) candidate from batch of candidates
 
     Args:
         batch_candidates: A `b x q x d` tensor of `b` q-batch candidates, or a
@@ -183,7 +196,6 @@ def get_best_candidates(batch_candidates: Tensor, batch_values: Tensor) -> Tenso
     Returns:
         A tensor of size `q x d` (if q-batch mode) or `d` from batch_candidates
             with the highest associated value.
-
     """
     best = torch.max(batch_values.view(-1), dim=0)[1].item()
     return batch_candidates[best]
