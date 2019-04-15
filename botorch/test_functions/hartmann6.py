@@ -41,7 +41,7 @@ def neg_hartmann6(X: Tensor) -> Tensor:
         X: A Tensor of size `6` or `k x 6` (k batch evaluations).
 
     Returns:
-        Tensor: `-H(X)`, the negative value of the standard Hartmann6 function.
+        `-H(X)`, the negative value of the standard Hartmann6 function.
     """
     batch = X.ndimension() > 1
     X = X if batch else X.unsqueeze(0)

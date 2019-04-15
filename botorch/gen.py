@@ -55,8 +55,10 @@ def gen_candidates_scipy(
             compatible with lower_bounds and upper_bounds!
 
     Returns:
-        Tensor: The set of generated candidates.
-        Tensor: The acquisition value for each t-batch.
+        2-element tuple containing
+
+        - The set of generated candidates.
+        - The acquisition value for each t-batch.
     """
     options = options or {}
     clamped_candidates = columnwise_clamp(
@@ -141,8 +143,10 @@ def gen_candidates_torch(
             compatible with lower_bounds and upper_bounds!
 
     Returns:
-        Tensor: The set of generated candidates.
-        Tensor: The acquisition value for each t-batch.
+        2-element tuple containing
+
+        - The set of generated candidates.
+        - The acquisition value for each t-batch.
     """
     options = options or {}
     clamped_candidates = columnwise_clamp(
@@ -195,7 +199,7 @@ def get_best_candidates(batch_candidates: Tensor, batch_values: Tensor) -> Tenso
 
     Returns:
         A tensor of size `q x d` (if q-batch mode) or `d` from batch_candidates
-            with the highest associated value.
+        with the highest associated value.
     """
     best = torch.max(batch_values.view(-1), dim=0)[1].item()
     return batch_candidates[best]

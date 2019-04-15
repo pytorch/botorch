@@ -27,7 +27,7 @@ def neg_branin(X: Tensor) -> Tensor:
         X: A Tensor of size `2` or `k x 2` (`k` batch evaluations).
 
     Returns:
-        Tensor: `-B(X)`, the negative value of the standard Branin function.
+        `-B(X)`, the negative value of the standard Branin function.
     """
     batch = X.ndimension() > 1
     X = X if batch else X.unsqueeze(0)

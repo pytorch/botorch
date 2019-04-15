@@ -65,8 +65,7 @@ class Posterior(ABC):
                 This is used for deterministic optimization.
 
         Returns:
-            Tensor: A `sample_shape x event`-dim Tensor of samples from the
-                posterior.
+            A `sample_shape x event`-dim Tensor of samples from the posterior.
         """
         pass
 
@@ -88,8 +87,7 @@ class Posterior(ABC):
                 This is used for deterministic optimization.
 
         Returns:
-            Tensor: A `sample_shape x event`-dim Tensor of samples from the
-                posterior.
+            A `sample_shape x event`-dim Tensor of samples from the posterior.
         """
         with torch.no_grad():
             return self.rsample(sample_shape=sample_shape, base_samples=base_samples)

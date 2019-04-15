@@ -9,6 +9,11 @@ botorch.acquisition
 :hidden:`botorch.acquisition.acquisition`
 -----------------------------------------
 .. automodule:: botorch.acquisition.acquisition
+
+
+:hidden:`AcquisitionFunction`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autoclass:: AcquisitionFunction
    :members:
 
 
@@ -18,7 +23,6 @@ botorch.acquisition.analytic
 Analytic acquisition functions (not using (q-)MC sampling).
 
 .. automodule:: botorch.acquisition.analytic
-   :members:
 
 
 :hidden:`AnalyticAcquisitionFunction`
@@ -47,6 +51,11 @@ Analytic acquisition functions (not using (q-)MC sampling).
 .. autoclass:: UpperConfidenceBound
    :members:
 
+:hidden:`ConstrainedExpectedImprovement`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autoclass:: ConstrainedExpectedImprovement
+   :members:
+
 :hidden:`NoisyExpectedImprovement`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autoclass:: NoisyExpectedImprovement
@@ -57,7 +66,6 @@ Analytic acquisition functions (not using (q-)MC sampling).
 botorch.acquisition.monte_carlo
 -------------------------------
 .. automodule:: botorch.acquisition.monte_carlo
-   :members:
 
 
 :hidden:`MCAcquisitionFunction`
@@ -94,21 +102,11 @@ botorch.acquisition.monte_carlo
 botorch.acquisition.objective
 -----------------------------
 .. automodule:: botorch.acquisition.objective
-   :members:
+
 
 :hidden:`MCAcquisitionObjective`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autoclass:: MCAcquisitionObjective
-   :members:
-
-:hidden:`GenericMCObjective`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: GenericMCObjective
-   :members:
-
-:hidden:`ConstrainedMCObjective`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: ConstrainedMCObjective
    :members:
 
 :hidden:`IdentityMCObjective`
@@ -121,12 +119,22 @@ botorch.acquisition.objective
 .. autoclass:: LinearMCObjective
    :members:
 
+:hidden:`GenericMCObjective`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autoclass:: GenericMCObjective
+  :members:
+
+:hidden:`ConstrainedMCObjective`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autoclass:: ConstrainedMCObjective
+ :members:
+
 
 
 botorch.acquisition.sampler
 ---------------------------
 .. automodule:: botorch.acquisition.sampler
-   :members:
+
 
 :hidden:`MCSampler`
 ~~~~~~~~~~~~~~~~~~~

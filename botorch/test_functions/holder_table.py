@@ -33,8 +33,7 @@ def neg_holder_table(X: Tensor) -> Tensor:
         X: A Tensor of size `2` or `k x 2` (`k` batch evaluations).
 
     Returns:
-        Tensor: `-H(X)`, the negative value of the standard Holder Table
-            function.
+        `-H(X)`, the negative value of the standard Holder Table function.
     """
     batch = X.ndimension() > 1
     X = X if batch else X.unsqueeze(0)

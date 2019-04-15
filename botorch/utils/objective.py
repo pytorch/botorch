@@ -26,24 +26,23 @@ def get_objective_weights_transform(
             If not provided, the identity mapping is used.
 
     Returns:
-        Callable[Tensor, Tensor]: Transform function using the objective weights.
+        Transform function using the objective weights.
     """
     # if no weights provided, just extract the single output
     if weights is None:
         return lambda Y: Y.squeeze(-1)
 
     def _objective(Y):
-        r"""
-        Evaluate objective.
+        r"""Evaluate objective.
 
         Note: einsum multiples Y by weights and sums over the `o`-dimension.
         Einsum is ~2x faster than using `(Y * weights.view(1, 1, -1)).sum(dim-1)`.
 
         Args:
-            Y: `... x b x q x o` tensor of function values
+            Y: A `... x b x q x o` tensor of function values.
 
         Returns:
-            Tensor: `... x b x q`-dim tensor of objective values
+            A `... x b x q`-dim tensor of objective values.
         """
         return torch.einsum("...o, o", [Y, weights])
 
@@ -71,7 +70,7 @@ def apply_constraints_nonnegative_soft(
         eta: The temperature parameter for the sigmoid function.
 
     Returns:
-        Tensor: `n_samples x b x q` tensor of feasibility-weighted objectives.
+        A `n_samples x b x q`-dim tensor of feasibility-weighted objectives.
     """
     obj = obj.clamp_min(0)  # Enforce non-negativity with constraints
     for constraint in constraints:
@@ -90,9 +89,9 @@ def soft_eval_constraint(lhs: Tensor, eta: float = 1e-3) -> Tensor:
             grows larger, this approximates the Heaviside step function.
 
     Returns:
-        Tensor: element-wise 'soft' feasibility indicator of the same shape as
-            lhs. For each element `x`, `value(x) -> 0` as `x` becomes positive,
-            and `value(x) -> 1` as x becomes negative.
+        Element-wise 'soft' feasibility indicator of the same shape as `lhs`.
+        For each element `x`, `value(x) -> 0` as `x` becomes positive, and
+        `value(x) -> 1` as x becomes negative.
     """
     if eta <= 0:
         raise ValueError("eta must be positive")
@@ -125,7 +124,7 @@ def apply_constraints(
         eta: The temperature parameter of the sigmoid function.
 
     Returns:
-        Tensor: `n_samples x b x q` tensor of feasibility-weighted objectives.
+        A `n_samples x b x q`-dim tensor of feasibility-weighted objectives.
     """
     # obj has dimensions n_samples x b x q
     obj = obj.add(infeasible_cost)  # now it is nonnegative

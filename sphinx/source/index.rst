@@ -14,6 +14,7 @@ Welcome to botorch's API reference!
    acquisition
    models
    posteriors
+   optim
    qmc
    test_functions
    exceptions

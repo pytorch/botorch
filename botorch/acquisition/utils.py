@@ -51,7 +51,7 @@ def get_acquisition_function(
             function to optimize is fixed and not stochastic).
 
     Returns:
-        AcquisitionFunction: The requested acquisition function.
+        The requested acquisition function.
 
     Example:
         >>> gp = SingleTaskGP(train_X, train_Y)

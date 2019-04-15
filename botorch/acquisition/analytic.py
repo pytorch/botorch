@@ -83,7 +83,7 @@ class ExpectedImprovement(AnalyticAcquisitionFunction):
 
         Returns:
             A `b1 x ... bk`-dim tensor of Expected Improvement values at the
-                given design points `X`.
+            given design points `X`.
         """
         self.best_f = self.best_f.to(X)
         posterior = self.model.posterior(X)
@@ -119,8 +119,8 @@ class PosteriorMean(AnalyticAcquisitionFunction):
                 points each.
 
         Returns:
-            A `(b)`-dim Tensor of Posterior Mean values at the given
-                design points `X`.
+            A `(b)`-dim Tensor of Posterior Mean values at the given design
+            points `X`.
         """
         posterior = self.model.posterior(X)
         self._validate_single_output_posterior(posterior)
@@ -164,8 +164,8 @@ class ProbabilityOfImprovement(AnalyticAcquisitionFunction):
                 points each.
 
         Returns:
-            A `(b)`-dim Tensor of Probability of Improvement values at the given
-                design points `X`.
+            A `(b)`-dim tensor of Probability of Improvement values at the given
+            design points `X`.
         """
         self.best_f = self.best_f.to(X)
         batch_shape = X.shape[:-2]
@@ -184,13 +184,13 @@ class ProbabilityOfImprovement(AnalyticAcquisitionFunction):
 class UpperConfidenceBound(AnalyticAcquisitionFunction):
     r"""Single-outcome Upper Confidence Bound (UCB).
 
-    Classic upper confidence bound that comprises of the posterior mean plus an
+    Analytic upper confidence bound that comprises of the posterior mean plus an
     additional term: the posterior standard deviation weighted by a trade-off
-    parameter, `beta`. Only supports the case of `q=1`. The model must be
-    single-outcome.
+    parameter, `beta`. Only supports the case of `q=1` (i.e. greedy, non-batch
+    selection of design points). The model must be single-outcome.
 
     `UCB(x) = mu(x) + sqrt(beta) * sigma(x)`, where `mu` and `sigma` are the
-    posteriorn mean and standard deviation, respectively.
+    posterior mean and standard deviation, respectively.
     """
 
     def __init__(
@@ -221,7 +221,7 @@ class UpperConfidenceBound(AnalyticAcquisitionFunction):
 
         Returns:
             A `(b)`-dim Tensor of Upper Confidence Bound values at the given
-                design points `X`.
+            design points `X`.
         """
         self.beta = self.beta.to(X)
         batch_shape = X.shape[:-2]
@@ -290,7 +290,7 @@ class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
 
         Returns:
             A `(b)`-dim Tensor of Expected Improvement values at the given
-                design points `X`.
+            design points `X`.
         """
         posterior = self.model.posterior(X.unsqueeze(dim=-2))
         means = posterior.mean.squeeze(dim=-2)  # (b) x t
@@ -439,7 +439,7 @@ class NoisyExpectedImprovement(ExpectedImprovement):
 
         Returns:
             A `b1 x ... bk`-dim tensor of Noisy Expected Improvement values at
-                the given design points `X`.
+            the given design points `X`.
         """
         # add a single-element batch dimension to be broadcasted against the
         # batch dimension of the fantasy model. This will be in addition to the

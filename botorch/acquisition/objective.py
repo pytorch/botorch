@@ -29,7 +29,7 @@ class MCAcquisitionObjective(Module, ABC):
 
         Returns:
             Tensor: A `sample_shape x batch_shape x q`-dim Tensor of objective
-                values (assuming maximization).
+            values (assuming maximization).
 
         Example:
             This method is usually not called directly, but via the objective's
@@ -70,12 +70,11 @@ class LinearMCObjective(MCAcquisitionObjective):
         r"""Evaluate the linear objective on the samples.
 
         Args:
-            samples: A `sample_shape x batch_shape x q x o`-dim Tensors of
+            samples: A `sample_shape x batch_shape x q x o`-dim tensors of
                 samples from a model posterior.
 
         Returns:
-            Tensor: A `sample_shape x batch_shape x q`-dim Tensor of objective
-                values.
+            A `sample_shape x batch_shape x q`-dim tensor of objective values.
         """
         if samples.shape[-1] != self.weights.shape[-1]:
             raise RuntimeError("Output shape of samples not equal to that of weights")
@@ -112,8 +111,8 @@ class GenericMCObjective(MCAcquisitionObjective):
                 samples from a model posterior.
 
         Returns:
-            Tensor: A `sample_shape x batch_shape x q`-dim Tensor of objective
-                values weighted by feasibility (assuming maximization).
+            A `sample_shape x batch_shape x q`-dim Tensor of objective values
+            weighted by feasibility (assuming maximization).
 
         Example:
             This method is usually not called directly, but via the objective's
@@ -178,8 +177,8 @@ class ConstrainedMCObjective(GenericMCObjective):
                 samples from a model posterior.
 
         Returns:
-            Tensor: A `sample_shape x batch_shape x q`-dim Tensor of objective
-                values weighted by feasibility (assuming maximization).
+            A `sample_shape x batch_shape x q`-dim Tensor of objective values
+            weighted by feasibility (assuming maximization).
         """
         obj = super().forward(samples=samples)
         return apply_constraints(

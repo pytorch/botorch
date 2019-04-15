@@ -61,8 +61,7 @@ class GPyTorchPosterior(Posterior):
                 This is used for deterministic optimization.
 
         Returns:
-            Tensor: A `sample_shape x event`-dim Tensor of samples from the
-                posterior.
+            A `sample_shape x event`-dim Tensor of samples from the posterior.
         """
         if sample_shape is None:
             sample_shape = torch.Size([1])
