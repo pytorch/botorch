@@ -75,10 +75,14 @@ def module_to_array(
             x.append(t.detach().view(-1).cpu().double().clone().numpy())
             # construct bounds
             if bounds_:
-                l, u = bounds_.get(p_name, (-inf, inf))
+                l_, u_ = bounds_.get(p_name, (-inf, inf))
+                if torch.is_tensor(l_):
+                    l_ = l_.cpu().detach()
+                if torch.is_tensor(u_):
+                    u_ = u_.cpu().detach()
                 # check for Nones here b/c it may be passed in manually in bounds
-                lower.append(np.full(t.nelement(), l if l is not None else -inf))
-                upper.append(np.full(t.nelement(), u if u is not None else inf))
+                lower.append(np.full(t.nelement(), l_ if l_ is not None else -inf))
+                upper.append(np.full(t.nelement(), u_ if u_ is not None else inf))
 
     x_out = np.concatenate(x)
     bounds_out = None

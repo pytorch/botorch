@@ -229,7 +229,7 @@ def initialize_q_batch_simple(
         return X
 
     max_val, max_idx = torch.max(Y, dim=0)
-    if max_val <= 0:
+    if torch.any(max_val <= 0):
         warn(
             "All acquisition values for raw sampled points are nonpositive, so "
             "initial conditions are being selected randomly.",
