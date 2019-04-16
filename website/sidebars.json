@@ -3,7 +3,6 @@
     "About": ["introduction", "design_philosophy", "botorch_and_ax"],
     "General": ["installation", "contributing"],
     "Basic Concepts": ["overview", "models", "posteriors", "acquisition", "optimization"],
-    "Advanced Topics": ["more_on_batching", "objectives", "samplers", "mtmo_models"],
-    "Case Studies": ["learning_to_walk"]
+    "Advanced Topics": ["more_on_batching", "objectives", "samplers", "mtmo_models"]
   }
 }
