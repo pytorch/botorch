@@ -59,6 +59,7 @@ On the other hand, when re-sampling is used in conjunction with a stochastic
 optimization algorithm, bias is no longer a concern. The trade-off here is that
 the optimization may be less effective, as discussed above.
 
+
 [^KingmaWelling2014]: D. P. Kingma, M. Welling. Auto-Encoding Variational Bayes.
 ICLR, 2013.
 
@@ -75,8 +76,7 @@ do not depend on MC sampling. These acquisition functions are subclasses of
 include classical acquisition functions such as Expected Improvement (EI),
 Upper Confidence Bound (UCB), and Probability of Improvement (PI). An example
 comparing the analytic version of EI `ExpectedImprovement` to the MC version
-`qExpectedImprovement` can be found in
-[this tutorial](../tutorials/compare_mc_analytic_acquisition).
+`qExpectedImprovement` can be found in [this tutorial](../tutorials/compare_mc_analytic_acquisition).
 
 Analytic acquisition functions allow for an explicit expression in terms of the
 summary statistics of the posterior distribution at the evaluated point(s).

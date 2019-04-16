@@ -41,8 +41,8 @@ and a covariance kernel $k(x,x')$, from which a mean vector
 $(\mu(x_0), \ldots, \mu(x_k))$ and covariance matrix $\Sigma$ with
 $\Sigma_{ij} = k(x_i, x_j)$ can be computed for any set of points
 $(x_1, \ldots x_k)$. Using a GP surrogate model for $f$ means that we assume
-$(f(x_1), \ldots, f(x_k))$ is multivariate normal with a mean vector and covariance
-matrix determined by $\mu(x)$ and $k(x,x')$.
+$(f(x_1), \ldots, f(x_k))$ is multivariate normal with a mean vector and
+covariance matrix determined by $\mu(x)$ and $k(x,x')$.
 
 While GPs have been a very successful modeling approach, botorch's
 first-class support for MC-sampling based acquisition functions makes it
@@ -118,8 +118,8 @@ is a standard normal. Therefore, an expectation with respect to $X$ can be
 approximated using samples from $\epsilon$. In the case where $\mu$ and $\sigma$
 are parameters of an optimization problem, MC approximations of the objective at
 different values of $\mu$ and $\sigma$ can be computed using a single set of
-"base samples." Importantly, a re-parameterization of this kind allows 
-to back-propagate gradients through the samples, which enables auto-
+"base samples." Importantly, a re-parameterization of this kind allows for
+back-propagation of gradients through the samples, which enables auto-
 differentiation of MC-based acquisition functions with respect to the
 candidate points.
 
