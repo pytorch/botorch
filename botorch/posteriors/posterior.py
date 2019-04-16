@@ -30,11 +30,6 @@ class Posterior(ABC):
         pass
 
     @property
-    def batch_shape(self) -> torch.Size:
-        r"""The t-batch shape."""
-        return self.event_shape[:-2]
-
-    @property
     def mean(self) -> Tensor:
         r"""The mean of the posterior as a `(b) x n x o`-dim Tensor."""
         raise NotImplementedError(
