@@ -30,8 +30,8 @@ acquisition function is stochastic, where algorithms `L-BFGS` or Sequential
 Least-Squares Programming designed for deterministic functions should not be
 applied. The function `gen_candidates_torch()` provides an interface for `torch`
 optimizers and handles bounding. See the example notebooks
-[here](../tutorials/compare_mc_analytic_acquisition) and [here](../tutorials/optimize_stochastic)
-for tutorials on how to use different optimizers.
+[here](../tutorials/compare_mc_analytic_acquisition) and
+[here](../tutorials/optimize_stochastic) for tutorials on how to use different optimizers.
 
 ### Multiple random restarts
 
