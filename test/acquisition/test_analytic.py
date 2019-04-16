@@ -347,7 +347,7 @@ class TestNosiyExpectedImprovement(unittest.TestCase):
             self.assertLess(val[1].item(), 1e-6)
             # test gradient
             val.sum().backward()
-            self.assertGreater(X_test.grad.norm().item(), 1e-3)
+            self.assertGreater(X_test.grad[0].abs().item(), 1e-4)
             # test without gradient
             with torch.no_grad():
                 val = nEI(X_test)
