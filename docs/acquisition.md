@@ -56,7 +56,7 @@ for 10 and 50 quasi-MC samples.
 ![robust_value](assets/EI_optimal_val_hist.png)
 
 On the other hand, when re-sampling is used in conjunction with a stochastic
-optimization algorithm, bias is no longer a concern. The trade-off here is that
+optimization algorithm, this kind of bias is no longer a concern. The trade-off here is that
 the optimization may be less effective, as discussed above.
 
 
