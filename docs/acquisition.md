@@ -45,20 +45,16 @@ is deterministic, allowing for conventional quasi-second order methods to be use
 least-squares programming `SLSQP`). These have faster convergence rates than first-order
 methods and can speed up acquisition function optimization significantly.
 
-The concern, however, is that the approximated acquisition function is *biased* for any
-fixed set of base samples, which may adversely affect the solution. Fortunately, experiments
-on synthetic functions show that both the optimal value and optimal solution quickly become
-quite robust to this bias as more samples are used. The plots below compare the distribution of optimal values and optimizer locations
-for 10 and 50 quasi-MC samples.
-
-![robust_optimizer](assets/EI_optimizer_hist.png)
-
-![robust_value](assets/EI_optimal_val_hist.png)
+One concern is that the approximated acquisition function is *biased* for any
+fixed set of base samples, which may adversely affect the solution. However, we find
+that in practice, both the optimal value and the optimal solution of these biased problems
+for standard acquisition functions converge quite rapidly to their true counterparts
+as more samples are used. Because using additional samples is relatively cheap computationally,
+we default to 500 base samples in the MC acquisition functions.
 
 On the other hand, when re-sampling is used in conjunction with a stochastic
 optimization algorithm, this kind of bias is no longer a concern. The trade-off here is that
 the optimization may be less effective, as discussed above.
-
 
 [^KingmaWelling2014]: D. P. Kingma, M. Welling. Auto-Encoding Variational Bayes.
 ICLR, 2013.
