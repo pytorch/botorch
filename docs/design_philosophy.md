@@ -8,18 +8,22 @@ title: Design Philosophy
 botorch adheres to the following main design tenets:
 - Modularity & Simplicity
   - Make it easy for researchers to develop and implement new ideas by following
-  an "unframework" design philosophy & making heavy use of auto-differentiation. Most botorch components are `torch.nn.Module` instances, so that users familiar with PyTorch can easily implement new implement new differentiable components.
+  an "un-framework" design philosophy & making heavy use of auto-differentiation.
+  Most botorch components are `torch.nn.Module` instances, so that users familiar
+  with PyTorch can easily implement new implement new differentiable components.
   - Facilitate model-agnostic Bayesian optimization by maintaining lightweight
-  APIs and first-class support for monte carlo-based acquisition functions.
+  APIs and first-class support for Monte-Carlo-based acquisition functions.
 - Performance & Scalability
-  - Achieve high levels of performance across different platforms while using the  device-agnostic code by using highly parallelized batch operations.
+  - Achieve high levels of performance across different platforms with
+  device-agnostic code by using highly parallelized batch operations.
   - Extend the applicability of Bayesian Optimization to very large problems by
-  harnessing scalable modeling frameworks such as [gpytorch](https://gpytorch.ai/).
+  harnessing scalable modeling frameworks such as [GPyTorch](https://gpytorch.ai/).
 
 ## Parallelism through batched computation
 
 Batching (as in batching data, batching computations) is a central component to
-all modern deep learning platforms and plays a critical role in the design of botorch.  Examples of batch computations in botorch include:
+all modern deep learning platforms and plays a critical role in the design of
+botorch. Examples of batch computations in botorch include:
 
 1. A batch of candidate points $X$ to be evaluated in parallel on the black-box
    function we are trying optimize. In botorch, we refer to this kind of batch
@@ -28,13 +32,16 @@ all modern deep learning platforms and plays a critical role in the design of bo
    the black-box function. These facilitate fast evaluation on modern hardware
    such as GPUs. botorch refer to these batches as *"t-batches"* (as in
    "torch-batches").
-3. A batched surrogate model, each batch of which models a different output (NOTE: is there more we can say here, like this is useful for multi-objective or multi-task modeling?).
-   This kind of batching also aims to exploit modern hardware architecture.
+3. A batched surrogate model, each batch of which models a different output
+   (which is useful for multi-objective Bayesian Optimization). This kind of
+   batching also aims to exploit modern hardware architecture.
 
 Note that none of these notions of batch pertains to the batching of *training
 data*, which is commonly done in training Neural Network models (sometimes
 called "mini-batching"). botorch aims to be agnostic with regards to the
-particular model used - so while model fitting may indeed be performed via stochastic gradient descent using mini-batch training, botorch itself abstracts away from this.
+particular model used - so while model fitting may indeed be performed via
+stochastic gradient descent using mini-batch training, botorch itself abstracts
+away from this.
 
 For more detail on the different batch notions in botorch, take a look at the
 [More on Batching](#more_on_batching) section.
@@ -58,10 +65,10 @@ because the amount of input data cannot be processes at once. Thus one typically
 subsets ("mini-batches") the data, and by doing so is left with a stochastic
 approximation of the empirical loss function (with each data-batch a sample).
 
-In botorch, `AcquisitionFunction` modules map an input design $X$ to the
-acquisition function value. Optimizing the acquisition function means optimizing
-the output over the possible values of $X$. If the acquisition function is
-deterministic, so is the optimization problem.
+In botorch, [`AcquisitionFunction`](../api/acquisition.html#acquisitionfunction)
+modules map an input design $X$ to the acquisition function value. Optimizing
+the acquisition function means optimizing the output over the possible values of
+$X$. If the acquisition function is deterministic, so is the optimization problem.
 
 For large Neural Network models, the number of optimization variables is very
 high, and can be in the hundreds of thousands or even millions of parameters.
