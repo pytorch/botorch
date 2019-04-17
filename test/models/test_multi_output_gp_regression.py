@@ -23,7 +23,7 @@ def _get_random_data(**tkwargs):
     train_x2 = torch.linspace(0, 0.95, 5, **tkwargs) + 0.05 * torch.rand(5, **tkwargs)
     train_y1 = torch.sin(train_x1 * (2 * math.pi)) + 0.2 * torch.randn_like(train_x1)
     train_y2 = torch.cos(train_x2 * (2 * math.pi)) + 0.2 * torch.randn_like(train_x2)
-    return train_x1, train_x2, train_y1, train_y2
+    return train_x1.unsqueeze(-1), train_x2.unsqueeze(-1), train_y1, train_y2
 
 
 def _get_model(**tkwargs):
@@ -58,7 +58,7 @@ class TestMultiOutputGP(unittest.TestCase):
             mll = fit_gpytorch_model(mll, options={"maxiter": 1})
 
             # test posterior
-            test_x = (torch.tensor([0.25, 0.75]).type_as(model.train_targets[0]),)
+            test_x = torch.tensor([[0.25], [0.75]], **tkwargs)
             posterior = model.posterior(test_x)
             self.assertIsInstance(posterior, GPyTorchPosterior)
             self.assertIsInstance(posterior.mvn, MultitaskMultivariateNormal)

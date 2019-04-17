@@ -17,9 +17,9 @@ class TestFitGPyTorchModel(unittest.TestCase):
     def _getModel(self, double=False, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         dtype = torch.double if double else torch.float
-        train_x = torch.linspace(0, 1, 10, device=device, dtype=dtype)
+        train_x = torch.linspace(0, 1, 10, device=device, dtype=dtype).unsqueeze(-1)
         noise = torch.tensor(NOISE, device=device, dtype=dtype)
-        train_y = torch.sin(train_x * (2 * math.pi)) + noise
+        train_y = torch.sin(train_x.view(-1) * (2 * math.pi)) + noise
         model = SingleTaskGP(train_x, train_y)
         mll = ExactMarginalLogLikelihood(model.likelihood, model)
         return mll.to(device=device, dtype=dtype)
@@ -40,9 +40,6 @@ class TestFitGPyTorchModel(unittest.TestCase):
     def test_fit_gpytorch_model_torch(self, cuda=False):
         for double in (False, True):
             mll = self._getModel(double=double, cuda=cuda)
-            # TODO: remove when default initialization honors constraints:
-            # https://github.com/cornellius-gp/gpytorch/issues/629
-            mll.model.likelihood.noise_covar.noise = 0.1
             mll = fit_gpytorch_model(
                 mll, optimizer=fit_gpytorch_torch, disp=False, maxiter=5
             )
