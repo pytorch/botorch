@@ -148,6 +148,7 @@ def gen_batch_initial_candidates(
     raw_samples: int,
     options: Dict[str, Union[bool, float, int]],
 ) -> Tensor:
+    r"""TODO"""
     seed: Optional[int] = options.get("seed")  # pyre-ignore
     batch_initial_arms: Tensor
     factor, max_factor = 1, 5
