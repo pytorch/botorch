@@ -39,21 +39,40 @@ A botorch model's `forward` method should take in a Tensor `X` of design points,
 and return a `Posterior` object (which would typically describe the (joint)
 probability distribution of the model output(s) over the design points in `X`).
 
+### Terminology
+
+Models may have multiple outputs, multiple inputs,
+and may exploit correlation between between different inputs. botorch uses the following terminology to distinguish these model types:
+
+* *Multi-Output Model*: a `Model` (as in the botorch object) with multiple outputs.
+* *Multi-Task Model*: A `Model` making use of a logical grouping of inputs/observations (as in the underlying process). For example, there could be multiple tasks where each task has a different fidelity.
+
+Note the following:
+* A multi-task model may or may not be a multi-output model.
+* Conversely, a multi-output model may or may not be a multi-task model.
+* If a model is both, we refer to it as a multi-task-multi-output model.
+
 ## botorch Models for Standard Use Cases
 
 botorch provides several GPyTorch models to cover most standard Bayesian
-optimization use cases. All of these models use Matérn 5/2 ARD kernels:
+optimization use cases. 
 
-* [`SingleTaskGP`](../api/models.html#singletaskgp): a single-task, single-output
+All of these models use Matérn 5/2 ARD kernels and support one or more outputs:
+### Single-Task GPs
+These models use the same training data for all outputs. If different training data is required for each output, use a `ModelListMultiOutputGP` to handle multiple outputs.
+* [`SingleTaskGP`](../api/models.html#singletaskgp): a single-task
   exact GP that infers a homoskedastic noise level (no noise observations)
-* [`FixedNoiseGP`](../api/models.html#fixednoisegp): a single task, single-output
-  exact GP that uses fixed observation noise levels (requires noise observations)
+* [`FixedNoiseGP`](../api/models.html#fixednoisegp): a single-task exact GP that uses fixed observation noise levels (requires noise observations)
 * [`HeteroskedasticSingleTaskGP`](../api/models.html#heteropskedasticsingletaskgp):
-  a single task, single-output exact GP that models heteroskedastic noise via
+  a single task exact GP that models heteroskedastic noise via
   an additional internal GP model (requires noise observations)
-* [`MultiOutputGP`](../api/models.html#multioutputgp): A multi-output model in
+
+### ModelList GPs
+* [`ModelListGP`](../api/models.html#modellistgp): A multi-output model in
   which outcomes are modeled independently, given a list of any type of
-  single-output GP.
+  single-task GP. This model should be used when the same training data is not used for all outputs. 
+
+### Multi-Task GPs
 * [`MultiTaskGP`](../api/models.html#multitaskgp): A Hadamard multi-task,
   multi-output GP using an ICM kernel, inferring the noise level (no noise
   observations).
