@@ -21,13 +21,74 @@ class TutorialHome extends React.Component {
   render() {
     return (
       <div className="docMainWrapper wrapper">
-        <TutorialSidebar currentTutorialID={null}/>
-          <Container className="mainContainer documentContainer postContainer">
-                <div className="post">
-                  <header className="postHeader">
-                    <h1 className="postHeaderTitle">Welcome to the botorch tutorials</h1>
-                  </header>
-                </div>
+        <TutorialSidebar currentTutorialID={null} />
+        <Container className="mainContainer documentContainer postContainer">
+          <div className="post">
+            <header className="postHeader">
+              <h1 className="postHeaderTitle">
+                Welcome to the botorch tutorials
+              </h1>
+            </header>
+            <body>
+              <p>
+                botorch (pronounced like blow-torch) is a library for Bayesian
+                Optimization research built on top of PyTorch, and is part of
+                the PyTorch ecosystem.
+              </p>
+              <p>
+                The tutorials here will help you undertand and use botorch in
+                your own work.
+              </p>
+              <bl>
+                <li>
+                  <a href="custom_botorch_model_in_ax">
+                    Using a custom botorch model
+                  </a>
+                </li>
+                <li>
+                  <a href="fit_model_with_torch_optimizer">
+                    Fitting a model using torch.optim
+                  </a>
+                </li>
+                <li>
+                  <a href="compare_mc_analytic_acquisition">
+                    Comparing analytic and MC Expected Improvement
+                  </a>
+                </li>
+                <li>
+                  <a href="optimize_with_cmaes">
+                    Acquisition function optimization with CMA-ES
+                  </a>
+                </li>
+                <li>
+                  <a href="optimize_stochastic">
+                    Acquisition function optimization using torch.optim
+                  </a>
+                </li>
+                <li>
+                  <a href="batch_mode_cross_validation">
+                    Using batch evaluation for fast cross-validation
+                  </a>
+                </li>
+                <li>
+                  <a href="custom_acquisition">
+                    Writing a custom acquisition function and interfacing with
+                    Ax
+                  </a>
+                </li>
+                <li>
+                  <a href="meta_learning_with_rgpe">
+                    Meta-Learning with Rank-Weighted GP Ensemble (RGPE)
+                  </a>
+                </li>
+                <li>
+                  <a href="vae_mnist">
+                    High-dimensional optimization with VAEs
+                  </a>
+                </li>
+              </bl>
+            </body>
+          </div>
         </Container>
       </div>
     );
