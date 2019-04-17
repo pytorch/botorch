@@ -24,8 +24,6 @@ from gpytorch.means import ConstantMean
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.priors import GammaPrior
 
-from ..test_fit import NOISE
-
 
 def _get_random_data(num_outputs, **tkwargs):
     train_x = torch.linspace(0, 0.95, 10, **tkwargs).unsqueeze(-1) + 0.05 * torch.rand(
