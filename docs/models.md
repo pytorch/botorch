@@ -3,7 +3,7 @@ id: models
 title: Models
 ---
 
-MModels play an essential role in Bayesian Optimization. A model is used as a
+Models play an essential role in Bayesian Optimization. A model is used as a
 surrogate function for the actual underlying black box function that one is
 trying to optimize. In botorch, a `Model` maps a set of design points to a
 posterior probability distribution of its output(s) over the design points.
@@ -52,10 +52,10 @@ Note the following:
 * Conversely, a multi-output model may or may not be a multi-task model.
 * If a model is both, we refer to it as a multi-task-multi-output model.
 
-## botorch Models for Standard Use Cases
+## Standard botorch Models
 
 botorch provides several GPyTorch models to cover most standard Bayesian
-optimization use cases.  
+optimization use cases:
 
 ### Single-Task GPs
 These models use the same training data for all outputs and assume conditional independence of the outputs given the input. If different training data is required for each output, use a `ModelListMultiOutputGP` to handle multiple outputs.
@@ -63,17 +63,17 @@ These models use the same training data for all outputs and assume conditional i
   exact GP that infers a homoskedastic noise level (no noise observations)
 * [`FixedNoiseGP`](../api/models.html#fixednoisegp): a single-task exact GP that uses fixed observation noise levels (requires noise observations)
 * [`HeteroskedasticSingleTaskGP`](../api/models.html#heteropskedasticsingletaskgp):
-  a single task exact GP that models heteroskedastic noise via
+  a single-task exact GP that models heteroskedastic noise via
   an additional internal GP model (requires noise observations)
 
 ### Model List of Single-Task GPs
-* [`ModelListMultiOutputGP`](../api/models.html#modellistgp): A multi-output model in
+* [`ModelListGP`](../api/models.html#modellistgp): A multi-output model in
   which outcomes are modeled independently, given a list of any type of
   single-task GP. This model should be used when the same training data is not used for all outputs. 
 
 ### Multi-Task GPs
 * [`MultiTaskGP`](../api/models.html#multitaskgp): A Hadamard multi-task,
-  multi-output GP using an ICM kernel, inferring the noise level (no noise
+  multi-output GP using an ICM kernel, inferring the noise level (does not require noise
   observations).
 * [`FixedNoiseMultiTaskGP`](../api/models.html#fixednoisemultitaskgp): A Hadamard
   multi-task, multi-output GP using an ICM kernel, with fixed observation noise
