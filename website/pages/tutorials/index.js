@@ -17,10 +17,6 @@ const MarkdownBlock = CompLibrary.MarkdownBlock;
 
 const TutorialSidebar = require(`${CWD}/core/TutorialSidebar.js`);
 
-// import ReactDOM from 'react-dom';
-// import Demo from './demo';
-
-
 class TutorialHome extends React.Component {
   render() {
     return (
