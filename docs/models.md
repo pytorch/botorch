@@ -3,6 +3,7 @@ id: models
 title: Models
 ---
 
+
 Models play an essential role in Bayesian Optimization. A model is used as a
 surrogate function for the actual underlying black box function that one is
 trying to optimize. In botorch, a `Model` maps a set of design points to a
