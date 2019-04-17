@@ -119,7 +119,7 @@ class qExpectedImprovement(MCAcquisitionFunction):
         samples = self.sampler(posterior)
         obj = self.objective(samples)
         obj = (obj - self.best_f).clamp_min(0)
-        q_ei = obj.max(dim=2)[0].mean(dim=0)
+        q_ei = obj.max(dim=-1)[0].mean(dim=0)
         return q_ei
 
 
@@ -181,7 +181,7 @@ class qNoisyExpectedImprovement(MCAcquisitionFunction):
         posterior = self.model.posterior(X_full)
         samples = self.sampler(posterior)
         obj = self.objective(samples)
-        diffs = obj[:, :, :q].max(dim=2)[0] - obj[:, :, q:].max(dim=2)[0]
+        diffs = obj[:, :, :q].max(dim=-1)[0] - obj[:, :, q:].max(dim=-1)[0]
         return diffs.clamp_min(0).mean(dim=0)
 
 
@@ -248,7 +248,8 @@ class qProbabilityOfImprovement(MCAcquisitionFunction):
         """
         posterior = self.model.posterior(X)
         samples = self.sampler(posterior)
-        max_obj = self.objective(samples).max(dim=-2)[0]
+        obj = self.objective(samples)
+        max_obj = obj.max(dim=-1)[0]
         val = torch.sigmoid((max_obj - self.best_f) / self.tau).mean(dim=0)
         return val
 
@@ -276,7 +277,8 @@ class qSimpleRegret(MCAcquisitionFunction):
         """
         posterior = self.model.posterior(X)
         samples = self.sampler(posterior)
-        val = samples.max(dim=2)[0].mean(dim=0)
+        obj = self.objective(samples)
+        val = obj.max(dim=-1)[0].mean(dim=0)
         return val
 
 
@@ -329,6 +331,7 @@ class qUpperConfidenceBound(MCAcquisitionFunction):
         """
         posterior = self.model.posterior(X)
         samples = self.sampler(posterior)
-        mean = posterior.mean
-        ucb_samples = mean + math.sqrt(self.beta * math.pi / 2) * (samples - mean).abs()
-        return ucb_samples.max(dim=-2)[0].mean(dim=0)
+        obj = self.objective(samples)
+        mean = obj.mean(dim=0)
+        ucb_samples = mean + math.sqrt(self.beta * math.pi / 2) * (obj - mean).abs()
+        return ucb_samples.max(dim=-1)[0].mean(dim=0)
