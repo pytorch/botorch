@@ -15,6 +15,8 @@ Welcome to botorch's API reference!
    models
    posteriors
    optim
+   fit
+   gen
    qmc
    test_functions
    exceptions
