@@ -22,18 +22,15 @@ Abstract Model API
 .. autoclass:: GPyTorchModel
    :members:
 
-:hidden:`BatchedMultiOutputGPyTorchModel`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: BatchedMultiOutputGPyTorchModel
-  :members:
-
 :hidden:`MultiOutputGPyTorchModel`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. currentmodule:: botorch.models.gpytorch
 .. autoclass:: MultiOutputGPyTorchModel
   :members:
 
 :hidden:`MultiTaskGPyTorchModel`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. currentmodule:: botorch.models.gpytorch
 .. autoclass:: MultiTaskGPyTorchModel
   :members:
 
