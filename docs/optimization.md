@@ -20,7 +20,7 @@ The default method used by botorch to optimize acquisition functions is
 [`gen_candidates_scipy()`](../api/gen.html#botorch.gen.gen_candidates_scipy).
 Given a set of starting points (for multiple restarts) and an acquisition
 function, this optimizer makes use of `scipy.optimize.minimize()` for
-optimization, via either the `L-BFGS-B` or `SLSQP` routines.
+optimization, via either the L-BFGS-B or SLSQP routines.
 `gen_candidates_scipy()` automatically handles conversion between `torch` and
 `numpy` types, and utilizes PyTorch's autograd capabilities to compute the
 gradient of the acquisition function.
@@ -30,9 +30,8 @@ gradient of the acquisition function.
 A `torch` optimizer such as `torch.optim.Adam` or `torch.optim.SGD` can also be
 used directly, without the need to perform `numpy` conversion. These first-order
 gradient-based optimizers are particularly useful for the case when the
-acquisition function is stochastic, where algorithms `L-BFGS` or Sequential
-Least-Squares Programming designed for deterministic functions should not be
-applied. The function
+acquisition function is stochastic, where algorithms like L-BFGS or SLSQP that
+are designed for deterministic functions should not be applied. The function
 [`gen_candidates_torch()`](../api/gen.html#botorch.gen.gen_candidates_torch)
 provides an interface for `torch` optimizers and handles bounding.
 See the example notebooks

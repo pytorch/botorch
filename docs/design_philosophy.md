@@ -19,6 +19,7 @@ botorch adheres to the following main design tenets:
   - Extend the applicability of Bayesian Optimization to very large problems by
   harnessing scalable modeling frameworks such as [GPyTorch](https://gpytorch.ai/).
 
+
 ## Parallelism through batched computation
 
 Batching (as in batching data, batching computations) is a central component to
@@ -44,8 +45,7 @@ stochastic gradient descent using mini-batch training, botorch itself abstracts
 away from this.
 
 For more detail on the different batch notions in botorch, take a look at the
-[More on Batching](#more_on_batching) section.
-
+[Batching in botorch](#batching) section.
 
 
 ## Optimizing Acquisition Functions
