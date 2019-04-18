@@ -59,8 +59,8 @@ stochastic optimization methods.
 ![resampling_fixed](assets/EI_resampling_fixed.png)
 
 If the base samples are fixed, the problem of optimizing the acquisition function
-is deterministic, allowing for conventional quasi-second order methods to be used
-(e.g., `L-BFGS` or sequential least-squares programming `SLSQP`). These have
+is deterministic, allowing for conventional quasi-second order methods such as
+L-BFGS or sequential least-squares programming (SLSQP) to be used. These have
 faster convergence rates than first-order methods and can speed up acquisition
 function optimization significantly.
 
