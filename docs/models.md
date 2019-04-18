@@ -59,7 +59,7 @@ optimization use cases:
 * [`FixedNoiseMultiTaskGP`](../api/models.html#fixednoisemultitaskgp): A Hadamard
   multi-task, multi-output GP using an ICM kernel, with fixed observation noise
   levels (requires noise observations).
-* [`MultiOutputGP`](../api/models.html#multioutputgp): A multi-output model in
+* [`ModelListGP`](../api/models.html#modellistgp): A multi-output model in
   which outcomes are modeled independently, given a list of any type of
   single-output GP.
 

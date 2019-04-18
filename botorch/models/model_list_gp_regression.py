@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 r"""
-Multi-output GP Regression models.
+Model List GP Regression models.
 """
 
 from typing import Any, List, Optional
@@ -9,11 +9,11 @@ from typing import Any, List, Optional
 from gpytorch.models import IndependentModelList
 from torch import Tensor
 
-from .gpytorch import MultiOutputGPyTorchModel
+from .gpytorch import ModelListGPyTorchModel
 from .model import Model
 
 
-class MultiOutputGP(IndependentModelList, MultiOutputGPyTorchModel):
+class ModelListGP(IndependentModelList, ModelListGPyTorchModel):
     r"""A multi-output GP model with independent GPs for the outputs.
 
     This model supports different-shaped training inputs for each of its
@@ -36,7 +36,7 @@ class MultiOutputGP(IndependentModelList, MultiOutputGPyTorchModel):
         Example:
             >>> model1 = SingleTaskGP(train_X1, train_Y1)
             >>> model2 = SingleTaskGP(train_X2, train_Y2)
-            >>> model = MultiOutputGP([model1, model2])
+            >>> model = ModelListGP([model1, model2])
         """
         super().__init__(*gp_models)
 

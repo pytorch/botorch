@@ -6,7 +6,7 @@ from copy import deepcopy
 
 import torch
 from botorch import fit_gpytorch_model
-from botorch.models import MultiOutputGP
+from botorch.models import ModelListGP
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.posteriors import GPyTorchPosterior
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
@@ -30,19 +30,19 @@ def _get_model(**tkwargs):
     train_x1, train_x2, train_y1, train_y2 = _get_random_data(**tkwargs)
     model1 = SingleTaskGP(train_X=train_x1, train_Y=train_y1)
     model2 = SingleTaskGP(train_X=train_x2, train_Y=train_y2)
-    model = MultiOutputGP(gp_models=[model1, model2])
+    model = ModelListGP(gp_models=[model1, model2])
     return model.to(**tkwargs)
 
 
-class TestMultiOutputGP(unittest.TestCase):
-    def test_MultiOutputGP(self, cuda=False):
+class TestModelListGP(unittest.TestCase):
+    def test_ModelListGP(self, cuda=False):
         for double in (False, True):
             tkwargs = {
                 "device": torch.device("cuda") if cuda else torch.device("cpu"),
                 "dtype": torch.double if double else torch.float,
             }
             model = _get_model(**tkwargs)
-            self.assertIsInstance(model, MultiOutputGP)
+            self.assertIsInstance(model, ModelListGP)
             self.assertIsInstance(model.likelihood, LikelihoodList)
             for m in model.models:
                 self.assertIsInstance(m.mean_module, ConstantMean)
@@ -85,24 +85,24 @@ class TestMultiOutputGP(unittest.TestCase):
                 )
             )
 
-    def test_MultiOutputGP_cuda(self):
+    def test_ModelListGP_cuda(self):
         if torch.cuda.is_available():
-            self.test_MultiOutputGP(cuda=True)
+            self.test_ModelListGP(cuda=True)
 
-    def test_MultiOutputGPSingle(self, cuda=False):
+    def test_ModelListGPSingle(self, cuda=False):
         tkwargs = {
             "device": torch.device("cuda") if cuda else torch.device("cpu"),
             "dtype": torch.float,
         }
         train_x1, train_x2, train_y1, train_y2 = _get_random_data(**tkwargs)
         model1 = SingleTaskGP(train_X=train_x1, train_Y=train_y1)
-        model = MultiOutputGP(gp_models=[model1])
+        model = ModelListGP(gp_models=[model1])
         model.to(**tkwargs)
         test_x = (torch.tensor([0.25, 0.75]).type_as(model.train_targets[0]),)
         posterior = model.posterior(test_x)
         self.assertIsInstance(posterior, GPyTorchPosterior)
         self.assertIsInstance(posterior.mvn, MultivariateNormal)
 
-    def test_MultiOutputGPSingle_cuda(self):
+    def test_ModelListGPSingle_cuda(self):
         if torch.cuda.is_available():
-            self.test_MultiOutputGPSingle(cuda=True)
+            self.test_ModelListGPSingle(cuda=True)
