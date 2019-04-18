@@ -3,7 +3,7 @@
 import unittest
 
 import torch
-from botorch.models import MultiOutputGP, SingleTaskGP
+from botorch.models import ModelListGP, SingleTaskGP
 from botorch.optim.utils import (
     _get_extra_mll_args,
     check_convergence,
@@ -152,7 +152,7 @@ class testGetExtraMllArgs(unittest.TestCase):
         self.assertEqual(len(elbo_extra_args), 0)
 
         # test SumMarginalLogLikelihood
-        model2 = MultiOutputGP(gp_models=[model])
+        model2 = ModelListGP(gp_models=[model])
         sum_mll = SumMarginalLogLikelihood(model2.likelihood, model2)
         sum_mll_extra_args = _get_extra_mll_args(mll=sum_mll)
         self.assertEqual(len(sum_mll_extra_args), 1)

@@ -160,7 +160,7 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
         return GPyTorchPosterior(mvn=mvn)
 
 
-class MultiOutputGPyTorchModel(GPyTorchModel, ABC):
+class ModelListGPyTorchModel(GPyTorchModel, ABC):
     r"""Abstract base class for models based on multi-output GPyTorch models.
 
     This is meant to be used with a gpytorch ModelList wrapper for independent

@@ -53,10 +53,10 @@ GPyTorch Regression Models
 .. autoclass:: HeteroskedasticSingleTaskGP
   :members:
 
-:hidden:`MultiOutputGP`
+:hidden:`ModelListGP`
 ~~~~~~~~~~~~~~~~~~~~~~~
-.. currentmodule:: botorch.models.multi_output_gp_regression
-.. autoclass:: MultiOutputGP
+.. currentmodule:: botorch.models.model_list_gp_regression
+.. autoclass:: ModelListGP
   :members:
 
 :hidden:`MultiTaskGP`

@@ -45,7 +45,7 @@ class SingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel):
 
     Use this model when you have independent output(s) and all outputs use the same
     training data. If outputs are independent and outputs have different training
-    data, use the MultiOutputGP. When modeling correlations between outputs, use
+    data, use the ModelListGP. When modeling correlations between outputs, use
     the MultiTaskGP.
     """
 
