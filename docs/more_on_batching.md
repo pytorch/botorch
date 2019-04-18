@@ -77,8 +77,14 @@ The GPyTorch models can also be fit on batched training points with shape $\text
 
 * *Batched evaluation* on a set of test points with shape $\textit{new_batch_shape} \times \textit{input_batch_shape}^* \times m \times d$, where $\textit{new_batch_shape}$ is the new batch shape for batched evaluation, yields $\textit{new_batch_shape} \times \textit{input_batch_shape}$ joint posteriors over the $m$ points in each respective batch (broadcasting as necessary over $\textit{input_batch_shape}$)
 
-For even more batches, check out [Batched Multi-Output Models](mtmo_models)
+#### Batched Multi-Output Models
+The [`BatchedMultiOutputGPyTorchModel`](../api/models.html#batchedmultioutputgpytorchmodel) class implements a fast multi-output model (assuming conditional independence of the outputs given the input) by batching over the outputs.
 
+##### Training inputs/targets
+Given training inputs with shape $\textit{input_batch_shape} \times n \times d$ and training outputs with shape $\textit{input_batch_shape} \times n \times o$, the `BatchedMultiOutputGPyTorchModel` permutes the training outputs to make the output $o$-dimension a batch dimension such that the augmented training inputs have shape $o \times \textit{input_batch_shape} \times n$. The training inputs (which are required to be the same for all outputs) are expanded to be $o \times \textit{input_batch_shape} \times n \times d$. 
+
+##### Evaluation
+When evaluating test points with shape $\textit{new_batch_shape} \times \textit{input_batch_shape} \times m \times d$ via the `posterior` method, the test points are broadcasted to the model(s) for each output. This results in the batched posterior where the mean has shape $\textit{new_batch_shape} \times o \times \textit{input_batch_shape} \times m$ which then is permuted back to the original multi-output shape $\textit{new_batch_shape} \times \textit{input_batch_shape} \times m \times o$.
 
 #### Batched Optimization of Random Restarts
 botorch uses random restarts to optimize an acquisition function from multiple starting points. To efficiently optimize an acquisition function for a $q$-batch of candidate points using $r$ random restarts, botorch uses used batched evaluation on a $r \times q \times d$ set of candidate points to independently evaluate and optimize each random restart in parallel. In order to optimize the $r$ acquisition functions using gradient information, the acquisition values the $r$ random restarts are summed before backpropping.
