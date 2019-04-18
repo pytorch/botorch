@@ -11,6 +11,7 @@ from .analytic import (
     UpperConfidenceBound,
 )
 from .monte_carlo import (
+    MCAcquisitionFunction,
     qExpectedImprovement,
     qNoisyExpectedImprovement,
     qProbabilityOfImprovement,
@@ -46,6 +47,7 @@ __all__ = [
     "GenericMCObjective",
     "IdentityMCObjective",
     "LinearMCObjective",
+    "MCAcquisitionFunction",
     "MCAcquisitionObjective",
     "IIDNormalSampler",
     "MCSampler",
