@@ -3,7 +3,8 @@ id: botorch_and_ax
 title: Using botorch with Ax
 ---
 
-[Ax](https://github.com/facebook/Ax) is a platform for sequential experimentation.
+[Ax](https://github.com/facebook/Ax) is a platform for sequential
+experimentation.
 It relies on botorch for implementing Bayesian Optimization algorithms, but
 provides higher-level APIs that make it easy and convenient to specify
 problems, visualize results, and benchmark new algorithms. It also comes with powerful metadata management, storage of results, and deployment-related APIs. Ax makes it convenient to
@@ -12,7 +13,8 @@ botorch is the "un-framework", then Ax is the "framework".
 
 Ax provides a `BotorchModel` (**TODO**: cross-link to Ax documentation) that is a sensible default for modeling and
 optimization which can be customized by specifying and passing in
-bespoke model constructors, acquisition functions, and optimization strategies.   This model bridge utilizes a number of built-in transformations (**TODO**: make sure these transformations are documented in Ax, and link to them here), such normalizing input spaces and outputs to ensure reasonable fitting of GPs.
+bespoke model constructors, acquisition functions, and optimization strategies.
+This model bridge utilizes a number of built-in transformations (**TODO**: make sure these transformations are documented in Ax, and link to them here), such normalizing input spaces and outputs to ensure reasonable fitting of GPs.
 
 ## When to use botorch though Ax
 
@@ -31,4 +33,6 @@ tutorial for more on how ot do this.
 If you're working in a non-standard setting, such as those with high-dimensional or structured feature or design spaces, or where the model fitting process requires interactive work, then using Ax may not be the best solution for you. In such
 a situation, you might be better off writing your own full Bayesian Optimization
 loop outside of Ax. The
-[q-Noisy Constrained EI](../tutorials/closed_loop_botorch_only) tutorial and [variational auto-encoder](../tutorials/vae_mnist) tutorial give examples of how this can be done.
+[q-Noisy Constrained EI](../tutorials/closed_loop_botorch_only) tutorial and
+[variational auto-encoder](../tutorials/vae_mnist) tutorial give examples of how
+this can be done.
