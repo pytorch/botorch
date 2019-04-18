@@ -86,7 +86,7 @@ setup(
     ],
     python_requires=">=3.6",
     setup_requires=["cython", "numpy"],
-    install_requires=["torch>=1.0.1", "gpytorch>=0.3.0", "scipy"],
+    install_requires=["torch>=1.0.1", "gpytorch>=0.3.1", "scipy"],
     include_dirs=[numpy.get_include()],
     packages=find_packages(),
     ext_modules=cythonize(EXTENSIONS),
