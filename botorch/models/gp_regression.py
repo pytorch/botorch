@@ -174,7 +174,9 @@ class FixedNoiseGP(ExactGP, BatchedMultiOutputGPyTorchModel):
             num_outputs=self._num_outputs,
             train_Yvar=train_Yvar,
         )
-        likelihood = FixedNoiseGaussianLikelihood(noise=train_Yvar)
+        likelihood = FixedNoiseGaussianLikelihood(
+            noise=train_Yvar, batch_shape=self._aug_batch_shape
+        )
         super().__init__(
             train_inputs=train_X, train_targets=train_Y, likelihood=likelihood
         )

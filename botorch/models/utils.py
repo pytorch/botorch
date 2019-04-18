@@ -61,22 +61,24 @@ def multioutput_to_batch_mode_transform(
         - A `(o) x batch_shape x n` tensor of training observations.
         - A `(o) x batch_shape x n` tensor observed measurement noise.
     """
+    input_batch_shape = train_X.shape[:-2]
     if num_outputs > 1:
-        # make train_Y `t x batch_shape x n`
+        # make train_Y `o x batch_shape x n`
         train_Y = train_Y.permute(-1, *range(train_Y.dim() - 1))
-        # expand train_X to `t x batch_shape x n x d`
+        # expand train_X to `o x batch_shape x n x d`
         train_X = train_X.unsqueeze(0).expand(
             torch.Size([num_outputs] + [-1] * train_X.dim())
         )
         if train_Yvar is not None:
-            # make train_Yvar `t x batch_shape x n`
+            # make train_Yvar `o x batch_shape x n`
             train_Yvar = train_Yvar.permute(-1, *range(train_Yvar.dim() - 1))
     elif train_Y.dim() > 1:
-        # t = 1, make train_Y `n`-dim
-        train_Y = train_Y.view(-1)
+        #  single output, make train_Y `batch_shape x n`
+        target_shape = input_batch_shape + torch.Size([-1])
+        train_Y = train_Y.view(target_shape)
         if train_Yvar is not None:
-            # expand train_Yvar `t x batch_shape x n`
-            train_Yvar = train_Yvar.view(-1)
+            # make train_Yvar `batch_shape x n`
+            train_Yvar = train_Yvar.view(target_shape)
     return train_X, train_Y, train_Yvar
 
 
