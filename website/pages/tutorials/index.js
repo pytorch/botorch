@@ -36,7 +36,7 @@ class TutorialHome extends React.Component {
                 the PyTorch ecosystem.
               </p>
               <p>
-                The tutorials here will help you undertand and use botorch in
+                The tutorials here will help you understand and use botorch in
                 your own work.
               </p>
               <bl>
@@ -74,6 +74,11 @@ class TutorialHome extends React.Component {
                   <a href="custom_acquisition">
                     Writing a custom acquisition function and interfacing with
                     Ax
+                  </a>
+                </li>
+                <li>
+                  <a href="closed_loop_botorch_only">
+                    A custom closed loop BO implementation using only botorch
                   </a>
                 </li>
                 <li>
