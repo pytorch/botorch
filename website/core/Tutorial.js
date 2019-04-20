@@ -39,7 +39,7 @@ function renderDownloadIcon() {
 
 class Tutorial extends React.Component {
   render() {
-    const {tutorialID} = this.props;
+    const {baseUrl, tutorialID} = this.props;
 
     const htmlFile = `${CWD}/_tutorials/${tutorialID}.html`;
     const normalizedHtmlFile = path.normalize(htmlFile);
@@ -57,7 +57,9 @@ class Tutorial extends React.Component {
           <div className="tutorialButtonWrapper buttonWrapper">
             <a
               className="tutorialButton button"
-              href={`/files/${tutorialID}.ipynb`}>
+              download
+              href={`${baseUrl}files/${tutorialID}.ipynb`}
+              target="_blank">
               {renderDownloadIcon()}
               {'Download Tutorial Jupyter Notebook'}
             </a>
@@ -65,7 +67,9 @@ class Tutorial extends React.Component {
           <div className="tutorialButtonWrapper buttonWrapper">
             <a
               className="tutorialButton button"
-              href={`/files/${tutorialID}.py`}>
+              download
+              href={`${baseUrl}files/${tutorialID}.py`}
+              target="_blank">
               {renderDownloadIcon()}
               {'Download Tutorial Source Code'}
             </a>
