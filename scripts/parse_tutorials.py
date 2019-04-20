@@ -14,11 +14,15 @@ TEMPLATE = """const CWD = process.cwd();
 const React = require('react');
 const Tutorial = require(`${{CWD}}/core/Tutorial.js`);
 
-function renderTutorial(props) {{
-  return <Tutorial tutorialID="{}"/>;
+class TutorialPage extends React.Component {{
+  render() {{
+      const {{config: siteConfig}} = this.props;
+      const {{baseUrl}} = siteConfig;
+      return <Tutorial baseUrl={{baseUrl}} tutorialID="{}"/>;
+  }}
 }}
 
-module.exports = renderTutorial;
+module.exports = TutorialPage;
 
 """
 
