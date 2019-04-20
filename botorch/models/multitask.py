@@ -4,7 +4,7 @@ r"""
 Multi-Task GP models.
 """
 
-from typing import Any, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 import torch
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
@@ -148,40 +148,6 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
         covar = covar_x.mul(covar_i)
         return MultivariateNormal(mean_x, covar)
 
-    def reinitialize(
-        self, train_X: Tensor, train_Y: Tensor, keep_params: bool = True, **kwargs: Any
-    ) -> None:
-        r"""Reinitialize model and the likelihood given new data.
-
-        Args:
-            train_X: A tensor of new training data
-            train_Y: A tensor of new training observations
-            keep_params: If True, keep the model's hyperarameter values (speeds
-                up refitting on similar data)
-
-        This does not refit the model. If device/dtype of the new training data
-        are different from that of the model, then the model is moved to the new
-        device/dtype.
-
-        Example:
-            >>> new_X1 = torch.rand(5, 2)
-            >>> Xnew = torch.cat([new_X1, torch.zeros(5, 1)], -1)
-            >>> new_train_X = torch.cat([train_X, Xnew], -2)
-            >>> new_train_Y = torch.cat([train_Y, f1(new_X1)], -1)
-            >>> model.reinitialize(new_train_X, new_train_Y)
-        """
-        if keep_params:
-            self.set_train_data(inputs=train_X, targets=train_Y, strict=False)
-        else:
-            self.__init__(
-                train_X=train_X,
-                train_Y=train_Y,
-                task_feature=self._task_feature,
-                output_tasks=self._output_tasks,
-                rank=self._rank,
-            )
-        self.to(train_X)
-
 
 class FixedNoiseMultiTaskGP(MultiTaskGP):
     r"""Multi-Task GP model using an ICM kernel, with known observation noise.
@@ -203,7 +169,7 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
         output_tasks: Optional[List[int]] = None,
         rank: Optional[int] = None,
     ) -> None:
-        r"""Multi-Task GP model using an ICM kernel and known ovservatioon noise.
+        r"""Multi-Task GP model using an ICM kernel and known observatioon noise.
 
         Args:
             train_X: A `n x (d + 1)` or `b x n x (d + 1)` (batch mode) tensor
@@ -222,10 +188,10 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
 
         Example:
             >>> X1, X2 = torch.rand(10, 2), torch.rand(20, 2)
-            >>> i1, i2 = torch.zeros(10), torch.ones(20)
-            >>> train_X = torch.stack([
+            >>> i1, i2 = torch.zeros(10, 1), torch.ones(20, 1)
+            >>> train_X = torch.cat([
             >>>     torch.cat([X1, i1], -1), torch.cat([X2, i2], -1),
-            >>> ])
+            >>> ], dim=0)
             >>> train_Y = torch.cat(f1(X1), f2(X2))
             >>> train_Yvar = 0.1 + 0.1 * torch.rand_like(train_Y)
             >>> model = FixedNoiseMultiTaskGP(train_X, train_Y, train_Yvar, -1)
@@ -239,47 +205,4 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
             rank=rank,
         )
         self.likelihood = FixedNoiseGaussianLikelihood(noise=train_Yvar)
-        self.to(train_X)
-
-    def reinitialize(
-        self,
-        train_X: Tensor,
-        train_Y: Tensor,
-        train_Yvar: Tensor,
-        keep_params: bool = True,
-        **kwargs: Any,
-    ) -> None:
-        r"""Reinitialize model and the likelihood given new data.
-
-        Args:
-            train_X: A tensor of new training data.
-            train_Y: A tensor of new training observations.
-            train_Yvar: A tensor of new observation noises.
-            keep_params: If True, keep the model's hyperparameter values (speeds
-                up refitting on similar data).
-
-        This does not refit the model. If device/dtype of the new training data
-        are different from that of the model, then the model is moved to the new
-        device/dtype.
-
-        Example:
-            >>> new_X1 = torch.rand(5, 2)
-            >>> Xnew = torch.cat([new_X1, torch.zeros(5, 1)], -1)
-            >>> new_train_X = torch.cat([train_X, Xnew], -2)
-            >>> new_train_Y = torch.cat([train_Y, f1(new_X1)], -1)
-            >>> new_train_Yvar = 0.1 + 0.1 * torch.rand_like(new_train_Y)
-            >>> model.reinitialize(new_train_X, new_train_Y, new_train_Yvar)
-        """
-        if keep_params:
-            self.set_train_data(inputs=train_X, targets=train_Y, strict=False)
-            self.likelihood.noise = train_Yvar
-        else:
-            self.__init__(
-                train_X=train_X,
-                train_Y=train_Y,
-                train_Yvar=train_Yvar,
-                task_feature=self._task_feature,
-                output_tasks=self._output_tasks,
-                rank=self._rank,
-            )
         self.to(train_X)
