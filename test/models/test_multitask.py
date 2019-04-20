@@ -79,23 +79,6 @@ class TestMultiTaskGP(unittest.TestCase):
             self.assertIsInstance(posterior_f, GPyTorchPosterior)
             self.assertIsInstance(posterior_f.mvn, MultitaskMultivariateNormal)
 
-            # test reinitialization
-            train_X_, train_Y_ = _get_random_mt_data(**tkwargs)
-            old_state_dict = deepcopy(model.state_dict())
-            model.reinitialize(train_X=train_X_, train_Y=train_Y_, keep_params=True)
-            for key, val in model.state_dict().items():
-                self.assertTrue(torch.equal(val, old_state_dict[key]))
-            model.posterior(test_x)  # check model still evaluates
-            # test reinitialization (resetting params)
-            model.reinitialize(train_X=train_X_, train_Y=train_Y_, keep_params=False)
-            self.assertFalse(
-                all(
-                    torch.equal(val, old_state_dict[key])
-                    for key, val in model.state_dict().items()
-                )
-            )
-            model.posterior(test_x)  # check model still evaluates
-
     def test_MultiTaskGP_cuda(self):
         if torch.cuda.is_available():
             self.test_MultiTaskGP(cuda=True)
@@ -135,23 +118,6 @@ class TestMultiTaskGP(unittest.TestCase):
             posterior_f = model.posterior(test_x)
             self.assertIsInstance(posterior_f, GPyTorchPosterior)
             self.assertIsInstance(posterior_f.mvn, MultivariateNormal)
-
-            # test reinitialization
-            train_X_, train_Y_ = _get_random_mt_data(**tkwargs)
-            old_state_dict = deepcopy(model.state_dict())
-            model.reinitialize(train_X=train_X_, train_Y=train_Y_, keep_params=True)
-            for key, val in model.state_dict().items():
-                self.assertTrue(torch.equal(val, old_state_dict[key]))
-            model.posterior(test_x)  # check model still evaluates
-            # test reinitialization (resetting params)
-            model.reinitialize(train_X=train_X_, train_Y=train_Y_, keep_params=False)
-            self.assertFalse(
-                all(
-                    torch.equal(val, old_state_dict[key])
-                    for key, val in model.state_dict().items()
-                )
-            )
-            model.posterior(test_x)  # check model still evaluates
 
     def test_MultiTaskGP_single_output_cuda(self):
         if torch.cuda.is_available():

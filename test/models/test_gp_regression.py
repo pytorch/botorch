@@ -25,12 +25,12 @@ from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikeliho
 from gpytorch.priors import GammaPrior
 
 
-def _get_random_data(batch_shape, num_outputs, **tkwargs):
-    train_x = torch.linspace(0, 0.95, 10, **tkwargs).unsqueeze(-1) + 0.05 * torch.rand(
-        10, 1, **tkwargs
+def _get_random_data(batch_shape, num_outputs, n=10, **tkwargs):
+    train_x = torch.linspace(0, 0.95, n, **tkwargs).unsqueeze(-1) + 0.05 * torch.rand(
+        n, 1, **tkwargs
     ).repeat(batch_shape + torch.Size([1, 1]))
     train_y = torch.sin(train_x * (2 * math.pi)) + 0.2 * torch.randn(
-        10, num_outputs, **tkwargs
+        n, num_outputs, **tkwargs
     ).repeat(batch_shape + torch.Size([1, 1]))
 
     if num_outputs == 1:
@@ -71,59 +71,13 @@ class TestSingleTaskGP(unittest.TestCase):
                     posterior = model(test_x)
                     self.assertIsInstance(posterior, MultivariateNormal)
 
-                    # Test reinitialize
-                    train_x, train_y = _get_random_data(
-                        batch_shape=batch_shape, num_outputs=num_outputs, **tkwargs
-                    )
-
-                    # check reinitializing while keeping param values
-                    old_params = deepcopy(dict(model.named_parameters()))
-                    model.reinitialize(train_x, train_y, keep_params=True)
+                    # test param sizes
                     params = dict(model.named_parameters())
                     for p in params:
-                        self.assertTrue(torch.equal(params[p], old_params[p]))
-
-                    # check reinitializing, resetting param values
-                    model.reinitialize(train_x, train_y, keep_params=False)
-                    params = dict(model.named_parameters())
-                    for p in params:
-                        if p == "likelihood.noise_covar.raw_noise":
-                            self.assertTrue(
-                                torch.allclose(
-                                    params[p].detach(), torch.tensor([22.0], **tkwargs)
-                                )
-                            )
-                        else:
-                            self.assertTrue(
-                                torch.allclose(
-                                    params[p].detach(), torch.tensor([0.0], **tkwargs)
-                                )
-                            )
                         self.assertEqual(
                             params[p].numel(),
                             num_outputs * torch.tensor(batch_shape).prod().item(),
                         )
-
-                    # check reinitializing while reseting param values and using custom
-                    # likelihood
-                    aug_batch_shape = (
-                        torch.Size([num_outputs]) if num_outputs > 1 else torch.Size()
-                    ) + batch_shape
-                    model = SingleTaskGP(
-                        train_X=train_x,
-                        train_Y=train_y,
-                        likelihood=GaussianLikelihood(batch_shape=aug_batch_shape),
-                    )
-                    old_params = deepcopy(dict(model.named_parameters()))
-                    mll = ExactMarginalLogLikelihood(model.likelihood, model)
-                    fit_gpytorch_model(mll, options={"maxiter": 1})
-                    train_x, train_y = _get_random_data(
-                        batch_shape=batch_shape, num_outputs=num_outputs, **tkwargs
-                    )
-                    model.reinitialize(train_x, train_y, keep_params=False)
-                    params = dict(model.named_parameters())
-                    for p in params:
-                        self.assertTrue(torch.equal(params[p], old_params[p]))
 
                     # test posterior
                     # test non batch evaluation
@@ -150,9 +104,9 @@ class TestSingleTaskGP(unittest.TestCase):
 
 
 class TestFixedNoiseGP(unittest.TestCase):
-    def _get_model(self, batch_shape, num_outputs, **tkwargs):
+    def _get_model(self, batch_shape, num_outputs, n, **tkwargs):
         train_x, train_y = _get_random_data(
-            batch_shape=batch_shape, num_outputs=num_outputs, **tkwargs
+            batch_shape=batch_shape, num_outputs=num_outputs, n=n, **tkwargs
         )
         train_yvar = torch.full_like(train_y, 0.01)
         model = FixedNoiseGP(train_X=train_x, train_Y=train_y, train_Yvar=train_yvar)
@@ -167,7 +121,10 @@ class TestFixedNoiseGP(unittest.TestCase):
                         "dtype": torch.double if double else torch.float,
                     }
                     model = self._get_model(
-                        batch_shape=batch_shape, num_outputs=num_outputs, **tkwargs
+                        batch_shape=batch_shape,
+                        num_outputs=num_outputs,
+                        n=10,
+                        **tkwargs
                     )
                     self.assertIsInstance(model, FixedNoiseGP)
                     self.assertIsInstance(
@@ -196,45 +153,6 @@ class TestFixedNoiseGP(unittest.TestCase):
                     #         posterior_obs.variance
                     #     )
                     # )
-
-                    # test reinitialization
-                    train_x_, train_y_ = _get_random_data(
-                        batch_shape=batch_shape, num_outputs=num_outputs, **tkwargs
-                    )
-                    train_yvar_ = torch.full_like(train_y_, 0.01)
-                    old_params = deepcopy(dict(model.named_parameters()))
-                    model.reinitialize(
-                        train_X=train_x_,
-                        train_Y=train_y_,
-                        train_Yvar=train_yvar_,
-                        keep_params=True,
-                    )
-                    params = dict(model.named_parameters())
-                    for p in params:
-                        self.assertTrue(torch.equal(params[p], old_params[p]))
-                        if not p.startswith("likelihood"):
-                            self.assertEqual(
-                                params[p].numel(),
-                                num_outputs * torch.tensor(batch_shape).prod().item(),
-                            )
-                    model.reinitialize(
-                        train_X=train_x_,
-                        train_Y=train_y_,
-                        train_Yvar=train_yvar_,
-                        keep_params=False,
-                    )
-                    params = dict(model.named_parameters())
-                    for p in params:
-                        if not p.startswith("likelihood"):
-                            self.assertTrue(
-                                torch.allclose(
-                                    params[p].detach(), torch.tensor([0.0], **tkwargs)
-                                )
-                            )
-                            self.assertEqual(
-                                params[p].numel(),
-                                num_outputs * torch.tensor(batch_shape).prod().item(),
-                            )
 
                     # test posterior
                     # test non batch evaluation
@@ -300,41 +218,13 @@ class TestHeteroskedasticSingleTaskGP(unittest.TestCase):
                     posterior = model(test_x)
                     self.assertIsInstance(posterior, MultivariateNormal)
 
-                    # test reinitialize
-                    train_x, train_y = _get_random_data(
-                        batch_shape=batch_shape, num_outputs=num_outputs, **tkwargs
-                    )
-                    train_yvar = (0.1 + 0.1 * torch.rand_like(train_y)) ** 2
-
-                    # check reinitializing while keeping param values
-                    old_params = dict(model.named_parameters())
-                    model.reinitialize(train_x, train_y, train_yvar, keep_params=True)
+                    # check param sizes
                     params = dict(model.named_parameters())
                     for p in params:
-                        self.assertTrue(torch.equal(params[p], old_params[p]))
-
-                    # check reinitializing, resetting param values
-                    model.reinitialize(train_x, train_y, train_yvar, keep_params=False)
-                    params = dict(model.named_parameters())
-                    for p in params:
-                        self.assertTrue(
-                            torch.allclose(params[p], torch.tensor([0.0], **tkwargs))
-                        )
                         self.assertEqual(
                             params[p].numel(),
                             num_outputs * torch.tensor(batch_shape).prod().item(),
                         )
-                    mll = ExactMarginalLogLikelihood(model.likelihood, model).to(
-                        **tkwargs
-                    )
-                    fit_gpytorch_model(mll, options={"maxiter": 1})
-                    # check that some of the parameters changed
-                    self.assertFalse(
-                        all(
-                            torch.allclose(params[p], torch.tensor([0.0], **tkwargs))
-                            for p in params
-                        )
-                    )
 
                     # test posterior
                     # test non batch evaluation

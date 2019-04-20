@@ -18,16 +18,18 @@ from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikeliho
 from gpytorch.priors import GammaPrior
 
 
-def _get_random_data(**tkwargs):
-    train_x1 = torch.linspace(0, 0.95, 10, **tkwargs) + 0.05 * torch.rand(10, **tkwargs)
-    train_x2 = torch.linspace(0, 0.95, 5, **tkwargs) + 0.05 * torch.rand(5, **tkwargs)
+def _get_random_data(n, **tkwargs):
+    train_x1 = torch.linspace(0, 0.95, n + 1, **tkwargs) + 0.05 * torch.rand(
+        n + 1, **tkwargs
+    )
+    train_x2 = torch.linspace(0, 0.95, n, **tkwargs) + 0.05 * torch.rand(n, **tkwargs)
     train_y1 = torch.sin(train_x1 * (2 * math.pi)) + 0.2 * torch.randn_like(train_x1)
     train_y2 = torch.cos(train_x2 * (2 * math.pi)) + 0.2 * torch.randn_like(train_x2)
     return train_x1.unsqueeze(-1), train_x2.unsqueeze(-1), train_y1, train_y2
 
 
-def _get_model(**tkwargs):
-    train_x1, train_x2, train_y1, train_y2 = _get_random_data(**tkwargs)
+def _get_model(n, **tkwargs):
+    train_x1, train_x2, train_y1, train_y2 = _get_random_data(n=n, **tkwargs)
     model1 = SingleTaskGP(train_X=train_x1, train_Y=train_y1)
     model2 = SingleTaskGP(train_X=train_x2, train_Y=train_y2)
     model = ModelListGP(gp_models=[model1, model2])
@@ -41,7 +43,7 @@ class TestModelListGP(unittest.TestCase):
                 "device": torch.device("cuda") if cuda else torch.device("cpu"),
                 "dtype": torch.double if double else torch.float,
             }
-            model = _get_model(**tkwargs)
+            model = _get_model(n=10, **tkwargs)
             self.assertIsInstance(model, ModelListGP)
             self.assertIsInstance(model.likelihood, LikelihoodList)
             for m in model.models:
@@ -63,28 +65,6 @@ class TestModelListGP(unittest.TestCase):
             self.assertIsInstance(posterior, GPyTorchPosterior)
             self.assertIsInstance(posterior.mvn, MultitaskMultivariateNormal)
 
-            # test reinitialization
-            train_x1_, train_x2_, train_y1_, train_y2_ = _get_random_data(**tkwargs)
-            old_state_dict = deepcopy(model.state_dict())
-            model.reinitialize(
-                train_Xs=[train_x1_, train_x2_],
-                train_Ys=[train_y1_, train_y2_],
-                keep_params=True,
-            )
-            for key, val in model.state_dict().items():
-                self.assertEqual(val, old_state_dict[key])
-            model.reinitialize(
-                train_Xs=[train_x1_, train_x2_],
-                train_Ys=[train_y1_, train_y2_],
-                keep_params=False,
-            )
-            self.assertFalse(
-                all(
-                    val == old_state_dict[key]
-                    for key, val in model.state_dict().items()
-                )
-            )
-
     def test_ModelListGP_cuda(self):
         if torch.cuda.is_available():
             self.test_ModelListGP(cuda=True)
@@ -94,7 +74,7 @@ class TestModelListGP(unittest.TestCase):
             "device": torch.device("cuda") if cuda else torch.device("cpu"),
             "dtype": torch.float,
         }
-        train_x1, train_x2, train_y1, train_y2 = _get_random_data(**tkwargs)
+        train_x1, train_x2, train_y1, train_y2 = _get_random_data(n=10, **tkwargs)
         model1 = SingleTaskGP(train_X=train_x1, train_Y=train_y1)
         model = ModelListGP(gp_models=[model1])
         model.to(**tkwargs)

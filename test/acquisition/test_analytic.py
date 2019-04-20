@@ -303,7 +303,6 @@ class TestNosiyExpectedImprovement(unittest.TestCase):
     def _get_model(self, cuda=False, dtype=torch.float):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         state_dict = {
-            "likelihood.noise_covar.noise": torch.full((10,), 0.0625),
             "mean_module.constant": torch.tensor([-0.0066]),
             "covar_module.raw_outputscale": torch.tensor(1.0143),
             "covar_module.base_kernel.raw_lengthscale": torch.tensor([[-0.99]]),
