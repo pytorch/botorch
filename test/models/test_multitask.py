@@ -2,7 +2,6 @@
 
 import math
 import unittest
-from copy import deepcopy
 
 import torch
 from botorch import fit_gpytorch_model
