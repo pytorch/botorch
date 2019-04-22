@@ -7,7 +7,7 @@ Acquisition functions are heuristics employed to evaluate the usefulness of one
 of more design points for achieving the objective of maximizing the underlying
 black box function.
 
-botorch supports both analytic as well as (quasi-) Monte-Carlo based acquisition
+BoTorch supports both analytic as well as (quasi-) Monte-Carlo based acquisition
 functions. It provides an
 [`AcquisitionFunction`](../api/acquisition.html#acquisitionfunction) API that
 abstracts away from the particular type, so that optimization can be performed
@@ -35,12 +35,12 @@ $$ H(X) \approx \frac{1}{N} \sum_{j=1}^N h(y_j) $$
 
 where $y_j \sim \mathbb{P}_Y(X)$.
 
-All MC-based acquisition funcitons in botorch are derived from
+All MC-based acquisition funcitons in BoTorch are derived from
 [`MCAcquisitionFunction`](../api/acquisition.html#mcacquisitionfunction).
 
 ### MC, q-MC, and fixed base samples
 
-botorch relies on the re-parameterization trick ([^KingmaWelling2014], [^Rezende2014])
+BoTorch relies on the re-parameterization trick ([^KingmaWelling2014], [^Rezende2014])
 and (quasi)-Monte-Carlo sampling for optimization and estimation of the batch
 acquisition functions [^Wilson2017]. The results below show the reduced variance
 when estimating an expected improvement (EI) acquisition function using base
@@ -79,7 +79,7 @@ here is that the optimization may be less effective, as discussed above.
 
 ## Analytic Acquisition Functions
 
-botorch also provides implementations of analytic acquisition functions that
+BoTorch also provides implementations of analytic acquisition functions that
 do not depend on MC sampling. These acquisition functions are subclasses of
 [`AnalyticAcquisitionFunction`](../api/acquisition.html#analyticacquisitionfunction)
 and only exist for the case of a single candidate point ($q = 1$). These
@@ -114,7 +114,7 @@ the Expected Improvement with respect to the design $x$. Classic Bayesian
 Optimization software will implement this gradient function explicitly, so that
 it can be used for numerically optimizing the acquisition function.
 
-botorch, in contrast, harnesses PyTorch's automatic differentiation feature
+BoTorch, in contrast, harnesses PyTorch's automatic differentiation feature
 ("autograd") in order to obtain gradients of acquisition functions. This makes
 implementing new acquisition functions much less cumbersome, as it does not
 require to analytically derive gradients. All that is required is that the
