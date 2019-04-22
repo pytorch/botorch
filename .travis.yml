@@ -5,15 +5,17 @@ python:
 
 matrix:
   include:
-    # Stable versions under py3.6 (TODO: Lock to upcomingofficial GPyTorch release)
+    # Stable versions under py3.6
     - name: "GPyTorch + PyTorch stable (Python 3.6)"
       python: "3.6"
       install:
         - pip install -q cython numpy
-        - pip install -q -e .[dev]
+        # TODO: Remove when locked to upcoming GPyTorch release 0.3.2
+        - pip install -q git+https://github.com/cornellius-gp/gpytorch.git@8f0d338d42222689f0106f5f29e62ef4777a392f
+        - pip install -q -e .[test]
       script:
-        - pytest -ra --cov=.
-    # Stable versions under py3.7 (TODO: Lock to upcomingofficial GPyTorch release)
+        - pytest -ra --cov=. --cov-report term-missing
+    # Stable versions under py3.7
     - name: "GPyTorch + PyTorch stable (Python 3.7)"
       # Enable Python 3.7 w/o without globally enabling sudo and xenial dist
       # See https://github.com/travis-ci/travis-ci/issues/9815
@@ -21,9 +23,11 @@ matrix:
       dist: xenial
       install:
         - pip install -q cython numpy
-        - pip install -q -e .[dev]
+        # TODO: Remove when locked to upcoming GPyTorch release 0.3.2
+        - pip install -q git+https://github.com/cornellius-gp/gpytorch.git@8f0d338d42222689f0106f5f29e62ef4777a392f
+        - pip install -q -e .[test]
       script:
-        - pytest -ra --cov=.
+        - pytest -ra --cov=. --cov-report term-missing
     # Latest versions
     - name: "GPyTorch + PyTorch latest"
       python: "3.6"
@@ -31,9 +35,9 @@ matrix:
         - pip install -q cython numpy
         - pip install -q torch_nightly -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html;
         - pip install -q git+https://github.com/cornellius-gp/gpytorch.git
-        - pip install -q -e .[dev]
+        - pip install -q -e .[test]
       script:
-        - pytest -ra --cov=.
+        - pytest -ra --cov=. --cov-report term-missing
     # Flake8 linting
     - name: "Lint: flake8 (Python 3.6)"
       python: "3.6"
@@ -54,7 +58,8 @@ matrix:
       python: "3.6"
       install:
         - pip install -q cython numpy
-        - pip install -q git+https://github.com/cornellius-gp/gpytorch.git@eb96db228b9a1aeb8314ec1d8bc448d11d4cc46c
+        # TODO: Remove when locked to upcoming GPyTorch release 0.3.2
+        - pip install -q git+https://github.com/cornellius-gp/gpytorch.git@8f0d338d42222689f0106f5f29e62ef4777a392f
         - pip install -q -e .[dev]
       script:
         # warnings treated as errors
