@@ -60,14 +60,10 @@ if fatals:
 # TODO: Use torch Sobol once torch 1.1 is released
 EXTENSIONS = [Extension("botorch.qmc.sobol", ["botorch/qmc/sobol.pyx"])]
 
-DEV_REQUIRES = [
-    "black",
-    "flake8",
-    "pytest>=3.6",
-    "pytest-cov",
-    "sphinx",
-    "sphinx-autodoc-typehints",
-]
+
+TEST_REQUIRES = ["pytest>=3.6", "pytest-cov"]
+
+DEV_REQUIRES = TEST_REQUIRES + ["black", "flake8", "sphinx", "sphinx-autodoc-typehints"]
 
 TUTORIAL_REQUIRES = ["jupyter", "matplotlib"]
 
@@ -90,5 +86,9 @@ setup(
     include_dirs=[numpy.get_include()],
     packages=find_packages(),
     ext_modules=cythonize(EXTENSIONS),
-    extras_require={"dev": DEV_REQUIRES, "tutorial": TUTORIAL_REQUIRES},
+    extras_require={
+        "dev": DEV_REQUIRES,
+        "test": TEST_REQUIRES,
+        "tutorial": TUTORIAL_REQUIRES,
+    },
 )
