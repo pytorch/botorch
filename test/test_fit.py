@@ -30,7 +30,7 @@ class TestFitGPyTorchModel(unittest.TestCase):
             mll = fit_gpytorch_model(mll, options={"maxiter": 5})
             model = mll.model
             # Make sure all of the parameters changed
-            self.assertGreater(model.likelihood.raw_noise.abs().item(), 1e-2)
+            self.assertGreater(model.likelihood.raw_noise.abs().item(), 1e-3)
             self.assertLess(model.mean_module.constant.abs().item(), 0.1)
             self.assertGreater(
                 model.covar_module.base_kernel.raw_lengthscale.abs().item(), 0.1

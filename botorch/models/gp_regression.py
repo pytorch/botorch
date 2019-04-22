@@ -74,13 +74,14 @@ class SingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel):
         )
         if likelihood is None:
             noise_prior = GammaPrior(1.1, 0.05)
+            noise_prior_mode = (noise_prior.concentration - 1) / noise_prior.rate
             likelihood = GaussianLikelihood(
                 noise_prior=noise_prior,
                 batch_shape=self._aug_batch_shape,
                 noise_constraint=GreaterThan(
                     MIN_INFERRED_NOISE_LEVEL,
                     transform=None,
-                    initial_value=noise_prior.mean,
+                    initial_value=noise_prior_mode,
                 ),
             )
         else:
