@@ -32,7 +32,6 @@ const siteConfig = {
     {doc: 'introduction', label: 'Docs'},
     {href: `${baseUrl}tutorials/`, label: 'Tutorials'},
     {href: `${baseUrl}api/`, label: 'API Reference'},
-    {blog: true, label: 'Blog'},
     // Search can be enabled when site is online and indexed
     // {search: true},
     {href: 'https://github.com/facebookexternal/botorch', label: 'GitHub'},
