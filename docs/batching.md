@@ -32,7 +32,7 @@ with the $i$-th element corresponding to the $i$-th t-batch. Always requiring a
 explicit t-batch dimension makes it much easier and less ambiguous to work with
 samples from the posterior in a consistent fashion.
 
-#### Batch-mode decorators
+#### Batch-Mode Decorators
 
 In order to simplify the user-facing API for evaluating acquisition functions,  
 BoTorch implements the
@@ -98,7 +98,7 @@ of samples of shape `sample_shape` + `event_shape`. For instance,
 The GPyTorch models implemented in BoTorch support t-batched evaluation with
 arbitrary t-batch shapes.
 
-##### Non-batched Models
+##### Non-Batched Models
 
 In the simplest case, a model is fit to non-batched training points with shape
 $n \times d$.
@@ -137,7 +137,7 @@ The [`BatchedMultiOutputGPyTorchModel`](../api/models.html#batchedmultioutputgpy
 class implements a fast multi-output model (assuming conditional independence of
 the outputs given the input) by batching over the outputs.
 
-##### Training inputs/targets
+##### Training Inputs/Targets
 Given training inputs with shape $\textit{input_batch_shape} \times n \times d$
 and training outputs with shape $\textit{input_batch_shape} \times n \times o$,
 the `BatchedMultiOutputGPyTorchModel` permutes the training outputs to make the

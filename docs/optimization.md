@@ -3,7 +3,7 @@ id: optimization
 title: Optimization
 ---
 
-## Model fitting
+## Model Fitting
 
 BoTorch provides the convenience method
 [`fit_gpytorch_model()`](../api/fit.html#botorch.fit.fit_gpytorch_scipy) for
@@ -14,7 +14,7 @@ observations.
 
 ## Optimizing Acquisition Functions
 
-#### Using `scipy` optimization methods on `torch` tensors
+#### Using scipy Optimizers on Tensors
 
 The default method used by BoTorch to optimize acquisition functions is
 [`gen_candidates_scipy()`](../api/gen.html#botorch.gen.gen_candidates_scipy).
@@ -25,7 +25,7 @@ optimization, via either the L-BFGS-B or SLSQP routines.
 `numpy` types, and utilizes PyTorch's autograd capabilities to compute the
 gradient of the acquisition function.
 
-#### Using `torch.optim` optimizers
+#### Using torch Optimizers
 
 A `torch` optimizer such as `torch.optim.Adam` or `torch.optim.SGD` can also be
 used directly, without the need to perform `numpy` conversion. These first-order
@@ -40,7 +40,7 @@ See the example notebooks
 optimizers.
 
 
-### Multiple random restarts
+### Multiple Random Restarts
 
 Acquisition functions are often difficult to optimize as they are generally
 non-convex and often flat (e.g., EI), so BoTorch makes use of multiple random
@@ -66,7 +66,7 @@ optimizing over random restarts can significantly reduce wall time by exploiting
 parallelism, while maintaining high quality solutions.
 
 
-### Joint versus sequential candidate generation for batch acquisition functions
+### Joint vs. Sequential Candidate Generation for Batch Acquisition Functions
 
 In batch Bayesian optimization $q$ design points are selected for parallel
 experimentation. The parallel (qEI, qNEI, qUCB, qPI) variants of acquisition
