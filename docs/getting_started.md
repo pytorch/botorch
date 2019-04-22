@@ -3,7 +3,7 @@ id: getting_started
 title: Getting started
 ---
 
-## Installing botorch
+## Installing BoTorch
 
 #### Installation requirements:
 
@@ -25,12 +25,12 @@ View and download our Jupyter notebook tutorials [here](../tutorials).
 
 ## API Reference
 
-For an in-depth reference of the botorch internals, see our
+For an in-depth reference of the BoTorch internals, see our
 [API Reference](../api)
 
 
 ## Contributing
 
-You'd like to contribute to botorch? Great! Please see
+You'd like to contribute to BoTorch? Great! Please see
 [here](https://github.com/facebookexternal/botorch/blob/master/CONTRIBUTING.md)
 for how to help out.

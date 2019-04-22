@@ -4,7 +4,7 @@ title: Objectives
 ---
 
 
-In botorch, an *objective* is a module that allows for convenient transformation
+In BoTorch, an *objective* is a module that allows for convenient transformation
 of model outputs into a scalar function to be optimized.
 Typical use cases for this are the scalarization of outputs for a multi-output
 model (see e.g. [^RandScal]), or optimization subject to outcome constraints,
@@ -22,9 +22,9 @@ required, and one can apply general transformations to the model outputs with
 with relative impunity so long gradients can be back-propagated through the
 transformation.
 
-All botorch objectives are derived from
+All BoTorch objectives are derived from
 [`MCAcquisitionObjective`](../api/acquisition.html#mcacquisitionobjective).
-botorch implements several MC-based objectives, including
+BoTorch implements several MC-based objectives, including
 [`LinearMCObjective`](../api/acquisition.html#linearmcobjective) for linear
 combinations of model outputs, and
 [`ConstrainedMCObjective`](../api/acquisition.html#constrainedmcobjective) for

@@ -6,7 +6,7 @@ title: Models
 
 Models play an essential role in Bayesian Optimization. A model is used as a
 surrogate function for the actual underlying black box function that one is
-trying to optimize. In botorch, a `Model` maps a set of design points to a
+trying to optimize. In BoTorch, a `Model` maps a set of design points to a
 posterior probability distribution of its output(s) over the design points.
 
 In Bayesian Optimization, the model used is traditionally a Gaussian Process,
@@ -14,19 +14,19 @@ in which case the posterior distribution, by definition, is a multivariate
 normal. However, with the exception of some of the analytic Acquisition
 functions in the
 [`botorch.acquisition.analytic`](../api/acquisition.html#botorch-acquisition-analytic)
-module, **botorch makes no assumption on the model being a GP, or on the
+module, **BoTorch makes no assumption on the model being a GP, or on the
 posterior being a multivariate normal**. The only requirement for using
-botorch's Monte-Carlo based acquisition functions is that the model returns a
+BoTorch's Monte-Carlo based acquisition functions is that the model returns a
 [`Posterior`](../api/api/posteriors.html#posterior) object that implements an
 `rsample()` method for sampling from the posterior of the model (if you wish to
 use gradient-based optimization algorithms, the model should allow
 back-propagating gradients through the samples to the model input).
 
 
-## The botorch `Model` Interface
+## The BoTorch `Model` Interface
 
-botorch models are PyTorch modules that implement the light-weight
-[`Model`](../api/models.html#model) interface. A botorch `Model` requires only
+BoTorch models are PyTorch modules that implement the light-weight
+[`Model`](../api/models.html#model) interface. A BoTorch `Model` requires only
 a single `posterior()` method that takes in a Tensor `X` of design points,
 and returns a [`Posterior`](../api/posteriors.html#posterior) object describing
 the (joint) probability distribution of the model output(s) over the design
@@ -43,10 +43,10 @@ provides a base class for conveniently wrapping GPyTorch models.
 ## Terminology
 
 Models may have multiple outputs, multiple inputs,
-and may exploit correlation between between different inputs. botorch uses the
+and may exploit correlation between between different inputs. BoTorch uses the
 following terminology to distinguish these model types:
 
-* *Multi-Output Model*: a `Model` (as in the botorch object) with multiple outputs.
+* *Multi-Output Model*: a `Model` (as in the BoTorch object) with multiple outputs.
 * *Multi-Task Model*: A `Model` making use of a logical grouping of inputs/observations
 (as in the underlying process). For example, there could be multiple tasks where
 each task has a different fidelity.
@@ -56,9 +56,9 @@ Note the following:
 * Conversely, a multi-output model may or may not be a multi-task model.
 * If a model is both, we refer to it as a multi-task-multi-output model.
 
-## Standard botorch Models
+## Standard BoTorch Models
 
-botorch provides several GPyTorch models to cover most standard Bayesian
+BoTorch provides several GPyTorch models to cover most standard Bayesian
 optimization use cases:
 
 ### Single-Task GPs
@@ -95,5 +95,5 @@ observations are standardized (zero mean, unit variance).
 
 ## Implementing Custom Models
 
-See the [Using a custom botorch model in Ax](../tutorials/custom_botorch_model_in_ax)
+See the [Using a custom BoTorch model in Ax](../tutorials/custom_botorch_model_in_ax)
 tutorial on how to define your own custom models.

@@ -5,7 +5,7 @@ title: Optimization
 
 ## Model fitting
 
-botorch provides the convenience method
+BoTorch provides the convenience method
 [`fit_gpytorch_model()`](../api/fit.html#botorch.fit.fit_gpytorch_scipy) for
 fitting GPyTorch models (optimizing model hyperparameters) using L-BFGS-B via
 `scipy.optimize.minimize()`. We recommend using this method for exact GPs, but
@@ -16,7 +16,7 @@ observations.
 
 #### Using `scipy` optimization methods on `torch` tensors
 
-The default method used by botorch to optimize acquisition functions is
+The default method used by BoTorch to optimize acquisition functions is
 [`gen_candidates_scipy()`](../api/gen.html#botorch.gen.gen_candidates_scipy).
 Given a set of starting points (for multiple restarts) and an acquisition
 function, this optimizer makes use of `scipy.optimize.minimize()` for
@@ -43,7 +43,7 @@ optimizers.
 ### Multiple random restarts
 
 Acquisition functions are often difficult to optimize as they are generally
-non-convex and often flat (e.g., EI), so botorch makes use of multiple random
+non-convex and often flat (e.g., EI), so BoTorch makes use of multiple random
 restarts to improve optimization quality. Each restart can be thought of as an
 optimization routine within a local region; thus, taking the best result over
 many restarts can help provide an approximation to the global optimization

@@ -5,11 +5,11 @@ title: Design Philosophy
 
 ## Main Tenets
 
-botorch adheres to the following main design tenets:
+BoTorch adheres to the following main design tenets:
 - Modularity & Simplicity
   - Make it easy for researchers to develop and implement new ideas by following
   an "un-framework" design philosophy & making heavy use of auto-differentiation.
-  Most botorch components are `torch.nn.Module` instances, so that users familiar
+  Most BoTorch components are `torch.nn.Module` instances, so that users familiar
   with PyTorch can easily implement new implement new differentiable components.
   - Facilitate model-agnostic Bayesian optimization by maintaining lightweight
   APIs and first-class support for Monte-Carlo-based acquisition functions.
@@ -24,14 +24,14 @@ botorch adheres to the following main design tenets:
 
 Batching (as in batching data, batching computations) is a central component to
 all modern deep learning platforms and plays a critical role in the design of
-botorch. Examples of batch computations in botorch include:
+BoTorch. Examples of batch computations in BoTorch include:
 
 1. A batch of candidate points $X$ to be evaluated in parallel on the black-box
-   function we are trying optimize. In botorch, we refer to this kind of batch
+   function we are trying optimize. In BoTorch, we refer to this kind of batch
    as a *"q-batch"*.
 2. A batch of q-batches to be evaluated in parallel on the surrogate model of
    the black-box function. These facilitate fast evaluation on modern hardware
-   such as GPUs. botorch refer to these batches as *"t-batches"* (as in
+   such as GPUs. BoTorch refer to these batches as *"t-batches"* (as in
    "torch-batches").
 3. A batched surrogate model, each batch of which models a different output
    (which is useful for multi-objective Bayesian Optimization). This kind of
@@ -39,18 +39,18 @@ botorch. Examples of batch computations in botorch include:
 
 Note that none of these notions of batch pertains to the batching of *training
 data*, which is commonly done in training Neural Network models (sometimes
-called "mini-batching"). botorch aims to be agnostic with regards to the
+called "mini-batching"). BoTorch aims to be agnostic with regards to the
 particular model used - so while model fitting may indeed be performed via
-stochastic gradient descent using mini-batch training, botorch itself abstracts
+stochastic gradient descent using mini-batch training, BoTorch itself abstracts
 away from this.
 
-For more detail on the different batch notions in botorch, take a look at the
-[Batching in botorch](#batching) section.
+For more detail on the different batch notions in BoTorch, take a look at the
+[Batching in BoTorch](#batching) section.
 
 
 ## Optimizing Acquisition Functions
 
-One place where botorch takes a somewhat different approach than PyTorch is in
+One place where BoTorch takes a somewhat different approach than PyTorch is in
 optimizing acquisition functions.
 
 In PyTorch, modules typically map (batches of) data to an output, where the
@@ -65,7 +65,7 @@ because the amount of input data cannot be processes at once. Thus one typically
 subsets ("mini-batches") the data, and by doing so is left with a stochastic
 approximation of the empirical loss function (with each data-batch a sample).
 
-In botorch, [`AcquisitionFunction`](../api/acquisition.html#acquisitionfunction)
+In BoTorch, [`AcquisitionFunction`](../api/acquisition.html#acquisitionfunction)
 modules map an input design $X$ to the acquisition function value. Optimizing
 the acquisition function means optimizing the output over the possible values of
 $X$. If the acquisition function is deterministic, then so is the optimization problem.
@@ -92,5 +92,5 @@ such as training Neural Networks become promising alternatives to standard SGD
 methods. In particular, this includes quasi-second order methods (such as
 L-BFGS or SLSQP) that approximate local curvature of the acquisition function by
 using past gradient information. These methods are currently not well supported
-in the `torch.optim` package, which is why botorch provides a custom interface
+in the `torch.optim` package, which is why BoTorch provides a custom interface
 that wraps scipy's optimizers.

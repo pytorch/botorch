@@ -3,24 +3,24 @@ id: batching
 title: Batching
 ---
 
-botorch makes frequent use of "batching", both in the sense of batch acquisition
+BoTorch makes frequent use of "batching", both in the sense of batch acquisition
 functions for multiple candidates as well as in the sense of parallel or batch
 computation (neither of these should be confused with mini-batch training).
-Here we explain some of the common patterns you will see in botorch for
+Here we explain some of the common patterns you will see in BoTorch for
 exploiting parallelism, including common shapes and decorators for more
 conveniently handling these shapes.
 
 
 ## Batch Acquisition Functions
 
-botorch supports batch acquisition functions that assign a joint utility to a
+BoTorch supports batch acquisition functions that assign a joint utility to a
 set of $q$ design points in the parameter space. These are, for obvious reasons,
-referred to as q-Acquisition Functions. For instance, botorch ships with support
+referred to as q-Acquisition Functions. For instance, BoTorch ships with support
 for q-EI, q-UCB, and a few others.
 
 As discussed in the
 [design philosophy](design_philosophy#batching-batching-batching),
-botorch has adopted the convention of referring to batches in the
+BoTorch has adopted the convention of referring to batches in the
 batch-acquisition sense as "q-batches", and to batches in the torch
 batch-evaluation sense as "t-batches".
 
@@ -35,7 +35,7 @@ samples from the posterior in a consistent fashion.
 #### Batch-mode decorators
 
 In order to simplify the user-facing API for evaluating acquisition functions,  
-botorch implements the
+BoTorch implements the
 [`@t_batch_mode_transform`](../api/utils.html#botorch.utils.transforms.t_batch_mode_transform)
 and
 [`@q_batch_mode_transform`](../api/utils.html#botorch.utils.transforms.q_batch_mode_transform)
@@ -64,7 +64,7 @@ dimension. This is typically used on the `forward` method of an
 
 ## Batching Sample Shapes
 
-botorch evaluates Monte-Carlo acquisition functions using (quasi-) Monte-Carlo
+BoTorch evaluates Monte-Carlo acquisition functions using (quasi-) Monte-Carlo
 sampling from the posterior at the input features $X$. Hence, on top of the
 existing q-batch and t-batch dimensions, we also end up with another batch
 dimension corresponding to the MC samples we draw. We use the PyTorch notions of
@@ -95,7 +95,7 @@ of samples of shape `sample_shape` + `event_shape`. For instance,
 
 
 ## Batched Evaluation of Models and Acquisition Functions
-The GPyTorch models implemented in botorch support t-batched evaluation with
+The GPyTorch models implemented in BoTorch support t-batched evaluation with
 arbitrary t-batch shapes.
 
 ##### Non-batched Models
@@ -156,9 +156,9 @@ which then is permuted back to the original multi-output shape
 $\textit{new_batch_shape} \times \textit{input_batch_shape} \times m \times o$.
 
 #### Batched Optimization of Random Restarts
-botorch uses random restarts to optimize an acquisition function from multiple
+BoTorch uses random restarts to optimize an acquisition function from multiple
 starting points. To efficiently optimize an acquisition function for a $q$-batch
-of candidate points using $r$ random restarts, botorch uses batched
+of candidate points using $r$ random restarts, BoTorch uses batched
 evaluation on a $r \times q \times d$ set of candidate points to independently
 evaluate and optimize each random restart in parallel.
 In order to optimize the $r$ acquisition functions using gradient information,
