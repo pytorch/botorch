@@ -20,7 +20,7 @@ BoTorch adheres to the following main design tenets:
   harnessing scalable modeling frameworks such as [GPyTorch](https://gpytorch.ai/).
 
 
-## Parallelism through batched computation
+## Parallelism Through Batched Computations
 
 Batching (as in batching data, batching computations) is a central component to
 all modern deep learning platforms and plays a critical role in the design of

@@ -38,7 +38,7 @@ where $y_j \sim \mathbb{P}_Y(X)$.
 All MC-based acquisition funcitons in BoTorch are derived from
 [`MCAcquisitionFunction`](../api/acquisition.html#mcacquisitionfunction).
 
-### MC, q-MC, and fixed base samples
+### MC, q-MC, and Fixed Base Samples
 
 BoTorch relies on the re-parameterization trick ([^KingmaWelling2014], [^Rezende2014])
 and (quasi)-Monte-Carlo sampling for optimization and estimation of the batch

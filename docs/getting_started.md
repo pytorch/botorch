@@ -5,7 +5,7 @@ title: Getting started
 
 ## Installing BoTorch
 
-#### Installation requirements:
+#### Installation Requirements:
 
 - Python >= 3.6
 - PyTorch >= 1.0.1 (**TODO:** Update to 1.1)

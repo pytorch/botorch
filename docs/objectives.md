@@ -33,7 +33,7 @@ constrained objectives (using a sigmoid approximation for the constraints).
 
 ## Using custom objectives
 
-### Utilizing `GenericMCObjective`
+### Utilizing GenericMCObjective
 
 The [`GenericMCObjective`](../api/acquisition.html#genericmcobjective) allows
 to simply use a generic callable to implement an ad-hoc objective. The callable

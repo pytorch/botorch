@@ -23,7 +23,7 @@ use gradient-based optimization algorithms, the model should allow
 back-propagating gradients through the samples to the model input).
 
 
-## The BoTorch `Model` Interface
+## The BoTorch Model Interface
 
 BoTorch models are PyTorch modules that implement the light-weight
 [`Model`](../api/models.html#model) interface. A BoTorch `Model` requires only
