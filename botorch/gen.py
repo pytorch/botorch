@@ -98,7 +98,7 @@ def gen_candidates_scipy(
         jac=True,
         bounds=bounds,
         constraints=constraints,
-        options=options,
+        options={k: v for k, v in options.items() if k != "method"},
     )
     candidates = fix_features(
         X=torch.from_numpy(res.x)  # pyre-ignore [16]
