@@ -1,8 +1,8 @@
 {
-  "Using botorch with Ax": [
+  "Using BoTorch with Ax": [
     {
       "id": "custom_botorch_model_in_ax",
-      "title": "Using a custom botorch model"
+      "title": "Using a custom BoTorch model"
     }
   ],
   "Full Optimization Loop": [

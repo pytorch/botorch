@@ -3,12 +3,12 @@ id: posteriors
 title: Posteriors
 ---
 
-A botorch `Posterior` object is a layer of
+A BoTorch `Posterior` object is a layer of
 abstraction that separates the specific model used from the evaluation (and
 subsequent optimization) of acquisition functions.
 In the simplest case, a posterior is a lightweight wrapper around an explicit
 distribution object from `torch.distributions` (or `gpytorch.distributions`).
-However, a botorch `Posterior` can be any distribution (even an implicit one),
+However, a BoTorch `Posterior` can be any distribution (even an implicit one),
 so long as one can sample from that distribution. For example, a posterior could
 be represented implicitly by some base distribution mapped through some Neural Network.
 

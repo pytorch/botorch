@@ -16,7 +16,7 @@ const baseUrl = '/';
 const users = [];
 
 const siteConfig = {
-  title: 'botorch',
+  title: 'BoTorch',
   tagline: 'Bayesian Optimization in PyTorch',
   url: 'http://botorch.org',
   baseUrl: baseUrl,
@@ -25,7 +25,7 @@ const siteConfig = {
   //   baseUrl: '/test-site/',
 
   // Used for publishing and more
-  projectName: 'botorch',
+  projectName: 'BoTorch',
   organizationName: 'facebookexternal',
 
   headerLinks: [

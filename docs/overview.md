@@ -3,7 +3,7 @@ id: overview
 title: Overview
 ---
 
-This overview describes the basic components of botorch and how they work
+This overview describes the basic components of BoTorch and how they work
 together. For a high-level view of what this design tries to achieve in more
 abstract terms, please see our [Design Philosophy](design_philosophy).
 
@@ -45,15 +45,15 @@ for any set of points $(x_1, \ldots x_k)$. Using a GP surrogate model for $f$
 means that we assume $(f(x_1), \ldots, f(x_k))$ is multivariate normal with a
 mean vector and covariance matrix determined by $\mu(x)$ and $k(x,x')$.
 
-botorch provides first-class support for [GPyTorch](https://gpytorch.ai/),
+BoTorch provides first-class support for [GPyTorch](https://gpytorch.ai/),
 a scalable package for GPs and Bayesian deep learning implemented in PyTorch.
 
-While GPs have been a very successful modeling approach, botorch's first-class
+While GPs have been a very successful modeling approach, BoTorch's first-class
 support for MC-sampling based acquisition functions makes it straightforward to
-also use other model types. In particular, botorch makes no particular assumptions
+also use other model types. In particular, BoTorch makes no particular assumptions
 on what kind of model is being used, so long as is able to produce samples from
 a posterior over outputs given an input $x$. See [Models](models#models) for
-more details on models in botorch.
+more details on models in BoTorch.
 
 
 ### Posteriors
@@ -68,7 +68,7 @@ Gaussian (fully parameterized by its mean and covariance matrix). In other cases
 the posterior may be implicit in the model and not easily described by a
 small set of parameters.
 
-botorch abstracts away from the particular form of the posterior by providing a
+BoTorch abstracts away from the particular form of the posterior by providing a
 simple `Posterior` API that only requires implementing an `rsample()` method for
 sampling from the posterior. For more details, please see [Posteriors](posteriors).
 
@@ -84,7 +84,7 @@ posteriors, but many of them (especially when assessing the joint value of
 multiple points in parallel) do not. In the latter case, one can resort to using
 Monte-Carlo (MC) sampling in order to approximate the acquisition function.
 
-botorch supports both analytic as well as (quasi-) Monte-Carlo based acquisition
+BoTorch supports both analytic as well as (quasi-) Monte-Carlo based acquisition
 functions. It provides an `AcquisitionFunction` API that abstracts away from the
 particular type, so that optimization can be performed on the same objects.
 Please see [Acquisition Functions](acquisition) for additional
@@ -102,7 +102,7 @@ we sample from the posterior and use the sample average as an approximation.
 #### Objectives
 
 To give additional flexibility in the case of MC-based acquisition functions,
-botorch provides the option of transforming the output(s) of the model through
+BoTorch provides the option of transforming the output(s) of the model through
 an `Objective` module, which returns a one-dimensional output that is passed to
 the acquisition function. The `MCAcquisitionFunction` class defaults its
 objective to `IdentityMCObjective`, which simply returns the last dimension of
