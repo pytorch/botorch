@@ -9,18 +9,13 @@ from typing import Callable, Dict, Optional, Union
 
 import torch
 from torch import Tensor
-from torch.nn import Module
 
 from ..acquisition import AcquisitionFunction
 from ..acquisition.analytic import AnalyticAcquisitionFunction
 from ..exceptions import BadInitialCandidatesWarning, UnsupportedError
 from ..gen import gen_candidates_scipy, get_best_candidates
 from ..utils.sampling import draw_sobol_samples
-from .initializers import (
-    get_similarity_measure,
-    initialize_q_batch,
-    initialize_q_batch_simple,
-)
+from .initializers import initialize_q_batch
 
 
 def sequential_optimize(
@@ -43,10 +38,11 @@ def sequential_optimize(
             function optimization.
         raw_samples: number of samples for initialization
         options: options for candidate generation.
-        fixed_features: A map {feature_index: value} for features that
+        fixed_features: A map `{feature_index: value}` for features that
             should be fixed to a particular value during generation.
-        post_processing_func: A function that post_processes an optimization result
-            appropriately (i.e., according to `round-trip` transformations).
+        post_processing_func: A function that post-processes an optimization
+            result appropriately (i.e., according to `round-trip`
+            transformations).
 
     Returns:
         The set of generated candidates.
@@ -54,7 +50,7 @@ def sequential_optimize(
     if not hasattr(acq_function, "X_baseline"):
         raise UnsupportedError(  # pyre-ignore: [16]
             "Sequential Optimization only supporte for acquisition functions "
-            "with an `X_pending` property"
+            "with an `X_baseline` property"
         )
     candidate_list = []
     candidates = torch.tensor([])
@@ -97,13 +93,13 @@ def joint_optimize(
     r"""Generate a set of candidates via joint multi-start optimization.
 
     Args:
-        acq_function: An acquisition function Module
+        acq_function: The acquisition function to be optimized.
         bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.
-        q: The number of candidates
+        q: The number of candidates.
         num_restarts: Number of starting points for multistart acquisition
             function optimization.
-        raw_samples: number of samples for initialization
-        options: options for candidate generation
+        raw_samples: number of samples for initialization.
+        options: options for candidate generation.
         fixed_features: A map {feature_index: value} for features that should be
             fixed to a particular value during generation.
         post_processing_func: A function that post processes an optimization result
@@ -112,16 +108,12 @@ def joint_optimize(
             included to match _sequential_optimize.
 
     Returns:
-        The set of generated candidates.
+         A `q x d` tensor of generated candidates.
     """
-    if isinstance(acq_function, AnalyticAcquisitionFunction):
-        # TODO: use tensor metadata (e.g. NamedTensors) when available
-        q = None
-
     batch_initial_candidates = gen_batch_initial_candidates(
         acq_function=acq_function,
         bounds=bounds,
-        q=q,
+        q=None if isinstance(acq_function, AnalyticAcquisitionFunction) else q,
         num_restarts=num_restarts,
         raw_samples=raw_samples,
         options=options,
@@ -141,14 +133,30 @@ def joint_optimize(
 
 
 def gen_batch_initial_candidates(
-    acq_function: Module,
+    acq_function: AcquisitionFunction,
     bounds: Tensor,
     q: Optional[int],
     num_restarts: int,
     raw_samples: int,
     options: Dict[str, Union[bool, float, int]],
 ) -> Tensor:
-    r"""TODO"""
+    r"""Generate a batch of initial conditions for random-restart optimziation.
+
+    Args:
+        acq_function: The acquisition function to be optimized.
+        bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.
+        q: The number of candidates to consider. If None, consider a sinlge
+            candidate and do not use an explicit q-batch dimension (used in
+            conjunction with AnalyticAcquisitionFunction).
+        num_restarts: The number of starting points for multistart acquisition
+            function optimization.
+        raw_samples: The number of raw samples to consider in the initialization
+            heuristic.
+        options: Options for initial condition generation.
+
+    Returns:
+        A `num_restarts x q x d` tensor of initial conditions.
+    """
     seed: Optional[int] = options.get("seed")  # pyre-ignore
     batch_initial_arms: Tensor
     factor, max_factor = 1, 5
@@ -164,20 +172,9 @@ def gen_batch_initial_candidates(
                 X_rnd = X_rnd.squeeze(dim=-2)
             with torch.no_grad():
                 Y_rnd = acq_function(X_rnd)
-            if options.get("simple_init", True):
-                batch_initial_candidates = initialize_q_batch_simple(
-                    X=X_rnd, Y=Y_rnd, n=num_restarts, options=options
-                )
-            else:
-                sim_measure = get_similarity_measure(model=acq_function.model)
-                batch_initial_candidates = initialize_q_batch(
-                    X=X_rnd,
-                    Y=Y_rnd,
-                    n=num_restarts,
-                    sim_measure=sim_measure,
-                    options=options,
-                )
-
+            batch_initial_candidates = initialize_q_batch(
+                X=X_rnd, Y=Y_rnd, n=num_restarts, options=options
+            )
             if not any(
                 issubclass(w.category, BadInitialCandidatesWarning)  # pyre-ignore: [16]
                 for w in ws  # pyre-ignore: [16]
