@@ -108,7 +108,24 @@ class Index extends React.Component {
         ]}
       </Block>
     );
-    //getStartedSection
+    // getStartedSection
+    const pre = "```";
+    // Example for model fitting
+    const modelFitCodeExample = `${pre}python
+>>> from botorch.models import SingleTaskGP
+>>> blahblah
+    `;
+    // Example for defining an acquisition function
+    const defAcqFuncExample = `${pre}python
+>>> from botorch.acquisition import qUpperConfidenceBound
+>>> blahblah
+    `;
+    // Example for optimizing candidates
+    const optAcqFuncExample = `${pre}python
+>>> from botorch.optim import joint_optimize
+>>> blahblah
+    `;
+    //
     const QuickStart = () => (
       <div
         className="productShowcaseSection" id="quickstart"
@@ -117,10 +134,20 @@ class Index extends React.Component {
         <Container>
               <ol>
                 <li>
-                  Download botorch from the Github repo and install with pip:
-                  <MarkdownBlock>
-                    {bash`cd botorch && pip install -e .`}
-                  </MarkdownBlock>
+                  Install BoTorch:
+                  <MarkdownBlock>{bash`pip install botorch`}</MarkdownBlock>
+                </li>
+                <li>
+                  Fit a model:
+                  <MarkdownBlock>{modelFitCodeExample}</MarkdownBlock>
+                </li>
+                <li>
+                  Define an acquisition function:
+                  <MarkdownBlock>{defAcqFuncExample}</MarkdownBlock>
+                </li>
+                <li>
+                  Optimize the acqusiton function:
+                  <MarkdownBlock>{optAcqFuncExample}</MarkdownBlock>
                 </li>
               </ol>
           </Container>
