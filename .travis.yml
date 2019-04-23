@@ -14,7 +14,7 @@ matrix:
         - pip install -q git+https://github.com/cornellius-gp/gpytorch.git@8f0d338d42222689f0106f5f29e62ef4777a392f
         # TODO: Remove nightly once locked against PyTorch 1.1
         - pip install -q torch_nightly -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html;
-        - pip install -q -e .[test]
+        - pip install -q -e .[dev]
       script:
         - pytest -ra --cov=. --cov-report term-missing
     # Stable versions under py3.7
@@ -29,7 +29,7 @@ matrix:
         - pip install -q git+https://github.com/cornellius-gp/gpytorch.git@8f0d338d42222689f0106f5f29e62ef4777a392f
         # TODO: Remove nightly once locked against PyTorch 1.1
         - pip install -q torch_nightly -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html;
-        - pip install -q -e .[test]
+        - pip install -q -e .[dev]
       script:
         - pytest -ra --cov=. --cov-report term-missing
     # Latest versions
@@ -38,7 +38,7 @@ matrix:
       install:
         - pip install -q torch_nightly -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html;
         - pip install -q git+https://github.com/cornellius-gp/gpytorch.git
-        - pip install -q -e .[test]
+        - pip install -q -e .[dev]
       script:
         - pytest -ra --cov=. --cov-report term-missing
     # Flake8 linting
