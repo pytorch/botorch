@@ -4,7 +4,7 @@ import unittest
 from unittest import mock
 
 import torch
-from botorch.acquisition import utils
+from botorch.acquisition import monte_carlo, utils
 from botorch.acquisition.objective import MCAcquisitionObjective
 from botorch.acquisition.sampler import IIDNormalSampler, SobolQMCNormalSampler
 from torch import Tensor
@@ -27,7 +27,7 @@ class TestGetAcquisitionFunction(unittest.TestCase):
         self.qmc = True
         self.seed = 1
 
-    @mock.patch(f"{utils.__name__}.qExpectedImprovement")
+    @mock.patch(f"{monte_carlo.__name__}.qExpectedImprovement")
     def test_GetQEI(self, mock_acqf):
         acqf = utils.get_acquisition_function(
             acquisition_function_name="qEI",
@@ -50,7 +50,7 @@ class TestGetAcquisitionFunction(unittest.TestCase):
         self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
         self.assertEqual(sampler.seed, 1)
 
-    @mock.patch(f"{utils.__name__}.qProbabilityOfImprovement")
+    @mock.patch(f"{monte_carlo.__name__}.qProbabilityOfImprovement")
     def test_GetQPI(self, mock_acqf):
         # basic test
         acqf = utils.get_acquisition_function(
@@ -98,7 +98,7 @@ class TestGetAcquisitionFunction(unittest.TestCase):
         self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
         self.assertEqual(sampler.seed, 2)
 
-    @mock.patch(f"{utils.__name__}.qNoisyExpectedImprovement")
+    @mock.patch(f"{monte_carlo.__name__}.qNoisyExpectedImprovement")
     def test_GetQNEI(self, mock_acqf):
         # basic test
         acqf = utils.get_acquisition_function(
@@ -141,7 +141,7 @@ class TestGetAcquisitionFunction(unittest.TestCase):
         self.assertEqual(sampler.seed, 2)
         self.assertTrue(torch.equal(kwargs["X_baseline"], self.X_observed))
 
-    @mock.patch(f"{utils.__name__}.qSimpleRegret")
+    @mock.patch(f"{monte_carlo.__name__}.qSimpleRegret")
     def test_GetQSR(self, mock_acqf):
         # basic test
         acqf = utils.get_acquisition_function(
@@ -182,7 +182,7 @@ class TestGetAcquisitionFunction(unittest.TestCase):
         self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
         self.assertEqual(sampler.seed, 2)
 
-    @mock.patch(f"{utils.__name__}.qUpperConfidenceBound")
+    @mock.patch(f"{monte_carlo.__name__}.qUpperConfidenceBound")
     def test_GetQUCB(self, mock_acqf):
         # make sure beta is specified
         with self.assertRaises(ValueError):
