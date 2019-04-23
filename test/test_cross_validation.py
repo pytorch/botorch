@@ -5,6 +5,7 @@ import unittest
 
 import torch
 from botorch.cross_validation import batch_cross_validation, gen_loo_cv_folds
+from botorch.models.gpytorch import GPyTorchModel
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.kernels import MultitaskKernel, RBFKernel, ScaleKernel
 from gpytorch.likelihoods import (
@@ -16,21 +17,23 @@ from gpytorch.models import ExactGP
 from gpytorch.priors import NormalPrior, SmoothedBoxPrior
 
 
-class CVExactGPModel(ExactGP):
-    def __init__(self, train_inputs, train_targets, likelihood, batch_size=1):
-        super(CVExactGPModel, self).__init__(train_inputs, train_targets, likelihood)
+class CVExactGPModel(ExactGP, GPyTorchModel):
+    def __init__(self, train_inputs, train_targets, likelihood, batch_shape=None):
+        super().__init__(train_inputs, train_targets, likelihood)
+        if batch_shape is None:
+            batch_shape = torch.Size([1])
         self.mean_module = ConstantMean(
-            batch_size=batch_size, prior=SmoothedBoxPrior(-10, 10)
+            batch_shape=batch_shape, prior=SmoothedBoxPrior(-10, 10)
         )
         self.covar_module = ScaleKernel(
             RBFKernel(
-                batch_size=batch_size,
+                batch_shape=batch_shape,
                 lengthscale_prior=NormalPrior(
-                    loc=torch.zeros(batch_size, 1, 1),
-                    scale=torch.ones(batch_size, 1, 1),
+                    loc=torch.zeros(batch_shape + torch.Size([1, 1])),
+                    scale=torch.ones(batch_shape + torch.Size([1, 1])),
                 ),
             ),
-            batch_size=batch_size,
+            batch_shape=batch_shape,
             outputscale_prior=SmoothedBoxPrior(-2, 2),
         )
 
@@ -41,30 +44,32 @@ class CVExactGPModel(ExactGP):
 
 
 class CVGaussianLikelihood(GaussianLikelihood):
-    def __init__(self, batch_size=1):
-        super(CVGaussianLikelihood, self).__init__(
+    def __init__(self, batch_shape=None):
+        if batch_shape is None:
+            batch_shape = torch.Size([1])
+        super().__init__(
             noise_prior=NormalPrior(
-                loc=torch.zeros(batch_size), scale=torch.ones(batch_size)
+                loc=torch.zeros(batch_shape), scale=torch.ones(batch_shape)
             ),
-            batch_size=batch_size,
+            batch_shape=batch_shape,
         )
 
 
-class CVMultitaskExactGPModel(ExactGP):
-    def __init__(self, train_inputs, train_targets, likelihood, batch_size=1):
-        super(CVMultitaskExactGPModel, self).__init__(
-            train_inputs, train_targets, likelihood
-        )
+class CVMultitaskExactGPModel(ExactGP, GPyTorchModel):
+    def __init__(self, train_inputs, train_targets, likelihood, batch_shape=None):
+        super().__init__(train_inputs, train_targets, likelihood)
+        if batch_shape is None:
+            batch_shape = torch.Size([1])
         self.mean_module = MultitaskMean(
-            ConstantMean(batch_size=batch_size, prior=SmoothedBoxPrior(-10, 10)),
+            ConstantMean(batch_shape=batch_shape, prior=SmoothedBoxPrior(-10, 10)),
             num_tasks=2,
         )
         self.covar_module = MultitaskKernel(
             RBFKernel(
-                batch_size=batch_size,
+                batch_shape=batch_shape,
                 lengthscale_prior=NormalPrior(
-                    loc=torch.zeros(batch_size, 1, 1),
-                    scale=torch.ones(batch_size, 1, 1),
+                    loc=torch.zeros(batch_shape + torch.Size([1, 1])),
+                    scale=torch.ones(batch_shape + torch.Size([1, 1])),
                 ),
             ),
             num_tasks=2,
@@ -78,13 +83,15 @@ class CVMultitaskExactGPModel(ExactGP):
 
 
 class CVMultitaskGaussianLikelihood(MultitaskGaussianLikelihoodKronecker):
-    def __init__(self, batch_size=1):
-        super(CVMultitaskGaussianLikelihood, self).__init__(
+    def __init__(self, batch_shape=None):
+        if batch_shape is None:
+            batch_shape = torch.Size([1])
+        super().__init__(
             noise_prior=NormalPrior(
-                loc=torch.zeros(batch_size), scale=torch.ones(batch_size)
+                loc=torch.zeros(batch_shape), scale=torch.ones(batch_shape)
             ),
             num_tasks=2,
-            batch_size=batch_size,
+            batch_shape=batch_shape,
         )
 
 
@@ -103,7 +110,7 @@ class TestFitBatchCrossValidation(unittest.TestCase):
         )
         # compute MSE
         ((cv_results.observed - cv_results.posterior.mean) ** 2).mean()
-        self.assertTrue(cv_results.posterior.mean.shape == torch.Size([5, 1]))
+        self.assertTrue(cv_results.posterior.mean.shape == torch.Size([5, 1, 1]))
 
     def test_single_task_batch_cv_cuda(self):
         if torch.cuda.is_available():
@@ -130,7 +137,7 @@ class TestFitBatchCrossValidation(unittest.TestCase):
         (cv_results.posterior.mean - cv_folds.test_y).detach().squeeze(1)
         # compute predictive sems
         torch.diagonal(
-            cv_results.posterior.covariance_matrix, dim1=-2, dim2=-1
+            cv_results.posterior.mvn.covariance_matrix, dim1=-2, dim2=-1
         ).sqrt().detach()
 
     def test_multi_task_batch_cv_cuda(self):
