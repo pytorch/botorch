@@ -4,8 +4,9 @@ import math
 import unittest
 
 import torch
-from botorch import fit_gpytorch_model, gen_candidates_scipy
 from botorch.acquisition import qExpectedImprovement
+from botorch.fit import fit_gpytorch_model
+from botorch.gen import gen_candidates_scipy, gen_candidates_torch
 from botorch.models import SingleTaskGP
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 
@@ -38,11 +39,11 @@ class TestBaseCandidateGeneration(unittest.TestCase):
 
 
 class TestGenCandidates(TestBaseCandidateGeneration):
-    def test_gen_candidates_scipy(self, cuda=False):
+    def test_gen_candidates(self, cuda=False, gen_candidates=gen_candidates_scipy):
         for double in (True, False):
             self._setUp(double=double, cuda=cuda)
             qEI = qExpectedImprovement(self.model, best_f=self.f_best)
-            candidates, _ = gen_candidates_scipy(
+            candidates, _ = gen_candidates(
                 initial_candidates=self.initial_candidates,
                 acquisition_function=qEI,
                 lower_bounds=0,
@@ -52,13 +53,22 @@ class TestGenCandidates(TestBaseCandidateGeneration):
 
     def test_gen_candidates_scipy_cuda(self):
         if torch.cuda.is_available():
-            self.test_gen_candidates_scipy(cuda=True)
+            self.test_gen_candidates(cuda=True)
 
-    def test_gen_candidates_scipy_with_none_fixed_features(self, cuda=False):
+    def test_gen_candidates_torch(self, cuda=False):
+        self.test_gen_candidates(cuda=cuda, gen_candidates=gen_candidates_torch)
+
+    def test_gen_candidates_torch_cuda(self):
+        if torch.cuda.is_available():
+            self.test_gen_candidates_torch(cuda=True)
+
+    def test_gen_candidates_with_none_fixed_features(
+        self, cuda=False, gen_candidates=gen_candidates_scipy
+    ):
         for double in (True, False):
             self._setUp(double=double, cuda=cuda, expand=True)
             qEI = qExpectedImprovement(self.model, best_f=self.f_best)
-            candidates, _ = gen_candidates_scipy(
+            candidates, _ = gen_candidates(
                 initial_candidates=self.initial_candidates,
                 acquisition_function=qEI,
                 lower_bounds=0,
@@ -71,13 +81,24 @@ class TestGenCandidates(TestBaseCandidateGeneration):
 
     def test_gen_candidates_scipy_with_none_fixed_features_cuda(self):
         if torch.cuda.is_available():
-            self.test_gen_candidates_scipy_with_none_fixed_features(cuda=True)
+            self.test_gen_candidates_with_none_fixed_features(cuda=True)
 
-    def test_gen_candidates_scipy_with_fixed_features(self, cuda=False):
+    def test_gen_candidates_torch_with_none_fixed_features(self, cuda=False):
+        self.test_gen_candidates_with_none_fixed_features(
+            cuda=cuda, gen_candidates=gen_candidates_torch
+        )
+
+    def test_gen_candidates_torch_with_none_fixed_features_cuda(self):
+        if torch.cuda.is_available():
+            self.test_gen_candidates_torch_with_none_fixed_features(cuda=True)
+
+    def test_gen_candidates_with_fixed_features(
+        self, cuda=False, gen_candidates=gen_candidates_scipy
+    ):
         for double in (True, False):
             self._setUp(double=double, cuda=cuda, expand=True)
             qEI = qExpectedImprovement(self.model, best_f=self.f_best)
-            candidates, _ = gen_candidates_scipy(
+            candidates, _ = gen_candidates(
                 initial_candidates=self.initial_candidates,
                 acquisition_function=qEI,
                 lower_bounds=0,
@@ -90,4 +111,13 @@ class TestGenCandidates(TestBaseCandidateGeneration):
 
     def test_gen_candidates_scipy_with_fixed_features_cuda(self, cuda=False):
         if torch.cuda.is_available():
-            self.test_gen_candidates_scipy_with_fixed_features(cuda=True)
+            self.test_gen_candidates_with_fixed_features(cuda=True)
+
+    def test_gen_candidates_torch_with_fixed_features(self, cuda=False):
+        self.test_gen_candidates_with_fixed_features(
+            cuda=cuda, gen_candidates=gen_candidates_torch
+        )
+
+    def test_gen_candidates_torch_with_fixed_features_cuda(self, cuda=False):
+        if torch.cuda.is_available():
+            self.test_gen_candidates_torch_with_fixed_features(cuda=True)
