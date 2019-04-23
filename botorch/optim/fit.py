@@ -16,7 +16,7 @@ from torch.optim.adam import Adam
 from torch.optim.optimizer import Optimizer
 
 from .numpy_converter import TorchAttr, module_to_array, set_params_with_array
-from .utils import _get_extra_mll_args, check_convergence
+from .utils import _filter_kwargs, _get_extra_mll_args, check_convergence
 
 
 ParameterBounds = Dict[str, Tuple[Optional[float], Optional[float]]]
@@ -32,10 +32,7 @@ def fit_gpytorch_torch(
     mll: MarginalLogLikelihood,
     bounds: Optional[ParameterBounds] = None,
     optimizer_cls: Optimizer = Adam,
-    lr: float = 0.05,
-    maxiter: int = 100,
-    optimizer_args: Optional[Dict[str, float]] = None,
-    disp: bool = True,
+    options: Optional[Dict[str, Any]] = None,
     track_iterations: bool = True,
 ) -> Tuple[MarginalLogLikelihood, List[OptimizationIteration]]:
     r"""Fit a gpytorch model by maximizing MLL with a torch optimizer.
@@ -50,22 +47,26 @@ def fit_gpytorch_torch(
             over bounds on the same parameters specified in the constraints
             registered with the module.
         optimizer_cls: Torch optimizer to use. Must not require a closure.
-        lr: Starting learning rate.
-        maxiter: Maximum number of iterations.
-        optimizer_args: Additional arguments to instantiate optimizer_cls.
-        disp: If True print information during optimization.
+        options: options for model fitting. Relevant options will be
+            passed to the optimizer_cls. Additionally, options can include: "disp"
+            to specify whether to display model fitting diagnostics and "maxiter"
+            to specify the maximum number of iterations.
         track_iterations: Track the function values and wall time for each
             iteration.
 
     Returns:
         2-element tuple containing
+
         - mll with parameters optimized in-place.
         - List of OptimizationIteration objects with information on each
-        iteration. If track_iterations is False, this will be an empty list.
+          iteration. If track_iterations is False, this will be an empty list.
     """
-    optimizer_args = {} if optimizer_args is None else optimizer_args
+
+    optim_options = {"maxiter": 100, "disp": True, "lr": 0.05}
+    optim_options.update(options)
     optimizer = optimizer_cls(
-        params=[{"params": mll.parameters()}], lr=lr, **optimizer_args
+        params=[{"params": mll.parameters()}],
+        **_filter_kwargs(optimizer_cls, **optim_options),
     )
 
     # get bounds specified in model (if any)
@@ -99,8 +100,10 @@ def fit_gpytorch_torch(
         loss_trajectory.append(loss.item())
         for name, param in mll.named_parameters():
             param_trajectory[name].append(param.detach().clone())
-        if disp and ((i + 1) % 10 == 0 or i == (maxiter - 1)):
-            print(f"Iter {i + 1}/{maxiter}: {loss.item()}")
+        if optim_options["disp"] and (
+            (i + 1) % 10 == 0 or i == (optim_options["maxiter"] - 1)
+        ):
+            print(f"Iter {i + 1}/{optim_options['maxiter']}: {loss.item()}")
         if track_iterations:
             iterations.append(OptimizationIteration(i, loss.item(), time.time() - t1))
         optimizer.step()
@@ -113,7 +116,7 @@ def fit_gpytorch_torch(
         converged = check_convergence(
             loss_trajectory=loss_trajectory,
             param_trajectory=param_trajectory,
-            options={"maxiter": maxiter},
+            options={"maxiter": optim_options["maxiter"]},
         )
     return mll, iterations
 
