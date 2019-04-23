@@ -299,7 +299,7 @@ class TestConstrainedExpectedImprovement(unittest.TestCase):
             self.test_constrained_expected_improvement_batch(cuda=True)
 
 
-class TestNosiyExpectedImprovement(unittest.TestCase):
+class TestNoisyExpectedImprovement(unittest.TestCase):
     def _get_model(self, cuda=False, dtype=torch.float):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         state_dict = {
