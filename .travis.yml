@@ -36,6 +36,7 @@ matrix:
     - name: "GPyTorch + PyTorch latest"
       python: "3.6"
       install:
+        - pip install -q cython numpy
         - pip install -q torch_nightly -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html;
         - pip install -q git+https://github.com/cornellius-gp/gpytorch.git
         - pip install -q -e .[dev]
