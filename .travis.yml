@@ -12,6 +12,8 @@ matrix:
         - pip install -q cython numpy
         # TODO: Remove when locked to upcoming GPyTorch release 0.3.2
         - pip install -q git+https://github.com/cornellius-gp/gpytorch.git@8f0d338d42222689f0106f5f29e62ef4777a392f
+        # TODO: Remove nightly once locked against PyTorch 1.1
+        - pip install -q torch_nightly -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html;
         - pip install -q -e .[test]
       script:
         - pytest -ra --cov=. --cov-report term-missing
@@ -25,6 +27,8 @@ matrix:
         - pip install -q cython numpy
         # TODO: Remove when locked to upcoming GPyTorch release 0.3.2
         - pip install -q git+https://github.com/cornellius-gp/gpytorch.git@8f0d338d42222689f0106f5f29e62ef4777a392f
+        # TODO: Remove nightly once locked against PyTorch 1.1
+        - pip install -q torch_nightly -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html;
         - pip install -q -e .[test]
       script:
         - pytest -ra --cov=. --cov-report term-missing
@@ -32,7 +36,6 @@ matrix:
     - name: "GPyTorch + PyTorch latest"
       python: "3.6"
       install:
-        - pip install -q cython numpy
         - pip install -q torch_nightly -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html;
         - pip install -q git+https://github.com/cornellius-gp/gpytorch.git
         - pip install -q -e .[test]
