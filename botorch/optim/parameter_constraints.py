@@ -12,6 +12,8 @@ import torch
 from scipy.optimize import Bounds
 from torch import Tensor
 
+from ..exceptions.errors import UnsupportedError
+
 
 ScipyConstraintDict = Dict[
     str, Union[str, Callable[[np.ndarray], float], Callable[[np.ndarray], np.ndarray]]
@@ -57,52 +59,83 @@ def make_scipy_linear_constraints(
     shapeX: torch.Size,
     inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
-) -> Tuple[ScipyConstraintDict]:
-    r"""Generate scipy constraints from torch represenation
+) -> List[ScipyConstraintDict]:
+    r"""Generate scipy constraints from torch representation.
 
     Args:
-        shapeX: The shape of the torch tensor to optimze over (i.e. `b x q x d`)
+        shapeX: The shape of the torch tensor to optimize over (i.e. `b x q x d`)
         inequality constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
-            `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`
+            `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`, where
+            `indices` is a single-dimensional index tensor (long dtype) containing
+            indices into the last dimension of `X`, `coefficients` is a
+            single-dimensional tensor of coefficients of the same length, and
+            rhs is a scalar.
         equality constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
-            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`
+            `\sum_i (X[indices[i]] * coefficients[i]) == rhs` (with `indices`
+            and `coefficients` of the same form as in `inequality_constraints`).
 
     Returns:
-        A list of dictionaries with callables for function value and Jacobian as
-        expected by `scipy.minimieze`, together with their associated constraint
-        types ("eq", "ineq")
+        A list of dictionaries containing callables for constraint function
+        values and Jacobians and a string indicating the associated constraint
+        type ("eq", "ineq"), as expected by `scipy.minimize`.
+
+    This function assumes that constraints are the same for each input batch,
+    and broadcasts the constraints accordingly to the input batch shape. This
+    function does currently not support constraints across elements of a q-batch.
+
+    Example:
+        The following will enforce that `x[1] + 0.5 x[2] >= -0.1` for each `x`
+        in both elements of the q-batch, and each of the 3 t-batches:
+        >>> constraints = make_scipy_linear_constraints(
+        >>>     torch.Size([3, 2, 4]),
+        >>>     [(torch.tensor([1, 3]), torch.tensor([1.0, 0.5]), -0.1)],
+        >>> )
     """
     constraints = []
     if inequality_constraints is not None:
         for indcs, coeffs, rhs in inequality_constraints:
-            c = _make_lin_constraint(
-                indices=indcs, coefficients=coeffs, rhs=rhs, shapeX=shapeX
+            constraints += _make_linear_constraints(
+                indices=indcs, coefficients=coeffs, rhs=rhs, shapeX=shapeX, eq=False
             )
-            c["type"] = "ineq"
-            constraints.append(c)
     if equality_constraints is not None:
         for indcs, coeffs, rhs in equality_constraints:
-            c = _make_lin_constraint(
-                indices=indcs, coefficients=coeffs, rhs=rhs, shapeX=shapeX
+            constraints += _make_linear_constraints(
+                indices=indcs, coefficients=coeffs, rhs=rhs, shapeX=shapeX, eq=True
             )
-            c["type"] = "eq"
-            constraints.append(c)
-    return tuple(constraints)
+    return constraints
 
 
 def eval_lin_constraint(
     x: np.ndarray, flat_idxr: List[int], coeffs: np.ndarray, rhs: float
-) -> float:
-    r"""Evaluate a single linear constraint"""
+) -> np.float64:
+    r"""Evaluate a single linear constraint.
+
+    Args:
+        x: The input array.
+        flat_idxr: The indices in `x` to consider.
+        coeffs: The coefficients corresponding to the indices.
+        rhs: The right-hand-side of the constraint.
+
+    Returns:
+        The evaluted constraint: `\sum_i (coeffs[i] * x[i]) - rhs`
+    """
     return np.sum(x[flat_idxr] * coeffs, -1) - rhs
 
 
 def lin_constraint_jac(
     x: np.ndarray, flat_idxr: List[int], coeffs: np.ndarray, n: int
 ) -> np.ndarray:
-    r"""Return the jacobian associated with a linear constraint"""
+    r"""Return the Jacobian associated with a linear constraint.
+
+    Args:
+        x: The input array.
+        flat_idxr: The indices for the elements of x that appear in the constraint.
+
+    Returns:
+        The Jacobian.
+    """
     # TODO: Use sparse representation (not sure if scipy optim supports that)
     jac = np.zeros(n)
     jac[flat_idxr] = coeffs
@@ -110,51 +143,85 @@ def lin_constraint_jac(
 
 
 def _arrayify(X: Tensor) -> np.ndarray:
-    r"""Convert a torch tensor (any dtype or device) to a numpy (double) array"""
+    r"""Convert a torch tensor (any dtype or device) to a numpy (double) array.
+
+    Args:
+        X: The input tensor.
+
+    Returns:
+        A numpy array of double dtype with the same shape and data as `X`.
+    """
     return X.cpu().detach().contiguous().double().clone().numpy()
 
 
-def _make_flat_indexer(indices: Tensor, shape: torch.Size) -> List[int]:
-    r"""Make a flat indexer
+def _make_linear_constraints(
+    indices: Tensor,
+    coefficients: Tensor,
+    rhs: float,
+    shapeX: torch.Size,
+    eq: bool = False,
+) -> List[ScipyConstraintDict]:
+    r"""Create linear constraints to be used by `scipy.minimize`.
 
-    Convert a list of multi-dimensional index tensors for a multi-dimensional
-    tensor `X` to the one-dimensional indexer for the corresponding flattened `X`.
-    """
-    multipliers = [shape[i:].numel() for i in range(1, len(shape))] + [1]
-    multipliers = torch.tensor(multipliers, device=indices.device)
-    return (indices * multipliers).sum(-1).tolist()
+    Encodes constraints of the form
+    `\sum_i (coefficients[i] * X[..., indices[i]]) ? rhs`
+    where `?` can be designated either as `>=` by setting `eq=False`, or as
+    `=` by setting `eq=True`.
 
-
-def _make_lin_constraint(
-    indices: Tensor, coefficients: Tensor, rhs: float, shapeX: torch.Size
-) -> ScipyConstraintDict:
-    r"""Create a linear constraint to be used by `scipy.minimize`
-
-    Implements a constraint of the form
-        `\sum_i (X[indices[i]] * coefficients[i]) ? rhs`
-    where `?` can be designated either as `>=` by setting `type="ineq"`, or as
-    `=` by setting `type="eq"` in the returned dictionary.
+    If indices is one-dimensional, the constraints are broadcasted across all
+    elements of the q-batch. If indices is two-dimensional (NOT YET SUPPORTED),
+    then constraints are applied across elements of a q-batch. In either case,
+    constraints are created for all t-batches.
 
     Args:
-        indices:
-        coefficients:
+        indices: A single-dimensional tensor of torch.long dtype, containing the
+            indices of the dimensions of the feature space that occur in the
+            linear constraint.
+        coefficients: A single-dimensional tensor of coefficients with the same
+            number of elements as `indices`.
         rhs: The right hand side of the constraint.
-        shapeX: The shape of the torch tensor to optimze over (i.e. `b x q x d`)
+        shapeX: The shape of the torch tensor to construct the constraints for
+            (i.e. `b x q x d`). Must have three dimensions.
+        eq: If True, return an equality constraint, o/w return an inequality
+            constraint (indicated by "eq" / "ineq" value of the `type` key).
 
     Returns:
-        A dictionary with keys "fun" and "jac", each with the appropriately
-        constructed callable on a single-dimensional input `x` (the flattened,
-        numpyified version of the optimization variable `X`). This does not
-        contain the "type" key indicating the constraint type ("eq" or "ineq").
+        A list of constraint dictionaries with the following keys
+
+        - "type": Indicates the type of the constraint ("eq" if `eq=True`, "ineq" o/w)
+        - "fun": A callable evaluating the constraint value on `x`, a flattened
+            version of the input tensor `X`, returning a scalar.
+        - "jac": A callable evaluating the constraint's Jacobian on `x`, a flattened
+            version of the input tensor `X`, returning a numpy array.
     """
+    if len(shapeX) != 3:
+        raise UnsupportedError("`shapeX` must be `b x q x d`")
     d = shapeX[-1]
-    if indices.max() >= d:
-        raise RuntimeError(f"Index out of bounds for {d}-dim parameter tensor")
-    flat_idxr = _make_flat_indexer(indices=indices, shape=shapeX)
+    n = shapeX.numel()
+    constraints: List[ScipyConstraintDict] = []
     coeffs = _arrayify(coefficients)
-    # TODO: Check signs
-    fun = partial(eval_lin_constraint, flat_idxr=flat_idxr, coeffs=coeffs, rhs=rhs)
-    jac = partial(
-        lin_constraint_jac, flat_idxr=flat_idxr, coeffs=coeffs, n=shapeX.numel()
-    )
-    return {"fun": fun, "jac": jac}
+    ctype = "eq" if eq else "ineq"
+    if indices[-1].max() > d - 1:
+        raise RuntimeError(f"Index out of bounds for {d}-dim parameter tensor")
+    # indices has two dimensions (potential constraints across q-batch elements)
+    if indices.dim() == 2:
+        raise NotImplementedError(
+            "Constraints across elements of q-batches not yet supported"
+        )
+    elif indices.dim() > 2:
+        raise UnsupportedError(
+            "Linear constraints supported only on individual candidates and "
+            "across q-batches, not across general batch shapes."
+        )
+    elif indices.dim() == 1:
+        # indices is one-dim - broadcast constraints across q-batches and t-batches
+        offsets = [shapeX[i:].numel() for i in range(1, len(shapeX))]
+        for i in range(shapeX[0]):
+            for j in range(shapeX[1]):
+                idxr = (i * offsets[0] + j * offsets[1] + indices).tolist()
+                fun = partial(
+                    eval_lin_constraint, flat_idxr=idxr, coeffs=coeffs, rhs=rhs
+                )
+                jac = partial(lin_constraint_jac, flat_idxr=idxr, coeffs=coeffs, n=n)
+                constraints.append({"type": ctype, "fun": fun, "jac": jac})
+    return constraints
