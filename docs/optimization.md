@@ -48,7 +48,7 @@ restarts to improve optimization quality. Each restart can be thought of as an
 optimization routine within a local region; thus, taking the best result over
 many restarts can help provide an approximation to the global optimization
 objective. The function
-[`gen_batch_initial_candidates()`](../api/optim.html#botorch.optim.optimize.gen_batch_initial_candidates)
+[`gen_batch_initial_conditions()`](../api/optim.html#botorch.optim.optimize.gen_batch_initial_conditions)
 implements heuristics for choosing a set of initial restart locations (candidates).
 
 Rather than optimize sequentially from each initial restart

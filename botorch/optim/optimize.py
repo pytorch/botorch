@@ -12,10 +12,11 @@ from torch import Tensor
 
 from ..acquisition import AcquisitionFunction
 from ..acquisition.analytic import AnalyticAcquisitionFunction
+from ..acquisition.utils import is_nonnegative
 from ..exceptions import BadInitialCandidatesWarning, UnsupportedError
 from ..gen import gen_candidates_scipy, get_best_candidates
 from ..utils.sampling import draw_sobol_samples
-from .initializers import initialize_q_batch
+from .initializers import initialize_q_batch, initialize_q_batch_nonneg
 
 
 def sequential_optimize(
@@ -110,7 +111,7 @@ def joint_optimize(
     Returns:
          A `q x d` tensor of generated candidates.
     """
-    batch_initial_candidates = gen_batch_initial_candidates(
+    batch_initial_candidates = gen_batch_initial_conditions(
         acq_function=acq_function,
         bounds=bounds,
         q=None if isinstance(acq_function, AnalyticAcquisitionFunction) else q,
@@ -132,7 +133,7 @@ def joint_optimize(
     )
 
 
-def gen_batch_initial_candidates(
+def gen_batch_initial_conditions(
     acq_function: AcquisitionFunction,
     bounds: Tensor,
     q: Optional[int],
@@ -152,14 +153,35 @@ def gen_batch_initial_candidates(
             function optimization.
         raw_samples: The number of raw samples to consider in the initialization
             heuristic.
-        options: Options for initial condition generation.
+        options: Options for initial condition generation. For valid options see
+            `initialize_q_batch` and `initialize_q_batch_nonneg`. If `options`
+            contains a `nonnegative=True` entry, then `acq_function` is
+            assumed to be non-negative (useful when using custom acquisition
+            functions).
 
     Returns:
         A `num_restarts x q x d` tensor of initial conditions.
+
+    Example:
+        >>> qEI = qExpectedImprovement(model, best_f=0.2)
+        >>> bounds = torch.tensor([[0., 0.], [1., 2.]])
+        >>> Xinit = gen_batch_initial_conditions(
+        >>>     qEI, bounds, q=3, num_restarts=25, raw_samples=500
+        >>> )
     """
     seed: Optional[int] = options.get("seed")  # pyre-ignore
     batch_initial_arms: Tensor
     factor, max_factor = 1, 5
+    init_kwargs = {}
+    if "eta" in options:
+        init_kwargs["eta"] = options.get("eta")
+    if options.get("nonnegative") or is_nonnegative(acq_function):
+        init_func = initialize_q_batch_nonneg
+        if "alpha" in options:
+            init_kwargs["alpha"] = options.get("alpha")
+    else:
+        init_func = initialize_q_batch
+
     while factor < max_factor:
         with warnings.catch_warnings(record=True) as ws:
             X_rnd = draw_sobol_samples(
@@ -172,19 +194,16 @@ def gen_batch_initial_candidates(
                 X_rnd = X_rnd.squeeze(dim=-2)
             with torch.no_grad():
                 Y_rnd = acq_function(X_rnd)
-            batch_initial_candidates = initialize_q_batch(
-                X=X_rnd, Y=Y_rnd, n=num_restarts, options=options
+            batch_initial_candidates = init_func(
+                X=X_rnd, Y=Y_rnd, n=num_restarts, **init_kwargs
             )
-            if not any(
-                issubclass(w.category, BadInitialCandidatesWarning)  # pyre-ignore: [16]
-                for w in ws  # pyre-ignore: [16]
-            ):
+            if not any(issubclass(w.category, BadInitialCandidatesWarning) for w in ws):
                 return batch_initial_candidates
             if factor < max_factor:
                 factor += 1
     warnings.warn(
-        "Unable to find non-zero acquistion function values - initial arms "
+        "Unable to find non-zero acquistion function values - initial conditions "
         "are being selected randomly.",
-        BadInitialCandidatesWarning,  # pyre-ignore: [16]
+        BadInitialCandidatesWarning,
     )
     return batch_initial_candidates

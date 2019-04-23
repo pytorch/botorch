@@ -9,16 +9,11 @@ from typing import Callable, Optional
 import torch
 from torch import Tensor
 
+from . import analytic, monte_carlo
 from ..models.model import Model
 from ..utils.transforms import squeeze_last_dim
-from .monte_carlo import (
-    MCAcquisitionFunction,
-    qExpectedImprovement,
-    qNoisyExpectedImprovement,
-    qProbabilityOfImprovement,
-    qSimpleRegret,
-    qUpperConfidenceBound,
-)
+from .acquisition import AcquisitionFunction
+from .monte_carlo import MCAcquisitionFunction
 from .objective import MCAcquisitionObjective
 from .sampler import IIDNormalSampler, SobolQMCNormalSampler
 
@@ -66,12 +61,12 @@ def get_acquisition_function(
     # instantiate and return the requested acquisition function
     if acquisition_function_name == "qEI":
         best_f = objective(model.posterior(X_observed).mean).max().item()
-        return qExpectedImprovement(
+        return monte_carlo.qExpectedImprovement(
             model=model, best_f=best_f, sampler=sampler, objective=objective
         )
     elif acquisition_function_name == "qPI":
         best_f = objective(model.posterior(X_observed).mean).max().item()
-        return qProbabilityOfImprovement(
+        return monte_carlo.qProbabilityOfImprovement(
             model=model,
             best_f=best_f,
             sampler=sampler,
@@ -83,15 +78,17 @@ def get_acquisition_function(
             X_baseline = X_observed
         else:
             X_baseline = torch.cat([X_observed, X_pending], dim=-2)
-        return qNoisyExpectedImprovement(
+        return monte_carlo.qNoisyExpectedImprovement(
             model=model, X_baseline=X_baseline, sampler=sampler, objective=objective
         )
     elif acquisition_function_name == "qSR":
-        return qSimpleRegret(model=model, sampler=sampler, objective=objective)
+        return monte_carlo.qSimpleRegret(
+            model=model, sampler=sampler, objective=objective
+        )
     elif acquisition_function_name == "qUCB":
         if "beta" not in kwargs:
             raise ValueError("`beta` must be specified in kwargs for qUCB.")
-        return qUpperConfidenceBound(
+        return monte_carlo.qUpperConfidenceBound(
             model=model, beta=kwargs["beta"], sampler=sampler, objective=objective
         )
     raise NotImplementedError(
@@ -126,3 +123,31 @@ def get_infeasible_cost(
     lb = objective(posterior.mean - 6 * posterior.variance.clamp_min(0).sqrt()).min()
     M = -lb.clamp_max(0.0)
     return M.item()
+
+
+def is_nonnegative(acq_function: AcquisitionFunction) -> bool:
+    r"""Determine whether a given acquisition function is non-negative.
+
+    Args:
+        acq_function: The `AcquisitionFunction` instance.
+
+    Returns:
+        True if `acq_function` is non-negative, False if not, or if the behavior
+        is unknown (for custom acquisition functions).
+
+    Example:
+        >>> qEI = qExpectedImprovement(model, best_f=0.1)
+        >>> is_nonnegative(qEI)  # returns True
+    """
+    return isinstance(
+        acq_function,
+        (
+            analytic.ExpectedImprovement,
+            analytic.ConstrainedExpectedImprovement,
+            analytic.ProbabilityOfImprovement,
+            analytic.NoisyExpectedImprovement,
+            monte_carlo.qExpectedImprovement,
+            monte_carlo.qNoisyExpectedImprovement,
+            monte_carlo.qProbabilityOfImprovement,
+        ),
+    )

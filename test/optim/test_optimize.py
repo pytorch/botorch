@@ -6,7 +6,7 @@ from unittest import TestCase, mock
 import torch
 from botorch.exceptions import BadInitialCandidatesWarning
 from botorch.optim.optimize import (
-    gen_batch_initial_candidates,
+    gen_batch_initial_conditions,
     joint_optimize,
     sequential_optimize,
 )
@@ -27,12 +27,12 @@ def rounding_func(X: Tensor) -> Tensor:
 
 
 class TestGenBatchInitialcandidates(TestCase):
-    def test_gen_batch_initial_candidates(self, cuda=False):
+    def test_gen_batch_initial_conditions(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
             bounds = torch.tensor([[0, 0], [1, 1]], device=device, dtype=dtype)
             for simple in (True, False):
-                batch_initial_candidates = gen_batch_initial_candidates(
+                batch_initial_candidates = gen_batch_initial_conditions(
                     acq_function=MockAcquisitionFunction(),
                     bounds=bounds,
                     q=1,
@@ -44,11 +44,11 @@ class TestGenBatchInitialcandidates(TestCase):
                 self.assertEqual(batch_initial_candidates.device, bounds.device)
                 self.assertEqual(batch_initial_candidates.dtype, bounds.dtype)
 
-    def test_gen_batch_initial_candidates_cuda(self):
+    def test_gen_batch_initial_conditions_cuda(self):
         if torch.cuda.is_available():
-            self.test_gen_batch_initial_candidates(cuda=True)
+            self.test_gen_batch_initial_conditions(cuda=True)
 
-    def test_gen_batch_initial_candidates_simple_warning(self, cuda=False):
+    def test_gen_batch_initial_conditions_simple_warning(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
             bounds = torch.tensor([[0, 0], [1, 1]], device=device, dtype=dtype)
@@ -57,7 +57,7 @@ class TestGenBatchInitialcandidates(TestCase):
                     "botorch.optim.optimize.draw_sobol_samples",
                     return_value=torch.zeros(10, 1, 2, device=device, dtype=dtype),
                 ):
-                    batch_initial_candidates = gen_batch_initial_candidates(
+                    batch_initial_candidates = gen_batch_initial_conditions(
                         acq_function=MockAcquisitionFunction(),
                         bounds=bounds,
                         q=1,
@@ -76,9 +76,9 @@ class TestGenBatchInitialcandidates(TestCase):
                         )
                     )
 
-    def test_gen_batch_initial_candidates_simple_raises_cuda(self):
+    def test_gen_batch_initial_conditions_simple_raises_cuda(self):
         if torch.cuda.is_available():
-            self.test_gen_batch_initial_candidates_simple_warning(cuda=True)
+            self.test_gen_batch_initial_conditions_simple_warning(cuda=True)
 
 
 class TestSequentialOptimize(TestCase):
@@ -132,14 +132,14 @@ class TestSequentialOptimize(TestCase):
 
 
 class TestJointOptimize(TestCase):
-    @mock.patch("botorch.optim.optimize.gen_batch_initial_candidates")
+    @mock.patch("botorch.optim.optimize.gen_batch_initial_conditions")
     @mock.patch("botorch.optim.optimize.gen_candidates_scipy")
     @mock.patch("botorch.optim.optimize.get_best_candidates")
     def test_joint_optimize(
         self,
         mock_get_best_candidates,
         mock_gen_candidates,
-        mock_gen_batch_initial_candidates,
+        mock_gen_batch_initial_conditions,
         cuda=False,
     ):
         q = 3
@@ -150,7 +150,7 @@ class TestJointOptimize(TestCase):
         tkwargs = {"device": torch.device("cuda") if cuda else torch.device("cpu")}
         for dtype in (torch.float, torch.double):
             tkwargs["dtype"] = dtype
-            mock_gen_batch_initial_candidates.return_value = torch.zeros(
+            mock_gen_batch_initial_conditions.return_value = torch.zeros(
                 num_restarts, q, 3, **tkwargs
             )
             mock_gen_candidates.return_value = torch.cat(
