@@ -79,7 +79,7 @@ def gen_candidates_scipy(
     def f(x):
         X = (
             torch.from_numpy(x)
-            .to(device=initial_candidates.device, dtype=initial_candidates.dtype)
+            .to(initial_candidates)
             .view(shapeX)
             .contiguous()
             .requires_grad_(True)
