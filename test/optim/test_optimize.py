@@ -102,6 +102,9 @@ class TestSequentialOptimize(TestCase):
             bounds = torch.stack(
                 [torch.zeros(3, **tkwargs), 4 * torch.ones(3, **tkwargs)]
             )
+            inequality_constraints = [
+                (torch.tensor([3]), torch.tensor([4]), torch.tensor(5))
+            ]
             candidates = sequential_optimize(
                 acq_function=mock_acq_function,
                 bounds=bounds,
@@ -109,6 +112,7 @@ class TestSequentialOptimize(TestCase):
                 num_restarts=num_restarts,
                 raw_samples=raw_samples,
                 options=options,
+                inequality_constraints=inequality_constraints,
                 post_processing_func=rounding_func,
             )
             self.assertTrue(torch.equal(candidates, expected_candidates))
@@ -120,6 +124,8 @@ class TestSequentialOptimize(TestCase):
                 "num_restarts": num_restarts,
                 "raw_samples": raw_samples,
                 "options": options,
+                "inequality_constraints": inequality_constraints,
+                "equality_constraints": None,
                 "fixed_features": None,
             }
             call_args_list = mock_joint_optimize.call_args_list[-q:]
