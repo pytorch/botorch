@@ -108,7 +108,41 @@ class Index extends React.Component {
         ]}
       </Block>
     );
-    //getStartedSection
+    // getStartedSection
+    const pre = "```";
+    // Example for model fitting
+    const modelFitCodeExample = `${pre}python
+>>> import torch
+>>> from botorch.models import SingleTaskGP
+>>> from botorch.fit import fit_gpytorch_model
+>>> from gpytorch.mlls import ExactMarginalLogLikelihood
+
+>>> train_X = torch.rand(10, 2)
+>>> Y = 1 - torch.norm(train_X - 0.5, dim=-1) + 0.1 * torch.rand(10)
+>>> train_Y = (Y - Y.mean()) / Y.std()
+
+>>> gp = SingleTaskGP(train_X, train_Y)
+>>> mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
+>>> fit_gpytorch_model(mll);
+    `;
+    // Example for defining an acquisition function
+    const constrAcqFuncExample = `${pre}python
+>>> from botorch.acquisition import UpperConfidenceBound
+
+>>> UCB = UpperConfidenceBound(gp, beta=0.1)
+    `;
+    // Example for optimizing candidates
+    const optAcqFuncExample = `${pre}python
+>>> from botorch.optim import joint_optimize
+
+>>> bounds = torch.stack([torch.zeros(2), torch.ones(2)])
+>>> candidate = joint_optimize(
+        UCB, bounds=bounds, q=1, num_restarts=5, raw_samples=20,
+    )
+>>> candidate
+tensor([0.4887, 0.5063])
+    `;
+    //
     const QuickStart = () => (
       <div
         className="productShowcaseSection" id="quickstart"
@@ -117,10 +151,20 @@ class Index extends React.Component {
         <Container>
               <ol>
                 <li>
-                  Download botorch from the Github repo and install with pip:
-                  <MarkdownBlock>
-                    {bash`cd botorch && pip install -e .`}
-                  </MarkdownBlock>
+                  Install BoTorch:
+                  <MarkdownBlock>{bash`pip install botorch`}</MarkdownBlock>
+                </li>
+                <li>
+                  Fit a model:
+                  <MarkdownBlock>{modelFitCodeExample}</MarkdownBlock>
+                </li>
+                <li>
+                  Construct an acquisition function:
+                  <MarkdownBlock>{constrAcqFuncExample}</MarkdownBlock>
+                </li>
+                <li>
+                  Optimize the acqusiton function:
+                  <MarkdownBlock>{optAcqFuncExample}</MarkdownBlock>
                 </li>
               </ol>
           </Container>
