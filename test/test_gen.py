@@ -30,7 +30,7 @@ class TestBaseCandidateGeneration(unittest.TestCase):
             ics = torch.tensor([[0.5, 1.0]], device=device, dtype=dtype)
         else:
             ics = torch.tensor([[0.5]], device=device, dtype=dtype)
-        self.initial_candidates = ics
+        self.initial_conditions = ics
         self.f_best = self.train_y.max().item()
         model = SingleTaskGP(self.train_x, self.train_y)
         self.model = model.to(device=device, dtype=dtype)
@@ -44,7 +44,7 @@ class TestGenCandidates(TestBaseCandidateGeneration):
             self._setUp(double=double, cuda=cuda)
             qEI = qExpectedImprovement(self.model, best_f=self.f_best)
             candidates, _ = gen_candidates(
-                initial_candidates=self.initial_candidates,
+                initial_conditions=self.initial_conditions,
                 acquisition_function=qEI,
                 lower_bounds=0,
                 upper_bounds=1,
@@ -69,7 +69,7 @@ class TestGenCandidates(TestBaseCandidateGeneration):
             self._setUp(double=double, cuda=cuda, expand=True)
             qEI = qExpectedImprovement(self.model, best_f=self.f_best)
             candidates, _ = gen_candidates(
-                initial_candidates=self.initial_candidates,
+                initial_conditions=self.initial_conditions,
                 acquisition_function=qEI,
                 lower_bounds=0,
                 upper_bounds=1,
@@ -99,7 +99,7 @@ class TestGenCandidates(TestBaseCandidateGeneration):
             self._setUp(double=double, cuda=cuda, expand=True)
             qEI = qExpectedImprovement(self.model, best_f=self.f_best)
             candidates, _ = gen_candidates(
-                initial_candidates=self.initial_candidates,
+                initial_conditions=self.initial_conditions,
                 acquisition_function=qEI,
                 lower_bounds=0,
                 upper_bounds=1,

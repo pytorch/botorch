@@ -21,7 +21,7 @@ from .optim.utils import check_convergence, columnwise_clamp, fix_features
 
 
 def gen_candidates_scipy(
-    initial_candidates: Tensor,
+    initial_conditions: Tensor,
     acquisition_function: Module,
     lower_bounds: Optional[Union[float, Tensor]] = None,
     upper_bounds: Optional[Union[float, Tensor]] = None,
@@ -36,10 +36,10 @@ def gen_candidates_scipy(
     using `scipy.optimize.minimize` via a numpy converter.
 
     Args:
-        initial_candidates: Starting points for optimization.
+        initial_conditions: Starting points for optimization.
         acquisition_function: Acquisition function to be used.
-        lower_bounds: Minimum values for each column of initial_candidates.
-        upper_bounds: Maximum values for each column of initial_candidates.
+        lower_bounds: Minimum values for each column of initial_conditions.
+        upper_bounds: Maximum values for each column of initial_conditions.
         inequality constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`
@@ -62,13 +62,13 @@ def gen_candidates_scipy(
     """
     options = options or {}
     clamped_candidates = columnwise_clamp(
-        initial_candidates, lower_bounds, upper_bounds
+        initial_conditions, lower_bounds, upper_bounds
     ).requires_grad_(True)
 
     shapeX = clamped_candidates.shape
     x0 = _arrayify(clamped_candidates.view(-1))
     bounds = make_scipy_bounds(
-        lower_bounds=lower_bounds, upper_bounds=upper_bounds, X=initial_candidates
+        lower_bounds=lower_bounds, upper_bounds=upper_bounds, X=initial_conditions
     )
     constraints = make_scipy_linear_constraints(
         shapeX=clamped_candidates.shape,
@@ -79,7 +79,7 @@ def gen_candidates_scipy(
     def f(x):
         X = (
             torch.from_numpy(x)
-            .to(initial_candidates)
+            .to(initial_conditions)
             .view(shapeX)
             .contiguous()
             .requires_grad_(True)
@@ -102,7 +102,7 @@ def gen_candidates_scipy(
     )
     candidates = fix_features(
         X=torch.from_numpy(res.x)  # pyre-ignore [16]
-        .to(initial_candidates)
+        .to(initial_conditions)
         .view(shapeX)
         .contiguous(),
         fixed_features=fixed_features,
@@ -112,7 +112,7 @@ def gen_candidates_scipy(
 
 
 def gen_candidates_torch(
-    initial_candidates: Tensor,
+    initial_conditions: Tensor,
     acquisition_function: Callable,
     lower_bounds: Optional[Union[float, Tensor]] = None,
     upper_bounds: Optional[Union[float, Tensor]] = None,
@@ -127,10 +127,10 @@ def gen_candidates_torch(
     using an optimizer from `torch.optim`.
 
     Args:
-        initial_candidates: Starting points for optimization.
+        initial_conditions: Starting points for optimization.
         acquisition_function: Acquisition function to be used.
-        lower_bounds: Minimum values for each column of initial_candidates.
-        upper_bounds: Maximum values for each column of initial_candidates.
+        lower_bounds: Minimum values for each column of initial_conditions.
+        upper_bounds: Maximum values for each column of initial_conditions.
         optimizer (Optimizer): The pytorch optimizer to use to perform
             candidate search.
         options: Options used to control the optimization. Includes
@@ -150,7 +150,7 @@ def gen_candidates_torch(
     """
     options = options or {}
     clamped_candidates = columnwise_clamp(
-        initial_candidates, lower_bounds, upper_bounds
+        initial_conditions, lower_bounds, upper_bounds
     ).requires_grad_(True)
     candidates = fix_features(clamped_candidates, fixed_features)
     bayes_optimizer = optimizer(
