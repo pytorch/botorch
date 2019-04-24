@@ -111,7 +111,7 @@ def joint_optimize(
     Returns:
          A `q x d` tensor of generated candidates.
     """
-    batch_initial_candidates = gen_batch_initial_conditions(
+    batch_initial_conditions = gen_batch_initial_conditions(
         acq_function=acq_function,
         bounds=bounds,
         q=None if isinstance(acq_function, AnalyticAcquisitionFunction) else q,
@@ -121,7 +121,7 @@ def joint_optimize(
     )
     # optimize using random restart optimization
     batch_candidates, batch_acq_values = gen_candidates_scipy(
-        initial_candidates=batch_initial_candidates,
+        initial_conditions=batch_initial_conditions,
         acquisition_function=acq_function,
         lower_bounds=bounds[0],
         upper_bounds=bounds[1],
@@ -194,11 +194,11 @@ def gen_batch_initial_conditions(
                 X_rnd = X_rnd.squeeze(dim=-2)
             with torch.no_grad():
                 Y_rnd = acq_function(X_rnd)
-            batch_initial_candidates = init_func(
+            batch_initial_conditions = init_func(
                 X=X_rnd, Y=Y_rnd, n=num_restarts, **init_kwargs
             )
             if not any(issubclass(w.category, BadInitialCandidatesWarning) for w in ws):
-                return batch_initial_candidates
+                return batch_initial_conditions
             if factor < max_factor:
                 factor += 1
     warnings.warn(
@@ -206,4 +206,4 @@ def gen_batch_initial_conditions(
         "are being selected randomly.",
         BadInitialCandidatesWarning,
     )
-    return batch_initial_candidates
+    return batch_initial_conditions
