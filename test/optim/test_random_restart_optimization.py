@@ -21,7 +21,7 @@ class TestRandomRestartOptimization(TestBaseCandidateGeneration):
             bounds = torch.tensor([[0.0], [1.0]]).type_as(self.train_x)
             batch_ics = torch.rand(2, 1).type_as(self.train_x)
             batch_candidates, batch_acq_values = gen_candidates_scipy(
-                initial_candidates=batch_ics,
+                initial_conditions=batch_ics,
                 acquisition_function=qEI,
                 lower_bounds=bounds[0],
                 upper_bounds=bounds[1],
