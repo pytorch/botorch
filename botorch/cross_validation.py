@@ -6,7 +6,6 @@ Cross-validation utilities using batch evaluation mode.
 
 from typing import Any, Dict, NamedTuple, Optional, Type
 
-import gpytorch
 import torch
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
@@ -66,9 +65,9 @@ def batch_cross_validation(
 
     Args:
         model_cls: An ExactGP class. Must be able to work both in non-batch and
-            in batch mode, and take a "batch_size" kwarg in its constructor
+            in batch mode, and take a "batch_shape" kwarg in its constructor
         likelihood_cls: A GaussianLikelihood class. Must be able to work both in
-            non-batch and in batch mode, and take a "batch_size" kwarg in its
+            non-batch and in batch mode, and take a "batch_shape" kwarg in its
             constructor
         cv_folds: A CVFolds tuple
         fit_args: Arguments passed along to fit_gpytorch_model
@@ -84,20 +83,19 @@ def batch_cross_validation(
         for problems of small size.
     """
     num_folds = cv_folds.train_x.shape[0]
-    likelihood_cv = likelihood_cls(batch_size=num_folds)
+    likelihood_cv = likelihood_cls(batch_shape=torch.Size([num_folds]))
     model_cv = model_cls(
-        cv_folds.train_x, cv_folds.train_y, likelihood_cv, batch_size=num_folds
+        cv_folds.train_x,
+        cv_folds.train_y,
+        likelihood_cv,
+        batch_shape=torch.Size([num_folds]),
     )
-    if cv_folds.train_x.is_cuda:
-        model_cv.cuda()
-    if cv_folds.train_x.dtype == torch.double:
-        model_cv.double()
-
     mll_cv = ExactMarginalLogLikelihood(likelihood_cv, model_cv)
+    mll_cv.to(cv_folds.train_x)
     mll_cv = fit_gpytorch_model(mll_cv, **fit_args)
 
     # Evaluate on the hold-out set in batch mode
-    with torch.no_grad(), gpytorch.settings.fast_pred_var():
-        posterior = likelihood_cv(model_cv(cv_folds.test_x))
+    with torch.no_grad():
+        posterior = model_cv.posterior(cv_folds.test_x)
 
     return CVResults(posterior=posterior, observed=cv_folds.test_y)

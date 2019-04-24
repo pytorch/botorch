@@ -32,7 +32,7 @@ class TestGenBatchInitialcandidates(TestCase):
         for dtype in (torch.float, torch.double):
             bounds = torch.tensor([[0, 0], [1, 1]], device=device, dtype=dtype)
             for simple in (True, False):
-                batch_initial_candidates = gen_batch_initial_conditions(
+                batch_initial_conditions = gen_batch_initial_conditions(
                     acq_function=MockAcquisitionFunction(),
                     bounds=bounds,
                     q=1,
@@ -40,9 +40,9 @@ class TestGenBatchInitialcandidates(TestCase):
                     raw_samples=10,
                     options={"simple_init": simple},
                 )
-                self.assertEqual(batch_initial_candidates.shape, torch.Size([2, 1, 2]))
-                self.assertEqual(batch_initial_candidates.device, bounds.device)
-                self.assertEqual(batch_initial_candidates.dtype, bounds.dtype)
+                self.assertEqual(batch_initial_conditions.shape, torch.Size([2, 1, 2]))
+                self.assertEqual(batch_initial_conditions.device, bounds.device)
+                self.assertEqual(batch_initial_conditions.dtype, bounds.dtype)
 
     def test_gen_batch_initial_conditions_cuda(self):
         if torch.cuda.is_available():
@@ -57,7 +57,7 @@ class TestGenBatchInitialcandidates(TestCase):
                     "botorch.optim.optimize.draw_sobol_samples",
                     return_value=torch.zeros(10, 1, 2, device=device, dtype=dtype),
                 ):
-                    batch_initial_candidates = gen_batch_initial_conditions(
+                    batch_initial_conditions = gen_batch_initial_conditions(
                         acq_function=MockAcquisitionFunction(),
                         bounds=bounds,
                         q=1,
@@ -71,7 +71,7 @@ class TestGenBatchInitialcandidates(TestCase):
                     )
                     self.assertTrue(
                         torch.equal(
-                            batch_initial_candidates,
+                            batch_initial_conditions,
                             torch.zeros(2, 1, 2, device=device, dtype=dtype),
                         )
                     )

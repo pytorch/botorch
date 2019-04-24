@@ -4,7 +4,8 @@ r"""
 Utilities for optimization.
 """
 
-from typing import Dict, List, Optional, Union
+from inspect import signature
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import torch
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
@@ -158,3 +159,9 @@ def _get_extra_mll_args(
         return []
     else:
         raise ValueError("Do not know how to optimize MLL type.")
+
+
+def _filter_kwargs(function: Callable, **kwargs: Any) -> Any:
+    r"""Filter out kwargs that are not applicable for a given function.
+    Return a copy of given kwargs dict with only the required kwargs."""
+    return {k: v for k, v in kwargs.items() if k in signature(function).parameters}
