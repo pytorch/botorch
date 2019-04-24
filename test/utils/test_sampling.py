@@ -6,13 +6,13 @@ import warnings
 import torch
 from botorch.exceptions.warnings import SamplingWarning
 from botorch.posteriors.gpytorch import GPyTorchPosterior
-from botorch.qmc.sobol import SobolEngine
 from botorch.utils.sampling import (
     construct_base_samples,
     construct_base_samples_from_posterior,
     manual_seed,
 )
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
+from torch.quasirandom import SobolEngine
 
 
 class TestConstructBaseSamples(unittest.TestCase):
