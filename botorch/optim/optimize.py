@@ -5,7 +5,7 @@ Methods for optimizing acquisition functions.
 """
 
 import warnings
-from typing import Callable, Dict, Optional, Union
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import torch
 from torch import Tensor
@@ -26,6 +26,8 @@ def sequential_optimize(
     num_restarts: int,
     raw_samples: int,
     options: Optional[Dict[str, Union[bool, float, int]]] = None,
+    inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
+    equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     fixed_features: Optional[Dict[int, float]] = None,
     post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
 ) -> Tensor:
@@ -39,6 +41,12 @@ def sequential_optimize(
             function optimization.
         raw_samples: number of samples for initialization
         options: options for candidate generation.
+        inequality constraints: A list of tuples (indices, coefficients, rhs),
+            with each tuple encoding an inequality constraint of the form
+            `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`
+        equality constraints: A list of tuples (indices, coefficients, rhs),
+            with each tuple encoding an inequality constraint of the form
+            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`
         fixed_features: A map `{feature_index: value}` for features that
             should be fixed to a particular value during generation.
         post_processing_func: A function that post-processes an optimization
@@ -64,6 +72,8 @@ def sequential_optimize(
             num_restarts=num_restarts,
             raw_samples=raw_samples,
             options=options or {},
+            inequality_constraints=inequality_constraints,
+            equality_constraints=equality_constraints,
             fixed_features=fixed_features,
         )
         if post_processing_func is not None:
@@ -88,6 +98,8 @@ def joint_optimize(
     num_restarts: int,
     raw_samples: int,
     options: Optional[Dict[str, Union[bool, float, int]]] = None,
+    inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
+    equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     fixed_features: Optional[Dict[int, float]] = None,
     post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
 ) -> Tensor:
@@ -101,6 +113,12 @@ def joint_optimize(
             function optimization.
         raw_samples: number of samples for initialization.
         options: options for candidate generation.
+        inequality constraints: A list of tuples (indices, coefficients, rhs),
+            with each tuple encoding an inequality constraint of the form
+            `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`
+        equality constraints: A list of tuples (indices, coefficients, rhs),
+            with each tuple encoding an inequality constraint of the form
+            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`
         fixed_features: A map {feature_index: value} for features that should be
             fixed to a particular value during generation.
         post_processing_func: A function that post processes an optimization result
@@ -111,6 +129,7 @@ def joint_optimize(
     Returns:
          A `q x d` tensor of generated candidates.
     """
+    # TODO: Generating initial candidates should use parameter constraints.
     batch_initial_conditions = gen_batch_initial_conditions(
         acq_function=acq_function,
         bounds=bounds,
@@ -126,6 +145,8 @@ def joint_optimize(
         lower_bounds=bounds[0],
         upper_bounds=bounds[1],
         options=options or {},
+        inequality_constraints=inequality_constraints,
+        equality_constraints=equality_constraints,
         fixed_features=fixed_features,
     )
     return get_best_candidates(
