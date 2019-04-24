@@ -47,8 +47,8 @@ def fit_gpytorch_torch(
             over bounds on the same parameters specified in the constraints
             registered with the module.
         optimizer_cls: Torch optimizer to use. Must not require a closure.
-        options: options for model fitting. Relevant options will be
-            passed to the optimizer_cls. Additionally, options can include: "disp"
+        options: options for model fitting. Relevant options will be passed to
+            the `optimizer_cls`. Additionally, options can include: "disp"
             to specify whether to display model fitting diagnostics and "maxiter"
             to specify the maximum number of iterations.
         track_iterations: Track the function values and wall time for each
@@ -61,9 +61,8 @@ def fit_gpytorch_torch(
         - List of OptimizationIteration objects with information on each
           iteration. If track_iterations is False, this will be an empty list.
     """
-
     optim_options = {"maxiter": 100, "disp": True, "lr": 0.05}
-    optim_options.update(options)
+    optim_options.update(options or {})
     optimizer = optimizer_cls(
         params=[{"params": mll.parameters()}],
         **_filter_kwargs(optimizer_cls, **optim_options),
@@ -198,6 +197,7 @@ def _scipy_objective_and_grad(
 
     Returns:
         2-element tuple containing
+
         - The objective value.
         - The gradient of the objective.
     """
