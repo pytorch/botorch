@@ -10,13 +10,11 @@ from typing import Generator, Optional
 
 import torch
 from torch import Tensor
+from torch.quasirandom import SobolEngine
 
 from ..exceptions.warnings import SamplingWarning
 from ..posteriors.posterior import Posterior
 from ..qmc.normal import NormalQMCEngine
-
-# TODO: Use torch Sobol engine in torch 1.1
-from ..qmc.sobol import SobolEngine
 
 
 def construct_base_samples(
@@ -127,10 +125,8 @@ def draw_sobol_samples(
     lower = bounds[0]
     rng = bounds[1] - bounds[0]
     sobol_engine = SobolEngine(d, scramble=True, seed=seed)
-    samples_np = sobol_engine.draw(n * q).reshape(n, q, d)
-    samples_raw = torch.from_numpy(samples_np).to(
-        device=lower.device, dtype=lower.dtype
-    )
+    samples_raw = sobol_engine.draw(n * q, dtype=lower.dtype).view(n, q, d)
+    samples_raw = samples_raw.to(device=lower.device)
     return lower + rng * samples_raw
 
 
@@ -162,11 +158,8 @@ def draw_sobol_normal_samples(
         >>> samples = draw_sobol_samples(2, 10, seed=1234)
     """
     normal_qmc_engine = NormalQMCEngine(d=d, seed=seed, inv_transform=True)
-    samples_np = normal_qmc_engine.draw(n)
-    return torch.from_numpy(samples_np).to(
-        dtype=torch.float if dtype is None else dtype,
-        device=device,  # None here will leave it on the cpu
-    )
+    samples = normal_qmc_engine.draw(n, dtype=torch.float if dtype is None else dtype)
+    return samples.to(device=device)
 
 
 @contextmanager
