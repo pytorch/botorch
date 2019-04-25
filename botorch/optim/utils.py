@@ -101,8 +101,8 @@ def _expand_bounds(
 ) -> Optional[Tensor]:
     r"""Expands a tensor representing bounds.
 
-    Expand the dimension of bounds if necessary such that the 1st dimension of
-        bounds is the same as the last dimension of `X`.
+    Expand the dimension of bounds if necessary such that the last dimension of
+    bounds is the same as the last dimension of `X`.
 
     Args:
         bounds: a bound (either upper or lower) of each column (last dimension)

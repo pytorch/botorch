@@ -68,7 +68,7 @@ def gen_candidates_scipy(
     shapeX = clamped_candidates.shape
     x0 = _arrayify(clamped_candidates.view(-1))
     bounds = make_scipy_bounds(
-        lower_bounds=lower_bounds, upper_bounds=upper_bounds, X=initial_conditions
+        X=initial_conditions, lower_bounds=lower_bounds, upper_bounds=upper_bounds
     )
     constraints = make_scipy_linear_constraints(
         shapeX=clamped_candidates.shape,

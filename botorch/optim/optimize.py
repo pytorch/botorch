@@ -58,8 +58,8 @@ def sequential_optimize(
     """
     if not hasattr(acq_function, "X_baseline"):
         raise UnsupportedError(  # pyre-ignore: [16]
-            "Sequential Optimization only supporte for acquisition functions "
-            "with an `X_baseline` property"
+            "Sequential Optimization is only supported for acquisition functions "
+            "with an `X_baseline` property."
         )
     candidate_list = []
     candidates = torch.tensor([])
@@ -157,7 +157,7 @@ def joint_optimize(
 def gen_batch_initial_conditions(
     acq_function: AcquisitionFunction,
     bounds: Tensor,
-    q: Optional[int],
+    q: int,
     num_restarts: int,
     raw_samples: int,
     options: Optional[Dict[str, Union[bool, float, int]]] = None,
@@ -167,9 +167,7 @@ def gen_batch_initial_conditions(
     Args:
         acq_function: The acquisition function to be optimized.
         bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.
-        q: The number of candidates to consider. If None, consider a sinlge
-            candidate and do not use an explicit q-batch dimension (used in
-            conjunction with AnalyticAcquisitionFunction).
+        q: The number of candidates to consider.
         num_restarts: The number of starting points for multistart acquisition
             function optimization.
         raw_samples: The number of raw samples to consider in the initialization
@@ -212,8 +210,6 @@ def gen_batch_initial_conditions(
                 q=1 if q is None else q,
                 seed=seed,
             )
-            if q is None:
-                X_rnd = X_rnd.squeeze(dim=-2)
             with torch.no_grad():
                 Y_rnd = acq_function(X_rnd)
             batch_initial_conditions = init_func(

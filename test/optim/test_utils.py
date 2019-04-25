@@ -5,6 +5,7 @@ import unittest
 import torch
 from botorch.models import ModelListGP, SingleTaskGP
 from botorch.optim.utils import (
+    _expand_bounds,
     _get_extra_mll_args,
     check_convergence,
     columnwise_clamp,
@@ -163,3 +164,28 @@ class testGetExtraMllArgs(unittest.TestCase):
         unsupported_mll = MarginalLogLikelihood(model.likelihood, model)
         with self.assertRaises(ValueError):
             _get_extra_mll_args(mll=unsupported_mll)
+
+
+class testExpandBounds(unittest.TestCase):
+    def test_expand_bounds(self):
+        X = torch.zeros(2, 3)
+        expected_bounds = torch.zeros(1, 3)
+        # bounds is float
+        bounds = 0.0
+        expanded_bounds = _expand_bounds(bounds=bounds, X=X)
+        self.assertTrue(torch.equal(expected_bounds, expanded_bounds))
+        # bounds is 0-d
+        bounds = torch.tensor(0.0)
+        expanded_bounds = _expand_bounds(bounds=bounds, X=X)
+        self.assertTrue(torch.equal(expected_bounds, expanded_bounds))
+        # bounds is 1-d
+        bounds = torch.zeros(3)
+        expanded_bounds = _expand_bounds(bounds=bounds, X=X)
+        self.assertTrue(torch.equal(expected_bounds, expanded_bounds))
+        # bounds is > 1-d
+        bounds = torch.zeros(1, 3)
+        expanded_bounds = _expand_bounds(bounds=bounds, X=X)
+        self.assertTrue(torch.equal(expected_bounds, expanded_bounds))
+        # bounds is None
+        expanded_bounds = _expand_bounds(bounds=None, X=X)
+        self.assertIsNone(expanded_bounds)
