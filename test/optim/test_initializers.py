@@ -45,6 +45,12 @@ class TestInitializeQBatch(unittest.TestCase):
             self.assertEqual(ics.dtype, X.dtype)
             # check that we chose the point with the positive acquisition value
             self.assertTrue(torch.equal(ics[0], X[-1]) or torch.equal(ics[1], X[-1]))
+            # test less than `n` alpha_pos values
+            Y = torch.arange(5, device=device, dtype=dtype)
+            ics = initialize_q_batch_nonneg(X=X, Y=Y, n=2, alpha=1.0)
+            self.assertEqual(ics.shape, torch.Size([2, 3, 4]))
+            self.assertEqual(ics.device, X.device)
+            self.assertEqual(ics.dtype, X.dtype)
 
     def test_initialize_q_batch_nonneg_cuda(self):
         if torch.cuda.is_available():

@@ -46,6 +46,18 @@ class TestApplyConstraints(unittest.TestCase):
         )
         self.assertTrue(torch.equal(obj, ones_f(samples) * 0.5 - 2.0))
 
+        # nonnegative objective, one constraint, eta = 0
+        samples = torch.randn(1)
+        obj = ones_f(samples)
+        with self.assertRaises(ValueError):
+            apply_constraints(
+                obj=obj,
+                constraints=[zeros_f],
+                samples=samples,
+                infeasible_cost=0.0,
+                eta=0.0,
+            )
+
 
 class TestGetObjectiveWeightsTransform(unittest.TestCase):
     def test_NoWeights(self):

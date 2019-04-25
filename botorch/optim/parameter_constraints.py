@@ -21,9 +21,9 @@ ScipyConstraintDict = Dict[
 
 
 def make_scipy_bounds(
-    lower_bounds: Optional[Union[float, Tensor]],
-    upper_bounds: Optional[Union[float, Tensor]],
     X: Tensor,
+    lower_bounds: Optional[Union[float, Tensor]] = None,
+    upper_bounds: Optional[Union[float, Tensor]] = None,
 ) -> Optional[Bounds]:
     r"""Creates a scipy Bounds object for optimziation
 
@@ -41,17 +41,17 @@ def make_scipy_bounds(
     if lower_bounds is None and upper_bounds is None:
         return None
 
-    def _expand(bounds: Tensor, X: Tensor) -> Tensor:
+    def _expand(bounds: Union[float, Tensor], X: Tensor, lower: bool) -> Tensor:
         if bounds is None:
-            ebounds = torch.full_like(X, float("inf"))
+            ebounds = torch.full_like(X, float("-inf" if lower else "inf"))
         else:
             if not torch.is_tensor(bounds):
                 bounds = torch.tensor(bounds)
             ebounds = bounds.expand_as(X)
         return _arrayify(ebounds).flatten()
 
-    lb = _expand(lower_bounds, X)
-    ub = _expand(upper_bounds, X)
+    lb = _expand(bounds=lower_bounds, X=X, lower=True)
+    ub = _expand(bounds=upper_bounds, X=X, lower=False)
     return Bounds(lb=lb, ub=ub, keep_feasible=True)
 
 
