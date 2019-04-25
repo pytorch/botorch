@@ -11,10 +11,10 @@ from typing import Optional
 import torch
 from torch import Tensor
 from torch.nn import Module
+from torch.quasirandom import SobolEngine
 
 from ..exceptions import UnsupportedError
 from ..posteriors import Posterior
-from ..qmc.sobol import SobolEngine
 from ..utils.sampling import draw_sobol_normal_samples, manual_seed
 
 
