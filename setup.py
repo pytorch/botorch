@@ -3,7 +3,6 @@
 import sys
 
 from setuptools import find_packages, setup
-from setuptools.extension import Extension
 
 
 REQUIRED_MAJOR = 3
@@ -35,30 +34,12 @@ def missing(package_name):
     )
 
 
-# check for numpy (required for building Sobol cython)
-try:
-    import numpy
-except ImportError:
-    missing("numpy")
-
-
-# check for Cython itself
-try:
-    from Cython.Build import cythonize
-except ImportError:
-    missing("cython")
-
-
 # error out if setup dependencies not met
 if fatals:
     sys.exit(
         "You need to fix the following issues before you can install botorch:\n - "
         + "\n - ".join(fatals)
     )
-
-
-# TODO: Use torch Sobol once torch 1.1 is released
-EXTENSIONS = [Extension("botorch.qmc.sobol", ["botorch/qmc/sobol.pyx"])]
 
 
 TEST_REQUIRES = ["pytest>=3.6", "pytest-cov"]
@@ -83,9 +64,7 @@ setup(
     python_requires=">=3.6",
     setup_requires=["cython", "numpy"],
     install_requires=["torch>=1.0.1", "gpytorch>=0.3.1", "scipy"],
-    include_dirs=[numpy.get_include()],
     packages=find_packages(),
-    ext_modules=cythonize(EXTENSIONS),
     extras_require={
         "dev": DEV_REQUIRES,
         "test": TEST_REQUIRES,

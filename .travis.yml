@@ -9,9 +9,10 @@ matrix:
     - name: "GPyTorch + PyTorch stable (Python 3.6)"
       python: "3.6"
       install:
-        - pip install -q cython numpy
-        # TODO: Remove when locked to upcoming GPyTorch release 0.3.2
-        - pip install -q git+https://github.com/cornellius-gp/gpytorch.git@8f0d338d42222689f0106f5f29e62ef4777a392f
+        # TODO: Remove once GPyTorch 0.3.2 is released and marked a dep. of botorch
+        - pip install -q git+https://github.com/cornellius-gp/gpytorch.git@32911e3b51901917c0f14101972581c1295b5edb
+        # TODO: Remove once PyTorch 1.1 is released and marked a dep. of botorch
+        - pip install -q torch_nightly -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
         - pip install -q -e .[test]
       script:
         - pytest -ra --cov=. --cov-report term-missing
@@ -22,9 +23,10 @@ matrix:
       python: "3.7"
       dist: xenial
       install:
-        - pip install -q cython numpy
-        # TODO: Remove when locked to upcoming GPyTorch release 0.3.2
-        - pip install -q git+https://github.com/cornellius-gp/gpytorch.git@8f0d338d42222689f0106f5f29e62ef4777a392f
+        # TODO: Remove once GPyTorch 0.3.2 is released and marked a dep. of botorch
+        - pip install -q git+https://github.com/cornellius-gp/gpytorch.git@32911e3b51901917c0f14101972581c1295b5edb
+        # TODO: Remove once PyTorch 1.1 is released and marked a dep. of botorch
+        - pip install -q torch_nightly -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
         - pip install -q -e .[test]
       script:
         - pytest -ra --cov=. --cov-report term-missing
@@ -32,9 +34,10 @@ matrix:
     - name: "GPyTorch + PyTorch latest"
       python: "3.6"
       install:
-        - pip install -q cython numpy
-        - pip install -q torch_nightly -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html;
+        # TODO: Fix gpytorch installation to work with torch nightly in pip,
+        # so we don't have to reinstall torch nightly after installing stable
         - pip install -q git+https://github.com/cornellius-gp/gpytorch.git
+        - pip install -q torch_nightly -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
         - pip install -q -e .[test]
       script:
         - pytest -ra --cov=. --cov-report term-missing
@@ -57,9 +60,10 @@ matrix:
     - name: "Docs: Sphinx (Python 3.6)"
       python: "3.6"
       install:
-        - pip install -q cython numpy
-        # TODO: Remove when locked to upcoming GPyTorch release 0.3.2
-        - pip install -q git+https://github.com/cornellius-gp/gpytorch.git@8f0d338d42222689f0106f5f29e62ef4777a392f
+        # TODO: Remove once GPyTorch 0.3.2 is released and marked a dep. of botorch
+        - pip install -q git+https://github.com/cornellius-gp/gpytorch.git@32911e3b51901917c0f14101972581c1295b5edb
+        # TODO: Remove once PyTorch 1.1 is released and marked a dep. of botorch
+        - pip install -q torch_nightly -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
         - pip install -q -e .[dev]
       script:
         # warnings treated as errors

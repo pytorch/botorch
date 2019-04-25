@@ -1,11 +1,23 @@
-# Contributing to botorch
-We want to make contributing to botorch is as easy and transparent as possible.
+# Contributing to BoTorch
+We want to make contributing to BoTorch is as easy and transparent as possible.
+
+
+## Development installation
+
+To get the development installation with all the necessary dependencies for
+linting, testing, and building the documentation, run the following:
+```bash
+git clone https://github.com/facebookexternal/botorch.git
+cd botorch
+pip install -e .[dev]
+```
+
 
 ## Our Development Process
 
 #### Code Style
 
-botorch uses the [black](https://github.com/ambv/black) code formatter to
+BoTorch uses the [black](https://github.com/ambv/black) code formatter to
 enforce a common code style across the code base. black is installed easily via
 pip using `pip install black`, and run locally by calling
 ```bash
@@ -20,7 +32,7 @@ Travis will fail on your PR if it does not adhere to the black formatting style.
 
 
 #### Type Hints
-botorch is fully typed using python 3.6+
+BoTorch is fully typed using python 3.6+
 [type hints](https://www.python.org/dev/peps/pep-0484/).
 We expect any contributions to also use proper type annotations. While we
 currently do not enforce full consistency of these in Travis (type checkers can
@@ -40,7 +52,7 @@ python -m unittest
 
 #### Documentation
 
-botorch's website is also open source, and is part of this very repository (the
+BoTorch's website is also open source, and is part of this very repository (the
 code can be found in the [website](../website/) folder).
 It is built using [Docusaurus](https://docusaurus.io/), and consists of three
 main elements:
@@ -89,5 +101,5 @@ outlined on that page and do not file a public issue.
 
 
 ## License
-By contributing to botorch, you agree that your contributions will be licensed
+By contributing to BoTorch, you agree that your contributions will be licensed
 under the LICENSE file in the root directory of this source tree.
