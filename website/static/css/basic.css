@@ -220,6 +220,11 @@ div.body {
     max-width: 800px;
 }
 
+dd {
+    padding-top: 10px;
+    padding-bottom: 5px;
+}
+
 div.body p, div.body dd, div.body li, div.body blockquote {
     -moz-hyphens: auto;
     -ms-hyphens: auto;
