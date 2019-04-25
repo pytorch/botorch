@@ -6,6 +6,7 @@ import torch
 from botorch.utils.transforms import (
     match_batch_shape,
     normalize,
+    squeeze_last_dim,
     standardize,
     t_batch_mode_transform,
     unnormalize,
@@ -118,3 +119,10 @@ class TestMatchBatchShape(unittest.TestCase):
         Y = torch.rand(4, 3, 3, 2)
         with self.assertRaises(RuntimeError):
             match_batch_shape(X, Y)
+
+
+class TestSqueezeLastDim(unittest.TestCase):
+    def test_squeeze_last_dim(self):
+        Y = torch.rand(2, 1, 1)
+        Y_squeezed = squeeze_last_dim(Y=Y)
+        self.assertTrue(torch.equal(Y_squeezed, Y.squeeze(-1)))

@@ -4,7 +4,8 @@ import warnings
 from unittest import TestCase, mock
 
 import torch
-from botorch.exceptions import BadInitialCandidatesWarning
+from botorch.exceptions.errors import UnsupportedError
+from botorch.exceptions.warnings import BadInitialCandidatesWarning
 from botorch.optim.optimize import (
     gen_batch_initial_conditions,
     joint_optimize,
@@ -14,8 +15,9 @@ from torch import Tensor
 
 
 class MockAcquisitionFunction:
-    def __init__(self):
-        self.X_baseline = None
+    def __init__(self, has_X_baseline_attr=True):
+        if has_X_baseline_attr:
+            self.X_baseline = None
         self.model = None
 
     def __call__(self, X):
@@ -31,16 +33,17 @@ class TestGenBatchInitialcandidates(TestCase):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
             bounds = torch.tensor([[0, 0], [1, 1]], device=device, dtype=dtype)
-            for simple in (True, False):
+            for nonnegative in (True, False):
                 batch_initial_conditions = gen_batch_initial_conditions(
                     acq_function=MockAcquisitionFunction(),
                     bounds=bounds,
                     q=1,
                     num_restarts=2,
                     raw_samples=10,
-                    options={"simple_init": simple},
+                    options={"nonnegative": nonnegative, "eta": 0.01, "alpha": 0.1},
                 )
-                self.assertEqual(batch_initial_conditions.shape, torch.Size([2, 1, 2]))
+                expected_shape = torch.Size([2, 1, 2])
+                self.assertEqual(batch_initial_conditions.shape, expected_shape)
                 self.assertEqual(batch_initial_conditions.device, bounds.device)
                 self.assertEqual(batch_initial_conditions.dtype, bounds.dtype)
 
@@ -63,7 +66,6 @@ class TestGenBatchInitialcandidates(TestCase):
                         q=1,
                         num_restarts=2,
                         raw_samples=10,
-                        options={"simple_init": True},
                     )
                     self.assertEqual(len(ws), 1)
                     self.assertTrue(
@@ -88,9 +90,9 @@ class TestSequentialOptimize(TestCase):
         num_restarts = 2
         raw_samples = 10
         options = {}
-        mock_acq_function = MockAcquisitionFunction()
         tkwargs = {"device": torch.device("cuda") if cuda else torch.device("cpu")}
         for dtype in (torch.float, torch.double):
+            mock_acq_function = MockAcquisitionFunction()
             tkwargs["dtype"] = dtype
             joint_optimize_return_values = [
                 torch.tensor([[[1.1, 2.1, 3.1]]], **tkwargs) for _ in range(q)
@@ -131,6 +133,17 @@ class TestSequentialOptimize(TestCase):
             call_args_list = mock_joint_optimize.call_args_list[-q:]
             for i in range(q):
                 self.assertEqual(call_args_list[i][1], expected_call_kwargs)
+
+            # test that error is raised for acquisition functions without X_baseline
+            mock_acq_function = MockAcquisitionFunction(has_X_baseline_attr=False)
+            with self.assertRaises(UnsupportedError):
+                sequential_optimize(
+                    acq_function=mock_acq_function,
+                    bounds=bounds,
+                    q=q,
+                    num_restarts=num_restarts,
+                    raw_samples=raw_samples,
+                )
 
     def test_sequential_optimize_cuda(self):
         if torch.cuda.is_available():
