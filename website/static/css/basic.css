@@ -217,7 +217,12 @@ table.modindextable td {
 
 div.body {
     min-width: 450px;
-    max-width: 800px;
+    max-width: 900px;
+}
+
+dd {
+    padding-top: 10px;
+    padding-bottom: 5px;
 }
 
 div.body p, div.body dd, div.body li, div.body blockquote {
