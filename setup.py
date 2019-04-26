@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import os
+import re
 import sys
 
 from setuptools import find_packages, setup
@@ -48,10 +50,13 @@ DEV_REQUIRES = TEST_REQUIRES + ["black", "flake8", "sphinx", "sphinx-autodoc-typ
 
 TUTORIAL_REQUIRES = ["jupyter", "matplotlib"]
 
+# get version string from setup.py
+with open(os.path.join(os.path.dirname(__file__), "botorch/__init__.py"), "r") as f:
+    version = re.search(r"__version__ = ['\"]([^'\"]*)['\"]", f.read(), re.M).group(1)
 
 setup(
     name="botorch",
-    version="0.1a2",
+    version=version,
     description="Bayesian Optimization in PyTorch",
     author="Facebook, Inc.",
     license="MIT",
