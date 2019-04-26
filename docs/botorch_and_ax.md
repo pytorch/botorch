@@ -15,9 +15,9 @@ Ax provides a `BotorchModel` (**TODO**: cross-link to Ax documentation) that is
 a sensible default for modeling and optimization which can be customized by
 specifying and passing in bespoke model constructors, acquisition functions,
 and optimization strategies.
-This model bridge utilizes a number of built-in transformations (**TODO**: make
-sure these transformations are documented in Ax, and link to them here), such
-as normalizing input spaces and outputs to ensure reasonable fitting of GPs.
+This model bridge utilizes a number of built-in transformations (**TODO**:
+cross-link to Ax documentation), such as normalizing input spaces and outputs to
+ensure reasonable fitting of GPs.
 
 ## When to use BoTorch though Ax
 
