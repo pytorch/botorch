@@ -138,6 +138,12 @@ class NormalQMCTests(unittest.TestCase):
 
 
 class MultivariateNormalQMCTests(unittest.TestCase):
+    def test_MultivariateNormalQMCEngineShapeErrors(self):
+        with self.assertRaises(ValueError):
+            MultivariateNormalQMCEngine(mean=torch.zeros(2), cov=torch.zeros(2, 1))
+        with self.assertRaises(ValueError):
+            MultivariateNormalQMCEngine(mean=torch.zeros(1), cov=torch.eye(2))
+
     def test_MultivariateNormalQMCEngineNonPSD(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):

@@ -17,30 +17,30 @@ class Posterior(ABC):
     @abstractproperty
     def device(self) -> torch.device:
         r"""The torch device this posterior lives on."""
-        pass
+        pass  # pragma: no cover
 
     @abstractproperty
     def dtype(self) -> torch.dtype:
         r"""The torch dtype of this posterior."""
-        pass
+        pass  # pragma: no cover
 
     @abstractproperty
     def event_shape(self) -> torch.Size:
         r"""The event shape (i.e. the shape of a single sample)."""
-        pass
+        pass  # pragma: no cover
 
     @property
     def mean(self) -> Tensor:
         r"""The mean of the posterior as a `(b) x n x o`-dim Tensor."""
         raise NotImplementedError(
-            f"Property `mean` not implemented for {self.__name__}"
+            f"Property `mean` not implemented for {self.__class__.__name__}"
         )
 
     @property
     def variance(self) -> Tensor:
         r"""The variance of the posterior as a `(b) x n x o`-dim Tensor."""
         raise NotImplementedError(
-            f"Property `variance` not implemented for {self.__name__}"
+            f"Property `variance` not implemented for {self.__class__.__name__}"
         )
 
     @abstractmethod
@@ -62,7 +62,7 @@ class Posterior(ABC):
         Returns:
             A `sample_shape x event`-dim Tensor of samples from the posterior.
         """
-        pass
+        pass  # pragma: no cover
 
     def sample(
         self,

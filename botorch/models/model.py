@@ -41,31 +41,4 @@ class Model(Module, ABC):
             A `Posterior` object, representing a batch of `b` joint distributions
             over `q` points and `o` outputs each.
         """
-        pass
-
-    def reinitialize(
-        self,
-        train_X: Tensor,
-        train_Y: Tensor,
-        train_Yvar: Optional[Tensor] = None,
-        keep_params: bool = True,
-        **kwargs: Any,
-    ) -> None:
-        r"""Re-initializes a model given new data.
-
-        Args:
-            train_X: A `n x d`-dim (or `b x n x d`) Tensor containing the new
-                training inputs.
-            train_Y: A `n x o`-dim (or `b x n x d`) Tensor containing the new
-                training outputs.
-            train_Yvar: A `n x o`-dim (or `b x n x o`) Tensor containing the
-                observed measurement noise at the training outputs.
-            keep_params: If True, do not reset the model hyperparameters.
-
-        This does not refit the model. If device/dtype of the new training data
-        are different from that of the model, then the model is moved to the new
-        device/dtype.
-        """
-        raise NotImplementedError(
-            f"Method `reinitialize` not implemented for {self.__name__}"
-        )
+        pass  # pragma: no cover

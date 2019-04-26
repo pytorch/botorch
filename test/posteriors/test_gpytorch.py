@@ -25,12 +25,19 @@ class TestGPyTorchPosterior(unittest.TestCase):
             self.assertTrue(torch.equal(posterior.mean, mean.unsqueeze(-1)))
             self.assertTrue(torch.equal(posterior.variance, variance.unsqueeze(-1)))
             # rsample
+            samples = posterior.rsample()
+            self.assertEqual(samples.shape, torch.Size([1, 3, 1]))
             samples = posterior.rsample(sample_shape=torch.Size([4]))
             self.assertEqual(samples.shape, torch.Size([4, 3, 1]))
             samples2 = posterior.rsample(sample_shape=torch.Size([4, 2]))
             self.assertEqual(samples2.shape, torch.Size([4, 2, 3, 1]))
             # rsample w/ base samples
             base_samples = torch.randn(4, 3, 1, device=device, dtype=dtype)
+            # incompatible shapes
+            with self.assertRaises(RuntimeError):
+                posterior.rsample(
+                    sample_shape=torch.Size([3]), base_samples=base_samples
+                )
             samples_b1 = posterior.rsample(
                 sample_shape=torch.Size([4]), base_samples=base_samples
             )

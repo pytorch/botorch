@@ -170,7 +170,7 @@ class ModelListGPyTorchModel(GPyTorchModel, ABC):
     @abstractproperty
     def num_outputs(self) -> int:
         r"""The number of outputs of the model."""
-        pass
+        pass  # pragma: no cover
 
     def posterior(
         self,
@@ -267,8 +267,6 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
         """
         if output_indices is None:
             output_indices = self._output_tasks
-        elif isinstance(output_indices, int):
-            output_indices = [output_indices]
         if any(i not in self._output_tasks for i in output_indices):
             raise ValueError("Too many output indices")
 

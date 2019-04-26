@@ -71,6 +71,19 @@ class TestMultiTaskGP(unittest.TestCase):
             posterior_f = model.posterior(test_x)
             self.assertIsInstance(posterior_f, GPyTorchPosterior)
             self.assertIsInstance(posterior_f.mvn, MultitaskMultivariateNormal)
+            self.assertEqual(posterior_f.mean.shape, torch.Size([2, 2]))
+            self.assertEqual(posterior_f.variance.shape, torch.Size([2, 2]))
+
+            # test posterior w/ single output index
+            posterior_f = model.posterior(test_x, output_indices=[0])
+            self.assertIsInstance(posterior_f, GPyTorchPosterior)
+            self.assertIsInstance(posterior_f.mvn, MultivariateNormal)
+            self.assertEqual(posterior_f.mean.shape, torch.Size([2, 1]))
+            self.assertEqual(posterior_f.variance.shape, torch.Size([2, 1]))
+
+            # test posterior w/ bad output index
+            with self.assertRaises(ValueError):
+                model.posterior(test_x, output_indices=[2])
 
             # test posterior (batch eval)
             test_x = torch.rand(3, 2, 1, **tkwargs)

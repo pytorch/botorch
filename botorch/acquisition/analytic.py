@@ -32,7 +32,7 @@ class AnalyticAcquisitionFunction(AcquisitionFunction, ABC):
         if posterior.event_shape[-1] != 1:
             raise UnsupportedError(
                 "Multi-Output posteriors are not supported for acquisition "
-                f" function of type {self.__class__}"
+                f" function of type {self.__class__.__name__}"
             )
 
 

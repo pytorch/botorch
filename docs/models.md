@@ -32,11 +32,6 @@ and returns a [`Posterior`](../api/posteriors.html#posterior) object describing
 the (joint) probability distribution of the model output(s) over the design
 points in `X`
 
-In addition, it is typically useful to define a `reinitialize()` method that
-provides a way to reinitialize a model with new data while optionally keeping
-previously learned hyperparameters fixed (so as to speed up subsequent model
-fitting).
-
 When working with GPs, [`GPyTorchModel`](../api/models.html#gpytorchmodel)
 provides a base class for conveniently wrapping GPyTorch models.
 
