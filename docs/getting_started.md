@@ -14,7 +14,7 @@ title: Getting started
 - cython (**TODO:** Remove)
 
 For detailed installation instructions, please see the
-[Readme](https://github.com/facebookexternal/botorch/blob/master/README.md)
+[Readme](https://github.com/pytorch/botorch/blob/master/README.md)
 on GitHub.
 
 
@@ -32,5 +32,5 @@ For an in-depth reference of the BoTorch internals, see our
 ## Contributing
 
 You'd like to contribute to BoTorch? Great! Please see
-[here](https://github.com/facebookexternal/botorch/blob/master/CONTRIBUTING.md)
+[here](https://github.com/pytorch/botorch/blob/master/CONTRIBUTING.md)
 for how to help out.

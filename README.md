@@ -3,8 +3,8 @@
 </a>
 
 [![Build Status](
-  https://travis-ci.com/facebookexternal/botorch.svg?token=esFvpzSw7sLSsfe1PAr1&branch=master
-)](https://travis-ci.com/facebookexternal/botorch)
+  https://travis-ci.com/pytorch/botorch.svg?token=esFvpzSw7sLSsfe1PAr1&branch=master
+)](https://travis-ci.com/pytorch/botorch)
 
 
 BoTorch is a library for Bayesian Optimization built on PyTorch.
@@ -79,7 +79,7 @@ occasional bug here or there), you can install the latest master from GitHub
 (this will also require installing the current GPyTorch master)::
 ```bash
 pip install git+https://github.com/cornellius-gp/gpytorch.git
-pip install git+https://github.com/facebookexternal/botorch.git
+pip install git+https://github.com/pytorch/botorch.git
 ```
 
 
@@ -87,7 +87,7 @@ pip install git+https://github.com/facebookexternal/botorch.git
 
 BoTorch is easily installed using pip:
 ```bash
-pip install git+ssh://git@github.com/facebookexternal/botorch.git
+pip install git+ssh://git@github.com/pytorch/botorch.git
 ```
 
 *Note:* You must use **ssh** here since the repo is private - for this to work,

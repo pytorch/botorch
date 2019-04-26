@@ -34,7 +34,7 @@ const siteConfig = {
     {href: `${baseUrl}api/`, label: 'API Reference'},
     // Search can be enabled when site is online and indexed
     // {search: true},
-    {href: 'https://github.com/facebookexternal/botorch', label: 'GitHub'},
+    {href: 'https://github.com/pytorch/botorch', label: 'GitHub'},
   ],
 
   // If you have users set above, you add it here:

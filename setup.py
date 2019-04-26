@@ -55,7 +55,7 @@ setup(
     description="Bayesian Optimization in PyTorch",
     author="Facebook, Inc.",
     license="MIT",
-    url="https://github.com/facebookexternal/botorch",
+    url="https://github.com/pytorch/botorch",
     keywords=["Bayesian Optimization", "pytorch", "Gaussian Process"],
     classifiers=[
         "Development Status :: 3 - Alpha",
