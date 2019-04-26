@@ -30,22 +30,13 @@ class GPyTorchModel(Model, ABC):
     """
 
     def posterior(
-        self,
-        X: Tensor,
-        output_indices: Optional[List[int]] = None,
-        observation_noise: bool = False,
-        **kwargs: Any,
+        self, X: Tensor, observation_noise: bool = False, **kwargs: Any
     ) -> GPyTorchPosterior:
         r"""Computes the posterior over model outputs at the provided points.
 
         Args:
             X: A `(batch_shape) x q x d`-dim Tensor, where `d` is the dimension of the
                 feature space and `q` is the number of points considered jointly.
-            output_indices: A list of indices, corresponding to the outputs over
-                which to compute the posterior (if the model is multi-output).
-                Can be used to speed up computation if only a subset of the
-                model's outputs are required for optimization. If omitted,
-                computes the posterior over all model outputs.
             observation_noise: If True, add observation noise to the posterior.
             detach_test_caches: If True, detach GPyTorch test caches during
                 computation of the posterior. Required for being able to compute
@@ -54,14 +45,9 @@ class GPyTorchModel(Model, ABC):
 
         Returns:
             A `GPyTorchPosterior` object, representing a batch of `b` joint
-            distributions over `q` points and the outputs selected by
-            `output_indices` each. Includes observation noise if
+            distributions over `q` points. Includes observation noise if
             `observation_noise=True`.
         """
-        if output_indices is not None and output_indices != [0]:
-            raise RuntimeError(
-                "Cannot pass more than one output index to single-output model"
-            )
         self.eval()  # make sure model is in eval mode
         detach_test_caches = kwargs.get("detach_test_caches", True)
         with ExitStack() as es:
