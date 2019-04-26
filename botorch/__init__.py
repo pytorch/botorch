@@ -7,7 +7,7 @@ from .gen import gen_candidates_scipy, gen_candidates_torch, get_best_candidates
 from .utils import manual_seed
 
 
-__version__ = "0.1a2"
+__version__ = "0.1.0a3"
 
 
 __all__ = [
