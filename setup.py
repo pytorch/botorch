@@ -48,7 +48,7 @@ TEST_REQUIRES = ["pytest>=3.6", "pytest-cov"]
 
 DEV_REQUIRES = TEST_REQUIRES + ["black", "flake8", "sphinx", "sphinx-autodoc-typehints"]
 
-TUTORIAL_REQUIRES = ["jupyter", "matplotlib"]
+TUTORIAL_REQUIRES = ["jupyter", "matplotlib", "torchvision"]
 
 # get version string from setup.py
 with open(os.path.join(os.path.dirname(__file__), "botorch/__init__.py"), "r") as f:
