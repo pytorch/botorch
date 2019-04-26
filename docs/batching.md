@@ -32,34 +32,22 @@ with the $i$-th element corresponding to the $i$-th t-batch. Always requiring a
 explicit t-batch dimension makes it much easier and less ambiguous to work with
 samples from the posterior in a consistent fashion.
 
-#### Batch-Mode Decorators
+
+#### Batch-Mode Decorator
 
 In order to simplify the user-facing API for evaluating acquisition functions,  
 BoTorch implements the
 [`@t_batch_mode_transform`](../api/utils.html#botorch.utils.transforms.t_batch_mode_transform)
-and
-[`@q_batch_mode_transform`](../api/utils.html#botorch.utils.transforms.q_batch_mode_transform)
-decorators.
-
-##### `@t_batch_mode_transform`
-
-This decorator simplifies evaluating MC-based acquisition functions using
-inputs in non-batch mode. If applied to an instance method with a single `Tensor`
+decorator, which allows the use of non-batch mode inputs. If applied to an
+instance method with a single `Tensor`
 argument, an input tensor to that method without a t-batch dimension (i.e.
 tensors of shape $q \times d$) will automatically be converted to a t-batch of
 size 1 (i.e. of `batch_shape` `torch.Size([1])`), This is typically used on the
-`forward` method of a `MCAcquisitionFunction`.
-
-
-##### `@q_batch_mode_transform`
-
-This decorator simplifies evaluating analytic acquisition functions with input
-tensors that do not have a q-batch dimension. If applied to an instance method
-with a single `Tensor` argument, an input tensor to that method will
-automatically receive an additional singleton dimension at the second-to-last
-dimension. This is typically used on the `forward` method of an
-`AnalyicAcquisitionFunction`.
-
+`forward` method of an `AcquisitionFunction`.
+The `@t_batch_mode_transform` decorator takes an `expected_q` argument that, if
+specified, checks that the number of q-batches in the input is equal to the
+one specified in the decorator. This is typically used for acquisition functions
+that can only handle the case $q=1$ (e.g. any `AnalyticAcqusitionFunction`).
 
 
 ## Batching Sample Shapes
