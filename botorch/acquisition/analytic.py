@@ -275,9 +275,7 @@ class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
         self.maximize = maximize
         self.objective_index = objective_index
         self.constraints = constraints
-        if not torch.is_tensor(best_f):
-            best_f = torch.tensor(best_f)
-        self.register_buffer("best_f", best_f)
+        self.register_buffer("best_f", torch.as_tensor(best_f))
         self._preprocess_constraint_bounds(constraints=constraints)
         self.register_forward_pre_hook(convert_to_target_pre_hook)
 
@@ -304,8 +302,8 @@ class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
         if not self.maximize:
             u = -u
         normal = Normal(
-            torch.zeros_like(u, device=u.device, dtype=u.dtype),
-            torch.ones_like(u, device=u.device, dtype=u.dtype),
+            torch.zeros(1, device=u.device, dtype=u.dtype),
+            torch.ones(1, device=u.device, dtype=u.dtype),
         )
         ei_pdf = torch.exp(normal.log_prob(u))  # (b) x 1
         ei_cdf = normal.cdf(u)
@@ -361,28 +359,17 @@ class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
 
         if len(self.constraint_lower_inds) > 0:
             normal_lower = _construct_dist(means, sigmas, self.constraint_lower_inds)
-            prob_feas = prob_feas.mul(
-                torch.prod(
-                    1 - normal_lower.cdf(self.constraint_lower), dim=-1, keepdim=True
-                )
-            )
+            prob_l = 1 - normal_lower.cdf(self.constraint_lower)
+            prob_feas = prob_feas.mul(torch.prod(prob_l, dim=-1, keepdim=True))
         if len(self.constraint_upper_inds) > 0:
             normal_upper = _construct_dist(means, sigmas, self.constraint_upper_inds)
-            prob_feas = prob_feas.mul(
-                torch.prod(
-                    normal_upper.cdf(self.constraint_upper), dim=-1, keepdim=True
-                )
-            )
+            prob_u = normal_upper.cdf(self.constraint_upper)
+            prob_feas = prob_feas.mul(torch.prod(prob_u, dim=-1, keepdim=True))
         if len(self.constraint_both_inds) > 0:
             normal_both = _construct_dist(means, sigmas, self.constraint_both_inds)
-            prob_feas = prob_feas.mul(
-                torch.prod(
-                    normal_both.cdf(self.constraint_both[:, 1])
-                    - normal_both.cdf(self.constraint_both[:, 0]),
-                    dim=-1,
-                    keepdim=True,
-                )
-            )
+            prob_u = normal_both.cdf(self.constraint_both[:, 1])
+            prob_l = normal_both.cdf(self.constraint_both[:, 0])
+            prob_feas = prob_feas.mul(torch.prod(prob_u - prob_l, dim=-1, keepdim=True))
         return prob_feas
 
 

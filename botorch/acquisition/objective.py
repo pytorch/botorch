@@ -37,7 +37,7 @@ class MCAcquisitionObjective(Module, ABC):
             >>> samples = sampler(posterior)
             >>> outcome = mc_obj(samples)
         """
-        pass
+        pass  # pragma: no cover
 
 
 class IdentityMCObjective(MCAcquisitionObjective):

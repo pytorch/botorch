@@ -36,4 +36,4 @@ class AcquisitionFunction(Module, ABC):
             A `(b)`-dim Tensor of acquisition funciton values at the given
             design points `X`.
         """
-        pass
+        pass  # pragma: no cover

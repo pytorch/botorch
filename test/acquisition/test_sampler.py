@@ -8,8 +8,10 @@ from botorch.acquisition.sampler import (
     MCSampler,
     SobolQMCNormalSampler,
 )
+from botorch.exceptions.errors import UnsupportedError
 from botorch.posteriors import GPyTorchPosterior
 from gpytorch.distributions import MultivariateNormal
+from gpytorch.lazy import DiagLazyTensor
 
 
 def _get_posterior(cuda=False, dtype=torch.float):
@@ -288,3 +290,13 @@ class TestSobolQMCNormalSampler(unittest.TestCase):
     def test_forward_no_collapse_cuda(self):
         if torch.cuda.is_available():
             self.test_forward_no_collapse(cuda=True)
+
+    def test_unsupported_dimension(self):
+        sampler = SobolQMCNormalSampler(num_samples=2)
+        mean = torch.zeros(1112)
+        cov = DiagLazyTensor(torch.ones(1112))
+        mvn = MultivariateNormal(mean, cov)
+        posterior = GPyTorchPosterior(mvn)
+        with self.assertRaises(UnsupportedError) as e:
+            sampler(posterior)
+            self.assertIn("Requested: 1112", str(e.exception))

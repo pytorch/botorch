@@ -300,6 +300,28 @@ class TestConstrainedExpectedImprovement(unittest.TestCase):
             )
             ei_expected = ei_expected_unconstrained * 0.5 * 0.5 * 0.5
             self.assertTrue(torch.allclose(ei, ei_expected, atol=1e-4))
+            # test maximize
+            module_min = ConstrainedExpectedImprovement(
+                model=mm,
+                best_f=0.0,
+                objective_index=0,
+                constraints={1: [None, 0]},
+                maximize=False,
+            )
+            ei_min = module_min(X)
+            ei_expected_unconstrained_min = torch.tensor(
+                0.6978, device=device, dtype=dtype
+            )
+            ei_expected_min = ei_expected_unconstrained_min * 0.5
+            self.assertTrue(torch.allclose(ei_min, ei_expected_min, atol=1e-4))
+            # test invalid onstraints
+            with self.assertRaises(ValueError):
+                ConstrainedExpectedImprovement(
+                    model=mm,
+                    best_f=0.0,
+                    objective_index=0,
+                    constraints={1: [1.0, -1.0]},
+                )
 
     def test_constrained_expected_improvement_cuda(self, cuda=False):
         if torch.cuda.is_available():
@@ -386,7 +408,7 @@ class TestNoisyExpectedImprovement(unittest.TestCase):
             self.assertGreater(X_test.grad[0].abs().item(), 1e-4)
             # test without gradient
             with torch.no_grad():
-                val = nEI(X_test)
+                nEI(X_test)
 
     def test_noisy_expected_improvement_cuda(self, cuda=False):
         if torch.cuda.is_available():

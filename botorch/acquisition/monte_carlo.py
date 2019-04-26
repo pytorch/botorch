@@ -59,7 +59,7 @@ class MCAcquisitionFunction(AcquisitionFunction, ABC):
         r"""Takes in a `(b) x q x d` X Tensor of `b` t-batches with `q` `d`-dim
         design points each, expands and concatenates `self.X_pending` and
         returns a one-dimensional Tensor with `b` elements."""
-        pass
+        pass  # pragma: no cover
 
 
 class qExpectedImprovement(MCAcquisitionFunction):

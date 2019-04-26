@@ -81,10 +81,6 @@ class MCSampler(Module, ABC):
         r"""The shape of a single sample"""
         return self._sample_shape
 
-    @sample_shape.setter
-    def sample_shape(self, shape: torch.Size) -> None:
-        self._sample_shape = shape
-
     @abstractmethod
     def _construct_base_samples(self, posterior: Posterior, shape: torch.Size) -> None:
         r"""Generate base samples (if necessary).
@@ -102,7 +98,7 @@ class MCSampler(Module, ABC):
             posterior: The Posterior for which to generate base samples.
             shape: The shape of the base samples to construct.
         """
-        pass
+        pass  # pragma: no cover
 
 
 class IIDNormalSampler(MCSampler):
@@ -233,7 +229,7 @@ class SobolQMCNormalSampler(MCSampler):
             if output_dim > SobolEngine.MAXDIM:
                 raise UnsupportedError(
                     "SobolQMCSampler only supports dimensions "
-                    f"`qt <= {SobolEngine.MAXDIM}`. Requested: {output_dim}"
+                    f"`q * o <= {SobolEngine.MAXDIM}`. Requested: {output_dim}"
                 )
             base_samples = draw_sobol_normal_samples(
                 d=output_dim,
