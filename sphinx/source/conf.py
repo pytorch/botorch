@@ -14,7 +14,7 @@ import re
 import sys
 
 
-base_path = os.path.abspath(os.path.join(__file__, "..", "..", ".."))
+base_path = os.path.abspath(os.path.join(__file__, "..", "..", "..", "botorch"))
 sys.path.append(base_path)
 
 
@@ -26,14 +26,14 @@ author = "Facebook, Inc."
 
 
 # get version string from setup.py
-with open(os.path.join(base_path, "setup.py"), "r") as f:
-    match = re.search(r"version=['\"]([^'\"]*)['\"]", f.read(), re.M)
+with open(os.path.join(base_path, "__init__.py"), "r") as f:
+    match = re.search(r"__version__ = ['\"]([^'\"]*)['\"]", f.read(), re.M)
 
-# The full version (of the form X.YaZ or X.Y.pZ)
+# The full version (of the form X.Y.ZaW or X.Y.Z.pW)
 release = match.group(1)
-# The short X.Y version
+# The short X.Y.Z version
 splits = release.split(".")
-version = ".".join(splits[0] + splits[1][:1])  # TODO: be smarter here
+version = ".".join(splits[:2] + [splits[2][:1]])  # TODO: be smarter here
 
 
 # -- General configuration ---------------------------------------------------
