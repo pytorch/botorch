@@ -103,7 +103,7 @@ class qExpectedImprovement(MCAcquisitionFunction):
             best_f = torch.tensor(float(best_f))
         self.register_buffer("best_f", best_f)
 
-    @t_batch_mode_transform
+    @t_batch_mode_transform()
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate qExpectedImprovement on the candidate set `X`.
 
@@ -162,7 +162,7 @@ class qNoisyExpectedImprovement(MCAcquisitionFunction):
         super().__init__(model=model, sampler=sampler, objective=objective)
         self.register_buffer("X_baseline", X_baseline)
 
-    @t_batch_mode_transform
+    @t_batch_mode_transform()
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate qNoisyExpectedImprovement on the candidate set `X`.
 
@@ -234,7 +234,7 @@ class qProbabilityOfImprovement(MCAcquisitionFunction):
             tau = torch.tensor(float(tau))
         self.register_buffer("tau", tau)
 
-    @t_batch_mode_transform
+    @t_batch_mode_transform()
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate qProbabilityOfImprovement on the candidate set `X`.
 
@@ -263,7 +263,7 @@ class qSimpleRegret(MCAcquisitionFunction):
     `qSR(X) = E(max Y), Y ~ f(X), X = (x_1,...,x_q)`
     """
 
-    @t_batch_mode_transform
+    @t_batch_mode_transform()
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate qSimpleRegret on the candidate set `X`.
 
@@ -317,7 +317,7 @@ class qUpperConfidenceBound(MCAcquisitionFunction):
         super().__init__(model=model, sampler=sampler, objective=objective)
         self.register_buffer("beta", torch.tensor(float(beta)))
 
-    @t_batch_mode_transform
+    @t_batch_mode_transform()
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate qUpperConfidenceBound on the candidate set `X`.
 

@@ -55,19 +55,21 @@ class TestExpectedImprovement(unittest.TestCase):
     def test_expected_improvement_batch(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
-            mean = torch.tensor([[-0.5], [0.0], [0.5]], device=device, dtype=dtype)
-            variance = torch.ones(3, 1, device=device, dtype=dtype)
+            mean = torch.tensor([-0.5, 0.0, 0.5], device=device, dtype=dtype).view(
+                3, 1, 1
+            )
+            variance = torch.ones(3, 1, 1, device=device, dtype=dtype)
             mm = MockModel(MockPosterior(mean=mean, variance=variance))
             module = ExpectedImprovement(model=mm, best_f=0.0)
-            X = torch.empty(3, 1, device=device, dtype=dtype)  # dummy
+            X = torch.empty(3, 1, 1, device=device, dtype=dtype)  # dummy
             ei = module(X)
             ei_expected = torch.tensor(
                 [0.19780, 0.39894, 0.69780], device=device, dtype=dtype
             )
             self.assertTrue(torch.allclose(ei, ei_expected, atol=1e-4))
             # check for proper error if multi-output model
-            mean2 = torch.rand(3, 2, device=device, dtype=dtype)
-            variance2 = torch.rand(3, 2, device=device, dtype=dtype)
+            mean2 = torch.rand(3, 1, 2, device=device, dtype=dtype)
+            variance2 = torch.rand(3, 1, 2, device=device, dtype=dtype)
             mm2 = MockModel(MockPosterior(mean=mean2, variance=variance2))
             module2 = ExpectedImprovement(model=mm2, best_f=0.0)
             with self.assertRaises(UnsupportedError):
@@ -85,9 +87,9 @@ class TestPosteriorMean(unittest.TestCase):
             mean = torch.tensor([[0.25]], device=device, dtype=dtype)
             mm = MockModel(MockPosterior(mean=mean))
             module = PosteriorMean(model=mm)
-            X = torch.empty(1, device=device, dtype=dtype)
+            X = torch.empty(1, 1, device=device, dtype=dtype)
             pm = module(X)
-            self.assertTrue(torch.equal(pm, mean[0, 0]))
+            self.assertTrue(torch.equal(pm, mean.view(-1)))
             # check for proper error if multi-output model
             mean2 = torch.rand(1, 2, device=device, dtype=dtype)
             mm2 = MockModel(MockPosterior(mean=mean2))
@@ -102,14 +104,16 @@ class TestPosteriorMean(unittest.TestCase):
     def test_posterior_mean_batch(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
-            mean = torch.tensor([[-0.5], [0.0], [0.5]], device=device, dtype=dtype)
+            mean = torch.tensor([-0.5, 0.0, 0.5], device=device, dtype=dtype).view(
+                3, 1, 1
+            )
             mm = MockModel(MockPosterior(mean=mean))
             module = PosteriorMean(model=mm)
-            X = torch.empty(3, 1, device=device, dtype=dtype)
+            X = torch.empty(3, 1, 1, device=device, dtype=dtype)
             pm = module(X)
             self.assertTrue(torch.equal(pm, mean.view(-1)))
             # check for proper error if multi-output model
-            mean2 = torch.rand(3, 2, device=device, dtype=dtype)
+            mean2 = torch.rand(3, 1, 2, device=device, dtype=dtype)
             mm2 = MockModel(MockPosterior(mean=mean2))
             module2 = PosteriorMean(model=mm2)
             with self.assertRaises(UnsupportedError):
@@ -124,18 +128,18 @@ class TestProbabilityOfImprovement(unittest.TestCase):
     def test_probability_of_improvement(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
-            mean = torch.tensor([[0.0]], device=device, dtype=dtype)
+            mean = torch.tensor([0.0], device=device, dtype=dtype).view(1, 1)
             variance = torch.ones(1, 1, device=device, dtype=dtype)
             mm = MockModel(MockPosterior(mean=mean, variance=variance))
 
             module = ProbabilityOfImprovement(model=mm, best_f=1.96)
-            X = torch.zeros(1, device=device, dtype=dtype)
+            X = torch.zeros(1, 1, device=device, dtype=dtype)
             pi = module(X)
             pi_expected = torch.tensor(0.0250, device=device, dtype=dtype)
             self.assertTrue(torch.allclose(pi, pi_expected, atol=1e-4))
 
             module = ProbabilityOfImprovement(model=mm, best_f=1.96, maximize=False)
-            X = torch.zeros(1, device=device, dtype=dtype)
+            X = torch.zeros(1, 1, device=device, dtype=dtype)
             pi = module(X)
             pi_expected = torch.tensor(0.9750, device=device, dtype=dtype)
             self.assertTrue(torch.allclose(pi, pi_expected, atol=1e-4))
@@ -155,16 +159,18 @@ class TestProbabilityOfImprovement(unittest.TestCase):
     def test_probability_of_improvement_batch(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
-            mean = torch.tensor([[0.0], [0.67449]], device=device, dtype=dtype)
+            mean = torch.tensor([0.0, 0.67449], device=device, dtype=dtype).view(
+                2, 1, 1
+            )
             variance = torch.ones_like(mean)
             mm = MockModel(MockPosterior(mean=mean, variance=variance))
             module = ProbabilityOfImprovement(model=mm, best_f=0.0)
-            X = torch.zeros(2, 1, device=device, dtype=dtype)
+            X = torch.zeros(2, 1, 1, device=device, dtype=dtype)
             pi = module(X)
             pi_expected = torch.tensor([0.5, 0.75], device=device, dtype=dtype)
             self.assertTrue(torch.allclose(pi, pi_expected, atol=1e-4))
             # check for proper error if multi-output model
-            mean2 = torch.rand(3, 2, device=device, dtype=dtype)
+            mean2 = torch.rand(3, 1, 2, device=device, dtype=dtype)
             variance2 = torch.ones_like(mean2)
             mm2 = MockModel(MockPosterior(mean=mean2, variance=variance2))
             module2 = ProbabilityOfImprovement(model=mm2, best_f=0.0)
@@ -211,17 +217,19 @@ class TestUpperConfidenceBound(unittest.TestCase):
     def test_upper_confidence_bound_batch(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
-            mean = torch.tensor([[0.0], [0.5]], device=device, dtype=dtype)
-            variance = torch.tensor([[1.0], [4.0]], device=device, dtype=dtype)
+            mean = torch.tensor([0.0, 0.5], device=device, dtype=dtype).view(2, 1, 1)
+            variance = torch.tensor([1.0, 4.0], device=device, dtype=dtype).view(
+                2, 1, 1
+            )
             mm = MockModel(MockPosterior(mean=mean, variance=variance))
             module = UpperConfidenceBound(model=mm, beta=1.0)
-            X = torch.zeros(2, 1, device=device, dtype=dtype)
+            X = torch.zeros(2, 1, 1, device=device, dtype=dtype)
             ucb = module(X)
             ucb_expected = torch.tensor([1.0, 2.5], device=device, dtype=dtype)
             self.assertTrue(torch.allclose(ucb, ucb_expected, atol=1e-4))
             # check for proper error if multi-output model
-            mean2 = torch.rand(3, 2, device=device, dtype=dtype)
-            variance2 = torch.rand(3, 2, device=device, dtype=dtype)
+            mean2 = torch.rand(3, 1, 2, device=device, dtype=dtype)
+            variance2 = torch.rand(3, 1, 2, device=device, dtype=dtype)
             mm2 = MockModel(MockPosterior(mean=mean2, variance=variance2))
             module2 = UpperConfidenceBound(model=mm2, beta=1.0)
             with self.assertRaises(UnsupportedError):
@@ -315,7 +323,7 @@ class TestConstrainedExpectedImprovement(unittest.TestCase):
                 objective_index=0,
                 constraints={1: [None, 0], 2: [5.0, None], 3: [-a, a]},
             )
-            X = torch.empty(3, 1, device=device, dtype=dtype)  # dummy
+            X = torch.empty(3, 1, 1, device=device, dtype=dtype)  # dummy
             ei = module(X)
             ei_expected_unconstrained = torch.tensor(
                 [0.19780, 0.39894, 0.69780], device=device, dtype=dtype
@@ -360,7 +368,7 @@ class TestNoisyExpectedImprovement(unittest.TestCase):
             X_observed = model.train_inputs[0]
             nEI = NoisyExpectedImprovement(model, X_observed, num_fantasies=5)
             X_test = torch.tensor(
-                [[0.25], [0.75]],
+                [[[0.25]], [[0.75]]],
                 device=X_observed.device,
                 dtype=dtype,
                 requires_grad=True,

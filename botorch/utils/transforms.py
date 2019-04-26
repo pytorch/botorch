@@ -5,7 +5,7 @@ Some basic data transformation helpers.
 """
 
 from functools import wraps
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 
 import torch
 from torch import Tensor
@@ -59,49 +59,52 @@ def unnormalize(X: Tensor, bounds: Tensor) -> Tensor:
 
 
 def t_batch_mode_transform(
-    method: Callable[[Any, Tensor], Any]
-) -> Callable[[Any, Tensor], Any]:
-    r"""Decorates instance functions to always receive a t-batched tensor.
+    expected_q: Optional[int] = None,
+) -> Callable[[Callable[[Any, Tensor], Any]], Callable[[Any, Tensor], Any]]:
+    r"""Factory for decorators that make instance methods receive a t-batched `X` tensor.
 
-    Decorator for instance methods that transforms an input tensor `X` to
-    t-batch mode (i.e. with at least 3 dimensions). This assumes the tensor
-    has a q-batch dimension.
+    This method creates decorators for instance methods to transform an input tensor
+    `X` to t-batch mode (i.e. with at least 3 dimensions). This assumes the tensor
+    has a q-batch dimension. The decorator also checks the q-batch size if `expected_q`
+    is provided.
 
     Args:
-        method: The (instance) method to be wrapped in the batch mode transform.
+        expected_q: The expected q-batch size of X. If specified, this will raise an
+            AssertitionError if X's q-batch size does not equal expected_q.
+
+    Example:
+        >>> class Foo:
+        >>>     @t_batch_mode_transform(expected_q=1)
+        >>>     def single_q_method(self, X):
+        >>>         ...
+        >>>
+        >>>     @t_batch_mode_transform()
+        >>>     def arbitrary_q_method(self, X):
+        >>>         ...
 
     Returns:
         The decorated instance method.
     """
 
-    @wraps(method)
-    def decorated(cls: Any, X: Tensor) -> Any:
-        X = X if X.dim() > 2 else X.unsqueeze(0)
-        return method(cls, X)
+    def decorator(method: Callable[[Any, Tensor], Any]) -> Callable[[Any, Tensor], Any]:
+        @wraps(method)
+        def decorated(cls: Any, X: Tensor) -> Any:
+            if X.dim() < 2:
+                raise ValueError(
+                    f"{type(cls).__name__} requires X to have at least 2 dimensions,"
+                    f" but received X with only {X.dim()} dimensions."
+                )
+            elif expected_q is not None and X.shape[-2] != expected_q:
+                raise AssertionError(
+                    f"Expected X to be `batch_shape x q={expected_q} x d`, but"
+                    f" got X with shape {X.shape}."
+                )
+            X = X if X.dim() > 2 else X.unsqueeze(0)
+            return method(cls, X)
 
-    return decorated
+        return decorated
 
-
-def q_batch_mode_transform(
-    method: Callable[[Any, Tensor], Any]
-) -> Callable[[Any, Tensor], Any]:
-    r"""Decorates instance functions to always receive a q-batched tensor.
-
-    Decorator for instance methods that transforms an input tensor `X` to
-    q-batch mode. Assumes that the tensor does not have a q-batch dimension.
-
-    Args:
-        method: The (instance) method to be wrapped in the batch mode transform.
-
-    Returns:
-        The decorated instance method.
-    """
-
-    @wraps(method)
-    def decorated(cls: Any, X: Tensor) -> Any:
-        return method(cls, X.unsqueeze(-2))
-
-    return decorated
+    return decorator
 
 
 def match_batch_shape(X: Tensor, Y: Tensor) -> Tensor:

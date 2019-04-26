@@ -16,7 +16,7 @@ from ..exceptions import UnsupportedError
 from ..models.gpytorch import GPyTorchModel
 from ..models.model import Model
 from ..posteriors.posterior import Posterior
-from ..utils.transforms import convert_to_target_pre_hook, q_batch_mode_transform
+from ..utils.transforms import convert_to_target_pre_hook, t_batch_mode_transform
 from .acquisition import AcquisitionFunction
 from .sampler import SobolQMCNormalSampler
 
@@ -71,12 +71,12 @@ class ExpectedImprovement(AnalyticAcquisitionFunction):
             best_f = torch.tensor(best_f)
         self.register_buffer("best_f", best_f)
 
-    @q_batch_mode_transform
+    @t_batch_mode_transform(expected_q=1)
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate Expected Improvement on the candidate set X.
 
         Args:
-            X: A `b1 x ... bk x d`-dim batched tensor of `d`-dim design points.
+            X: A `b1 x ... bk x 1 x d`-dim batched tensor of `d`-dim design points.
                 Expected Improvement is computed for each point individually,
                 i.e., what is considered are the marginal posteriors, not the
                 joint.
@@ -110,12 +110,12 @@ class PosteriorMean(AnalyticAcquisitionFunction):
     `mean` property. The model must be single-outcome.
     """
 
-    @q_batch_mode_transform
+    @t_batch_mode_transform(expected_q=1)
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate the posterior mean on the candidate set X.
 
         Args:
-            X: A `(b) x d`-dim Tensor of `(b)` t-batches of `d`-dim design
+            X: A `(b) x 1 x d`-dim Tensor of `(b)` t-batches of `d`-dim design
                 points each.
 
         Returns:
@@ -155,12 +155,12 @@ class ProbabilityOfImprovement(AnalyticAcquisitionFunction):
             best_f = torch.tensor(best_f)
         self.register_buffer("best_f", best_f)
 
-    @q_batch_mode_transform
+    @t_batch_mode_transform(expected_q=1)
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate the Probability of Improvement on the candidate set X.
 
         Args:
-            X: A `(b) x d`-dim Tensor of `(b)` t-batches of `d`-dim design
+            X: A `(b) x 1 x d`-dim Tensor of `(b)` t-batches of `d`-dim design
                 points each.
 
         Returns:
@@ -211,12 +211,12 @@ class UpperConfidenceBound(AnalyticAcquisitionFunction):
             beta = torch.tensor(beta)
         self.register_buffer("beta", beta)
 
-    @q_batch_mode_transform
+    @t_batch_mode_transform(expected_q=1)
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate the Upper Confidence Bound on the candidate set X.
 
         Args:
-            X: A `(b) x d`-dim Tensor of `(b)` t-batches of `d`-dim design
+            X: A `(b) x 1 x d`-dim Tensor of `(b)` t-batches of `d`-dim design
                 points each.
 
         Returns:
@@ -281,18 +281,19 @@ class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
         self._preprocess_constraint_bounds(constraints=constraints)
         self.register_forward_pre_hook(convert_to_target_pre_hook)
 
+    @t_batch_mode_transform(expected_q=1)
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate Constrained Expected Improvement on the candidate set X.
 
         Args:
-            X: A `(b) x d`-dim Tensor of `(b)` t-batches of `d`-dim design
+            X: A `(b) x 1 x d`-dim Tensor of `(b)` t-batches of `d`-dim design
                 points each.
 
         Returns:
             A `(b)`-dim Tensor of Expected Improvement values at the given
             design points `X`.
         """
-        posterior = self.model.posterior(X.unsqueeze(dim=-2))
+        posterior = self.model.posterior(X)
         means = posterior.mean.squeeze(dim=-2)  # (b) x t
         sigmas = posterior.variance.squeeze(dim=-2).sqrt().clamp_min(1e-9)  # (b) x t
 
@@ -435,17 +436,14 @@ class NoisyExpectedImprovement(ExpectedImprovement):
         r"""Evaluate Expected Improvement on the candidate set X.
 
         Args:
-            X: A `b1 x ... bk x d`-dim batched tensor of `d`-dim design points.
+            X: A `b1 x ... bk x 1 x d`-dim batched tensor of `d`-dim design points.
 
         Returns:
             A `b1 x ... bk`-dim tensor of Noisy Expected Improvement values at
             the given design points `X`.
         """
-        # add a single-element batch dimension to be broadcasted against the
-        # batch dimension of the fantasy model. This will be in addition to the
-        # single-element q-batch dimension added by the forward method of
-        # ExpectedImprovement
-        return super().forward(X.unsqueeze(-2)).mean(dim=-1)
+        # add batch dimension for broadcasting to fantasy models
+        return super().forward(X.unsqueeze(-3)).mean(dim=-1)
 
 
 def _construct_dist(means: Tensor, sigmas: Tensor, inds: Tensor):

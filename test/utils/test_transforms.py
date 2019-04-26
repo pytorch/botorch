@@ -64,22 +64,53 @@ class TestNormalizeAndUnnormalize(unittest.TestCase):
 
 
 class BMIMTestClass:
-    @t_batch_mode_transform
-    def method(self, X: Tensor) -> None:
+    @t_batch_mode_transform()
+    def q_method(self, X: Tensor) -> None:
+        return X
+
+    @t_batch_mode_transform(expected_q=1)
+    def q1_method(self, X: Tensor) -> None:
         return X
 
 
 class TestBatchModeTransform(unittest.TestCase):
     def test_t_batch_mode_transform(self):
         c = BMIMTestClass()
+        # test with q != 1
         # non-batch
         X = torch.rand(3, 2)
-        Xout = c.method(X)
+        Xout = c.q_method(X)
+        self.assertTrue(torch.equal(Xout, X.unsqueeze(0)))
+        # test with expected_q = 1
+        with self.assertRaises(AssertionError):
+            c.q1_method(X)
+        # batch
+        X = X.unsqueeze(0)
+        Xout = c.q_method(X)
+        self.assertTrue(torch.equal(Xout, X))
+        # test with expected_q = 1
+        with self.assertRaises(AssertionError):
+            c.q1_method(X)
+
+        # test with q = 1
+        X = torch.rand(1, 2)
+        Xout = c.q_method(X)
+        self.assertTrue(torch.equal(Xout, X.unsqueeze(0)))
+        # test with expected_q = 1
+        Xout = c.q1_method(X)
         self.assertTrue(torch.equal(Xout, X.unsqueeze(0)))
         # batch
         X = X.unsqueeze(0)
-        Xout = c.method(X)
+        Xout = c.q_method(X)
         self.assertTrue(torch.equal(Xout, X))
+        # test with expected_q = 1
+        Xout = c.q1_method(X)
+        self.assertTrue(torch.equal(Xout, X))
+
+        # test single-dim
+        X = torch.zeros(1)
+        with self.assertRaises(ValueError):
+            c.q_method(X)
 
 
 class TestMatchBatchShape(unittest.TestCase):
