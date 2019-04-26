@@ -29,6 +29,7 @@ class TestGPyTorchModel(unittest.TestCase):
     def test_gpytorch_model(self):
         train_X = torch.rand(5, 1)
         train_Y = torch.sin(train_X.squeeze())
+        # basic test
         model = SimpleGPyTorchModel(train_X, train_Y)
         test_X = torch.rand(2, 1)
         posterior = model.posterior(test_X)
