@@ -1,0 +1,8 @@
+name: botorch
+channels:
+  - pytorch
+  - gpytorch
+dependencies:
+  - pytorch-nightly
+  - gpytorch
+  - scipy

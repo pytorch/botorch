@@ -1,0 +1,42 @@
+{% set data = load_setup_py_data(setup_file="setup.py", from_recipe_dir=True) %}
+
+package:
+  name: {{ data.get("name")|lower }}
+  version: {{ data.get("version") }}
+
+source:
+  path: ./
+
+build:
+  noarch: python
+  script: "$PYTHON setup.py install --single-version-externally-managed --record=record.txt"
+
+requirements:
+  host:
+    - python>=3.6
+  run:
+    - pytorch-nightly
+    - gpytorch
+    - scipy
+
+test:
+  imports:
+    - botorch
+    - botorch.acquisition
+    - botorch.exceptions
+    - botorch.models
+    - botorch.optim
+    - botorch.posteriors
+    - botorch.qmc
+    - botorch.test_functions
+    - botorch.utils
+    - botorch.fit
+    - botorch.gen
+
+about:
+  home: https://botorch.org
+  license: MIT
+  license_file: LICENSE
+  summary: Bayesian Optimization in PyTorch
+  doc_url: https://botorch.org/docs
+  dev_url: https://github.com/pytorch/botorch
