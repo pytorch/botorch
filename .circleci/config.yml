@@ -1,0 +1,62 @@
+version: 2
+
+install_test_docs: &install_test_docs
+  steps:
+    - checkout
+    - run:
+        name: create virtualenv, install linters
+        # note: Everything is done in a virtualenv b/c otherwise pip has
+        # permission issues installing in the docker image
+        command: |
+          python -m venv ../env
+          source ../env/bin/activate
+          pip install --upgrade pip
+          pip install -q black flake8
+    - run:
+        name: lint black
+        command: |
+          source ../env/bin/activate
+          black --check --diff .
+    - run:
+        name: lint flake8
+        command: |
+          source ../env/bin/activate
+          flake8 --isolated --ignore=T484,T499,W503,E704,E231,E203 --max-line-length=88
+    - run:
+        name: install botorch
+        # need to install nightlies AFTER gpytorch + botorch (gpytorch can't deal with this properly
+        # and installs pytorch stable over it). TODO: Remove when pytorch 1.1 is out
+        command: |
+          source ../env/bin/activate
+          pip install -q gpytorch
+          pip install -q -e .[dev]
+          pip install -q torch_nightly -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
+    - run:
+        name: unit tests
+        command: |
+          source ../env/bin/activate
+          pytest -ra --cov=. --cov-report term-missing
+    - run:
+        name: build Sphinx docs
+        command: |
+          source ../env/bin/activate
+          sphinx-build -WT --keep-going sphinx/source sphinx/build
+
+jobs:
+  lint_test_py_36:
+    docker:
+      - image: circleci/python:3.6.8
+    <<: *install_test_docs
+  lint_test_py_37:
+    docker:
+      - image: circleci/python:3.7.1
+    <<: *install_test_docs
+
+workflows:
+  version: 2
+  lint_and_test_py36:
+    jobs:
+      - lint_test_py_36
+  lint_and_test_py37:
+    jobs:
+      - lint_test_py_37
