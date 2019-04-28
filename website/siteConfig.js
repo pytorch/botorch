@@ -18,7 +18,7 @@ const users = [];
 const siteConfig = {
   title: 'BoTorch',
   tagline: 'Bayesian Optimization in PyTorch',
-  url: 'http://botorch.org',
+  url: 'https://www.botorch.org',
   baseUrl: baseUrl,
   // For github.io type URLs, you would set the url and baseUrl like:
   //   url: 'https://facebook.github.io',
@@ -41,9 +41,9 @@ const siteConfig = {
   users,
 
   /* path to images for header/footer */
-  headerIcon: null,
-  footerIcon: null,
-  favicon: null,
+  headerIcon: 'img/botorch.png',
+  footerIcon: 'img/botorch.png',
+  favicon: 'img/botorch.ico',
 
   /* Colors for website */
   colors: {
@@ -75,8 +75,8 @@ const siteConfig = {
   cleanUrl: true,
 
   // Open Graph and Twitter card images.
-  ogImage: 'img/docusaurus.png',
-  twitterImage: 'img/docusaurus.png',
+  ogImage: 'img/botorch.png',
+  twitterImage: 'img/botorch.png',
 
   // Show documentation's last contributor's name.
   // enableUpdateBy: true,
