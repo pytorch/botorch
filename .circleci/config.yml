@@ -2,23 +2,19 @@ version: 2
 
 
 aliases:
+
   - &exclude_ghpages_fbconfig
     branches:
       ignore:
         - gh-pages
         - fb-config
-  - &install_test_docs
+
+  - &install_test_docs_pip
     steps:
       - checkout
       - run:
-          name: create virtualenv, install linters
-          # note: Everything is done in a virtualenv b/c otherwise pip has
-          # permission issues installing in the docker image
-          command: |
-            python -m venv ../env
-            source ../env/bin/activate
-            pip install --upgrade pip
-            pip install -q black flake8
+          name: install deps via pip
+          command: ./scripts/install_via_pip.sh
       - run:
           name: lint black
           command: |
@@ -28,42 +24,80 @@ aliases:
           name: lint flake8
           command: |
             source ../env/bin/activate
-            flake8 --isolated --ignore=T484,T499,W503,E704,E231,E203 --max-line-length=88
-      - run:
-          name: install botorch
-          # need to install nightlies AFTER gpytorch + botorch (gpytorch can't deal with this properly
-          # and installs pytorch stable over it). TODO: Remove when pytorch 1.1 is out
-          command: |
-            source ../env/bin/activate
-            pip install -q gpytorch
-            pip install -q -e .[dev]
-            pip install -q torch_nightly -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
+            flake8
       - run:
           name: unit tests
           command: |
             source ../env/bin/activate
             pytest -ra --cov=. --cov-report term-missing
       - run:
-          name: build Sphinx docs
+          name: build sphinx docs
           command: |
             source ../env/bin/activate
             sphinx-build -WT --keep-going sphinx/source sphinx/build
 
+  - &install_test_docs_conda
+    steps:
+      - checkout
+      - run:
+          name: install deps via conda
+          command: ./scripts/install_via_conda.sh -l
+      - run:
+          name: lint black
+          command: black --check --diff .
+      - run:
+          name: lint flake8
+          command: flake8
+      - run:
+          name: unit tests
+          command: pytest -ra --cov=. --cov-report term-missing
+      - run:
+          name: build sphinx docs
+          command: sphinx-build -WT --keep-going sphinx/source sphinx/build
+
+  - &auto_deploy_site
+    steps:
+      - checkout
+      - run:
+          name: install deps via pip
+          command: ./scripts/install_via_pip.sh
+      - run:
+          name: deploy to GitHub Pages
+          command: |
+            source ../env/bin/activate
+            git config --global user.email "botorchnik@users.noreply.github.com"
+            git config --global user.name "botorchnik"
+            cd website
+            yarn install
+            #echo "machine github.com login botorchnik password $GITHUB_TOKEN" > ~/.netrc
+            #GIT_USER=botorchnik USE_SSH=true yarn run publish-gh-pages
+
 jobs:
-  lint_test_py_36:
+  lint_test_py36_pip:
     docker:
       - image: circleci/python:3.6.8
-    <<: *install_test_docs
-  lint_test_py_37:
+    <<: *install_test_docs_pip
+  lint_test_py37_conda_latest:
     docker:
-      - image: circleci/python:3.7.1
-    <<: *install_test_docs
+      - image: continuumio/miniconda3
+    <<: *install_test_docs_conda
+  auto_deploy_site:
+    docker:
+      - image: circleci/python:3.6.8-node
+    <<: *auto_deploy_site
 
 workflows:
   version: 2
   lint_and_test:
     jobs:
-      - lint_test_py_36:
+      - lint_test_py36_pip:
           filters: *exclude_ghpages_fbconfig
-      - lint_test_py_37:
+      - lint_test_py37_conda_latest:
           filters: *exclude_ghpages_fbconfig
+  # auto_deploy_site:
+  #   jobs:
+  #     - auto_deploy_site:
+  #         filters:
+  #           branches:
+  #             only:
+  #               - master
