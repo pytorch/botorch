@@ -26,72 +26,61 @@ class TutorialHome extends React.Component {
           <div className="post">
             <header className="postHeader">
               <h1 className="postHeaderTitle">
-                Welcome to the botorch tutorials
+                Welcome to the BoTorch tutorials
               </h1>
             </header>
             <body>
               <p>
-                botorch (pronounced like blow-torch) is a library for Bayesian
-                Optimization research built on top of PyTorch, and is part of
-                the PyTorch ecosystem.
+                The tutorials here will help you understand and use BoTorch in
+                your own work. They assume that you are familiar with both Bayesian
+                optimization and PyTorch.
               </p>
               <p>
-                The tutorials here will help you understand and use botorch in
-                your own work.
+                If you are new to Bayesian optimization, we recommend you start
+                with the <a href="https://ax.dev/docs/bayesopt">Ax docs</a> and
+                the following <a href="https://arxiv.org/abs/1807.02811">tutorial paper</a>.
               </p>
-              <bl>
-                <li>
-                  <a href="custom_botorch_model_in_ax">
-                    Using a custom botorch model
-                  </a>
-                </li>
-                <li>
-                  <a href="fit_model_with_torch_optimizer">
-                    Fitting a model using torch.optim
-                  </a>
-                </li>
-                <li>
-                  <a href="compare_mc_analytic_acquisition">
-                    Comparing analytic and MC Expected Improvement
-                  </a>
-                </li>
-                <li>
-                  <a href="optimize_with_cmaes">
-                    Acquisition function optimization with CMA-ES
-                  </a>
-                </li>
-                <li>
-                  <a href="optimize_stochastic">
-                    Acquisition function optimization using torch.optim
-                  </a>
-                </li>
-                <li>
-                  <a href="batch_mode_cross_validation">
-                    Using batch evaluation for fast cross-validation
-                  </a>
-                </li>
-                <li>
-                  <a href="custom_acquisition">
-                    Writing a custom acquisition function and interfacing with
-                    Ax
-                  </a>
-                </li>
-                <li>
-                  <a href="closed_loop_botorch_only">
-                    A custom closed loop BO implementation using only botorch
-                  </a>
-                </li>
-                <li>
-                  <a href="meta_learning_with_rgpe">
-                    Meta-Learning with Rank-Weighted GP Ensemble (RGPE)
-                  </a>
-                </li>
-                <li>
-                  <a href="vae_mnist">
-                    High-dimensional optimization with VAEs
-                  </a>
-                </li>
-              </bl>
+              <p>
+                If you are new to PyTorch, the easiest way to get started is with
+                the <a href="https://pytorch.org/tutorials/beginner/blitz/tensor_tutorial.html#sphx-glr-beginner-blitz-tensor-tutorial-py">What is PyTorch?</a> tutorial.
+              </p>
+              <p>
+                The BoTorch tutorials are grouped into the following four areas:
+              </p>
+              <p>
+                <h4>Using BoTorch with Ax</h4>
+                These tutorials give you an overview of how to leverage <a href="https://ax.dev">Ax</a>,
+                a platform for sequential experimentation, in order to simplify
+                managing your Bayesian Optimization (BO) loop. Doing so can help
+                you focus on the main BO components (Models, Acqusition functions,
+                Optimization of Acquisition functions), rather than tedious loop
+                control.
+                See our <a href="https://botorch.org/docs/botorch_and_ax">Documentation</a> for
+                additional information.
+
+                <h4>Full Optimization Loops</h4>
+                In some situations (e.g. if you're working in a non-standard setting,
+                or simply if you want to be able to understand and control every
+                single aspect of your BO loop), then you may also consider working
+                purely in BoTorch. The tutorials in this section show you how to
+                do that.
+
+                <h4>Bite-Sized Tutorials</h4>
+                Rather than guiding you thorugh full end-to-end Bayesian Optimization
+                loops, the tutorials in this section focus on specific tasks that
+                you will encounter in customizing your BO algorithms. For instance,
+                you may want
+                to <a href="https://botorch.org/tutorials/custom_acquisition">write a custom acquisition function</a>,
+                and <a href="https://botorch.org/tutorials/optimize_with_cmaes">use a custom zero-th order optimizer</a> for
+                optimizing it.
+
+                <h4>Advanced Usage</h4>
+                Tutorials in this section showcase more advanced ways of using
+                BoTorch. For instance,
+                the <a href="https://botorch.org/tutorials/vae_mnist">this</a> tutorial
+                shows how to perform BO if your objective function is an image,
+                by optimizing in the latent space of a ariational auto-encoder (VAE).
+              </p>
             </body>
           </div>
         </Container>

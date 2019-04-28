@@ -17,9 +17,9 @@ easy-to-use interface for defining, managing and running sequential experiments,
 while handling (meta-)data management, transformations, and systems integration.
 
 
-## Why BoTorch
+## Why BoTorch?
 
-#### Improved Developer Efficiency
+### Improved Developer Efficiency
 
 BoTorch significantly improves developer efficiency by utilizing quasi-Monte-Carlo
 based acquisition functions (by ways of the "re-parameterization trick") in
@@ -37,7 +37,7 @@ researchers to do state-of-the art research on modern Bayesian Optimization
 methods.
 
 
-#### State-of-the-art Modeling
+### State-of-the-art Modeling
 
 Bayesian Optimization traditionally relies heavily on Gaussian Process (GP)
 models, which provide well-calibrated uncertainty estimates.
@@ -52,7 +52,7 @@ work with [Pyro](http://pyro.ai/) models), and support optimization of acquisiti
 functions over any kind of posterior distribution, as long as it can be sampled from.
 
 
-#### Harnessing the Power of PyTorch
+### Harnessing the Power of PyTorch
 
 Built on PyTorch, BoTorch harnesses the power of auto-differentiation, native
 support for highly parallelized modern hardware (such as GPUs) using device-agnostic
@@ -66,7 +66,7 @@ gradient-based optimization of acquisition functions operating on differentiable
 models.
 
 
-#### Bridging the Gap Between Research and Production
+### Bridging the Gap Between Research and Production
 
 BoTorch implements modular building blocks for modern Bayesian optimization.
 It bridge the gap between research and production by being a very flexible
