@@ -44,11 +44,16 @@ setup(
     project_urls={
         "Documentation": "https://botorch.org",
         "Source": "https://github.com/pytorch/botorch",
+        "conda": "https://anaconda.org/pytorch/botorch",
     },
-    keywords=["Bayesian optimization", "pytorch"],
+    keywords=["Bayesian optimization", "PyTorch"],
     classifiers=[
         "Development Status :: 4 - Beta",
-        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3 :: Only",
+        "License :: OSI Approved :: MIT License",
+        "Topic :: Scientific/Engineering",
+        "Intended Audience :: Science/Research",
+        "Intended Audience :: Developers",
     ],
     python_requires=">=3.6",
     install_requires=["torch>=1.1", "gpytorch>=0.3.2", "scipy"],

@@ -142,7 +142,6 @@ For more details see our [Documentation](https://botorch.org/docs) and the
   candidate = joint_optimize(
       UCB, bounds=bounds, q=1, num_restarts=5, raw_samples=20,
   )
-  candidate
   ```
 
 
