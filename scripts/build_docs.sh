@@ -26,13 +26,6 @@ while getopts 'hb' flag; do
   esac
 done
 
-
-echo "-----------------------------------"
-echo "Building Cython modules"
-echo "-----------------------------------"
-cd ..
-python3 setup.py build_ext --inplace
-
 echo "-----------------------------------"
 echo "Generating API reference via Sphinx"
 echo "-----------------------------------"
@@ -55,7 +48,7 @@ cd ..
 mkdir -p "website/pages/api/"
 
 cwd=$(pwd)
-python3 scripts/parse_sphinx.py -i "${cwd}/sphinx/build/html/" -o "${cwd}/website/pages/api/"
+python scripts/parse_sphinx.py -i "${cwd}/sphinx/build/html/" -o "${cwd}/website/pages/api/"
 
 SPHINX_JS_DIR='sphinx/build/html/_static/'
 DOCUSAURUS_JS_DIR='website/static/js/'
@@ -81,7 +74,7 @@ echo "Generating tutorials"
 echo "-----------------------------------"
 mkdir -p "website/_tutorials"
 mkdir -p "website/static/files"
-python3 scripts/parse_tutorials.py -w "${cwd}"
+python scripts/parse_tutorials.py -w "${cwd}"
 
 # Starting local server
 cd website || exit
