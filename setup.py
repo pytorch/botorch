@@ -44,7 +44,7 @@ if fatals:
     )
 
 
-TEST_REQUIRES = ["pytest>=3.6", "pytest-cov"]
+TEST_REQUIRES = ["pytest", "pytest-cov"]
 
 DEV_REQUIRES = TEST_REQUIRES + ["black", "flake8", "sphinx", "sphinx-autodoc-typehints"]
 
@@ -67,8 +67,7 @@ setup(
         "Programming Language :: Python :: 3",
     ],
     python_requires=">=3.6",
-    setup_requires=["cython", "numpy"],
-    install_requires=["torch>=1.0.1", "gpytorch>=0.3.1", "scipy"],
+    install_requires=["torch>=1.0.1", "gpytorch>=0.3.2", "scipy"],
     packages=find_packages(),
     extras_require={
         "dev": DEV_REQUIRES,
