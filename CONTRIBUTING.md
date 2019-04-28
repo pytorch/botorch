@@ -1,4 +1,5 @@
 # Contributing to BoTorch
+
 We want to make contributing to BoTorch is as easy and transparent as possible.
 
 
@@ -32,15 +33,17 @@ Travis will fail on your PR if it does not adhere to the black formatting style.
 
 
 #### Type Hints
+
 BoTorch is fully typed using python 3.6+
 [type hints](https://www.python.org/dev/peps/pep-0484/).
 We expect any contributions to also use proper type annotations. While we
-currently do not enforce full consistency of these in Travis (type checkers can
-be buggy at times), you should strive to type check your code locally. For this
-we recommend using [pyre](https://pyre-check.org/).
+currently do not enforce full consistency of these in our continuous integration
+test, you should strive to type check your code locally. For this we recommend
+using [pyre](https://pyre-check.org/).
 
 
 #### Unit Tests
+
 To run the unit tests, you can either use `pytest` (if installed):
 ```bash
 pytest -ra
@@ -49,6 +52,12 @@ or python's `unittest`:
 ```bash
 python -m unittest
 ```
+
+To get coverage reports we recommend using the `pytest-cov` plugin:
+```bash
+pytest -ra --cov=. --cov-report term-missing
+```
+
 
 #### Documentation
 
@@ -62,7 +71,7 @@ main elements:
 2. The API reference, auto-generated from the docstrings using
    [Sphinx](http://www.sphinx-doc.org), and embedded into the Docusaurus website.
    The sphinx .rst source files for this live in [sphinx/source](../sphinx/source/).
-3. The Jupyter notebook tutorials, parsed by nbconvert, and embedded into the
+3. The Jupyter notebook tutorials, parsed by `nbconvert`, and embedded into the
    Docusaurus website. These live in [tutorials](../tutorials).
 
 To build the documentation you will need [Node](https://nodejs.org/en/) >= 8.x
@@ -71,7 +80,7 @@ and [Yarn](https://yarnpkg.com/en/) >= 1.5.
 The following command will both build the docs and serve the site locally:
 ```bash
 cd scripts
-./build_docs.sh
+./scripts/build_docs.sh
 ```
 
 ## Pull Requests
@@ -83,15 +92,19 @@ We actively welcome your pull requests.
 3. If you have changed APIs, update the documentation. Make sure the
    documentation builds.
 4. Ensure the test suite passes.
-5. Make sure your code passes black's formatting checks.
+5. Make sure your code passes both `black` and `flake8` formatting checks.
 6. If you haven't already, complete the Contributor License Agreement ("CLA").
 
+
 ## Contributor License Agreement ("CLA")
+
 In order to accept your pull request, we need you to submit a CLA. You only need
 to do this once to work on any of Facebook's open source projects. You can
 complete your CLA here: <https://code.facebook.com/cla>
 
+
 ## Issues
+
 We use GitHub issues to track public bugs. Please ensure your description is
 clear and has sufficient instructions to be able to reproduce the issue.
 
@@ -101,5 +114,6 @@ outlined on that page and do not file a public issue.
 
 
 ## License
+
 By contributing to BoTorch, you agree that your contributions will be licensed
 under the LICENSE file in the root directory of this source tree.
