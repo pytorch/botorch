@@ -64,6 +64,18 @@ class TestModelListGP(unittest.TestCase):
             self.assertIsInstance(posterior, GPyTorchPosterior)
             self.assertIsInstance(posterior.mvn, MultitaskMultivariateNormal)
 
+            # test observation_noise
+            posterior = model.posterior(test_x, observation_noise=True)
+            self.assertIsInstance(posterior, GPyTorchPosterior)
+            self.assertIsInstance(posterior.mvn, MultitaskMultivariateNormal)
+
+            # test output_indices
+            posterior = model.posterior(
+                test_x, output_indices=[0], observation_noise=True
+            )
+            self.assertIsInstance(posterior, GPyTorchPosterior)
+            self.assertIsInstance(posterior.mvn, MultivariateNormal)
+
     def test_ModelListGP_cuda(self):
         if torch.cuda.is_available():
             self.test_ModelListGP(cuda=True)

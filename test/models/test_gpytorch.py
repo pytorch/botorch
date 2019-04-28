@@ -35,3 +35,7 @@ class TestGPyTorchModel(unittest.TestCase):
         posterior = model.posterior(test_X)
         self.assertIsInstance(posterior, GPyTorchPosterior)
         self.assertEqual(posterior.mean.shape, torch.Size([2, 1]))
+        # test observation noise
+        posterior = model.posterior(test_X, observation_noise=True)
+        self.assertIsInstance(posterior, GPyTorchPosterior)
+        self.assertEqual(posterior.mean.shape, torch.Size([2, 1]))

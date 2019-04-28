@@ -53,7 +53,7 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
             train_Y: A `n` or `b x n` (batch mode) tensor of training
                 observations.
             task_feature: The index of the task feature
-                (`-(d + 1) <= task_feature <= d + 1`).
+                (`-d <= task_feature <= d`).
             output_tasks: A list of task indices for which to compute model
                 outputs for. If omitted, return outputs for all task indices.
             rank: The rank to be used for the index kernel. If omitted, use a
@@ -72,8 +72,8 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
             # Currently, batch mode MTGPs are blocked upstream in GPyTorch
             raise ValueError(f"Unsupported shape {train_X.shape} for train_X.")
         d = train_X.shape[-1] - 1
-        if not (-(d + 1) <= task_feature <= d + 1):
-            raise ValueError(f"Must have that -({d+1}) <= task_feature <= {d+1}")
+        if not (-d <= task_feature <= d):
+            raise ValueError(f"Must have that -{d} <= task_feature <= {d}")
         all_tasks = train_X[:, task_feature].unique().to(dtype=torch.long).tolist()
         if output_tasks is None:
             output_tasks = all_tasks
@@ -105,11 +105,6 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
         # TODO: Add LKJ prior for the index kernel
         self.task_covar_module = IndexKernel(num_tasks=num_tasks, rank=self._rank)
         self.to(train_X)
-
-    @property
-    def num_outputs(self) -> int:
-        r"""The number of outputs of the model."""
-        return len(self._output_tasks)
 
     def _split_inputs(self, x: Tensor) -> Tuple[Tensor, Tensor]:
         r"""Extracts base features and task indices from input data.
