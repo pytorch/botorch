@@ -8,7 +8,7 @@ of more design points for achieving the objective of maximizing the underlying
 black box function.
 
 BoTorch supports both analytic as well as (quasi-) Monte-Carlo based acquisition
-functions. It provides an
+functions. It provides a generic
 [`AcquisitionFunction`](../api/acquisition.html#acquisitionfunction) API that
 abstracts away from the particular type, so that optimization can be performed
 on the same objects.
@@ -19,9 +19,14 @@ on the same objects.
 Many common acquisition functions can be expressed as the expectation of some
 real-valued function of the model output(s) at the design point(s):
 
-$$ H(X) = \mathbb{E}\bigl[ h(Y) \mid Y \sim \mathbb{P}_Y(X) \bigr] $$
+$$
+\alpha(X) = \mathbb{E}\bigl[ a(\xi) \mid
+  \xi \sim \mathbb{P}(f(X) \mid \mathcal{D}) \bigr]
+$$
 
-Here $\mathbb{P}_Y(X)$ is the posterior distribution of $Y$ given $X$.
+where $X = (x_1, \dotsc, x_q)$, and $\mathbb{P}(f(X) \mid \mathcal{D})$ is the
+posterior distribution of the function $f$ at $X$ given the data $\mathcal{D}$
+observed so far.
 
 Evaluating the acquisition function thus requires evaluating an integral over
 the posterior distribution. In most cases, this is analytically intractable. In
@@ -29,22 +34,51 @@ particular, analytic expressions generally do not exist for batch acquisition
 functions that consider multiple design points jointly (i.e. $q > 1$).
 
 An alternative is to use Monte-Carlo (MC) sampling to approximate the integrals.
-An MC approximation of $H$ at $X$ using $N$ MC samples is
+An MC approximation of $\alpha$ at $X$ using $N$ MC samples is
 
-$$ H(X) \approx \frac{1}{N} \sum_{j=1}^N h(y_j) $$
+$$ \alpha(X) \approx \frac{1}{N} \sum_{i=1}^N a(\xi_{i}) $$
 
-where $y_j \sim \mathbb{P}_Y(X)$.
+where $\xi_i \sim \mathbb{P}(f(X) \mid \mathcal{D})$.
 
-All MC-based acquisition funcitons in BoTorch are derived from
+For instance, for q-Expected Improvement (qEI), we have:
+
+$$
+\text{qEI}(X) \approx \frac{1}{N} \sum_{i=1}^N \max_{j=1,..., q}
+\bigl\\{ \max(\xi_{ij} - f^\*, 0) \bigr\\},
+\qquad \xi_{i} \sim \mathbb{P}(f(X) \mid \mathcal{D})
+$$
+
+where $f^\*$ is the best function value observed so far (assuming noiseless
+observations). Using the reparameterization trick ([^KingmaWelling2014],
+[^Rezende2014]),
+
+$$
+\text{qEI}(X) \approx \frac{1}{N} \sum_{i=1}^N \max_{j=1,..., q}
+\bigl\\{ \max\bigl( \mu(X)\_j + (L(X) \epsilon_i)\_j - f^\*, 0 \bigr) \bigr\\},
+\qquad \epsilon_{i} \sim \mathcal{N}(0, I)s
+$$
+
+where $\mu(X)$ is the posterior mean of $f$ at $X$, and $L(X)L(X)^T = \Sigma(X)$
+is a root decomposition of the posterior variance.
+
+All MC-based acquisition functions in BoTorch are derived from
 [`MCAcquisitionFunction`](../api/acquisition.html#mcacquisitionfunction).
+
+Acquisition functions expect input tensors $X$ of shape
+$\textit{batch_shape} \times q \times d$, where $d$ is the dimension of the
+feature space, $q$ is the number of points considered jointly, and
+$\textit{batch_shape}$ is the batch-shape of the input tensor. The output
+$\alpha(X)$ will have shape $\textit{batch_shape}$, with each element
+corresponding to the respective $q \times d$ batch tensor in the input $X$.
+Note that for analytic acquisition functions, it must be that $q=1$.
 
 ### MC, q-MC, and Fixed Base Samples
 
-BoTorch relies on the re-parameterization trick ([^KingmaWelling2014], [^Rezende2014])
-and (quasi)-Monte-Carlo sampling for optimization and estimation of the batch
-acquisition functions [^Wilson2017]. The results below show the reduced variance
-when estimating an expected improvement (EI) acquisition function using base
-samples obtained via quasi-MC sampling versus standard MC sampling.
+BoTorch relies on the re-parameterization trick and (quasi)-Monte-Carlo sampling
+for optimization and estimation of the batch acquisition functions [^Wilson2017].
+The results below show the reduced variance when estimating an expected
+improvement (EI) acquisition function using base samples obtained via quasi-MC
+sampling versus standard MC sampling.
 
 ![MC_qMC](assets/EI_MC_qMC.png)
 
@@ -68,13 +102,18 @@ One concern is that the approximated acquisition function is *biased* for any
 fixed set of base samples, which may adversely affect the solution. However, we
 find that in practice, both the optimal value and the optimal solution of these
 biased problems for standard acquisition functions converge quite rapidly to
-their true counterparts as more samples are used. Because using additional
-samples is relatively cheap computationally, we default to 500 base samples in
-the MC acquisition functions.
+their true counterparts as more samples are used. Note that for evaluation of
+the acquisition function we integrate over a $qo$-dimensional space (where
+$q$ is the number of points in the q-batch and $o$ is the number of outputs
+included in the objective). Therefore, the MC integration problem can be quite
+low-dimensional even for models on high-dimensional feature spaces (large $d$).
+Because using additional samples is relatively cheap computationally,
+we default to 500 base samples in the MC acquisition functions.
 
 On the other hand, when re-sampling is used in conjunction with a stochastic
-optimization algorithm, this kind of bias is no longer a concern. The trade-off
-here is that the optimization may be less effective, as discussed above.
+optimization algorithm, the kind of bias noted above is no longer a concern.
+The trade-off here is that the optimization may be less effective, as discussed
+above.
 
 
 ## Analytic Acquisition Functions
@@ -93,15 +132,15 @@ can be found in
 
 Analytic acquisition functions allow for an explicit expression in terms of the
 summary statistics of the posterior distribution at the evaluated point(s).
-A classic such acquisition function is Expected Improvement of a single point
+A popular acquisition function is Expected Improvement of a single point
 for a Gaussian posterior, given by
 
 $$ \text{EI}(x) = \mathbb{E}\bigl[
-\max(y - f_{max}, 0) \mid y\sim \mathcal{N}(\mu(x), \sigma^2(x))
+\max(y - f^\*, 0) \mid y\sim \mathcal{N}(\mu(x), \sigma^2(x))
 \bigr] $$
 
 where $\mu(x)$ and $\sigma(x)$ are the posterior mean and variance of $f$ at the
-point $x$, and $f_{max}$ is the best function value observed so far (assuming
+point $x$, and $f^\*$ is again the best function value observed so far (assuming
 noiseless observations). It can be shown that
 
 $$ \text{EI}(x) = \sigma(x) \bigl( z \Phi(z) + \varphi(z) \bigr)$$

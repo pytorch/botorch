@@ -4,22 +4,26 @@ title: Overview
 ---
 
 This overview describes the basic components of BoTorch and how they work
-together. For a high-level view of what this design tries to achieve in more
-abstract terms, please see our [Design Philosophy](design_philosophy).
+together. For a high-level view of what BoTorch tries to achieve in more
+abstract terms, please see the [Introduction](introduction).
 
 
 ## Black-Box Optimization
 
 ![Black Box Optimization](assets/overview_blackbox.png)
 
-At a high level, the problem underlying Bayesian Optimization (BO) is to maximize
-some expensive-to-evaluate black box function $f$. In other words, we do not have
-access to the functional form of $f$ and our only recourse is to evaluate $f$ at
-a sequence of test points, with the hope of determining a near-optimal value after
-a small number of evaluations. BO is a general approach to adaptively select these
-test points (or batches of test points to be evaluated in parallel) that allows
-for a principled trade-off between evaluating $f$ at regions of high uncertainty
-and regions of good performance.
+At a high level, the problem underlying Bayesian Optimization (BO) is to
+maximize some expensive-to-evaluate black box function $f$. In other words, we
+do not have access to the functional form of $f$ and our only recourse is to
+evaluate $f$ at a sequence of test points, with the hope of determining a
+near-optimal value after a small number of evaluations. In many settings,
+the function values are not observed exactly, and only noisy observations are
+available
+
+Bayesian Optimization is a general approach to adaptively select these test
+points (or batches of test points to be evaluated in parallel) that allows for
+a principled trade-off between evaluating $f$ in regions of good observed
+performance and regions of high uncertainty.
 
 
 ## Bayesian Optimization
@@ -31,46 +35,49 @@ and regions of good performance.
 
 In order to optimize $f$ within a small number of evaluations, we need a way of
 extrapolating our belief about what $f$ looks like at points we have not yet
-evaluated. In Bayesian Optimization, this is referred to as the *surrogate model*.
-Importantly, the surrogate model should be able to quantifying the uncertainty
+evaluated. In Bayesian Optimization, this is referred to as the
+*surrogate model*.
+Importantly, the surrogate model should be able to quantify the uncertainty
 of its predictions in form of a **posterior** distribution over function values
 $f(x)$ at points $x$.
 
 The surrogate model for $f$ is typically a Gaussian Process (GP), in which case
 the posterior distribution on any finite collection of points is a multivariate
 normal distribution. A GP is specified by a mean function $\mu(x)$ and a
-covariance kernel $k(x,x')$, from which a mean vector $(\mu(x_0), \ldots, \mu(x_k))$
+covariance kernel $k(x, x')$, from which a mean vector
+$(\mu(x_0), \ldots, \mu(x_k))$
 and covariance matrix $\Sigma$ with $\Sigma_{ij} = k(x_i, x_j)$ can be computed
 for any set of points $(x_1, \ldots x_k)$. Using a GP surrogate model for $f$
 means that we assume $(f(x_1), \ldots, f(x_k))$ is multivariate normal with a
-mean vector and covariance matrix determined by $\mu(x)$ and $k(x,x')$.
+mean vector and covariance matrix determined by $\mu(x)$ and $k(x, x')$.
 
 BoTorch provides first-class support for [GPyTorch](https://gpytorch.ai/),
-a scalable package for GPs and Bayesian deep learning implemented in PyTorch.
+a package for scalable GPs and Bayesian deep learning implemented in PyTorch.
 
-While GPs have been a very successful modeling approach, BoTorch's first-class
-support for MC-sampling based acquisition functions makes it straightforward to
-also use other model types. In particular, BoTorch makes no particular assumptions
+While GPs have been a very successful modeling approach, BoTorch's support for
+MC-sampling based acquisition functions makes it straightforward to also use
+other model types. In particular, BoTorch makes no particular assumptions
 on what kind of model is being used, so long as is able to produce samples from
-a posterior over outputs given an input $x$. See [Models](models#models) for
+a posterior over outputs given an input $x$. See [Models](models) for
 more details on models in BoTorch.
 
 
 ### Posteriors
 
 Posteriors represent the "belief" a model has about the function values at a
-point (or set of points) based on the data it has been trained with. That is,
+point (or set of points), based on the data it has been trained with. That is,
 the posterior distribution over the outputs conditional on the data observed
 so far.
 
 When using a GP model, the posterior is given explicitly as a multivariate
-Gaussian (fully parameterized by its mean and covariance matrix). In other cases,
-the posterior may be implicit in the model and not easily described by a
-small set of parameters.
+Gaussian (fully parameterized by its mean and covariance matrix).
+In other cases, the posterior may be implicit in the model and not easily
+described by a small set of parameters.
 
 BoTorch abstracts away from the particular form of the posterior by providing a
 simple `Posterior` API that only requires implementing an `rsample()` method for
-sampling from the posterior. For more details, please see [Posteriors](posteriors).
+sampling from the posterior. For more details, please see
+[Posteriors](posteriors).
 
 
 ### Acquisition Functions
@@ -87,8 +94,7 @@ Monte-Carlo (MC) sampling in order to approximate the acquisition function.
 BoTorch supports both analytic as well as (quasi-) Monte-Carlo based acquisition
 functions. It provides an `AcquisitionFunction` API that abstracts away from the
 particular type, so that optimization can be performed on the same objects.
-Please see [Acquisition Functions](acquisition) for additional
-information.
+Please see [Acquisition Functions](acquisition) for additional information.
 
 
 #### Evaluating Monte-Carlo Acquisition Functions
@@ -96,8 +102,10 @@ information.
 ![Monte-Carlo Acquisition Functions](assets/overview_mcacquisition.png)
 
 The idea behind using Monte-Carlo sampling for evaluating acquisition functions
-is simple: instead of computing the (intractable) expectation over the posterior,
-we sample from the posterior and use the sample average as an approximation.
+is simple: instead of computing an (intractable) expectation over the
+posterior, we sample from the posterior and use the sample average as an
+approximation.
+
 
 #### Objectives
 
@@ -107,12 +115,12 @@ an `Objective` module, which returns a one-dimensional output that is passed to
 the acquisition function. The `MCAcquisitionFunction` class defaults its
 objective to `IdentityMCObjective`, which simply returns the last dimension of
 the model output. Thus, for the standard use case of a single-output GP that
-directly models the black box function $f$, no special objective module is
-required. For more details on the advanced features enabled by the `Objective`
-module, see [Objectives](objectives).
+directly models the black box function $f$, no special objective required.
+For more details on the advanced features enabled by the `Objective`, see
+[Objectives](objectives).
 
 
-## The Re-parameterization Trick
+## The Re-Parameterization Trick
 
 ![Reparameterization Trick](assets/overview_reparameterization.png)
 
@@ -130,16 +138,16 @@ back-propagation of gradients through the samples, which enables auto-
 differentiation of MC-based acquisition functions with respect to the
 candidate points.
 
-Base samples are constructed using an `MCSampler` object, which provides an
-interface that allows for different sampling techniques. `IIDNormalSampler`
-utilizes independent standard normal draws, while `SobolQMCNormalSampler` uses
-quasi-random, low-discrepancy "Sobol" sequences as uniform samples which are
-then transformed to construct normal samples. Sobol sequences are more evenly
-distributed than i.i.d. uniform samples and tend to improve the convergence rate
-of MC estimates of integrals/expectations. We find that Sobol sequences
-substantially improve the performance of MC-based acquisition functions, and so
-`SobolQMCNormalSampler` is used by default. For more details, see
-[Monte-Carlo Samplers](samplers.md).
+In BoTorch, base samples are constructed using an `MCSampler` object, which
+provides an interface that allows for different sampling techniques.
+`IIDNormalSampler` utilizes independent standard normal draws, while
+`SobolQMCNormalSampler` uses quasi-random, low-discrepancy "Sobol" sequences as
+uniform samples which are then transformed to construct quasi-normal samples.
+Sobol sequences are more evenly distributed than i.i.d. uniform samples and tend
+to improve the convergence rate of MC estimates of integrals/expectations.
+We find that Sobol sequences substantially improve the performance of MC-based
+acquisition functions, and so `SobolQMCNormalSampler` is used by default.
+For more details, see [Monte-Carlo Samplers](samplers.md).
 
 
 [^KingmaWelling2014]: D. P. Kingma, M. Welling. Auto-Encoding Variational Bayes.

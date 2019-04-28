@@ -19,7 +19,8 @@ This model bridge utilizes a number of built-in transformations (**TODO**: make
 sure these transformations are documented in Ax, and link to them here), such
 as normalizing input spaces and outputs to ensure reasonable fitting of GPs.
 
-## When to use BoTorch though Ax
+
+## When to use BoTorch through Ax
 
 If it's simple to use BoTorch through Ax for your problem, then use Ax. It
 dramatically reduces the amount of bookkeeping one needs to do as a Bayesian
@@ -36,6 +37,7 @@ management, data storage, etc. See the
 [Using a custom BoTorch model in Ax](../tutorials/custom_botorch_model_in_ax)
 tutorial for more on how to do this.
 
+
 ## When not to use Ax
 
 If you're working in a non-standard setting, such as those with high-dimensional
@@ -50,3 +52,11 @@ this can be done.
 You may also consider working purely in BoTorch if you want to be able to
 understand and control every single aspect of your BO loop - Ax's simplicity
 necessarily means that certain aspects will not be fully visible to the user.
+
+
+## Prototyping in BoTorch
+
+The modular design of BoTorch makes it very easy to prototype and debug
+individual components in an interactive fashion in a Jupyter notebook.
+Once these building blocks have been designed and tested, they can easily
+be integrated into Ax.

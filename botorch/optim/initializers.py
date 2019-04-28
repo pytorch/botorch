@@ -16,7 +16,7 @@ def initialize_q_batch(X: Tensor, Y: Tensor, n: int, eta: float = 1.0) -> Tensor
     proportional to `exp(eta * Z)`, where `Z = (Y - mean(Y)) / std(Y)` and `eta`
     is a temperature parameter.
 
-    When using an acquisiton funciton that is non-negative and possibly zero
+    When using an acquisiton function that is non-negative and possibly zero
     over large areas of the feature space (e.g. qEI), you should use
     `initialize_q_batch_nonneg` instead.
 
