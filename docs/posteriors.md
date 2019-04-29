@@ -10,17 +10,16 @@ In the simplest case, a posterior is a lightweight wrapper around an explicit
 distribution object from `torch.distributions` (or `gpytorch.distributions`).
 However, a BoTorch `Posterior` can be any distribution (even an implicit one),
 so long as one can sample from that distribution. For example, a posterior could
-be represented implicitly by some base distribution mapped through some Neural Network.
+be represented implicitly by some base distribution mapped through a neural network.
 
 While the analytic acquisition functions assume that the posterior is a
-multivariate Gaussian, the MC-based acquisition functions do not make any
+multivariate Gaussian, the Monte-Carlo (MC) based acquisition functions do not make any
 assumptions about the underlying distribution. Rather, the MC-based acquisition
-functions only require that the posterior can be sampled from.
-As long as posterior implements the [`Posterior`](../api/posteriors.html#posterior)
-interface, the MC-based acquisition functions can work with it
-(when using gradient-based acquisition function optimization then it must be
-possible to back-propagate gradients through the samples).
-
+functions only require that the posterior can generate samples through an `rsample`
+method. As long as the posterior implements the [`Posterior`](../api/posteriors.html#posterior)
+interface, it can be used with an MC-based acquisition function. In addition, note that
+gradient-based acquisition function optimization requires the ability to back-propagate
+gradients through the MC samples.
 
 For GP models based on GPyTorch for which the posterior distribution is a
 multivariate Gaussian,

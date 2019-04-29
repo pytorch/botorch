@@ -77,7 +77,7 @@ class GPyTorchPosterior(Posterior):
             samples = self.mvn.rsample(
                 sample_shape=sample_shape, base_samples=base_samples
             )
-        # make sure there alwayas is an output dimension
+        # make sure there always is an output dimension
         if not self._is_mt:
             samples = samples.unsqueeze(-1)
         return samples
