@@ -3,6 +3,12 @@ id: getting_started
 title: Getting started
 ---
 
+This section shows you how to get your feet wet with BoTorch.
+
+Before jumping the gun, we recommend you start with the high-level
+[Overview](overview) to learn about the basic concepts in BoTorch.
+
+
 ## Installing BoTorch
 
 #### Installation Requirements:
