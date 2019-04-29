@@ -1,4 +1,125 @@
-version: 2
+version: 2.1
+
+commands:
+
+  pip_install:
+    description: "Install dependencies via pip"
+    parameters:
+      args:
+        type: string
+        default: ""
+    steps:
+      - run:
+          name: "Install dependencies via pip"
+          command: ./scripts/install_via_pip.sh << parameters.args >>
+
+  conda_install:
+    description: "Install dependencies via conda"
+    parameters:
+      args:
+        type: string
+        default: ""
+    steps:
+      - run:
+          name: "Install dependencies via conda"
+          command: ./scripts/install_via_conda.sh << parameters.args >>
+
+  lint_flake8:
+    description: "Lint with flake8"
+    steps:
+      - run:
+          name: "Lint with flake8"
+          command: flake8
+
+  lint_black:
+    description: "Lint with black"
+    steps:
+      - run:
+          name: "Lint with black"
+          command: black --check --diff .
+
+  unit_tests:
+    description: "Run unit tests"
+    steps:
+      - run:
+          name: "Run unit tests"
+          command: pytest -ra --cov=. --cov-report term-missing
+
+  sphinx:
+    description: "Run sphinx"
+    steps:
+      - run:
+          name: "Run sphinx"
+          command: sphinx-build -WT --keep-going sphinx/source sphinx/build
+
+  configure_github_bot:
+    description: "Configure Docusaurus GitHub bot"
+    steps:
+      - run:
+          name: "Configure Docusaurus GitHub bot"
+          # Do not do this if we don't have the right org (pytorch), or if this is just a PR
+          command: |
+            if [[ $CIRCLE_PROJECT_USERNAME == "pytorch" && -z $CI_PULL_REQUEST && -z $CIRCLE_PR_USERNAME ]]; then
+              git config --global user.email "docusaurus-bot@users.noreply.github.com"
+              git config --global user.name "BoTorch website deployment script"
+              echo "machine github.com login docusaurus-bot password $GITHUB_TOKEN" > ~/.netrc
+            fi
+
+  deploy_site:
+    description: "Deploy website to GitHub Pages"
+    steps:
+      - run:
+          name: "Deploy website to GitHub Pages"
+            # TODO: make the installation above conditional on there being relevant changes (no need to install if there are none)
+          command: |
+            if ! git diff-tree --no-commit-id --name-only -r HEAD | grep -E "(^docs\/.*)|(website\/.*)"; then
+              echo "Skipping deploy. No relevant website files have changed"
+            elif [[ $CIRCLE_PROJECT_USERNAME == "pytorch" && -z $CI_PULL_REQUEST && -z $CIRCLE_PR_USERNAME ]]; then
+              ./scripts/build_docs.sh -b
+              cd website
+              GIT_USER=docusaurus-bot USE_SSH=false yarn run publish-gh-pages
+            else
+              echo "Skipping deploy."
+            fi
+
+
+jobs:
+
+  lint_test_py36_pip:
+    docker:
+      - image: circleci/python:3.6.8
+    steps:
+      - checkout
+      - pip_install
+      - lint_flake8
+      - lint_black
+      - unit_tests
+      - sphinx
+
+  lint_test_py37_conda_latest:
+    docker:
+      - image: continuumio/miniconda3
+    steps:
+      - checkout
+      - conda_install:
+          args: "-l"
+      - lint_flake8
+      - lint_black
+      - unit_tests
+      - sphinx
+
+  auto_deploy_site:
+    docker:
+      - image: circleci/python:3.6.8-node
+    steps:
+      - checkout
+      - pip_install:
+          args: "-d"
+      - lint_flake8
+      - lint_black
+      - unit_tests
+      - configure_github_bot
+      - deploy_site
 
 
 aliases:
@@ -9,95 +130,20 @@ aliases:
         - gh-pages
         - fb-config
 
-  - &install_test_docs_pip
-    steps:
-      - checkout
-      - run:
-          name: install deps via pip
-          command: ./scripts/install_via_pip.sh
-      - run:
-          name: lint black
-          command: |
-            source ../env/bin/activate
-            black --check --diff .
-      - run:
-          name: lint flake8
-          command: |
-            source ../env/bin/activate
-            flake8
-      - run:
-          name: unit tests
-          command: |
-            source ../env/bin/activate
-            pytest -ra --cov=. --cov-report term-missing
-      - run:
-          name: build sphinx docs
-          command: |
-            source ../env/bin/activate
-            sphinx-build -WT --keep-going sphinx/source sphinx/build
-
-  - &install_test_docs_conda
-    steps:
-      - checkout
-      - run:
-          name: install deps via conda
-          command: ./scripts/install_via_conda.sh -l
-      - run:
-          name: lint black
-          command: black --check --diff .
-      - run:
-          name: lint flake8
-          command: flake8
-      - run:
-          name: unit tests
-          command: pytest -ra --cov=. --cov-report term-missing
-      - run:
-          name: build sphinx docs
-          command: sphinx-build -WT --keep-going sphinx/source sphinx/build
-
-  - &auto_deploy_site
-    steps:
-      - checkout
-      - run:
-          name: install deps via pip
-          command: ./scripts/install_via_pip.sh
-      - run:
-          name: deploy to GitHub Pages
-          command: |
-            source ../env/bin/activate
-            git config --global user.email "botorchnik@users.noreply.github.com"
-            git config --global user.name "botorchnik"
-            cd website
-            yarn install
-            #echo "machine github.com login botorchnik password $GITHUB_TOKEN" > ~/.netrc
-            #GIT_USER=botorchnik USE_SSH=true yarn run publish-gh-pages
-
-jobs:
-  lint_test_py36_pip:
-    docker:
-      - image: circleci/python:3.6.8
-    <<: *install_test_docs_pip
-  lint_test_py37_conda_latest:
-    docker:
-      - image: continuumio/miniconda3
-    <<: *install_test_docs_conda
-  auto_deploy_site:
-    docker:
-      - image: circleci/python:3.6.8-node
-    <<: *auto_deploy_site
 
 workflows:
-  version: 2
+
   lint_and_test:
     jobs:
       - lint_test_py36_pip:
           filters: *exclude_ghpages_fbconfig
       - lint_test_py37_conda_latest:
           filters: *exclude_ghpages_fbconfig
-  # auto_deploy_site:
-  #   jobs:
-  #     - auto_deploy_site:
-  #         filters:
-  #           branches:
-  #             only:
-  #               - master
+
+  auto_deploy_site:
+    jobs:
+      - auto_deploy_site:
+          filters:
+            branches:
+              only:
+                - master
