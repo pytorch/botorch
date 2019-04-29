@@ -6,20 +6,28 @@ title: Using BoTorch with Ax
 [Ax](https://github.com/facebook/Ax) is a platform for sequential
 experimentation. It relies on BoTorch for implementing Bayesian Optimization
 algorithms, but provides higher-level APIs that make it easy and convenient to
-specify problems, visualize results, and benchmark new algorithms. It also comes
-with powerful metadata management, storage of results, and deployment-related APIs.
-Ax makes it convenient to use BoTorch in most standard Bayesian Optimization
-settings. Simply put, if BoTorch is the "un-framework", then Ax is the "framework".
+specify problems, visualize results, and benchmark new algorithms.
+It also comes with powerful metadata management, storage of results, and
+deployment-related APIs. Ax makes it convenient to use BoTorch in most standard
+Bayesian Optimization settings.
+Simply put, if BoTorch is the "un-framework", then Ax is the "framework".
 
-Ax provides a `BotorchModel` (**TODO**: cross-link to Ax documentation) that is
-a sensible default for modeling and optimization which can be customized by
-specifying and passing in bespoke model constructors, acquisition functions,
+
+![BoTorch and Ax](assets/botorch_and_ax.svg)
+
+
+Ax provides a
+[`BotorchModel`](https://ax.dev/api/models.html#ax.models.torch.botorch.BotorchModel)
+that is a sensible default for modeling and optimization which can be customized
+by specifying and passing in bespoke model constructors, acquisition functions,
 and optimization strategies.
-This model bridge utilizes a number of built-in transformations (**TODO**: make
-sure these transformations are documented in Ax, and link to them here), such
-as normalizing input spaces and outputs to ensure reasonable fitting of GPs.
+This model bridge utilizes a number of built-in transformations, such as
+normalizing input spaces and outputs to ensure reasonable fitting of GPs.
+See the [Ax Docs](https://ax.dev/docs/models.html#transforms) for more
+information.
 
-## When to use BoTorch though Ax
+
+## When to use BoTorch through Ax
 
 If it's simple to use BoTorch through Ax for your problem, then use Ax. It
 dramatically reduces the amount of bookkeeping one needs to do as a Bayesian
@@ -36,6 +44,7 @@ management, data storage, etc. See the
 [Using a custom BoTorch model in Ax](../tutorials/custom_botorch_model_in_ax)
 tutorial for more on how to do this.
 
+
 ## When not to use Ax
 
 If you're working in a non-standard setting, such as those with high-dimensional
@@ -50,3 +59,11 @@ this can be done.
 You may also consider working purely in BoTorch if you want to be able to
 understand and control every single aspect of your BO loop - Ax's simplicity
 necessarily means that certain aspects will not be fully visible to the user.
+
+
+## Prototyping in BoTorch
+
+The modular design of BoTorch makes it very easy to prototype and debug
+individual components in an interactive fashion in a Jupyter notebook.
+Once these building blocks have been designed and tested, they can easily
+be integrated into Ax.
