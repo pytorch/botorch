@@ -3,7 +3,6 @@ id: models
 title: Models
 ---
 
-
 Models play an essential role in Bayesian Optimization. A model is used as a
 surrogate function for the actual underlying black box function that one is
 trying to optimize. In BoTorch, a `Model` maps a set of design points to a
@@ -18,9 +17,9 @@ module, **BoTorch makes no assumption on the model being a GP, or on the
 posterior being a multivariate normal**. The only requirement for using
 BoTorch's Monte-Carlo based acquisition functions is that the model returns a
 [`Posterior`](../api/api/posteriors.html#posterior) object that implements an
-`rsample()` method for sampling from the posterior of the model (if you wish to
+`rsample()` method for sampling from the posterior of the model. If you wish to
 use gradient-based optimization algorithms, the model should allow
-back-propagating gradients through the samples to the model input).
+back-propagating gradients through the samples to the model input.
 
 
 ## The BoTorch Model Interface
@@ -35,21 +34,24 @@ points in `X`
 When working with GPs, [`GPyTorchModel`](../api/models.html#gpytorchmodel)
 provides a base class for conveniently wrapping GPyTorch models.
 
+
 ## Terminology
 
-Models may have multiple outputs, multiple inputs,
-and may exploit correlation between between different inputs. BoTorch uses the
-following terminology to distinguish these model types:
+Models may have multiple outputs, multiple inputs, and may exploit correlation
+between between different inputs. BoTorch uses the following terminology to
+distinguish these model types:
 
-* *Multi-Output Model*: a `Model` (as in the BoTorch object) with multiple outputs.
-* *Multi-Task Model*: A `Model` making use of a logical grouping of inputs/observations
-(as in the underlying process). For example, there could be multiple tasks where
-each task has a different fidelity.
+* *Multi-Output Model*: a `Model` (as in the BoTorch object) with multiple
+  outputs.
+* *Multi-Task Model*: A `Model` making use of a logical grouping of
+  inputs/observations (as in the underlying process). For example, there could
+  be multiple tasks where each task has a different fidelity.
 
 Note the following:
-* A multi-task model may or may not be a multi-output model.
-* Conversely, a multi-output model may or may not be a multi-task model.
-* If a model is both, we refer to it as a multi-task-multi-output model.
+* A multi-task (MT) model may or may not be a multi-output model.
+* Conversely, a multi-output (MO) model may or may not be a multi-task model.
+* If a model is both, we refer to it as a multi-task-multi-output (MTMO) model.
+
 
 ## Standard BoTorch Models
 
@@ -58,15 +60,16 @@ optimization use cases:
 
 ### Single-Task GPs
 These models use the same training data for all outputs and assume conditional
-independence of the outputs given the input. If different training data is required
-for each output, use a `ModelListMultiOutputGP` to handle multiple outputs.
+independence of the outputs given the input. If different training data is
+required for each output, use a [`ModelListGP`](../api/models.html#modellistgp)
+instead.
 * [`SingleTaskGP`](../api/models.html#singletaskgp): a single-task
-  exact GP that infers a homoskedastic noise level (no noise observations)
+  exact GP that infers a homoskedastic noise level (no noise observations).
 * [`FixedNoiseGP`](../api/models.html#fixednoisegp): a single-task exact GP that
-uses fixed observation noise levels (requires noise observations)
+uses fixed observation noise levels (requires noise observations).
 * [`HeteroskedasticSingleTaskGP`](../api/models.html#heteropskedasticsingletaskgp):
-  a single-task exact GP that models heteroskedastic noise via
-  an additional internal GP model (requires noise observations)
+  a single-task exact GP that models heteroskedastic noise using an additional
+  internal GP model (requires noise observations).
 
 ### Model List of Single-Task GPs
 * [`ModelListGP`](../api/models.html#modellistgp): A multi-output model in
@@ -76,19 +79,33 @@ uses fixed observation noise levels (requires noise observations)
 
 ### Multi-Task GPs
 * [`MultiTaskGP`](../api/models.html#multitaskgp): A Hadamard multi-task,
-  multi-output GP using an ICM kernel, inferring the noise level (does not require
-     noise
-  observations).
-* [`FixedNoiseMultiTaskGP`](../api/models.html#fixednoisemultitaskgp): A Hadamard
-  multi-task, multi-output GP using an ICM kernel, with fixed observation noise
-  levels (requires noise observations).
+  multi-output GP using an ICM kernel, inferring the noise level (does not
+  require noise observations).
+* [`FixedNoiseMultiTaskGP`](../api/models.html#fixednoisemultitaskgp):
+  A Hadamard multi-task, multi-output GP using an ICM kernel, with fixed
+  observation noise levels (requires noise observations).
 
-All of the above models use Matérn 5/2 kernels with Automatic Relevance Discovery
-(ARD), and have reasonable priors on hyperparameters that make them work well in
-settings where the input features are normalized to the unit cube and the
-observations are standardized (zero mean, unit variance).
+All of the above models use Matérn 5/2 kernels with Automatic Relevance
+Discovery (ARD), and have reasonable priors on hyperparameters that make them
+work well in settings where the **input features are normalized to the unit
+cube** and the **observations are standardized** (zero mean, unit variance).
+
 
 ## Implementing Custom Models
 
-See the [Using a custom BoTorch model in Ax](../tutorials/custom_botorch_model_in_ax)
-tutorial on how to define your own custom models.
+The configurability of the above models is limited (for instance, it's not
+straightforward to use a different kernel). Doing so is a conscious design
+decision - we believe that having a few simple and easy-to-understand models for
+basic use cases is more valuable than having a highly complex and configurable
+model class whose implementation is impossible to understand.
+
+Instead, we advocate that users implement their own models to cover their
+particular use case. Due to the light-weight Model API, this is easy to do.
+See the
+[Using a custom BoTorch model in Ax](../tutorials/custom_botorch_model_in_ax)
+tutorial for an example.
+
+If you happen to implement a model that you think would be useful for other
+researchers as well (and involves more than just swapping out the Matérn kernel
+for an RBF kernel), please consider [contributing](getting_started#contributing)
+this model to BoTorch.

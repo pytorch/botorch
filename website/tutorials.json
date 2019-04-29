@@ -5,7 +5,7 @@
       "title": "Using a custom BoTorch model"
     }
   ],
-  "Full Optimization Loop": [
+  "Full Optimization Loops": [
     {
       "id": "closed_loop_botorch_only",
       "title": "q-Noisy Constrained EI"

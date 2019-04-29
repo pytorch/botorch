@@ -19,7 +19,7 @@ output of a model, the transformation needs to be affine (because Gaussians are
 closed under affine transformations).
 When using MC-based acquisition functions, however, fewer assumptions are
 required, and one can apply general transformations to the model outputs with
-with relative impunity so long gradients can be back-propagated through the
+relative impunity so long gradients can be back-propagated through the
 transformation.
 
 All BoTorch objectives are derived from
@@ -45,7 +45,7 @@ For instance, say you have a multi-output model with $o=2$ outputs, and you want
 to optimize a $obj(y) = 1 - \\|y - y_0\\|_2$, where $y_0 \in \mathbb{R}^2$.
 For this you would use the following custom objective:
 ```python
-obj = lambda Y: 1 - torch.norm(Y - y_0, dim=-1)
+obj = lambda xi: 1 - torch.norm(xi - y_0, dim=-1)
 mc_objective = GenericMCObjective(obj)
 ```
 
@@ -64,7 +64,7 @@ A custom objective module of the above example would be
 class MyCustomObjective(MCAcquisitionObjective):
 
     def forward(self, samples):
-      return 1 - torch.norm(Y - y_0, dim=-1)
+      return 1 - torch.norm(samples - y_0, dim=-1)
 ```
 
 

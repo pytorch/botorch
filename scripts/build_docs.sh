@@ -1,9 +1,11 @@
 #!/bin/bash
 
+# run this script from the project root using `./scripts/build_docs.sh`
+
 usage() {
   echo "Usage: $0 [-b]"
   echo ""
-  echo "Build Ax documentation."
+  echo "Build BoTorch documentation."
   echo ""
   echo "  -b   Build static version of documentation (otherwise start server)"
   echo ""
@@ -26,23 +28,15 @@ while getopts 'hb' flag; do
   esac
 done
 
-
-echo "-----------------------------------"
-echo "Building Cython modules"
-echo "-----------------------------------"
-cd ..
-python3 setup.py build_ext --inplace
-
 echo "-----------------------------------"
 echo "Generating API reference via Sphinx"
 echo "-----------------------------------"
 cd sphinx || exit
 make html
-cd ..
+cd .. || exit
 
-# build Docusaurus site
 echo "-----------------------------------"
-echo "Building Docusaurus site"
+echo "Building BoTorch Docusaurus site"
 echo "-----------------------------------"
 cd website || exit
 yarn
@@ -55,7 +49,7 @@ cd ..
 mkdir -p "website/pages/api/"
 
 cwd=$(pwd)
-python3 scripts/parse_sphinx.py -i "${cwd}/sphinx/build/html/" -o "${cwd}/website/pages/api/"
+python scripts/parse_sphinx.py -i "${cwd}/sphinx/build/html/" -o "${cwd}/website/pages/api/"
 
 SPHINX_JS_DIR='sphinx/build/html/_static/'
 DOCUSAURUS_JS_DIR='website/static/js/'
@@ -81,9 +75,8 @@ echo "Generating tutorials"
 echo "-----------------------------------"
 mkdir -p "website/_tutorials"
 mkdir -p "website/static/files"
-python3 scripts/parse_tutorials.py -w "${cwd}"
+python scripts/parse_tutorials.py -w "${cwd}"
 
-# Starting local server
 cd website || exit
 
 if [[ $BUILD_STATIC == true ]]; then
