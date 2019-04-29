@@ -10,7 +10,7 @@ abstract terms, please see the [Introduction](introduction).
 
 ## Black-Box Optimization
 
-![Black Box Optimization](assets/overview_blackbox.png)
+![Black Box Optimization](assets/overview_blackbox.svg)
 
 At a high level, the problem underlying Bayesian Optimization (BO) is to
 maximize some expensive-to-evaluate black box function $f$. In other words, we
@@ -28,7 +28,7 @@ performance and regions of high uncertainty.
 
 ## Bayesian Optimization
 
-![Bayesian Optimization](assets/overview_bayesopt.png)
+![Bayesian Optimization](assets/overview_bayesopt.svg)
 
 
 ### Models
@@ -99,7 +99,7 @@ Please see [Acquisition Functions](acquisition) for additional information.
 
 #### Evaluating Monte-Carlo Acquisition Functions
 
-![Monte-Carlo Acquisition Functions](assets/overview_mcacquisition.png)
+![Monte-Carlo Acquisition Functions](assets/overview_mcacquisition.svg)
 
 The idea behind using Monte-Carlo sampling for evaluating acquisition functions
 is simple: instead of computing an (intractable) expectation over the
@@ -122,8 +122,6 @@ For more details on the advanced features enabled by the `Objective`, see
 
 ## The Re-Parameterization Trick
 
-![Reparameterization Trick](assets/overview_reparameterization.png)
-
 The re-parameterization trick (see e.g. [^KingmaWelling2014], [^Rezende2014])
 can be used to write the posterior distribution as a deterministic
 transformation of an auxiliary random variable $\epsilon$. For example, a
@@ -137,6 +135,8 @@ different values of $\mu$ and $\sigma$ can be computed using a single set of
 back-propagation of gradients through the samples, which enables auto-
 differentiation of MC-based acquisition functions with respect to the
 candidate points.
+
+![Reparameterization Trick](assets/mc_acq_illustration.svg)
 
 In BoTorch, base samples are constructed using an `MCSampler` object, which
 provides an interface that allows for different sampling techniques.

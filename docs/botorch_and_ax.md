@@ -6,18 +6,25 @@ title: Using BoTorch with Ax
 [Ax](https://github.com/facebook/Ax) is a platform for sequential
 experimentation. It relies on BoTorch for implementing Bayesian Optimization
 algorithms, but provides higher-level APIs that make it easy and convenient to
-specify problems, visualize results, and benchmark new algorithms. It also comes
-with powerful metadata management, storage of results, and deployment-related APIs.
-Ax makes it convenient to use BoTorch in most standard Bayesian Optimization
-settings. Simply put, if BoTorch is the "un-framework", then Ax is the "framework".
+specify problems, visualize results, and benchmark new algorithms.
+It also comes with powerful metadata management, storage of results, and
+deployment-related APIs. Ax makes it convenient to use BoTorch in most standard
+Bayesian Optimization settings.
+Simply put, if BoTorch is the "un-framework", then Ax is the "framework".
 
-Ax provides a `BotorchModel` (**TODO**: cross-link to Ax documentation) that is
-a sensible default for modeling and optimization which can be customized by
-specifying and passing in bespoke model constructors, acquisition functions,
+
+![BoTorch and Ax](assets/botorch_and_ax.svg)
+
+
+Ax provides a
+[`BotorchModel`](https://ax.dev/api/models.html#ax.models.torch.botorch.BotorchModel)
+that is a sensible default for modeling and optimization which can be customized
+by specifying and passing in bespoke model constructors, acquisition functions,
 and optimization strategies.
-This model bridge utilizes a number of built-in transformations (**TODO**:
-cross-link to Ax documentation), such as normalizing input spaces and outputs to
-ensure reasonable fitting of GPs.
+This model bridge utilizes a number of built-in transformations, such as
+normalizing input spaces and outputs to ensure reasonable fitting of GPs.
+See the [Ax Docs](https://ax.dev/docs/models.html#transforms) for more
+information.
 
 
 ## When to use BoTorch through Ax
