@@ -15,8 +15,8 @@ requirements:
   host:
     - python>=3.6
   run:
-    - pytorch-nightly
-    - gpytorch
+    - pytorch>=1.1
+    - gpytorch>=0.3.2
     - scipy
 
 test:

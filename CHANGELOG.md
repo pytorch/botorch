@@ -2,4 +2,6 @@
 
 The release log for BoTorch.
 
-There has not been any public release yet.
+## [0.1.0] - April 30, 2019
+
+First public beta release.
