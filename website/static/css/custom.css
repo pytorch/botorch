@@ -6,29 +6,48 @@ html body {
   overflow-x: hidden;
 }
 
-.headerTitle {
-  font-weight: 400
+.fixedHeaderContainer {
+    background-color: #222222;
+}
+
+.fixedHeaderContainer header .headerTitleWithLogo {
+  display: none;
+}
+
+.navigationSlider .slidingNav ul li a {
+  color: #F7931E;
+}
+
+.navigationSlider .slidingNav ul li a:hover {
+  color: #ffffff;
+  background-color: inherit;
+}
+
+.navigationSlider .slidingNav ul li.siteNavItemActive > a, .navigationSlider .slidingNav ul li.siteNavGroupActive > a {
+  background-color: inherit;
 }
 
 .homeContainer {
-  background: #f0bc40;
+  background: #353d47;
+  background: rgb(2,0,36);
+  background: linear-gradient(180deg, rgba(2,0,36,1), rgba(147,49,157,1) 0%, rgba(241,90,36,1) 100%);
   padding: 50px 0px;
 }
 
 .projectTitle {
-  color: #dc3b26;
+  color: #ffffff;
   font-variant: small-caps;
   font-weight: 300;
 }
 
 .promoSection .button {
   border: 1px solid #fff;
-  color: #dc3b26;
+  color: #ffffff;
 }
 
 .promoSection .button:hover {
-  background: #f29837;
-  border: 1px solid #dc3b26;
+  background-color: inherit;
+  border: 1px solid #ffffff;
   color: #fff;
 }
 
@@ -56,7 +75,7 @@ div.productShowcaseSection {
 }
 
 .blockContent > h2 {
-  color: #f29837;
+  color: #F7931E;
 }
 
 .productShowcaseSection li {
@@ -71,12 +90,36 @@ div.productShowcaseSection {
   background: #fff;
 }
 
+.productShowcaseSection {
+  color: #6C6C6C;
+}
+
+.productShowcaseSection h2 {
+  color: #1C60F7;
+}
+
+.container .wrapper .alignCenter h2 {
+  color: #6C6C6C;
+}
+
 div#quickstart  {
-  background: #f1f1f2;
+  background: #EFEFEF;
 }
 
 div#quickstart ol {
   margin-bottom: 0px;
+}
+
+.nav-footer {
+  background-color: #222222;
+}
+
+.nav-footer .sitemap a {
+  color: #F7931E;
+}
+
+.nav-footer .sitemap a:hover {
+  color: #ffffff;
 }
 
 p a {
@@ -88,9 +131,87 @@ p a:hover {
   border-bottom: 1px dotted #f29837;
 }
 
+/* Style docs */
+.toc .toggleNav .navGroup .navGroupCategoryTitle {
+  color: #222222;
+}
+
+.toc .toggleNav ul li a {
+  color: #6C6C6C;
+}
+
+.toc .toggleNav ul li a:hover {
+  color: #F15A24;
+}
+
+.toc .toggleNav .navGroup .navListItemActive a {
+  color: #1C60F7;
+}
+
+.mainContainer .wrapper .post .postHeaderTitle {
+  color: #222222;
+}
+
+.mainContainer .wrapper .post h1, .mainContainer .wrapper .post h2, .mainContainer .wrapper .post h3 {
+  color: #222222;
+}
+
+.mainContainer .wrapper .post {
+  color: #6C6C6C;
+}
+
+.mainContainer .wrapper .post strong {
+  color: #222222;
+}
+
+.mainContainer .wrapper .post a {
+  color: #1C60F7;
+}
+
+.mainContainer .wrapper .post a:hover {
+  color: #1C60F7;
+  border: 0px;
+}
+
+a.edit-page-link {
+  color: #F7931E !important;
+  border: 1px solid #F7931E;
+}
+
+a.edit-page-link:hover {
+  color: #F7931E;
+  border: 1px solid #F7931E !important;
+  background-color: inherit;
+}
+
+a.docs-next, a.docs-prev {
+  color: #F7931E;
+  border: 1px solid #F7931E;
+}
+
+a.docs-next:hover, a.docs-prev:hover {
+  color: #F7931E;
+  border: 1px solid #F7931E;
+  background-color: inherit;
+}
+
 /* Style tutorials */
 .tutorialBody {
   margin-top: -20px;
+  color: #6C6C6C;
+}
+
+.tutorialBody h1, .tutorialBody h2, .tutorialBody h3 {
+  color: #222222
+}
+
+.tutorialBody a {
+  color: #1C60F7;
+}
+
+.tutorialBody a:hover {
+  color: #1C60F7;
+  border: 0px;
 }
 
 .tutorialBody h1 {
