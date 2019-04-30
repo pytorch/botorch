@@ -164,7 +164,7 @@ tensor([0.4887, 0.5063])
                   <MarkdownBlock>{constrAcqFuncExample}</MarkdownBlock>
                 </li>
                 <li>
-                  Optimize the acqusiton function:
+                  Optimize the acquisition function:
                   <MarkdownBlock>{optAcqFuncExample}</MarkdownBlock>
                 </li>
               </ol>
