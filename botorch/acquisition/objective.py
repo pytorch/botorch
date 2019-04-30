@@ -14,7 +14,14 @@ from torch.nn import Module
 
 
 class MCAcquisitionObjective(Module, ABC):
-    r"""Abstract base class for MC-based objectives."""
+    r"""Abstract base class for MC-based objectives.
+
+    Example:
+        >>> # This method is usually not called directly, but via the objective's
+        >>> # `__call__` method:
+        >>> samples = sampler(posterior)
+        >>> outcome = mc_obj(samples)
+    """
 
     def __init__(self) -> None:
         super().__init__()
@@ -30,18 +37,18 @@ class MCAcquisitionObjective(Module, ABC):
         Returns:
             Tensor: A `sample_shape x batch_shape x q`-dim Tensor of objective
             values (assuming maximization).
-
-        Example:
-            This method is usually not called directly, but via the objective's
-            `__call__` method:
-            >>> samples = sampler(posterior)
-            >>> outcome = mc_obj(samples)
         """
         pass  # pragma: no cover
 
 
 class IdentityMCObjective(MCAcquisitionObjective):
-    r"""Trivial objective extracting the last dimension."""
+    r"""Trivial objective extracting the last dimension.
+
+    Example:
+        >>> identity_objective = IdentityMCObjective()
+        >>> samples = sampler(posterior)
+        >>> objective = identity_objective(samples)
+    """
 
     def forward(self, samples: Tensor) -> Tensor:
         return samples.squeeze(-1)
@@ -52,6 +59,13 @@ class LinearMCObjective(MCAcquisitionObjective):
 
     For input `samples` and `mc_obj = LinearMCObjective(weights)`, this produces
     `mc_obj(samples) = sum_{i} weights[i] * samples[..., i]`
+
+    Example:
+        >>> # example for a two outcomes
+        >>> weights = torch.tensor([0.75, 0.25])
+        >>> linear_objective = LinearMCObjective(weights)
+        >>> samples = sampler(posterior)
+        >>> objective = linear_objective(samples)
     """
 
     def __init__(self, weights: Tensor) -> None:
@@ -87,6 +101,11 @@ class GenericMCObjective(MCAcquisitionObjective):
     Allows to construct arbitrary MC-objective functions from a generic
     callable. In order to be able to use gradient-based acquisition function
     optimization it should be possible to backpropagate through the callable.
+
+    Example:
+        >>> generic_objective = GenericMCObjective(lambda Y: torch.sqrt(Y).sum(dim=-1))
+        >>> samples = sampler(posterior)
+        >>> objective = generic_objective(samples)
     """
 
     def __init__(self, objective: Callable[[Tensor], Tensor]) -> None:
@@ -96,9 +115,6 @@ class GenericMCObjective(MCAcquisitionObjective):
             objective: A callable mapping a `sample_shape x batch-shape x q x o`-
                 dim Tensor to a `sample_shape x batch-shape x q`-dim Tensor of
                 objective values.
-
-        Example:
-            >>> mc_obj = GenericMCObjective(lambda Y: torch.sqrt(Y, dim=-1))
         """
         super().__init__()
         self.objective = objective
@@ -113,12 +129,6 @@ class GenericMCObjective(MCAcquisitionObjective):
         Returns:
             A `sample_shape x batch_shape x q`-dim Tensor of objective values
             weighted by feasibility (assuming maximization).
-
-        Example:
-            This method is usually not called directly, but via the objective's
-            `__call__` method:
-            >>> samples = sampler(posterior)
-            >>> outcome = mc_obj(samples)
         """
         return self.objective(samples)
 
@@ -135,6 +145,15 @@ class ConstrainedMCObjective(GenericMCObjective):
 
     See `botorch.utils.objective.apply_constraints` for details on the constarint
     handling.
+
+    Example:
+        >>> bound = 0.0
+        >>> objective = lambda Y: Y[..., 0]
+        >>> # apply non-negativity constraint on f(x)[1]
+        >>> constraint = lambda Y: bound - Y[..., 1]
+        >>> constrained_objective = ConstrainedMCObjective(objective, [constraint])
+        >>> samples = sampler(posterior)
+        >>> objective = constrained_objective(samples)
     """
 
     def __init__(
@@ -158,11 +177,6 @@ class ConstrainedMCObjective(GenericMCObjective):
                 infeasible.
             eta: The temperature parameter of the sigmoid function approximating
                 the constraint.
-
-        Example:
-            >>> objective = lambda Y: Y[..., 0]
-            >>> constraint = lambda Y: bound - Y[..., 1]
-            >>> mc_obj = ConstrainedMCObjective(objective, [constraint])
         """
         super().__init__(objective=objective)
         self.constraints = constraints

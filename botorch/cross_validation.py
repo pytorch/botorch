@@ -60,6 +60,10 @@ def gen_loo_cv_folds(
         - test_Yvar: A `n x 1 x o` or `batch_shape x n x 1 x o` tensor of observed
           measurement noise.
 
+    Example:
+        >>> train_X = torch.rand(10, 1)
+        >>> train_Y = torch.sin(6 * train_X) + 0.2 * torch.rand_like(train_X)
+        >>> cv_folds = gen_loo_cv_folds(train_X, train_Y)
     """
     masks = torch.eye(train_X.shape[-2], dtype=torch.uint8, device=train_X.device)
     if train_Y.dim() < train_X.dim():
@@ -102,7 +106,7 @@ def batch_cross_validation(
     fit_args: Optional[Dict[str, Any]] = None,
     observation_noise: bool = False,
 ) -> CVResults:
-    r"""Perform cross validation by using gpytorch batch mode
+    r"""Perform cross validation by using gpytorch batch mode.
 
     Args:
         model_cls: A GPyTorchModel class. This class must initialize the likelihood
@@ -120,6 +124,16 @@ def batch_cross_validation(
         - observed_Y: A `n x 1 x o` or `batch_shape x n x 1 x o` tensor of observations.
         - observed_Yvar: A `n x 1 x o` or `batch_shape x n x 1 x o` tensor of observed
           measurement noise.
+
+    Example:
+        >>> train_X = torch.rand(10, 1)
+        >>> train_Y = torch.sin(6 * train_X) + 0.2 * torch.rand_like(train_X)
+        >>> cv_folds = gen_loo_cv_folds(train_X, train_Y)
+        >>> cv_results = batch_cross_validation(
+        >>>     SingleTaskGP,
+        >>>     ExactMarginalLogLikelihood,
+        >>>     cv_folds,
+        >>> )
 
     WARNING: This function is currently very memory inefficient, use it only
         for problems of small size.

@@ -13,7 +13,7 @@ from torch import Tensor
 def get_objective_weights_transform(
     weights: Optional[Tensor]
 ) -> Callable[[Tensor], Tensor]:
-    r"""Create a linear objective callable froma set of weights.
+    r"""Create a linear objective callable from a set of weights.
 
     Create a callable mapping a Tensor of size `b x q x o` to a Tensor of size
     `b x q`, where `o` is the number of outputs of the model using scalarization
@@ -27,6 +27,10 @@ def get_objective_weights_transform(
 
     Returns:
         Transform function using the objective weights.
+
+    Example:
+        >>> weights = torch.tensor([0.75, 0.25])
+        >>> transform = get_objective_weights_transform(weights)
     """
     # if no weights provided, just extract the single output
     if weights is None:

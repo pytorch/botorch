@@ -3,10 +3,10 @@ id: introduction
 title: Introduction
 ---
 
-BoTorch (pronounced like "blow-torch") is a library for Bayesian optimization
-research built on top of PyTorch, and is part of the PyTorch ecosystem.
+BoTorch (pronounced like "blow-torch") is a library for [Bayesian optimization](https://en.wikipedia.org/wiki/Bayesian_optimization)
+research built on top of [PyTorch](https://pytorch.org/), and is part of the PyTorch ecosystem.
 
-Bayesian optimization (BO) is an established technique for sequential
+Bayesian optimization (BayesOpt) is an established technique for sequential
 optimization of costly-to-evaluate black-box functions. It can be applied to a
 wide variety of problems, including hyperparameter optimization for machine
 learning algorithms, A/B testing, as well as many scientific and engineering
@@ -15,7 +15,7 @@ problems.
 BoTorch is best used in tandem with [Ax](https://ax.dev), Facebook's open-source
 adaptive experimentation platform, which provides an easy-to-use interface for
 defining, managing and running sequential experiments, while handling
-(meta-)data management, transformations, and systems integration.
+(meta-)data management, transformations, and systems integration. Users who just want an easy-to-use suite for Bayesian optimization [should start with Ax](https://ax.dev/docs/bayesopt).
 
 
 ## Why BoTorch?
@@ -26,7 +26,7 @@ BoTorch provides a modular and easily extensible interface for composing
 Bayesian optimization primitives, including probabilistic models, acquisition
 functions, and optimizers.
 
-It significantly improves develop efficiency by utilizing quasi-Monte-Carlo
+It significantly improves developer efficiency by utilizing quasi-Monte-Carlo
 acquisition functions (by ways of the "re-parameterization trick"
 [^AutoEncVarBayes], [^ReparamAcq]), which makes it straightforward to implement
 new ideas without having to impose restrictive assumptions about the underlying
@@ -48,7 +48,7 @@ Bayesian optimization traditionally relies heavily on Gaussian Process (GP)
 models, which provide well-calibrated uncertainty estimates. BoTorch provides
 first-class support for state-of-the art probabilistic models in
 [GPyTorch](https://gpytorch.ai), a library for efficient and scalable GPs
-implemented in PyTorch (and contributed to significantly by the BoTorch authors).
+implemented in PyTorch (and to which the BoTorch authors have significantly contributed).
 This includes support for multi-task GPs, deep kernel learning, deep GPs, and
 approximate inference. This enables using GP models for problems that have
 traditionally not been amenable to Bayesian optimization techniques.

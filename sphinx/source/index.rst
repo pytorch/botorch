@@ -1,6 +1,6 @@
 :github_url: https://github.com/pytorch/botorch
 
-Welcome to botorch's API reference!
+BoTorch API Reference
 ===================================
 
 .. toctree::
@@ -23,7 +23,7 @@ Welcome to botorch's API reference!
    utils
 
 
-Indices and tables
+Indices and Tables
 ==================
 
 * :ref:`genindex`

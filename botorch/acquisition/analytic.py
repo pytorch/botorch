@@ -47,6 +47,11 @@ class ExpectedImprovement(AnalyticAcquisitionFunction):
     single-outcome.
 
     `EI(x) = E(max(y - best_f, 0)), y ~ f(x)`
+
+    Example:
+        >>> model = SingleTaskGP(train_X, train_Y)
+        >>> EI = ExpectedImprovement(model, best_f=0.2)
+        >>> ei = EI(test_X)
     """
 
     def __init__(
@@ -59,11 +64,6 @@ class ExpectedImprovement(AnalyticAcquisitionFunction):
             best_f: Either a scalar or a `b`-dim Tensor (batch mode) representing
                 the best function value observed so far (assumed noiseless).
             maximize: If True, consider the problem a maximization problem.
-
-        Example:
-            >>> gp = SingleTaskGP(train_X, train_Y)
-            >>> EI = ExpectedImprovement(gp)
-            >>> ei = EI(test_X)
         """
         super().__init__(model=model)
         self.maximize = maximize
@@ -108,6 +108,11 @@ class PosteriorMean(AnalyticAcquisitionFunction):
 
     Only supports the case of q=1. Requires the model's posterior to have a
     `mean` property. The model must be single-outcome.
+
+    Example:
+        >>> model = SingleTaskGP(train_X, train_Y)
+        >>> PM = PosteriorMean(model)
+        >>> pm = PM(test_X)
     """
 
     @t_batch_mode_transform(expected_q=1)
@@ -136,6 +141,11 @@ class ProbabilityOfImprovement(AnalyticAcquisitionFunction):
     must be single-outcome.
 
     `PI(x) = P(y >= best_f), y ~ f(x)`
+
+    Example:
+        >>> model = SingleTaskGP(train_X, train_Y)
+        >>> PI = ProbabilityOfImprovement(model, best_f=0.2)
+        >>> pi = PI(test_X)
     """
 
     def __init__(
@@ -191,6 +201,11 @@ class UpperConfidenceBound(AnalyticAcquisitionFunction):
 
     `UCB(x) = mu(x) + sqrt(beta) * sigma(x)`, where `mu` and `sigma` are the
     posterior mean and standard deviation, respectively.
+
+    Example:
+        >>> model = SingleTaskGP(train_X, train_Y)
+        >>> UCB = UpperConfidenceBound(model, beta=0.2)
+        >>> ucb = UCB(test_X)
     """
 
     def __init__(
@@ -249,6 +264,14 @@ class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
     `Constrained_EI(x) = EI(x) * Product_i P(y_i \in [lower_i, upper_i])`,
     where `y_i ~ constraint_i(x)` and `lower_i`, `upper_i` are the lower and
     upper bounds for the i-th constraint, respectively.
+
+    Example:
+        >>> # example where 0th output has a non-negativity constraint and
+        ... # 1st output is the objective
+        >>> model = SingleTaskGP(train_X, train_Y)
+        >>> constraints = {0: (0.0, None)}
+        >>> cEI = ConstrainedExpectedImprovement(model, 0.2, 1, constraints)
+        >>> cei = cEI(test_X)
     """
 
     def __init__(
@@ -315,6 +338,13 @@ class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
     def _preprocess_constraint_bounds(
         self, constraints: Dict[int, Tuple[Optional[float], Optional[float]]]
     ) -> None:
+        r"""Set up constraint bounds.
+
+        Args:
+            constraints: A dictionary of the form `{i: [lower, upper]}`, where
+                `i` is the output index, and `lower` and `upper` are lower and upper
+                bounds on that output (resp. interpreted as -Inf / Inf if None)
+        """
         constraint_lower, self.constraint_lower_inds = [], []
         constraint_upper, self.constraint_upper_inds = [], []
         constraint_both, self.constraint_both_inds = [], []
@@ -348,11 +378,22 @@ class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
         )
 
     def _compute_prob_feas(self, X: Tensor, means: Tensor, sigmas: Tensor) -> Tensor:
-        # This function does casework for upper bound, lower bound, and both-sided
-        # bounds. Another way to do it would be to use 'inf' and -'inf' for the
-        # one-sided bounds and use the logic for the both-sided case. But this
-        # causes an issue with autograd since we get 0 * inf. Investigate later.
+        r"""Compute feasibility probability for each batch of X.
 
+        Args:
+            X: A `(b) x 1 x d`-dim Tensor of `(b)` t-batches of `d`-dim design
+                points each.
+            means: A `(b) x t`-dim Tensor of means.
+            sigmas: A `(b) x t`-dim Tensor of standard deviations.
+        Returns:
+            A `(b) x 1 x 1`-dim tensor of feasibility probabilities
+
+        Note: This function does case-work for upper bound, lower bound, and both-sided
+        bounds. Another way to do it would be to use 'inf' and -'inf' for the
+        one-sided bounds and use the logic for the both-sided case. But this
+        causes an issue with autograd since we get 0 * inf.
+        TODO: Investigate further.
+        """
         output_shape = list(X.shape)
         output_shape[-1] = 1
         prob_feas = torch.ones(output_shape, device=X.device, dtype=X.dtype)
@@ -384,7 +425,13 @@ class NoisyExpectedImprovement(ExpectedImprovement):
     `NEI(x) = E(max(y - max Y_baseline), 0)), (y, Y_baseline) ~ f((x, X_baseline))`,
     where `X_baseline` are previously observed points.
 
-    Note: This acquisition function currently relies on using a GPyTorch ExactGP.
+    Note: This acquisition function currently relies on using a FixedNoiseGP (required
+    for noiseless fantasies).
+
+    Example:
+        >>> model = FixedNoiseGP(train_X, train_Y, train_Yvar=train_Yvar)
+        >>> NEI = NoisyExpectedImprovement(model, train_X)
+        >>> nei = NEI(test_X)
     """
 
     def __init__(
@@ -433,7 +480,7 @@ class NoisyExpectedImprovement(ExpectedImprovement):
         return super().forward(X.unsqueeze(-3)).mean(dim=-1)
 
 
-def _construct_dist(means: Tensor, sigmas: Tensor, inds: Tensor):
+def _construct_dist(means: Tensor, sigmas: Tensor, inds: Tensor) -> Normal:
     mean = means[..., inds]
     sigma = sigmas[..., inds]
     return Normal(loc=mean, scale=sigma)

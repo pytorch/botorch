@@ -29,12 +29,12 @@ class GPyTorchPosterior(Posterior):
 
     @property
     def device(self) -> torch.device:
-        r"""The torch device or the posterior"""
+        r"""The torch device of the posterior."""
         return self.mvn.loc.device
 
     @property
     def dtype(self) -> torch.dtype:
-        r"""The torch dtype or the posterior"""
+        r"""The torch dtype of the posterior."""
         return self.mvn.loc.dtype
 
     @property
@@ -61,7 +61,7 @@ class GPyTorchPosterior(Posterior):
                 This is used for deterministic optimization.
 
         Returns:
-            A `sample_shape x event`-dim Tensor of samples from the posterior.
+            A `sample_shape x event_shape`-dim Tensor of samples from the posterior.
         """
         if sample_shape is None:
             sample_shape = torch.Size([1])
@@ -77,7 +77,7 @@ class GPyTorchPosterior(Posterior):
             samples = self.mvn.rsample(
                 sample_shape=sample_shape, base_samples=base_samples
             )
-        # make sure there alwayas is an output dimension
+        # make sure there always is an output dimension
         if not self._is_mt:
             samples = samples.unsqueeze(-1)
         return samples

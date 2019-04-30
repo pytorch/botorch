@@ -49,6 +49,10 @@ def module_to_array(
         parameter.
         - A `2 x n_params` numpy array with lower and upper bounds if at least
         one constraint is finite, and None otherwise.
+
+    Example:
+        >>> mll = ExactMarginalLogLikelihood(model.likelihood, model)
+        >>> parameter_array, property_dict, bounds_out = module_to_array(mll)
     """
     x: List[np.ndarray] = []
     lower: List[np.ndarray] = []
@@ -105,6 +109,12 @@ def set_params_with_array(
 
     Returns:
         Module: module with parameters updated in-place.
+
+    Example:
+        >>> mll = ExactMarginalLogLikelihood(model.likelihood, model)
+        >>> parameter_array, property_dict, bounds_out = module_to_array(mll)
+        >>> parameter_array += 0.1  # perturb parameters (for example only)
+        >>> mll = set_params_with_array(mll, parameter_array,  property_dict)
     """
     param_dict = OrderedDict(module.named_parameters())
     start_idx = 0

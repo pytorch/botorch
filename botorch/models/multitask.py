@@ -175,7 +175,7 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
             train_Yvar: A `n` or `b x n` (batch mode) tensor of observation
                 noise standard errors.
             task_feature: The index of the task feature
-                (`-(d + 1) <= task_feature <= d + 1`).
+                (`-d <= task_feature <= d`).
             output_tasks: A list of task indices for which to compute model
                 outputs for. If omitted, return outputs for all task indices.
             rank: The rank to be used for the index kernel. If omitted, use a

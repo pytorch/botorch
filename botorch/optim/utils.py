@@ -23,6 +23,15 @@ def check_convergence(
     r"""Check convergence of optimization for pytorch optimizers.
 
     Right now this is just a dummy function and only checks for maxiter.
+
+    Args:
+        loss_trajectory: A list containing the loss value at each iteration.
+        param_trajectory: A dictionary mapping each parameter name to a list of Tensors
+            where the `i`th Tensor is the parameter value at iteration `i`.
+        options: dictionary of options. Currently only "maxiter" is supported.
+
+    Returns:
+        A boolean indicating whether optimization has converged.
     """
     maxiter: int = options.get("maxiter", 50)
     # TODO: Be A LOT smarter about this
@@ -74,7 +83,7 @@ def fix_features(
 
     Args:
         X: input Tensor with shape `... x p`, where `p` is the number of features
-        fixed_features:  A dictionary with keys as column indices and values
+        fixed_features: A dictionary with keys as column indices and values
             equal to what the feature should be set to in `X`. If the value is
             None, that column is just considered fixed. Keys should be in the
             range `[0, p - 1]`.
@@ -94,6 +103,13 @@ def fix_features(
             ],
             dim=-1,
         )
+
+
+def _fix_feature(Z: Tensor, value: Optional[float]) -> Tensor:
+    r"""Helper function returns a Tensor like `Z` filled with `value` if provided."""
+    if value is None:
+        return Z.detach()
+    return torch.full_like(Z, value)
 
 
 def _expand_bounds(
@@ -131,12 +147,6 @@ def _expand_bounds(
         return None
 
 
-def _fix_feature(Z: Tensor, value: Optional[float]) -> Tensor:
-    if value is None:
-        return Z.detach()
-    return torch.full_like(Z, value)
-
-
 def _get_extra_mll_args(
     mll: MarginalLogLikelihood
 ) -> Union[List[Tensor], List[List[Tensor]]]:
@@ -149,7 +159,7 @@ def _get_extra_mll_args(
         mll: The MarginalLogLikelihood module.
 
     Returns:
-        Extra argumentsfor the MarginalLogLikelihood.
+        Extra arguments for the MarginalLogLikelihood.
     """
     if isinstance(mll, ExactMarginalLogLikelihood):
         return list(mll.model.train_inputs)

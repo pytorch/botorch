@@ -32,10 +32,9 @@ def initialize_q_batch(X: Tensor, Y: Tensor, n: int, eta: float = 1.0) -> Tensor
         A `n x q x d` tensor of `n` `q`-batch initial conditions.
 
     Example:
-        To get `n=10` starting points of q-batch size `q=3` for a
-        `d=6`-dimensional model:
+        # To get `n=10` starting points of q-batch size `q=3` for model with `d=6`:
         >>> qUCB = qUpperConfidenceBound(model, beta=0.1)
-        >>> Xrnd = lb + (ub - lb) * torch.rand(500, 3, 6)
+        >>> Xrnd = torch.rand(500, 3, 6)
         >>> Xinit = initialize_q_batch(Xrnd, qUCB(Xrnd), 10)
     """
     n_samples = X.shape[0]
@@ -90,6 +89,12 @@ def initialize_q_batch_nonneg(
 
     Returns:
         A `n x q x d` tensor of `n` `q`-batch initial conditions.
+
+    Example:
+        # To get `n=10` starting points of q-batch size `q=3` for model with `d=6`:
+        >>> qEI = qExpectedImprovement(model, best_f=0.2)
+        >>> Xrnd = torch.rand(500, 3, 6)
+        >>> Xinit = initialize_q_batch(Xrnd, qEI(Xrnd), 10)
     """
     n_samples = X.shape[0]
     if n > n_samples:

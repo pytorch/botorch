@@ -55,11 +55,11 @@ observations). Using the reparameterization trick ([^KingmaWelling2014],
 $$
 \text{qEI}(X) \approx \frac{1}{N} \sum_{i=1}^N \max_{j=1,..., q}
 \bigl\\{ \max\bigl( \mu(X)\_j + (L(X) \epsilon_i)\_j - f^\*, 0 \bigr) \bigr\\},
-\qquad \epsilon_{i} \sim \mathcal{N}(0, I)s
+\qquad \epsilon_{i} \sim \mathcal{N}(0, I)
 $$
 
 where $\mu(X)$ is the posterior mean of $f$ at $X$, and $L(X)L(X)^T = \Sigma(X)$
-is a root decomposition of the posterior variance.
+is a root decomposition of the posterior covariance matrix.
 
 All MC-based acquisition functions in BoTorch are derived from
 [`MCAcquisitionFunction`](../api/acquisition.html#mcacquisitionfunction).
@@ -146,7 +146,7 @@ noiseless observations). It can be shown that
 $$ \text{EI}(x) = \sigma(x) \bigl( z \Phi(z) + \varphi(z) \bigr)$$
 
 where $z = \frac{\mu(x) - f_{\max}}{\sigma(x)}$ and $\Phi$ and $\varphi$ are
-the cdf and pdf of the standard Normal distribution, respectively.
+the cdf and pdf of the standard normal distribution, respectively.
 
 With some additional work, it is also possible to express the gradient of
 the Expected Improvement with respect to the design $x$. Classic Bayesian

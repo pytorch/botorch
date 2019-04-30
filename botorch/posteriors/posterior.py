@@ -16,12 +16,12 @@ class Posterior(ABC):
 
     @abstractproperty
     def device(self) -> torch.device:
-        r"""The torch device this posterior lives on."""
+        r"""The torch device of the posterior."""
         pass  # pragma: no cover
 
     @abstractproperty
     def dtype(self) -> torch.dtype:
-        r"""The torch dtype of this posterior."""
+        r"""The torch dtype of the posterior."""
         pass  # pragma: no cover
 
     @abstractproperty
@@ -78,11 +78,11 @@ class Posterior(ABC):
                 draw `n` samples, set to `torch.Size([n])`. To draw `b` batches
                 of `n` samples each, set to `torch.Size([b, n])`.
             base_samples: An (optional) Tensor of `N(0, I)` base samples of
-                appropriate dimension, typically obtained from a `Sampler`.
+                appropriate dimension, typically obtained from a `Sampler` object.
                 This is used for deterministic optimization.
 
         Returns:
-            A `sample_shape x event`-dim Tensor of samples from the posterior.
+            A `sample_shape x event_shape`-dim Tensor of samples from the posterior.
         """
         with torch.no_grad():
             return self.rsample(sample_shape=sample_shape, base_samples=base_samples)

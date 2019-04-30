@@ -34,7 +34,7 @@ class HomeSplash extends React.Component {
     );
 
     const Logo = props => (
-      <div className="projectLogo">
+      <div className="splashLogo">
         <img src={props.img_src} alt="Project Logo" />
       </div>
     );
@@ -64,8 +64,9 @@ class HomeSplash extends React.Component {
 
     return (
       <SplashContainer>
+        <Logo img_src={baseUrl+'img/botorch_logo_lockup_top.png'}/>
         <div className="inner">
-          <ProjectTitle siteConfig={siteConfig} />
+          {/* <ProjectTitle siteConfig={siteConfig} /> */}
           <PromoSection>
             <Button href={docUrl('introduction.html')}>Introduction</Button>
             <Button href={"#quickstart"}>Get Started</Button>
@@ -101,7 +102,7 @@ class Index extends React.Component {
           {
             content:
               'This is another description of how this project is useful',
-            image: `${baseUrl}img/botorch_logo_lockup.svg`,
+            image: `${baseUrl}img/botorch_logo_lockup_white.svg`,
             imageAlign: 'right',
             title: 'Description',
           },
@@ -163,7 +164,7 @@ tensor([0.4887, 0.5063])
                   <MarkdownBlock>{constrAcqFuncExample}</MarkdownBlock>
                 </li>
                 <li>
-                  Optimize the acqusiton function:
+                  Optimize the acquisition function:
                   <MarkdownBlock>{optAcqFuncExample}</MarkdownBlock>
                 </li>
               </ol>
@@ -180,19 +181,19 @@ tensor([0.4887, 0.5063])
         {[
           {
             content: 'Plug in new models, acquisition functions, and optimizers.',
-            image: `${baseUrl}img/th-large-solid.svg`,
+            image: `${baseUrl}img/puzzle_pieces.svg`,
             imageAlign: 'top',
             title: 'Modular',
           },
           {
             content: 'Easily integrate neural network modules. Native GPU & autograd support.',
-            image: `${baseUrl}img/pytorch-logo.png`,
+            image: `${baseUrl}img/pytorch_logo.svg`,
             imageAlign: 'top',
             title: 'Built on PyTorch',
           },
           {
             content: 'Support for scalable GPs. Run code on multiple devices.',
-            image: `${baseUrl}img/expand-arrows-alt-solid.svg`,
+            image: `${baseUrl}img/arrows_expanding_colored.svg`,
             imageAlign: 'top',
             title: 'Scalable',
           },

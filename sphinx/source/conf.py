@@ -20,7 +20,7 @@ sys.path.append(base_path)
 
 # -- Project information -----------------------------------------------------
 
-project = "botorch"
+project = "BoTorch"
 copyright = "2019, Facebook, Inc."
 author = "Facebook, Inc."
 
@@ -88,8 +88,7 @@ html_theme = "alabaster"
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-#
-# html_theme_options = {}
+html_theme_options = {}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -141,7 +140,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, "botorch.tex", "botorch Documentation", "Facebook, Inc.", "manual")
+    (master_doc, "botorch.tex", "BoTorch Documentation", "Facebook, Inc.", "manual")
 ]
 
 
@@ -161,9 +160,9 @@ texinfo_documents = [
     (
         master_doc,
         "botorch",
-        "botorch Documentation",
+        "BoTorch Documentation",
         author,
-        "botorch",
+        "BoTorch",
         "Bayesian Optimization in PyTorch.",
         "Miscellaneous",
     )

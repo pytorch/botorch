@@ -26,7 +26,7 @@ class NormalQMCEngine:
     instead, set `inv_transform=True`.
 
     Example:
-        >>> engine = NormalQMCEngine(3, inv_transform=True)
+        >>> engine = NormalQMCEngine(3)
         >>> samples = engine.draw(10)
     """
 
@@ -54,7 +54,7 @@ class NormalQMCEngine:
     def draw(
         self, n: int = 1, out: Optional[Tensor] = None, dtype: torch.dtype = torch.float
     ) -> Optional[Tensor]:
-        r"""Draw n qMC samples from the standard Normal.
+        r"""Draw `n` qMC samples from the standard Normal.
 
         Args:
             n: The number of samples to draw.
@@ -63,7 +63,7 @@ class NormalQMCEngine:
             dtype: The desired torch data type (ignored if `out` is provided).
 
         Returns:
-            A `n x d` tensor of samples if `out=None`, and `None` otherwise.
+            A `n x d` tensor of samples if `out=None` and `None` otherwise.
         """
         # get base samples
         samples = self._sobol_engine.draw(n, dtype=dtype)
@@ -96,7 +96,7 @@ class MultivariateNormalQMCEngine:
 
     Example:
         >>> mean = torch.tensor([1.0, 2.0])
-        >>> cov = torch.tensor([[1.0, 0.25]. [0.25, 2.0]])
+        >>> cov = torch.tensor([[1.0, 0.25], [0.25, 2.0]])
         >>> engine = MultivariateNormalQMCEngine(mean, cov)
         >>> samples = engine.draw(10)
     """
@@ -139,16 +139,15 @@ class MultivariateNormalQMCEngine:
             self._corr_matrix = (eigvec * eigval_root).transpose(-1, -2)
 
     def draw(self, n: int = 1, out: Optional[Tensor] = None) -> Optional[Tensor]:
-        r"""Draw n qMC samples from the multivariate Normal.
+        r"""Draw `n` qMC samples from the multivariate Normal.
 
         Args:
             n: The number of samples to draw.
             out: An option output tensor. If provided, draws are put into this
                 tensor, and the function returns None.
-            dtype: The desired torch data type (ignored if out provided).
 
         Returns:
-            A `n x d` tensor of samples if `out=None`, and `None` otherwise.
+            A `n x d` tensor of samples if `out=None` and `None` otherwise.
         """
         dtype = out.dtype if out is not None else self._mean.dtype
         device = out.device if out is not None else self._mean.device

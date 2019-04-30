@@ -6,30 +6,56 @@ html body {
   overflow-x: hidden;
 }
 
-.headerTitle {
-  font-weight: 400
+.fixedHeaderContainer {
+    background-color: #222222;
+}
+
+.fixedHeaderContainer header .headerTitleWithLogo {
+  display: none;
+}
+
+.navigationSlider .slidingNav ul li a {
+  color: #EFEFEF;
+  background-color: #222222;
+}
+
+.navigationSlider .slidingNav ul li a:hover {
+  color: #F15A24;
+  background-color: inherit;
+}
+
+.navigationSlider .slidingNav ul li.siteNavItemActive > a, .navigationSlider .slidingNav ul li.siteNavGroupActive > a {
+  background-color: inherit;
 }
 
 .homeContainer {
-  background: #f0bc40;
+  background: rgb(2,0,36);
+  background: linear-gradient(180deg, rgba(2,0,36,1), rgba(34,34,34,1) 0%, rgba(28,96,247,1) 100%);
   padding: 50px 0px;
 }
 
+.splashLogo{
+  display: block;
+  margin: 0 auto;
+  height: 275px;
+  width: 300px;
+}
+
 .projectTitle {
-  color: #dc3b26;
+  color: #ffffff;
   font-variant: small-caps;
   font-weight: 300;
 }
 
 .promoSection .button {
   border: 1px solid #fff;
-  color: #dc3b26;
+  color: #ffffff;
 }
 
 .promoSection .button:hover {
-  background: #f29837;
-  border: 1px solid #dc3b26;
-  color: #fff;
+  background-color: inherit;
+  border: 1px solid #F15A24;
+  color: #F15A24;
 }
 
 .landingPage {
@@ -38,6 +64,7 @@ html body {
 
 div.productShowcaseSection {
   padding-top: 40px;
+  color: #6C6C6C;
 }
 
 .productShowcaseSection > h2 {
@@ -45,6 +72,7 @@ div.productShowcaseSection {
   font-weight: 300;
   margin: 0px;
   padding: 0px;
+  color: #1C60F7;
 }
 
 .productShowcaseSection div.container {
@@ -53,10 +81,6 @@ div.productShowcaseSection {
 
 .productShowcaseSection div.blockImage  {
   height: 80px;
-}
-
-.blockContent > h2 {
-  color: #f29837;
 }
 
 .productShowcaseSection li {
@@ -71,30 +95,105 @@ div.productShowcaseSection {
   background: #fff;
 }
 
+.container .wrapper .alignCenter h2 {
+  color: #222222;
+}
+
 div#quickstart  {
-  background: #f1f1f2;
+  background: #EFEFEF;
 }
 
 div#quickstart ol {
   margin-bottom: 0px;
 }
 
-p a {
-  color: #f29837;
+.nav-footer {
+  background-color: #222222;
 }
 
-p a:hover {
-  color: #f29837;
-  border-bottom: 1px dotted #f29837;
+.nav-footer .sitemap a {
+  color: #EFEFEF;
+}
+
+.nav-footer .sitemap a:hover {
+  color: #F15A24;
+}
+
+a, p a {
+  color: #1C60F7;
+}
+
+a:hover, p a:hover {
+  color: #1C60F7;
+}
+
+/* Style docs */
+.toc .toggleNav .navGroup .navGroupCategoryTitle {
+  color: #222222;
+}
+
+.toc .toggleNav ul li a {
+  color: #6C6C6C;
+}
+
+.toc .toggleNav ul li a:hover {
+  color: #F15A24;
+}
+
+.toc .toggleNav .navGroup .navListItemActive a {
+  color: #1C60F7;
+}
+
+.mainContainer .wrapper .post .postHeaderTitle {
+  color: #222222;
+}
+
+.mainContainer .wrapper .post h1, .mainContainer .wrapper .post h2, .mainContainer .wrapper .post h3 {
+  color: #222222;
+}
+
+.mainContainer .wrapper .post {
+  color: #6C6C6C;
+}
+
+.mainContainer .wrapper .post strong {
+  color: #222222;
+}
+
+a.edit-page-link {
+  color: #1C60F7 !important;
+  border: 1px solid #1C60F7;
+}
+
+a.edit-page-link:hover {
+  color: #F15A24;
+  border: 1px solid #F15A24 !important;
+  background-color: inherit;
+}
+
+a.docs-next, a.docs-prev {
+  color: #1C60F7;
+  border: 1px solid #1C60F7;
+}
+
+a.docs-next:hover, a.docs-prev:hover {
+  color: #F15A24;
+  border: 1px solid #F15A24;
+  background-color: inherit;
 }
 
 /* Style tutorials */
 .tutorialBody {
   margin-top: -20px;
+  color: #6C6C6C;
 }
 
 .tutorialBody h1 {
   margin: 0px;
+}
+
+.tutorialBody h1, .tutorialBody h2, .tutorialBody h3 {
+  color: #222222
 }
 
 .tutorialBody pre {
@@ -132,22 +231,19 @@ p a:hover {
 }
 
 .tutorialButton {
-  color: #f29837;
+  color: #1C60F7;
+  border: 1px solid #1C60F7;
 }
 
 .tutorialButton svg {
   height: 15px;
   margin-right: 5px;
-  fill: #f29837;
 }
 
 .tutorialButton:hover {
-  background-color: #353d47;
-  color: #dc3b26;
-}
-
-.tutorialButton:hover svg path {
-  fill: #dc3b26;
+  color: #F15A24;
+  border: 1px solid #F15A24;
+  background-color: inherit;
 }
 
 @media only screen and (min-device-width: 360px) and (max-device-width: 736px) {
