@@ -12,7 +12,18 @@ from torch import Tensor
 
 
 def squeeze_last_dim(Y: Tensor) -> Tensor:
-    """Squeeze the last dimension of a Tensor."""
+    r"""Squeeze the last dimension of a Tensor.
+
+    Args:
+        Y: A `... x d`-dim Tensor.
+
+    Returns:
+        The input tensor with last dimension squeezed.
+
+    Example:
+        >>> Y = torch.rand(4, 3)
+        >>> Y_squeezed = squeeze_last_dim(Y)
+    """
     return Y.squeeze(-1)
 
 
@@ -20,10 +31,14 @@ def standardize(X: Tensor) -> Tensor:
     r"""Standardize a tensor by dim=0.
 
     Args:
-        X: tensor `n x (d)`
+        X: A `n` or `n x d`-dim tensor
 
     Returns:
         The standardized `X`.
+
+    Example:
+        >>> X = torch.rand(4, 3)
+        >>> X_standardized = standardize(X)
     """
     X_std = X.std(dim=0)
     X_std = X_std.where(X_std >= 1e-9, torch.full_like(X_std, 1.0))
@@ -31,8 +46,7 @@ def standardize(X: Tensor) -> Tensor:
 
 
 def normalize(X: Tensor, bounds: Tensor) -> Tensor:
-    r"""
-    Min-max normalize X to [0,1] using the provided bounds.
+    r"""Min-max normalize X to [0, 1] using the provided bounds.
 
     Args:
         X: `... x d` tensor of data
@@ -40,13 +54,17 @@ def normalize(X: Tensor, bounds: Tensor) -> Tensor:
             columns.
     Returns:
         A `... x d`-dim tensor of normalized data.
+
+    Example:
+        >>> X = torch.rand(4, 3)
+        >>> bounds = torch.stack([torch.zeros(3), 0.5 * torch.ones(3)])
+        >>> X_normalized = unnormalize(X, bounds)
     """
     return (X - bounds[0]) / (bounds[1] - bounds[0])
 
 
 def unnormalize(X: Tensor, bounds: Tensor) -> Tensor:
-    r"""
-    Unscale X from [0,1] to the original scale.
+    r"""Unscale X from [0, 1] to the original scale.
 
     Args:
         X: `... x d` tensor of data
@@ -54,6 +72,11 @@ def unnormalize(X: Tensor, bounds: Tensor) -> Tensor:
             columns.
     Returns:
         A `... x d`-dim tensor of unnormalized data.
+
+    Example:
+        >>> X_normalized = torch.rand(4, 3)
+        >>> bounds = torch.stack([torch.zeros(3), 0.5 * torch.ones(3)])
+        >>> X = unnormalize(X_normalized, bounds)
     """
     return X * (bounds[1] - bounds[0]) + bounds[0]
 
@@ -72,8 +95,11 @@ def t_batch_mode_transform(
         expected_q: The expected q-batch size of X. If specified, this will raise an
             AssertitionError if X's q-batch size does not equal expected_q.
 
+    Returns:
+        The decorated instance method.
+
     Example:
-        >>> class Foo:
+        >>> class ExampleClass:
         >>>     @t_batch_mode_transform(expected_q=1)
         >>>     def single_q_method(self, X):
         >>>         ...
@@ -81,9 +107,6 @@ def t_batch_mode_transform(
         >>>     @t_batch_mode_transform()
         >>>     def arbitrary_q_method(self, X):
         >>>         ...
-
-    Returns:
-        The decorated instance method.
     """
 
     def decorator(method: Callable[[Any, Tensor], Any]) -> Callable[[Any, Tensor], Any]:
@@ -108,7 +131,7 @@ def t_batch_mode_transform(
 
 
 def match_batch_shape(X: Tensor, Y: Tensor) -> Tensor:
-    r"""Matches the batch dimension of a tensor to that of anther tensor.
+    r"""Matches the batch dimension of a tensor to that of another tensor.
 
     Args:
         X: A `batch_shape_X x q x d` tensor, whose batch dimensions that
@@ -121,6 +144,14 @@ def match_batch_shape(X: Tensor, Y: Tensor) -> Tensor:
         the batch dimensions of `Y` (if compatible). For instance, if `X` is
         `b'' x b' x q x d` and `Y` is `b x q x d`, then the returned tensor is
         `b'' x b x q x d`.
+
+    Example:
+        >>> X = torch.rand(2, 1, 5, 3)
+        >>> Y = torch.rand(2, 6, 4, 3)
+        >>> X_matched = match_batch_shape(X, Y)
+        >>> X_matched.shape
+        torch.Size([2, 6, 5, 3])
+
     """
     return X.expand(X.shape[: -Y.dim()] + Y.shape[:-2] + X.shape[-2:])
 

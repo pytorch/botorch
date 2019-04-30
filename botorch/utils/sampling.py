@@ -26,7 +26,7 @@ def construct_base_samples(
     device: Optional[torch.device] = None,
     dtype: Optional[torch.dtype] = None,
 ) -> Tensor:
-    r"""Construct a tensor of normally distributed base samples.
+    r"""Construct base samples from a multi-variate standard normal N(0, I_qo).
 
     Args:
         batch_shape: The batch shape of the base samples to generate. Typically,
@@ -41,6 +41,12 @@ def construct_base_samples(
         A `sample_shape x batch_shape x output_shape` dimensional tensor of base
         samples, drawn from a N(0, I_qo) distribution (using QMC if `qmc=True`).
         Here `output_shape = q x o`.
+
+    Example:
+        >>> batch_shape = torch.Size([2])
+        >>> output_shape = torch.Size([3])
+        >>> sample_shape = torch.Size([10])
+        >>> samples = construct_base_samples(batch_shape, output_shape, sample_shape)
     """
     base_sample_shape = batch_shape + output_shape
     output_dim = output_shape.numel()
@@ -86,6 +92,10 @@ def construct_base_samples_from_posterior(
         `o` are the same as in the posterior's `event_shape` `b x q x o`.
         Importantly, this only obtain a single t-batch of samples, so as to not
         introduce any sampling variance across t-batches.
+
+    Example:
+        >>> sample_shape = torch.Size([10])
+        >>> samples = construct_base_samples_from_posterior(posterior, sample_shape)
     """
     output_shape = posterior.event_shape[-2:]  # shape of joint output: q x o
     if collapse_batch_dims:
@@ -120,6 +130,10 @@ def draw_sobol_samples(
 
     Returns:
         A `n x q x d`-dim tensor of qMC samples from the box defined by bounds.
+
+    Example:
+        >>> bounds = torch.stack([torch.zeros(3), torch.ones(3)])
+        >>> samples = draw_sobol_samples(bounds, 10, 2)a
     """
     d = bounds.shape[-1]
     lower = bounds[0]
@@ -155,7 +169,7 @@ def draw_sobol_normal_samples(
         and dtype specified by the input.
 
     Example:
-        >>> samples = draw_sobol_samples(2, 10, seed=1234)
+        >>> samples = draw_sobol_normal_samples(2, 10)
     """
     normal_qmc_engine = NormalQMCEngine(d=d, seed=seed, inv_transform=True)
     samples = normal_qmc_engine.draw(n, dtype=torch.float if dtype is None else dtype)
@@ -163,15 +177,18 @@ def draw_sobol_normal_samples(
 
 
 @contextmanager
-def manual_seed(seed: Optional[int] = None) -> Generator:
+def manual_seed(seed: Optional[int] = None) -> Generator[None, None, None]:
     r"""Contextmanager for manual setting the torch.random seed.
 
     Args:
         seed: The seed to set the random number generator to.
 
+    Returns:
+        Generator
+
     Example:
         >>> with manual_seed(1234):
-        >>>     x = torch.randn(3)
+        >>>     X = torch.rand(3)
     """
     old_state = torch.random.get_rng_state()
     try:
