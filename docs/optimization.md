@@ -80,7 +80,7 @@ and
 [`sequential_optimize()`](../api/optim.html#botorch.optim.optimize.sequential_optimize)
 provide for these two types of functionality, respectively.
 
-Our empirical observations of the *closed-loop Bayesian Optimization performance*
+Our empirical observations of the *closed-loop Bayesian optimization performance*
 for $q = 5$ show that joint optimization and sequential optimization have similar
 optimization performance on some standard benchmarks, but sequential optimization
 comes at a steep cost in wall time (2-6x in our tests). Therefore, for moderately
