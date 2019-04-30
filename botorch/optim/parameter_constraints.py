@@ -28,15 +28,19 @@ def make_scipy_bounds(
     r"""Creates a scipy Bounds object for optimziation
 
     Args:
+        X: `... x d` tensor
         lower_bounds: Lower bounds on each column (last dimension) of `X`. If
             this is a single float, then all columns have the same bound.
         upper_bounds: Lower bounds on each column (last dimension) of `X`. If
             this is a single float, then all columns have the same bound.
-        X: `... x d` tensor
 
     Returns:
         A scipy `Bounds` object if either lower_bounds or upper_bounds is not
         None, and None otherwise.
+
+    Example:
+        >>> X = torch.rand(5, 2)
+        >>> scipy_bounds = make_scipy_bounds(X, 0.1, 0.8)
     """
     if lower_bounds is None and upper_bounds is None:
         return None
@@ -63,7 +67,7 @@ def make_scipy_linear_constraints(
     r"""Generate scipy constraints from torch representation.
 
     Args:
-        shapeX: The shape of the torch tensor to optimize over (i.e. `b x q x d`)
+        shapeX: The shape of the torch.Tensor to optimize over (i.e. `b x q x d`)
         inequality constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`, where
@@ -132,6 +136,8 @@ def lin_constraint_jac(
     Args:
         x: The input array.
         flat_idxr: The indices for the elements of x that appear in the constraint.
+        coeffs: The coefficients corresponding to the indices.
+        n: number of elements
 
     Returns:
         The Jacobian.
@@ -143,7 +149,7 @@ def lin_constraint_jac(
 
 
 def _arrayify(X: Tensor) -> np.ndarray:
-    r"""Convert a torch tensor (any dtype or device) to a numpy (double) array.
+    r"""Convert a torch.Tensor (any dtype or device) to a numpy (double) array.
 
     Args:
         X: The input tensor.

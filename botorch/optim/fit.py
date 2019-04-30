@@ -60,6 +60,12 @@ def fit_gpytorch_torch(
         - mll with parameters optimized in-place.
         - List of OptimizationIteration objects with information on each
           iteration. If track_iterations is False, this will be an empty list.
+
+    Example:
+        >>> mll = ExactMarginalLogLikelihood(model.likelihood, model)
+        >>> model.train()
+        >>> model.likelihood.train()
+        >>> fit_gpytorch_torch(mll)
     """
     optim_options = {"maxiter": 100, "disp": True, "lr": 0.05}
     optim_options.update(options or {})
@@ -147,6 +153,12 @@ def fit_gpytorch_scipy(
         - MarginalLogLikelihood with parameters optimized in-place.
         - List of OptimizationIteration objects with information on each
           iteration. If track_iterations is False, this will be an empty list.
+
+    Example:
+        >>> mll = ExactMarginalLogLikelihood(model.likelihood, model)
+        >>> model.train()
+        >>> model.likelihood.train()
+        >>> fit_gpytorch_scipy(mll)
     """
     x0, property_dict, bounds = module_to_array(module=mll, bounds=bounds)
     x0 = x0.astype(np.float64)

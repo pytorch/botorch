@@ -34,13 +34,13 @@ def sequential_optimize(
     r"""Generate a set of candidates via sequential multi-start optimization.
 
     Args:
-        acq_function: A qNoisyExpectedImprovement acquisition function.
+        acq_function: The qNoisyExpectedImprovement acquisition function.
         bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.
         q: The number of candidates.
         num_restarts:  Number of starting points for multistart acquisition
             function optimization.
-        raw_samples: number of samples for initialization
-        options: options for candidate generation.
+        raw_samples: Number of samples for initialization
+        options: Options for candidate generation.
         inequality constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`
@@ -55,6 +55,12 @@ def sequential_optimize(
 
     Returns:
         The set of generated candidates.
+    Example
+    >>> # generate `q=2` candidates sequentially using 20 random restarts and
+    >>> # 500 raw samples
+    >>> qEI = qExpectedImprovement(model, best_f=0.2)
+    >>> bounds = torch.tensor([[0.], [1.]])
+    >>> candidates = sequential_optimize(qEI, bounds, 2, 20, 500)
     """
     if not hasattr(acq_function, "X_baseline"):
         raise UnsupportedError(  # pyre-ignore: [16]
@@ -106,13 +112,13 @@ def joint_optimize(
     r"""Generate a set of candidates via joint multi-start optimization.
 
     Args:
-        acq_function: The acquisition function to be optimized.
+        acq_function: The acquisition function.
         bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.
         q: The number of candidates.
         num_restarts: Number of starting points for multistart acquisition
             function optimization.
-        raw_samples: number of samples for initialization.
-        options: options for candidate generation.
+        raw_samples: Number of samples for initialization.
+        options: Options for candidate generation.
         inequality constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
             `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`
@@ -128,6 +134,12 @@ def joint_optimize(
 
     Returns:
          A `q x d` tensor of generated candidates.
+
+    Example:
+        >>> # generate `q=2` candidates jointly using 20 random restarts and 500 raw samples
+        >>> qEI = qExpectedImprovement(model, best_f=0.2)
+        >>> bounds = torch.tensor([[0.], [1.]])
+        >>> candidates = joint_optimize(qEI, bounds, 2, 20, 500)
     """
     # TODO: Generating initial candidates should use parameter constraints.
     batch_initial_conditions = gen_batch_initial_conditions(
@@ -183,7 +195,7 @@ def gen_batch_initial_conditions(
 
     Example:
         >>> qEI = qExpectedImprovement(model, best_f=0.2)
-        >>> bounds = torch.tensor([[0., 0.], [1., 2.]])
+        >>> bounds = torch.tensor([[0.], [1.]])
         >>> Xinit = gen_batch_initial_conditions(
         >>>     qEI, bounds, q=3, num_restarts=25, raw_samples=500
         >>> )
