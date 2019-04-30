@@ -56,8 +56,8 @@ class TutorialHome extends React.Component {
                 <h4>Using BoTorch with Ax</h4>
                 These tutorials give you an overview of how to leverage{' '}
                 <a href="https://ax.dev">Ax</a>, a platform for sequential
-                experimentation, in order to simplify the management of your BO loop.
-                Doing so can help you focus on the main
+                experimentation, in order to simplify the management of your BO
+                loop. Doing so can help you focus on the main
                 aspects of BO (models, acquisition functions, optimization of
                 acquisition functions), rather than tedious loop control. See
                 our{' '}
