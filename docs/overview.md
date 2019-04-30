@@ -115,7 +115,7 @@ an `Objective` module, which returns a one-dimensional output that is passed to
 the acquisition function. The `MCAcquisitionFunction` class defaults its
 objective to `IdentityMCObjective`, which simply returns the last dimension of
 the model output. Thus, for the standard use case of a single-output GP that
-directly models the black box function $f$, no special objective required.
+directly models the black box function $f$, no special objective is required.
 For more details on the advanced features enabled by the `Objective`, see
 [Objectives](objectives).
 
