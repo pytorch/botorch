@@ -25,28 +25,31 @@ search_js_scripts = """
 
 
 def parse_sphinx(input_dir, output_dir):
-    for fname in os.listdir(input_dir):
-        if fname.endswith(".html"):
-            with open(input_dir + fname, "r") as f:
-                soup = BeautifulSoup(f.read(), "html.parser")
-                doc = soup.find("div", {"class": "document"})
-                wrapped_doc = doc.wrap(soup.new_tag("div", **{"class": "sphinx"}))
-            # add js
-            if fname == "search.html":
-                out = js_scripts + search_js_scripts + str(wrapped_doc)
-            else:
-                out = js_scripts + str(wrapped_doc)
-            with open(output_dir + fname, "w") as fout:
-                fout.write(out)
+    for cur, _, files in os.walk(input_dir):
+        for fname in files:
+            if fname.endswith(".html"):
+                with open(os.path.join(cur, fname), "r") as f:
+                    soup = BeautifulSoup(f.read(), "html.parser")
+                    doc = soup.find("div", {"class": "document"})
+                    wrapped_doc = doc.wrap(soup.new_tag("div", **{"class": "sphinx"}))
+                # add js
+                if fname == "search.html":
+                    out = js_scripts + search_js_scripts + str(wrapped_doc)
+                else:
+                    out = js_scripts + str(wrapped_doc)
+                output_path = os.path.join(output_dir, os.path.relpath(cur, input_dir))
+                os.makedirs(output_path, exist_ok=True)
+                with open(os.path.join(output_path, fname), "w") as fout:
+                    fout.write(out)
 
-                # update reference in JS file
-                with open(input_dir + "_static/searchtools.js", "r") as js_file:
-                    js = js_file.read()
-                js = js.replace(
-                    "DOCUMENTATION_OPTIONS.URL_ROOT + '_sources/'", "'_sphinx-sources/'"
-                )
-                with open(input_dir + "_static/searchtools.js", "w") as js_file:
-                    js_file.write(js)
+    # update reference in JS file
+    with open(os.path.join(input_dir, "_static/searchtools.js"), "r") as js_file:
+        js = js_file.read()
+    js = js.replace(
+        "DOCUMENTATION_OPTIONS.URL_ROOT + '_sources/'", "'_sphinx-sources/'"
+    )
+    with open(os.path.join(input_dir, "_static/searchtools.js"), "w") as js_file:
+        js_file.write(js)
 
 
 if __name__ == "__main__":
