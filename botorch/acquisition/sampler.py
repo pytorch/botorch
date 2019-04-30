@@ -31,6 +31,12 @@ class MCSampler(Module, ABC):
         collapse_batch_dims: If True, collapse the t-batch dimensions of the
             produced samples to size 1. This is useful for preventing sampling
             variance across t-batches.
+
+    Example:
+        This method is usually not called directly, but via the sampler's
+        `__call__` method:
+        >>> posterior = model.posterior(test_X)
+        >>> samples = sampler(posterior)
     """
 
     def forward(self, posterior: Posterior) -> Tensor:
@@ -41,12 +47,6 @@ class MCSampler(Module, ABC):
 
         Returns:
             The samples drawn from the posterior.
-
-        Example:
-            This method is usually not called directly, but via the sampler's
-            `__call__` method:
-            >>> posterior = model.posterior(test_X)
-            >>> samples = sampler(posterior)
         """
         base_sample_shape = self._get_base_sample_shape(posterior=posterior)
         self._construct_base_samples(posterior=posterior, shape=base_sample_shape)
@@ -66,10 +66,6 @@ class MCSampler(Module, ABC):
             `collapse_batch_dims=True`, the t-batch dimensions of the base
             samples are collapsed to size 1. This is useful to prevent sampling
             variance across t-batches.
-
-        Example:
-            >>> posterior = model.posterior(test_X)
-            >>> shape = _get_base_sample_shape(posterior)
         """
         event_shape = posterior.event_shape
         if self.collapse_batch_dims:
@@ -102,7 +98,13 @@ class MCSampler(Module, ABC):
 
 
 class IIDNormalSampler(MCSampler):
-    """Sampler for MC base samples using iid N(0,1) samples."""
+    r"""Sampler for MC base samples using iid N(0,1) samples.
+
+    Example:
+        >>> sampler = IIDNormalSampler(1000, seed=1234)
+        >>> posterior = model.posterior(test_X)
+        >>> samples = sampler(posterior)
+    """
 
     def __init__(
         self,
@@ -122,9 +124,6 @@ class IIDNormalSampler(MCSampler):
             collapse_batch_dims: If True, collapse the t-batch dimensions to
                 size 1. This is useful for preventing sampling variance across
                 t-batches.
-
-        Example:
-            >>> sampler = IIDNormalSampler(1000, seed=1234)
         """
         super().__init__()
         self._sample_shape = torch.Size([num_samples])
@@ -146,11 +145,6 @@ class IIDNormalSampler(MCSampler):
         Args:
             posterior: The Posterior for which to generate base samples.
             shape: The shape of the base samples to construct.
-
-        Example:
-            >>> posterior = model.posterior(test_X)
-            >>> shape = sampler._get_base_sample_shape(posterior)
-            >>> sampler._construct_base_samples(posterior, shape)
         """
         if (
             self.resample
@@ -168,7 +162,13 @@ class IIDNormalSampler(MCSampler):
 
 
 class SobolQMCNormalSampler(MCSampler):
-    r"""Sampler for quasi-MC base samples using Sobol sequences."""
+    r"""Sampler for quasi-MC base samples using Sobol sequences.
+
+    Example:
+        >>> sampler = SobolQMCNormalSampler(1000, seed=1234)
+        >>> posterior = model.posterior(test_X)
+        >>> samples = sampler(posterior)
+    """
 
     def __init__(
         self,
@@ -188,9 +188,6 @@ class SobolQMCNormalSampler(MCSampler):
             collapse_batch_dims: If True, collapse the t-batch dimensions to
                 size 1. This is useful for preventing sampling variance across
                 t-batches.
-
-        Example:
-            >>> sampler = SobolQMCNormalSampler(1000, seed=1234)
         """
         super().__init__()
         self._sample_shape = torch.Size([num_samples])
@@ -212,11 +209,6 @@ class SobolQMCNormalSampler(MCSampler):
         Args:
             posterior: The Posterior for which to generate base samples.
             shape: The shape of the base samples to construct.
-
-        Example:
-            >>> posterior = model.posterior(test_X)
-            >>> shape = sampler._get_base_sample_shape(posterior)
-            >>> sampler._construct_base_samples(posterior, shape)
         """
         if (
             self.resample

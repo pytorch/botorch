@@ -49,9 +49,9 @@ def get_acquisition_function(
         The requested acquisition function.
 
     Example:
-        >>> gp = SingleTaskGP(train_X, train_Y)
+        >>> model = SingleTaskGP(train_X, train_Y)
         >>> obj = LinearMCObjective(weights=torch.tensor([1.0, 2.0]))
-        >>> acqf = get_acquisition_function("qEI", gp, obj, train_X)
+        >>> acqf = get_acquisition_function("qEI", model, obj, train_X)
     """
     # initialize the sampler
     if qmc:
@@ -115,9 +115,9 @@ def get_infeasible_cost(
         The infeasible cost `M` value.
 
     Example:
-        >>> gp = SingleTaskGP(train_X, train_Y)
+        >>> model = SingleTaskGP(train_X, train_Y)
         >>> objective = lambda Y: Y[..., -1] ** 2
-        >>> M = get_infeasible_cost(train_X, gp, obj)
+        >>> M = get_infeasible_cost(train_X, model, obj)
     """
     posterior = model.posterior(X)
     lb = objective(posterior.mean - 6 * posterior.variance.clamp_min(0).sqrt()).min()

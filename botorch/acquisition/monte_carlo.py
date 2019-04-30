@@ -72,6 +72,13 @@ class qExpectedImprovement(MCAcquisitionFunction):
     (4) averaging over the samples
 
     `qEI(X) = E(max(max Y - best_f, 0)), Y ~ f(X), where X = (x_1,...,x_q)`
+
+    Example:
+        >>> model = SingleTaskGP(train_X, train_Y)
+        >>> best_f = train_Y.max()[0]
+        >>> sampler = SobolQMCNormalSampler(1000)
+        >>> qEI = qExpectedImprovement(model, best_f, sampler)
+        >>> qei = qEI(test_X)
     """
 
     def __init__(
@@ -91,12 +98,6 @@ class qExpectedImprovement(MCAcquisitionFunction):
                 `SobolQMCNormalSampler(num_samples=500, collapse_batch_dims=True)`
             objective: The MCAcquisitionObjective under which the samples are
                 evaluated. Defaults to `IdentityMCObjective()`.
-
-        Example:
-            >>> model = SingleTaskGP(train_X, train_Y)
-            >>> best_f = train_Y.max()[0]
-            >>> sampler = SobolQMCNormalSampler(1000)
-            >>> qEI = qExpectedImprovement(model, best_f, sampler)
         """
         super().__init__(model=model, sampler=sampler, objective=objective)
         if not torch.is_tensor(best_f):
@@ -133,6 +134,12 @@ class qNoisyExpectedImprovement(MCAcquisitionFunction):
 
     `qNEI(X) = E(max(max Y - max Y_baseline, 0))`, where
     `(Y, Y_baseline) ~ f((X, X_baseline)), X = (x_1,...,x_q)`
+
+    Example:
+        >>> model = SingleTaskGP(train_X, train_Y)
+        >>> sampler = SobolQMCNormalSampler(1000)
+        >>> qNEI = qNoisyExpectedImprovement(model, train_X, sampler)
+        >>> qnei = qNEI(test_X)
     """
 
     def __init__(
@@ -153,11 +160,6 @@ class qNoisyExpectedImprovement(MCAcquisitionFunction):
                 `SobolQMCNormalSampler(num_samples=500, collapse_batch_dims=True)`.
             objective: The MCAcquisitionObjective under which the samples are
                 evaluated. Defaults to `IdentityMCObjective()`.
-
-        Example:
-            >>> model = SingleTaskGP(train_X, train_Y)
-            >>> sampler = SobolQMCNormalSampler(1000)
-            >>> qNEI = qNoisyExpectedImprovement(model, train_X, sampler)
         """
         super().__init__(model=model, sampler=sampler, objective=objective)
         self.register_buffer("X_baseline", X_baseline)
@@ -195,6 +197,13 @@ class qProbabilityOfImprovement(MCAcquisitionFunction):
     replaced with a sigmoid function with temperature parameter `tau`.
 
     `qPI(X) = P(max Y >= best_f), Y ~ f(X), X = (x_1,...,x_q)`
+
+    Example:
+        >>> model = SingleTaskGP(train_X, train_Y)
+        >>> best_f = train_Y.max()[0]
+        >>> sampler = SobolQMCNormalSampler(1000)
+        >>> qPI = qProbabilityOfImprovement(model, best_f, sampler)
+        >>> qpi = qPI(test_X)
     """
 
     def __init__(
@@ -219,12 +228,6 @@ class qProbabilityOfImprovement(MCAcquisitionFunction):
                 of the step function. Smaller values yield more accurate
                 approximations of the function, but result in gradients
                 estimates with higher variance.
-
-        Example:
-            >>> model = SingleTaskGP(train_X, train_Y)
-            >>> best_f = train_Y.max()[0]
-            >>> sampler = SobolQMCNormalSampler(1000)
-            >>> qEI = qProbabilityOfImprovement(model, best_f, sampler)
         """
         super().__init__(model=model, sampler=sampler, objective=objective)
         if not torch.is_tensor(best_f):
@@ -261,6 +264,12 @@ class qSimpleRegret(MCAcquisitionFunction):
     regret.
 
     `qSR(X) = E(max Y), Y ~ f(X), X = (x_1,...,x_q)`
+
+    Example:
+        >>> model = SingleTaskGP(train_X, train_Y)
+        >>> sampler = SobolQMCNormalSampler(1000)
+        >>> qSR = qSimpleRegret(model, sampler)
+        >>> qsr = qSR(test_X)
     """
 
     @t_batch_mode_transform()
@@ -290,6 +299,12 @@ class qUpperConfidenceBound(MCAcquisitionFunction):
 
     `qUCB = E(max(mu + |Y_tilde - mu|))`, where `Y_tilde ~ N(mu, beta pi/2 Sigma)`
     and `f(X)` has distribution `N(mu, Sigma)`.
+
+    Example:
+        >>> model = SingleTaskGP(train_X, train_Y)
+        >>> sampler = SobolQMCNormalSampler(1000)
+        >>> qUCB = qUpperConfidenceBound(model, 0.1, sampler)
+        >>> qucb = qUCB(test_X)
     """
 
     def __init__(
@@ -308,11 +323,6 @@ class qUpperConfidenceBound(MCAcquisitionFunction):
                 `SobolQMCNormalSampler(num_samples=500, collapse_batch_dims=True)`
             objective: The MCAcquisitionObjective under which the samples are
                 evaluated. Defaults to `IdentityMCObjective()`.
-
-        Example:
-            >>> model = SingleTaskGP(train_X, train_Y)
-            >>> sampler = SobolQMCNormalSampler(1000)
-            >>> qUCB = qUpperConfidenceBound(model, 0.1, sampler)
         """
         super().__init__(model=model, sampler=sampler, objective=objective)
         self.register_buffer("beta", torch.tensor(float(beta)))
