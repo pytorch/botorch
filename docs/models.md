@@ -43,7 +43,7 @@ distinguish these model types:
 
 * *Multi-Output Model*: a `Model` (as in the BoTorch object) with multiple
   outputs.
-* *Multi-Task Model*: A `Model` making use of a logical grouping of
+* *Multi-Task Model*: a `Model` making use of a logical grouping of
   inputs/observations (as in the underlying process). For example, there could
   be multiple tasks where each task has a different fidelity.
 
@@ -77,11 +77,11 @@ uses fixed observation noise levels (requires noise observations).
   used for all outputs.
 
 ### Multi-Task GPs
-* [`MultiTaskGP`](../api/models.html#multitaskgp): A Hadamard multi-task,
+* [`MultiTaskGP`](../api/models.html#multitaskgp): a Hadamard multi-task,
   multi-output GP using an ICM kernel, inferring the noise level (does not
   require noise observations).
 * [`FixedNoiseMultiTaskGP`](../api/models.html#fixednoisemultitaskgp):
-  A Hadamard multi-task, multi-output GP using an ICM kernel, with fixed
+  a Hadamard multi-task, multi-output GP using an ICM kernel, with fixed
   observation noise levels (requires noise observations).
 
 All of the above models use Matérn 5/2 kernels with Automatic Relevance
