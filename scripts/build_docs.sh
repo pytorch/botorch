@@ -84,9 +84,6 @@ if [[ $BUILD_STATIC == true ]]; then
   echo "Building static site"
   echo "-----------------------------------"
   yarn build
-  # hack to correct logo since docusaurus messes it up during build
-  # This needs to be done until https://github.com/facebook/Docusaurus/issues/1427 is fixed
-  cp static/img/botorch_logo_lockup_white.svg build/botorch/img/botorch_logo_lockup_white.svg
 else
   echo "-----------------------------------"
   echo "Starting local server"
