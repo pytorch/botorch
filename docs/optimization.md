@@ -68,7 +68,7 @@ parallelism, while maintaining high quality solutions.
 
 ### Joint vs. Sequential Candidate Generation for Batch Acquisition Functions
 
-In batch Bayesian optimization $q$ design points are selected for parallel
+In batch Bayesian Optimization $q$ design points are selected for parallel
 experimentation. The parallel (qEI, qNEI, qUCB, qPI) variants of acquisition
 functions call for *joint* optimization over the $q$ design points (i.e., solve
 an optimization problem with a $q \times d$-dimensional decision), but when $q$

@@ -8,12 +8,12 @@ surrogate function for the actual underlying black box function that one is
 trying to optimize. In BoTorch, a `Model` maps a set of design points to a
 posterior probability distribution of its output(s) over the design points.
 
-In Bayesian Optimization, the model used is traditionally a Gaussian Process,
+In Bayesian Optimization, the surrogate model is traditionally a Gaussian Process,
 in which case the posterior distribution, by definition, is a multivariate
 normal. However, with the exception of some of the analytic Acquisition
 functions in the
 [`botorch.acquisition.analytic`](../api/acquisition.html#botorch-acquisition-analytic)
-module, **BoTorch makes no assumption on the model being a GP, or on the
+module, **BoTorch makes no assumption on the model being a GP or on the
 posterior being a multivariate normal**. The only requirement for using
 BoTorch's Monte-Carlo based acquisition functions is that the model returns a
 [`Posterior`](../api/api/posteriors.html#posterior) object that implements an
@@ -78,11 +78,11 @@ uses fixed observation noise levels (requires noise observations).
   used for all outputs.
 
 ### Multi-Task GPs
-* [`MultiTaskGP`](../api/models.html#multitaskgp): A Hadamard multi-task,
+* [`MultiTaskGP`](../api/models.html#multitaskgp): A multi-task,
   multi-output GP using an ICM kernel, inferring the noise level (does not
   require noise observations).
 * [`FixedNoiseMultiTaskGP`](../api/models.html#fixednoisemultitaskgp):
-  A Hadamard multi-task, multi-output GP using an ICM kernel, with fixed
+  A multi-task, multi-output GP using an ICM kernel, with fixed
   observation noise levels (requires noise observations).
 
 All of the above models use Matérn 5/2 kernels with Automatic Relevance
