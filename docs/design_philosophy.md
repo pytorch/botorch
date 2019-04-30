@@ -25,8 +25,8 @@ BoTorch adheres to the following main design tenets:
 
 ## Parallelism Through Batched Computations
 
-Batching (as in batching data or batching computations) is a central component to
-all modern deep learning platforms and plays a critical role in the design of
+Batching (as in batching data or batching computations) is a central component
+to all modern deep learning platforms and plays a critical role in the design of
 BoTorch. Examples of batch computations in BoTorch include:
 
 1. A batch of candidate points $X$ to be evaluated in parallel on the black-box
@@ -35,10 +35,11 @@ BoTorch. Examples of batch computations in BoTorch include:
 2. A batch of q-batches to be evaluated in parallel on the surrogate model of
    the black-box function. These facilitate fast evaluation on modern hardware
    such as GPUs and multi-core CPUs with advanced instruction sets (e.g. AVX).
-   In BoTorch, we refer to a batch of this type as **"t-batch"** (as in "torch-batch").
-3. A **batched** surrogate **model**, each batch of which models a different output
-   (which is useful for multi-objective Bayesian Optimization). This kind of
-   batching also aims to exploit modern hardware architecture.
+   In BoTorch, we refer to a batch of this type as **"t-batch"** (as in
+   "torch-batch").
+3. A **batched** surrogate **model**, each batch of which models a different
+   output (which is useful for multi-objective Bayesian Optimization). This kind
+   of batching also aims to exploit modern hardware architecture.
 
 Note that none of these notions of batch pertains to the batching of *training
 data*, which is commonly done in training Neural Network models (sometimes
@@ -48,12 +49,15 @@ stochastic gradient descent using mini-batch training, BoTorch itself abstracts
 away from this.
 
 For an in-depth look at the different batch notions in BoTorch, take a look at
-the [Batching in BoTorch](#batching) section.
+the [Batching in BoTorch](batching) section.
 
 
 ## Optimizing Acquisition Functions
 
-While BoTorch tries to align as closely as possible with PyTorch when possible, optimization of acquisition functions requires a somewhat different approach. We now describe this discrepancy and explain in detail why we made this design decision.
+While BoTorch tries to align as closely as possible with PyTorch when possible,
+optimization of acquisition functions requires a somewhat different approach.
+We now describe this discrepancy and explain in detail why we made this design
+decision.
 
 In PyTorch, modules typically map (batches of) data to an output, where the
 mapping is parameterized by the parameters of the modules (often the weights
@@ -80,8 +84,8 @@ optimizing a model with these algorithms is by extracting the module's
 parameters (e.g. using `parameters()`), and writing a manual optimization loop
 that calls `step()` on a torch `Optimizer` object.
 
-Optimizing acquisition functions is different since the problem
-dimensionality is often much smaller. Indeed, optimizing over $q$ design points in a
+Optimizing acquisition functions is different since the problem dimensionality
+is often much smaller. Indeed, optimizing over $q$ design points in a
 $d$-dimensional feature space results in $qd$ scalar parameters to optimize
 over. Both $q$ and $d$ are often quite small, and hence so is the dimensionality
 of the problem.
@@ -89,11 +93,11 @@ Moreover, the optimization problem can be cast as a deterministic one (either
 because an analytic acquisition function is used, or because the
 reparameterization trick is employed to render the Monte-Carlo-based evaluation
 of the acquisition function deterministic in terms of the input tensor $X$).
-As a result, optimization algorithms that are typically inadmissible for problems
-such as training Neural Networks become promising alternatives to standard
-first-order methods. In particular, this includes quasi-second order methods
-(such as L-BFGS or SLSQP) that approximate local curvature of the acquisition
-function by using past gradient information.
+As a result, optimization algorithms that are typically inadmissible for
+problems such as training Neural Networks become promising alternatives to
+standard first-order methods. In particular, this includes quasi-second order
+methods (such as L-BFGS or SLSQP) that approximate local curvature of the
+acquisition function by using past gradient information.
 These methods are currently not well supported in the `torch.optim` package,
 which is why BoTorch provides a custom interface that wraps the optimizers from
 the `scipy.optimize` module.

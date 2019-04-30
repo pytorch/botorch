@@ -3,10 +3,12 @@ id: introduction
 title: Introduction
 ---
 
-BoTorch (pronounced like "blow-torch") is a library for [Bayesian optimization](https://en.wikipedia.org/wiki/Bayesian_optimization)
-research built on top of [PyTorch](https://pytorch.org/), and is part of the PyTorch ecosystem.
+BoTorch (pronounced like "blow-torch") is a library for
+[Bayesian Optimization](https://en.wikipedia.org/wiki/Bayesian_optimization)
+research built on top of [PyTorch](https://pytorch.org/), and is part of the
+PyTorch ecosystem.
 
-Bayesian optimization (BayesOpt) is an established technique for sequential
+Bayesian Optimization (BayesOpt) is an established technique for sequential
 optimization of costly-to-evaluate black-box functions. It can be applied to a
 wide variety of problems, including hyperparameter optimization for machine
 learning algorithms, A/B testing, as well as many scientific and engineering
@@ -15,7 +17,9 @@ problems.
 BoTorch is best used in tandem with [Ax](https://ax.dev), Facebook's open-source
 adaptive experimentation platform, which provides an easy-to-use interface for
 defining, managing and running sequential experiments, while handling
-(meta-)data management, transformations, and systems integration. Users who just want an easy-to-use suite for Bayesian optimization [should start with Ax](https://ax.dev/docs/bayesopt).
+(meta-)data management, transformations, and systems integration. Users who just
+want an easy-to-use suite for Bayesian Optimization
+[should start with Ax](https://ax.dev/docs/bayesopt).
 
 
 ## Why BoTorch?
@@ -23,11 +27,11 @@ defining, managing and running sequential experiments, while handling
 ### Improved Developer Efficiency
 
 BoTorch provides a modular and easily extensible interface for composing
-Bayesian optimization primitives, including probabilistic models, acquisition
+Bayesian Optimization primitives, including probabilistic models, acquisition
 functions, and optimizers.
 
 It significantly improves developer efficiency by utilizing quasi-Monte-Carlo
-acquisition functions (by ways of the "re-parameterization trick"
+acquisition functions (by way of the "re-parameterization trick"
 [^AutoEncVarBayes], [^ReparamAcq]), which makes it straightforward to implement
 new ideas without having to impose restrictive assumptions about the underlying
 model. Specifically, it avoids pen and paper math to derive analytic expressions
@@ -39,19 +43,20 @@ rich multi-output models with multiple correlated outcomes.
 BoTorch follows the same modular design philosophy as PyTorch, which makes it
 very easy for users to swap out or rearrange individual components in order to
 customize all aspects of their algorithm, thereby empowering researchers to do
-state-of-the art research on modern Bayesian optimization methods.
+state-of-the art research on modern Bayesian Optimization methods.
 
 
 ### State-of-the-art Modeling
 
-Bayesian optimization traditionally relies heavily on Gaussian Process (GP)
+Bayesian Optimization traditionally relies heavily on Gaussian Process (GP)
 models, which provide well-calibrated uncertainty estimates. BoTorch provides
 first-class support for state-of-the art probabilistic models in
 [GPyTorch](https://gpytorch.ai), a library for efficient and scalable GPs
-implemented in PyTorch (and to which the BoTorch authors have significantly contributed).
+implemented in PyTorch (and to which the BoTorch authors have significantly
+contributed).
 This includes support for multi-task GPs, deep kernel learning, deep GPs, and
 approximate inference. This enables using GP models for problems that have
-traditionally not been amenable to Bayesian optimization techniques.
+traditionally not been amenable to Bayesian Optimization techniques.
 
 In addition, BoTorch's lightweight APIs are model-agnostic (they can for example
 work with [Pyro](http://pyro.ai) models), and support optimization of
@@ -76,7 +81,7 @@ optimization of acquisition functions operating on differentiable models.
 
 ### Bridging the Gap Between Research and Production
 
-BoTorch implements modular building blocks for modern Bayesian optimization.
+BoTorch implements modular building blocks for modern Bayesian Optimization.
 It bridges the gap between research and production by being a very flexible
 research framework, but at the same time, a reliable, production-grade
 implementation that integrates well with other higher-level platforms,
@@ -86,13 +91,13 @@ specifically [Ax](https://ax.dev).
 ## Target Audience
 
 The primary audience for hands-on use of BoTorch are researchers and
-sophisticated practitioners in Bayesian optimization and AI.
+sophisticated practitioners in Bayesian Optimization and AI.
 
 We recommend using BoTorch as a low-level API for implementing new algorithms
 for Ax. Ax has been designed to be an easy-to-use platform for end-users, which
-at the same time is flexible enough for Bayesian optimization researchers to
+at the same time is flexible enough for Bayesian Optimization researchers to
 plug into for handling of feature transformations, (meta-)data management,
-storage, etc. See [Using BoTorch with Ax](../botorch_and_ax) for more details.
+storage, etc. See [Using BoTorch with Ax](botorch_and_ax) for more details.
 
 We recommend that end-users who are not actively doing research on Bayesian
 Optimization simply use Ax.

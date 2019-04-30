@@ -113,35 +113,34 @@ class Index extends React.Component {
     const pre = "```";
     // Example for model fitting
     const modelFitCodeExample = `${pre}python
->>> import torch
->>> from botorch.models import SingleTaskGP
->>> from botorch.fit import fit_gpytorch_model
->>> from gpytorch.mlls import ExactMarginalLogLikelihood
+import torch
+from botorch.models import SingleTaskGP
+from botorch.fit import fit_gpytorch_model
+from gpytorch.mlls import ExactMarginalLogLikelihood
 
->>> train_X = torch.rand(10, 2)
->>> Y = 1 - torch.norm(train_X - 0.5, dim=-1) + 0.1 * torch.rand(10)
->>> train_Y = (Y - Y.mean()) / Y.std()
+train_X = torch.rand(10, 2)
+Y = 1 - torch.norm(train_X - 0.5, dim=-1) + 0.1 * torch.rand(10)
+train_Y = (Y - Y.mean()) / Y.std()
 
->>> gp = SingleTaskGP(train_X, train_Y)
->>> mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
->>> fit_gpytorch_model(mll);
+gp = SingleTaskGP(train_X, train_Y)
+mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
+fit_gpytorch_model(mll)
     `;
     // Example for defining an acquisition function
     const constrAcqFuncExample = `${pre}python
->>> from botorch.acquisition import UpperConfidenceBound
+from botorch.acquisition import UpperConfidenceBound
 
->>> UCB = UpperConfidenceBound(gp, beta=0.1)
+UCB = UpperConfidenceBound(gp, beta=0.1)
     `;
     // Example for optimizing candidates
     const optAcqFuncExample = `${pre}python
->>> from botorch.optim import joint_optimize
+from botorch.optim import joint_optimize
 
->>> bounds = torch.stack([torch.zeros(2), torch.ones(2)])
->>> candidate = joint_optimize(
-        UCB, bounds=bounds, q=1, num_restarts=5, raw_samples=20,
-    )
->>> candidate
-tensor([0.4887, 0.5063])
+bounds = torch.stack([torch.zeros(2), torch.ones(2)])
+candidate = joint_optimize(
+    UCB, bounds=bounds, q=1, num_restarts=5, raw_samples=20,
+)
+candidate  # tensor([0.4887, 0.5063])
     `;
     //
     const QuickStart = () => (
@@ -152,19 +151,22 @@ tensor([0.4887, 0.5063])
         <Container>
               <ol>
                 <li>
-                  Install BoTorch:
+                  <h4>Install BoTorch:</h4>
+                  <a>via conda (recommended):</a>
+                  <MarkdownBlock>{bash`conda install botorch -c pytorch`}</MarkdownBlock>
+                  <a>via pip:</a>
                   <MarkdownBlock>{bash`pip install botorch`}</MarkdownBlock>
                 </li>
                 <li>
-                  Fit a model:
+                  <h4>Fit a model:</h4>
                   <MarkdownBlock>{modelFitCodeExample}</MarkdownBlock>
                 </li>
                 <li>
-                  Construct an acquisition function:
+                  <h4>Construct an acquisition function:</h4>
                   <MarkdownBlock>{constrAcqFuncExample}</MarkdownBlock>
                 </li>
                 <li>
-                  Optimize the acquisition function:
+                  <h4>Optimize the acquisition function:</h4>
                   <MarkdownBlock>{optAcqFuncExample}</MarkdownBlock>
                 </li>
               </ol>
@@ -192,7 +194,7 @@ tensor([0.4887, 0.5063])
             title: 'Built on PyTorch',
           },
           {
-            content: 'Support for scalable GPs. Run code on multiple devices.',
+            content: 'Support for scalable GPs via GPyTorch. Run code on multiple devices.',
             image: `${baseUrl}img/arrows_expanding_colored.svg`,
             imageAlign: 'top',
             title: 'Scalable',
