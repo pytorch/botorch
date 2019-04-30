@@ -12,7 +12,7 @@ abstract terms, please see the [Introduction](introduction).
 
 ![Black Box Optimization](assets/overview_blackbox.svg)
 
-At a high level, the problem underlying Bayesian Optimization (BO) is to
+At a high level, the problem underlying Bayesian Optimization (BayesOpt) is to
 maximize some expensive-to-evaluate black box function $f$. In other words, we
 do not have access to the functional form of $f$ and our only recourse is to
 evaluate $f$ at a sequence of test points, with the hope of determining a

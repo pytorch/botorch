@@ -10,7 +10,7 @@ BoTorch adheres to the following main design tenets:
   * Make it easy for researchers to develop and implement new ideas by following
     a modular design philosophy & making heavy use of auto-differentiation. Most
     BoTorch components are `torch.nn.Module` instances, so that users familiar
-    with PyTorch can easily implement new implement new differentiable
+    with PyTorch can easily implement new differentiable
     components.
   * Facilitate model-agnostic Bayesian Optimization by maintaining lightweight
     APIs and first-class support for Monte-Carlo-based acquisition functions.
@@ -25,7 +25,7 @@ BoTorch adheres to the following main design tenets:
 
 ## Parallelism Through Batched Computations
 
-Batching (as in batching data, batching computations) is a central component to
+Batching (as in batching data or batching computations) is a central component to
 all modern deep learning platforms and plays a critical role in the design of
 BoTorch. Examples of batch computations in BoTorch include:
 
@@ -35,7 +35,7 @@ BoTorch. Examples of batch computations in BoTorch include:
 2. A batch of q-batches to be evaluated in parallel on the surrogate model of
    the black-box function. These facilitate fast evaluation on modern hardware
    such as GPUs and multi-core CPUs with advanced instruction sets (e.g. AVX).
-   BoTorch refer to a batch of this type as **"t-batch"** (as in "torch-batch").
+   In BoTorch, we refer to a batch of this type as **"t-batch"** (as in "torch-batch").
 3. A **batched** surrogate **model**, each batch of which models a different output
    (which is useful for multi-objective Bayesian Optimization). This kind of
    batching also aims to exploit modern hardware architecture.
@@ -53,8 +53,7 @@ the [Batching in BoTorch](#batching) section.
 
 ## Optimizing Acquisition Functions
 
-One place where BoTorch takes a somewhat different approach than PyTorch is in
-optimizing acquisition functions.
+While BoTorch tries to align as closely as possible with PyTorch when possible, optimization of acquisition functions requires a somewhat different approach. We now describe this discrepancy and explain in detail why we made this design decision.
 
 In PyTorch, modules typically map (batches of) data to an output, where the
 mapping is parameterized by the parameters of the modules (often the weights
@@ -62,7 +61,7 @@ of a Neural Network). Fitting the model means optimizing some loss (which is
 defined with respect to the underlying distribution of the data).
 As this distribution is unknown, one cannot directly evaluate this function.
 Instead, one considers the empirical loss function, i.e. the loss evaluated on
-all data available. In a typical machine learning model training, a stochastic
+all data available. In typical machine learning model training, a stochastic
 version of the empirical loss, obtained by "mini-batching" the data, is
 optimized using stochastic optimization algorithms.
 
@@ -81,8 +80,8 @@ optimizing a model with these algorithms is by extracting the module's
 parameters (e.g. using `parameters()`), and writing a manual optimization loop
 that calls `step()` on a torch `Optimizer` object.
 
-Optimizing acquisition functions is different in that quite often the problem
-dimensionality is much smaller. Indeed, optimizing over $q$ design points in a
+Optimizing acquisition functions is different since the problem
+dimensionality is often much smaller. Indeed, optimizing over $q$ design points in a
 $d$-dimensional feature space results in $qd$ scalar parameters to optimize
 over. Both $q$ and $d$ are often quite small, and hence so is the dimensionality
 of the problem.
