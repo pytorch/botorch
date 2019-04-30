@@ -62,10 +62,11 @@ def fit_gpytorch_torch(
           iteration. If track_iterations is False, this will be an empty list.
 
     Example:
-        >>> mll = ExactMarginalLogLikelihood(model.likelihood, model)
-        >>> model.train()
-        >>> model.likelihood.train()
+        >>> gp = SingleTaskGP(train_X, train_Y)
+        >>> mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
+        >>> mll.train()
         >>> fit_gpytorch_torch(mll)
+        >>> mll.eval()
     """
     optim_options = {"maxiter": 100, "disp": True, "lr": 0.05}
     optim_options.update(options or {})
@@ -155,10 +156,11 @@ def fit_gpytorch_scipy(
           iteration. If track_iterations is False, this will be an empty list.
 
     Example:
-        >>> mll = ExactMarginalLogLikelihood(model.likelihood, model)
-        >>> model.train()
-        >>> model.likelihood.train()
+        >>> gp = SingleTaskGP(train_X, train_Y)
+        >>> mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
+        >>> mll.train()
         >>> fit_gpytorch_scipy(mll)
+        >>> mll.eval()
     """
     x0, property_dict, bounds = module_to_array(module=mll, bounds=bounds)
     x0 = x0.astype(np.float64)

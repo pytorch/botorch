@@ -25,6 +25,11 @@ def fit_gpytorch_model(
 
     Returns:
         MarginalLogLikelihood with optimized parameters.
+
+    Example:
+        >>> gp = SingleTaskGP(train_X, train_Y)
+        >>> mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
+        >>> fit_gpytorch_model(mll)
     """
     mll.train()
     mll, _ = optimizer(mll, track_iterations=False, **kwargs)
