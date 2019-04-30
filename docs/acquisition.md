@@ -150,7 +150,7 @@ the cdf and pdf of the standard normal distribution, respectively.
 
 With some additional work, it is also possible to express the gradient of
 the Expected Improvement with respect to the design $x$. Classic Bayesian
-optimization software will implement this gradient function explicitly, so that
+Optimization software will implement this gradient function explicitly, so that
 it can be used for numerically optimizing the acquisition function.
 
 BoTorch, in contrast, harnesses PyTorch's automatic differentiation feature

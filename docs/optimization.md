@@ -68,7 +68,7 @@ parallelism, while maintaining high quality solutions.
 
 ### Joint vs. Sequential Candidate Generation for Batch Acquisition Functions
 
-In batch Bayesian optimization $q$ design points are selected for parallel
+In batch Bayesian Optimization $q$ design points are selected for parallel
 experimentation. The parallel (qEI, qNEI, qUCB, qPI) variants of acquisition
 functions call for *joint* optimization over the $q$ design points (i.e., solve
 an optimization problem with a $q \times d$-dimensional decision), but when $q$
@@ -80,7 +80,7 @@ and
 [`sequential_optimize()`](../api/optim.html#botorch.optim.optimize.sequential_optimize)
 provide for these two types of functionality, respectively.
 
-Our empirical observations of the *closed-loop Bayesian optimization performance*
+Our empirical observations of the *closed-loop Bayesian Optimization performance*
 for $q = 5$ show that joint optimization and sequential optimization have similar
 optimization performance on some standard benchmarks, but sequential optimization
 comes at a steep cost in wall time (2-6x in our tests). Therefore, for moderately
