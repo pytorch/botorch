@@ -20,7 +20,7 @@ sys.path.append(base_path)
 
 # -- Project information -----------------------------------------------------
 
-project = "botorch"
+project = "BoTorch"
 copyright = "2019, Facebook, Inc."
 author = "Facebook, Inc."
 
