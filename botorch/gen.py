@@ -59,6 +59,19 @@ def gen_candidates_scipy(
 
         - The set of generated candidates.
         - The acquisition value for each t-batch.
+
+    Example:
+        >>> qEI = qExpectedImprovement(model, best_f=0.2)
+        >>> bounds = torch.tensor([[0., 0.], [1., 2.]])
+        >>> Xinit = gen_batch_initial_conditions(
+        >>>     qEI, bounds, q=3, num_restarts=25, raw_samples=500
+        >>> )
+        >>> batch_candidates, batch_acq_values = gen_candidates_scipy(
+                initial_conditions=Xinit,
+                acquisition_function=qEI,
+                lower_bounds=bounds[0],
+                upper_bounds=bounds[1],
+            )
     """
     options = options or {}
     clamped_candidates = columnwise_clamp(
@@ -147,6 +160,19 @@ def gen_candidates_torch(
 
         - The set of generated candidates.
         - The acquisition value for each t-batch.
+
+    Example:
+        >>> qEI = qExpectedImprovement(model, best_f=0.2)
+        >>> bounds = torch.tensor([[0., 0.], [1., 2.]])
+        >>> Xinit = gen_batch_initial_conditions(
+        >>>     qEI, bounds, q=3, num_restarts=25, raw_samples=500
+        >>> )
+        >>> batch_candidates, batch_acq_values = gen_candidates_torch(
+                initial_conditions=Xinit,
+                acquisition_function=qEI,
+                lower_bounds=bounds[0],
+                upper_bounds=bounds[1],
+            )
     """
     options = options or {}
     clamped_candidates = columnwise_clamp(
@@ -200,6 +226,20 @@ def get_best_candidates(batch_candidates: Tensor, batch_values: Tensor) -> Tenso
     Returns:
         A tensor of size `q x d` (if q-batch mode) or `d` from batch_candidates
         with the highest associated value.
+
+    Example:
+        >>> qEI = qExpectedImprovement(model, best_f=0.2)
+        >>> bounds = torch.tensor([[0., 0.], [1., 2.]])
+        >>> Xinit = gen_batch_initial_conditions(
+        >>>     qEI, bounds, q=3, num_restarts=25, raw_samples=500
+        >>> )
+        >>> batch_candidates, batch_acq_values = gen_candidates_scipy(
+                initial_conditions=Xinit,
+                acquisition_function=qEI,
+                lower_bounds=bounds[0],
+                upper_bounds=bounds[1],
+            )
+        >>> best_candidates = get_best_candidates(batch_candidates, batch_acq_values)
     """
     best = torch.max(batch_values.view(-1), dim=0)[1].item()
     return batch_candidates[best]
