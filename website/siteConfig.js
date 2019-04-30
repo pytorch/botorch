@@ -47,7 +47,7 @@ const siteConfig = {
   },
 
   // images for header/footer and favicon
-  headerIcon: 'img/botorch_logo_lockup_white.svg',
+  headerIcon: 'img/botorch_logo_lockup_white.png',
   footerIcon: 'img/botorch.png',
   favicon: 'img/botorch.ico',
 
