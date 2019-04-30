@@ -36,7 +36,7 @@ constrained objectives (using a sigmoid approximation for the constraints).
 ### Utilizing GenericMCObjective
 
 The [`GenericMCObjective`](../api/acquisition.html#genericmcobjective) allows
-to simply use a generic callable to implement an ad-hoc objective. The callable
+simply using a generic callable to implement an ad-hoc objective. The callable
 is expected to map a `sample_shape x batch_shape x q x o`-dimensional tensor of
 posterior samples to a `sample_shape x batch_shape x q`-dimensional tensor of
 sampled objective values.
@@ -53,7 +53,7 @@ mc_objective = GenericMCObjective(obj)
 
 Instead of using `GenericMCObjective`, you can also implement your own
 `MCAcquisitionObjective` modules to make them easier to re-use, or support
-for more complex logic. The only thing required to implement
+more complex logic. The only thing required to implement
 is a `forward` method that takes in a
 `sample_shape x batch_shape x q x o`-dimensional tensor of
 posterior samples and maps it to a
