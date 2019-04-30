@@ -33,7 +33,7 @@ MIN_INFERRED_NOISE_LEVEL = 1e-6
 
 
 class SingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel):
-    r"""A single-task Exact GP model.
+    r"""A single-task exact GP model.
 
     A single-task exact GP using relatively strong priors on the Kernel
     hyperparameters, which work best when covariates are normalized to the unit
@@ -52,7 +52,7 @@ class SingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel):
     def __init__(
         self, train_X: Tensor, train_Y: Tensor, likelihood: Optional[Likelihood] = None
     ) -> None:
-        r"""A single-task Exact GP model.
+        r"""A single-task exact GP model.
 
         Args:
             train_X: A `n x d` or `batch_shape x n x d` (batch mode) tensor of training
@@ -107,7 +107,7 @@ class SingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel):
 
 
 class FixedNoiseGP(ExactGP, BatchedMultiOutputGPyTorchModel):
-    r"""A single-task Exact GP model using fixed noise levels.
+    r"""A single-task exact GP model using fixed noise levels.
 
     A single-task exact GP that uses fixed observation noise levels. This model
     also uses relatively strong priors on the Kernel hyperparameters, which work
@@ -118,7 +118,7 @@ class FixedNoiseGP(ExactGP, BatchedMultiOutputGPyTorchModel):
     """
 
     def __init__(self, train_X: Tensor, train_Y: Tensor, train_Yvar: Tensor) -> None:
-        r"""A single-task Exact GP model using fixed noise levels.
+        r"""A single-task exact GP model using fixed noise levels.
 
         Args:
             train_X: A `n x d` or `batch_shape x n x d` (batch mode) tensor of training
@@ -168,15 +168,15 @@ class FixedNoiseGP(ExactGP, BatchedMultiOutputGPyTorchModel):
 
 
 class HeteroskedasticSingleTaskGP(SingleTaskGP):
-    r"""A single-task Exact GP model using a heteroskeastic noise model.
+    r"""A single-task exact GP model using a heteroskeastic noise model.
 
-    This model internally wraps another GP to model the observation noise. This
-    allows the likelihood to make out-of-sample predictions for the observation
-    noise levels.
+    This model internally wraps another GP (a SingleTaskGP) to model the observation
+    noise. This allows the likelihood to make out-of-sample predictions for the
+    observation noise levels.
     """
 
     def __init__(self, train_X: Tensor, train_Y: Tensor, train_Yvar: Tensor) -> None:
-        r"""A single-task Exact GP model using a heteroskeastic noise model.
+        r"""A single-task exact GP model using a heteroskedastic noise model.
 
         Args:
             train_X: A `n x d` or `batch_shape x n x d` (batch mode) tensor of training

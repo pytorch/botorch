@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 r"""
-Abstract base module for all botorch models.
+Abstract base module for all BoTorch models.
 """
 
 from abc import ABC, abstractmethod
@@ -14,7 +14,7 @@ from ..posteriors import Posterior
 
 
 class Model(Module, ABC):
-    r"""Abstract base class for botorch models."""
+    r"""Abstract base class for BoTorch models."""
 
     @abstractmethod
     def posterior(
