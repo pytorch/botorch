@@ -702,6 +702,21 @@ div.math:hover a.headerlink {
     visibility: visible;
 }
 
+/* -- source ---------------------------------------------------------- */
+
+div.sphinx div.highlight {
+  width: 120%;
+}
+
+div.sphinx div.highlight pre {
+  background-color: #fff;
+  padding: 7px 0 0 0;
+}
+
+div.sphinx div.viewcode-block:target {
+  background: #fff;
+}
+
 /* -- printout stylesheet --------------------------------------------------- */
 
 @media print {
