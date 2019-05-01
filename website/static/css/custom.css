@@ -29,8 +29,8 @@ html body {
 }
 
 .homeContainer {
-  background: rgb(2,0,36);
-  background: linear-gradient(180deg, rgba(2,0,36,1), rgba(34,34,34,1) 0%, rgba(28,96,247,1) 100%);
+  background: rgba(34,34,34,1);
+  background: linear-gradient(180deg, rgba(34,34,34,1), rgba(34,34,34,1) 0%, rgba(28,96,247,1) 100%);
   padding: 30px 0px;
 }
 
