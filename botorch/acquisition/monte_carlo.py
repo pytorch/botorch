@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+
 r"""
 Batch acquisition functions using the reparameterization trick in combination
 with (quasi) Monte-Carlo sampling. See [Rezende2014reparam]_ and

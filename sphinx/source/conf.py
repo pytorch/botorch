@@ -1,5 +1,7 @@
 #! /usr/bin/env python3
 
+# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+
 # Configuration file for the Sphinx documentation builder.
 #
 # This file does only contain a selection of the most common options. For a

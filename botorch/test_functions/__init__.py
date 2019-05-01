@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+
 from .branin import neg_branin
 from .eggholder import neg_eggholder
 from .hartmann6 import neg_hartmann6

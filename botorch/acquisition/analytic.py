@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+
 r"""
 Analytic Acquisition Functions that evaluate the posterior without performing
 Monte-Carlo sampling.

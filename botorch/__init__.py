@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+
 from . import acquisition, exceptions, models, optim, posteriors, test_functions
 from .cross_validation import batch_cross_validation
 from .fit import fit_gpytorch_model

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+
 LATEST=false
 
 while getopts 'l' flag; do

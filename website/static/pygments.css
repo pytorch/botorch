@@ -1,4 +1,8 @@
-.highlight .hll { background-color: #ffffcc }
+/*
+ * Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved.
+ */
+
+ .highlight .hll { background-color: #ffffcc }
 .highlight .c { color: #60a0b0; font-style: italic } /* Comment */
 .highlight .err { border: 1px solid #FF0000 } /* Error */
 .highlight .k { color: #007020; font-weight: bold } /* Keyword */

@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+
 from .constraints import get_outcome_constraint_transforms
 from .objective import apply_constraints, get_objective_weights_transform
 from .sampling import (

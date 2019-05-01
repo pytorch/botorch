@@ -1,5 +1,7 @@
 #! /usr/bin/env python3
 
+# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+
 import torch
 from botorch.acquisition import qExpectedImprovement
 from botorch.gen import gen_candidates_scipy, get_best_candidates
