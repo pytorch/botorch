@@ -84,7 +84,7 @@ def unnormalize(X: Tensor, bounds: Tensor) -> Tensor:
 def t_batch_mode_transform(
     expected_q: Optional[int] = None,
 ) -> Callable[[Callable[[Any, Tensor], Any]], Callable[[Any, Tensor], Any]]:
-    r"""Factory for decorators that make instance methods receive a t-batched `X` tensor.
+    r"""Factory for decorators taking a t-batched `X` tensor.
 
     This method creates decorators for instance methods to transform an input tensor
     `X` to t-batch mode (i.e. with at least 3 dimensions). This assumes the tensor

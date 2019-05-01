@@ -138,7 +138,7 @@ def joint_optimize(
 
     Example:
         >>> # generate `q=2` candidates jointly using 20 random restarts and
-        >>> 500 raw samples
+        >>> # 500 raw samples
         >>> qEI = qExpectedImprovement(model, best_f=0.2)
         >>> bounds = torch.tensor([[0.], [1.]])
         >>> candidates = joint_optimize(qEI, bounds, 2, 20, 500)
