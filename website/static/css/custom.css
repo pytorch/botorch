@@ -165,13 +165,13 @@ a:hover, p a:hover {
 }
 
 a.edit-page-link {
-  color: #1C60F7 !important;
+  color: #1C60F7;
   border: 1px solid #1C60F7;
 }
 
 a.edit-page-link:hover {
   color: #F15A24;
-  border: 1px solid #F15A24 !important;
+  border: 1px solid #F15A24;
   background-color: inherit;
 }
 
