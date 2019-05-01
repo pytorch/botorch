@@ -69,10 +69,14 @@ div.productShowcaseSection {
 
 .productShowcaseSection > h2 {
   font-variant: small-caps;
-  font-weight: 300;
+  font-weight: 360;
   margin: 0px;
   padding: 0px;
   color: #1C60F7;
+}
+
+.productShowcaseSection p {
+  font-weight: 360;
 }
 
 .productShowcaseSection div.container {

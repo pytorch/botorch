@@ -1,6 +1,6 @@
 ---
 id: getting_started
-title: Getting started
+title: Getting Started
 ---
 
 This section shows you how to get your feet wet with BoTorch.
@@ -39,7 +39,7 @@ on GitHub.
 
 ## Basic Components
 
-Here's a quick run down of the main components of a Bayesian optimization loop.
+Here's a quick run down of the main components of a Bayesian Optimization loop.
 
 1. Fit a Gaussian Process model to data
     ```python
