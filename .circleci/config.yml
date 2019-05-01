@@ -75,6 +75,7 @@ commands:
             if ! git diff-tree --no-commit-id --name-only -r HEAD | grep -E "(^docs\/.*)|(^website\/.*)|(^scripts\/.*)|(^sphinx\/.*)|(^tutorials\/.*)"; then
               echo "Skipping deploy. No relevant website files have changed"
             elif [[ $CIRCLE_PROJECT_USERNAME == "pytorch" && -z $CI_PULL_REQUEST && -z $CIRCLE_PR_USERNAME ]]; then
+              mkdir -p website/static/.circleci && cp -a .circleci/. website/static/.circleci/.
               ./scripts/build_docs.sh -b
               cd website
               GIT_USER=docusaurus-bot USE_SSH=false yarn run publish-gh-pages
@@ -118,6 +119,7 @@ jobs:
       - lint_flake8
       - lint_black
       - unit_tests
+      - sphinx
       - configure_github_bot
       - deploy_site
 
