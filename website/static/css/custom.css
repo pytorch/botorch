@@ -7,7 +7,7 @@ html body {
 }
 
 .fixedHeaderContainer {
-    background-color: #222222;
+  background-color: #222222;
 }
 
 .fixedHeaderContainer header .headerTitleWithLogo {
@@ -31,14 +31,14 @@ html body {
 .homeContainer {
   background: rgb(2,0,36);
   background: linear-gradient(180deg, rgba(2,0,36,1), rgba(34,34,34,1) 0%, rgba(28,96,247,1) 100%);
-  padding: 50px 0px;
+  padding: 30px 0px;
 }
 
 .splashLogo{
   display: block;
   margin: 0 auto;
-  height: 275px;
-  width: 300px;
+  height: 230px;
+  width: 275px;
 }
 
 .projectTitle {
@@ -59,7 +59,7 @@ html body {
 }
 
 .landingPage {
-    padding: 0px;
+  padding: 0px;
 }
 
 div.productShowcaseSection {

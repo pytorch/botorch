@@ -41,7 +41,6 @@ class HomeSplash extends React.Component {
 
     const ProjectTitle = () => (
       <h2 className="projectTitle">
-        {siteConfig.title}
         <small>{siteConfig.tagline}</small>
       </h2>
     );
@@ -66,7 +65,7 @@ class HomeSplash extends React.Component {
       <SplashContainer>
         <Logo img_src={baseUrl+'img/botorch_logo_lockup_top.png'}/>
         <div className="inner">
-          {/* <ProjectTitle siteConfig={siteConfig} /> */}
+          <ProjectTitle siteConfig={siteConfig} />
           <PromoSection>
             <Button href={docUrl('introduction.html')}>Introduction</Button>
             <Button href={"#quickstart"}>Get Started</Button>
@@ -195,7 +194,7 @@ candidate  # tensor([0.4887, 0.5063])
           },
           {
             content: 'Support for scalable GPs via GPyTorch. Run code on multiple devices.',
-            image: `${baseUrl}img/arrows_expanding_colored.svg`,
+            image: `${baseUrl}img/expanding_arrows.svg`,
             imageAlign: 'top',
             title: 'Scalable',
           },
