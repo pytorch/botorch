@@ -53,9 +53,6 @@ Optimization simply use Ax.
 - scipy
 
 
-#### Installing BoTorch
-
-
 ##### Installing the latest release
 
 The latest release of BoTorch is easily installed either via
@@ -68,7 +65,7 @@ or via `pip`:
 pip install botorch
 ```
 
-**Important note for MacOS users:**
+***Important note for MacOS users:***
 * You will want to make sure your PyTorch build is linked against MKL (the
   non-optimized version of BoTorch can be up to an order of magnitude slower in
   some settings). Setting this up manually on MacOS can be tricky - to ensure
