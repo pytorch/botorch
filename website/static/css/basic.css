@@ -220,6 +220,46 @@ div.body {
     max-width: 900px;
 }
 
+table {
+  overflow: hidden;
+}
+
+dl {
+     margin-bottom: 15px;
+ }
+
+dl.class > dt  {
+  background-color: #f8f8f8;
+  border-left: 3px solid #F15A24;
+  padding: 2px 0px 2px 5px;
+}
+
+dl.class > dt > code  {
+  background: none;
+}
+
+dl.class > dt > em.property {
+  color: #F15A24;
+  font-style: normal;
+  font-variant: small-caps;
+}
+
+dl.class em.property {
+  color: #F15A24;
+  font-style: normal;
+  font-variant: small-caps;
+}
+
+dl.function > dt  {
+  background-color: #f8f8f8;
+  border-left: 3px solid #F15A24;
+  padding: 2px 0px 2px 5px;
+}
+
+dl.function > dt > code  {
+  background: none;
+}
+
 dd {
     padding-top: 10px;
     padding-bottom: 5px;
