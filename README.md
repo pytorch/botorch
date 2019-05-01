@@ -46,21 +46,11 @@ Optimization simply use Ax.
 
 ## Installation
 
-#### Installation Requirements
-
+**Installation Requirements**
 - Python >= 3.6
 - PyTorch >= 1.1
 - gpytorch >= 0.3.2
 - scipy
-
-**Important note for MacOS users:**
-* You will want to make sure your PyTorch build is linked against MKL (the
-  non-optimized version of BoTorch can be up to an order of magnitude slower in
-  some settings). Setting this up manually on MacOS can be tricky - to ensure
-  this works properly please follow the
-  [PyTorch installation instructions](https://pytorch.org/get-started/locally/).
-* If you need CUDA on MacOS, you will need to build PyTorch from source. Please
-  consult the PyTorch installation instructions above.
 
 
 #### Installing BoTorch
@@ -77,6 +67,15 @@ or via `pip`:
 ```bash
 pip install botorch
 ```
+
+**Important note for MacOS users:**
+* You will want to make sure your PyTorch build is linked against MKL (the
+  non-optimized version of BoTorch can be up to an order of magnitude slower in
+  some settings). Setting this up manually on MacOS can be tricky - to ensure
+  this works properly please follow the
+  [PyTorch installation instructions](https://pytorch.org/get-started/locally/).
+* If you need CUDA on MacOS, you will need to build PyTorch from source. Please
+  consult the PyTorch installation instructions above.
 
 
 ##### Installing from latest master
@@ -124,7 +123,7 @@ For more details see our [Documentation](https://botorch.org/docs) and the
 
   gp = SingleTaskGP(train_X, train_Y)
   mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
-  fit_gpytorch_model(mll);
+  fit_gpytorch_model(mll)
   ```
 
 2. Construct an acquisition function
