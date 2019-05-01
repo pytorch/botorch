@@ -19,7 +19,7 @@ html body {
   background-color: #222222;
 }
 
-.navigationSlider .slidingNav ul li a:hover {
+.navigationSlider .slidingNav ul li a:hover, .navigationSlider .slidingNav ul li a:focus {
   color: #F15A24;
   background-color: inherit;
 }
