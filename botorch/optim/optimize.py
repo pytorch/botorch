@@ -55,12 +55,13 @@ def sequential_optimize(
 
     Returns:
         The set of generated candidates.
+
     Example
-    >>> # generate `q=2` candidates sequentially using 20 random restarts and
-    >>> # 500 raw samples
-    >>> qEI = qExpectedImprovement(model, best_f=0.2)
-    >>> bounds = torch.tensor([[0.], [1.]])
-    >>> candidates = sequential_optimize(qEI, bounds, 2, 20, 500)
+        # generate `q=2` candidates sequentially using 20 random restarts
+        # and 500 raw samples
+        >>> qEI = qExpectedImprovement(model, best_f=0.2)
+        >>> bounds = torch.tensor([[0.], [1.]])
+        >>> candidates = sequential_optimize(qEI, bounds, 2, 20, 500)
     """
     if not hasattr(acq_function, "X_baseline"):
         raise UnsupportedError(  # pyre-ignore: [16]
@@ -136,7 +137,8 @@ def joint_optimize(
          A `q x d` tensor of generated candidates.
 
     Example:
-        >>> # generate `q=2` candidates jointly using 20 random restarts and 500 raw samples
+        >>> # generate `q=2` candidates jointly using 20 random restarts and
+        >>> 500 raw samples
         >>> qEI = qExpectedImprovement(model, best_f=0.2)
         >>> bounds = torch.tensor([[0.], [1.]])
         >>> candidates = joint_optimize(qEI, bounds, 2, 20, 500)
