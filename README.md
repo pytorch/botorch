@@ -1,8 +1,10 @@
 <a href="https://botorch.org">
-  <img width="300" src="./botorch_logo_lockup.svg" alt="BoTorch Logo" />
+  <img width="350" src="./botorch_logo_lockup.svg" alt="BoTorch Logo" />
 </a>
 
-[![CircleCI](https://circleci.com/gh/pytorch/botorch.svg?style=shield&circle-token=19c388387063692b6d33eecc243c8990a43ae655)](https://circleci.com/gh/pytorch/botorch)
+<hr/>
+
+[![CircleCI](https://circleci.com/gh/pytorch/botorch.svg?style=shield)](https://circleci.com/gh/pytorch/botorch)
 [![Conda](https://img.shields.io/conda/v/pytorch/botorch.svg)](https://anaconda.org/pytorch/botorch)
 [![PyPI](https://img.shields.io/pypi/v/botorch.svg)](https://pypi.org/project/botorch)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.md)
