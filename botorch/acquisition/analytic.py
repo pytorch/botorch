@@ -453,18 +453,19 @@ class NoisyExpectedImprovement(ExpectedImprovement):
             maximize: If True, consider the problem a maximization problem.
         """
         # construct fantasy model (batch mode)
-        posterior = model.posterior(X_observed)
-        self._validate_single_output_posterior(posterior=posterior)
-        sampler = SobolQMCNormalSampler(num_fantasies)
-        Y_fantasized = sampler(posterior).squeeze(-1)
-        noise = torch.full_like(Y_fantasized, 1e-7)  # "noiseless" fantasies
-        batch_X_observed = X_observed.expand(num_fantasies, *X_observed.shape)
-        # The fantasy model will operate in batch mode
-        fantasy_model = model.get_fantasy_model(
-            batch_X_observed, Y_fantasized, noise=noise
-        )
-        best_f = Y_fantasized.max(dim=-1)[0]
-        super().__init__(model=fantasy_model, best_f=best_f, maximize=maximize)
+        with torch.no_grad():
+            posterior = model.posterior(X_observed)
+            self._validate_single_output_posterior(posterior=posterior)
+            sampler = SobolQMCNormalSampler(num_fantasies)
+            Y_fantasized = sampler(posterior).squeeze(-1)
+            noise = torch.full_like(Y_fantasized, 1e-7)  # "noiseless" fantasies
+            batch_X_observed = X_observed.expand(num_fantasies, *X_observed.shape)
+            # The fantasy model will operate in batch mode
+            fantasy_model = model.get_fantasy_model(
+                batch_X_observed, Y_fantasized, noise=noise
+            )
+            best_f = Y_fantasized.max(dim=-1)[0]
+            super().__init__(model=fantasy_model, best_f=best_f, maximize=maximize)
 
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate Expected Improvement on the candidate set X.
