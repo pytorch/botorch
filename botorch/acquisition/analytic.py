@@ -8,6 +8,7 @@ Monte-Carlo sampling.
 """
 
 from abc import ABC
+from copy import deepcopy
 from typing import Dict, Optional, Tuple, Union
 
 import torch
@@ -15,6 +16,7 @@ from torch import Tensor
 from torch.distributions import Normal
 
 from ..exceptions import UnsupportedError
+from ..models.gp_regression import FixedNoiseGP
 from ..models.gpytorch import GPyTorchModel
 from ..models.model import Model
 from ..posteriors.posterior import Posterior
@@ -454,20 +456,24 @@ class NoisyExpectedImprovement(ExpectedImprovement):
                 complexity and performance).
             maximize: If True, consider the problem a maximization problem.
         """
-        # construct fantasy model (batch mode)
+        if not isinstance(model, FixedNoiseGP):
+            raise UnsupportedError(
+                "Only FixedNoiseGPs are currently supported for fantasy NEI"
+            )
+        # sample fantasies
         with torch.no_grad():
             posterior = model.posterior(X_observed)
             self._validate_single_output_posterior(posterior=posterior)
             sampler = SobolQMCNormalSampler(num_fantasies)
             Y_fantasized = sampler(posterior).squeeze(-1)
-            noise = torch.full_like(Y_fantasized, 1e-7)  # "noiseless" fantasies
-            batch_X_observed = X_observed.expand(num_fantasies, *X_observed.shape)
-            # The fantasy model will operate in batch mode
-            fantasy_model = model.get_fantasy_model(
-                batch_X_observed, Y_fantasized, noise=noise
-            )
-            best_f = Y_fantasized.max(dim=-1)[0]
-            super().__init__(model=fantasy_model, best_f=best_f, maximize=maximize)
+        batch_X_observed = X_observed.expand(num_fantasies, *X_observed.shape)
+        # The fantasy model will operate in batch mode
+        fantasy_model = _get_noiseless_fantasy_model(
+            model=model, batch_X_observed=batch_X_observed, Y_fantasized=Y_fantasized
+        )
+
+        best_f = Y_fantasized.max(dim=-1)[0]
+        super().__init__(model=fantasy_model, best_f=best_f, maximize=maximize)
 
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate Expected Improvement on the candidate set X.
@@ -487,3 +493,42 @@ def _construct_dist(means: Tensor, sigmas: Tensor, inds: Tensor) -> Normal:
     mean = means[..., inds]
     sigma = sigmas[..., inds]
     return Normal(loc=mean, scale=sigma)
+
+
+def _get_noiseless_fantasy_model(
+    model: FixedNoiseGP, batch_X_observed: Tensor, Y_fantasized: Tensor
+) -> FixedNoiseGP:
+    r"""Construct a fantasy model from a fitted model and provided fantasies.
+
+    The fantasy model uses the hyperparameters from the original fitted model and
+    assumes the fantasies are noiseless.
+
+    Args:
+        model: a fitted FixedNoiseGP
+        batch_X_observed: A `b x m x d` tensor of inputs where `b` is the number of
+            fantasies.
+        Y_fantasized: A `b x m` tensor of fantasized targets where `b` is the number of
+            fantasies.
+
+    Returns:
+        The fantasy model.
+    """
+    # initialize a copy of FixedNoiseGP on the original training inputs
+    # this makes FixedNoiseGP a non-batch GP, so that the same hyperparameters
+    # are used across all batches (by default, a GP with batched training data
+    # uses independent hyperparameters for each batch).
+    fantasy_model = FixedNoiseGP(
+        train_X=model.train_inputs[0],
+        train_Y=model.train_targets,
+        train_Yvar=model.likelihood.noise_covar.noise,
+    )
+    # update training inputs/targets to be batch mode fantasies
+    fantasy_model.set_train_data(
+        inputs=batch_X_observed, targets=Y_fantasized, strict=False
+    )
+    # use noiseless fantasies
+    fantasy_model.likelihood.noise_covar.noise = torch.full_like(Y_fantasized, 1e-7)
+    # load hyperparameters from original model
+    state_dict = deepcopy(model.state_dict())
+    fantasy_model.load_state_dict(state_dict)
+    return fantasy_model

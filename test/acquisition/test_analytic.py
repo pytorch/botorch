@@ -16,7 +16,7 @@ from botorch.acquisition.analytic import (
     UpperConfidenceBound,
 )
 from botorch.exceptions import UnsupportedError
-from botorch.models import FixedNoiseGP
+from botorch.models import FixedNoiseGP, SingleTaskGP
 
 from ..mock import MockModel, MockPosterior
 
@@ -411,6 +411,10 @@ class TestNoisyExpectedImprovement(unittest.TestCase):
             # test without gradient
             with torch.no_grad():
                 nEI(X_test)
+            # test non-FixedNoiseGP model
+            other_model = SingleTaskGP(X_observed, model.train_targets)
+            with self.assertRaises(UnsupportedError):
+                NoisyExpectedImprovement(other_model, X_observed, num_fantasies=5)
 
     def test_noisy_expected_improvement_cuda(self, cuda=False):
         if torch.cuda.is_available():
