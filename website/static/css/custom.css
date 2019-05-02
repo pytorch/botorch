@@ -14,6 +14,10 @@ html body {
   display: none;
 }
 
+.navigationSlider .slidingNav ul {
+    background: #222222;
+}
+
 .navigationSlider .slidingNav ul li a {
   color: #EFEFEF;
   background-color: #222222;
