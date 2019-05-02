@@ -21,7 +21,7 @@ const siteConfig = {
   tagline: 'Bayesian Optimization in PyTorch',
   url: 'https://botorch.org',
   baseUrl: baseUrl,
-  cleanUrl: true,  // No .html extensions for paths
+  cleanUrl: true, // No .html extensions for paths
 
   // used for publishing and more
   organizationName: 'pytorch',
@@ -33,17 +33,16 @@ const siteConfig = {
     {href: `${baseUrl}tutorials/`, label: 'Tutorials'},
     {href: `${baseUrl}api/`, label: 'API Reference'},
     {href: 'https://github.com/pytorch/botorch', label: 'GitHub'},
-    {search: true},  // position search box to the very right
+    {search: true}, // position search box to the very right
   ],
 
   // add users to the website
   users,
 
   // search integration w/ algolia
-  // TODO: Add algolia config
   algolia: {
-    apiKey: '',
-    indexName: '',
+    apiKey: '207c27d819f967749142d8611de7cb19',
+    indexName: 'botorch',
   },
 
   // images for header/footer and favicon
