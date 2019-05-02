@@ -415,6 +415,10 @@ class TestNoisyExpectedImprovement(unittest.TestCase):
             other_model = SingleTaskGP(X_observed, model.train_targets)
             with self.assertRaises(UnsupportedError):
                 NoisyExpectedImprovement(other_model, X_observed, num_fantasies=5)
+            # Test with minimize
+            nEI = NoisyExpectedImprovement(
+                model, X_observed, num_fantasies=5, maximize=False
+            )
 
     def test_noisy_expected_improvement_cuda(self, cuda=False):
         if torch.cuda.is_available():

@@ -472,7 +472,11 @@ class NoisyExpectedImprovement(ExpectedImprovement):
             model=model, batch_X_observed=batch_X_observed, Y_fantasized=Y_fantasized
         )
 
-        best_f = Y_fantasized.max(dim=-1)[0]
+        if maximize:
+            best_f = Y_fantasized.max(dim=-1)[0]
+        else:
+            best_f = Y_fantasized.min(dim=-1)[0]
+
         super().__init__(model=fantasy_model, best_f=best_f, maximize=maximize)
 
     def forward(self, X: Tensor) -> Tensor:
