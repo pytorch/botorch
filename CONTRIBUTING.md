@@ -62,17 +62,17 @@ pytest -ra --cov=. --cov-report term-missing
 #### Documentation
 
 BoTorch's website is also open source, and is part of this very repository (the
-code can be found in the [website](../website/) folder).
+code can be found in the [website](/website/) folder).
 It is built using [Docusaurus](https://docusaurus.io/), and consists of three
 main elements:
 
 1. The documentation in Docusaurus itself (if you know Markdown, you can
-   already contribute!). This lives in the [docs](../docs/).
+   already contribute!). This lives in the [docs](/docs/).
 2. The API reference, auto-generated from the docstrings using
    [Sphinx](http://www.sphinx-doc.org), and embedded into the Docusaurus website.
-   The sphinx .rst source files for this live in [sphinx/source](../sphinx/source/).
+   The sphinx .rst source files for this live in [sphinx/source](/sphinx/source/).
 3. The Jupyter notebook tutorials, parsed by `nbconvert`, and embedded into the
-   Docusaurus website. These live in [tutorials](../tutorials).
+   Docusaurus website. These live in [tutorials](/tutorials/).
 
 To build the documentation you will need [Node](https://nodejs.org/en/) >= 8.x
 and [Yarn](https://yarnpkg.com/en/) >= 1.5.
