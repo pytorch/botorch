@@ -106,7 +106,7 @@ above:
 ## Getting Started
 
 Here's a quick run down of the main components of a Bayesian optimization loop.
-For more details see our [Documentation](https://botorch.org/docs) and the
+For more details see our [Documentation](https://botorch.org/docs/introduction) and the
 [Tutorials](https://botorch.org/tutorials).
 
 1. Fit a Gaussian Process model to data
@@ -148,4 +148,4 @@ See the [CONTRIBUTING](CONTRIBUTING.md) file for how to help out.
 
 
 ## License
-BoTorch is MIT licensed, as found in the [LICENSE](LICENSE.md) file.
+BoTorch is MIT licensed, as found in the [LICENSE](LICENSE) file.
