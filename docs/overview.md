@@ -126,7 +126,7 @@ The re-parameterization trick (see e.g. [^KingmaWelling2014], [^Rezende2014])
 can be used to write the posterior distribution as a deterministic
 transformation of an auxiliary random variable $\epsilon$. For example, a
 normally distributed random variable $X$ with mean $\mu$ and standard deviation
-$\theta$ has the same distribution as $\mu + \sigma \epsilon$ where $\epsilon$
+$\sigma$ has the same distribution as $\mu + \sigma \epsilon$ where $\epsilon$
 is a standard normal. Therefore, an expectation with respect to $X$ can be
 approximated using samples from $\epsilon$. In the case where $\mu$ and $\sigma$
 are parameters of an optimization problem, MC approximations of the objective at
