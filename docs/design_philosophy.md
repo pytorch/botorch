@@ -77,7 +77,7 @@ problem.
 
 For large Neural Network models, the number of optimization variables is very
 high, and can be in the hundreds of thousands or even millions of parameters.
-The resulting optimization problem is often solved using using first-order
+The resulting optimization problem is often solved using first-order
 stochastic gradient descent algorithms (e.g. SGD and its many variants).
 Many of these are implemented in the `torch.optim` module. The typical way of
 optimizing a model with these algorithms is by extracting the module's
