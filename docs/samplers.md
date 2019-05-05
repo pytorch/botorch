@@ -7,7 +7,7 @@ MC-based acquisition functions rely on the reparameterization trick, which
 transforms some set of $\epsilon$ from some base distribution into a target
 distribution. For example, when drawing posterior samples from a Gaussian
 process, the classical parameterization is $\mu(x) + L(x) \epsilon$, where
-$\epsilon$ are i.i.d normal, $\mu$ is the mean of the posterior, and $L(x)$ is
+$\epsilon$ are i.i.d standard normal, $\mu$ is the mean of the posterior, and $L(x)$ is
 a root decomposition of the covariance matrix such that $L(x)L(x)^T = \Sigma(x)$.
 
 Exactly how base samples are generated when using the reparameterization trick
