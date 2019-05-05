@@ -78,7 +78,7 @@ Here's a quick run down of the main components of a Bayesian Optimization loop.
 ## Tutorials
 
 Our Jupyter notebook tutorials help you get off the ground with BoTorch.
-View and download download them [here](../tutorials).
+View and download them [here](../tutorials).
 
 
 ## API Reference
