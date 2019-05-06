@@ -38,7 +38,7 @@ provides a base class for conveniently wrapping GPyTorch models.
 ## Terminology
 
 Models may have multiple outputs, multiple inputs, and may exploit correlation
-between between different inputs. BoTorch uses the following terminology to
+between different inputs. BoTorch uses the following terminology to
 distinguish these model types:
 
 * *Multi-Output Model*: a `Model` (as in the BoTorch object) with multiple
