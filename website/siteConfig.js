@@ -27,6 +27,9 @@ const siteConfig = {
   organizationName: 'pytorch',
   projectName: 'botorch',
 
+  // Google analytics
+  gaTrackingId: 'UA-139570076-2',
+
   // links that will be used in the header navigation bar
   headerLinks: [
     {doc: 'introduction', label: 'Docs'},
