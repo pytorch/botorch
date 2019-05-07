@@ -63,12 +63,12 @@ class HomeSplash extends React.Component {
 
     return (
       <SplashContainer>
-        <Logo img_src={baseUrl+'img/botorch_logo_lockup_top.png'}/>
+        <Logo img_src={baseUrl + 'img/botorch_logo_lockup_top.png'} />
         <div className="inner">
           <ProjectTitle siteConfig={siteConfig} />
           <PromoSection>
             <Button href={docUrl('introduction.html')}>Introduction</Button>
-            <Button href={"#quickstart"}>Get Started</Button>
+            <Button href={'#quickstart'}>Get Started</Button>
             <Button href={`${baseUrl}tutorials/`}>Tutorials</Button>
           </PromoSection>
         </div>
@@ -109,7 +109,7 @@ class Index extends React.Component {
       </Block>
     );
     // getStartedSection
-    const pre = "```";
+    const pre = '```';
     // Example for model fitting
     const modelFitCodeExample = `${pre}python
 import torch
@@ -144,62 +144,64 @@ candidate  # tensor([0.4887, 0.5063])
     //
     const QuickStart = () => (
       <div
-        className="productShowcaseSection" id="quickstart"
+        className="productShowcaseSection"
+        id="quickstart"
         style={{textAlign: 'center'}}>
         <h2>Get Started</h2>
         <Container>
-              <ol>
-                <li>
-                  <h4>Install BoTorch:</h4>
-                  <a>via conda (recommended):</a>
-                  <MarkdownBlock>{bash`conda install botorch -c pytorch`}</MarkdownBlock>
-                  <a>via pip:</a>
-                  <MarkdownBlock>{bash`pip install botorch`}</MarkdownBlock>
-                </li>
-                <li>
-                  <h4>Fit a model:</h4>
-                  <MarkdownBlock>{modelFitCodeExample}</MarkdownBlock>
-                </li>
-                <li>
-                  <h4>Construct an acquisition function:</h4>
-                  <MarkdownBlock>{constrAcqFuncExample}</MarkdownBlock>
-                </li>
-                <li>
-                  <h4>Optimize the acquisition function:</h4>
-                  <MarkdownBlock>{optAcqFuncExample}</MarkdownBlock>
-                </li>
-              </ol>
-          </Container>
-        </div>
+          <ol>
+            <li>
+              <h4>Install BoTorch:</h4>
+              <a>via conda (recommended):</a>
+              <MarkdownBlock>{bash`conda install botorch -c pytorch`}</MarkdownBlock>
+              <a>via pip:</a>
+              <MarkdownBlock>{bash`pip install botorch`}</MarkdownBlock>
+            </li>
+            <li>
+              <h4>Fit a model:</h4>
+              <MarkdownBlock>{modelFitCodeExample}</MarkdownBlock>
+            </li>
+            <li>
+              <h4>Construct an acquisition function:</h4>
+              <MarkdownBlock>{constrAcqFuncExample}</MarkdownBlock>
+            </li>
+            <li>
+              <h4>Optimize the acquisition function:</h4>
+              <MarkdownBlock>{optAcqFuncExample}</MarkdownBlock>
+            </li>
+          </ol>
+        </Container>
+      </div>
     );
 
     const Features = () => (
-      <div
-        className="productShowcaseSection"
-        style={{textAlign: 'center'}}>
+      <div className="productShowcaseSection" style={{textAlign: 'center'}}>
         <h2>Key Features</h2>
-      <Block layout="threeColumn">
-        {[
-          {
-            content: 'Plug in new models, acquisition functions, and optimizers.',
-            image: `${baseUrl}img/puzzle_pieces.svg`,
-            imageAlign: 'top',
-            title: 'Modular',
-          },
-          {
-            content: 'Easily integrate neural network modules. Native GPU & autograd support.',
-            image: `${baseUrl}img/pytorch_logo.svg`,
-            imageAlign: 'top',
-            title: 'Built on PyTorch',
-          },
-          {
-            content: 'Support for scalable GPs via GPyTorch. Run code on multiple devices.',
-            image: `${baseUrl}img/expanding_arrows.svg`,
-            imageAlign: 'top',
-            title: 'Scalable',
-          },
-        ]}
-      </Block>
+        <Block layout="threeColumn">
+          {[
+            {
+              content:
+                'Plug in new models, acquisition functions, and optimizers.',
+              image: `${baseUrl}img/puzzle_pieces.svg`,
+              imageAlign: 'top',
+              title: 'Modular',
+            },
+            {
+              content:
+                'Easily integrate neural network modules. Native GPU & autograd support.',
+              image: `${baseUrl}img/pytorch_logo.svg`,
+              imageAlign: 'top',
+              title: 'Built on PyTorch',
+            },
+            {
+              content:
+                'Support for scalable GPs via GPyTorch. Run code on multiple devices.',
+              image: `${baseUrl}img/expanding_arrows.svg`,
+              imageAlign: 'top',
+              title: 'Scalable',
+            },
+          ]}
+        </Block>
       </div>
     );
 

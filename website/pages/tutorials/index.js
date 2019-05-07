@@ -25,9 +25,7 @@ class TutorialHome extends React.Component {
         <Container className="mainContainer documentContainer postContainer">
           <div className="post">
             <header className="postHeader">
-              <h1 className="postHeaderTitle">
-                BoTorch Tutorials
-              </h1>
+              <h1 className="postHeaderTitle">BoTorch Tutorials</h1>
             </header>
             <body>
               <p>
@@ -36,9 +34,9 @@ class TutorialHome extends React.Component {
                 Bayesian optimization (BO) and PyTorch.
               </p>
               <p>
-                If you are new to BO, we recommend you start
-                with the <a href="https://ax.dev/docs/bayesopt">Ax docs</a> and
-                the following{' '}
+                If you are new to BO, we recommend you start with the{' '}
+                <a href="https://ax.dev/docs/bayesopt">Ax docs</a> and the
+                following{' '}
                 <a href="https://arxiv.org/abs/1807.02811">tutorial paper</a>.
               </p>
               <p>
@@ -57,40 +55,40 @@ class TutorialHome extends React.Component {
                 These tutorials give you an overview of how to leverage{' '}
                 <a href="https://ax.dev">Ax</a>, a platform for sequential
                 experimentation, in order to simplify the management of your BO
-                loop. Doing so can help you focus on the main
-                aspects of BO (models, acquisition functions, optimization of
-                acquisition functions), rather than tedious loop control. See
-                our{' '}
+                loop. Doing so can help you focus on the main aspects of BO
+                (models, acquisition functions, optimization of acquisition
+                functions), rather than tedious loop control. See our{' '}
                 <a href="https://botorch.org/docs/botorch_and_ax">
                   Documentation
                 </a>{' '}
                 for additional information.
                 <h4>Full Optimization Loops</h4>
-                In some situations (e.g. when working in a non-standard
-                setting, or if you want to understand and
-                control various details of the BO loop), then you may also
-                consider working purely in BoTorch. The tutorials in this
-                section illustrate this approach.
+                In some situations (e.g. when working in a non-standard setting,
+                or if you want to understand and control various details of the
+                BO loop), then you may also consider working purely in BoTorch.
+                The tutorials in this section illustrate this approach.
                 <h4>Bite-Sized Tutorials</h4>
-                Rather than guiding you through full end-to-end BO loops,
-                the tutorials in this section focus on
-                specific tasks that you will encounter in customizing your BO
-                algorithms. For instance, you may want to{' '}
+                Rather than guiding you through full end-to-end BO loops, the
+                tutorials in this section focus on specific tasks that you will
+                encounter in customizing your BO algorithms. For instance, you
+                may want to{' '}
                 <a href="https://botorch.org/tutorials/custom_acquisition">
                   write a custom acquisition function
-                </a>
-                {' '}and then{' '}
+                </a>{' '}
+                and then{' '}
                 <a href="https://botorch.org/tutorials/optimize_with_cmaes">
                   use a custom zero-th order optimizer
                 </a>{' '}
                 to optimize it.
                 <h4>Advanced Usage</h4>
                 Tutorials in this section showcase more advanced ways of using
-                BoTorch. For instance, {' '}
-                <a href="https://botorch.org/tutorials/vae_mnist">this tutorial</a>{' '}
-                 shows how to perform BO if your objective function is
-                an image, by optimizing in the latent space of a variational
-                auto-encoder (VAE).
+                BoTorch. For instance,{' '}
+                <a href="https://botorch.org/tutorials/vae_mnist">
+                  this tutorial
+                </a>{' '}
+                shows how to perform BO if your objective function is an image,
+                by optimizing in the latent space of a variational auto-encoder
+                (VAE).
               </p>
             </body>
           </div>
