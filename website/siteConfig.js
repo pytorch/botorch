@@ -11,7 +11,7 @@
 // site configuration options.
 
 // Define this so it can be easily modified in scripts (to host elsewhere)
-const baseUrl = 'https://botorch.org/';
+const baseUrl = '/';
 
 // List of projects/orgs using your project for the users page.
 const users = [];
