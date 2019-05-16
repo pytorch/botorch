@@ -19,7 +19,7 @@ adaptive experimentation platform, which provides an easy-to-use interface for
 defining, managing and running sequential experiments, while handling
 (meta-)data management, transformations, and systems integration. Users who just
 want an easy-to-use suite for Bayesian Optimization
-[should start with Ax](https://ax.dev/docs/bayesopt).
+[should start with Ax](https://ax.dev/docs/bayesopt.html).
 
 
 ## Why BoTorch?
