@@ -71,7 +71,7 @@ class NormalQMCEngine:
         samples = self._sobol_engine.draw(n, dtype=dtype)
         if self._inv_transform:
             # apply inverse transform (values to close to 0/1 result in inf values)
-            v = 0.5 + (1 - 1e-10) * (samples - 0.5)
+            v = 0.5 + (1 - 1e-6) * (samples - 0.5)
             samples_tf = torch.erfinv(2 * v - 1) * math.sqrt(2)
         else:
             # apply Box-Muller transform (note: [1] indexes starting from 1)
