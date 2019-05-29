@@ -146,25 +146,42 @@ def joint_optimize(
         >>> candidates = joint_optimize(qEI, bounds, 2, 20, 500)
     """
     # TODO: Generating initial candidates should use parameter constraints.
+
+    options = options or {}
     batch_initial_conditions = gen_batch_initial_conditions(
         acq_function=acq_function,
         bounds=bounds,
         q=None if isinstance(acq_function, AnalyticAcquisitionFunction) else q,
         num_restarts=num_restarts,
         raw_samples=raw_samples,
-        options=options or {},
+        options=options,
     )
-    # optimize using random restart optimization
-    batch_candidates, batch_acq_values = gen_candidates_scipy(
-        initial_conditions=batch_initial_conditions,
-        acquisition_function=acq_function,
-        lower_bounds=bounds[0],
-        upper_bounds=bounds[1],
-        options=options or {},
-        inequality_constraints=inequality_constraints,
-        equality_constraints=equality_constraints,
-        fixed_features=fixed_features,
-    )
+    batch_limit = options.get("batch_limit", num_restarts)
+    batch_candidates_list = []
+    batch_acq_values_list = []
+    start_idx = 0
+    while start_idx < num_restarts:
+        end_idx = min(start_idx + batch_limit, num_restarts)
+        # optimize using random restart optimization
+        batch_candidates_curr, batch_acq_values_curr = gen_candidates_scipy(
+            initial_conditions=batch_initial_conditions[start_idx:end_idx],
+            acquisition_function=acq_function,
+            lower_bounds=bounds[0],
+            upper_bounds=bounds[1],
+            options={
+                k: v
+                for k, v in options.items()
+                if k not in ("batch_limit", "nonnegative")
+            },
+            inequality_constraints=inequality_constraints,
+            equality_constraints=equality_constraints,
+            fixed_features=fixed_features,
+        )
+        batch_candidates_list.append(batch_candidates_curr)
+        batch_acq_values_list.append(batch_acq_values_curr)
+        start_idx += batch_limit
+    batch_candidates = torch.cat(batch_candidates_list)
+    batch_acq_values = torch.cat(batch_acq_values_list)
     return get_best_candidates(
         batch_candidates=batch_candidates, batch_values=batch_acq_values
     )
@@ -206,6 +223,7 @@ def gen_batch_initial_conditions(
     """
     options = options or {}
     seed: Optional[int] = options.get("seed")  # pyre-ignore
+    batch_limit: Optional[int] = options.get("batch_limit")  # pyre-ignore
     batch_initial_arms: Tensor
     factor, max_factor = 1, 5
     init_kwargs = {}
@@ -227,7 +245,16 @@ def gen_batch_initial_conditions(
                 seed=seed,
             )
             with torch.no_grad():
-                Y_rnd = acq_function(X_rnd)
+                if batch_limit is None:
+                    batch_limit = X_rnd.shape[0]
+                Y_rnd_list = []
+                start_idx = 0
+                while start_idx < X_rnd.shape[0]:
+                    end_idx = min(start_idx + batch_limit, X_rnd.shape[0])
+                    Y_rnd_curr = acq_function(X_rnd[start_idx:end_idx])
+                    Y_rnd_list.append(Y_rnd_curr)
+                    start_idx += batch_limit
+                Y_rnd = torch.cat(Y_rnd_list).to(X_rnd)
             batch_initial_conditions = init_func(
                 X=X_rnd, Y=Y_rnd, n=num_restarts, **init_kwargs
             )

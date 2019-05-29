@@ -70,6 +70,16 @@ class TestEndToEnd(unittest.TestCase):
             )
             self.assertTrue(torch.all(-EPS <= candidates))
             self.assertTrue(torch.all(candidates <= 1 + EPS))
+            candidates_batch_limit = joint_optimize(
+                acq_function=qEI,
+                bounds=self.bounds,
+                q=3,
+                num_restarts=10,
+                raw_samples=20,
+                options={"maxiter": 5, "batch_limit": 5},
+            )
+            self.assertTrue(torch.all(-EPS <= candidates_batch_limit))
+            self.assertTrue(torch.all(candidates_batch_limit <= 1 + EPS))
 
     def test_qEI_cuda(self):
         if torch.cuda.is_available():
