@@ -48,9 +48,9 @@ class TestNegHolderTable(unittest.TestCase):
                 GLOBAL_MAXIMIZERS, device=device, dtype=dtype, requires_grad=True
             )
             res = neg_holder_table(X)
-            torch.autograd.backward([*res])
-            self.assertTrue(torch.max((res - GLOBAL_MAXIMUM).abs()) < 1e-5)
-            self.assertLess(X.grad.abs().max().item(), 1e-3)
+            grad = torch.autograd.grad([*res], X)[0]
+            self.assertLess((res - GLOBAL_MAXIMUM).abs().max().item(), 1e-5)
+            self.assertLess(grad.abs().max().item(), 1e-3)
 
     def test_neg_holder_table_global_maxima_cuda(self):
         if torch.cuda.is_available():

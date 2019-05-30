@@ -16,14 +16,7 @@ from torch.nn import Module
 
 
 class MCAcquisitionObjective(Module, ABC):
-    r"""Abstract base class for MC-based objectives.
-
-    Example:
-        >>> # This method is usually not called directly, but via the objective's
-        >>> # `__call__` method:
-        >>> samples = sampler(posterior)
-        >>> outcome = mc_obj(samples)
-    """
+    r"""Abstract base class for MC-based objectives."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -39,6 +32,13 @@ class MCAcquisitionObjective(Module, ABC):
         Returns:
             Tensor: A `sample_shape x batch_shape x q`-dim Tensor of objective
             values (assuming maximization).
+
+        This method is usually not called directly, but via the objectives
+
+        Example:
+            >>> # `__call__` method:
+            >>> samples = sampler(posterior)
+            >>> outcome = mc_obj(samples)
         """
         pass  # pragma: no cover
 
@@ -63,7 +63,8 @@ class LinearMCObjective(MCAcquisitionObjective):
     `mc_obj(samples) = sum_{i} weights[i] * samples[..., i]`
 
     Example:
-        >>> # example for a two outcomes
+        Example for a model with two outcomes:
+
         >>> weights = torch.tensor([0.75, 0.25])
         >>> linear_objective = LinearMCObjective(weights)
         >>> samples = sampler(posterior)

@@ -46,9 +46,9 @@ class TestNegMichalewicz(unittest.TestCase):
                 GLOBAL_MAXIMIZER, device=device, dtype=dtype, requires_grad=True
             )
             res = neg_michalewicz(X)
-            res.backward()
             self.assertAlmostEqual(res.item(), GLOBAL_MAXIMUM, places=4)
-            self.assertLess(X.grad.abs().max().item(), 1e-3)
+            grad = torch.autograd.grad(res, X)[0]
+            self.assertLess(grad.abs().max().item(), 1e-3)
 
     def test_neg_michalewicz_global_maximum_cuda(self):
         if torch.cuda.is_available():
