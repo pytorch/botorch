@@ -96,7 +96,8 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
 
             - A `input_batch_shape x (o) x n x d` tensor of training features.
             - A `target_batch_shape x (o) x n` tensor of training observations.
-            - A `target_batch_shape x (o) x n` tensor observed measurement noise (or None).
+            - A `target_batch_shape x (o) x n` tensor observed measurement noise
+                (or None).
         """
         self._num_outputs = train_Y.shape[-1] if train_Y.dim() == train_X.dim() else 1
         self._input_batch_shape = train_X.shape[:-2]
@@ -189,8 +190,8 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
 
         Returns:
             A `BatchedMultiOutputGPyTorchModel` with `n + m` training examples,
-                where the `m` fantasy examples have been added and all test-time
-                caches have been updated.
+            where the `m` fantasy examples have been added and all test-time
+            caches have been updated.
         """
         inputs, targets, noise = multioutput_to_batch_mode_transform(
             train_X=inputs,
