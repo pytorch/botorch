@@ -11,7 +11,7 @@ GPyTorch Model class such as an ExactGP.
 
 from abc import ABC, abstractproperty
 from contextlib import ExitStack
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Tuple
 
 import torch
 from gpytorch import settings
@@ -19,9 +19,10 @@ from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNorm
 from gpytorch.lazy import lazify
 from torch import Tensor
 
+from ..exceptions.errors import UnsupportedError
 from ..posteriors.gpytorch import GPyTorchPosterior
 from .model import Model
-from .utils import _make_X_full, add_output_dim
+from .utils import _make_X_full, add_output_dim, multioutput_to_batch_mode_transform
 
 
 class GPyTorchModel(Model, ABC):
@@ -74,23 +75,43 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
     _input_batch_shape: torch.Size
     _aug_batch_shape: torch.Size
 
-    def _set_dimensions(self, train_X: Tensor, train_Y: Tensor) -> None:
+    def _set_dimensions(
+        self, train_X: Tensor, train_Y: Tensor, train_Yvar: Optional[Tensor] = None
+    ) -> Tuple[Tensor, Tensor, Optional[Tensor]]:
         r"""Store the number of outputs and the batch shape.
+
+        For single output targets, this also squeezes the output dimension.
 
         Args:
             train_X: A `n x d` or `batch_shape x n x d` (batch mode) tensor of training
                 features.
             train_Y: A `n x (o)` or `batch_shape x n x (o)` (batch mode) tensor of
                 training observations.
+            train_Yvar: A `n x (o)` or `batch_shape x n x (o)` (batch mode) tensor of
+                observed measurement noise. Note: this will be None when using a model
+                that infers the noise level (e.g. a `SingleTaskGP`).
+
+        Returns:
+            3-element tuple containing
+
+            - A `input_batch_shape x (o) x n x d` tensor of training features.
+            - A `target_batch_shape x (o) x n` tensor of training observations.
+            - A `target_batch_shape x (o) x n` tensor observed measurement noise (or None).
         """
         self._num_outputs = train_Y.shape[-1] if train_Y.dim() == train_X.dim() else 1
         self._input_batch_shape = train_X.shape[:-2]
         if self._num_outputs > 1:
-            self._aug_batch_shape = (
-                torch.Size([self._num_outputs]) + self._input_batch_shape
+            self._aug_batch_shape = self._input_batch_shape + torch.Size(
+                [self._num_outputs]
             )
         else:
             self._aug_batch_shape = self._input_batch_shape
+            # squeeze last dim if single output
+            if train_Y.dim() == train_X.dim():
+                train_Y = train_Y.squeeze(-1)
+            if train_Yvar is not None and train_Yvar.dim() == train_X.dim():
+                train_Yvar = train_Yvar.squeeze(-1)
+        return train_X, train_Y, train_Yvar
 
     def posterior(
         self,
@@ -146,6 +167,57 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
                 ]
                 mvn = MultitaskMultivariateNormal.from_independent_mvns(mvns=mvns)
         return GPyTorchPosterior(mvn=mvn)
+
+    def get_fantasy_model(
+        self, inputs: Tensor, targets: Tensor, **kwargs
+    ) -> "BatchedMultiOutputGPyTorchModel":
+        r"""Wrapper method around `gpytorch.models.exact_gp.ExactGP.get_fantasy_model`.
+
+        This method adapts `get_fantasy_model` to support batched multi-output GPs.
+
+        Args:
+            inputs: A `batch_shape x m x d` or
+                `f_batch_shape x batch_shape x m x d`-dim Tensor of inputs for the
+                fantasy observations, where `f_batch_shape` are fantasy batch
+                dimensions. Note: when using the same inputs for all fantasies,
+                inputs should be `batch_shape x m x d` to avoid recomputing the
+                repeated blocks of the covariance matrix. Additionally, if provided,
+                the "noise" keyword argument should map to a `batch_shape x m`-dim
+                Tensor of observed measurement noise for fastest performance.
+            targets: `batch_shape x m` or `f_batch_shape x batch_shape x m`-dim Tensor
+                of fantasy observations.
+
+        Returns:
+            A `BatchedMultiOutputGPyTorchModel` with `n + m` training examples,
+                where the `m` fantasy examples have been added and all test-time
+                caches have been updated.
+        """
+        inputs, targets, noise = multioutput_to_batch_mode_transform(
+            train_X=inputs,
+            train_Y=targets,
+            num_outputs=self._num_outputs,
+            train_Yvar=kwargs.get("noise", None),
+        )
+        if noise is not None:
+            fant_kwargs = kwargs.copy()
+            fant_kwargs.update({"noise": noise})
+        else:
+            fant_kwargs = kwargs
+        try:
+            fantasy_model = super().get_fantasy_model(
+                inputs=inputs, targets=targets, **fant_kwargs
+            )
+        except AttributeError as e:
+            if hasattr(super(), "get_fantasy_model"):
+                raise e
+            raise UnsupportedError(
+                "Non-Exact GPs currently do not support fantasy models."
+            )
+        fantasy_model._input_batch_shape = fantasy_model.train_targets.shape[
+            : (-1 if self._num_outputs == 1 else -2)
+        ]
+        fantasy_model._aug_batch_shape = fantasy_model.train_targets.shape[:-1]
+        return fantasy_model
 
 
 class ModelListGPyTorchModel(GPyTorchModel, ABC):

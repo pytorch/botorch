@@ -30,16 +30,6 @@ class TestMultiOutputToBatchModeTransform(unittest.TestCase):
             self.assertTrue(torch.equal(X_out, train_X))
             self.assertTrue(torch.equal(Y_out, train_Y))
             self.assertTrue(torch.equal(Yvar_out, train_Yvar))
-            # num_outputs = 1 and train_Y has shape `n x 1`
-            X_out, Y_out, Yvar_out = multioutput_to_batch_mode_transform(
-                train_X=train_X,
-                train_Y=train_Y.view(-1, 1),
-                num_outputs=num_outputs,
-                train_Yvar=train_Yvar.view(-1, 1),
-            )
-            self.assertTrue(torch.equal(X_out, train_X))
-            self.assertTrue(torch.equal(Y_out, train_Y))
-            self.assertTrue(torch.equal(Yvar_out, train_Yvar))
             # num_outputs > 1
             num_outputs = 2
             train_Y = torch.rand(n, num_outputs, **tkwargs)
@@ -68,24 +58,24 @@ class TestAddOutputDim(unittest.TestCase):
                 "dtype": torch.double if double else torch.float,
             }
             original_batch_shape = torch.Size([2])
-            # check exception is raised
-            X = torch.rand(2, 1, **tkwargs)
-            with self.assertRaises(ValueError):
+            # check exception is raised when trailing batch dims do not line up
+            X = torch.rand(2, 3, 2, 1, **tkwargs)
+            with self.assertRaises(RuntimeError):
                 add_output_dim(X=X, original_batch_shape=original_batch_shape)
             # test no new batch dims
             X = torch.rand(2, 2, 1, **tkwargs)
             X_out, output_dim_idx = add_output_dim(
                 X=X, original_batch_shape=original_batch_shape
             )
-            self.assertTrue(torch.equal(X_out, X.unsqueeze(0)))
-            self.assertEqual(output_dim_idx, 0)
+            self.assertTrue(torch.equal(X_out, X.unsqueeze(1)))
+            self.assertEqual(output_dim_idx, 1)
             # test new batch dims
             X = torch.rand(3, 2, 2, 1, **tkwargs)
             X_out, output_dim_idx = add_output_dim(
                 X=X, original_batch_shape=original_batch_shape
             )
-            self.assertTrue(torch.equal(X_out, X.unsqueeze(1)))
-            self.assertEqual(output_dim_idx, 1)
+            self.assertTrue(torch.equal(X_out, X.unsqueeze(2)))
+            self.assertEqual(output_dim_idx, 2)
 
     def test_add_output_dim_cuda(self, cuda=False):
         if torch.cuda.is_available():

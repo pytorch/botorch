@@ -9,6 +9,7 @@ Utiltiy functions for models.
 from typing import List, Optional, Tuple
 
 import torch
+from gpytorch.utils.broadcasting import _mul_broadcast_shape
 from torch import Tensor
 
 
@@ -48,39 +49,31 @@ def multioutput_to_batch_mode_transform(
     independent batch.
 
     Args:
-        train_X: A `n x d` or `batch_shape x n x d` (batch mode) tensor of training
-            features.
-        train_Y: A `n x (o)` or `batch_shape x n x (o)` (batch mode) tensor of
+        train_X: A `n x d` or `input_batch_shape x n x d` (batch mode) tensor of
+            training features.
+        train_Y: A `n x (o)` or `target_batch_shape x n x (o)` (batch mode) tensor of
             training observations.
         num_outputs: number of outputs
-        train_Yvar: A `batch_shape x n x (o)`
-            tensor of observed measurement noise.
+        train_Yvar: A `target_batch_shape x n x (o)` tensor of observed measurement
+            noise.
 
     Returns:
         3-element tuple containing
 
-        - A `(o) x batch_shape x n x d` tensor of training features.
-        - A `(o) x batch_shape x n` tensor of training observations.
-        - A `(o) x batch_shape x n` tensor observed measurement noise.
+        - A `input_batch_shape x (o) x n x d` tensor of training features.
+        - A `target_batch_shape x (o) x n` tensor of training observations.
+        - A `target_batch_shape x (o) x n` tensor observed measurement noise.
     """
-    input_batch_shape = train_X.shape[:-2]
     if num_outputs > 1:
-        # make train_Y `o x batch_shape x n`
-        train_Y = train_Y.permute(-1, *range(train_Y.dim() - 1))
-        # expand train_X to `o x batch_shape x n x d`
-        train_X = train_X.unsqueeze(0).expand(
-            torch.Size([num_outputs] + [-1] * train_X.dim())
+        # make train_Y `batch_shape x o x n`
+        train_Y = train_Y.transpose(-1, -2)
+        # expand train_X to `batch_shape x o x n x d`
+        train_X = train_X.unsqueeze(-3).expand(
+            train_X.shape[:-2] + torch.Size([num_outputs]) + train_X.shape[-2:]
         )
         if train_Yvar is not None:
-            # make train_Yvar `o x batch_shape x n`
-            train_Yvar = train_Yvar.permute(-1, *range(train_Yvar.dim() - 1))
-    elif train_Y.dim() > 1:
-        #  single output, make train_Y `batch_shape x n`
-        target_shape = input_batch_shape + torch.Size([-1])
-        train_Y = train_Y.view(target_shape)
-        if train_Yvar is not None:
-            # make train_Yvar `batch_shape x n`
-            train_Yvar = train_Yvar.view(target_shape)
+            # make train_Yvar `batch_shape x o x n`
+            train_Yvar = train_Yvar.transpose(-1, -2)
     return train_X, train_Y, train_Yvar
 
 
@@ -96,17 +89,20 @@ def add_output_dim(X: Tensor, original_batch_shape: torch.Size) -> Tuple[Tensor,
     Returns:
         2-element tuple containing
 
-        - A `(new_batch_shape) x o x (original_batch_shape) x n x d` tensor of
+        - A `(new_batch_shape) x (original_batch_shape) x o x n x d` tensor of
         features.
         - The index corresponding to the output dimension.
     """
-    num_original_batch_dims = len(original_batch_shape)
-    if X.shape[-(num_original_batch_dims + 2) : -2] != original_batch_shape:
-        raise ValueError(
-            "The trailing batch dimensions of X must match the batch dimensions of the"
-            " training inputs."
+    X_batch_shape = X.shape[:-2]
+    if len(X_batch_shape) > 0 and len(original_batch_shape) > 0:
+        # check that X_batch_shape supports broadcasting or augments
+        # original_batch_shape with extra batch dims
+        error_msg = (
+            "The trailing batch dimensions of X must match the trailing "
+            "batch dimensions of the training inputs."
         )
-    # insert `t` dimension
-    output_dim_idx = len(X.shape) - (num_original_batch_dims + 2)
-    X = X.unsqueeze(output_dim_idx)
+        _mul_broadcast_shape(X_batch_shape, original_batch_shape, error_msg=error_msg)
+    # insert `o` dimension
+    X = X.unsqueeze(-3)
+    output_dim_idx = max(len(original_batch_shape), len(X_batch_shape))
     return X, output_dim_idx

@@ -34,7 +34,7 @@ from .utils import multioutput_to_batch_mode_transform
 MIN_INFERRED_NOISE_LEVEL = 1e-6
 
 
-class SingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel):
+class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
     r"""A single-task exact GP model.
 
     A single-task exact GP using relatively strong priors on the Kernel
@@ -70,7 +70,7 @@ class SingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel):
             >>> model = SingleTaskGP(train_X, train_Y)
         """
         ard_num_dims = train_X.shape[-1]
-        self._set_dimensions(train_X=train_X, train_Y=train_Y)
+        train_X, train_Y, _ = self._set_dimensions(train_X=train_X, train_Y=train_Y)
         train_X, train_Y, _ = multioutput_to_batch_mode_transform(
             train_X=train_X, train_Y=train_Y, num_outputs=self._num_outputs
         )
@@ -88,7 +88,7 @@ class SingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel):
             )
         else:
             self._likelihood_state_dict = deepcopy(likelihood.state_dict())
-        super().__init__(train_X, train_Y, likelihood)
+        ExactGP.__init__(self, train_X, train_Y, likelihood)
         self.mean_module = ConstantMean(batch_shape=self._aug_batch_shape)
         self.covar_module = ScaleKernel(
             MaternKernel(
@@ -108,7 +108,7 @@ class SingleTaskGP(ExactGP, BatchedMultiOutputGPyTorchModel):
         return MultivariateNormal(mean_x, covar_x)
 
 
-class FixedNoiseGP(ExactGP, BatchedMultiOutputGPyTorchModel):
+class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
     r"""A single-task exact GP model using fixed noise levels.
 
     A single-task exact GP that uses fixed observation noise levels. This model
@@ -127,7 +127,7 @@ class FixedNoiseGP(ExactGP, BatchedMultiOutputGPyTorchModel):
                 features.
             train_Y: A `n x (o)` or `batch_shape x n x (o)` (batch mode) tensor of
                 training observations.
-            train_Yvar: A `batch_shape x n x (t)` or `batch_shape x n x (t)`
+            train_Yvar: A `batch_shape x n x (o)` or `batch_shape x n x (o)`
                 (batch mode) tensor of observed measurement noise.
 
         Example:
@@ -137,7 +137,9 @@ class FixedNoiseGP(ExactGP, BatchedMultiOutputGPyTorchModel):
             >>> model = FixedNoiseGP(train_X, train_Y, train_Yvar)
         """
         ard_num_dims = train_X.shape[-1]
-        self._set_dimensions(train_X=train_X, train_Y=train_Y)
+        train_X, train_Y, train_Yvar = self._set_dimensions(
+            train_X=train_X, train_Y=train_Y, train_Yvar=train_Yvar
+        )
         train_X, train_Y, train_Yvar = multioutput_to_batch_mode_transform(
             train_X=train_X,
             train_Y=train_Y,
@@ -147,8 +149,8 @@ class FixedNoiseGP(ExactGP, BatchedMultiOutputGPyTorchModel):
         likelihood = FixedNoiseGaussianLikelihood(
             noise=train_Yvar, batch_shape=self._aug_batch_shape
         )
-        super().__init__(
-            train_inputs=train_X, train_targets=train_Y, likelihood=likelihood
+        ExactGP.__init__(
+            self, train_inputs=train_X, train_targets=train_Y, likelihood=likelihood
         )
         self.mean_module = ConstantMean(batch_shape=self._aug_batch_shape)
         self.covar_module = ScaleKernel(
@@ -186,7 +188,7 @@ class HeteroskedasticSingleTaskGP(SingleTaskGP):
             train_Y: A `n x (o)` or `batch_shape x n x (o)` (batch mode) tensor of
                 training observations.
             train_Yvar: A `batch_shape x n x (o)` or `batch_shape x n x (o)`
-                (batch mode) tensor of observed measurement noise..
+                (batch mode) tensor of observed measurement noise.
 
         Example:
             >>> train_X = torch.rand(20, 2)
@@ -195,15 +197,25 @@ class HeteroskedasticSingleTaskGP(SingleTaskGP):
             >>> train_Yvar = 0.1 + se * torch.rand_like(train_Y)
             >>> model = HeteroskedasticSingleTaskGP(train_X, train_Y, train_Yvar)
         """
-        self._set_dimensions(train_X=train_X, train_Y=train_Y)
-        train_Y_log_var = torch.log(train_Yvar)
+        train_X, train_Y, train_Yvar = self._set_dimensions(
+            train_X=train_X, train_Y=train_Y, train_Yvar=train_Yvar
+        )
+        train_X_tf, _, train_Yvar_tf = multioutput_to_batch_mode_transform(
+            train_X=train_X,
+            train_Y=train_Y,
+            num_outputs=self._num_outputs,
+            train_Yvar=train_Yvar,
+        )
+        train_Y_log_var_tf = torch.log(train_Yvar_tf)
         noise_likelihood = GaussianLikelihood(
             noise_prior=SmoothedBoxPrior(-3, 5, 0.5, transform=torch.log),
             batch_shape=self._aug_batch_shape,
-            noise_constraint=GreaterThan(MIN_INFERRED_NOISE_LEVEL, transform=None),
+            noise_constraint=GreaterThan(
+                MIN_INFERRED_NOISE_LEVEL, transform=None, initial_value=1.0
+            ),
         )
         noise_model = SingleTaskGP(
-            train_X=train_X, train_Y=train_Y_log_var, likelihood=noise_likelihood
+            train_X=train_X_tf, train_Y=train_Y_log_var_tf, likelihood=noise_likelihood
         )
 
         likelihood = _GaussianLikelihoodBase(HeteroskedasticNoise(noise_model))
