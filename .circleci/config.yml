@@ -91,19 +91,20 @@ jobs:
       - image: circleci/python:3.6.8
     steps:
       - checkout
-      - pip_install
+      - pip_install:
+          args: "-n"
       - lint_flake8
       - lint_black
       - unit_tests
       - sphinx
 
-  lint_test_py37_conda_latest:
+  lint_test_py37_conda:
     docker:
       - image: continuumio/miniconda3
     steps:
       - checkout
       - conda_install:
-          args: "-l"
+          args: "-n"
       - lint_flake8
       - lint_black
       - unit_tests
@@ -115,7 +116,7 @@ jobs:
     steps:
       - checkout
       - pip_install:
-          args: "-d"
+          args: "-n -d"
       - lint_flake8
       - lint_black
       - unit_tests
@@ -139,7 +140,7 @@ workflows:
     jobs:
       - lint_test_py36_pip:
           filters: *exclude_ghpages_fbconfig
-      - lint_test_py37_conda_latest:
+      - lint_test_py37_conda:
           filters: *exclude_ghpages_fbconfig
 
   auto_deploy_site:
