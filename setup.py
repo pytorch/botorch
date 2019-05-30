@@ -36,6 +36,10 @@ TUTORIALS_REQUIRES = ["jupyter", "matplotlib", "cma", "torchvision"]
 with open(os.path.join(os.path.dirname(__file__), "botorch/__init__.py"), "r") as f:
     version = re.search(r"__version__ = ['\"]([^'\"]*)['\"]", f.read(), re.M).group(1)
 
+# read in README.md as the long description
+with open("README.md", "r") as fh:
+    long_description = fh.read()
+
 setup(
     name="botorch",
     version=version,
@@ -57,6 +61,8 @@ setup(
         "Intended Audience :: Science/Research",
         "Intended Audience :: Developers",
     ],
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     python_requires=">=3.6",
     install_requires=["torch>=1.1", "gpytorch>=0.3.2", "scipy"],
     packages=find_packages(),
