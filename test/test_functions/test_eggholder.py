@@ -46,9 +46,9 @@ class TestNegEggholder(unittest.TestCase):
                 GLOBAL_MAXIMIZER, device=device, dtype=dtype, requires_grad=True
             )
             res = neg_eggholder(X)
-            res.backward()
             self.assertAlmostEqual(res.item(), GLOBAL_MAXIMUM, places=4)
-            self.assertGreater(X.grad.abs().max().item(), 3.0)
+            grad = torch.autograd.grad(res, X)[0]
+            self.assertGreater(grad.abs().max().item(), 3.0)
 
     def test_neg_eggholder_global_maximum_cuda(self):
         if torch.cuda.is_available():

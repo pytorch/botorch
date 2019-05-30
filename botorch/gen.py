@@ -101,9 +101,9 @@ def gen_candidates_scipy(
         )
         X_fix = fix_features(X=X, fixed_features=fixed_features)
         loss = -acquisition_function(X_fix).sum()
-        loss.backward()
+        # compute gradient w.r.t. the inputs (does not accumulate in leaves)
+        gradf = _arrayify(torch.autograd.grad(loss, X)[0].contiguous().view(-1))
         fval = loss.item()
-        gradf = _arrayify(X.grad.view(-1))
         return fval, gradf
 
     res = minimize(
@@ -116,10 +116,7 @@ def gen_candidates_scipy(
         options={k: v for k, v in options.items() if k != "method"},
     )
     candidates = fix_features(
-        X=torch.from_numpy(res.x)  # pyre-ignore [16]
-        .to(initial_conditions)
-        .view(shapeX)
-        .contiguous(),
+        X=torch.from_numpy(res.x).to(initial_conditions).view(shapeX).contiguous(),
         fixed_features=fixed_features,
     )
     batch_acquisition = acquisition_function(candidates)

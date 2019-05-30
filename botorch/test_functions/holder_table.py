@@ -39,7 +39,7 @@ def neg_holder_table(X: Tensor) -> Tensor:
     """
     batch = X.ndimension() > 1
     X = X if batch else X.unsqueeze(0)
-    term = torch.abs(1 - torch.norm(X, dim=1) / math.pi)
+    term = torch.abs(1 - torch.norm(X, dim=-1) / math.pi)
     H = -torch.abs(torch.sin(X[:, 0]) * torch.cos(X[:, 1]) * torch.exp(term))
     result = -H
     return result if batch else result.squeeze(0)

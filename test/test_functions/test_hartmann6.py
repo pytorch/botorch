@@ -46,9 +46,9 @@ class TestNegHartmann6(unittest.TestCase):
                 GLOBAL_MAXIMIZER, device=device, dtype=dtype, requires_grad=True
             )
             res = neg_hartmann6(X)
-            res.backward()
             self.assertAlmostEqual(res.item(), GLOBAL_MAXIMUM, places=4)
-            self.assertLess(X.grad.abs().max().item(), 1e-4)
+            grad = torch.autograd.grad(res, X)[0]
+            self.assertLess(grad.abs().max().item(), 1e-4)
 
     def test_neg_hartmann6_global_maximum_cuda(self):
         if torch.cuda.is_available():

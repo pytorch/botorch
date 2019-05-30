@@ -48,9 +48,9 @@ class TestNegStyblinskiTang(unittest.TestCase):
                 (3,), GLOBAL_MAXIMIZER, device=device, dtype=dtype, requires_grad=True
             )
             res = neg_styblinski_tang(X)
-            res.backward()
             self.assertAlmostEqual(res.item(), 3 * GLOBAL_MAXIMUM, places=4)
-            self.assertLess(X.grad.abs().max().item(), 1e-5)
+            grad = torch.autograd.grad(res, X)[0]
+            self.assertLess(grad.abs().max().item(), 1e-5)
 
     def test_neg_styblinski_tang_global_maximum_cuda(self):
         if torch.cuda.is_available():
