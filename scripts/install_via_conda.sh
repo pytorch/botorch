@@ -6,7 +6,7 @@ PYTORCH_NIGHTLY=false
 
 while getopts 'n' flag; do
   case "${flag}" in
-    l) PYTORCH_NIGHTLY=true ;;
+    n) PYTORCH_NIGHTLY=true ;;
     *) echo "usage: $0 [-n]" >&2
        exit 1 ;;
     esac
