@@ -83,6 +83,13 @@ commands:
               echo "Skipping deploy."
             fi
 
+  upload_coverage:
+    description: "Upload coverage report to codecov.io"
+    steps:
+      - run:
+          name: "Upload coverage report"
+          command: bash <(curl -s https://codecov.io/bash)
+
 
 jobs:
 
@@ -97,6 +104,7 @@ jobs:
       - lint_black
       - unit_tests
       - sphinx
+      - upload_coverage
 
   lint_test_py37_conda:
     docker:
@@ -109,6 +117,7 @@ jobs:
       - lint_black
       - unit_tests
       - sphinx
+      - upload_coverage
 
   auto_deploy_site:
     docker:
