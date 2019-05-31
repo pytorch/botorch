@@ -33,7 +33,7 @@ def _get_model(n, **tkwargs):
     train_x1, train_x2, train_y1, train_y2 = _get_random_data(n=n, **tkwargs)
     model1 = SingleTaskGP(train_X=train_x1, train_Y=train_y1)
     model2 = SingleTaskGP(train_X=train_x2, train_Y=train_y2)
-    model = ModelListGP(gp_models=[model1, model2])
+    model = ModelListGP(model1, model2)
     return model.to(**tkwargs)
 
 
@@ -78,6 +78,14 @@ class TestModelListGP(unittest.TestCase):
             self.assertIsInstance(posterior, GPyTorchPosterior)
             self.assertIsInstance(posterior.mvn, MultivariateNormal)
 
+            # test get_fantasy_model
+            f_x1 = torch.rand(2, 1, **tkwargs)
+            f_y1 = torch.rand(2, **tkwargs)
+            f_x2 = torch.rand(3, 1, **tkwargs)
+            f_y2 = torch.rand(3, **tkwargs)
+            fantasy_model = model.get_fantasy_model([f_x1, f_x2], [f_y1, f_y2])
+            self.assertIsInstance(fantasy_model, ModelListGP)
+
     def test_ModelListGP_cuda(self):
         if torch.cuda.is_available():
             self.test_ModelListGP(cuda=True)
@@ -89,7 +97,7 @@ class TestModelListGP(unittest.TestCase):
         }
         train_x1, train_x2, train_y1, train_y2 = _get_random_data(n=10, **tkwargs)
         model1 = SingleTaskGP(train_X=train_x1, train_Y=train_y1)
-        model = ModelListGP(gp_models=[model1])
+        model = ModelListGP(model1)
         model.to(**tkwargs)
         test_x = (torch.tensor([0.25, 0.75]).type_as(model.train_targets[0]),)
         posterior = model.posterior(test_x)

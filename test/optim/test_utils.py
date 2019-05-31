@@ -155,7 +155,7 @@ class testGetExtraMllArgs(unittest.TestCase):
         self.assertEqual(len(elbo_extra_args), 0)
 
         # test SumMarginalLogLikelihood
-        model2 = ModelListGP(gp_models=[model])
+        model2 = ModelListGP(model)
         sum_mll = SumMarginalLogLikelihood(model2.likelihood, model2)
         sum_mll_extra_args = _get_extra_mll_args(mll=sum_mll)
         self.assertEqual(len(sum_mll_extra_args), 1)

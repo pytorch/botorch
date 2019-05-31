@@ -6,7 +6,7 @@ r"""
 Model List GP Regression models.
 """
 
-from typing import List
+import typing  # noqa F401
 
 from gpytorch.models import IndependentModelList
 
@@ -27,15 +27,15 @@ class ModelListGP(IndependentModelList, ModelListGPyTorchModel):
     structure, you should consider using a batched GP model instead).
     """
 
-    def __init__(self, gp_models: List[GPyTorchModel]) -> None:
+    def __init__(self, *gp_models: GPyTorchModel) -> None:
         r"""A multi-output GP model with independent GPs for the outputs.
 
         Args:
-            gp_models: A list of single-output BoTorch models.
+            *gp_models: An variable number of single-output BoTorch models.
 
         Example:
             >>> model1 = SingleTaskGP(train_X1, train_Y1)
             >>> model2 = SingleTaskGP(train_X2, train_Y2)
-            >>> model = ModelListGP([model1, model2])
+            >>> model = ModelListGP(model1, model2)
         """
         super().__init__(*gp_models)
