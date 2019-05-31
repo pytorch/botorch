@@ -2,12 +2,12 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-LATEST=false
+PYTORCH_NIGHTLY=false
 
-while getopts 'l' flag; do
+while getopts 'n' flag; do
   case "${flag}" in
-    l) LATEST=true ;;
-    *) echo "usage: $0 [-l]" >&2
+    n) PYTORCH_NIGHTLY=true ;;
+    *) echo "usage: $0 [-n]" >&2
        exit 1 ;;
     esac
   done
@@ -18,20 +18,19 @@ conda update -y -n base -c defaults conda
 # required to use conda develop
 conda install -y conda-build
 
-if [[ $LATEST == true ]]; then
+if [[ $PYTORCH_NIGHTLY == true ]]; then
   # install CPU version for much smaller download
   conda install -y -c pytorch pytorch-nightly-cpu
-  # get gpytorch master
-  git clone https://github.com/cornellius-gp/gpytorch.git ../gpytorch
-  # install gpytorch
-  conda develop ../gpytorch
-fi
-
-if [[ $LATEST == false ]]; then
+else
   # install CPU version for much smaller download
   conda install -y -c pytorch pytorch-cpu
-  conda install -y -c gpytorch gpytorch
 fi
+
+# get gpytorch master
+git clone https://github.com/cornellius-gp/gpytorch.git ../gpytorch
+
+# install gpytorch
+conda develop ../gpytorch
 
 # install other deps
 conda install -y scipy sphinx pytest flake8
