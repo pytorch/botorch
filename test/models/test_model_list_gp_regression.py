@@ -8,7 +8,7 @@ import unittest
 import torch
 from botorch import fit_gpytorch_model
 from botorch.models import ModelListGP
-from botorch.models.gp_regression import SingleTaskGP
+from botorch.models.gp_regression import FixedNoiseGP, SingleTaskGP
 from botorch.posteriors import GPyTorchPosterior
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.kernels import MaternKernel, ScaleKernel
@@ -29,10 +29,20 @@ def _get_random_data(n, **tkwargs):
     return train_x1.unsqueeze(-1), train_x2.unsqueeze(-1), train_y1, train_y2
 
 
-def _get_model(n, **tkwargs):
+def _get_model(n, fixed_noise=False, **tkwargs):
     train_x1, train_x2, train_y1, train_y2 = _get_random_data(n=n, **tkwargs)
-    model1 = SingleTaskGP(train_X=train_x1, train_Y=train_y1)
-    model2 = SingleTaskGP(train_X=train_x2, train_Y=train_y2)
+    if fixed_noise:
+        train_y1_var = 0.1 + 0.1 * torch.rand_like(train_y1, **tkwargs)
+        train_y2_var = 0.1 + 0.1 * torch.rand_like(train_y2, **tkwargs)
+        model1 = FixedNoiseGP(
+            train_X=train_x1, train_Y=train_y1, train_Yvar=train_y1_var
+        )
+        model2 = FixedNoiseGP(
+            train_X=train_x2, train_Y=train_y2, train_Yvar=train_y2_var
+        )
+    else:
+        model1 = SingleTaskGP(train_X=train_x1, train_Y=train_y1)
+        model2 = SingleTaskGP(train_X=train_x2, train_Y=train_y2)
     model = ModelListGP(model1, model2)
     return model.to(**tkwargs)
 
@@ -79,18 +89,101 @@ class TestModelListGP(unittest.TestCase):
             self.assertIsInstance(posterior.mvn, MultivariateNormal)
 
             # test get_fantasy_model
-            f_x1 = torch.rand(2, 1, **tkwargs)
-            f_y1 = torch.rand(2, **tkwargs)
-            f_x2 = torch.rand(3, 1, **tkwargs)
-            f_y2 = torch.rand(3, **tkwargs)
-            fantasy_model = model.get_fantasy_model([f_x1, f_x2], [f_y1, f_y2])
+            f_x = torch.rand(2, 1, **tkwargs)
+            f_y = torch.rand(2, 2, **tkwargs)
+            fantasy_model = model.get_fantasy_model(f_x, f_y)
             self.assertIsInstance(fantasy_model, ModelListGP)
+
+            # test get_fantasy_model batched
+            f_x = torch.rand(3, 2, 1, **tkwargs)
+            f_y = torch.rand(3, 2, 2, **tkwargs)
+            fantasy_model = model.get_fantasy_model(f_x, f_y)
+            self.assertIsInstance(fantasy_model, ModelListGP)
+
+            # test get_fantasy_model batched (fast fantasies)
+            f_x = torch.rand(2, 1, **tkwargs)
+            f_y = torch.rand(3, 2, 2, **tkwargs)
+            fantasy_model = model.get_fantasy_model(f_x, f_y)
+            self.assertIsInstance(fantasy_model, ModelListGP)
+
+            # test get_fantasy_model (incorrect input shape error)
+            with self.assertRaises(ValueError):
+                model.get_fantasy_model(f_x, torch.rand(3, 2, 3, **tkwargs))
 
     def test_ModelListGP_cuda(self):
         if torch.cuda.is_available():
             self.test_ModelListGP(cuda=True)
 
-    def test_ModelListGPSingle(self, cuda=False):
+    def test_ModelListGP_fixed_noise(self, cuda=False):
+        for double in (False, True):
+            tkwargs = {
+                "device": torch.device("cuda") if cuda else torch.device("cpu"),
+                "dtype": torch.double if double else torch.float,
+            }
+            model = _get_model(n=10, fixed_noise=True, **tkwargs)
+            self.assertIsInstance(model, ModelListGP)
+            self.assertIsInstance(model.likelihood, LikelihoodList)
+            for m in model.models:
+                self.assertIsInstance(m.mean_module, ConstantMean)
+                self.assertIsInstance(m.covar_module, ScaleKernel)
+                matern_kernel = m.covar_module.base_kernel
+                self.assertIsInstance(matern_kernel, MaternKernel)
+                self.assertIsInstance(matern_kernel.lengthscale_prior, GammaPrior)
+
+            # test model fitting
+            mll = SumMarginalLogLikelihood(model.likelihood, model)
+            for mll_ in mll.mlls:
+                self.assertIsInstance(mll_, ExactMarginalLogLikelihood)
+            mll = fit_gpytorch_model(mll, options={"maxiter": 1})
+
+            # test posterior
+            test_x = torch.tensor([[0.25], [0.75]], **tkwargs)
+            posterior = model.posterior(test_x)
+            self.assertIsInstance(posterior, GPyTorchPosterior)
+            self.assertIsInstance(posterior.mvn, MultitaskMultivariateNormal)
+
+            # test output_indices
+            posterior = model.posterior(
+                test_x, output_indices=[0], observation_noise=True
+            )
+            self.assertIsInstance(posterior, GPyTorchPosterior)
+            self.assertIsInstance(posterior.mvn, MultivariateNormal)
+
+            # test get_fantasy_model
+            f_x = torch.rand(2, 1, **tkwargs)
+            f_y = torch.rand(2, 2, **tkwargs)
+            noise = 0.1 + 0.1 * torch.rand_like(f_y)
+            fantasy_model = model.get_fantasy_model(f_x, f_y, noise=noise)
+            self.assertIsInstance(fantasy_model, ModelListGP)
+
+            # test get_fantasy_model batched
+            f_x = torch.rand(3, 2, 1, **tkwargs)
+            f_y = torch.rand(3, 2, 2, **tkwargs)
+            noise = 0.1 + 0.1 * torch.rand_like(f_y)
+            fantasy_model = model.get_fantasy_model(f_x, f_y, noise=noise)
+            self.assertIsInstance(fantasy_model, ModelListGP)
+
+            # test get_fantasy_model batched (fast fantasies)
+            f_x = torch.rand(2, 1, **tkwargs)
+            f_y = torch.rand(3, 2, 2, **tkwargs)
+            noise = 0.1 + 0.1 * torch.rand(2, 2, **tkwargs)
+            fantasy_model = model.get_fantasy_model(f_x, f_y, noise=noise)
+            self.assertIsInstance(fantasy_model, ModelListGP)
+
+            # test get_fantasy_model (incorrect input shape error)
+            with self.assertRaises(ValueError):
+                model.get_fantasy_model(
+                    f_x, torch.rand(3, 2, 3, **tkwargs), noise=noise
+                )
+            # test get_fantasy_model (incorrect noise shape error)
+            with self.assertRaises(ValueError):
+                model.get_fantasy_model(f_x, f_y, noise=torch.rand(2, 3, **tkwargs))
+
+    def test_ModelListGP_fixed_noise_cuda(self):
+        if torch.cuda.is_available():
+            self.test_ModelListGP_fixed_noise(cuda=True)
+
+    def test_ModelListGP_single(self, cuda=False):
         tkwargs = {
             "device": torch.device("cuda") if cuda else torch.device("cpu"),
             "dtype": torch.float,
@@ -104,6 +197,6 @@ class TestModelListGP(unittest.TestCase):
         self.assertIsInstance(posterior, GPyTorchPosterior)
         self.assertIsInstance(posterior.mvn, MultivariateNormal)
 
-    def test_ModelListGPSingle_cuda(self):
+    def test_ModelListGP_single_cuda(self):
         if torch.cuda.is_available():
-            self.test_ModelListGPSingle(cuda=True)
+            self.test_ModelListGP_single(cuda=True)

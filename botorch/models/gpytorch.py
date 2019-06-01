@@ -185,8 +185,9 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
                 repeated blocks of the covariance matrix. Additionally, if provided,
                 the "noise" keyword argument should map to a `batch_shape x m`-dim
                 Tensor of observed measurement noise for fastest performance.
-            targets: `batch_shape x m` or `f_batch_shape x batch_shape x m`-dim Tensor
-                of fantasy observations.
+            targets: `batch_shape x m x o` or
+                `f_batch_shape x batch_shape x m x o`-dim Tensor of fantasy
+                observations.
 
         Returns:
             A `BatchedMultiOutputGPyTorchModel` with `n + m` training examples,
