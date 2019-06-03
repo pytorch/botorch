@@ -6,7 +6,7 @@
 
 [![Conda](https://img.shields.io/conda/v/pytorch/botorch.svg)](https://anaconda.org/pytorch/botorch)
 [![PyPI](https://img.shields.io/pypi/v/botorch.svg)](https://pypi.org/project/botorch)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.md)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![CircleCI](https://circleci.com/gh/pytorch/botorch.svg?style=shield)](https://circleci.com/gh/pytorch/botorch)
 [![Codecov](https://img.shields.io/codecov/c/github/pytorch/botorch.svg)](https://codecov.io/github/pytorch/botorch)
 
