@@ -54,4 +54,4 @@ class TestNegLevy(unittest.TestCase):
 
     def test_neg_levy_global_maximum_cuda(self):
         if torch.cuda.is_available():
-            self.test_neg_levy_global_maximum(cuda=False)
+            self.test_neg_levy_global_maximum(cuda=True)

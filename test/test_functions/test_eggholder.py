@@ -52,4 +52,4 @@ class TestNegEggholder(unittest.TestCase):
 
     def test_neg_eggholder_global_maximum_cuda(self):
         if torch.cuda.is_available():
-            self.test_neg_eggholder_global_maximum(cuda=False)
+            self.test_neg_eggholder_global_maximum(cuda=True)
