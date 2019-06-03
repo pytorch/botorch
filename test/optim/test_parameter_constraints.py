@@ -85,6 +85,35 @@ class TestParameterConstraints(unittest.TestCase):
         self.assertEqual(len(lcs), 1)
         self.assertEqual(lcs[0]["type"], "ineq")
 
+        # check constraint across q-batch
+        device = torch.device("cuda") if cuda else torch.device("cpu")
+        indices = torch.tensor([[0, 3], [1, 2]], dtype=torch.long, device=device)
+        shapeX = torch.Size([3, 2, 4])
+        for dtype in (torch.float, torch.double):
+            coefficients = torch.tensor([1.0, 2.0], dtype=dtype, device=device)
+            constraints = _make_linear_constraints(
+                indices=indices,
+                coefficients=coefficients,
+                rhs=1.0,
+                shapeX=shapeX,
+                eq=True,
+            )
+            self.assertTrue(
+                all(set(c.keys()) == {"fun", "jac", "type"} for c in constraints)
+            )
+            self.assertTrue(all(c["type"] == "eq" for c in constraints))
+            self.assertEqual(len(constraints), shapeX[0])
+            x = np.random.rand(shapeX.numel())
+            offsets = [shapeX[i:].numel() for i in range(1, len(shapeX))]
+            # rule is [i, j, k] is i * offset[0] + j * offset[1] + k
+            for i in range(shapeX[0]):
+                pos1 = i * offsets[0] + 3
+                pos2 = i * offsets[0] + 1 * offsets[1] + 2
+                self.assertEqual(constraints[i]["fun"](x), x[pos1] + 2 * x[pos2] - 1.0)
+                jac_exp = np.zeros(shapeX.numel())
+                jac_exp[[pos1, pos2]] = [1, 2]
+                self.assertTrue(np.allclose(constraints[i]["jac"](x), jac_exp))
+
     def test_make_linear_constraints_cuda(self):
         if torch.cuda.is_available():
             self.test_make_linear_constraints(cuda=True)
@@ -123,14 +152,15 @@ class TestParameterConstraints(unittest.TestCase):
                 inequality_constraints=[(indices, coefficients, 1.0)],
                 equality_constraints=[(indices, coefficients, 1.0)],
             )
-        # test that 2-dim indices raises a NotImplementedError
+        # test that 2-dim indices work properly
         indices = indices.unsqueeze(0)
-        with self.assertRaises(NotImplementedError):
-            make_scipy_linear_constraints(
-                shapeX=shapeX,
-                inequality_constraints=[(indices, coefficients, 1.0)],
-                equality_constraints=[(indices, coefficients, 1.0)],
-            )
+        cs = make_scipy_linear_constraints(
+            shapeX=shapeX,
+            inequality_constraints=[(indices, coefficients, 1.0)],
+            equality_constraints=[(indices, coefficients, 1.0)],
+        )
+        self.assertEqual(len(cs), 4)
+        self.assertTrue({c["type"] for c in cs} == {"ineq", "eq"})
         # test that >2-dim indices raises an UnsupportedError
         indices = indices.unsqueeze(0)
         with self.assertRaises(UnsupportedError):
@@ -141,6 +171,23 @@ class TestParameterConstraints(unittest.TestCase):
             )
         # test that out of bounds index raises an error
         indices = torch.tensor([0, 4], dtype=torch.long, device=device)
+        with self.assertRaises(RuntimeError):
+            make_scipy_linear_constraints(
+                shapeX=shapeX,
+                inequality_constraints=[(indices, coefficients, 1.0)],
+                equality_constraints=[(indices, coefficients, 1.0)],
+            )
+        # test that two-d index out-of-bounds raises an error
+        # q out of bounds
+        indices = torch.tensor([[0, 0], [1, 0]], dtype=torch.long, device=device)
+        with self.assertRaises(RuntimeError):
+            make_scipy_linear_constraints(
+                shapeX=shapeX,
+                inequality_constraints=[(indices, coefficients, 1.0)],
+                equality_constraints=[(indices, coefficients, 1.0)],
+            )
+        # d out of bounds
+        indices = torch.tensor([[0, 0], [0, 4]], dtype=torch.long, device=device)
         with self.assertRaises(RuntimeError):
             make_scipy_linear_constraints(
                 shapeX=shapeX,

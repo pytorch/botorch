@@ -89,14 +89,25 @@ def make_scipy_linear_constraints(
 
     This function assumes that constraints are the same for each input batch,
     and broadcasts the constraints accordingly to the input batch shape. This
-    function does currently not support constraints across elements of a q-batch.
+    function does support constraints across elements of a q-batch if the
+    indices are a 2-d Tensor.
 
     Example:
-        The following will enforce that `x[1] + 0.5 x[2] >= -0.1` for each `x`
+        The following will enforce that `x[1] + 0.5 x[3] >= -0.1` for each `x`
         in both elements of the q-batch, and each of the 3 t-batches:
+
         >>> constraints = make_scipy_linear_constraints(
         >>>     torch.Size([3, 2, 4]),
         >>>     [(torch.tensor([1, 3]), torch.tensor([1.0, 0.5]), -0.1)],
+        >>> )
+
+        The following will enforce that `x[0, 1] + 0.5 x[1, 3] >= -0.1` where
+        x[0, :] is the first element of the q-batch and x[1, :] is the second
+        element of the q-batch, for each of the 3 t-batches:
+
+        >>> constraints = make_scipy_linear_constraints(
+        >>>     torch.size([3, 2, 4])
+        >>>     [(torch.tensor([[0, 1], [1, 3]), torch.tensor([1.0, 0.5]), -0.1)],
         >>> )
     """
     constraints = []
@@ -176,15 +187,17 @@ def _make_linear_constraints(
     where `?` can be designated either as `>=` by setting `eq=False`, or as
     `=` by setting `eq=True`.
 
-    If indices is one-dimensional, the constraints are broadcasted across all
-    elements of the q-batch. If indices is two-dimensional (NOT YET SUPPORTED),
-    then constraints are applied across elements of a q-batch. In either case,
+    If indices is one-dimensional, the constraints are broadcasted across
+    all elements of the q-batch. If indices is two-dimensional, then
+    constraints are applied across elements of a q-batch. In either case,
     constraints are created for all t-batches.
 
     Args:
-        indices: A single-dimensional tensor of torch.long dtype, containing the
-            indices of the dimensions of the feature space that occur in the
-            linear constraint.
+        indices: A tensor of shape `c` or `c x 2`, where c is the number of terms
+            in the constraint.  If single-dimensional, contains the indices of
+            the dimensions of the feature space that occur in the linear constraint.  If
+            two-dimensional, contains pairs of indices of the q-batch (0) and
+            the feature space (1) that occur in the linear constraint.
         coefficients: A single-dimensional tensor of coefficients with the same
             number of elements as `indices`.
         rhs: The right hand side of the constraint.
@@ -204,25 +217,38 @@ def _make_linear_constraints(
     """
     if len(shapeX) != 3:
         raise UnsupportedError("`shapeX` must be `b x q x d`")
-    d = shapeX[-1]
+    q, d = shapeX[-2:]
     n = shapeX.numel()
     constraints: List[ScipyConstraintDict] = []
     coeffs = _arrayify(coefficients)
     ctype = "eq" if eq else "ineq"
-    if indices[-1].max() > d - 1:
-        raise RuntimeError(f"Index out of bounds for {d}-dim parameter tensor")
-    # indices has two dimensions (potential constraints across q-batch elements)
-    if indices.dim() == 2:
-        raise NotImplementedError(
-            "Constraints across elements of q-batches not yet supported"
-        )
-    elif indices.dim() > 2:
+    if indices.dim() > 2:
         raise UnsupportedError(
             "Linear constraints supported only on individual candidates and "
             "across q-batches, not across general batch shapes."
         )
+    elif indices.dim() == 2:
+        # indices has two dimensions (potential constraints across q-batch elements)
+        if indices[:, 0].max() > q - 1:
+            raise RuntimeError(f"Index out of bounds for {q}-batch")
+        if indices[:, 1].max() > d - 1:
+            raise RuntimeError(f"Index out of bounds for {d}-dim parameter tensor")
+
+        offsets = [shapeX[i:].numel() for i in range(1, len(shapeX))]
+        # rule is [i, j, k] is at
+        # i * offsets[0] + j * offsets[1] + k
+        for i in range(shapeX[0]):
+            idxr = []
+            for a in indices:
+                b = a.tolist()
+                idxr.append(i * offsets[0] + b[0] * offsets[1] + b[1])
+            fun = partial(eval_lin_constraint, flat_idxr=idxr, coeffs=coeffs, rhs=rhs)
+            jac = partial(lin_constraint_jac, flat_idxr=idxr, coeffs=coeffs, n=n)
+            constraints.append({"type": ctype, "fun": fun, "jac": jac})
     elif indices.dim() == 1:
         # indices is one-dim - broadcast constraints across q-batches and t-batches
+        if indices.max() > d - 1:
+            raise RuntimeError(f"Index out of bounds for {d}-dim parameter tensor")
         offsets = [shapeX[i:].numel() for i in range(1, len(shapeX))]
         for i in range(shapeX[0]):
             for j in range(shapeX[1]):
