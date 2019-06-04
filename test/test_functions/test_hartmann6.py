@@ -40,7 +40,7 @@ class TestNegHartmann6(unittest.TestCase):
             self.test_batch_eval_neg_hartmann6(cuda=True)
 
     def test_neg_hartmann6_global_maximum(self, cuda=False):
-        device = torch.device("scuda") if cuda else torch.device("cpu")
+        device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
             X = torch.tensor(
                 GLOBAL_MAXIMIZER, device=device, dtype=dtype, requires_grad=True
