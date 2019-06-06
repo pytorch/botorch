@@ -58,8 +58,12 @@ def initialize_q_batch(X: Tensor, Y: Tensor, n: int, eta: float = 1.0) -> Tensor
         return X[torch.randperm(n=n_samples, device=X.device)][:n]
 
     max_val, max_idx = torch.max(Y, dim=0)
-    Z = Y - Y.mean() / Ystd
-    weights = torch.exp(eta * Z)
+    Z = (Y - Y.mean()) / Ystd
+    etaZ = eta * Z
+    weights = torch.exp(etaZ)
+    while torch.isinf(weights).any():
+        etaZ *= 0.5
+        weights = torch.exp(etaZ)
     idcs = torch.multinomial(weights, n)
     # make sure we get the maximum
     if max_idx not in idcs:

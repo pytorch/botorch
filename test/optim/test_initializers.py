@@ -84,3 +84,19 @@ class TestInitializeQBatch(unittest.TestCase):
     def test_initialize_q_batch_cuda(self):
         if torch.cuda.is_available():
             self.test_initialize_q_batch(cuda=True)
+
+    def test_initialize_q_batch_largeZ(self, cuda=False):
+        device = torch.device("cuda") if cuda else torch.device("cpu")
+        for dtype in (torch.float, torch.double):
+            # testing large eta*Z
+            X = torch.rand(5, 3, 4, device=device, dtype=dtype)
+            Y = torch.rand(5, device=device, dtype=dtype)
+            Ystd = Y.std()
+            Z = (Y - Y.mean()) / Ystd
+            eta = (1e6 / (torch.abs(Z) + 1e-7).min()).item()
+            ics = initialize_q_batch(X=X, Y=Y, n=5, eta=eta)
+            self.assertTrue(torch.equal(X, ics))
+
+    def test_initialize_q_batch_largeZ_cuda(self):
+        if torch.cuda.is_available():
+            self.test_initialize_q_batch_largeZ(cuda=True)
