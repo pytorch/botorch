@@ -44,13 +44,13 @@ class MCAcquisitionFunction(AcquisitionFunction, ABC):
         Args:
             model: A fitted model.
             sampler: The sampler used to draw base samples. Defaults to
-                `SobolQMCNormalSampler(num_samples=500, collapse_batch_dims=True)`.
+                `SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)`.
             objective: THe MCAcquisitionObjective under which the samples are
                 evaluated. Defaults to `IdentityMCObjective()`.
         """
         super().__init__(model=model)
         if sampler is None:
-            sampler = SobolQMCNormalSampler(num_samples=500, collapse_batch_dims=True)
+            sampler = SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)
         self.add_module("sampler", sampler)
         if objective is None:
             objective = IdentityMCObjective()
