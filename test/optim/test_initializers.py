@@ -90,12 +90,9 @@ class TestInitializeQBatch(unittest.TestCase):
         for dtype in (torch.float, torch.double):
             # testing large eta*Z
             X = torch.rand(5, 3, 4, device=device, dtype=dtype)
-            Y = torch.rand(5, device=device, dtype=dtype)
-            Ystd = Y.std()
-            Z = (Y - Y.mean()) / Ystd
-            eta = (1e6 / (torch.abs(Z) + 1e-7).min()).item()
-            ics = initialize_q_batch(X=X, Y=Y, n=5, eta=eta)
-            self.assertTrue(torch.equal(X, ics))
+            Y = torch.tensor([-1e12, 0, 0, 0, 1e12], device=device, dtype=dtype)
+            ics = initialize_q_batch(X=X, Y=Y, n=2, eta=100)
+            self.assertEqual(ics.shape[0], 2)
 
     def test_initialize_q_batch_largeZ_cuda(self):
         if torch.cuda.is_available():
