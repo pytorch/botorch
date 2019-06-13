@@ -131,28 +131,6 @@ botorch.acquisition.objective
 
 
 
-botorch.acquisition.sampler
----------------------------
-.. automodule:: botorch.acquisition.sampler
-
-
-:hidden:`MCSampler`
-~~~~~~~~~~~~~~~~~~~
-.. autoclass:: MCSampler
-   :members:
-
-:hidden:`IIDNormalSampler`
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: IIDNormalSampler
-   :members:
-
-:hidden:`SobolQMCNormalSampler`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: SobolQMCNormalSampler
-   :members:
-
-
-
 botorch.acquisition.utils
 -------------------------
 .. automodule:: botorch.acquisition.utils

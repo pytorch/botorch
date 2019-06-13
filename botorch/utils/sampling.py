@@ -16,7 +16,7 @@ from torch.quasirandom import SobolEngine
 
 from ..exceptions.warnings import SamplingWarning
 from ..posteriors.posterior import Posterior
-from ..qmc.normal import NormalQMCEngine
+from ..sampling.qmc import NormalQMCEngine
 
 
 def construct_base_samples(

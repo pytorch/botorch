@@ -27,7 +27,7 @@ test:
     - botorch.models
     - botorch.optim
     - botorch.posteriors
-    - botorch.qmc
+    - botorch.sampling
     - botorch.test_functions
     - botorch.utils
     - botorch.fit

@@ -27,7 +27,6 @@ from .objective import (
     LinearMCObjective,
     MCAcquisitionObjective,
 )
-from .sampler import IIDNormalSampler, MCSampler, SobolQMCNormalSampler
 from .utils import get_acquisition_function
 
 
@@ -51,8 +50,5 @@ __all__ = [
     "LinearMCObjective",
     "MCAcquisitionFunction",
     "MCAcquisitionObjective",
-    "IIDNormalSampler",
-    "MCSampler",
-    "SobolQMCNormalSampler",
     "get_acquisition_function",
 ]

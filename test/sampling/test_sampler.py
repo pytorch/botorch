@@ -5,13 +5,9 @@
 import unittest
 
 import torch
-from botorch.acquisition.sampler import (
-    IIDNormalSampler,
-    MCSampler,
-    SobolQMCNormalSampler,
-)
 from botorch.exceptions.errors import UnsupportedError
 from botorch.posteriors import GPyTorchPosterior
+from botorch.sampling.samplers import IIDNormalSampler, MCSampler, SobolQMCNormalSampler
 from gpytorch.distributions import MultivariateNormal
 from gpytorch.lazy import DiagLazyTensor
 
