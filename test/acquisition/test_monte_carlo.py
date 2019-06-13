@@ -14,11 +14,7 @@ from botorch.acquisition.monte_carlo import (
     qUpperConfidenceBound,
 )
 from botorch.acquisition.sampler import IIDNormalSampler, SobolQMCNormalSampler
-
-from ..mock import MockModel, MockPosterior
-
-
-# TODO: T41739913 Implement tests for all MCAcquisitionFunctions
+from botorch.utils.mock import MockModel, MockPosterior
 
 
 class TestMCAcquisitionFunction(unittest.TestCase):

@@ -17,8 +17,7 @@ from botorch.acquisition.analytic import (
 )
 from botorch.exceptions import UnsupportedError
 from botorch.models import FixedNoiseGP, SingleTaskGP
-
-from ..mock import MockModel, MockPosterior
+from botorch.utils.mock import MockModel, MockPosterior
 
 
 NEI_NOISE = [-0.099, -0.004, 0.227, -0.182, 0.018, 0.334, -0.270, 0.156, -0.237, 0.052]
