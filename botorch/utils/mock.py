@@ -6,9 +6,10 @@ from collections import OrderedDict
 from typing import List, Optional
 
 import torch
-from botorch.models.model import Model
-from botorch.posteriors import Posterior
 from torch import Tensor
+
+from ..models.model import Model
+from ..posteriors import Posterior
 
 
 EMPTY_SIZE = torch.Size()

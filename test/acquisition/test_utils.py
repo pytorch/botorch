@@ -9,9 +9,8 @@ import torch
 from botorch.acquisition import monte_carlo, utils
 from botorch.acquisition.objective import MCAcquisitionObjective
 from botorch.acquisition.sampler import IIDNormalSampler, SobolQMCNormalSampler
+from botorch.utils.mock import MockModel, MockPosterior
 from torch import Tensor
-
-from ..mock import MockModel, MockPosterior
 
 
 class DummyMCObjective(MCAcquisitionObjective):
