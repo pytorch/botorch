@@ -13,11 +13,11 @@ from torch import Tensor
 
 from . import analytic, monte_carlo
 from ..models.model import Model
+from ..sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
 from ..utils.transforms import squeeze_last_dim
 from .acquisition import AcquisitionFunction
 from .monte_carlo import MCAcquisitionFunction
 from .objective import MCAcquisitionObjective
-from .sampler import IIDNormalSampler, SobolQMCNormalSampler
 
 
 def get_acquisition_function(

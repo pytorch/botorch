@@ -24,10 +24,10 @@ import torch
 from torch import Tensor
 
 from ..models.model import Model
+from ..sampling.samplers import MCSampler, SobolQMCNormalSampler
 from ..utils.transforms import match_batch_shape, t_batch_mode_transform
 from .acquisition import AcquisitionFunction
 from .objective import IdentityMCObjective, MCAcquisitionObjective
-from .sampler import MCSampler, SobolQMCNormalSampler
 
 
 class MCAcquisitionFunction(AcquisitionFunction, ABC):

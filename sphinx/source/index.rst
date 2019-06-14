@@ -17,7 +17,7 @@ BoTorch API Reference
    optim
    fit
    gen
-   qmc
+   sampling
    test_functions
    exceptions
    utils

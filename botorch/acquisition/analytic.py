@@ -20,9 +20,9 @@ from ..models.gp_regression import FixedNoiseGP
 from ..models.gpytorch import GPyTorchModel
 from ..models.model import Model
 from ..posteriors.posterior import Posterior
+from ..sampling.samplers import SobolQMCNormalSampler
 from ..utils.transforms import convert_to_target_pre_hook, t_batch_mode_transform
 from .acquisition import AcquisitionFunction
-from .sampler import SobolQMCNormalSampler
 
 
 class AnalyticAcquisitionFunction(AcquisitionFunction, ABC):

@@ -13,7 +13,7 @@ from botorch.acquisition.monte_carlo import (
     qSimpleRegret,
     qUpperConfidenceBound,
 )
-from botorch.acquisition.sampler import IIDNormalSampler, SobolQMCNormalSampler
+from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.mock import MockModel, MockPosterior
 
 

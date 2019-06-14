@@ -7,7 +7,7 @@ import unittest
 
 import numpy as np
 import torch
-from botorch.qmc import MultivariateNormalQMCEngine, NormalQMCEngine
+from botorch.sampling.qmc import MultivariateNormalQMCEngine, NormalQMCEngine
 from botorch.utils.sampling import manual_seed
 from scipy.stats import shapiro
 
