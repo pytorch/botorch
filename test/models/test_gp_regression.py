@@ -13,7 +13,7 @@ from botorch.models.gp_regression import (
     SingleTaskGP,
 )
 from botorch.posteriors import GPyTorchPosterior
-from gpytorch.distributions import MultivariateNormal
+from botorch.sampling import SobolQMCNormalSampler
 from gpytorch.kernels import MaternKernel, ScaleKernel
 from gpytorch.likelihoods import (
     FixedNoiseGaussianLikelihood,
@@ -49,7 +49,7 @@ class TestSingleTaskGP(unittest.TestCase):
         return model, model_kwargs
 
     def test_gp(self, cuda=False):
-        for batch_shape in (torch.Size([]), torch.Size([2])):
+        for batch_shape in (torch.Size(), torch.Size([2])):
             for num_outputs in (1, 2):
                 for double in (False, True):
                     tkwargs = {
@@ -63,17 +63,13 @@ class TestSingleTaskGP(unittest.TestCase):
                         **tkwargs
                     )
                     fit_gpytorch_model(mll, options={"maxiter": 1})
+
                     # test init
                     self.assertIsInstance(model.mean_module, ConstantMean)
                     self.assertIsInstance(model.covar_module, ScaleKernel)
                     matern_kernel = model.covar_module.base_kernel
                     self.assertIsInstance(matern_kernel, MaternKernel)
                     self.assertIsInstance(matern_kernel.lengthscale_prior, GammaPrior)
-
-                    # Test forward
-                    test_x = torch.rand(batch_shape + torch.Size([3, 1]), **tkwargs)
-                    posterior = model(test_x)
-                    self.assertIsInstance(posterior, MultivariateNormal)
 
                     # test param sizes
                     params = dict(model.named_parameters())
@@ -106,8 +102,8 @@ class TestSingleTaskGP(unittest.TestCase):
         if torch.cuda.is_available():
             self.test_gp(cuda=True)
 
-    def test_get_fantasy_model(self, cuda=False):
-        for batch_shape in (torch.Size([]), torch.Size([2])):
+    def test_condition_on_observations(self, cuda=False):
+        for batch_shape in (torch.Size(), torch.Size([2])):
             for num_outputs in (1, 2):
                 for double in (False, True):
                     tkwargs = {
@@ -119,26 +115,26 @@ class TestSingleTaskGP(unittest.TestCase):
                     )
                     # evaluate model
                     model.posterior(torch.rand(torch.Size([4, 1]), **tkwargs))
-                    # test get_fantasy_model
+                    # test condition_on_observations
                     fant_shape = torch.Size([2])
                     # fantasize at different input points
                     X_fant, Y_fant = _get_random_data(
                         fant_shape + batch_shape, num_outputs, n=3, **tkwargs
                     )
-                    fant_kwargs = (
+                    c_kwargs = (
                         {"noise": torch.full_like(Y_fant, 0.01)}
                         if isinstance(model, FixedNoiseGP)
                         else {}
                     )
-                    fm = model.get_fantasy_model(X_fant, Y_fant, **fant_kwargs)
+                    cm = model.condition_on_observations(X_fant, Y_fant, **c_kwargs)
                     # fantasize at different same input points
-                    fant_kwargs_same_inputs = (
+                    c_kwargs_same_inputs = (
                         {"noise": torch.full_like(Y_fant[0], 0.01)}
                         if isinstance(model, FixedNoiseGP)
                         else {}
                     )
-                    fm_same_inputs = model.get_fantasy_model(
-                        X_fant[0], Y_fant, **fant_kwargs_same_inputs
+                    cm_same_inputs = model.condition_on_observations(
+                        X_fant[0], Y_fant, **c_kwargs_same_inputs
                     )
 
                     test_Xs = [
@@ -154,12 +150,12 @@ class TestSingleTaskGP(unittest.TestCase):
                         ),
                     ]
                     for test_X in test_Xs:
-                        posterior = fm.posterior(test_X)
+                        posterior = cm.posterior(test_X)
                         self.assertEqual(
                             posterior.mean.shape,
                             fant_shape + batch_shape + torch.Size([4, num_outputs]),
                         )
-                        posterior_same_inputs = fm_same_inputs.posterior(test_X)
+                        posterior_same_inputs = cm_same_inputs.posterior(test_X)
                         self.assertEqual(
                             posterior_same_inputs.mean.shape,
                             fant_shape + batch_shape + torch.Size([4, num_outputs]),
@@ -186,15 +182,15 @@ class TestSingleTaskGP(unittest.TestCase):
                             model_non_batch.posterior(
                                 torch.rand(torch.Size([4, 1]), **tkwargs)
                             )
-                            fant_kwargs = (
+                            c_kwargs = (
                                 {"noise": torch.full_like(Y_fant[0, 0, :], 0.01)}
                                 if isinstance(model, FixedNoiseGP)
                                 else {}
                             )
-                            fm_non_batch = model_non_batch.get_fantasy_model(
-                                X_fant[0][0], Y_fant[:, 0, :], **fant_kwargs
+                            cm_non_batch = model_non_batch.condition_on_observations(
+                                X_fant[0][0], Y_fant[:, 0, :], **c_kwargs
                             )
-                            non_batch_posterior = fm_non_batch.posterior(test_X)
+                            non_batch_posterior = cm_non_batch.posterior(test_X)
                             self.assertTrue(
                                 torch.allclose(
                                     posterior_same_inputs.mean[:, 0, ...],
@@ -212,9 +208,36 @@ class TestSingleTaskGP(unittest.TestCase):
                                 )
                             )
 
-    def test_get_fantasy_model_cuda(self):
+    def test_condition_on_observations_cuda(self):
         if torch.cuda.is_available():
-            self.test_get_fantasy_model(cuda=True)
+            self.test_condition_on_observations(cuda=True)
+
+    def test_fantasize(self, cuda=False):
+        for batch_shape in (torch.Size(), torch.Size([2])):
+            for num_outputs in (1, 2):
+                for double in (False, True):
+                    tkwargs = {
+                        "device": torch.device("cuda") if cuda else torch.device("cpu"),
+                        "dtype": torch.double if double else torch.float,
+                    }
+                    model, model_kwargs = self._get_model_and_data(
+                        batch_shape=batch_shape, num_outputs=num_outputs, **tkwargs
+                    )
+                    # fantasize
+                    X_f = torch.rand(
+                        torch.Size(batch_shape + torch.Size([4, 1])), **tkwargs
+                    )
+                    sampler = SobolQMCNormalSampler(num_samples=3)
+                    fm = model.fantasize(X=X_f, sampler=sampler)
+                    self.assertIsInstance(fm, model.__class__)
+                    fm = model.fantasize(
+                        X=X_f, sampler=sampler, observation_noise=False
+                    )
+                    self.assertIsInstance(fm, model.__class__)
+
+    def test_fantasize_cuda(self):
+        if torch.cuda.is_available():
+            self.test_fantasize(cuda=True)
 
 
 class TestFixedNoiseGP(TestSingleTaskGP):
@@ -231,7 +254,7 @@ class TestFixedNoiseGP(TestSingleTaskGP):
         return model, model_kwargs
 
     def test_fixed_noise_likelihood(self, cuda=False):
-        for batch_shape in (torch.Size([]), torch.Size([2])):
+        for batch_shape in (torch.Size(), torch.Size([2])):
             for num_outputs in (1, 2):
                 for double in (False, True):
                     tkwargs = {
@@ -271,7 +294,7 @@ class TestHeteroskedasticSingleTaskGP(TestSingleTaskGP):
         return model, model_kwargs
 
     def test_heteroskedastic_likelihood(self, cuda=False):
-        for batch_shape in (torch.Size([]), torch.Size([2])):
+        for batch_shape in (torch.Size(), torch.Size([2])):
             for num_outputs in (1, 2):
                 for double in (False, True):
                     tkwargs = {
@@ -293,3 +316,11 @@ class TestHeteroskedasticSingleTaskGP(TestSingleTaskGP):
     def test_heteroskedastic_likelihood_cuda(self):
         if torch.cuda.is_available():
             self.test_heteroskedastic_likelihood(cuda=True)
+
+    def test_condition_on_observations(self, cuda=False):
+        with self.assertRaises(NotImplementedError):
+            super().test_condition_on_observations(cuda=cuda)
+
+    def test_fantasize(self, cuda=False):
+        with self.assertRaises(NotImplementedError):
+            super().test_fantasize(cuda=cuda)

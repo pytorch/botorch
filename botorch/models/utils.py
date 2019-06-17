@@ -78,9 +78,10 @@ def multioutput_to_batch_mode_transform(
 
 
 def add_output_dim(X: Tensor, original_batch_shape: torch.Size) -> Tuple[Tensor, int]:
-    r"""Inserts the output dimension at the correct location. The trailing batch
-        dimensions of X must match the original batch dimensions of the training
-        inputs, but can also include extra batch dimensions.
+    r"""Insert the output dimension at the correct location.
+
+    The trailing batch dimensions of X must match the original batch dimensions
+    of the training inputs, but can also include extra batch dimensions.
 
     Args:
         X: A `(new_batch_shape) x (original_batch_shape) x n x d` tensor of features.

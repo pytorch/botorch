@@ -6,7 +6,7 @@ r"""
 Model List GP Regression models.
 """
 
-import typing  # noqa F401
+from typing import Any
 
 from gpytorch.models import IndependentModelList
 from torch import Tensor
@@ -41,53 +41,48 @@ class ModelListGP(IndependentModelList, ModelListGPyTorchModel):
         """
         super().__init__(*gp_models)
 
-    def get_fantasy_model(
-        self, inputs: Tensor, targets: Tensor, **kwargs
+    def condition_on_observations(
+        self, X: Tensor, Y: Tensor, **kwargs: Any
     ) -> "ModelListGP":
-        r"""Construct a fantasy model.
-
-        This method wraps gpytorch's `IndependentModelList.get_fantasy_model`
-        method to provide an API consistent with that of BoTorch's batched
-        multi-output GP models.
+        r"""Condition the model on new observations.
 
         Args:
-            inputs: A `batch_shape x m x d` or
-                `f_batch_shape x batch_shape x m x d`-dim Tensor of inputs for the
-                fantasy observations, where `f_batch_shape` are fantasy batch
-                dimensions. Note: when using the same inputs for all fantasies,
-                inputs should be `batch_shape x m x d` to avoid recomputing the
-                repeated blocks of the covariance matrix. Additionally, if provided,
-                the "noise" keyword argument should map to a `batch_shape x m`-dim
-                Tensor of observed measurement noise for fastest performance.
-            targets: `batch_shape x m x o` or
-                `f_batch_shape x batch_shape x m x o`-dim Tensor of fantasy
-                observations.
+            X: A `batch_shape x m x d`-dim Tensor, where `d` is the dimension of
+                the feature space, `m` is the number of points per batch, and
+                `batch_shape` is the batch shape (must be compatible with the
+                batch shape of the model).
+            Y: A `batch_shape' x m x (o)`-dim Tensor, where `o` is the number of
+                model outputs, `m` is the number of points per batch, and
+                `batch_shape'` is the batch shape of the observations.
+                `batch_shape'` must be broadcastable to `batch_shape` using
+                standard broadcasting semantics. If `Y` has fewer batch dimensions
+                than `X`, its is assumed that the missing batch dimensions are
+                the same for all `Y`.
 
         Returns:
-            A `ModelListGP`, where the `i`-th model has `n_i + m` training examples,
-            where the `m` fantasy examples have been added and all test-time caches
-            have been updated.
+            A `ModelListGPyTorchModel` representing the original model
+            conditioned on the new observations `(X, Y)` (and possibly noise
+            observations passed in via kwargs). Here the `i`-th model has
+            `n_i + m` training examples, where the `m` training examples have
+            been added and all test-time caches have been updated.
         """
-        inputs_ = [inputs] * self.num_outputs
-        if targets.shape[-1] != self.num_outputs:
+        inputs = [X] * self.num_outputs
+        if Y.shape[-1] != self.num_outputs:
             raise ValueError(
-                "Incorrect number of outputs for fantasy observations. "
-                f"Received {targets.shape[-1]} observation outputs, but "
-                f"model has {self.num_outputs} outputs."
+                "Incorrect number of outputs for observations. Received "
+                f"{Y.shape[-1]} observation outputs, but model has "
+                f"{self.num_outputs} outputs."
             )
-        targets_ = [targets[..., i] for i in range(targets.shape[-1])]
+        targets = [Y[..., i] for i in range(Y.shape[-1])]
         if "noise" in kwargs:
             noise = kwargs.pop("noise")
             if noise.shape[-1] != self.num_outputs:
                 raise ValueError(
-                    "Incorrect number of outputs for fantasy noise. "
+                    "Incorrect number of outputs for noise observations. "
                     f"Received {noise.shape[-1]} observation outputs, but "
                     f"model has {self.num_outputs} outputs."
                 )
-            kwargs_ = {
-                **kwargs,
-                "noise": [noise[..., i] for i in range(targets.shape[-1])],
-            }
+            kwargs_ = {**kwargs, "noise": [noise[..., i] for i in range(Y.shape[-1])]}
         else:
             kwargs_ = kwargs
-        return super().get_fantasy_model(inputs_, targets_, **kwargs_)
+        return super().get_fantasy_model(inputs, targets, **kwargs_)
