@@ -7,7 +7,7 @@ Gaussian Process Regression models based on GPyTorch models.
 """
 
 from copy import deepcopy
-from typing import Optional
+from typing import Any, Optional
 
 import torch
 from gpytorch.constraints.constraints import GreaterThan
@@ -27,6 +27,7 @@ from gpytorch.priors.smoothed_box_prior import SmoothedBoxPrior
 from gpytorch.priors.torch_priors import GammaPrior
 from torch import Tensor
 
+from ..sampling.samplers import MCSampler
 from .gpytorch import BatchedMultiOutputGPyTorchModel
 from .utils import multioutput_to_batch_mode_transform
 
@@ -66,7 +67,7 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
 
         Example:
             >>> train_X = torch.rand(20, 2)
-            >>> train_Y = torch.sin(train_X[:, 0]]) + torch.cos(train_X[:, 1])
+            >>> train_Y = torch.sin(train_X[:, 0]) + torch.cos(train_X[:, 1])
             >>> model = SingleTaskGP(train_X, train_Y)
         """
         ard_num_dims = train_X.shape[-1]
@@ -165,6 +166,48 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         )
         self.to(train_X)
 
+    def fantasize(
+        self,
+        X: Tensor,
+        sampler: MCSampler,
+        observation_noise: bool = True,
+        **kwargs: Any,
+    ) -> "FixedNoiseGP":
+        r"""Construct a fantasy model.
+
+        Constructs a fantasy model in the following fashion:
+        (1) compute the model posterior at `X` (if `observation_noise=True`,
+        this includes observation noise, which is taken as the mean across
+        the observation noise in the training data).
+        (2) sample from this posterior (using `sampler`) to generate "fake"
+        observations.
+        (3) condition the model on the new fake observations.
+
+        Args:
+            X: A `batch_shape x m x d`-dim Tensor, where `d` is the dimension of
+                the feature space, `m` is the number of points per batch, and
+                `batch_shape` is the batch shape (must be compatible with the
+                batch shape of the model).
+            sampler: The sampler used for sampling from the posterior at `X`.
+            observation_noise: If True, include the mean across the observation
+                noise in the training data as observation noise in the posterior
+                from which the samples are drawn.
+
+        Returns:
+            The constructed fantasy model.
+        """
+        post_X = self.posterior(X, observation_noise=observation_noise, **kwargs)
+        Y_fantasized = sampler(post_X)  # num_fantasies x batch_shape x m x o
+        # Use the mean of the previous noise values (TODO: be smarter here).
+        # noise should be batch_shape x q x o when X is batch_shape x q x d, and
+        # Y_fantasized is num_fantasies x batch_shape x q x o.
+        noise_shape = Y_fantasized.shape[1:]
+        if noise_shape[-1] == 1:
+            # If single output, do not include an output dimension.
+            noise_shape = noise_shape[:-1]
+        noise = self.likelihood.noise.mean().expand(noise_shape)
+        return self.condition_on_observations(X=X, Y=Y_fantasized, noise=noise)
+
     def forward(self, x: Tensor) -> MultivariateNormal:
         mean_x = self.mean_module(x)
         covar_x = self.covar_module(x)
@@ -221,3 +264,8 @@ class HeteroskedasticSingleTaskGP(SingleTaskGP):
         likelihood = _GaussianLikelihoodBase(HeteroskedasticNoise(noise_model))
         super().__init__(train_X=train_X, train_Y=train_Y, likelihood=likelihood)
         self.to(train_X)
+
+    def condition_on_observations(
+        self, X: Tensor, Y: Tensor, **kwargs: Any
+    ) -> "HeteroskedasticSingleTaskGP":
+        raise NotImplementedError

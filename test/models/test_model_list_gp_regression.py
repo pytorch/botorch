@@ -88,27 +88,27 @@ class TestModelListGP(unittest.TestCase):
             self.assertIsInstance(posterior, GPyTorchPosterior)
             self.assertIsInstance(posterior.mvn, MultivariateNormal)
 
-            # test get_fantasy_model
+            # test condition_on_observations
             f_x = torch.rand(2, 1, **tkwargs)
             f_y = torch.rand(2, 2, **tkwargs)
-            fantasy_model = model.get_fantasy_model(f_x, f_y)
-            self.assertIsInstance(fantasy_model, ModelListGP)
+            cm = model.condition_on_observations(f_x, f_y)
+            self.assertIsInstance(cm, ModelListGP)
 
-            # test get_fantasy_model batched
+            # test condition_on_observations batched
             f_x = torch.rand(3, 2, 1, **tkwargs)
             f_y = torch.rand(3, 2, 2, **tkwargs)
-            fantasy_model = model.get_fantasy_model(f_x, f_y)
-            self.assertIsInstance(fantasy_model, ModelListGP)
+            cm = model.condition_on_observations(f_x, f_y)
+            self.assertIsInstance(cm, ModelListGP)
 
-            # test get_fantasy_model batched (fast fantasies)
+            # test condition_on_observations batched (fast fantasies)
             f_x = torch.rand(2, 1, **tkwargs)
             f_y = torch.rand(3, 2, 2, **tkwargs)
-            fantasy_model = model.get_fantasy_model(f_x, f_y)
-            self.assertIsInstance(fantasy_model, ModelListGP)
+            cm = model.condition_on_observations(f_x, f_y)
+            self.assertIsInstance(cm, ModelListGP)
 
-            # test get_fantasy_model (incorrect input shape error)
+            # test condition_on_observations (incorrect input shape error)
             with self.assertRaises(ValueError):
-                model.get_fantasy_model(f_x, torch.rand(3, 2, 3, **tkwargs))
+                model.condition_on_observations(f_x, torch.rand(3, 2, 3, **tkwargs))
 
     def test_ModelListGP_cuda(self):
         if torch.cuda.is_available():
@@ -149,35 +149,37 @@ class TestModelListGP(unittest.TestCase):
             self.assertIsInstance(posterior, GPyTorchPosterior)
             self.assertIsInstance(posterior.mvn, MultivariateNormal)
 
-            # test get_fantasy_model
+            # test condition_on_observations
             f_x = torch.rand(2, 1, **tkwargs)
             f_y = torch.rand(2, 2, **tkwargs)
             noise = 0.1 + 0.1 * torch.rand_like(f_y)
-            fantasy_model = model.get_fantasy_model(f_x, f_y, noise=noise)
-            self.assertIsInstance(fantasy_model, ModelListGP)
+            cm = model.condition_on_observations(f_x, f_y, noise=noise)
+            self.assertIsInstance(cm, ModelListGP)
 
-            # test get_fantasy_model batched
+            # test condition_on_observations batched
             f_x = torch.rand(3, 2, 1, **tkwargs)
             f_y = torch.rand(3, 2, 2, **tkwargs)
             noise = 0.1 + 0.1 * torch.rand_like(f_y)
-            fantasy_model = model.get_fantasy_model(f_x, f_y, noise=noise)
-            self.assertIsInstance(fantasy_model, ModelListGP)
+            cm = model.condition_on_observations(f_x, f_y, noise=noise)
+            self.assertIsInstance(cm, ModelListGP)
 
-            # test get_fantasy_model batched (fast fantasies)
+            # test condition_on_observations batched (fast fantasies)
             f_x = torch.rand(2, 1, **tkwargs)
             f_y = torch.rand(3, 2, 2, **tkwargs)
             noise = 0.1 + 0.1 * torch.rand(2, 2, **tkwargs)
-            fantasy_model = model.get_fantasy_model(f_x, f_y, noise=noise)
-            self.assertIsInstance(fantasy_model, ModelListGP)
+            cm = model.condition_on_observations(f_x, f_y, noise=noise)
+            self.assertIsInstance(cm, ModelListGP)
 
-            # test get_fantasy_model (incorrect input shape error)
+            # test condition_on_observations (incorrect input shape error)
             with self.assertRaises(ValueError):
-                model.get_fantasy_model(
+                model.condition_on_observations(
                     f_x, torch.rand(3, 2, 3, **tkwargs), noise=noise
                 )
-            # test get_fantasy_model (incorrect noise shape error)
+            # test condition_on_observations (incorrect noise shape error)
             with self.assertRaises(ValueError):
-                model.get_fantasy_model(f_x, f_y, noise=torch.rand(2, 3, **tkwargs))
+                model.condition_on_observations(
+                    f_x, f_y, noise=torch.rand(2, 3, **tkwargs)
+                )
 
     def test_ModelListGP_fixed_noise_cuda(self):
         if torch.cuda.is_available():

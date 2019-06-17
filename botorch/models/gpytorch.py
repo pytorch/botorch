@@ -19,7 +19,6 @@ from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNorm
 from gpytorch.lazy import lazify
 from torch import Tensor
 
-from ..exceptions.errors import UnsupportedError
 from ..posteriors.gpytorch import GPyTorchPosterior
 from .model import Model
 from .utils import _make_X_full, add_output_dim, multioutput_to_batch_mode_transform
@@ -41,10 +40,10 @@ class GPyTorchModel(Model, ABC):
             X: A `(batch_shape) x q x d`-dim Tensor, where `d` is the dimension of the
                 feature space and `q` is the number of points considered jointly.
             observation_noise: If True, add observation noise to the posterior.
-            detach_test_caches: If True, detach GPyTorch test caches during
-                computation of the posterior. Required for being able to compute
+            propagate_grads: If True, do not detach GPyTorch's test caches when
+                computing the posterior. Required for being able to compute
                 derivatives with respect to training inputs at test time (used
-                e.g. by qNoisyExpectedImprovement). Defaults to `True`.
+                e.g. by qNoisyExpectedImprovement). Defaults to `False`.
 
         Returns:
             A `GPyTorchPosterior` object, representing a batch of `b` joint
@@ -52,7 +51,7 @@ class GPyTorchModel(Model, ABC):
             `observation_noise=True`.
         """
         self.eval()  # make sure model is in eval mode
-        detach_test_caches = kwargs.get("detach_test_caches", True)
+        detach_test_caches = not kwargs.get("propagate_grads", False)
         with ExitStack() as es:
             es.enter_context(settings.debug(False))
             es.enter_context(settings.fast_pred_var())
@@ -62,6 +61,37 @@ class GPyTorchModel(Model, ABC):
                 # TODO: Allow passing in observation noise via kwarg
                 mvn = self.likelihood(mvn, X)
             return GPyTorchPosterior(mvn=mvn)
+
+    def condition_on_observations(self, X: Tensor, Y: Tensor, **kwargs: Any) -> "Model":
+        r"""Condition the model on new observations.
+
+        Args:
+            X: A `batch_shape x n x d`-dim Tensor, where `d` is the dimension of
+                the feature space, `n` is the number of points per batch, and
+                `batch_shape` is the batch shape (must be compatible with the
+                batch shape of the model).
+            Y: A `batch_shape' x n x (o)`-dim Tensor, where `o` is the number of
+                model outputs, `n` is the number of points per batch, and
+                `batch_shape'` is the batch shape of the observations.
+                `batch_shape'` must be broadcastable to `batch_shape` using
+                standard broadcasting semantics. If `Y` has fewer batch dimensions
+                than `X`, its is assumed that the missing batch dimensions are
+                the same for all `Y`.
+
+        Returns:
+            A `Model` object of the same type, representing the original model
+            conditioned on the new observations `(X, Y)` (and possibly noise
+            observations passed in via kwargs).
+
+        Example:
+            >>> train_X = torch.rand(20, 2)
+            >>> train_Y = torch.sin(train_X[:, 0]) + torch.cos(train_X[:, 1])
+            >>> model = SingleTaskGP(train_X, train_Y)
+            >>> new_X = torch.rand(5, 2)
+            >>> new_Y = torch.sin(new_X[:, 0]) + torch.cos(new_X[:, 1])
+            >>> model = model.condition_on_observations(X=new_X, Y=new_Y)
+        """
+        return self.get_fantasy_model(inputs=X, targets=Y.squeeze(dim=-1), **kwargs)
 
 
 class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
@@ -132,10 +162,10 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
                 model's outputs are required for optimization. If omitted,
                 computes the posterior over all model outputs.
             observation_noise: If True, add observation noise to the posterior.
-            detach_test_caches: If True, detach GPyTorch test caches during
-                computation of the posterior. Required for being able to compute
+            propagate_grads: If True, do not detach GPyTorch's test caches when
+                computing of the posterior. Required for being able to compute
                 derivatives with respect to training inputs at test time (used
-                e.g. by qNoisyExpectedImprovement). Defaults to `True`.
+                e.g. by qNoisyExpectedImprovement). Defaults to `False`.
 
         Returns:
             A `GPyTorchPosterior` object, representing `batch_shape` joint
@@ -144,7 +174,7 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
             `observation_noise=True`.
         """
         self.eval()  # make sure model is in eval mode
-        detach_test_caches = kwargs.get("detach_test_caches", True)
+        detach_test_caches = not kwargs.get("propagate_grads", False)
         with ExitStack() as es:
             es.enter_context(settings.debug(False))
             es.enter_context(settings.fast_pred_var())
@@ -169,52 +199,53 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
                 mvn = MultitaskMultivariateNormal.from_independent_mvns(mvns=mvns)
         return GPyTorchPosterior(mvn=mvn)
 
-    def get_fantasy_model(
-        self, inputs: Tensor, targets: Tensor, **kwargs
+    def condition_on_observations(
+        self, X: Tensor, Y: Tensor, **kwargs: Any
     ) -> "BatchedMultiOutputGPyTorchModel":
-        r"""Wrapper method around `gpytorch.models.exact_gp.ExactGP.get_fantasy_model`.
-
-        This method adapts `get_fantasy_model` to support batched multi-output GPs.
+        r"""Condition the model on new observations.
 
         Args:
-            inputs: A `batch_shape x m x d` or
-                `f_batch_shape x batch_shape x m x d`-dim Tensor of inputs for the
-                fantasy observations, where `f_batch_shape` are fantasy batch
-                dimensions. Note: when using the same inputs for all fantasies,
-                inputs should be `batch_shape x m x d` to avoid recomputing the
-                repeated blocks of the covariance matrix. Additionally, if provided,
-                the "noise" keyword argument should map to a `batch_shape x m`-dim
-                Tensor of observed measurement noise for fastest performance.
-            targets: `batch_shape x m x o` or
-                `f_batch_shape x batch_shape x m x o`-dim Tensor of fantasy
-                observations.
+            X: A `batch_shape x m x d`-dim Tensor, where `d` is the dimension of
+                the feature space, `m` is the number of points per batch, and
+                `batch_shape` is the batch shape (must be compatible with the
+                batch shape of the model).
+            Y: A `batch_shape' x m x (o)`-dim Tensor, where `o` is the number of
+                model outputs, `m` is the number of points per batch, and
+                `batch_shape'` is the batch shape of the observations.
+                `batch_shape'` must be broadcastable to `batch_shape` using
+                standard broadcasting semantics. If `Y` has fewer batch dimensions
+                than `X`, its is assumed that the missing batch dimensions are
+                the same for all `Y`.
 
         Returns:
-            A `BatchedMultiOutputGPyTorchModel` with `n + m` training examples,
-            where the `m` fantasy examples have been added and all test-time
-            caches have been updated.
+            A `BatchedMultiOutputGPyTorchModel` object of the same type with
+            `n + m` training examples, representing the original model
+            conditioned on the new observations `(X, Y)` (and possibly noise
+            observations passed in via kwargs).
+
+
+        Example:
+            >>> train_X = torch.rand(20, 2)
+            >>> train_Y = torch.cat(
+            >>>     [torch.sin(train_X[:, 0]), torch.cos(train_X[:, 1])], -1
+            >>> )
+            >>> model = SingleTaskGP(train_X, train_Y)
+            >>> new_X = torch.rand(5, 2)
+            >>> new_Y = torch.cat([torch.sin(new_X[:, 0]), torch.cos(new_X[:, 1])], -1)
+            >>> model = model.condition_on_observations(X=new_X, Y=new_Y)
         """
         inputs, targets, noise = multioutput_to_batch_mode_transform(
-            train_X=inputs,
-            train_Y=targets,
+            train_X=X,
+            train_Y=Y,
             num_outputs=self._num_outputs,
             train_Yvar=kwargs.get("noise", None),
         )
+        fant_kwargs = {k: v for k, v in kwargs.items() if k != "propagate_grads"}
         if noise is not None:
-            fant_kwargs = kwargs.copy()
             fant_kwargs.update({"noise": noise})
-        else:
-            fant_kwargs = kwargs
-        try:
-            fantasy_model = super().get_fantasy_model(
-                inputs=inputs, targets=targets, **fant_kwargs
-            )
-        except AttributeError as e:
-            if hasattr(super(), "get_fantasy_model"):
-                raise e
-            raise UnsupportedError(
-                "Non-Exact GPs currently do not support fantasy models."
-            )
+        fantasy_model = super().condition_on_observations(
+            X=inputs, Y=targets, **fant_kwargs
+        )
         fantasy_model._input_batch_shape = fantasy_model.train_targets.shape[
             : (-1 if self._num_outputs == 1 else -2)
         ]
@@ -253,10 +284,10 @@ class ModelListGPyTorchModel(GPyTorchModel, ABC):
                 model's outputs are required for optimization. If omitted,
                 computes the posterior over all model outputs.
             observation_noise: If True, add observation noise to the posterior.
-            detach_test_caches: If True, detach GPyTorch test caches during
-                computation of the posterior. Required for being able to compute
+            propagate_grads: If True, do not detach GPyTorch's test caches when
+                computing of the posterior. Required for being able to compute
                 derivatives with respect to training inputs at test time (used
-                e.g. by qNoisyExpectedImprovement).
+                e.g. by qNoisyExpectedImprovement). Defaults to `False`.
 
         Returns:
             A `GPyTorchPosterior` object, representing `batch_shape` joint
@@ -264,7 +295,7 @@ class ModelListGPyTorchModel(GPyTorchModel, ABC):
             `output_indices` each. Includes measurement noise if
             `observation_noise=True`.
         """
-        detach_test_caches = kwargs.get("detach_test_caches", True)
+        detach_test_caches = not kwargs.get("propagate_grads", False)
         self.eval()  # make sure model is in eval mode
         with ExitStack() as es:
             es.enter_context(settings.debug(False))
@@ -288,6 +319,14 @@ class ModelListGPyTorchModel(GPyTorchModel, ABC):
             return GPyTorchPosterior(
                 mvn=MultitaskMultivariateNormal.from_independent_mvns(mvns=mvns)
             )
+
+    def condition_on_observations(
+        self, X: Tensor, Y: Tensor, **kwargs: Any
+    ) -> "ModelListGPyTorchModel":
+        raise NotImplementedError(
+            "`condition_on_observations` not implemented in "
+            "`ModelListGPyTorchModel` base class"
+        )
 
 
 class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
@@ -316,10 +355,10 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
                 model's outputs are required for optimization. If omitted,
                 computes the posterior over all model outputs.
             observation_noise: If True, add observation noise to the posterior.
-            detach_test_caches: If True, detach GPyTorch test caches during
-                computation of the posterior. Required for being able to compute
+            propagate_grads: If True, do not detach GPyTorch's test caches when
+                computing of the posterior. Required for being able to compute
                 derivatives with respect to training inputs at test time (used
-                e.g. by qNoisyExpectedImprovement).
+                e.g. by qNoisyExpectedImprovement). Defaults to `False`.
 
         Returns:
             A `GPyTorchPosterior` object, representing `batch_shape` joint
@@ -336,7 +375,7 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
         X_full = _make_X_full(X=X, output_indices=output_indices, tf=self._task_feature)
 
         self.eval()  # make sure model is in eval mode
-        detach_test_caches = kwargs.get("detach_test_caches", True)
+        detach_test_caches = not kwargs.get("propagate_grads", False)
         with ExitStack() as es:
             es.enter_context(settings.debug(False))
             es.enter_context(settings.fast_pred_var())
