@@ -8,7 +8,6 @@ Utilities for acquisition functions.
 
 from typing import Callable, Optional
 
-import torch
 from torch import Tensor
 
 from . import analytic, monte_carlo
@@ -64,7 +63,11 @@ def get_acquisition_function(
     if acquisition_function_name == "qEI":
         best_f = objective(model.posterior(X_observed).mean).max().item()
         return monte_carlo.qExpectedImprovement(
-            model=model, best_f=best_f, sampler=sampler, objective=objective
+            model=model,
+            best_f=best_f,
+            sampler=sampler,
+            objective=objective,
+            X_pending=X_pending,
         )
     elif acquisition_function_name == "qPI":
         best_f = objective(model.posterior(X_observed).mean).max().item()
@@ -73,25 +76,30 @@ def get_acquisition_function(
             best_f=best_f,
             sampler=sampler,
             objective=objective,
+            X_pending=X_pending,
             tau=kwargs.get("tau", 1e-3),
         )
     elif acquisition_function_name == "qNEI":
-        if X_pending is None:
-            X_baseline = X_observed
-        else:
-            X_baseline = torch.cat([X_observed, X_pending], dim=-2)
         return monte_carlo.qNoisyExpectedImprovement(
-            model=model, X_baseline=X_baseline, sampler=sampler, objective=objective
+            model=model,
+            X_baseline=X_observed,
+            sampler=sampler,
+            objective=objective,
+            X_pending=X_pending,
         )
     elif acquisition_function_name == "qSR":
         return monte_carlo.qSimpleRegret(
-            model=model, sampler=sampler, objective=objective
+            model=model, sampler=sampler, objective=objective, X_pending=X_pending
         )
     elif acquisition_function_name == "qUCB":
         if "beta" not in kwargs:
             raise ValueError("`beta` must be specified in kwargs for qUCB.")
         return monte_carlo.qUpperConfidenceBound(
-            model=model, beta=kwargs["beta"], sampler=sampler, objective=objective
+            model=model,
+            beta=kwargs["beta"],
+            sampler=sampler,
+            objective=objective,
+            X_pending=X_pending,
         )
     raise NotImplementedError(
         f"Unknown acquisition function {acquisition_function_name}"

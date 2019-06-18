@@ -42,7 +42,11 @@ class TestGetAcquisitionFunction(unittest.TestCase):
         self.assertTrue(acqf == mock_acqf.return_value)
         best_f = self.objective(self.model.posterior(self.X_observed).mean).max().item()
         mock_acqf.assert_called_once_with(
-            model=self.model, best_f=best_f, sampler=mock.ANY, objective=self.objective
+            model=self.model,
+            best_f=best_f,
+            sampler=mock.ANY,
+            objective=self.objective,
+            X_pending=self.X_pending,
         )
         args, kwargs = mock_acqf.call_args
         self.assertEqual(args, ())
@@ -50,6 +54,7 @@ class TestGetAcquisitionFunction(unittest.TestCase):
         self.assertIsInstance(sampler, SobolQMCNormalSampler)
         self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
         self.assertEqual(sampler.seed, 1)
+        self.assertTrue(torch.equal(kwargs["X_pending"], self.X_pending))
 
     @mock.patch(f"{monte_carlo.__name__}.qProbabilityOfImprovement")
     def test_GetQPI(self, mock_acqf):
@@ -70,6 +75,7 @@ class TestGetAcquisitionFunction(unittest.TestCase):
             best_f=best_f,
             sampler=mock.ANY,
             objective=self.objective,
+            X_pending=self.X_pending,
             tau=1e-3,
         )
         args, kwargs = mock_acqf.call_args
@@ -78,6 +84,7 @@ class TestGetAcquisitionFunction(unittest.TestCase):
         self.assertIsInstance(sampler, SobolQMCNormalSampler)
         self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
         self.assertEqual(sampler.seed, 1)
+        self.assertTrue(torch.equal(kwargs["X_pending"], self.X_pending))
         # test with different tau, non-qmc
         acqf = utils.get_acquisition_function(
             acquisition_function_name="qPI",
@@ -98,6 +105,7 @@ class TestGetAcquisitionFunction(unittest.TestCase):
         self.assertIsInstance(sampler, IIDNormalSampler)
         self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
         self.assertEqual(sampler.seed, 2)
+        self.assertTrue(torch.equal(kwargs["X_pending"], self.X_pending))
 
     @mock.patch(f"{monte_carlo.__name__}.qNoisyExpectedImprovement")
     def test_GetQNEI(self, mock_acqf):
@@ -115,8 +123,8 @@ class TestGetAcquisitionFunction(unittest.TestCase):
         self.assertTrue(mock_acqf.call_count, 1)
         args, kwargs = mock_acqf.call_args
         self.assertEqual(args, ())
-        X_baseline_exp = torch.cat([self.X_observed, self.X_pending], dim=-2)
-        self.assertTrue(torch.equal(kwargs["X_baseline"], X_baseline_exp))
+        self.assertTrue(torch.equal(kwargs["X_baseline"], self.X_observed))
+        self.assertTrue(torch.equal(kwargs["X_pending"], self.X_pending))
         sampler = kwargs["sampler"]
         self.assertIsInstance(sampler, SobolQMCNormalSampler)
         self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
@@ -136,6 +144,7 @@ class TestGetAcquisitionFunction(unittest.TestCase):
         args, kwargs = mock_acqf.call_args
         self.assertEqual(args, ())
         self.assertTrue(torch.equal(kwargs["X_baseline"], self.X_observed))
+        self.assertEqual(kwargs["X_pending"], None)
         sampler = kwargs["sampler"]
         self.assertIsInstance(sampler, IIDNormalSampler)
         self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
@@ -156,7 +165,10 @@ class TestGetAcquisitionFunction(unittest.TestCase):
         )
         self.assertTrue(acqf == mock_acqf.return_value)
         mock_acqf.assert_called_once_with(
-            model=self.model, sampler=mock.ANY, objective=self.objective
+            model=self.model,
+            sampler=mock.ANY,
+            objective=self.objective,
+            X_pending=self.X_pending,
         )
         args, kwargs = mock_acqf.call_args
         self.assertEqual(args, ())
@@ -164,6 +176,7 @@ class TestGetAcquisitionFunction(unittest.TestCase):
         self.assertIsInstance(sampler, SobolQMCNormalSampler)
         self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
         self.assertEqual(sampler.seed, 1)
+        self.assertTrue(torch.equal(kwargs["X_pending"], self.X_pending))
         # test with non-qmc
         acqf = utils.get_acquisition_function(
             acquisition_function_name="qSR",
@@ -182,6 +195,7 @@ class TestGetAcquisitionFunction(unittest.TestCase):
         self.assertIsInstance(sampler, IIDNormalSampler)
         self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
         self.assertEqual(sampler.seed, 2)
+        self.assertTrue(torch.equal(kwargs["X_pending"], self.X_pending))
 
     @mock.patch(f"{monte_carlo.__name__}.qUpperConfidenceBound")
     def test_GetQUCB(self, mock_acqf):
@@ -208,7 +222,11 @@ class TestGetAcquisitionFunction(unittest.TestCase):
         )
         self.assertTrue(acqf == mock_acqf.return_value)
         mock_acqf.assert_called_once_with(
-            model=self.model, beta=0.3, sampler=mock.ANY, objective=self.objective
+            model=self.model,
+            beta=0.3,
+            sampler=mock.ANY,
+            objective=self.objective,
+            X_pending=self.X_pending,
         )
         args, kwargs = mock_acqf.call_args
         self.assertEqual(args, ())
@@ -216,6 +234,7 @@ class TestGetAcquisitionFunction(unittest.TestCase):
         self.assertIsInstance(sampler, SobolQMCNormalSampler)
         self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
         self.assertEqual(sampler.seed, 1)
+        self.assertTrue(torch.equal(kwargs["X_pending"], self.X_pending))
         # test with different tau, non-qmc
         acqf = utils.get_acquisition_function(
             acquisition_function_name="qUCB",
@@ -236,6 +255,7 @@ class TestGetAcquisitionFunction(unittest.TestCase):
         self.assertIsInstance(sampler, IIDNormalSampler)
         self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
         self.assertEqual(sampler.seed, 2)
+        self.assertTrue(torch.equal(kwargs["X_pending"], self.X_pending))
 
     def test_GetUnknownAcquisitionFunction(self):
         with self.assertRaises(NotImplementedError):

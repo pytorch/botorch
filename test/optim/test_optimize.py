@@ -3,10 +3,10 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 import warnings
+from typing import Optional
 from unittest import TestCase, mock
 
 import torch
-from botorch.exceptions.errors import UnsupportedError
 from botorch.exceptions.warnings import BadInitialCandidatesWarning
 from botorch.optim.optimize import (
     gen_batch_initial_conditions,
@@ -17,13 +17,15 @@ from torch import Tensor
 
 
 class MockAcquisitionFunction:
-    def __init__(self, has_X_baseline_attr=True):
-        if has_X_baseline_attr:
-            self.X_baseline = None
+    def __init__(self):
         self.model = None
+        self.X_pending = None
 
     def __call__(self, X):
         return X[..., 0].max(dim=-1)[0]
+
+    def set_X_pending(self, X_pending: Optional[Tensor] = None):
+        self.X_pending = X_pending
 
 
 def rounding_func(X: Tensor) -> Tensor:
@@ -135,17 +137,6 @@ class TestSequentialOptimize(TestCase):
             call_args_list = mock_joint_optimize.call_args_list[-q:]
             for i in range(q):
                 self.assertEqual(call_args_list[i][1], expected_call_kwargs)
-
-            # test that error is raised for acquisition functions without X_baseline
-            mock_acq_function = MockAcquisitionFunction(has_X_baseline_attr=False)
-            with self.assertRaises(UnsupportedError):
-                sequential_optimize(
-                    acq_function=mock_acq_function,
-                    bounds=bounds,
-                    q=q,
-                    num_restarts=num_restarts,
-                    raw_samples=raw_samples,
-                )
 
     def test_sequential_optimize_cuda(self):
         if torch.cuda.is_available():

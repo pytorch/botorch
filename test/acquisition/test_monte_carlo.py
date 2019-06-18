@@ -3,6 +3,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 import unittest
+import warnings
 
 import torch
 from botorch.acquisition.monte_carlo import (
@@ -13,6 +14,7 @@ from botorch.acquisition.monte_carlo import (
     qSimpleRegret,
     qUpperConfidenceBound,
 )
+from botorch.exceptions import BotorchWarning
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.mock import MockModel, MockPosterior
 
@@ -73,6 +75,21 @@ class TestQExpectedImprovement(unittest.TestCase):
             bs = acqf.sampler.base_samples.clone()
             acqf(X)
             self.assertFalse(torch.equal(acqf.sampler.base_samples, bs))
+
+            # basic test for X_pending and warning
+            acqf.set_X_pending()
+            self.assertIsNone(acqf.X_pending)
+            acqf.set_X_pending(None)
+            self.assertIsNone(acqf.X_pending)
+            acqf.set_X_pending(X)
+            self.assertEqual(acqf.X_pending, X)
+            res = acqf(X)
+            X2 = torch.zeros(1, 1, 1, device=device, dtype=dtype, requires_grad=True)
+            with warnings.catch_warnings(record=True) as ws:
+                acqf.set_X_pending(X2)
+                self.assertEqual(acqf.X_pending, X2)
+                self.assertEqual(len(ws), 1)
+                self.assertTrue(issubclass(ws[-1].category, BotorchWarning))
 
     def test_q_expected_improvement_cuda(self):
         if torch.cuda.is_available():
@@ -215,6 +232,30 @@ class TestQNoisyExpectedImprovement(unittest.TestCase):
             acqf(X)
             self.assertFalse(torch.equal(acqf.sampler.base_samples, bs))
 
+            # basic test for X_pending and warning
+            sampler = SobolQMCNormalSampler(num_samples=2)
+            samples_noisy_pending = torch.tensor(
+                [1.0, 0.0, 0.0], device=device, dtype=dtype
+            )
+            samples_noisy_pending = samples_noisy_pending.view(1, 3, 1)
+            mm_noisy_pending = MockModel(MockPosterior(samples=samples_noisy_pending))
+            acqf = qNoisyExpectedImprovement(
+                model=mm_noisy_pending, X_baseline=X_baseline, sampler=sampler
+            )
+            acqf.set_X_pending()
+            self.assertIsNone(acqf.X_pending)
+            acqf.set_X_pending(None)
+            self.assertIsNone(acqf.X_pending)
+            acqf.set_X_pending(X)
+            self.assertEqual(acqf.X_pending, X)
+            res = acqf(X)
+            X2 = torch.zeros(1, 1, 1, device=device, dtype=dtype, requires_grad=True)
+            with warnings.catch_warnings(record=True) as ws:
+                acqf.set_X_pending(X2)
+                self.assertEqual(acqf.X_pending, X2)
+                self.assertEqual(len(ws), 1)
+                self.assertTrue(issubclass(ws[-1].category, BotorchWarning))
+
     def test_q_noisy_expected_improvement_cuda(self):
         if torch.cuda.is_available():
             self.test_q_noisy_expected_improvement(cuda=True)
@@ -347,6 +388,21 @@ class TestQProbabilityOfImprovement(unittest.TestCase):
             acqf(X)
             self.assertFalse(torch.equal(acqf.sampler.base_samples, bs))
 
+            # basic test for X_pending and warning
+            acqf.set_X_pending()
+            self.assertIsNone(acqf.X_pending)
+            acqf.set_X_pending(None)
+            self.assertIsNone(acqf.X_pending)
+            acqf.set_X_pending(X)
+            self.assertEqual(acqf.X_pending, X)
+            res = acqf(X)
+            X2 = torch.zeros(1, 1, 1, device=device, dtype=dtype, requires_grad=True)
+            with warnings.catch_warnings(record=True) as ws:
+                acqf.set_X_pending(X2)
+                self.assertEqual(acqf.X_pending, X2)
+                self.assertEqual(len(ws), 1)
+                self.assertTrue(issubclass(ws[-1].category, BotorchWarning))
+
     def test_q_probability_of_improvement_cuda(self):
         if torch.cuda.is_available():
             self.test_q_probability_of_improvement(cuda=True)
@@ -471,6 +527,21 @@ class TestQSimpleRegret(unittest.TestCase):
             acqf(X)
             self.assertFalse(torch.equal(acqf.sampler.base_samples, bs))
 
+            # basic test for X_pending and warning
+            acqf.set_X_pending()
+            self.assertIsNone(acqf.X_pending)
+            acqf.set_X_pending(None)
+            self.assertIsNone(acqf.X_pending)
+            acqf.set_X_pending(X)
+            self.assertEqual(acqf.X_pending, X)
+            res = acqf(X)
+            X2 = torch.zeros(1, 1, 1, device=device, dtype=dtype, requires_grad=True)
+            with warnings.catch_warnings(record=True) as ws:
+                acqf.set_X_pending(X2)
+                self.assertEqual(acqf.X_pending, X2)
+                self.assertEqual(len(ws), 1)
+                self.assertTrue(issubclass(ws[-1].category, BotorchWarning))
+
     def test_q_simple_regret_cuda(self):
         if torch.cuda.is_available():
             self.test_q_simple_regret(cuda=True)
@@ -594,6 +665,21 @@ class TestQUpperConfidenceBound(unittest.TestCase):
             acqf(X)
             self.assertFalse(torch.equal(acqf.sampler.base_samples, bs))
 
+            # basic test for X_pending and warning
+            acqf.set_X_pending()
+            self.assertIsNone(acqf.X_pending)
+            acqf.set_X_pending(None)
+            self.assertIsNone(acqf.X_pending)
+            acqf.set_X_pending(X)
+            self.assertEqual(acqf.X_pending, X)
+            res = acqf(X)
+            X2 = torch.zeros(1, 1, 1, device=device, dtype=dtype, requires_grad=True)
+            with warnings.catch_warnings(record=True) as ws:
+                acqf.set_X_pending(X2)
+                self.assertEqual(acqf.X_pending, X2)
+                self.assertEqual(len(ws), 1)
+                self.assertTrue(issubclass(ws[-1].category, BotorchWarning))
+
     def test_q_upper_confidence_bound_cuda(self):
         if torch.cuda.is_available():
             self.test_q_upper_confidence_bound(cuda=True)
@@ -663,6 +749,21 @@ class TestQUpperConfidenceBound(unittest.TestCase):
             bs = acqf.sampler.base_samples.clone()
             acqf(X.expand(2, 1, 1))
             self.assertFalse(torch.equal(acqf.sampler.base_samples, bs))
+
+            # basic test for X_pending and warning
+            acqf.set_X_pending()
+            self.assertIsNone(acqf.X_pending)
+            acqf.set_X_pending(None)
+            self.assertIsNone(acqf.X_pending)
+            acqf.set_X_pending(X)
+            self.assertEqual(acqf.X_pending, X)
+            res = acqf(X)
+            X2 = torch.zeros(1, 1, 1, device=device, dtype=dtype, requires_grad=True)
+            with warnings.catch_warnings(record=True) as ws:
+                acqf.set_X_pending(X2)
+                self.assertEqual(acqf.X_pending, X2)
+                self.assertEqual(len(ws), 1)
+                self.assertTrue(issubclass(ws[-1].category, BotorchWarning))
 
     def test_q_upper_confidence_bound_batch_cuda(self):
         if torch.cuda.is_available():

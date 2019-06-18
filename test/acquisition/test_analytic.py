@@ -48,6 +48,8 @@ class TestExpectedImprovement(unittest.TestCase):
             ei = module(X)
             ei_expected = torch.tensor(0.6978, device=device, dtype=dtype)
             self.assertTrue(torch.allclose(ei, ei_expected, atol=1e-4))
+            with self.assertRaises(UnsupportedError):
+                module.set_X_pending(None)
 
     def test_expected_improvement_cuda(self, cuda=False):
         if torch.cuda.is_available():
