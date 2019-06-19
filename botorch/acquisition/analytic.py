@@ -39,6 +39,11 @@ class AnalyticAcquisitionFunction(AcquisitionFunction, ABC):
                 f" function of type {self.__class__.__name__}"
             )
 
+    def set_X_pending(self, X_pending: Optional[Tensor] = None) -> None:
+        raise UnsupportedError(
+            f"Analytic acquisition functions do not account for X_pending yet."
+        )
+
 
 class ExpectedImprovement(AnalyticAcquisitionFunction):
     r"""Single-outcome Expected Improvement (analytic).

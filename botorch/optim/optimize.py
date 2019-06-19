@@ -15,7 +15,7 @@ from torch import Tensor
 from ..acquisition import AcquisitionFunction
 from ..acquisition.analytic import AnalyticAcquisitionFunction
 from ..acquisition.utils import is_nonnegative
-from ..exceptions import BadInitialCandidatesWarning, UnsupportedError
+from ..exceptions import BadInitialCandidatesWarning
 from ..gen import gen_candidates_scipy, get_best_candidates
 from ..utils.sampling import draw_sobol_samples
 from .initializers import initialize_q_batch, initialize_q_batch_nonneg
@@ -36,7 +36,7 @@ def sequential_optimize(
     r"""Generate a set of candidates via sequential multi-start optimization.
 
     Args:
-        acq_function: The qNoisyExpectedImprovement acquisition function.
+        acq_function: An AcquisitionFunction
         bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.
         q: The number of candidates.
         num_restarts:  Number of starting points for multistart acquisition
@@ -65,14 +65,9 @@ def sequential_optimize(
         >>> bounds = torch.tensor([[0.], [1.]])
         >>> candidates = sequential_optimize(qEI, bounds, 2, 20, 500)
     """
-    if not hasattr(acq_function, "X_baseline"):
-        raise UnsupportedError(  # pyre-ignore: [16]
-            "Sequential Optimization is only supported for acquisition functions "
-            "with an `X_baseline` property."
-        )
     candidate_list = []
     candidates = torch.tensor([])
-    base_X_baseline = acq_function.X_baseline  # pyre-ignore: [16]
+    base_X_pending = acq_function.X_pending  # pyre-ignore: [16]
     for _ in range(q):
         candidate = joint_optimize(
             acq_function=acq_function,
@@ -90,13 +85,13 @@ def sequential_optimize(
             candidate = post_processing_func(candidate.view(-1)).view(*candidate_shape)
         candidate_list.append(candidate)
         candidates = torch.cat(candidate_list, dim=-2)
-        acq_function.X_baseline = (
-            torch.cat([base_X_baseline, candidates], dim=-2)
-            if base_X_baseline is not None
+        acq_function.set_X_pending(
+            torch.cat([base_X_pending, candidates], dim=-2)
+            if base_X_pending is not None
             else candidates
         )
-    # Reset acq_func to previous X_baseline state
-    acq_function.X_baseline = base_X_baseline
+    # Reset acq_func to previous X_pending state
+    acq_function.set_X_pending(base_X_pending)
     return candidates
 
 
@@ -263,7 +258,7 @@ def gen_batch_initial_conditions(
             if factor < max_factor:
                 factor += 1
     warnings.warn(
-        "Unable to find non-zero acquistion function values - initial conditions "
+        "Unable to find non-zero acquisition function values - initial conditions "
         "are being selected randomly.",
         BadInitialCandidatesWarning,
     )
