@@ -6,7 +6,6 @@ r"""
 Sampler modules to be used with MC-evaluated acquisition functions.
 """
 
-import random
 from abc import ABC, abstractmethod
 from typing import Optional
 
@@ -131,7 +130,7 @@ class IIDNormalSampler(MCSampler):
         self._sample_shape = torch.Size([num_samples])
         self.collapse_batch_dims = collapse_batch_dims
         self.resample = resample
-        self.seed = seed if seed is not None else random.randint(0, 1000000)
+        self.seed = seed if seed is not None else torch.randint(0, 1000000, (1,)).item()
 
     def _construct_base_samples(self, posterior: Posterior, shape: torch.Size) -> None:
         r"""Generate iid `N(0,1)` base samples (if necessary).
@@ -195,7 +194,7 @@ class SobolQMCNormalSampler(MCSampler):
         self._sample_shape = torch.Size([num_samples])
         self.collapse_batch_dims = collapse_batch_dims
         self.resample = resample
-        self.seed = seed if seed is not None else random.randint(0, 1_000_000)
+        self.seed = seed if seed is not None else torch.randint(0, 1000000, (1,)).item()
 
     def _construct_base_samples(self, posterior: Posterior, shape: torch.Size) -> None:
         r"""Generate quasi-random Normal base samples (if necessary).
