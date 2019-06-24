@@ -32,7 +32,7 @@ from .gpytorch import BatchedMultiOutputGPyTorchModel
 from .utils import multioutput_to_batch_mode_transform
 
 
-MIN_INFERRED_NOISE_LEVEL = 1e-6
+MIN_INFERRED_NOISE_LEVEL = 1e-4
 
 
 class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
