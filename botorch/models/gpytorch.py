@@ -185,6 +185,8 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
                     X=X, original_batch_shape=self._input_batch_shape
                 )
             mvn = self(X)
+            if observation_noise:
+                mvn = self.likelihood(mvn, X)
             mean_x = mvn.mean
             covar_x = mvn.covariance_matrix
             if self._num_outputs > 1:
