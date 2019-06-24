@@ -12,6 +12,7 @@ from botorch.models.gp_regression import (
     HeteroskedasticSingleTaskGP,
     SingleTaskGP,
 )
+from botorch.models.utils import add_output_dim
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling import SobolQMCNormalSampler
 from gpytorch.kernels import MaternKernel, ScaleKernel
@@ -82,20 +83,39 @@ class TestSingleTaskGP(unittest.TestCase):
                     # test posterior
                     # test non batch evaluation
                     X = torch.rand(batch_shape + torch.Size([3, 1]), **tkwargs)
+                    expected_mean_shape = batch_shape + torch.Size([3, num_outputs])
                     posterior = model.posterior(X)
                     self.assertIsInstance(posterior, GPyTorchPosterior)
-                    self.assertEqual(
-                        posterior.mean.shape, batch_shape + torch.Size([3, num_outputs])
+                    self.assertEqual(posterior.mean.shape, expected_mean_shape)
+                    # test adding observation noise
+                    posterior_pred = model.posterior(X, observation_noise=True)
+                    self.assertIsInstance(posterior_pred, GPyTorchPosterior)
+                    self.assertEqual(posterior_pred.mean.shape, expected_mean_shape)
+                    pvar = posterior_pred.variance
+                    pvar_exp = _get_pvar_expected(posterior, model, X, num_outputs)
+                    self.assertTrue(
+                        torch.allclose(pvar, pvar_exp, rtol=1e-4, atol=1e-06)
                     )
+
                     # test batch evaluation
                     X = torch.rand(
                         torch.Size([2]) + batch_shape + torch.Size([3, 1]), **tkwargs
                     )
+                    expected_mean_shape = (
+                        torch.Size([2]) + batch_shape + torch.Size([3, num_outputs])
+                    )
+
                     posterior = model.posterior(X)
                     self.assertIsInstance(posterior, GPyTorchPosterior)
-                    self.assertEqual(
-                        posterior.mean.shape,
-                        torch.Size([2]) + batch_shape + torch.Size([3, num_outputs]),
+                    self.assertEqual(posterior.mean.shape, expected_mean_shape)
+                    # test adding observation noise in batch mode
+                    posterior_pred = model.posterior(X, observation_noise=True)
+                    self.assertIsInstance(posterior_pred, GPyTorchPosterior)
+                    self.assertEqual(posterior_pred.mean.shape, expected_mean_shape)
+                    pvar = posterior_pred.variance
+                    pvar_exp = _get_pvar_expected(posterior, model, X, num_outputs)
+                    self.assertTrue(
+                        torch.allclose(pvar, pvar_exp, rtol=1e-4, atol=1e-06)
                     )
 
     def test_gp_cuda(self):
@@ -324,3 +344,13 @@ class TestHeteroskedasticSingleTaskGP(TestSingleTaskGP):
     def test_fantasize(self, cuda=False):
         with self.assertRaises(NotImplementedError):
             super().test_fantasize(cuda=cuda)
+
+
+def _get_pvar_expected(posterior, model, X, num_outputs):
+    if num_outputs == 1:
+        return model.likelihood(posterior.mvn, X).variance.unsqueeze(-1)
+    X_, odi = add_output_dim(X=X, original_batch_shape=model._input_batch_shape)
+    pvar_exp = model.likelihood(model(X_), X_).variance
+    return torch.stack(
+        [pvar_exp.select(dim=odi, index=i) for i in range(num_outputs)], dim=-1
+    )
