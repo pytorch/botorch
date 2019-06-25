@@ -9,6 +9,7 @@ Utilities for model fitting.
 from typing import Any, Callable
 
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
+from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
 
 from .optim.fit import fit_gpytorch_scipy
 
@@ -33,6 +34,11 @@ def fit_gpytorch_model(
         >>> mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
         >>> fit_gpytorch_model(mll)
     """
+    sequential = kwargs.pop("sequential", True)
+    if isinstance(mll, SumMarginalLogLikelihood) and sequential:
+        for mll_ in mll.mlls:
+            fit_gpytorch_model(mll=mll_, optimizer=optimizer, **kwargs)
+        return mll
     mll.train()
     mll, _ = optimizer(mll, track_iterations=False, **kwargs)
     mll.eval()
