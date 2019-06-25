@@ -7,6 +7,7 @@ Tools for model fitting.
 """
 
 import time
+import warnings
 from collections import OrderedDict
 from typing import Any, Dict, List, NamedTuple, Optional, Tuple
 
@@ -17,6 +18,7 @@ from torch import Tensor
 from torch.optim.adam import Adam
 from torch.optim.optimizer import Optimizer
 
+from ..exceptions.warnings import OptimizationWarning
 from .numpy_converter import TorchAttr, module_to_array, set_params_with_array
 from .utils import _filter_kwargs, _get_extra_mll_args, check_convergence
 
@@ -192,8 +194,16 @@ def fit_gpytorch_scipy(
     iterations = []
     if track_iterations:
         for i, xk in enumerate(xs):
-            obj, _ = _scipy_objective_and_grad(xk, mll, property_dict)
+            obj, _ = _scipy_objective_and_grad(
+                x=xk, mll=mll, property_dict=property_dict
+            )
             iterations.append(OptimizationIteration(i, obj, ts[i]))
+
+    if not res.success:
+        msg = res.message.decode("ascii")
+        warnings.warn(
+            f"Fitting failed with the optimizer reporting '{msg}'", OptimizationWarning
+        )
 
     # Set to optimum
     mll = set_params_with_array(mll, res.x, property_dict)
@@ -220,9 +230,15 @@ def _scipy_objective_and_grad(
     mll = set_params_with_array(mll, x, property_dict)
     train_inputs, train_targets = mll.model.train_inputs, mll.model.train_targets
     mll.zero_grad()
-    output = mll.model(*train_inputs)
-    args = [output, train_targets] + _get_extra_mll_args(mll)
-    loss = -mll(*args).sum()
+    try:  # catch linear algebra errors in gpytorch
+        output = mll.model(*train_inputs)
+        args = [output, train_targets] + _get_extra_mll_args(mll)
+        loss = -mll(*args).sum()
+    except RuntimeError as e:
+        if "singular" in e.args[0]:
+            return float("nan"), np.full_like(x, "nan")
+        else:
+            raise e  # pragma: nocover
     loss.backward()
     param_dict = OrderedDict(mll.named_parameters())
     grad = []

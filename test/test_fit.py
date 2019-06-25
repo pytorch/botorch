@@ -4,6 +4,7 @@
 
 import math
 import unittest
+import warnings
 
 import torch
 from botorch import fit_gpytorch_model
@@ -13,10 +14,14 @@ from botorch.optim.fit import (
     fit_gpytorch_scipy,
     fit_gpytorch_torch,
 )
+from gpytorch.constraints import GreaterThan
+from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 
 
 NOISE = [0.127, -0.113, -0.345, -0.034, -0.069, -0.272, 0.013, 0.056, 0.087, -0.081]
+
+MAX_ITER_MSG = "TOTAL NO. of ITERATIONS REACHED LIMIT"
 
 
 class TestFitGPyTorchModel(unittest.TestCase):
@@ -34,7 +39,11 @@ class TestFitGPyTorchModel(unittest.TestCase):
         options = {"disp": False, "maxiter": 5}
         for double in (False, True):
             mll = self._getModel(double=double, cuda=cuda)
-            mll = fit_gpytorch_model(mll, optimizer=optimizer, options=options)
+            with warnings.catch_warnings(record=True) as ws:
+                mll = fit_gpytorch_model(mll, optimizer=optimizer, options=options)
+                if optimizer == fit_gpytorch_scipy:
+                    self.assertEqual(len(ws), 1)
+                    self.assertTrue(MAX_ITER_MSG in str(ws[-1].message))
             model = mll.model
             # Make sure all of the parameters changed
             self.assertGreater(model.likelihood.raw_noise.abs().item(), 1e-3)
@@ -46,12 +55,17 @@ class TestFitGPyTorchModel(unittest.TestCase):
 
             # test overriding the default bounds with user supplied bounds
             mll = self._getModel(double=double, cuda=cuda)
-            mll = fit_gpytorch_model(
-                mll,
-                optimizer=optimizer,
-                options=options,
-                bounds={"likelihood.noise_covar.raw_noise": (1e-1, None)},
-            )
+            with warnings.catch_warnings(record=True) as ws:
+                mll = fit_gpytorch_model(
+                    mll,
+                    optimizer=optimizer,
+                    options=options,
+                    bounds={"likelihood.noise_covar.raw_noise": (1e-1, None)},
+                )
+                if optimizer == fit_gpytorch_scipy:
+                    self.assertEqual(len(ws), 1)
+                    self.assertTrue(MAX_ITER_MSG in str(ws[-1].message))
+
             model = mll.model
             self.assertGreaterEqual(model.likelihood.raw_noise.abs().item(), 1e-1)
             self.assertLess(model.mean_module.constant.abs().item(), 0.1)
@@ -64,7 +78,11 @@ class TestFitGPyTorchModel(unittest.TestCase):
             mll = self._getModel(double=double, cuda=cuda)
             if optimizer is fit_gpytorch_torch:
                 options["disp"] = True
-            mll, iterations = optimizer(mll, options=options, track_iterations=True)
+            with warnings.catch_warnings(record=True) as ws:
+                mll, iterations = optimizer(mll, options=options, track_iterations=True)
+                if optimizer == fit_gpytorch_scipy:
+                    self.assertEqual(len(ws), 1)
+                    self.assertTrue(MAX_ITER_MSG in str(ws[-1].message))
             self.assertEqual(len(iterations), options["maxiter"])
             self.assertIsInstance(iterations[0], OptimizationIteration)
 
@@ -81,12 +99,37 @@ class TestFitGPyTorchModel(unittest.TestCase):
                     )
                 ),
             )
-            mll = fit_gpytorch_model(mll, optimizer=optimizer, options=options)
+            with warnings.catch_warnings(record=True) as ws:
+                mll = fit_gpytorch_model(mll, optimizer=optimizer, options=options)
+                if optimizer == fit_gpytorch_scipy:
+                    self.assertEqual(len(ws), 1)
+                    self.assertTrue(MAX_ITER_MSG in str(ws[-1].message))
             self.assertTrue(mll.dummy_param.grad is None)
 
-    def test_fit_gpytorch_model_scipy_cuda(self):
+    def test_fit_gpytorch_model_cuda(self):
         if torch.cuda.is_available():
             self.test_fit_gpytorch_model(cuda=True)
+
+    def test_fit_gpytorch_model_singular(self, cuda=False):
+        options = {"disp": False, "maxiter": 2}
+        device = torch.device("cuda") if cuda else torch.device("cpu")
+        for dtype in (torch.float, torch.double):
+            X_train = torch.rand(2, 2, device=device, dtype=dtype)
+            Y_train = torch.zeros(2, device=device, dtype=dtype)
+            test_likelihood = GaussianLikelihood(
+                noise_constraint=GreaterThan(-1.0, transform=None, initial_value=0.0)
+            )
+            gp = SingleTaskGP(X_train, Y_train, likelihood=test_likelihood)
+            mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
+            mll.to(device=device, dtype=dtype)
+            with warnings.catch_warnings(record=True) as ws:
+                fit_gpytorch_model(mll, options=options)
+                self.assertEqual(len(ws), 1)
+                self.assertTrue("Fitting failed" in str(ws[0].message))
+
+    def test_fit_gpytorch_model_singular_cuda(self):
+        if torch.cuda.is_available():
+            self.test_fit_gpytorch_model_singular(cuda=True)
 
     def test_fit_gpytorch_model_torch(self, cuda=False):
         self.test_fit_gpytorch_model(cuda=cuda, optimizer=fit_gpytorch_torch)
