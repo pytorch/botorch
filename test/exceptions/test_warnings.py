@@ -8,6 +8,7 @@ import warnings
 from botorch.exceptions.warnings import (
     BadInitialCandidatesWarning,
     BotorchWarning,
+    OptimizationWarning,
     SamplingWarning,
 )
 
@@ -16,12 +17,14 @@ class TestBotorchWarnings(unittest.TestCase):
     def test_botorch_warnings_hierarchy(self):
         self.assertIsInstance(BotorchWarning(), Warning)
         self.assertIsInstance(BadInitialCandidatesWarning(), BotorchWarning)
+        self.assertIsInstance(OptimizationWarning(), BotorchWarning)
         self.assertIsInstance(SamplingWarning(), BotorchWarning)
 
     def test_botorch_warnings(self):
         for WarningClass in (
             BotorchWarning,
             BadInitialCandidatesWarning,
+            OptimizationWarning,
             SamplingWarning,
         ):
             with warnings.catch_warnings(record=True) as w:
