@@ -64,11 +64,15 @@ class TestModelListGP(unittest.TestCase):
                 self.assertIsInstance(matern_kernel, MaternKernel)
                 self.assertIsInstance(matern_kernel.lengthscale_prior, GammaPrior)
 
-            # test model fitting
+            # test constructing likelihood wrapper
             mll = SumMarginalLogLikelihood(model.likelihood, model)
             for mll_ in mll.mlls:
                 self.assertIsInstance(mll_, ExactMarginalLogLikelihood)
+
+            # test model fitting (sequential)
             mll = fit_gpytorch_model(mll, options={"maxiter": 1})
+            # test model fitting (joint)
+            mll = fit_gpytorch_model(mll, options={"maxiter": 1}, sequential=False)
 
             # test posterior
             test_x = torch.tensor([[0.25], [0.75]], **tkwargs)
