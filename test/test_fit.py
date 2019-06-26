@@ -22,6 +22,7 @@ from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikeliho
 NOISE = [0.127, -0.113, -0.345, -0.034, -0.069, -0.272, 0.013, 0.056, 0.087, -0.081]
 
 MAX_ITER_MSG = "TOTAL NO. of ITERATIONS REACHED LIMIT"
+MAX_RETRY_MSG = "Fitting failed on all retries."
 
 
 class TestFitGPyTorchModel(unittest.TestCase):
@@ -40,10 +41,12 @@ class TestFitGPyTorchModel(unittest.TestCase):
         for double in (False, True):
             mll = self._getModel(double=double, cuda=cuda)
             with warnings.catch_warnings(record=True) as ws:
-                mll = fit_gpytorch_model(mll, optimizer=optimizer, options=options)
+                mll = fit_gpytorch_model(
+                    mll, optimizer=optimizer, options=options, max_retries=1
+                )
                 if optimizer == fit_gpytorch_scipy:
                     self.assertEqual(len(ws), 1)
-                    self.assertTrue(MAX_ITER_MSG in str(ws[-1].message))
+                    self.assertTrue(MAX_RETRY_MSG in str(ws[-1].message))
             model = mll.model
             # Make sure all of the parameters changed
             self.assertGreater(model.likelihood.raw_noise.abs().item(), 1e-3)
@@ -60,11 +63,12 @@ class TestFitGPyTorchModel(unittest.TestCase):
                     mll,
                     optimizer=optimizer,
                     options=options,
+                    max_retries=1,
                     bounds={"likelihood.noise_covar.raw_noise": (1e-1, None)},
                 )
                 if optimizer == fit_gpytorch_scipy:
                     self.assertEqual(len(ws), 1)
-                    self.assertTrue(MAX_ITER_MSG in str(ws[-1].message))
+                    self.assertTrue(MAX_RETRY_MSG in str(ws[-1].message))
 
             model = mll.model
             self.assertGreaterEqual(model.likelihood.raw_noise.abs().item(), 1e-1)
@@ -100,10 +104,12 @@ class TestFitGPyTorchModel(unittest.TestCase):
                 ),
             )
             with warnings.catch_warnings(record=True) as ws:
-                mll = fit_gpytorch_model(mll, optimizer=optimizer, options=options)
+                mll = fit_gpytorch_model(
+                    mll, optimizer=optimizer, options=options, max_retries=1
+                )
                 if optimizer == fit_gpytorch_scipy:
                     self.assertEqual(len(ws), 1)
-                    self.assertTrue(MAX_ITER_MSG in str(ws[-1].message))
+                    self.assertTrue(MAX_RETRY_MSG in str(ws[-1].message))
             self.assertTrue(mll.dummy_param.grad is None)
 
     def test_fit_gpytorch_model_cuda(self):
@@ -123,9 +129,10 @@ class TestFitGPyTorchModel(unittest.TestCase):
             mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
             mll.to(device=device, dtype=dtype)
             with warnings.catch_warnings(record=True) as ws:
+                # this will do multiple retries
                 fit_gpytorch_model(mll, options=options)
                 self.assertEqual(len(ws), 1)
-                self.assertTrue("Fitting failed" in str(ws[0].message))
+                self.assertTrue(MAX_RETRY_MSG in str(ws[0].message))
 
     def test_fit_gpytorch_model_singular_cuda(self):
         if torch.cuda.is_available():

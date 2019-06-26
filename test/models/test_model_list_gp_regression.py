@@ -70,9 +70,11 @@ class TestModelListGP(unittest.TestCase):
                 self.assertIsInstance(mll_, ExactMarginalLogLikelihood)
 
             # test model fitting (sequential)
-            mll = fit_gpytorch_model(mll, options={"maxiter": 1})
+            mll = fit_gpytorch_model(mll, options={"maxiter": 1}, max_retries=1)
             # test model fitting (joint)
-            mll = fit_gpytorch_model(mll, options={"maxiter": 1}, sequential=False)
+            mll = fit_gpytorch_model(
+                mll, options={"maxiter": 1}, max_retries=1, sequential=False
+            )
 
             # test posterior
             test_x = torch.tensor([[0.25], [0.75]], **tkwargs)
@@ -138,7 +140,7 @@ class TestModelListGP(unittest.TestCase):
             mll = SumMarginalLogLikelihood(model.likelihood, model)
             for mll_ in mll.mlls:
                 self.assertIsInstance(mll_, ExactMarginalLogLikelihood)
-            mll = fit_gpytorch_model(mll, options={"maxiter": 1})
+            mll = fit_gpytorch_model(mll, options={"maxiter": 1}, max_retries=1)
 
             # test posterior
             test_x = torch.tensor([[0.25], [0.75]], **tkwargs)

@@ -63,7 +63,7 @@ class TestSingleTaskGP(unittest.TestCase):
                     mll = ExactMarginalLogLikelihood(model.likelihood, model).to(
                         **tkwargs
                     )
-                    fit_gpytorch_model(mll, options={"maxiter": 1})
+                    fit_gpytorch_model(mll, options={"maxiter": 1}, max_retries=1)
 
                     # test init
                     self.assertIsInstance(model.mean_module, ConstantMean)
