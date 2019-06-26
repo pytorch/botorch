@@ -37,7 +37,7 @@ class TestBaseCandidateGeneration(unittest.TestCase):
         model = SingleTaskGP(self.train_x, self.train_y)
         self.model = model.to(device=device, dtype=dtype)
         self.mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
-        self.mll = fit_gpytorch_model(self.mll, options={"maxiter": 1})
+        self.mll = fit_gpytorch_model(self.mll, options={"maxiter": 1}, max_retries=1)
 
 
 class TestGenCandidates(TestBaseCandidateGeneration):

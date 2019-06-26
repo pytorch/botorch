@@ -6,6 +6,7 @@ r"""
 Utilities for optimization.
 """
 
+import warnings
 from inspect import signature
 from typing import Any, Callable, Dict, List, Optional, Union
 
@@ -15,6 +16,29 @@ from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
 from gpytorch.mlls.variational_elbo import VariationalELBO
 from torch import Tensor
+
+from ..exceptions.warnings import BotorchWarning
+from ..models.gpytorch import GPyTorchModel
+
+
+def sample_all_priors(model: GPyTorchModel) -> None:
+    r"""Sample from hyperparameter priors (in-place).
+
+    Args:
+        model: A GPyTorchModel.
+    """
+    for _, prior, _, setting_closure in model.named_priors():
+        if setting_closure is None:
+            raise RuntimeError(
+                "Must provide inverse transform to be able to sample from prior."
+            )
+        try:
+            setting_closure(prior.sample())
+        except NotImplementedError:
+            warnings.warn(
+                f"`rsample` not implemented for {type(prior)}. Skipping.",
+                BotorchWarning,
+            )
 
 
 def check_convergence(
@@ -129,7 +153,7 @@ def _expand_bounds(
 
     Returns:
         A tensor of bounds expanded to be compatible with the size of `X` if
-        bounds is not None, and None if bounds is None
+        bounds is not None, and None if bounds is None.
     """
     if bounds is not None:
         if not torch.is_tensor(bounds):

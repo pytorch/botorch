@@ -3,7 +3,12 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 from .errors import BotorchError, CandidateGenerationError, UnsupportedError
-from .warnings import BadInitialCandidatesWarning, BotorchWarning, SamplingWarning
+from .warnings import (
+    BadInitialCandidatesWarning,
+    BotorchWarning,
+    OptimizationWarning,
+    SamplingWarning,
+)
 
 
 __all__ = [
@@ -12,5 +17,6 @@ __all__ = [
     "UnsupportedError",
     "BotorchWarning",
     "BadInitialCandidatesWarning",
+    "OptimizationWarning",
     "SamplingWarning",
 ]

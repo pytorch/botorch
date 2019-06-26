@@ -198,13 +198,11 @@ def fit_gpytorch_scipy(
                 x=xk, mll=mll, property_dict=property_dict
             )
             iterations.append(OptimizationIteration(i, obj, ts[i]))
-
     if not res.success:
         msg = res.message.decode("ascii")
         warnings.warn(
             f"Fitting failed with the optimizer reporting '{msg}'", OptimizationWarning
         )
-
     # Set to optimum
     mll = set_params_with_array(mll, res.x, property_dict)
     return mll, iterations

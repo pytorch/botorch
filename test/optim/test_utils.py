@@ -3,6 +3,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 import unittest
+from copy import deepcopy
 
 import torch
 from botorch.models import ModelListGP, SingleTaskGP
@@ -12,11 +13,16 @@ from botorch.optim.utils import (
     check_convergence,
     columnwise_clamp,
     fix_features,
+    sample_all_priors,
 )
+from gpytorch.kernels.matern_kernel import MaternKernel
+from gpytorch.kernels.scale_kernel import ScaleKernel
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
 from gpytorch.mlls.variational_elbo import VariationalELBO
+from gpytorch.priors.smoothed_box_prior import SmoothedBoxPrior
+from gpytorch.priors.torch_priors import GammaPrior
 
 
 class TestCheckConvergence(unittest.TestCase):
@@ -191,3 +197,61 @@ class testExpandBounds(unittest.TestCase):
         # bounds is None
         expanded_bounds = _expand_bounds(bounds=None, X=X)
         self.assertIsNone(expanded_bounds)
+
+
+class TestSampleAllPriors(unittest.TestCase):
+    def test_sample_all_priors(self, cuda=False):
+        device = torch.device("cuda" if cuda else "cpu")
+        for dtype in (torch.float, torch.double):
+            train_X = torch.rand(3, 5, device=device, dtype=dtype)
+            train_Y = torch.rand(3, device=device, dtype=dtype)
+            model = SingleTaskGP(train_X=train_X, train_Y=train_Y)
+            mll = ExactMarginalLogLikelihood(model.likelihood, model)
+            mll.to(device=device, dtype=dtype)
+            original_state_dict = dict(deepcopy(mll.model.state_dict()))
+            sample_all_priors(model)
+
+            # make sure one of the hyperparameters changed
+            self.assertTrue(
+                dict(model.state_dict())["likelihood.noise_covar.raw_noise"]
+                != original_state_dict["likelihood.noise_covar.raw_noise"]
+            )
+
+            # change one of the priors to SmoothedBoxPrior
+            model.covar_module = ScaleKernel(
+                MaternKernel(
+                    nu=2.5,
+                    ard_num_dims=model.train_inputs[0].shape[-1],
+                    batch_shape=model._aug_batch_shape,
+                    lengthscale_prior=SmoothedBoxPrior(3.0, 6.0),
+                ),
+                batch_shape=model._aug_batch_shape,
+                outputscale_prior=GammaPrior(2.0, 0.15),
+            )
+            original_state_dict = dict(deepcopy(mll.model.state_dict()))
+            sample_all_priors(model)
+
+            # the lengthscale should not have changed because sampling is
+            # not implemented for SmoothedBoxPrior
+            self.assertTrue(
+                torch.equal(
+                    dict(model.state_dict())[
+                        "covar_module.base_kernel.raw_lengthscale"
+                    ],
+                    original_state_dict["covar_module.base_kernel.raw_lengthscale"],
+                )
+            )
+
+            # set setting_closure to None and make sure RuntimeError is raised
+            prior_tuple = model.likelihood.noise_covar._priors["noise_prior"]
+            model.likelihood.noise_covar._priors["noise_prior"] = (
+                prior_tuple[0],
+                prior_tuple[1],
+                None,
+            )
+            with self.assertRaises(RuntimeError):
+                sample_all_priors(model)
+
+    def test_sample_all_priors_cuda(self):
+        if torch.cuda.is_available():
+            self.test_sample_all_priors(cuda=True)
