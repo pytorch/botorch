@@ -35,7 +35,9 @@ class TestEndToEnd(unittest.TestCase):
         self.mll_st = ExactMarginalLogLikelihood(
             self.model_st.likelihood, self.model_st
         )
-        self.mll_st = fit_gpytorch_model(self.mll_st, options={"maxiter": 5})
+        self.mll_st = fit_gpytorch_model(
+            self.mll_st, options={"maxiter": 5}, max_retries=1
+        )
         model_fn = FixedNoiseGP(
             self.train_x, self.train_y, self.train_yvar.expand_as(self.train_y)
         )
@@ -43,7 +45,9 @@ class TestEndToEnd(unittest.TestCase):
         self.mll_fn = ExactMarginalLogLikelihood(
             self.model_fn.likelihood, self.model_fn
         )
-        self.mll_fn = fit_gpytorch_model(self.mll_fn, options={"maxiter": 5})
+        self.mll_fn = fit_gpytorch_model(
+            self.mll_fn, options={"maxiter": 5}, max_retries=1
+        )
 
     def test_qEI(self, cuda=False):
         for double in (True, False):

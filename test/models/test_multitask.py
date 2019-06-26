@@ -82,7 +82,7 @@ class TestMultiTaskGP(unittest.TestCase):
 
             # test model fitting
             mll = ExactMarginalLogLikelihood(model.likelihood, model)
-            mll = fit_gpytorch_model(mll, options={"maxiter": 1})
+            mll = fit_gpytorch_model(mll, options={"maxiter": 1}, max_retries=1)
 
             # test posterior
             test_x = torch.rand(2, 1, **tkwargs)
@@ -155,7 +155,7 @@ class TestMultiTaskGP(unittest.TestCase):
 
             # test model fitting
             mll = ExactMarginalLogLikelihood(model.likelihood, model)
-            mll = fit_gpytorch_model(mll, options={"maxiter": 1})
+            mll = fit_gpytorch_model(mll, options={"maxiter": 1}, max_retries=1)
 
             # test posterior
             test_x = torch.rand(2, 1, **tkwargs)
@@ -197,7 +197,7 @@ class TestFixedNoiseMultiTaskGP(unittest.TestCase):
 
             # test model fitting
             mll = ExactMarginalLogLikelihood(model.likelihood, model)
-            mll = fit_gpytorch_model(mll, options={"maxiter": 1})
+            mll = fit_gpytorch_model(mll, options={"maxiter": 1}, max_retries=1)
 
             # test posterior
             test_x = torch.rand(2, 1, **tkwargs)
@@ -268,7 +268,7 @@ class TestFixedNoiseMultiTaskGP(unittest.TestCase):
 
             # test model fitting
             mll = ExactMarginalLogLikelihood(model.likelihood, model)
-            mll = fit_gpytorch_model(mll, options={"maxiter": 1})
+            mll = fit_gpytorch_model(mll, options={"maxiter": 1}, max_retries=1)
 
             # test posterior
             test_x = torch.rand(2, 1, **tkwargs)
