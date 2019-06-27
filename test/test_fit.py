@@ -8,7 +8,8 @@ import warnings
 
 import torch
 from botorch import fit_gpytorch_model
-from botorch.models import SingleTaskGP
+from botorch.exceptions.warnings import OptimizationWarning
+from botorch.models import FixedNoiseGP, HeteroskedasticSingleTaskGP, SingleTaskGP
 from botorch.optim.fit import (
     OptimizationIteration,
     fit_gpytorch_scipy,
@@ -36,6 +37,27 @@ class TestFitGPyTorchModel(unittest.TestCase):
         mll = ExactMarginalLogLikelihood(model.likelihood, model)
         return mll.to(device=device, dtype=dtype)
 
+    def _getBatchedModel(self, kind="SingleTaskGP", double=False, cuda=False):
+        device = torch.device("cuda") if cuda else torch.device("cpu")
+        dtype = torch.double if double else torch.float
+        train_x = torch.linspace(0, 1, 10, device=device, dtype=dtype).unsqueeze(-1)
+        noise = torch.tensor(NOISE, device=device, dtype=dtype)
+        train_y1 = torch.sin(train_x.view(-1) * (2 * math.pi)) + noise
+        train_y2 = torch.sin(train_x.view(-1) * (2 * math.pi)) + noise
+        train_y = torch.stack([train_y1, train_y2], dim=-1)
+        if kind == "SingleTaskGP":
+            model = SingleTaskGP(train_x, train_y)
+        elif kind == "FixedNoiseGP":
+            model = FixedNoiseGP(train_x, train_y, 0.1 * torch.ones_like(train_y))
+        elif kind == "HeteroskedasticSingleTaskGP":
+            model = HeteroskedasticSingleTaskGP(
+                train_x, train_y, 0.1 * torch.ones_like(train_y)
+            )
+        else:
+            raise NotImplementedError
+        mll = ExactMarginalLogLikelihood(model.likelihood, model)
+        return mll.to(device=device, dtype=dtype)
+
     def test_fit_gpytorch_model(self, cuda=False, optimizer=fit_gpytorch_scipy):
         options = {"disp": False, "maxiter": 5}
         for double in (False, True):
@@ -46,7 +68,7 @@ class TestFitGPyTorchModel(unittest.TestCase):
                 )
                 if optimizer == fit_gpytorch_scipy:
                     self.assertEqual(len(ws), 1)
-                    self.assertTrue(MAX_RETRY_MSG in str(ws[-1].message))
+                    self.assertTrue(MAX_RETRY_MSG in str(ws[0].message))
             model = mll.model
             # Make sure all of the parameters changed
             self.assertGreater(model.likelihood.raw_noise.abs().item(), 1e-3)
@@ -68,7 +90,7 @@ class TestFitGPyTorchModel(unittest.TestCase):
                 )
                 if optimizer == fit_gpytorch_scipy:
                     self.assertEqual(len(ws), 1)
-                    self.assertTrue(MAX_RETRY_MSG in str(ws[-1].message))
+                    self.assertTrue(MAX_RETRY_MSG in str(ws[0].message))
 
             model = mll.model
             self.assertGreaterEqual(model.likelihood.raw_noise.abs().item(), 1e-1)
@@ -86,7 +108,7 @@ class TestFitGPyTorchModel(unittest.TestCase):
                 mll, iterations = optimizer(mll, options=options, track_iterations=True)
                 if optimizer == fit_gpytorch_scipy:
                     self.assertEqual(len(ws), 1)
-                    self.assertTrue(MAX_ITER_MSG in str(ws[-1].message))
+                    self.assertTrue(MAX_ITER_MSG in str(ws[0].message))
             self.assertEqual(len(iterations), options["maxiter"])
             self.assertIsInstance(iterations[0], OptimizationIteration)
 
@@ -109,7 +131,7 @@ class TestFitGPyTorchModel(unittest.TestCase):
                 )
                 if optimizer == fit_gpytorch_scipy:
                     self.assertEqual(len(ws), 1)
-                    self.assertTrue(MAX_RETRY_MSG in str(ws[-1].message))
+                    self.assertTrue(MAX_RETRY_MSG in str(ws[0].message))
             self.assertTrue(mll.dummy_param.grad is None)
 
     def test_fit_gpytorch_model_cuda(self):
@@ -117,7 +139,7 @@ class TestFitGPyTorchModel(unittest.TestCase):
             self.test_fit_gpytorch_model(cuda=True)
 
     def test_fit_gpytorch_model_singular(self, cuda=False):
-        options = {"disp": False, "maxiter": 2}
+        options = {"disp": False, "maxiter": 5}
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
             X_train = torch.rand(2, 2, device=device, dtype=dtype)
@@ -130,7 +152,7 @@ class TestFitGPyTorchModel(unittest.TestCase):
             mll.to(device=device, dtype=dtype)
             with warnings.catch_warnings(record=True) as ws:
                 # this will do multiple retries
-                fit_gpytorch_model(mll, options=options)
+                fit_gpytorch_model(mll, options=options, max_retries=1)
                 self.assertEqual(len(ws), 1)
                 self.assertTrue(MAX_RETRY_MSG in str(ws[0].message))
 
@@ -144,3 +166,24 @@ class TestFitGPyTorchModel(unittest.TestCase):
     def test_fit_gpytorch_model_torch_cuda(self):
         if torch.cuda.is_available():
             self.test_fit_gpytorch_model_torch(cuda=True)
+
+    def test_fit_gpytorch_model_sequential(self, cuda=False):
+        options = {"disp": False, "maxiter": 1}
+        for double in (False, True):
+            for kind in ("SingleTaskGP", "FixedNoiseGP", "HeteroskedasticSingleTaskGP"):
+                with warnings.catch_warnings():
+                    warnings.filterwarnings("ignore", category=OptimizationWarning)
+                    mll = self._getBatchedModel(kind=kind, double=double, cuda=cuda)
+                    mll = fit_gpytorch_model(mll, options=options, max_retries=1)
+                    mll = self._getBatchedModel(kind=kind, double=double, cuda=cuda)
+                    mll = fit_gpytorch_model(
+                        mll, options=options, sequential=True, max_retries=1
+                    )
+                    mll = self._getBatchedModel(kind=kind, double=double, cuda=cuda)
+                    mll = fit_gpytorch_model(
+                        mll, options=options, sequential=False, max_retries=1
+                    )
+
+    def test_fit_gpytorch_model_sequential_cuda(self):
+        if torch.cuda.is_available():
+            self.test_fit_gpytorch_model_sequential(cuda=True)
