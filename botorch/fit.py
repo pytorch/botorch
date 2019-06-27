@@ -15,6 +15,9 @@ from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
 
 from .exceptions.warnings import OptimizationWarning
+from .models.converter import batched_to_model_list, model_list_to_batched
+from .models.gp_regression import HeteroskedasticSingleTaskGP
+from .models.gpytorch import BatchedMultiOutputGPyTorchModel
 from .optim.fit import fit_gpytorch_scipy
 from .optim.utils import sample_all_priors
 
@@ -22,17 +25,20 @@ from .optim.utils import sample_all_priors
 def fit_gpytorch_model(
     mll: MarginalLogLikelihood, optimizer: Callable = fit_gpytorch_scipy, **kwargs: Any
 ) -> MarginalLogLikelihood:
-    r"""Fit hyperparameters of a gpytorch model. On optimizer failures, a new
-    initial condition is sampled from the hyperparameter priors and optimization
-    is retried. The maximum number of retries can be passed in as a `max_retries`
-    kwarg (default is 5).
+    r"""Fit hyperparameters of a GPyTorch model.
+
+    On optimizer failures, a new initial condition is sampled from the
+    hyperparameter priors and optimization is retried. The maximum number of
+    retries can be passed in as a `max_retries` kwarg (default is 5).
 
     Optimizer functions are in botorch.optim.fit.
 
     Args:
         mll: MarginalLogLikelihood to be maximized.
         optimizer: The optimizer function.
-        kwargs: Arguments passed along to the optimizer function.
+        kwargs: Arguments passed along to the optimizer function, including
+            `max_retries` and `sequential` (controls the fitting of `ModelListGP`
+            and `BatchedMultiOutputGPyTorchModel` models).
 
     Returns:
         MarginalLogLikelihood with optimized parameters.
@@ -43,13 +49,34 @@ def fit_gpytorch_model(
         >>> fit_gpytorch_model(mll)
     """
     sequential = kwargs.pop("sequential", True)
+    max_retries = kwargs.pop("max_retries", 5)
     if isinstance(mll, SumMarginalLogLikelihood) and sequential:
         for mll_ in mll.mlls:
-            fit_gpytorch_model(mll=mll_, optimizer=optimizer, **kwargs)
+            fit_gpytorch_model(
+                mll=mll_, optimizer=optimizer, max_retries=max_retries, **kwargs
+            )
         return mll
-    max_retries = kwargs.pop("max_retries", 5)
-    original_state_dict = deepcopy(mll.model.state_dict())
+    elif (
+        isinstance(mll.model, BatchedMultiOutputGPyTorchModel)
+        and mll.model._num_outputs > 1
+        and sequential
+        and not isinstance(mll.model, HeteroskedasticSingleTaskGP)
+    ):
+        model_list = batched_to_model_list(mll.model)
+        mll_ = SumMarginalLogLikelihood(model_list.likelihood, model_list)
+        fit_gpytorch_model(
+            mll=mll_,
+            optimizer=optimizer,
+            sequential=True,
+            max_retries=max_retries,
+            **kwargs,
+        )
+        model_ = model_list_to_batched(mll_.model)
+        mll.model.load_state_dict(model_.state_dict())
+        mll.eval()
+    # retry with random samples from the priors upon failure
     mll.train()
+    original_state_dict = deepcopy(mll.model.state_dict())
     retry = 0
     while retry < max_retries:
         with warnings.catch_warnings(record=True) as ws:

@@ -61,10 +61,6 @@ def _check_compatibility(models: ModelListGP) -> None:
             "Conversion of HeteroskedasticSingleTaskGP is currently unsupported."
         )
 
-    # if the list has only one model, we can just return a copy of that
-    if len(models) == 1:
-        return deepcopy(models[0])
-
     # check that each model is single-output
     if not all(m._num_outputs == 1 for m in models):
         raise UnsupportedError("All models must be single-output.")
@@ -95,6 +91,10 @@ def model_list_to_batched(model_list: ModelListGP) -> BatchedMultiOutputGPyTorch
     """
     models = model_list.models
     _check_compatibility(models)
+
+    # if the list has only one model, we can just return a copy of that
+    if len(models) == 1:
+        return deepcopy(models[0])
 
     # construct inputs
     train_X = deepcopy(models[0].train_inputs[0])

@@ -4,9 +4,11 @@
 
 import math
 import unittest
+import warnings
 
 import torch
 from botorch import fit_gpytorch_model
+from botorch.exceptions.warnings import OptimizationWarning
 from botorch.models.gp_regression import (
     FixedNoiseGP,
     HeteroskedasticSingleTaskGP,
@@ -63,7 +65,9 @@ class TestSingleTaskGP(unittest.TestCase):
                     mll = ExactMarginalLogLikelihood(model.likelihood, model).to(
                         **tkwargs
                     )
-                    fit_gpytorch_model(mll, options={"maxiter": 1}, max_retries=1)
+                    with warnings.catch_warnings():
+                        warnings.filterwarnings("ignore", category=OptimizationWarning)
+                        fit_gpytorch_model(mll, options={"maxiter": 1}, max_retries=1)
 
                     # test init
                     self.assertIsInstance(model.mean_module, ConstantMean)
