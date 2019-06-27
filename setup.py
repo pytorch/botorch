@@ -64,7 +64,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     python_requires=">=3.6",
-    install_requires=["torch>=1.1", "gpytorch>=0.3.2", "scipy"],
+    install_requires=["torch>=1.1", "gpytorch>=0.3.3", "scipy"],
     packages=find_packages(),
     extras_require={
         "dev": DEV_REQUIRES,
