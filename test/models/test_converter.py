@@ -13,6 +13,7 @@ from botorch.models import (
     SingleTaskGP,
 )
 from botorch.models.converter import batched_to_model_list, model_list_to_batched
+from gpytorch.likelihoods import GaussianLikelihood
 
 from .test_gpytorch import SimpleGPyTorchModel
 
@@ -93,6 +94,10 @@ class TestConverters(unittest.TestCase):
             gp2 = HeteroskedasticSingleTaskGP(
                 train_X, train_Y1, torch.ones_like(train_Y1)
             )
+            with self.assertRaises(NotImplementedError):
+                model_list_to_batched(ModelListGP(gp2))
+            # test custom likelihood
+            gp2 = SingleTaskGP(train_X, train_Y2, likelihood=GaussianLikelihood())
             with self.assertRaises(NotImplementedError):
                 model_list_to_batched(ModelListGP(gp2))
             # test FixedNoiseGP
