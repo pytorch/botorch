@@ -62,7 +62,7 @@ def _check_compatibility(models: ModelListGP) -> None:
         )
 
     # TODO: Add support for custom likelihoods
-    if any(hasattr(m, "_likelihood_state_dict") for m in models):
+    if any(getattr(m, "_is_custom_likelihood", False) for m in models):
         raise NotImplementedError(
             "Conversion of models with custom likelihoods is currently unsupported."
         )
