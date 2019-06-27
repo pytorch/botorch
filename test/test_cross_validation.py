@@ -4,9 +4,11 @@
 
 import math
 import unittest
+import warnings
 
 import torch
 from botorch.cross_validation import batch_cross_validation, gen_loo_cv_folds
+from botorch.exceptions.warnings import OptimizationWarning
 from botorch.models.gp_regression import FixedNoiseGP, SingleTaskGP
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 
@@ -42,12 +44,14 @@ class TestFitBatchCrossValidation(unittest.TestCase):
                         train_X=train_X, train_Y=train_Y
                     )
                     # Test SingleTaskGP
-                    cv_results = batch_cross_validation(
-                        model_cls=SingleTaskGP,
-                        mll_cls=ExactMarginalLogLikelihood,
-                        cv_folds=noiseless_cv_folds,
-                        fit_args={"options": {"maxiter": 1}},
-                    )
+                    with warnings.catch_warnings():
+                        warnings.filterwarnings("ignore", category=OptimizationWarning)
+                        cv_results = batch_cross_validation(
+                            model_cls=SingleTaskGP,
+                            mll_cls=ExactMarginalLogLikelihood,
+                            cv_folds=noiseless_cv_folds,
+                            fit_args={"options": {"maxiter": 1}},
+                        )
                     expected_shape = batch_shape + torch.Size([n, 1, num_outputs])
                     self.assertEqual(cv_results.posterior.mean.shape, expected_shape)
                     self.assertEqual(cv_results.observed_Y.shape, expected_shape)
@@ -56,12 +60,14 @@ class TestFitBatchCrossValidation(unittest.TestCase):
                     noisy_cv_folds = gen_loo_cv_folds(
                         train_X=train_X, train_Y=train_Y, train_Yvar=train_Yvar
                     )
-                    cv_results = batch_cross_validation(
-                        model_cls=FixedNoiseGP,
-                        mll_cls=ExactMarginalLogLikelihood,
-                        cv_folds=noisy_cv_folds,
-                        fit_args={"options": {"maxiter": 1}},
-                    )
+                    with warnings.catch_warnings():
+                        warnings.filterwarnings("ignore", category=OptimizationWarning)
+                        cv_results = batch_cross_validation(
+                            model_cls=FixedNoiseGP,
+                            mll_cls=ExactMarginalLogLikelihood,
+                            cv_folds=noisy_cv_folds,
+                            fit_args={"options": {"maxiter": 1}},
+                        )
                     self.assertEqual(cv_results.posterior.mean.shape, expected_shape)
                     self.assertEqual(cv_results.observed_Y.shape, expected_shape)
                     self.assertEqual(cv_results.observed_Y.shape, expected_shape)

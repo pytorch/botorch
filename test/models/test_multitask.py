@@ -4,9 +4,11 @@
 
 import math
 import unittest
+import warnings
 
 import torch
-from botorch import fit_gpytorch_model
+from botorch.exceptions.warnings import OptimizationWarning
+from botorch.fit import fit_gpytorch_model
 from botorch.models.multitask import FixedNoiseMultiTaskGP, MultiTaskGP
 from botorch.posteriors import GPyTorchPosterior
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
@@ -82,7 +84,9 @@ class TestMultiTaskGP(unittest.TestCase):
 
             # test model fitting
             mll = ExactMarginalLogLikelihood(model.likelihood, model)
-            mll = fit_gpytorch_model(mll, options={"maxiter": 1}, max_retries=1)
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=OptimizationWarning)
+                mll = fit_gpytorch_model(mll, options={"maxiter": 1}, max_retries=1)
 
             # test posterior
             test_x = torch.rand(2, 1, **tkwargs)
@@ -155,7 +159,9 @@ class TestMultiTaskGP(unittest.TestCase):
 
             # test model fitting
             mll = ExactMarginalLogLikelihood(model.likelihood, model)
-            mll = fit_gpytorch_model(mll, options={"maxiter": 1}, max_retries=1)
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=OptimizationWarning)
+                mll = fit_gpytorch_model(mll, options={"maxiter": 1}, max_retries=1)
 
             # test posterior
             test_x = torch.rand(2, 1, **tkwargs)
@@ -197,7 +203,9 @@ class TestFixedNoiseMultiTaskGP(unittest.TestCase):
 
             # test model fitting
             mll = ExactMarginalLogLikelihood(model.likelihood, model)
-            mll = fit_gpytorch_model(mll, options={"maxiter": 1}, max_retries=1)
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=OptimizationWarning)
+                mll = fit_gpytorch_model(mll, options={"maxiter": 1}, max_retries=1)
 
             # test posterior
             test_x = torch.rand(2, 1, **tkwargs)
@@ -268,7 +276,9 @@ class TestFixedNoiseMultiTaskGP(unittest.TestCase):
 
             # test model fitting
             mll = ExactMarginalLogLikelihood(model.likelihood, model)
-            mll = fit_gpytorch_model(mll, options={"maxiter": 1}, max_retries=1)
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=OptimizationWarning)
+                mll = fit_gpytorch_model(mll, options={"maxiter": 1}, max_retries=1)
 
             # test posterior
             test_x = torch.rand(2, 1, **tkwargs)

@@ -4,9 +4,11 @@
 
 import math
 import unittest
+import warnings
 
 import torch
 from botorch.acquisition import ExpectedImprovement, qExpectedImprovement
+from botorch.exceptions.warnings import OptimizationWarning
 from botorch.fit import fit_gpytorch_model
 from botorch.models import FixedNoiseGP, SingleTaskGP
 from botorch.optim import joint_optimize
@@ -35,9 +37,11 @@ class TestEndToEnd(unittest.TestCase):
         self.mll_st = ExactMarginalLogLikelihood(
             self.model_st.likelihood, self.model_st
         )
-        self.mll_st = fit_gpytorch_model(
-            self.mll_st, options={"maxiter": 5}, max_retries=1
-        )
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=OptimizationWarning)
+            self.mll_st = fit_gpytorch_model(
+                self.mll_st, options={"maxiter": 5}, max_retries=1
+            )
         model_fn = FixedNoiseGP(
             self.train_x, self.train_y, self.train_yvar.expand_as(self.train_y)
         )
@@ -45,9 +49,11 @@ class TestEndToEnd(unittest.TestCase):
         self.mll_fn = ExactMarginalLogLikelihood(
             self.model_fn.likelihood, self.model_fn
         )
-        self.mll_fn = fit_gpytorch_model(
-            self.mll_fn, options={"maxiter": 5}, max_retries=1
-        )
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=OptimizationWarning)
+            self.mll_fn = fit_gpytorch_model(
+                self.mll_fn, options={"maxiter": 5}, max_retries=1
+            )
 
     def test_qEI(self, cuda=False):
         for double in (True, False):

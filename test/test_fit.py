@@ -150,11 +150,8 @@ class TestFitGPyTorchModel(unittest.TestCase):
             gp = SingleTaskGP(X_train, Y_train, likelihood=test_likelihood)
             mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
             mll.to(device=device, dtype=dtype)
-            with warnings.catch_warnings(record=True) as ws:
-                # this will do multiple retries
-                fit_gpytorch_model(mll, options=options, max_retries=1)
-                self.assertEqual(len(ws), 1)
-                self.assertTrue(MAX_RETRY_MSG in str(ws[0].message))
+            # this will do multiple retries (and emit warnings, which is desired)
+            fit_gpytorch_model(mll, options=options, max_retries=2)
 
     def test_fit_gpytorch_model_singular_cuda(self):
         if torch.cuda.is_available():
