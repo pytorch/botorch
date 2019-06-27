@@ -4,9 +4,11 @@
 
 import math
 import unittest
+import warnings
 
 import torch
-from botorch import fit_gpytorch_model
+from botorch.exceptions.warnings import OptimizationWarning
+from botorch.fit import fit_gpytorch_model
 from botorch.models import ModelListGP
 from botorch.models.gp_regression import FixedNoiseGP, SingleTaskGP
 from botorch.posteriors import GPyTorchPosterior
@@ -70,11 +72,15 @@ class TestModelListGP(unittest.TestCase):
                 self.assertIsInstance(mll_, ExactMarginalLogLikelihood)
 
             # test model fitting (sequential)
-            mll = fit_gpytorch_model(mll, options={"maxiter": 1}, max_retries=1)
-            # test model fitting (joint)
-            mll = fit_gpytorch_model(
-                mll, options={"maxiter": 1}, max_retries=1, sequential=False
-            )
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=OptimizationWarning)
+                mll = fit_gpytorch_model(mll, options={"maxiter": 1}, max_retries=1)
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=OptimizationWarning)
+                # test model fitting (joint)
+                mll = fit_gpytorch_model(
+                    mll, options={"maxiter": 1}, max_retries=1, sequential=False
+                )
 
             # test posterior
             test_x = torch.tensor([[0.25], [0.75]], **tkwargs)
@@ -140,7 +146,9 @@ class TestModelListGP(unittest.TestCase):
             mll = SumMarginalLogLikelihood(model.likelihood, model)
             for mll_ in mll.mlls:
                 self.assertIsInstance(mll_, ExactMarginalLogLikelihood)
-            mll = fit_gpytorch_model(mll, options={"maxiter": 1}, max_retries=1)
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=OptimizationWarning)
+                mll = fit_gpytorch_model(mll, options={"maxiter": 1}, max_retries=1)
 
             # test posterior
             test_x = torch.tensor([[0.25], [0.75]], **tkwargs)

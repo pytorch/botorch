@@ -3,6 +3,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 import unittest
+import warnings
 from copy import deepcopy
 
 import torch
@@ -229,7 +230,10 @@ class TestSampleAllPriors(unittest.TestCase):
                 outputscale_prior=GammaPrior(2.0, 0.15),
             )
             original_state_dict = dict(deepcopy(mll.model.state_dict()))
-            sample_all_priors(model)
+            with warnings.catch_warnings(record=True) as ws:
+                sample_all_priors(model)
+                self.assertEqual(len(ws), 1)
+                self.assertTrue("rsample" in str(ws[0].message))
 
             # the lengthscale should not have changed because sampling is
             # not implemented for SmoothedBoxPrior

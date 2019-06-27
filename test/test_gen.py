@@ -4,9 +4,11 @@
 
 import math
 import unittest
+import warnings
 
 import torch
 from botorch.acquisition import qExpectedImprovement
+from botorch.exceptions.warnings import OptimizationWarning
 from botorch.fit import fit_gpytorch_model
 from botorch.gen import gen_candidates_scipy, gen_candidates_torch
 from botorch.models import SingleTaskGP
@@ -37,7 +39,11 @@ class TestBaseCandidateGeneration(unittest.TestCase):
         model = SingleTaskGP(self.train_x, self.train_y)
         self.model = model.to(device=device, dtype=dtype)
         self.mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
-        self.mll = fit_gpytorch_model(self.mll, options={"maxiter": 1}, max_retries=1)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=OptimizationWarning)
+            self.mll = fit_gpytorch_model(
+                self.mll, options={"maxiter": 1}, max_retries=1
+            )
 
 
 class TestGenCandidates(TestBaseCandidateGeneration):
