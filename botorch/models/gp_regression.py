@@ -6,7 +6,6 @@ r"""
 Gaussian Process Regression models based on GPyTorch models.
 """
 
-from copy import deepcopy
 from typing import Any, Optional
 
 import torch
@@ -88,7 +87,7 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
                 ),
             )
         else:
-            self._likelihood_state_dict = deepcopy(likelihood.state_dict())
+            self._is_custom_likelihood = True
         ExactGP.__init__(self, train_X, train_Y, likelihood)
         self.mean_module = ConstantMean(batch_shape=self._aug_batch_shape)
         self.covar_module = ScaleKernel(
