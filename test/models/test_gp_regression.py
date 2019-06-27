@@ -98,7 +98,7 @@ class TestSingleTaskGP(unittest.TestCase):
                     pvar = posterior_pred.variance
                     pvar_exp = _get_pvar_expected(posterior, model, X, num_outputs)
                     self.assertTrue(
-                        torch.allclose(pvar, pvar_exp, rtol=1e-4, atol=1e-06)
+                        torch.allclose(pvar, pvar_exp, rtol=1e-4, atol=1e-05)
                     )
 
                     # test batch evaluation
@@ -119,7 +119,7 @@ class TestSingleTaskGP(unittest.TestCase):
                     pvar = posterior_pred.variance
                     pvar_exp = _get_pvar_expected(posterior, model, X, num_outputs)
                     self.assertTrue(
-                        torch.allclose(pvar, pvar_exp, rtol=1e-4, atol=1e-06)
+                        torch.allclose(pvar, pvar_exp, rtol=1e-4, atol=1e-05)
                     )
 
     def test_gp_cuda(self):

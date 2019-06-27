@@ -14,12 +14,18 @@ from typing import Any, Callable
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
 
-from .exceptions.warnings import OptimizationWarning
+from .exceptions.errors import UnsupportedError
+from .exceptions.warnings import BotorchWarning, OptimizationWarning
 from .models.converter import batched_to_model_list, model_list_to_batched
-from .models.gp_regression import HeteroskedasticSingleTaskGP
 from .models.gpytorch import BatchedMultiOutputGPyTorchModel
 from .optim.fit import fit_gpytorch_scipy
 from .optim.utils import sample_all_priors
+
+
+FAILED_CONVERSION_MSG = (
+    "Failed to convert ModelList to batched model. "
+    "Performing joint instead of sequential fitting."
+)
 
 
 def fit_gpytorch_model(
@@ -60,20 +66,26 @@ def fit_gpytorch_model(
         isinstance(mll.model, BatchedMultiOutputGPyTorchModel)
         and mll.model._num_outputs > 1
         and sequential
-        and not isinstance(mll.model, HeteroskedasticSingleTaskGP)
     ):
-        model_list = batched_to_model_list(mll.model)
-        mll_ = SumMarginalLogLikelihood(model_list.likelihood, model_list)
-        fit_gpytorch_model(
-            mll=mll_,
-            optimizer=optimizer,
-            sequential=True,
-            max_retries=max_retries,
-            **kwargs,
-        )
-        model_ = model_list_to_batched(mll_.model)
-        mll.model.load_state_dict(model_.state_dict())
-        mll.eval()
+        try:  # check if backwards-conversion is possible
+            model_list = batched_to_model_list(mll.model)
+            model_ = model_list_to_batched(model_list)
+            mll_ = SumMarginalLogLikelihood(model_list.likelihood, model_list)
+            fit_gpytorch_model(
+                mll=mll_,
+                optimizer=optimizer,
+                sequential=True,
+                max_retries=max_retries,
+                **kwargs,
+            )
+            model_ = model_list_to_batched(mll_.model)
+            mll.model.load_state_dict(model_.state_dict())
+            return mll.eval()
+        except (NotImplementedError, UnsupportedError, RuntimeError, AttributeError):
+            warnings.warn(FAILED_CONVERSION_MSG, BotorchWarning)
+            return fit_gpytorch_model(
+                mll=mll, optimizer=optimizer, sequential=False, max_retries=max_retries
+            )
     # retry with random samples from the priors upon failure
     mll.train()
     original_state_dict = deepcopy(mll.model.state_dict())
@@ -91,5 +103,4 @@ def fit_gpytorch_model(
             logging.warning(f"Fitting failed on try {retry}.")
 
     warnings.warn("Fitting failed on all retries.", OptimizationWarning)
-    mll.eval()
-    return mll
+    return mll.eval()

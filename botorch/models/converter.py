@@ -61,6 +61,12 @@ def _check_compatibility(models: ModelListGP) -> None:
             "Conversion of HeteroskedasticSingleTaskGP is currently unsupported."
         )
 
+    # TODO: Add support for custom likelihoods
+    if any(hasattr(m, "_likelihood_state_dict") for m in models):
+        raise NotImplementedError(
+            "Conversion of models with custom likelihoods is currently unsupported."
+        )
+
     # check that each model is single-output
     if not all(m._num_outputs == 1 for m in models):
         raise UnsupportedError("All models must be single-output.")
@@ -158,6 +164,11 @@ def batched_to_model_list(batch_model: BatchedMultiOutputGPyTorchModel) -> Model
         >>> batch_gp = SingleTaskGP(train_X, train_Y)
         >>> list_gp = batched_to_model_list(batch_gp)
     """
+    # TODO: Add support for HeteroskedasticSingleTaskGP
+    if isinstance(batch_model, HeteroskedasticSingleTaskGP):
+        raise NotImplementedError(
+            "Conversion of HeteroskedasticSingleTaskGP currently not supported."
+        )
     batch_sd = batch_model.state_dict()
 
     tensors = {n for n, p in batch_sd.items() if len(p.shape) > 0}
@@ -177,11 +188,6 @@ def batched_to_model_list(batch_model: BatchedMultiOutputGPyTorchModel) -> Model
         if isinstance(batch_model, FixedNoiseGP):
             noise_covar = batch_model.likelihood.noise_covar
             kwargs["train_Yvar"] = noise_covar.noise.select(input_bdims, i).clone()
-        # TODO: Add support for HeteroskedasticSingleTaskGP
-        if isinstance(batch_model, HeteroskedasticSingleTaskGP):
-            raise NotImplementedError(
-                "Conversion of HeteroskedasticSingleTaskGP currently not supported."
-            )
         model = batch_model.__class__(**kwargs)
         model.load_state_dict(sd)
         models.append(model)
