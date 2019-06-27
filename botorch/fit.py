@@ -100,7 +100,7 @@ def fit_gpytorch_model(
                 mll.eval()
                 return mll
             retry += 1
-            logging.warning(f"Fitting failed on try {retry}.")
+            logging.log(logging.DEBUG, f"Fitting failed on try {retry}.")
 
     warnings.warn("Fitting failed on all retries.", OptimizationWarning)
     return mll.eval()
