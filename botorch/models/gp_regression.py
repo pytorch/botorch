@@ -22,6 +22,7 @@ from gpytorch.likelihoods.likelihood import Likelihood
 from gpytorch.likelihoods.noise_models import HeteroskedasticNoise
 from gpytorch.means.constant_mean import ConstantMean
 from gpytorch.models.exact_gp import ExactGP
+from gpytorch.module import Module
 from gpytorch.priors.smoothed_box_prior import SmoothedBoxPrior
 from gpytorch.priors.torch_priors import GammaPrior
 from torch import Tensor
@@ -52,7 +53,11 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
     """
 
     def __init__(
-        self, train_X: Tensor, train_Y: Tensor, likelihood: Optional[Likelihood] = None
+        self,
+        train_X: Tensor,
+        train_Y: Tensor,
+        likelihood: Optional[Likelihood] = None,
+        covar_module: Optional[Module] = None,
     ) -> None:
         r"""A single-task exact GP model.
 
@@ -63,13 +68,14 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
                 training observations.
             likelihood: A likelihood. If omitted, use a standard
                 GaussianLikelihood with inferred noise level.
+            covar_module: The covariance (kernel) matrix. If omitted, use the
+                MaternKernel.
 
         Example:
             >>> train_X = torch.rand(20, 2)
             >>> train_Y = torch.sin(train_X[:, 0]) + torch.cos(train_X[:, 1])
             >>> model = SingleTaskGP(train_X, train_Y)
         """
-        ard_num_dims = train_X.shape[-1]
         train_X, train_Y, _ = self._set_dimensions(train_X=train_X, train_Y=train_Y)
         train_X, train_Y, _ = multioutput_to_batch_mode_transform(
             train_X=train_X, train_Y=train_Y, num_outputs=self._num_outputs
@@ -90,16 +96,19 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
             self._is_custom_likelihood = True
         ExactGP.__init__(self, train_X, train_Y, likelihood)
         self.mean_module = ConstantMean(batch_shape=self._aug_batch_shape)
-        self.covar_module = ScaleKernel(
-            MaternKernel(
-                nu=2.5,
-                ard_num_dims=ard_num_dims,
+        if covar_module is None:
+            self.covar_module = ScaleKernel(
+                MaternKernel(
+                    nu=2.5,
+                    ard_num_dims=train_X.shape[-1],
+                    batch_shape=self._aug_batch_shape,
+                    lengthscale_prior=GammaPrior(3.0, 6.0),
+                ),
                 batch_shape=self._aug_batch_shape,
-                lengthscale_prior=GammaPrior(3.0, 6.0),
-            ),
-            batch_shape=self._aug_batch_shape,
-            outputscale_prior=GammaPrior(2.0, 0.15),
-        )
+                outputscale_prior=GammaPrior(2.0, 0.15),
+            )
+        else:
+            self.covar_module = covar_module
         self.to(train_X)
 
     def forward(self, x: Tensor) -> MultivariateNormal:
@@ -136,7 +145,6 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
             >>> train_Yvar = torch.full_like(train_Y, 0.2)
             >>> model = FixedNoiseGP(train_X, train_Y, train_Yvar)
         """
-        ard_num_dims = train_X.shape[-1]
         train_X, train_Y, train_Yvar = self._set_dimensions(
             train_X=train_X, train_Y=train_Y, train_Yvar=train_Yvar
         )
@@ -156,7 +164,7 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         self.covar_module = ScaleKernel(
             base_kernel=MaternKernel(
                 nu=2.5,
-                ard_num_dims=ard_num_dims,
+                ard_num_dims=train_X.shape[-1],
                 batch_shape=self._aug_batch_shape,
                 lengthscale_prior=GammaPrior(3.0, 6.0),
             ),
