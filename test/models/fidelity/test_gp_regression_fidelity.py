@@ -69,12 +69,11 @@ class TestSingleTaskGPFidelity(unittest.TestCase):
         model = SingleTaskMultiFidelityGP(**model_kwargs)
         return model, model_kwargs
 
-    def test_exception_message(self):
-        train_X = torch.rand(20, 4)
+    def test_exception_message(self, cuda=False):
+        train_X = torch.rand(20, 4, device=torch.device("cuda" if cuda else "cpu"))
         train_Y = train_X.pow(2).sum(dim=-1)
-        GP = SingleTaskMultiFidelityGP
         with self.assertRaises(UnsupportedError):
-            GP(
+            SingleTaskMultiFidelityGP(
                 train_X,
                 train_Y,
                 train_iteration_fidelity=False,
