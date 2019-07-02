@@ -8,7 +8,10 @@ import unittest
 import torch
 from botorch import fit_gpytorch_model
 from botorch.exceptions import UnsupportedError
-from botorch.models.fidelity.gp_regression_fidelity import SingleTaskMultiFidelityGP
+from botorch.models.fidelity.gp_regression_fidelity import (
+    SingleTaskGPLTKernel,
+    SingleTaskMultiFidelityGP,
+)
 from botorch.models.gp_regression import FixedNoiseGP
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling import SobolQMCNormalSampler
@@ -45,6 +48,9 @@ def _get_random_data_with_fidelity(
 
 
 class TestSingleTaskGPFidelity(unittest.TestCase):
+    def _get_model(self):
+        return SingleTaskMultiFidelityGP
+
     def _get_model_and_data(
         self,
         train_iteration_fidelity,
@@ -66,14 +72,16 @@ class TestSingleTaskGPFidelity(unittest.TestCase):
             "train_iteration_fidelity": train_iteration_fidelity,
             "train_data_fidelity": train_data_fidelity,
         }
-        model = SingleTaskMultiFidelityGP(**model_kwargs)
+        gp_model = self._get_model()
+        model = gp_model(**model_kwargs)
         return model, model_kwargs
 
     def test_exception_message(self, cuda=False):
         train_X = torch.rand(20, 4, device=torch.device("cuda" if cuda else "cpu"))
         train_Y = train_X.pow(2).sum(dim=-1)
+        gp_model = self._get_model()
         with self.assertRaises(UnsupportedError):
-            SingleTaskMultiFidelityGP(
+            gp_model(
                 train_X,
                 train_Y,
                 train_iteration_fidelity=False,
@@ -331,3 +339,8 @@ class TestSingleTaskGPFidelity(unittest.TestCase):
     def test_fantasize_cuda(self):
         if torch.cuda.is_available():
             self.test_fantasize(cuda=True)
+
+
+class TestSingleTaskGPLTKernel(TestSingleTaskGPFidelity):
+    def _get_model(self):
+        return SingleTaskGPLTKernel
