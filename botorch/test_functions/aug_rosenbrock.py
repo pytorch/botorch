@@ -15,8 +15,8 @@ def neg_aug_rosenbrock(X: Tensor):
     d-dimensional function (usually evaluated on `[-5, 10]^(d-2) * [0, 1]^2`),
     the last two dimensions are the fidelity parameters:
 
-        `f(x) = sum_{i=1}^{d-1} (100 (x_{i+1} - x_i^2 + 0.1 * (1-x_{d-1}))^2
-                + (x_i - 1 + 0.1 * (1 - x_d)^2)^2)'
+        f(x) = sum_{i=1}^{d-1} (100 (x_{i+1} - x_i^2 + 0.1 * (1-x_{d-1}))^2 +
+            (x_i - 1 + 0.1 * (1 - x_d)^2)^2)
 
     f has one minimizer for its global minimum at
 
