@@ -2,7 +2,7 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-from .gp_regression_fidelity import SingleTaskMultiFidelityGP
+from .gp_regression_fidelity import SingleTaskGPLTKernel, SingleTaskMultiFidelityGP
 
 
-__all__ = ["SingleTaskMultiFidelityGP"]
+__all__ = ["SingleTaskMultiFidelityGP", "SingleTaskGPLTKernel"]

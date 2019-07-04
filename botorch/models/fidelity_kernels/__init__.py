@@ -4,6 +4,7 @@
 
 from .downsampling_kernel import DownsamplingKernel
 from .exponential_decay_kernel import ExpDecayKernel
+from .linear_truncated_fidelity import LinearTruncatedFidelityKernel
 
 
-__all__ = ["ExpDecayKernel", "DownsamplingKernel"]
+__all__ = ["ExpDecayKernel", "DownsamplingKernel", "LinearTruncatedFidelityKernel"]

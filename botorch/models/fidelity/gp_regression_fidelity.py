@@ -12,6 +12,9 @@ import torch
 from botorch.exceptions import UnsupportedError
 from botorch.models.fidelity_kernels.downsampling_kernel import DownsamplingKernel
 from botorch.models.fidelity_kernels.exponential_decay_kernel import ExpDecayKernel
+from botorch.models.fidelity_kernels.linear_truncated_fidelity import (
+    LinearTruncatedFidelityKernel,
+)
 from gpytorch.kernels.rbf_kernel import RBFKernel
 from gpytorch.kernels.scale_kernel import ScaleKernel
 from gpytorch.likelihoods.likelihood import Likelihood
@@ -96,6 +99,67 @@ class SingleTaskMultiFidelityGP(SingleTaskGP):
                 kernel = rbf_kernel * ds_kernel
         else:
             raise UnsupportedError("You should have at least one fidelity parameter.")
+        covar_module = ScaleKernel(
+            kernel,
+            batch_shape=self._aug_batch_shape,
+            outputscale_prior=GammaPrior(2.0, 0.15),
+        )
+        super().__init__(train_X=train_X, train_Y=train_Y, covar_module=covar_module)
+        self.to(train_X)
+
+
+class SingleTaskGPLTKernel(SingleTaskGP):
+    r"""A single task multi-fidelity GP model wiht Linear Truncated kernel.
+
+    A sub-class of SingleTaskGP model. By default the last two dimensions of train_X
+    are the fidelity parameters: training iterations, training data points.
+
+    Args:
+        train_X: A `n x (d + s)` or `batch_shape x n x (d + s) ` (batch mode) tensor
+            of training features, s is the dimension of the fidelity parameters.
+        train_Y: A `n x (o)` or `batch_shape x n x (o)` (batch mode) tensor of
+            training observations.
+        dimension: The dimension of `x`.
+        nu: The smoothness parameter fo Matern kernel: either 1/2, 3/2, or 5/2.
+            Default: '2.5'
+        train_iteration_fidelity: An indicator of whether we have the training
+            iteration fidelity variable.
+        train_data_fidelity: An indicator of whether we have the downsampling
+            fidelity variable. If train_iteration_fidelity and train_data_fidelity
+            are both True, the last and second last columns are treated as the
+            training data points fidelity parameter and training iteration
+            number fidelity parameter respectively. Otherwise the last column of
+            train_X is treated as the fidelity parameter with True indicator.
+            We assume train_X has at least one fidelity parameter.
+        likelihood: A likelihood. If omitted, use a standard
+            GaussianLikelihood with inferred noise level.
+
+    Example:
+        >>> train_X = torch.rand(20, 4)
+        >>> train_Y = train_X.pow(2).sum(dim=-1)
+        >>> model = SingleTaskGPLTKernel(train_X, train_Y)
+    """
+
+    def __init__(
+        self,
+        train_X: Tensor,
+        train_Y: Tensor,
+        nu: float = 2.5,
+        train_iteration_fidelity: bool = True,
+        train_data_fidelity: bool = True,
+        likelihood: Optional[Likelihood] = None,
+    ) -> None:
+        if not train_iteration_fidelity and not train_data_fidelity:
+            raise UnsupportedError("You should have at least one fidelity parameter.")
+        train_X, train_Y, _ = self._set_dimensions(train_X=train_X, train_Y=train_Y)
+        kernel = LinearTruncatedFidelityKernel(
+            nu=nu,
+            dimension=train_X.shape[-1],
+            train_iteration_fidelity=train_iteration_fidelity,
+            train_data_fidelity=train_data_fidelity,
+            batch_shape=self._aug_batch_shape,
+            power_prior=GammaPrior(3.0, 3.0),
+        )
         covar_module = ScaleKernel(
             kernel,
             batch_shape=self._aug_batch_shape,
