@@ -84,7 +84,13 @@ class TestIIDNormalSampler(unittest.TestCase):
             posterior_batched = _get_posterior_batched(cuda=cuda, dtype=dtype)
             samples_batched = sampler(posterior_batched)
             self.assertEqual(samples_batched.shape, torch.Size([4, 3, 2, 1]))
-            self.assertEqual(sampler.seed, 1236)
+            self.assertEqual(sampler.seed, 1235)
+            # ensure this works when changing the dtype
+            new_dtype = torch.float if dtype == torch.double else torch.double
+            posterior_batched = _get_posterior_batched(cuda=cuda, dtype=new_dtype)
+            samples_batched = sampler(posterior_batched)
+            self.assertEqual(samples_batched.shape, torch.Size([4, 3, 2, 1]))
+            self.assertEqual(sampler.seed, 1235)
 
             # resample
             sampler = IIDNormalSampler(num_samples=4, resample=True, seed=None)
@@ -212,7 +218,13 @@ class TestSobolQMCNormalSampler(unittest.TestCase):
             posterior_batched = _get_posterior_batched(cuda=cuda, dtype=dtype)
             samples_batched = sampler(posterior_batched)
             self.assertEqual(samples_batched.shape, torch.Size([4, 3, 2, 1]))
-            self.assertEqual(sampler.seed, 1236)
+            self.assertEqual(sampler.seed, 1235)
+            # ensure this works when changing the dtype
+            new_dtype = torch.float if dtype == torch.double else torch.double
+            posterior_batched = _get_posterior_batched(cuda=cuda, dtype=new_dtype)
+            samples_batched = sampler(posterior_batched)
+            self.assertEqual(samples_batched.shape, torch.Size([4, 3, 2, 1]))
+            self.assertEqual(sampler.seed, 1235)
 
             # resample
             sampler = SobolQMCNormalSampler(num_samples=4, resample=True, seed=None)

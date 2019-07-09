@@ -87,9 +87,9 @@ class MCSampler(Module, ABC):
 
          - `resample=True`
          - the MCSampler has no `base_samples` attribute.
-         - `shape` is different than `self.base_samples.shape`.
-         - device and/or dtype of posterior are different than those of
-          `self.base_samples`.
+         - `shape` is different than `self.base_samples.shape` (if
+           `collapse_batch_dims=True`, then batch dimensions of will be
+           automatically broadcasted as necessary)
 
         Args:
             posterior: The Posterior for which to generate base samples.
@@ -137,11 +137,12 @@ class IIDNormalSampler(MCSampler):
 
         This function will generate a new set of base samples and set the
         `base_samples` buffer if one of the following is true:
-          - `resample=True`
-          - the MCSampler has no `base_samples` attribute.
-          - `shape` is different than `self.base_samples.shape`.
-          - device and/or dtype of posterior ar different than those of
-            `self.base_samples`.
+
+        - `resample=True`
+        - the MCSampler has no `base_samples` attribute.
+        - `shape` is different than `self.base_samples.shape` (if
+            `collapse_batch_dims=True`, then batch dimensions of will be
+            automatically broadcasted as necessary)
 
         Args:
             posterior: The Posterior for which to generate base samples.
@@ -150,9 +151,9 @@ class IIDNormalSampler(MCSampler):
         if (
             self.resample
             or not hasattr(self, "base_samples")
-            or self.base_samples.shape != shape
-            or self.base_samples.device != posterior.device
-            or self.base_samples.dtype != posterior.dtype
+            or self.base_samples.shape[-2:] != shape[-2:]
+            or not self.collapse_batch_dims
+            and shape != self.base_samples.shape
         ):
             with manual_seed(seed=self.seed):
                 base_samples = torch.randn(
@@ -160,6 +161,12 @@ class IIDNormalSampler(MCSampler):
                 )
             self.seed += 1
             self.register_buffer("base_samples", base_samples)
+        elif self.collapse_batch_dims and shape != self.base_samples.shape:
+            self.base_samples = self.base_samples.view(shape)
+        if self.base_samples.device != posterior.device:
+            self.to(device=posterior.device)  # pragma: nocover
+        if self.base_samples.dtype != posterior.dtype:
+            self.to(dtype=posterior.dtype)
 
 
 class SobolQMCNormalSampler(MCSampler):
@@ -201,11 +208,12 @@ class SobolQMCNormalSampler(MCSampler):
 
         This function will generate a new set of base samples and set the
         `base_samples` buffer if one of the following is true:
-          - `resample=True`
-          - the MCSampler has no `base_samples` attribute.
-          - `self.sample_shape` is different than `self.base_samples.shape`.
-          - device and/or dtype of posterior ar different than those of
-            `self.base_samples`.
+
+        - `resample=True`
+        - the MCSampler has no `base_samples` attribute.
+        - `shape` is different than `self.base_samples.shape` (if
+          `collapse_batch_dims=True`, then batch dimensions of will be
+          automatically broadcasted as necessary)
 
         Args:
             posterior: The Posterior for which to generate base samples.
@@ -214,9 +222,9 @@ class SobolQMCNormalSampler(MCSampler):
         if (
             self.resample
             or not hasattr(self, "base_samples")
-            or self.base_samples.shape != shape
-            or self.base_samples.device != posterior.device
-            or self.base_samples.dtype != posterior.dtype
+            or self.base_samples.shape[-2:] != shape[-2:]
+            or not self.collapse_batch_dims
+            and shape != self.base_samples.shape
         ):
             output_dim = shape[-2:].numel()
             if output_dim > SobolEngine.MAXDIM:
@@ -234,3 +242,9 @@ class SobolQMCNormalSampler(MCSampler):
             self.seed += 1
             base_samples = base_samples.view(shape)
             self.register_buffer("base_samples", base_samples)
+        elif self.collapse_batch_dims and shape != posterior.event_shape:
+            self.base_samples = self.base_samples.view(shape)
+        if self.base_samples.device != posterior.device:
+            self.to(device=posterior.device)  # pragma: nocover
+        if self.base_samples.dtype != posterior.dtype:
+            self.to(dtype=posterior.dtype)
