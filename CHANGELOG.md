@@ -3,6 +3,20 @@
 The release log for BoTorch.
 
 
+## [0.1.2] - July 9, 2019
+
+Maintenance release
+
+#### Bug fixes
+* Avoid [PyTorch bug]((https://github.com/pytorch/pytorch/issues/22353)
+  resulting in bad gradients on GPU by requiring GPyTorch >= 0.3.4
+* Fixes to resampling behavior in MCSamplers (#204)
+
+#### Experimental Features
+* Linear truncated kernel for multi-fidelity bayesian optimization (#192)
+* SingleTaskMultiFidelityGP for GP models that have fidelity parameters (#181)
+
+
 ## [0.1.1] - June 27, 2019
 
 API updates, more robust model fitting
