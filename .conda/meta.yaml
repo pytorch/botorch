@@ -38,5 +38,5 @@ about:
   license: MIT
   license_file: LICENSE
   summary: Bayesian Optimization in PyTorch
-  doc_url: https://botorch.org/docs
+  doc_url: https://botorch.org/docs/introduction
   dev_url: https://github.com/pytorch/botorch
