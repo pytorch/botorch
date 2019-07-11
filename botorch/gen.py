@@ -44,12 +44,14 @@ def gen_candidates_scipy(
         upper_bounds: Maximum values for each column of initial_conditions.
         inequality constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
-            `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`
+            `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`.
         equality constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
-            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`
-        options: options used to control the optimization including "method"
-            and "maxiter"
+            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`.
+        options: Options used to control the optimization including "method"
+            and "maxiter". Select method for `scipy.minimize` using the
+            method" key. By default uses L-BFGS-B for box-constrained problems
+            and SLSQP if inequality or equality constraints are present.
         fixed_features: This is a dictionary of feature indices to values, where
             all generated candidates will have features fixed to these values.
             If the dictionary value is None, then that feature will just be
@@ -109,7 +111,7 @@ def gen_candidates_scipy(
     res = minimize(
         f,
         x0,
-        method=options.get("method", "SLSQP"),
+        method=options.get("method", "SLSQP" if constraints else "L-BFGS-B"),
         jac=True,
         bounds=bounds,
         constraints=constraints,
