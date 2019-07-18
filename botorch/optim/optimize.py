@@ -106,6 +106,7 @@ def joint_optimize(
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     fixed_features: Optional[Dict[int, float]] = None,
     post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
+    batch_initial_conditions: Optional[Tensor] = None,
 ) -> Tensor:
     r"""Generate a set of candidates via joint multi-start optimization.
 
@@ -129,6 +130,8 @@ def joint_optimize(
             appropriately (i.e., according to `round-trip` transformations).
             Note: post_processing_func is not used by _joint_optimize and is only
             included to match _sequential_optimize.
+        batch_initial_conditions: A tensor to specify the initial conditions. Set
+            this if you do not want to use default initialization strategy.
 
     Returns:
          A `q x d` tensor of generated candidates.
@@ -141,16 +144,18 @@ def joint_optimize(
         >>> candidates = joint_optimize(qEI, bounds, 2, 20, 500)
     """
     # TODO: Generating initial candidates should use parameter constraints.
-
     options = options or {}
-    batch_initial_conditions = gen_batch_initial_conditions(
-        acq_function=acq_function,
-        bounds=bounds,
-        q=None if isinstance(acq_function, AnalyticAcquisitionFunction) else q,
-        num_restarts=num_restarts,
-        raw_samples=raw_samples,
-        options=options,
-    )
+
+    if batch_initial_conditions is None:
+        batch_initial_conditions = gen_batch_initial_conditions(
+            acq_function=acq_function,
+            bounds=bounds,
+            q=None if isinstance(acq_function, AnalyticAcquisitionFunction) else q,
+            num_restarts=num_restarts,
+            raw_samples=raw_samples,
+            options=options,
+        )
+
     batch_limit = options.get("batch_limit", num_restarts)
     batch_candidates_list = []
     batch_acq_values_list = []
