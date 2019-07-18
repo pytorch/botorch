@@ -13,6 +13,7 @@ import torch
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from torch import Tensor
 
+from ..exceptions.errors import UnsupportedError
 from .posterior import Posterior
 
 
@@ -99,3 +100,42 @@ class GPyTorchPosterior(Posterior):
         if not self._is_mt:
             variance = variance.unsqueeze(-1)
         return variance
+
+
+def scalarize_posterior(
+    posterior: GPyTorchPosterior, weights: Tensor, offset: float = 0.0
+) -> GPyTorchPosterior:
+    r"""Affine transformation of a multi-output posterior.
+
+    Args:
+        posterior: The posterior to be transformed. Must be single-point (`q=1`).
+            Supports `t`-batching.
+        weights: An single-dimensional tensor of weights. Number of elements
+            must be the numbe of outputs of the posterior.
+        offset: The offset of the affine transformation.
+
+    Returns:
+        The transformed (single-output) posterior. If the input posterior has
+            mean `mu` and covariance matrix `Sigma`, this posterior has mean
+            `weights^T * mu` and variance `weights^T Sigma w`.
+
+    Example:
+        Example for a model with two outcomes:
+
+        >>> X = torch.rand(1, 2)
+        >>> posterior = model.posterior(X)
+        >>> weights = torch.tensor([0.5, 0.25])
+        >>> new_posterior = scalarize_posterior(posterior, weights=weights)
+    """
+    mean = posterior.mean
+    if mean.shape[-1] != len(weights):
+        raise RuntimeError("Output shape not equal to that of weights")
+    if mean.shape[-2] != 1:
+        raise UnsupportedError("scalarize_posterior currently not supported for q>1")
+    # no need to use lazy here since q=1
+    cov = posterior.mvn.covariance_matrix
+    batch_shape = cov.shape[:-2]
+    new_cov = ((cov @ weights) @ weights).view(*batch_shape, 1, 1)
+    new_mean = offset + (mean @ weights).view(*batch_shape, 1)
+    new_mvn = MultivariateNormal(new_mean, new_cov)
+    return GPyTorchPosterior(new_mvn)

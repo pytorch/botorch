@@ -11,9 +11,12 @@ from botorch.acquisition.objective import (
     IdentityMCObjective,
     LinearMCObjective,
     MCAcquisitionObjective,
+    ScalarizedObjective,
 )
 from botorch.utils import apply_constraints
 from torch import Tensor
+
+from ..posteriors.test_gpytorch import _get_test_posterior
 
 
 def generic_obj(samples: Tensor) -> Tensor:
@@ -26,6 +29,38 @@ def infeasible_con(samples: Tensor) -> Tensor:
 
 def feasible_con(samples: Tensor) -> Tensor:
     return -torch.ones(samples.shape[0:-1], device=samples.device, dtype=samples.dtype)
+
+
+class TestScalarizedObjective(unittest.TestCase):
+    def test_affine_acquisition_objective(self, cuda=False):
+        device = torch.device("cuda") if cuda else torch.device("cpu")
+        for dtype in (torch.float, torch.double):
+            offset = torch.rand(1).item()
+            for batch_shape in ([], [3]):
+                for o in (1, 2):
+                    weights = torch.randn(o, device=device, dtype=dtype)
+                    obj = ScalarizedObjective(weights=weights, offset=offset)
+                    posterior = _get_test_posterior(batch_shape, device, dtype, o=o)
+                    mean, covar = posterior.mvn.mean, posterior.mvn.covariance_matrix
+                    new_posterior = obj(posterior)
+                    exp_size = torch.Size(batch_shape + [1, 1])
+                    self.assertEqual(new_posterior.mean.shape, exp_size)
+                    new_mean_exp = offset + mean @ weights
+                    self.assertTrue(
+                        torch.allclose(new_posterior.mean[..., -1], new_mean_exp)
+                    )
+                    self.assertEqual(new_posterior.variance.shape, exp_size)
+                    new_covar_exp = ((covar @ weights) @ weights).unsqueeze(-1)
+                    self.assertTrue(
+                        torch.allclose(new_posterior.variance[..., -1], new_covar_exp)
+                    )
+                    # test error
+                    with self.assertRaises(ValueError):
+                        ScalarizedObjective(weights=torch.rand(2, o))
+
+    def test_affine_acquisition_objective_cuda(self, cuda=False):
+        if torch.cuda.is_available():
+            self.test_affine_acquisition_objective(cuda=True)
 
 
 class TestMCAcquisitionObjective(unittest.TestCase):

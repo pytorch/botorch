@@ -23,21 +23,48 @@ from ..posteriors.posterior import Posterior
 from ..sampling.samplers import SobolQMCNormalSampler
 from ..utils.transforms import convert_to_target_pre_hook, t_batch_mode_transform
 from .acquisition import AcquisitionFunction
+from .objective import ScalarizedObjective
 
 
 class AnalyticAcquisitionFunction(AcquisitionFunction, ABC):
     r"""Base class for analytic acquisition functions."""
 
-    def _validate_single_output_posterior(self, posterior: Posterior) -> None:
-        r"""Validates that the computed posterior is single-output.
-
-        Raises an UnsupportedError if not.
-        """
-        if posterior.event_shape[-1] != 1:
+    def __init__(
+        self, model: Model, objective: Optional[ScalarizedObjective] = None
+    ) -> None:
+        super().__init__(model=model)
+        if objective is not None and not isinstance(objective, ScalarizedObjective):
             raise UnsupportedError(
-                "Multi-Output posteriors are not supported for acquisition "
-                f" function of type {self.__class__.__name__}"
+                "Only objectives of type ScalarizedObjective are supported for "
+                "analytic acquisition functions."
             )
+        self.objective = objective
+
+    def _get_posterior(self, X: Tensor, check_single_output: bool = True) -> Posterior:
+        r"""Compute the posterior at the input candidate set X.
+
+        Applies the objective if provided.
+
+        Args:
+            X: The input candidate set
+            check_single_output: If True, Raise an error if the posterior is not
+                single-output.
+
+        Returns:
+            The posterior at X.
+        """
+        posterior = self.model.posterior(X)
+        if self.objective is not None:
+            # Unlike MCAcquisitionObjectives (which transform samples), this
+            # transforms the posterior
+            posterior = self.objective(posterior)
+        if check_single_output:
+            if posterior.event_shape[-1] != 1:
+                raise UnsupportedError(
+                    "Multi-Output posteriors are not supported for acquisition "
+                    f"functions of type {self.__class__.__name__}"
+                )
+        return posterior
 
     def set_X_pending(self, X_pending: Optional[Tensor] = None) -> None:
         raise UnsupportedError(
@@ -64,7 +91,11 @@ class ExpectedImprovement(AnalyticAcquisitionFunction):
     """
 
     def __init__(
-        self, model: Model, best_f: Union[float, Tensor], maximize: bool = True
+        self,
+        model: Model,
+        best_f: Union[float, Tensor],
+        objective: Optional[ScalarizedObjective] = None,
+        maximize: bool = True,
     ) -> None:
         r"""Single-outcome Expected Improvement (analytic).
 
@@ -73,8 +104,9 @@ class ExpectedImprovement(AnalyticAcquisitionFunction):
             best_f: Either a scalar or a `b`-dim Tensor (batch mode) representing
                 the best function value observed so far (assumed noiseless).
             maximize: If True, consider the problem a maximization problem.
+            objective: An ScalarizedObjective (optional).
         """
-        super().__init__(model=model)
+        super().__init__(model=model, objective=objective)
         self.maximize = maximize
         if not torch.is_tensor(best_f):
             best_f = torch.tensor(best_f)
@@ -95,8 +127,7 @@ class ExpectedImprovement(AnalyticAcquisitionFunction):
             given design points `X`.
         """
         self.best_f = self.best_f.to(X)
-        posterior = self.model.posterior(X)
-        self._validate_single_output_posterior(posterior)
+        posterior = self._get_posterior(X=X)
         mean = posterior.mean
         # deal with batch evaluation and broadcasting
         view_shape = mean.shape[:-2] if mean.dim() >= X.dim() else X.shape[:-2]
@@ -136,8 +167,7 @@ class PosteriorMean(AnalyticAcquisitionFunction):
             A `(b)`-dim Tensor of Posterior Mean values at the given design
             points `X`.
         """
-        posterior = self.model.posterior(X)
-        self._validate_single_output_posterior(posterior)
+        posterior = self._get_posterior(X=X)
         return posterior.mean.view(X.shape[:-2])
 
 
@@ -158,7 +188,11 @@ class ProbabilityOfImprovement(AnalyticAcquisitionFunction):
     """
 
     def __init__(
-        self, model: Model, best_f: Union[float, Tensor], maximize: bool = True
+        self,
+        model: Model,
+        best_f: Union[float, Tensor],
+        objective: Optional[ScalarizedObjective] = None,
+        maximize: bool = True,
     ) -> None:
         r"""Single-outcome analytic Probability of Improvement.
 
@@ -168,7 +202,7 @@ class ProbabilityOfImprovement(AnalyticAcquisitionFunction):
                 the best function value observed so far (assumed noiseless).
             maximize: If True, consider the problem a maximization problem.
         """
-        super().__init__(model=model)
+        super().__init__(model=model, objective=objective)
         self.maximize = maximize
         if not torch.is_tensor(best_f):
             best_f = torch.tensor(best_f)
@@ -187,10 +221,9 @@ class ProbabilityOfImprovement(AnalyticAcquisitionFunction):
             design points `X`.
         """
         self.best_f = self.best_f.to(X)
-        batch_shape = X.shape[:-2]
-        posterior = self.model.posterior(X)
-        self._validate_single_output_posterior(posterior)
+        posterior = self._get_posterior(X=X)
         mean, sigma = posterior.mean, posterior.variance.sqrt()
+        batch_shape = X.shape[:-2]
         mean = posterior.mean.view(batch_shape)
         sigma = posterior.variance.sqrt().clamp_min(1e-9).view(batch_shape)
         u = (mean - self.best_f.expand_as(mean)) / sigma
@@ -218,7 +251,11 @@ class UpperConfidenceBound(AnalyticAcquisitionFunction):
     """
 
     def __init__(
-        self, model: Model, beta: Union[float, Tensor], maximize: bool = True
+        self,
+        model: Model,
+        beta: Union[float, Tensor],
+        objective: Optional[ScalarizedObjective] = None,
+        maximize: bool = True,
     ) -> None:
         r"""Single-outcome Upper Confidence Bound.
 
@@ -229,7 +266,7 @@ class UpperConfidenceBound(AnalyticAcquisitionFunction):
                 representing the trade-off parameter between mean and covariance
             maximize: If True, consider the problem a maximization problem.
         """
-        super().__init__(model=model)
+        super().__init__(model=model, objective=objective)
         self.maximize = maximize
         if not torch.is_tensor(beta):
             beta = torch.tensor(beta)
@@ -248,9 +285,8 @@ class UpperConfidenceBound(AnalyticAcquisitionFunction):
             design points `X`.
         """
         self.beta = self.beta.to(X)
+        posterior = self._get_posterior(X=X)
         batch_shape = X.shape[:-2]
-        posterior = self.model.posterior(X)
-        self._validate_single_output_posterior(posterior)
         mean = posterior.mean.view(batch_shape)
         variance = posterior.variance.view(batch_shape)
         delta = (self.beta.expand_as(mean) * variance).sqrt()
@@ -323,7 +359,7 @@ class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
             A `(b)`-dim Tensor of Expected Improvement values at the given
             design points `X`.
         """
-        posterior = self.model.posterior(X)
+        posterior = self._get_posterior(X=X, check_single_output=False)
         means = posterior.mean.squeeze(dim=-2)  # (b) x t
         sigmas = posterior.variance.squeeze(dim=-2).sqrt().clamp_min(1e-9)  # (b) x t
 
@@ -467,8 +503,7 @@ class NoisyExpectedImprovement(ExpectedImprovement):
             )
         # sample fantasies
         with torch.no_grad():
-            posterior = model.posterior(X_observed)
-            self._validate_single_output_posterior(posterior=posterior)
+            posterior = model.posterior(X=X_observed)
             sampler = SobolQMCNormalSampler(num_fantasies)
             Y_fantasized = sampler(posterior).squeeze(-1)
         batch_X_observed = X_observed.expand(num_fantasies, *X_observed.shape)

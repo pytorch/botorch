@@ -14,7 +14,8 @@ from botorch.acquisition.monte_carlo import (
     qSimpleRegret,
     qUpperConfidenceBound,
 )
-from botorch.exceptions import BotorchWarning
+from botorch.acquisition.objective import ScalarizedObjective
+from botorch.exceptions import BotorchWarning, UnsupportedError
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.mock import MockModel, MockPosterior
 
@@ -90,6 +91,11 @@ class TestQExpectedImprovement(unittest.TestCase):
                 self.assertEqual(acqf.X_pending, X2)
                 self.assertEqual(len(ws), 1)
                 self.assertTrue(issubclass(ws[-1].category, BotorchWarning))
+
+        # test bad objective type
+        obj = ScalarizedObjective(weights=torch.rand(2, device=device, dtype=dtype))
+        with self.assertRaises(UnsupportedError):
+            qExpectedImprovement(model=mm, best_f=0, sampler=sampler, objective=obj)
 
     def test_q_expected_improvement_cuda(self):
         if torch.cuda.is_available():

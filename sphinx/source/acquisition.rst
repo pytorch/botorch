@@ -104,6 +104,11 @@ botorch.acquisition.objective
 .. automodule:: botorch.acquisition.objective
 
 
+:hidden:`ScalarizedObjective`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autoclass:: ScalarizedObjective
+   :members:
+
 :hidden:`MCAcquisitionObjective`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autoclass:: MCAcquisitionObjective
