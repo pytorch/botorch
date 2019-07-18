@@ -160,6 +160,7 @@ class TestJointOptimize(TestCase):
         options = {}
         mock_acq_function = MockAcquisitionFunction()
         tkwargs = {"device": torch.device("cuda") if cuda else torch.device("cpu")}
+        cnt = 1
         for dtype in (torch.float, torch.double):
             tkwargs["dtype"] = dtype
             mock_gen_batch_initial_conditions.return_value = torch.zeros(
@@ -182,6 +183,18 @@ class TestJointOptimize(TestCase):
                 options=options,
             )
             self.assertTrue(torch.equal(candidates, expected_candidates))
+
+            candidates = joint_optimize(
+                acq_function=mock_acq_function,
+                bounds=bounds,
+                q=q,
+                num_restarts=num_restarts,
+                raw_samples=raw_samples,
+                options=options,
+                batch_initial_conditions=torch.zeros(num_restarts, q, 3, **tkwargs),
+            )
+            self.assertEqual(mock_gen_batch_initial_conditions.call_count, cnt)
+            cnt += 1
 
     def test_joint_optimize_cuda(self):
         if torch.cuda.is_available():
