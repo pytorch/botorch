@@ -15,9 +15,12 @@ from botorch.acquisition.analytic import (
     ProbabilityOfImprovement,
     UpperConfidenceBound,
 )
+from botorch.acquisition.objective import IdentityMCObjective, ScalarizedObjective
 from botorch.exceptions import UnsupportedError
 from botorch.models import FixedNoiseGP, SingleTaskGP
+from botorch.posteriors import GPyTorchPosterior
 from botorch.utils.mock import MockModel, MockPosterior
+from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 
 
 NEI_NOISE = [-0.099, -0.004, 0.227, -0.182, 0.018, 0.334, -0.270, 0.156, -0.237, 0.052]
@@ -37,12 +40,14 @@ class TestExpectedImprovement(unittest.TestCase):
             variance = torch.ones(1, 1, device=device, dtype=dtype)
             mm = MockModel(MockPosterior(mean=mean, variance=variance))
 
+            # basic test
             module = ExpectedImprovement(model=mm, best_f=0.0)
             X = torch.empty(1, 1, device=device, dtype=dtype)  # dummy
             ei = module(X)
             ei_expected = torch.tensor(0.19780, device=device, dtype=dtype)
             self.assertTrue(torch.allclose(ei, ei_expected, atol=1e-4))
 
+            # test maximize
             module = ExpectedImprovement(model=mm, best_f=0.0, maximize=False)
             X = torch.empty(1, 1, device=device, dtype=dtype)  # dummy
             ei = module(X)
@@ -50,6 +55,34 @@ class TestExpectedImprovement(unittest.TestCase):
             self.assertTrue(torch.allclose(ei, ei_expected, atol=1e-4))
             with self.assertRaises(UnsupportedError):
                 module.set_X_pending(None)
+
+            # test objective (single-output)
+            mean = torch.tensor([0.5], device=device, dtype=dtype)
+            covar = torch.tensor([[0.16]], device=device, dtype=dtype)
+            mvn = MultivariateNormal(mean, covar)
+            p = GPyTorchPosterior(mvn)
+            mm = MockModel(p)
+            weights = torch.tensor([0.5], device=device, dtype=dtype)
+            obj = ScalarizedObjective(weights)
+            ei = ExpectedImprovement(model=mm, best_f=0.0, objective=obj)
+            X = torch.rand(1, 2, device=device, dtype=dtype)
+            ei_expected = torch.tensor(0.2601, device=device, dtype=dtype)
+            torch.allclose(ei(X), ei_expected, atol=1e-4)
+
+            # test objective (multi-output)
+            mean = torch.tensor([[-0.25, 0.5]], device=device, dtype=dtype)
+            covar = torch.tensor(
+                [[[0.5, 0.125], [0.125, 0.5]]], device=device, dtype=dtype
+            )
+            mvn = MultitaskMultivariateNormal(mean, covar)
+            p = GPyTorchPosterior(mvn)
+            mm = MockModel(p)
+            weights = torch.tensor([2.0, 1.0], device=device, dtype=dtype)
+            obj = ScalarizedObjective(weights)
+            ei = ExpectedImprovement(model=mm, best_f=0.0, objective=obj)
+            X = torch.rand(1, 2, device=device, dtype=dtype)
+            ei_expected = torch.tensor(0.6910, device=device, dtype=dtype)
+            torch.allclose(ei(X), ei_expected, atol=1e-4)
 
     def test_expected_improvement_cuda(self, cuda=False):
         if torch.cuda.is_available():
@@ -77,6 +110,42 @@ class TestExpectedImprovement(unittest.TestCase):
             module2 = ExpectedImprovement(model=mm2, best_f=0.0)
             with self.assertRaises(UnsupportedError):
                 module2(X)
+
+            # test objective (single-output)
+            mean = torch.tensor([[[0.5]], [[0.25]]], device=device, dtype=dtype)
+            covar = torch.tensor([[[[0.16]]], [[[0.125]]]], device=device, dtype=dtype)
+            mvn = MultivariateNormal(mean, covar)
+            p = GPyTorchPosterior(mvn)
+            mm = MockModel(p)
+            weights = torch.tensor([0.5], device=device, dtype=dtype)
+            obj = ScalarizedObjective(weights)
+            ei = ExpectedImprovement(model=mm, best_f=0.0, objective=obj)
+            X = torch.rand(2, 1, 2, device=device, dtype=dtype)
+            ei_expected = torch.tensor([[0.2601], [0.1500]], device=device, dtype=dtype)
+            torch.allclose(ei(X), ei_expected, atol=1e-4)
+
+            # test objective (multi-output)
+            mean = torch.tensor(
+                [[[-0.25, 0.5]], [[0.2, -0.1]]], device=device, dtype=dtype
+            )
+            covar = torch.tensor(
+                [[[0.5, 0.125], [0.125, 0.5]], [[0.25, -0.1], [-0.1, 0.25]]],
+                device=device,
+                dtype=dtype,
+            )
+            mvn = MultitaskMultivariateNormal(mean, covar)
+            p = GPyTorchPosterior(mvn)
+            mm = MockModel(p)
+            weights = torch.tensor([2.0, 1.0], device=device, dtype=dtype)
+            obj = ScalarizedObjective(weights)
+            ei = ExpectedImprovement(model=mm, best_f=0.0, objective=obj)
+            X = torch.rand(2, 1, 2, device=device, dtype=dtype)
+            ei_expected = torch.tensor([0.6910, 0.5371], device=device, dtype=dtype)
+            torch.allclose(ei(X), ei_expected, atol=1e-4)
+
+        # test bad objective class
+        with self.assertRaises(UnsupportedError):
+            ExpectedImprovement(model=mm, best_f=0.0, objective=IdentityMCObjective())
 
     def test_expected_improvement_batch_cuda(self, cuda=False):
         if torch.cuda.is_available():

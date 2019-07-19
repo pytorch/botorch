@@ -74,7 +74,7 @@ class MockPosterior(Posterior):
 class MockModel(Model):
     """Mock object that implements dummy methods and feeds through specified outputs"""
 
-    def __init__(self, posterior: MockPosterior):
+    def __init__(self, posterior: MockPosterior) -> None:
         super(Model, self).__init__()
         self._posterior = posterior
 

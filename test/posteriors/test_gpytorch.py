@@ -6,9 +6,20 @@ import unittest
 import warnings
 
 import torch
-from botorch.posteriors.gpytorch import GPyTorchPosterior
+from botorch.exceptions.errors import UnsupportedError
+from botorch.posteriors.gpytorch import GPyTorchPosterior, scalarize_posterior
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.lazy.non_lazy_tensor import lazify
+
+
+def _get_test_posterior(batch_shape, device, dtype, q=1, o=1):
+    mean = torch.rand(*batch_shape, q, o, device=device, dtype=dtype)
+    a = torch.rand(*batch_shape, q * o, q * o, device=device, dtype=dtype)
+    covar = a @ a.transpose(-1, -2)
+    diag = torch.diagonal(covar, dim1=-2, dim2=-1)
+    diag += torch.rand(*batch_shape, q * o, device=device, dtype=dtype)  # in-place
+    mvn = MultitaskMultivariateNormal(mean, covar)
+    return GPyTorchPosterior(mvn)
 
 
 class TestGPyTorchPosterior(unittest.TestCase):
@@ -254,3 +265,37 @@ class TestGPyTorchPosterior(unittest.TestCase):
     def test_degenerate_GPyTorchPosterior_Multitask_cuda(self):
         if torch.cuda.is_available():
             self.test_degenerate_GPyTorchPosterior_Multitask(cuda=True)
+
+    def test_scalarize_posterior(self, cuda=False):
+        device = torch.device("cuda") if cuda else torch.device("cpu")
+        for dtype in (torch.float, torch.double):
+            offset = torch.rand(1).item()
+            for batch_shape in ([], [3]):
+                for o in (1, 2):
+                    weights = torch.randn(o, device=device, dtype=dtype)
+                    posterior = _get_test_posterior(batch_shape, device, dtype, o=o)
+                    mean, covar = posterior.mvn.mean, posterior.mvn.covariance_matrix
+                    new_posterior = scalarize_posterior(posterior, weights, offset)
+                    exp_size = torch.Size(batch_shape + [1, 1])
+                    self.assertEqual(new_posterior.mean.shape, exp_size)
+                    new_mean_exp = offset + mean @ weights
+                    self.assertTrue(
+                        torch.allclose(new_posterior.mean[..., -1], new_mean_exp)
+                    )
+                    self.assertEqual(new_posterior.variance.shape, exp_size)
+                    new_covar_exp = ((covar @ weights) @ weights).unsqueeze(-1)
+                    self.assertTrue(
+                        torch.allclose(new_posterior.variance[..., -1], new_covar_exp)
+                    )
+                    # test errors
+                    with self.assertRaises(RuntimeError):
+                        scalarize_posterior(posterior, weights[:-1], offset)
+                    posterior2 = _get_test_posterior(
+                        batch_shape, device, dtype, q=2, o=o
+                    )
+                    with self.assertRaises(UnsupportedError):
+                        scalarize_posterior(posterior2, weights, offset)
+
+    def test_scalarize_posterior_cuda(self):
+        if torch.cuda.is_available():
+            self.test_scalarize_posterior(cuda=True)

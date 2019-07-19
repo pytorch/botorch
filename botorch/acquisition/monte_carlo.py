@@ -23,6 +23,7 @@ from typing import Optional, Union
 import torch
 from torch import Tensor
 
+from ..exceptions.errors import UnsupportedError
 from ..models.model import Model
 from ..sampling.samplers import MCSampler, SobolQMCNormalSampler
 from ..utils.transforms import match_batch_shape, t_batch_mode_transform
@@ -58,6 +59,11 @@ class MCAcquisitionFunction(AcquisitionFunction, ABC):
         self.add_module("sampler", sampler)
         if objective is None:
             objective = IdentityMCObjective()
+        elif not isinstance(objective, MCAcquisitionObjective):
+            raise UnsupportedError(
+                "Only objectives of type MCAcquisitionObjective are supported for "
+                "MC acquisition functions."
+            )
         self.add_module("objective", objective)
         self.set_X_pending(X_pending)
 

@@ -14,6 +14,52 @@ from botorch.utils import apply_constraints
 from torch import Tensor
 from torch.nn import Module
 
+from ..posteriors.gpytorch import GPyTorchPosterior, scalarize_posterior
+
+
+class ScalarizedObjective(Module):
+    r"""Affine objective to be used with analytic acquisition functions.
+
+    For a Gaussian posterior at a single point (`q=1`) with mean `mu` and
+    covariance matrix `Sigma`, this yields a single-output posterior with mean
+    `weights^T * mu` and variance `weights^T Sigma w`.
+
+    Example:
+        Example for a model with two outcomes:
+
+        >>> weights = torch.tensor([0.5, 0.25])
+        >>> objective = ScalarizedObjective(weights)
+        >>> EI = ExpectedImprovement(model, best_f=0.1, objective=objective)
+    """
+
+    def __init__(self, weights: Tensor, offset: float = 0.0) -> None:
+        r"""Affine objective.
+
+        Args:
+            weights: A one-dimensional tensor with `o` elements representing the
+                linear weights on the outputs.
+            offset: An offset to be added to posterior mean.
+        """
+        if weights.dim() != 1:
+            raise ValueError("weights must be a one-dimensional tensor.")
+        super().__init__()
+        self.register_buffer("weights", weights)
+        self.offset = offset
+
+    def forward(self, posterior: GPyTorchPosterior) -> GPyTorchPosterior:
+        r"""Compute the posterior of the affine transformation.
+
+        Args:
+            posterior: A posterior with the same number of outputs as the
+                elements in `self.weights`.
+
+        Returns:
+            A single-output posterior.
+        """
+        return scalarize_posterior(
+            posterior=posterior, weights=self.weights, offset=self.offset
+        )
+
 
 class MCAcquisitionObjective(Module, ABC):
     r"""Abstract base class for MC-based objectives."""
