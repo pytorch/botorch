@@ -79,7 +79,7 @@ def gen_candidates_scipy(
     """
     options = options or {}
     clamped_candidates = columnwise_clamp(
-        initial_conditions, lower_bounds, upper_bounds
+        X=initial_conditions, lower=lower_bounds, upper=upper_bounds
     ).requires_grad_(True)
 
     shapeX = clamped_candidates.shape
@@ -121,8 +121,11 @@ def gen_candidates_scipy(
         X=torch.from_numpy(res.x).to(initial_conditions).view(shapeX).contiguous(),
         fixed_features=fixed_features,
     )
-    batch_acquisition = acquisition_function(candidates)
-    return candidates, batch_acquisition
+    clamped_candidates = columnwise_clamp(
+        X=candidates, lower=lower_bounds, upper=upper_bounds, raise_on_violation=True
+    )
+    batch_acquisition = acquisition_function(clamped_candidates)
+    return clamped_candidates, batch_acquisition
 
 
 def gen_candidates_torch(
@@ -177,7 +180,7 @@ def gen_candidates_torch(
     """
     options = options or {}
     clamped_candidates = columnwise_clamp(
-        initial_conditions, lower_bounds, upper_bounds
+        X=initial_conditions, lower=lower_bounds, upper=upper_bounds
     ).requires_grad_(True)
     candidates = fix_features(clamped_candidates, fixed_features)
     bayes_optimizer = optimizer(
@@ -211,6 +214,9 @@ def gen_candidates_torch(
             param_trajectory=param_trajectory,
             options=options,
         )
+    clamped_candidates = columnwise_clamp(
+        X=candidates, lower=lower_bounds, upper=upper_bounds, raise_on_violation=True
+    )
     batch_acquisition = acquisition_function(candidates)
     return candidates, batch_acquisition
 

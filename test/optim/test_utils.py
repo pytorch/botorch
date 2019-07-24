@@ -7,6 +7,7 @@ import warnings
 from copy import deepcopy
 
 import torch
+from botorch.exceptions import BotorchError
 from botorch.models import ModelListGP, SingleTaskGP
 from botorch.optim.utils import (
     _expand_bounds,
@@ -93,6 +94,21 @@ class TestColumnWiseClamp(unittest.TestCase):
     def test_column_wise_clamp_tensors_cuda(self):
         if torch.cuda.is_available():
             self.test_column_wise_clamp_tensors(cuda=True)
+
+    def test_column_wise_clamp_raise_on_violation(self, cuda=False):
+        X = self.X.cuda() if cuda else self.X
+        with self.assertRaises(BotorchError):
+            X_clmp = columnwise_clamp(
+                X, torch.zeros(2), torch.ones(2), raise_on_violation=True
+            )
+        X_clmp = columnwise_clamp(
+            X, torch.tensor([-3, -3]), torch.tensor([3, 3]), raise_on_violation=True
+        )
+        self.assertTrue(torch.equal(X_clmp, X))
+
+    def test_column_wise_clamp_raise_on_violation_cuda(self):
+        if torch.cuda.is_available():
+            self.test_column_wise_clamp_raise_on_violation(cuda=True)
 
 
 class TestFixFeatures(unittest.TestCase):
