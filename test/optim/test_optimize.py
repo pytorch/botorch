@@ -191,7 +191,11 @@ class TestJointOptimize(TestCase):
                 num_restarts=num_restarts,
                 raw_samples=raw_samples,
                 options=options,
+                return_best_only=False,
                 batch_initial_conditions=torch.zeros(num_restarts, q, 3, **tkwargs),
+            )
+            self.assertTrue(
+                torch.equal(candidates, mock_gen_candidates.return_value[0])
             )
             self.assertEqual(mock_gen_batch_initial_conditions.call_count, cnt)
             cnt += 1
