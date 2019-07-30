@@ -107,6 +107,7 @@ def joint_optimize(
     fixed_features: Optional[Dict[int, float]] = None,
     post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
     batch_initial_conditions: Optional[Tensor] = None,
+    return_best_only: bool = True,
 ) -> Tensor:
     r"""Generate a set of candidates via joint multi-start optimization.
 
@@ -132,6 +133,8 @@ def joint_optimize(
             included to match _sequential_optimize.
         batch_initial_conditions: A tensor to specify the initial conditions. Set
             this if you do not want to use default initialization strategy.
+        return_best_only: Set this to False if you want to output the solutions
+            corresponding to all initializations.
 
     Returns:
          A `q x d` tensor of generated candidates.
@@ -182,9 +185,13 @@ def joint_optimize(
         start_idx += batch_limit
     batch_candidates = torch.cat(batch_candidates_list)
     batch_acq_values = torch.cat(batch_acq_values_list)
-    return get_best_candidates(
-        batch_candidates=batch_candidates, batch_values=batch_acq_values
-    )
+
+    if return_best_only:
+        return get_best_candidates(
+            batch_candidates=batch_candidates, batch_values=batch_acq_values
+        )
+    else:
+        return batch_candidates
 
 
 def gen_batch_initial_conditions(
