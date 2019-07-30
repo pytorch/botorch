@@ -48,32 +48,40 @@ def standardize(X: Tensor) -> Tensor:
 
 
 def normalize(X: Tensor, bounds: Tensor) -> Tensor:
-    r"""Min-max normalize X to [0, 1] using the provided bounds.
+    r"""Min-max normalize X w.r.t. the provided bounds.
 
     Args:
         X: `... x d` tensor of data
         bounds: `2 x d` tensor of lower and upper bounds for each of the X's d
             columns.
+
     Returns:
-        A `... x d`-dim tensor of normalized data.
+        A `... x d`-dim tensor of normalized data, given by
+            `(X - bounds[0]) / (bounds[1] - bounds[0])`. If all elements of `X`
+            are contained within `bounds`, the normalized values will be
+            contained within `[0, 1]^d`.
 
     Example:
         >>> X = torch.rand(4, 3)
         >>> bounds = torch.stack([torch.zeros(3), 0.5 * torch.ones(3)])
-        >>> X_normalized = unnormalize(X, bounds)
+        >>> X_normalized = normalize(X, bounds)
     """
     return (X - bounds[0]) / (bounds[1] - bounds[0])
 
 
 def unnormalize(X: Tensor, bounds: Tensor) -> Tensor:
-    r"""Unscale X from [0, 1] to the original scale.
+    r"""Un-normalizes X w.r.t. the provided bounds.
 
     Args:
         X: `... x d` tensor of data
         bounds: `2 x d` tensor of lower and upper bounds for each of the X's d
             columns.
+
     Returns:
-        A `... x d`-dim tensor of unnormalized data.
+        A `... x d`-dim tensor of unnormalized data, given by
+            `X * (bounds[1] - bounds[0]) + bounds[0]`. If all elements of `X`
+            are contained in `[0, 1]^d`, the un-normalized values will be
+            contained within `bounds`.
 
     Example:
         >>> X_normalized = torch.rand(4, 3)
