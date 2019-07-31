@@ -10,7 +10,6 @@ botorch.acquisition
 -----------------------------------------
 .. automodule:: botorch.acquisition.acquisition
 
-
 :hidden:`AcquisitionFunction`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autoclass:: AcquisitionFunction
@@ -24,12 +23,10 @@ Analytic acquisition functions (not using (q-)MC sampling).
 
 .. automodule:: botorch.acquisition.analytic
 
-
 :hidden:`AnalyticAcquisitionFunction`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autoclass:: AnalyticAcquisitionFunction
    :members:
-
 
 :hidden:`ExpectedImprovement`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -62,11 +59,21 @@ Analytic acquisition functions (not using (q-)MC sampling).
    :members:
 
 
+botorch.acquisition.fixed_feature
+---------------------------------
+Derived Acquisition Function for fixing features during optimization.
+
+.. automodule:: botorch.acquisition.fixed_feature
+
+:hidden:`FixedFeatureAcquisitionFunction`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autoclass:: FixedFeatureAcquisitionFunction
+  :members:
+
 
 botorch.acquisition.monte_carlo
 -------------------------------
 .. automodule:: botorch.acquisition.monte_carlo
-
 
 :hidden:`MCAcquisitionFunction`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
