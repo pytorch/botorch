@@ -12,6 +12,7 @@ from .analytic import (
     ProbabilityOfImprovement,
     UpperConfidenceBound,
 )
+from .fixed_feature import FixedFeatureAcquisitionFunction
 from .monte_carlo import (
     MCAcquisitionFunction,
     qExpectedImprovement,
@@ -36,6 +37,7 @@ __all__ = [
     "AnalyticAcquisitionFunction",
     "ConstrainedExpectedImprovement",
     "ExpectedImprovement",
+    "FixedFeatureAcquisitionFunction",
     "NoisyExpectedImprovement",
     "PosteriorMean",
     "ProbabilityOfImprovement",
