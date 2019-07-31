@@ -189,7 +189,6 @@ class qNoisyExpectedImprovement(MCAcquisitionFunction):
                 points that have been submitted for function evaluation
                 but have not yet been evaluated.  Concatenated into X upon
                 forward call.  Copied and set to have no gradient.
-
         """
         super().__init__(
             model=model, sampler=sampler, objective=objective, X_pending=X_pending
