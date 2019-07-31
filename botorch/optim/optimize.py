@@ -159,9 +159,9 @@ def joint_optimize(
             options=options,
         )
 
-    batch_limit = options.get("batch_limit", num_restarts)
-    batch_candidates_list = []
-    batch_acq_values_list = []
+    batch_limit: int = options.get("batch_limit", num_restarts)
+    batch_candidates_list: List[Tensor] = []
+    batch_acq_values_list: List[Tensor] = []
     start_idx = 0
     while start_idx < num_restarts:
         end_idx = min(start_idx + batch_limit, num_restarts)

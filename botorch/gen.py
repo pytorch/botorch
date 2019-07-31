@@ -204,7 +204,7 @@ def gen_candidates_torch(
             loss.backward()
             return loss
 
-        bayes_optimizer.step(closure)  # pyre-ignore
+        bayes_optimizer.step(closure)
         clamped_candidates.data = columnwise_clamp(
             clamped_candidates, lower_bounds, upper_bounds
         )

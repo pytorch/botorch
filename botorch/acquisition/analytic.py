@@ -32,6 +32,12 @@ class AnalyticAcquisitionFunction(AcquisitionFunction, ABC):
     def __init__(
         self, model: Model, objective: Optional[ScalarizedObjective] = None
     ) -> None:
+        r"""Base constructor for analytic acquisition functions.
+
+        Args:
+            model: A fitted single-outcome model.
+            objective: A ScalarizedObjective (optional).
+        """
         super().__init__(model=model)
         if objective is not None and not isinstance(objective, ScalarizedObjective):
             raise UnsupportedError(
@@ -103,8 +109,8 @@ class ExpectedImprovement(AnalyticAcquisitionFunction):
             model: A fitted single-outcome model.
             best_f: Either a scalar or a `b`-dim Tensor (batch mode) representing
                 the best function value observed so far (assumed noiseless).
+            objective: A ScalarizedObjective (optional).
             maximize: If True, consider the problem a maximization problem.
-            objective: An ScalarizedObjective (optional).
         """
         super().__init__(model=model, objective=objective)
         self.maximize = maximize
@@ -200,6 +206,7 @@ class ProbabilityOfImprovement(AnalyticAcquisitionFunction):
             model: A fitted single-outcome model.
             best_f: Either a scalar or a `b`-dim Tensor (batch mode) representing
                 the best function value observed so far (assumed noiseless).
+            objective: A ScalarizedObjective (optional).
             maximize: If True, consider the problem a maximization problem.
         """
         super().__init__(model=model, objective=objective)
@@ -264,6 +271,7 @@ class UpperConfidenceBound(AnalyticAcquisitionFunction):
                 candidate sets X will be)
             beta: Either a scalar or a one-dim tensor with `b` elements (batch mode)
                 representing the trade-off parameter between mean and covariance
+            objective: A ScalarizedObjective (optional).
             maximize: If True, consider the problem a maximization problem.
         """
         super().__init__(model=model, objective=objective)

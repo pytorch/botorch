@@ -17,7 +17,13 @@ from torch.nn import Module
 from ..posteriors.gpytorch import GPyTorchPosterior, scalarize_posterior
 
 
-class ScalarizedObjective(Module):
+class AcquisitionObjective(Module, ABC):
+    r"""Abstract base class for objectives."""
+
+    ...
+
+
+class ScalarizedObjective(AcquisitionObjective):
     r"""Affine objective to be used with analytic acquisition functions.
 
     For a Gaussian posterior at a single point (`q=1`) with mean `mu` and
@@ -61,11 +67,8 @@ class ScalarizedObjective(Module):
         )
 
 
-class MCAcquisitionObjective(Module, ABC):
+class MCAcquisitionObjective(AcquisitionObjective):
     r"""Abstract base class for MC-based objectives."""
-
-    def __init__(self) -> None:
-        super().__init__()
 
     @abstractmethod
     def forward(self, samples: Tensor) -> Tensor:
