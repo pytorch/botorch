@@ -60,6 +60,6 @@ class TestFixedFeatureAcquisitionFunction(unittest.TestCase):
         with self.assertRaises(ValueError):
             qEI_ff(test_X)
 
-    def test_fix_features_cuda(self):
+    def test_fixed_features_cuda(self):
         if torch.cuda.is_available():
-            self.test_fix_features(cuda=True)
+            self.test_fixed_features(cuda=True)
