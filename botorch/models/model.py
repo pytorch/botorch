@@ -12,6 +12,7 @@ from typing import Any, List, Optional
 from torch import Tensor
 from torch.nn import Module
 
+from .. import settings
 from ..posteriors import Posterior
 from ..sampling.samplers import MCSampler
 
@@ -96,6 +97,8 @@ class Model(Module, ABC):
         Returns:
             The constructed fantasy model.
         """
-        post_X = self.posterior(X, observation_noise=observation_noise, **kwargs)
+        propagate_grads = kwargs.pop("propagate_grads", False)
+        with settings.propagate_grads(propagate_grads):
+            post_X = self.posterior(X, observation_noise=observation_noise)
         Y_fantasized = sampler(post_X)  # num_fantasies x batch_shape x m x o
         return self.condition_on_observations(X=X, Y=Y_fantasized, **kwargs)
