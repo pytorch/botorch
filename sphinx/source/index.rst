@@ -18,6 +18,7 @@ BoTorch API Reference
    fit
    gen
    sampling
+   settings
    test_functions
    exceptions
    utils

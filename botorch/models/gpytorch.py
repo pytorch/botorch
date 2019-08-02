@@ -14,11 +14,12 @@ from contextlib import ExitStack
 from typing import Any, List, Optional, Tuple
 
 import torch
-from gpytorch import settings
+from gpytorch import settings as gpt_settings
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.lazy import lazify
 from torch import Tensor
 
+from .. import settings
 from ..posteriors.gpytorch import GPyTorchPosterior
 from .model import Model
 from .utils import _make_X_full, add_output_dim, multioutput_to_batch_mode_transform
@@ -40,10 +41,6 @@ class GPyTorchModel(Model, ABC):
             X: A `(batch_shape) x q x d`-dim Tensor, where `d` is the dimension of the
                 feature space and `q` is the number of points considered jointly.
             observation_noise: If True, add observation noise to the posterior.
-            propagate_grads: If True, do not detach GPyTorch's test caches when
-                computing the posterior. Required for being able to compute
-                derivatives with respect to training inputs at test time (used
-                e.g. by qNoisyExpectedImprovement). Defaults to `False`.
 
         Returns:
             A `GPyTorchPosterior` object, representing a batch of `b` joint
@@ -51,11 +48,12 @@ class GPyTorchModel(Model, ABC):
             `observation_noise=True`.
         """
         self.eval()  # make sure model is in eval mode
-        detach_test_caches = not kwargs.get("propagate_grads", False)
         with ExitStack() as es:
-            es.enter_context(settings.debug(False))
-            es.enter_context(settings.fast_pred_var())
-            es.enter_context(settings.detach_test_caches(detach_test_caches))
+            es.enter_context(gpt_settings.debug(False))
+            es.enter_context(gpt_settings.fast_pred_var())
+            es.enter_context(
+                gpt_settings.detach_test_caches(settings.propagate_grads.off())
+            )
             mvn = self(X)
             if observation_noise:
                 # TODO: Allow passing in observation noise via kwarg
@@ -162,10 +160,6 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
                 model's outputs are required for optimization. If omitted,
                 computes the posterior over all model outputs.
             observation_noise: If True, add observation noise to the posterior.
-            propagate_grads: If True, do not detach GPyTorch's test caches when
-                computing of the posterior. Required for being able to compute
-                derivatives with respect to training inputs at test time (used
-                e.g. by qNoisyExpectedImprovement). Defaults to `False`.
 
         Returns:
             A `GPyTorchPosterior` object, representing `batch_shape` joint
@@ -174,11 +168,12 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
             `observation_noise=True`.
         """
         self.eval()  # make sure model is in eval mode
-        detach_test_caches = not kwargs.get("propagate_grads", False)
         with ExitStack() as es:
-            es.enter_context(settings.debug(False))
-            es.enter_context(settings.fast_pred_var())
-            es.enter_context(settings.detach_test_caches(detach_test_caches))
+            es.enter_context(gpt_settings.debug(False))
+            es.enter_context(gpt_settings.fast_pred_var())
+            es.enter_context(
+                gpt_settings.detach_test_caches(settings.propagate_grads.off())
+            )
             # insert a dimension for the output dimension
             if self._num_outputs > 1:
                 X, output_dim_idx = add_output_dim(
@@ -242,12 +237,9 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
             num_outputs=self._num_outputs,
             train_Yvar=kwargs.get("noise", None),
         )
-        fant_kwargs = {k: v for k, v in kwargs.items() if k != "propagate_grads"}
         if noise is not None:
-            fant_kwargs.update({"noise": noise})
-        fantasy_model = super().condition_on_observations(
-            X=inputs, Y=targets, **fant_kwargs
-        )
+            kwargs.update({"noise": noise})
+        fantasy_model = super().condition_on_observations(X=inputs, Y=targets, **kwargs)
         fantasy_model._input_batch_shape = fantasy_model.train_targets.shape[
             : (-1 if self._num_outputs == 1 else -2)
         ]
@@ -286,10 +278,6 @@ class ModelListGPyTorchModel(GPyTorchModel, ABC):
                 model's outputs are required for optimization. If omitted,
                 computes the posterior over all model outputs.
             observation_noise: If True, add observation noise to the posterior.
-            propagate_grads: If True, do not detach GPyTorch's test caches when
-                computing of the posterior. Required for being able to compute
-                derivatives with respect to training inputs at test time (used
-                e.g. by qNoisyExpectedImprovement). Defaults to `False`.
 
         Returns:
             A `GPyTorchPosterior` object, representing `batch_shape` joint
@@ -297,12 +285,13 @@ class ModelListGPyTorchModel(GPyTorchModel, ABC):
             `output_indices` each. Includes measurement noise if
             `observation_noise=True`.
         """
-        detach_test_caches = not kwargs.get("propagate_grads", False)
         self.eval()  # make sure model is in eval mode
         with ExitStack() as es:
-            es.enter_context(settings.debug(False))
-            es.enter_context(settings.fast_pred_var())
-            es.enter_context(settings.detach_test_caches(detach_test_caches))
+            es.enter_context(gpt_settings.debug(False))
+            es.enter_context(gpt_settings.fast_pred_var())
+            es.enter_context(
+                gpt_settings.detach_test_caches(settings.propagate_grads.off())
+            )
             if output_indices is not None:
                 mvns = [self.forward_i(i, X) for i in output_indices]
                 if observation_noise:
@@ -357,10 +346,6 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
                 model's outputs are required for optimization. If omitted,
                 computes the posterior over all model outputs.
             observation_noise: If True, add observation noise to the posterior.
-            propagate_grads: If True, do not detach GPyTorch's test caches when
-                computing of the posterior. Required for being able to compute
-                derivatives with respect to training inputs at test time (used
-                e.g. by qNoisyExpectedImprovement). Defaults to `False`.
 
         Returns:
             A `GPyTorchPosterior` object, representing `batch_shape` joint
@@ -377,11 +362,12 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
         X_full = _make_X_full(X=X, output_indices=output_indices, tf=self._task_feature)
 
         self.eval()  # make sure model is in eval mode
-        detach_test_caches = not kwargs.get("propagate_grads", False)
         with ExitStack() as es:
-            es.enter_context(settings.debug(False))
-            es.enter_context(settings.fast_pred_var())
-            es.enter_context(settings.detach_test_caches(detach_test_caches))
+            es.enter_context(gpt_settings.debug(False))
+            es.enter_context(gpt_settings.fast_pred_var())
+            es.enter_context(
+                gpt_settings.detach_test_caches(settings.propagate_grads.off())
+            )
             mvn = self(X_full)
             if observation_noise:
                 # TODO: Allow passing in observation noise via kwarg
