@@ -3,9 +3,17 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 import unittest
+import warnings
 
 import torch
-from botorch.models.utils import add_output_dim, multioutput_to_batch_mode_transform
+from botorch.exceptions import InputDataError, InputDataWarning
+from botorch.models.utils import (
+    add_output_dim,
+    check_min_max_scaling,
+    check_no_nans,
+    check_standardization,
+    multioutput_to_batch_mode_transform,
+)
 
 
 class TestMultiOutputToBatchModeTransform(unittest.TestCase):
@@ -80,3 +88,72 @@ class TestAddOutputDim(unittest.TestCase):
     def test_add_output_dim_cuda(self, cuda=False):
         if torch.cuda.is_available():
             self.test_add_output_dim(cuda=True)
+
+
+class TestInputDataChecks(unittest.TestCase):
+    def test_check_no_nans(self):
+        check_no_nans(torch.tensor([1.0, 2.0]))
+        with self.assertRaises(InputDataError):
+            check_no_nans(torch.tensor([1.0, float("nan")]))
+
+    def test_check_min_max_scaling(self):
+        # check unscaled input in unit cube
+        X = 0.1 + 0.8 * torch.rand(4, 2, 3)
+        with warnings.catch_warnings(record=True) as ws:
+            check_min_max_scaling(X=X)
+            self.assertFalse(any(issubclass(w.category, InputDataWarning) for w in ws))
+        check_min_max_scaling(X=X, raise_on_fail=True)
+        with warnings.catch_warnings(record=True) as ws:
+            check_min_max_scaling(X=X, strict=True)
+            self.assertTrue(any(issubclass(w.category, InputDataWarning) for w in ws))
+            self.assertTrue(any("not scaled" in str(w.message) for w in ws))
+        with self.assertRaises(InputDataError):
+            check_min_max_scaling(X=X, strict=True, raise_on_fail=True)
+        # check proper input
+        Xmin, Xmax = X.min(dim=-1, keepdim=True)[0], X.max(dim=-1, keepdim=True)[0]
+        Xstd = (X - Xmin) / (Xmax - Xmin)
+        with warnings.catch_warnings(record=True) as ws:
+            check_min_max_scaling(X=Xstd)
+            self.assertFalse(any(issubclass(w.category, InputDataWarning) for w in ws))
+        check_min_max_scaling(X=Xstd, raise_on_fail=True)
+        with warnings.catch_warnings(record=True) as ws:
+            check_min_max_scaling(X=Xstd, strict=True)
+            self.assertFalse(any(issubclass(w.category, InputDataWarning) for w in ws))
+        check_min_max_scaling(X=Xstd, strict=True, raise_on_fail=True)
+        # check violation
+        X[0, 0, 0] = 2
+        with warnings.catch_warnings(record=True) as ws:
+            check_min_max_scaling(X=X)
+            self.assertTrue(any(issubclass(w.category, InputDataWarning) for w in ws))
+            self.assertTrue(any("not contained" in str(w.message) for w in ws))
+        with self.assertRaises(InputDataError):
+            check_min_max_scaling(X=X, raise_on_fail=True)
+        with warnings.catch_warnings(record=True) as ws:
+            check_min_max_scaling(X=X, strict=True)
+            self.assertTrue(any(issubclass(w.category, InputDataWarning) for w in ws))
+            self.assertTrue(any("not contained" in str(w.message) for w in ws))
+        with self.assertRaises(InputDataError):
+            check_min_max_scaling(X=X, strict=True, raise_on_fail=True)
+
+    def test_check_standardization(self):
+        Y = torch.randn(3, 4, 2)
+        # check standardized input
+        Yst = (Y - Y.mean(dim=-2, keepdim=True)) / Y.std(dim=-2, keepdim=True)
+        with warnings.catch_warnings(record=True) as ws:
+            check_standardization(Y=Yst)
+            self.assertFalse(any(issubclass(w.category, InputDataWarning) for w in ws))
+        check_standardization(Y=Yst, raise_on_fail=True)
+        # check nonzero mean
+        with warnings.catch_warnings(record=True) as ws:
+            check_standardization(Y=Yst + 1)
+            self.assertTrue(any(issubclass(w.category, InputDataWarning) for w in ws))
+            self.assertTrue(any("not standardized" in str(w.message) for w in ws))
+        with self.assertRaises(InputDataError):
+            check_standardization(Y=Yst + 1, raise_on_fail=True)
+        # check non-unit variance
+        with warnings.catch_warnings(record=True) as ws:
+            check_standardization(Y=Yst * 2)
+            self.assertTrue(any(issubclass(w.category, InputDataWarning) for w in ws))
+            self.assertTrue(any("not standardized" in str(w.message) for w in ws))
+        with self.assertRaises(InputDataError):
+            check_standardization(Y=Yst * 2, raise_on_fail=True)
