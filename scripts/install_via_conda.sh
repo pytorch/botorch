@@ -20,10 +20,11 @@ conda install -y conda-build
 
 if [[ $PYTORCH_NIGHTLY == true ]]; then
   # install CPU version for much smaller download
-  conda install -y -c pytorch pytorch-nightly-cpu
+  conda install -y -c pytorch-nightly pytorch cpuonly
+
 else
   # install CPU version for much smaller download
-  conda install -y -c pytorch pytorch-cpu
+  conda install -y -c pytorch pytorch cpuonly
 fi
 
 # get gpytorch master
