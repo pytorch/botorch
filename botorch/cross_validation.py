@@ -68,6 +68,7 @@ def gen_loo_cv_folds(
         >>> cv_folds = gen_loo_cv_folds(train_X, train_Y)
     """
     masks = torch.eye(train_X.shape[-2], dtype=torch.uint8, device=train_X.device)
+    masks = masks.to(dtype=torch.bool)
     if train_Y.dim() < train_X.dim():
         # add output dimension
         train_Y = train_Y.unsqueeze(-1)
