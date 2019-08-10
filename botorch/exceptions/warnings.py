@@ -13,14 +13,20 @@ class BotorchWarning(Warning):
     pass
 
 
-class OptimizationWarning(BotorchWarning):
-    r"""Optimization-releated warnings."""
+class BadInitialCandidatesWarning(BotorchWarning):
+    r"""Warning issued if set of initial candidates for optimziation is bad."""
 
     pass
 
 
-class BadInitialCandidatesWarning(BotorchWarning):
-    r"""Warning issued if set of initial candidates for optimziation is bad."""
+class InputDataWarning(BotorchWarning):
+    r"""Warning raised when input data does not comply with conventions."""
+
+    pass
+
+
+class OptimizationWarning(BotorchWarning):
+    r"""Optimization-releated warnings."""
 
     pass
 

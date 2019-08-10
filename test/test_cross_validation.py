@@ -43,6 +43,35 @@ class TestFitBatchCrossValidation(unittest.TestCase):
                     noiseless_cv_folds = gen_loo_cv_folds(
                         train_X=train_X, train_Y=train_Y
                     )
+                    # check shapes
+                    expected_shape_train_X = batch_shape + torch.Size(
+                        [n, n - 1, train_X.shape[-1]]
+                    )
+                    expected_shape_test_X = batch_shape + torch.Size(
+                        [n, 1, train_X.shape[-1]]
+                    )
+                    self.assertEqual(
+                        noiseless_cv_folds.train_X.shape, expected_shape_train_X
+                    )
+                    self.assertEqual(
+                        noiseless_cv_folds.test_X.shape, expected_shape_test_X
+                    )
+
+                    expected_shape_train_Y = batch_shape + torch.Size(
+                        [n, n - 1, num_outputs]
+                    )
+                    expected_shape_test_Y = batch_shape + torch.Size(
+                        [n, 1, num_outputs]
+                    )
+
+                    self.assertEqual(
+                        noiseless_cv_folds.train_Y.shape, expected_shape_train_Y
+                    )
+                    self.assertEqual(
+                        noiseless_cv_folds.test_Y.shape, expected_shape_test_Y
+                    )
+                    self.assertIsNone(noiseless_cv_folds.train_Yvar)
+                    self.assertIsNone(noiseless_cv_folds.test_Yvar)
                     # Test SingleTaskGP
                     with warnings.catch_warnings():
                         warnings.filterwarnings("ignore", category=OptimizationWarning)
@@ -59,6 +88,21 @@ class TestFitBatchCrossValidation(unittest.TestCase):
                     # Test FixedNoiseGP
                     noisy_cv_folds = gen_loo_cv_folds(
                         train_X=train_X, train_Y=train_Y, train_Yvar=train_Yvar
+                    )
+                    # check shapes
+                    self.assertEqual(
+                        noisy_cv_folds.train_X.shape, expected_shape_train_X
+                    )
+                    self.assertEqual(noisy_cv_folds.test_X.shape, expected_shape_test_X)
+                    self.assertEqual(
+                        noisy_cv_folds.train_Y.shape, expected_shape_train_Y
+                    )
+                    self.assertEqual(noisy_cv_folds.test_Y.shape, expected_shape_test_Y)
+                    self.assertEqual(
+                        noisy_cv_folds.train_Yvar.shape, expected_shape_train_Y
+                    )
+                    self.assertEqual(
+                        noisy_cv_folds.test_Yvar.shape, expected_shape_test_Y
                     )
                     with warnings.catch_warnings():
                         warnings.filterwarnings("ignore", category=OptimizationWarning)

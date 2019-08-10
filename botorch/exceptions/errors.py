@@ -19,6 +19,12 @@ class CandidateGenerationError(BotorchError):
     pass
 
 
+class InputDataError(BotorchError):
+    r"""Exception raised when input data does not comply with conventions."""
+
+    pass
+
+
 class UnsupportedError(BotorchError):
     r"""Currently unsupported feature."""
 
