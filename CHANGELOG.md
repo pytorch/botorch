@@ -11,7 +11,7 @@ Compatibility & maintenance release
 * Updates to support breaking changes in PyTorch to boolean masks and tensor
   comparisons (#224).
 * Require PyTorch >=1.2 (#225).
-* Require GPyTorch >= 0.3.4a (itself a compatibility release).
+* Require GPyTorch >=0.3.5 (itself a compatibility release).
 
 #### New Features
 * Add `FixedFeatureAcquisitionFunction` wrapper that simplifies optimizing
