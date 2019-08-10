@@ -16,7 +16,7 @@ requirements:
     - python>=3.6
   run:
     - pytorch>=1.2
-    - gpytorch>=0.3.4
+    - gpytorch>=0.3.4a
     - scipy
 
 test:

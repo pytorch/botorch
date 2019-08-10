@@ -15,7 +15,7 @@ Before jumping the gun, we recommend you start with the high-level
 
 - Python >= 3.6
 - PyTorch >= 1.2
-- gpytorch >= 0.3.4
+- gpytorch >= 0.3.4a
 - scipy
 
 BoTorch is easily installed via
