@@ -3,6 +3,37 @@
 The release log for BoTorch.
 
 
+## [0.1.3] - Aug 9, 2019
+
+Compatibility & maintenance release
+
+#### Compatibility
+* Updates to support breaking changes in PyTorch to boolean masks and tensor
+  comparisons (#224).
+* Require PyTorch >=1.2 (#225).
+* Require GPyTorch >=0.3.5 (itself a compatibility release).
+
+#### New Features
+* Add `FixedFeatureAcquisitionFunction` wrapper that simplifies optimizing
+  acquisition functions over a subset of input features (#219).
+* Add `ScalarizedObjective` for scalarizing posteriors (#210).
+* Change default optimization behavior to use L-BFGS-B by for box constraints
+  (#207).
+
+#### Bug fixes
+* Add validation to candidate generation (#213), making sure constraints are
+  strictly satisfied (rater than just up to numerical accuracy of the optimizer).
+
+#### Minor changes
+* Introduce `AcquisitionObjective` base class (#220).
+* Add propagate_grads context manager, replacing the `propagate_grads` kwarg in
+  model `posterior()` calls (#221)
+* Add `batch_initial_conditions` argument to `joint_optimize()` for
+  warm-starting the optimization (ec3365a37ed02319e0d2bb9bea03aee89b7d9caa).
+* Add `return_best_only` argument to `joint_optimize()` (#216). Useful for
+  implementing advanced warm-starting procedures.
+
+
 ## [0.1.2] - July 9, 2019
 
 Maintenance release
