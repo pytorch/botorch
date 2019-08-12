@@ -1,0 +1,492 @@
+<!DOCTYPE html><html lang=""><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/v/latest/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/v/latest/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/v/latest/img/botorch.png"/><link rel="shortcut icon" href="/v/latest/img/botorch.ico"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+              })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+              ga('create', 'UA-139570076-2', 'auto');
+              ga('send', 'pageview');
+            </script><link rel="stylesheet" href="/v/latest/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/v/latest/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/v/latest/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/latest/versions"><h3>latest</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="container docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span></span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">Tutorials</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/latest/tutorials/">Overview</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Using BoTorch with Ax</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/latest/tutorials/custom_botorch_model_in_ax">Using a custom BoTorch model</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Full Optimization Loops</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/latest/tutorials/closed_loop_botorch_only">q-Noisy Constrained EI</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Bite-Sized Tutorials</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/latest/tutorials/fit_model_with_torch_optimizer">Fitting a model using torch.optim</a></li><li class="navListItem"><a class="navItem" href="/v/latest/tutorials/compare_mc_analytic_acquisition">Comparing analytic and MC Expected Improvement</a></li><li class="navListItem"><a class="navItem" href="/v/latest/tutorials/optimize_with_cmaes">Acquisition function optimization with CMA-ES</a></li><li class="navListItem"><a class="navItem" href="/v/latest/tutorials/optimize_stochastic">Acquisition function optimization with torch.optim</a></li><li class="navListItem"><a class="navItem" href="/v/latest/tutorials/batch_mode_cross_validation">Using batch evaluation for fast cross-validation</a></li><li class="navListItem"><a class="navItem" href="/v/latest/tutorials/custom_acquisition">Writing a custom acquisition function</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Advanced Usage</h3><ul class=""><li class="navListItem"><a class="navItem" href="/v/latest/tutorials/meta_learning_with_rgpe">Meta-learning with RGPE</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/v/latest/tutorials/vae_mnist">High-dimensional optimization with VAEs</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              var headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                var el = event.target;
+                while(el !== headings){
+                  if (el.tagName === 'A') {
+                    document.body.classList.remove('tocActive');
+                    break;
+                  } else{
+                    el = el.parentNode;
+                  }
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer"><div class="wrapper"><div class="tutorialBody">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+<div class="notebook">
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="VAE-MNIST-example:-BO-in-a-latent-space">VAE MNIST example: BO in a latent space<a class="anchor-link" href="#VAE-MNIST-example:-BO-in-a-latent-space">¶</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>In this tutorial, we use the MNIST dataset and some standard PyTorch examples to show a synthetic problem where the input to the objective function is a <code>28 x 28</code> image. The main idea is to train a <a href="https://arxiv.org/abs/1312.6114">variational auto-encoder (VAE)</a> on the MNIST dataset and run Bayesian Optimization in the latent space. We also refer readers to <a href="http://krasserm.github.io/2018/04/07/latent-space-optimization/">this tutorial</a>, which discusses <a href="https://arxiv.org/abs/1610.02415">the method</a> of jointly training a VAE with a predictor (e.g., classifier), and shows a similar tutorial for the MNIST setting.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [1]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+
+<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+<span class="kn">import</span> <span class="nn">torch.nn.functional</span> <span class="k">as</span> <span class="nn">F</span>
+<span class="kn">import</span> <span class="nn">torch.optim</span> <span class="k">as</span> <span class="nn">optim</span>
+<span class="kn">from</span> <span class="nn">torchvision</span> <span class="k">import</span> <span class="n">datasets</span> <span class="c1"># transforms</span>
+
+<span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">"cuda"</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">"cpu"</span><span class="p">)</span>
+<span class="n">dtype</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">float</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Problem-setup">Problem setup<a class="anchor-link" href="#Problem-setup">¶</a></h3><p>Let's first define our synthetic expensive-to-evaluate objective function. We assume that it takes the following form:</p>
+$$\text{image} \longrightarrow \text{image classifier} \longrightarrow \text{scoring function} 
+\longrightarrow \text{score}.$$<p>The classifier is a convolutional neural network (CNN) trained using the architecture of the <a href="https://github.com/pytorch/examples/tree/master/mnist">PyTorch CNN example</a>.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [2]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">class</span> <span class="nc">Net</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Net</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">conv1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">conv2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="mi">4</span> <span class="o">*</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">500</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conv1</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">max_pool2d</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conv2</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">max_pool2d</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="o">*</span><span class="mi">4</span><span class="o">*</span><span class="mi">50</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fc1</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc2</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">F</span><span class="o">.</span><span class="n">log_softmax</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We next instantiate the CNN for digit recognition and load a pre-trained model.</p>
+<p>Here, you may have to change <code>PRETRAINED_LOCATION</code> to the location of the <code>pretrained_models</code> folder on your machine.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [3]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">PRETRAINED_LOCATION</span> <span class="o">=</span> <span class="s2">"./pretrained_models"</span>
+
+<span class="n">cnn_model</span> <span class="o">=</span> <span class="n">Net</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+<span class="n">cnn_state_dict</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">PRETRAINED_LOCATION</span><span class="p">,</span> <span class="s2">"mnist_cnn.pt"</span><span class="p">),</span> <span class="n">map_location</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+<span class="n">cnn_model</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">cnn_state_dict</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Our VAE model follows the <a href="https://github.com/pytorch/examples/tree/master/vae">PyTorch VAE example</a>, except that we use the same data transform from the CNN tutorial for consistency. We then instantiate the model and again load a pre-trained model. To train these models, we refer readers to the PyTorch Github repository.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [4]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">class</span> <span class="nc">VAE</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">784</span><span class="p">,</span> <span class="mi">400</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc21</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">400</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc22</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">400</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc3</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">400</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc4</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">400</span><span class="p">,</span> <span class="mi">784</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">encode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">h1</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fc1</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc21</span><span class="p">(</span><span class="n">h1</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc22</span><span class="p">(</span><span class="n">h1</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">reparameterize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">logvar</span><span class="p">):</span>
+        <span class="n">std</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mf">0.5</span><span class="o">*</span><span class="n">logvar</span><span class="p">)</span>
+        <span class="n">eps</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn_like</span><span class="p">(</span><span class="n">std</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">mu</span> <span class="o">+</span> <span class="n">eps</span><span class="o">*</span><span class="n">std</span>
+
+    <span class="k">def</span> <span class="nf">decode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
+        <span class="n">h3</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fc3</span><span class="p">(</span><span class="n">z</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fc4</span><span class="p">(</span><span class="n">h3</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">mu</span><span class="p">,</span> <span class="n">logvar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">784</span><span class="p">))</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reparameterize</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">logvar</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">z</span><span class="p">),</span> <span class="n">mu</span><span class="p">,</span> <span class="n">logvar</span>
+
+<span class="n">vae_model</span> <span class="o">=</span> <span class="n">VAE</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+<span class="n">vae_state_dict</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">PRETRAINED_LOCATION</span><span class="p">,</span> <span class="s2">"mnist_vae.pt"</span><span class="p">),</span> <span class="n">map_location</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+<span class="n">vae_model</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">vae_state_dict</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We now define the scoring function that maps digits to scores. The function below prefers the digit '3'.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [5]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">score</span><span class="p">(</span><span class="n">y</span><span class="p">):</span>
+    <span class="sd">"""Returns a 'score' for each digit from 0 to 9. It is modeled as a squared exponential</span>
+<span class="sd">    centered at the digit '3'.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="mi">3</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Given the scoring function, we can now write our overall objective, which as discussed above, starts with an image and outputs a score. Let's say the objective computes the expected score given the probabilities from the classifier.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [6]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">score_image_recognition</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="sd">"""The input x is an image and an expected score based on the CNN classifier and</span>
+<span class="sd">    the scoring function is returned.</span>
+<span class="sd">    """</span>
+    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+        <span class="n">probs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">cnn_model</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>  <span class="c1"># b x 10</span>
+        <span class="n">scores</span> <span class="o">=</span> <span class="n">score</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">))</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">probs</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">probs</span> <span class="o">*</span> <span class="n">scores</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Finally, we define a helper function <code>decode</code> that takes as input the parameters <code>mu</code> and <code>logvar</code> of the variational distribution and performs reparameterization and the decoding. We use batched Bayesian optimization to search over the parameters <code>mu</code> and <code>logvar</code></p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [7]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">decode</span><span class="p">(</span><span class="n">train_x</span><span class="p">):</span>
+    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+        <span class="n">decoded</span> <span class="o">=</span> <span class="n">vae_model</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">train_x</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">decoded</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">train_x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">28</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Model-initialization-and-initial-random-batch">Model initialization and initial random batch<a class="anchor-link" href="#Model-initialization-and-initial-random-batch">¶</a></h4><p>We use a <code>SingleTaskGP</code> to model the score of an image generated by a latent representation. The model is initialized with points drawn from $[-6, 6]^{20}$.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [8]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.models</span> <span class="k">import</span> <span class="n">SingleTaskGP</span>
+<span class="kn">from</span> <span class="nn">gpytorch.mlls.exact_marginal_log_likelihood</span> <span class="k">import</span> <span class="n">ExactMarginalLogLikelihood</span>
+
+
+<span class="n">bounds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[</span><span class="o">-</span><span class="mf">6.0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">20</span><span class="p">,</span> <span class="p">[</span><span class="mf">6.0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">20</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">initialize_model</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+    <span class="c1"># generate training data  </span>
+    <span class="n">train_x</span> <span class="o">=</span> <span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span> <span class="o">+</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">train_obj</span> <span class="o">=</span> <span class="n">score_image_recognition</span><span class="p">(</span><span class="n">decode</span><span class="p">(</span><span class="n">train_x</span><span class="p">))</span>
+    <span class="n">best_observed_value</span> <span class="o">=</span> <span class="n">train_obj</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+    
+    <span class="c1"># define models for objective and constraint</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="o">=</span><span class="n">train_x</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_obj</span><span class="p">)</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_x</span><span class="p">)</span>
+    
+    <span class="n">mll</span> <span class="o">=</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+    <span class="n">mll</span> <span class="o">=</span> <span class="n">mll</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_x</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">train_x</span><span class="p">,</span> <span class="n">train_obj</span><span class="p">,</span> <span class="n">mll</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">best_observed_value</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Define-a-helper-function-that-performs-the-essential-BO-step">Define a helper function that performs the essential BO step<a class="anchor-link" href="#Define-a-helper-function-that-performs-the-essential-BO-step">¶</a></h4><p>The helper function below takes an acquisition function as an argument, optimizes it, and returns the batch $\{x_1, x_2, \ldots x_q\}$ along with the observed function values. For this example, we'll use a small batch of $q=3$.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [9]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.optim</span> <span class="k">import</span> <span class="n">joint_optimize</span>
+
+
+<span class="n">BATCH_SIZE</span> <span class="o">=</span> <span class="mi">3</span>
+
+
+<span class="k">def</span> <span class="nf">optimize_acqf_and_get_observation</span><span class="p">(</span><span class="n">acq_func</span><span class="p">):</span>
+    <span class="sd">"""Optimizes the acquisition function, and returns a new candidate and a noisy observation"""</span>
+    
+    <span class="c1"># optimize</span>
+    <span class="n">candidates</span> <span class="o">=</span> <span class="n">joint_optimize</span><span class="p">(</span>
+        <span class="n">acq_function</span><span class="o">=</span><span class="n">acq_func</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+        <span class="n">q</span><span class="o">=</span><span class="n">BATCH_SIZE</span><span class="p">,</span>
+        <span class="n">num_restarts</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+        <span class="n">raw_samples</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># observe new values </span>
+    <span class="n">new_x</span> <span class="o">=</span> <span class="n">candidates</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+    <span class="n">new_obj</span> <span class="o">=</span> <span class="n">score_image_recognition</span><span class="p">(</span><span class="n">decode</span><span class="p">(</span><span class="n">new_x</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">new_x</span><span class="p">,</span> <span class="n">new_obj</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Perform-Bayesian-Optimization-loop-with-qEI">Perform Bayesian Optimization loop with qEI<a class="anchor-link" href="#Perform-Bayesian-Optimization-loop-with-qEI">¶</a></h3><p>The Bayesian optimization "loop" for a batch size of $q$ simply iterates the following steps: (1) given a surrogate model, choose a batch of points $\{x_1, x_2, \ldots x_q\}$, (2) observe $f(x)$ for each $x$ in the batch, and (3) update the surrogate model. We run <code>N_BATCH=75</code> iterations. The acquisition function is approximated using <code>MC_SAMPLES=2000</code> samples. We also initialize the model with 5 randomly drawn points.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [10]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch</span> <span class="k">import</span> <span class="n">fit_gpytorch_model</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.monte_carlo</span> <span class="k">import</span> <span class="n">qExpectedImprovement</span>
+<span class="kn">from</span> <span class="nn">botorch.sampling.samplers</span> <span class="k">import</span> <span class="n">SobolQMCNormalSampler</span>
+
+<span class="n">seed</span><span class="o">=</span><span class="mi">1</span>
+<span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+
+<span class="n">N_BATCH</span> <span class="o">=</span> <span class="mi">50</span>
+<span class="n">MC_SAMPLES</span> <span class="o">=</span> <span class="mi">2000</span>
+<span class="n">best_observed</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="c1"># call helper function to initialize model</span>
+<span class="n">train_x</span><span class="p">,</span> <span class="n">train_obj</span><span class="p">,</span> <span class="n">mll</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">best_value</span> <span class="o">=</span> <span class="n">initialize_model</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">best_observed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">best_value</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We are now ready to run the BO loop (this make take a few minutes, depending on your machine).</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [11]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">"ignore"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Running BO "</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s1">''</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="k">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+
+<span class="c1"># run N_BATCH rounds of BayesOpt after the initial random batch</span>
+<span class="k">for</span> <span class="n">iteration</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N_BATCH</span><span class="p">):</span>    
+
+    <span class="c1"># fit the model</span>
+    <span class="n">fit_gpytorch_model</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>
+
+    <span class="c1"># define the qNEI acquisition module using a QMC sampler</span>
+    <span class="n">qmc_sampler</span> <span class="o">=</span> <span class="n">SobolQMCNormalSampler</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="n">MC_SAMPLES</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">qEI</span> <span class="o">=</span> <span class="n">qExpectedImprovement</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="n">qmc_sampler</span><span class="p">,</span> <span class="n">best_f</span><span class="o">=</span><span class="n">best_value</span><span class="p">)</span>
+
+    <span class="c1"># optimize and get new observation</span>
+    <span class="n">new_x</span><span class="p">,</span> <span class="n">new_obj</span> <span class="o">=</span> <span class="n">optimize_acqf_and_get_observation</span><span class="p">(</span><span class="n">qEI</span><span class="p">)</span>
+
+    <span class="c1"># update training points</span>
+    <span class="n">train_x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">train_x</span><span class="p">,</span> <span class="n">new_x</span><span class="p">))</span>
+    <span class="n">train_obj</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">train_obj</span><span class="p">,</span> <span class="n">new_obj</span><span class="p">))</span>
+
+    <span class="c1"># update progress</span>
+    <span class="n">best_value</span> <span class="o">=</span> <span class="n">score_image_recognition</span><span class="p">(</span><span class="n">decode</span><span class="p">(</span><span class="n">train_x</span><span class="p">))</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+    <span class="n">best_observed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">best_value</span><span class="p">)</span>
+
+    <span class="c1"># reinitialize the model so it is ready for fitting on next iteration</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">set_train_data</span><span class="p">(</span><span class="n">train_x</span><span class="p">,</span> <span class="n">train_obj</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"."</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s1">''</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="output_wrapper">
+<div class="output">
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>
+Running BO ..................................................</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>EI recommends the best point observed so far. We can visualize what the images corresponding to recommended points <em>would have</em> been if the BO process ended at various times. Here, we show the progress of the algorithm by examining the images at 0%, 10%, 25%, 50%, 75%, and 100% completion. The first image is the best image found through the initial random batch.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [12]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="k">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="o">%</span><span class="k">matplotlib</span> inline
+
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">14</span><span class="p">,</span> <span class="mi">14</span><span class="p">))</span>
+<span class="n">percentages</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">75</span><span class="p">,</span> <span class="mi">100</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+<span class="n">inds</span> <span class="o">=</span> <span class="p">(</span><span class="n">N_BATCH</span> <span class="o">*</span> <span class="n">BATCH_SIZE</span> <span class="o">*</span> <span class="n">percentages</span> <span class="o">/</span> <span class="mi">100</span> <span class="o">+</span> <span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">ax</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ax</span><span class="o">.</span><span class="n">flat</span><span class="p">):</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">score_image_recognition</span><span class="p">(</span><span class="n">decode</span><span class="p">(</span><span class="n">train_x</span><span class="p">[:</span><span class="n">inds</span><span class="p">[</span><span class="n">i</span><span class="p">],:])),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">img</span> <span class="o">=</span> <span class="n">decode</span><span class="p">(</span><span class="n">train_x</span><span class="p">[</span><span class="n">b</span><span class="p">]</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">'gray'</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="output_wrapper">
+<div class="output">
+<div class="output_area">
+<div class="prompt"></div>
+<div class="output_png output_subarea">
+<img src="data:image/png;base64,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
+"/>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div><div class="tutorialButtonWrapper buttonWrapper"><a class="tutorialButton button" download="" href="/v/latest/files/vae_mnist.ipynb" target="_blank"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="file-download" class="svg-inline--fa fa-file-download fa-w-12" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path fill="currentColor" d="M224 136V0H24C10.7 0 0 10.7 0 24v464c0 13.3 10.7 24 24 24h336c13.3 0 24-10.7 24-24V160H248c-13.2 0-24-10.8-24-24zm76.45 211.36l-96.42 95.7c-6.65 6.61-17.39 6.61-24.04 0l-96.42-95.7C73.42 337.29 80.54 320 94.82 320H160v-80c0-8.84 7.16-16 16-16h32c8.84 0 16 7.16 16 16v80h65.18c14.28 0 21.4 17.29 11.27 27.36zM377 105L279.1 7c-4.5-4.5-10.6-7-17-7H256v128h128v-6.1c0-6.3-2.5-12.4-7-16.9z"></path></svg>Download Tutorial Jupyter Notebook</a></div><div class="tutorialButtonWrapper buttonWrapper"><a class="tutorialButton button" download="" href="/v/latest/files/vae_mnist.py" target="_blank"><svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="file-download" class="svg-inline--fa fa-file-download fa-w-12" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path fill="currentColor" d="M224 136V0H24C10.7 0 0 10.7 0 24v464c0 13.3 10.7 24 24 24h336c13.3 0 24-10.7 24-24V160H248c-13.2 0-24-10.8-24-24zm76.45 211.36l-96.42 95.7c-6.65 6.61-17.39 6.61-24.04 0l-96.42-95.7C73.42 337.29 80.54 320 94.82 320H160v-80c0-8.84 7.16-16 16-16h32c8.84 0 16 7.16 16 16v80h65.18c14.28 0 21.4 17.29 11.27 27.36zM377 105L279.1 7c-4.5-4.5-10.6-7-17-7H256v128h128v-6.1c0-6.3-2.5-12.4-7-16.9z"></path></svg>Download Tutorial Source Code</a></div></div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/v/latest/" class="nav-home"><img src="/v/latest/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/v/latest/docs/introduction">Introduction</a><a href="/v/latest/docs/getting_started">Getting Started</a><a href="/v/latest/tutorials">Tutorials</a><a href="/v/latest/api">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/v/latest/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2019 Facebook Inc.</section></footer></div></body></html>
