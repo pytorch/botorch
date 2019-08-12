@@ -75,7 +75,6 @@ commands:
             if ! git diff-tree --no-commit-id --name-only -r HEAD | grep -E "(^docs\/.*)|(^website\/.*)|(^scripts\/.*)|(^sphinx\/.*)|(^tutorials\/.*)"; then
               echo "Skipping deploy. No relevant website files have changed"
             elif [[ $CIRCLE_PROJECT_USERNAME == "pytorch" && -z $CI_PULL_REQUEST && -z $CIRCLE_PR_USERNAME ]]; then
-              mkdir -p website/static/.circleci && cp -a .circleci/. website/static/.circleci/.
               ./scripts/publish_site.sh -d
             else
               echo "Skipping deploy."
@@ -151,9 +150,12 @@ workflows:
           filters: *exclude_ghpages_fbconfig
 
   auto_deploy_site:
-    jobs:
-      - auto_deploy_site:
+    triggers:
+      - schedule:
+          cron: "0 8 * * *" # UTC
           filters:
             branches:
               only:
                 - master
+    jobs:
+      - auto_deploy_site
