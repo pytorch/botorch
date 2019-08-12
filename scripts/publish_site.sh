@@ -47,10 +47,10 @@ WORK_DIR=$(mktemp -d)
 cd "${WORK_DIR}" || exit
 
 if [[ $DOCUSAURUS_BOT == true ]]; then
-  # Setup git credentials
-  git config --global user.name "BoTorch Website Deployment Script"
-  git config --global user.email "docusaurus-bot@users.noreply.github.com"
-  echo "machine github.com login docusaurus-bot password ${DOCUSAURUS_PUBLISH_TOKEN}" > ~/.netrc
+  # Assumes docusaurus bot credentials have been stored in ~/.netrc, e.g. via
+  # git config --global user.email "docusaurus-bot@users.noreply.github.com"
+  # git config --global user.name "BoTorch website deployment script"
+  # echo "machine github.com login docusaurus-bot password $GITHUB_TOKEN" > ~/.netrc
 
   # Clone both master & gh-pages branches
   git clone https://docusaurus-bot@github.com:pytorch/botorch.git botorch-master

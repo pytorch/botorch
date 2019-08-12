@@ -23,21 +23,19 @@ while getopts 'nd' flag; do
 sudo pip install --upgrade pip
 
 # Install CPU version to save download size (don't let gpytorch install the full one)
-sudo pip install https://download.pytorch.org/whl/cpu/torch-1.1.0-cp36-cp36m-linux_x86_64.whl
+if [[ $PYTORCH_NIGHLTY == true ]]; then
+  sudo pip install --progress-bar off numpy
+  sudo pip install --progress-bar off torch -f https://download.pytorch.org/whl/nightly/cpu/torch.html
+else
+  sudo pip install --progress-bar off torch==1.2.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
+fi
 
 # install gpytorch master
-sudo pip install git+https://github.com/cornellius-gp/gpytorch.git
+sudo pip install --progress-bar off git+https://github.com/cornellius-gp/gpytorch.git
 
 # install botorch + dev deps
 sudo pip install -e .[dev]
 
-# install pytorch nightly if asked for (we do this after gpytorch b/c gpytorch setup will
-# ignore the nightly and install the most recent stable anyway)
-if [[ $PYTORCH_NIGHLTY == true ]]; then
-  sudo pip install torch_nightly -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
-fi
-
-
 if [[ $DEPLOY == true ]]; then
-  sudo pip install beautifulsoup4 ipython nbconvert
+  sudo pip install --progress-bar off beautifulsoup4 ipython nbconvert
 fi
