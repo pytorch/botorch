@@ -53,8 +53,8 @@ if [[ $DOCUSAURUS_BOT == true ]]; then
   # echo "machine github.com login docusaurus-bot password $GITHUB_TOKEN" > ~/.netrc
 
   # Clone both master & gh-pages branches
-  git clone https://docusaurus-bot@github.com:pytorch/botorch.git botorch-master
-  git clone --branch gh-pages https://docusaurus-bot@github.com:pytorch/botorch.git botorch-gh-pages
+  git clone https://docusaurus-bot@github.com/pytorch/botorch.git botorch-master
+  git clone --branch gh-pages https://docusaurus-bot@github.com/pytorch/botorch.git botorch-gh-pages
 else
   git clone git@github.com:pytorch/botorch.git botorch-master
   git clone --branch gh-pages git@github.com:pytorch/botorch.git botorch-gh-pages
