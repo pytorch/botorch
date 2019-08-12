@@ -119,19 +119,19 @@ jobs:
       - sphinx
       - upload_coverage
 
-  auto_deploy_site:
-    docker:
-      - image: circleci/python:3.6.8-node
-    steps:
-      - checkout
-      - pip_install:
-          args: "-n -d"
-      - lint_flake8
-      - lint_black
-      - unit_tests
-      - sphinx
-      - configure_github_bot
-      - deploy_site
+  # auto_deploy_site:
+  #   docker:
+  #     - image: circleci/python:3.6.8-node
+  #   steps:
+  #     - checkout
+  #     - pip_install:
+  #         args: "-n -d"
+  #     - lint_flake8
+  #     - lint_black
+  #     - unit_tests
+  #     - sphinx
+  #     - configure_github_bot
+  #     - deploy_site
 
 
 aliases:
@@ -152,10 +152,10 @@ workflows:
       - lint_test_py37_conda:
           filters: *exclude_ghpages_fbconfig
 
-  auto_deploy_site:
-    jobs:
-      - auto_deploy_site:
-          filters:
-            branches:
-              only:
-                - master
+  # auto_deploy_site:
+  #   jobs:
+  #     - auto_deploy_site:
+  #         filters:
+  #           branches:
+  #             only:
+  #               - master
