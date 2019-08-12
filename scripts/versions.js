@@ -57,7 +57,7 @@ function Versions(props) {
                   </code>
                 </td>
                 <td>
-                  <a href={`${baseUrl}versions/latest/index.html`}>latest</a>
+                  <a href={`${baseUrl}v/latest/index.html`}>latest</a>
                 </td>
               </tr>
             </tbody>
@@ -72,7 +72,7 @@ function Versions(props) {
                     <tr key={version}>
                       <th>{version}</th>
                       <td>
-                        <a href={`${baseUrl}versions/${version}/index.html`}>
+                        <a href={`${baseUrl}v/${version}/index.html`}>
                           Documentation
                         </a>
                       </td>

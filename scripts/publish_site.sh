@@ -3,19 +3,24 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved.
 
 usage() {
-  echo "Usage: $0 [-b]"
+  echo "Usage: $0 [-d] [-v VERSION]"
   echo ""
   echo "Build and push updated BoTorch site. Will either update latest or bump stable version."
   echo ""
-  echo "  -v    Build site for new library version. If not specified, will update latest."
+  echo "  -d           Use Docusaurus bot GitHub credentials. If not specified, will use default GitHub credentials."
+  echo "  -v=VERSION   Build site for new library version. If not specified, will update master."
   echo ""
   exit 1
 }
 
+DOCUSAURUS_BOT=false
 VERSION=false
 
-while getopts 'hv' option; do
+while getopts 'dhv:' option; do
   case "${option}" in
+    d)
+      DOCUSAURUS_BOT=true
+      ;;
     h)
       usage
       ;;
@@ -28,14 +33,11 @@ while getopts 'hv' option; do
   esac
 done
 
-# Command to strip out Algolia (search functionality) form siteConfig.js
-# Algolia only indexes stable build, so we'll remove from older versions
-REMOVE_ALGOLIA_CMD="import os, re; "
-REMOVE_ALGOLIA_CMD+="c = open('siteConfig.js', 'r').read(); "
-REMOVE_ALGOLIA_CMD+="out = re.sub('algolia: \{.+\},', '', c, flags=re.DOTALL); "
-REMOVE_ALGOLIA_CMD+="f = open('siteConfig.js', 'w'); "
-REMOVE_ALGOLIA_CMD+="f.write(out); "
-REMOVE_ALGOLIA_CMD+="f.close(); "
+
+# Function to get absolute filename
+fullpath() {
+  echo "$(cd "$(dirname "$1")" || exit; pwd -P)/$(basename "$1")"
+}
 
 # Current directory (needed for cleanup later)
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -44,22 +46,32 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 WORK_DIR=$(mktemp -d)
 cd "${WORK_DIR}" || exit
 
-# Clone both master & gh-pages branches
-git clone git@github.com:pytorch/botorch.git botorch-master
-git clone --branch gh-pages git@github.com:pytorch/botorch.git botorch-gh-pages
+if [[ $DOCUSAURUS_BOT == true ]]; then
+  # Setup git credentials
+  git config --global user.name "BoTorch Website Deployment Script"
+  git config --global user.email "docusaurus-bot@users.noreply.github.com"
+  echo "machine github.com login docusaurus-bot password ${DOCUSAURUS_PUBLISH_TOKEN}" > ~/.netrc
+
+  # Clone both master & gh-pages branches
+  git clone https://docusaurus-bot@github.com:pytorch/botorch.git botorch-master
+  git clone --branch gh-pages https://docusaurus-bot@github.com:pytorch/botorch.git botorch-gh-pages
+else
+  git clone git@github.com:pytorch/botorch.git botorch-master
+  git clone --branch gh-pages git@github.com:pytorch/botorch.git botorch-gh-pages
+fi
 
 # A few notes about the script below:
 # * Docusaurus versioning was designed to *only* version the markdown
 #   files in the docs/ subdirectory. We are repurposing parts of Docusaurus
 #   versioning, but snapshotting the entire site. Versions of the site are
-#   stored in the versions/ subdirectory on gh-pages:
+#   stored in the v/ subdirectory on gh-pages:
 #
 #   --gh-pages/
 #     |-- api/
 #     |-- css/
 #     |-- docs/
 #     |   ...
-#     |-- versions/
+#     |-- v/
 #     |   |-- 1.0.1/
 #     |   |-- 1.0.2/
 #     |   |   ...
@@ -68,7 +80,7 @@ git clone --branch gh-pages git@github.com:pytorch/botorch.git botorch-gh-pages
 #     |-- versions.html
 #
 # * The stable version is in the top-level directory. It is also
-#   placed into the versions/ subdirectory so that it does not need to
+#   placed into the v/ subdirectory so that it does not need to
 #   be built again when the version is augmented.
 # * We want to support serving / building the Docusaurus site locally
 #   without any versions. This means that we have to keep versions.js
@@ -89,7 +101,7 @@ if [[ $VERSION == false ]]; then
   # use versions.js for latest build, but we do need versions.js
   # in website/pages in order to use docusaurus-versions)
   CMD="import os, json; "
-  CMD+="vs = [v for v in os.listdir('botorch-gh-pages/versions') if v != 'latest' and not v.startswith('.')]; "
+  CMD+="vs = [v for v in os.listdir('botorch-gh-pages/v') if v != 'latest' and not v.startswith('.')]; "
   CMD+="print(json.dumps(vs))"
   python3 -c "$CMD" > botorch-master/website/_versions.json
 
@@ -98,26 +110,28 @@ if [[ $VERSION == false ]]; then
   cp botorch-master/scripts/versions.js botorch-master/website/pages/en/versions.js
   cd botorch-master/website || exit
 
-  # Build site, tagged with "latest" version; baseUrl set to /versions/latest/
+  # Replace baseUrl (set to /v/latest/) & disable Algolia
+  CONFIG_FILE=$(fullpath "siteConfig.js")
+  python3 ../scripts/patch_site_config.py -f "${CONFIG_FILE}" -b "/v/latest/" --disable_algolia
+
+  # Tag site with "latest" version
   yarn
   yarn run version latest
-  sed -i '' "s/baseUrl = '\/'/baseUrl = '\/versions\/latest\/'/g" siteConfig.js
 
-  # disable search for non-stable version (can't use sed b/c of newline)
-  python3 -c "$REMOVE_ALGOLIA_CMD"
-
+  # Build site
   cd .. || exit
   ./scripts/build_docs.sh -b
   rm -rf website/build/botorch/docs/next  # don't need this
 
   # Move built site to gh-pages (but keep old versions.js)
   cd "${WORK_DIR}" || exit
-  cp botorch-gh-pages/versions/latest/versions.html versions.html
-  rm -rf botorch-gh-pages/versions/latest
-  mv botorch-master/website/build/botorch botorch-gh-pages/versions/latest
+  cp botorch-gh-pages/v/latest/versions.html versions.html
+  rm -rf botorch-gh-pages/v/latest
+  mv botorch-master/website/build/botorch botorch-gh-pages/v/latest
   # versions.html goes both in top-level and under en/ (default language)
-  cp versions.html botorch-gh-pages/versions/latest/versions.html
-  cp versions.html botorch-gh-pages/versions/latest/en/versions.html
+  cp versions.html botorch-gh-pages/v/latest/versions.html
+  cp versions.html botorch-gh-pages/v/latest/en/versions.html
+  cp -R botorch-master/.circleci botorch-gh-pages/
 
   # Push changes to gh-pages
   cd botorch-gh-pages || exit
@@ -133,7 +147,7 @@ else
   # Checkout master branch with specified tag
   cd botorch-master || exit
   git fetch --tags
-  git checkout "${VERSION}"
+  git checkout "v${VERSION}"
 
   # Populate _versions.json from existing versions; this contains a list
   # of versions present in gh-pages (excluding latest). This is then used
@@ -142,7 +156,7 @@ else
   # Note that this script doesn't allow building a version of the site that
   # is already on gh-pages.
   CMD="import os, json; "
-  CMD+="vs = [v for v in os.listdir('../botorch-gh-pages/versions') if v != 'latest' and not v.startswith('.')]; "
+  CMD+="vs = [v for v in os.listdir('../botorch-gh-pages/v') if v != 'latest' and not v.startswith('.')]; "
   CMD+="assert '${VERSION}' not in vs, '${VERSION} is already on gh-pages.'; "
   CMD+="vs.append('${VERSION}'); "
   CMD+="print(json.dumps(vs))"
@@ -150,7 +164,7 @@ else
 
   cp scripts/versions.js website/pages/en/versions.js
 
-  # Set Docusaurus version
+  # Tag site as 'stable'
   cd website || exit
   yarn
   yarn run version stable
@@ -164,33 +178,36 @@ else
   cd "${WORK_DIR}" || exit
   rm -rf botorch-master/website/build/botorch/docs/next  # don't need this
   mv botorch-master/website/build/botorch new-site
-  mv botorch-gh-pages/versions new-site/versions
+  mv botorch-gh-pages/v new-site/v
 
-  # Build new version of site (to be placed in versions/$VERSION/)
+  # Build new version of site (to be placed in v/$VERSION/)
   # the only thing that changes here is the baseUrl (for nav purposes)
   # we build this now so that in the future, we can just bump version and not move
   # previous stable to versions
   cd botorch-master/website || exit
-  sed -i '' "s/baseUrl = '\/'/baseUrl = '\/versions\/${VERSION}\/'/g" siteConfig.js
 
-  # disable search for non-stable version (can't use sed b/c of newline)
-  python3 -c "$REMOVE_ALGOLIA_CMD"
+  # Replace baseUrl (set to /v/$VERSION/) & disable Algolia
+  CONFIG_FILE=$(fullpath "siteConfig.js")
+  python3 ../scripts/patch_site_config.py -f "${CONFIG_FILE}" -b "/v/${VERSION}/" --disable_algolia
 
+  # Tag exact version & build site
   yarn run version "${VERSION}"
   cd .. || exit
-  ./scripts/build_docs.sh -b
+  # Only run Docusaurus (skip tutorial build & Sphinx)
+  ./scripts/build_docs.sh -b -o
   rm -rf website/build/botorch/docs/next  # don't need this
   rm -rf website/build/botorch/docs/stable  # or this
-  mv website/build/botorch "../new-site/versions/${VERSION}"
+  mv website/build/botorch "../new-site/v/${VERSION}"
 
   # Need to run script to update versions.js for previous versions in
-  # new-site/versions with the newly built versions.js. Otherwise,
+  # new-site/v with the newly built versions.js. Otherwise,
   # the versions.js for older versions in versions subdirectory
   # won't be up-to-date and will not have a way to navigate back to
   # newer versions. This is the only part of the old versions that
   # needs to be updated when a new version is built.
   cd "${WORK_DIR}" || exit
   python3 botorch-master/scripts/update_versions_html.py -p "${WORK_DIR}"
+  cp -R botorch-master/.circleci new-site/
 
   # Init as Git repo and push to gh-pages
   cd new-site || exit

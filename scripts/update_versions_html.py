@@ -23,11 +23,13 @@ def updateVersionHTML(base_path, base_url=BASE_URL):
     def prepend_url(a_tag, base_url, version):
         href = a_tag.attrs["href"]
         if href.startswith("https://") or href.startswith("http://"):
-            return href
-        else:
-            return "{base_url}versions/{version}{original_url}".format(
-                base_url=base_url, version=version, original_url=href
-            )
+            if href.startswith(BASE_URL):
+                href = href.replace(BASE_URL, "/")
+            else:
+                return href
+        return "{base_url}v/{version}{original_url}".format(
+            base_url=base_url, version=version, original_url=href
+        )
 
     for v in versions:
         soup = BeautifulSoup(html, "html.parser")
@@ -43,16 +45,28 @@ def updateVersionHTML(base_path, base_url=BASE_URL):
 
         # version link
         t = soup.find("h2", {"class": "headerTitleWithLogo"}).find_next("a")
-        t.string = v
         t.attrs["href"] = prepend_url(t, base_url, v)
+        h3 = t.find("h3")
+        h3.string = v
+
+        # footer
+        nav_links = soup.find("footer").findAll("a")
+        for l in nav_links:
+            l.attrs["href"] = prepend_url(l, base_url, v)
 
         # output files
+        with open(base_path + "/new-site/v/{}/versions.html".format(v), "w") as outfile:
+            outfile.write(str(soup))
         with open(
-            base_path + "/new-site/versions/{}/versions.html".format(v), "w"
+            base_path + "/new-site/v/{}/en/versions.html".format(v), "w"
         ) as outfile:
             outfile.write(str(soup))
         with open(
-            base_path + "/new-site/versions/{}/en/versions.html".format(v), "w"
+            base_path + "/new-site/v/{}/versions/index.html".format(v), "w"
+        ) as outfile:
+            outfile.write(str(soup))
+        with open(
+            base_path + "/new-site/v/{}/en/versions/index.html".format(v), "w"
         ) as outfile:
             outfile.write(str(soup))
 
