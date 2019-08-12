@@ -214,7 +214,7 @@ else
   git init
   git add --all
   git commit -m "Publish version ${VERSION} of site"
-  git push --force "https://github.com/pytorch/botorch" master:gh-pages
+  git push --force "git@github.com:pytorch/botorch.git" master:gh-pages
 
 fi
 
