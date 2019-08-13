@@ -16,7 +16,7 @@ from ..acquisition import AcquisitionFunction
 from ..acquisition.analytic import AnalyticAcquisitionFunction
 from ..acquisition.utils import is_nonnegative
 from ..exceptions import BadInitialCandidatesWarning
-from ..gen import gen_candidates_scipy, get_best_candidates
+from ..gen import gen_candidates_scipy, gen_candidates_torch, get_best_candidates
 from ..utils.sampling import draw_sobol_samples
 from .initializers import initialize_q_batch, initialize_q_batch_nonneg
 
@@ -158,28 +158,39 @@ def joint_optimize(
             raw_samples=raw_samples,
             options=options,
         )
-
-    batch_limit: int = options.get("batch_limit", num_restarts)
-    batch_candidates_list: List[Tensor] = []
-    batch_acq_values_list: List[Tensor] = []
+    batch_limit = options.get("batch_limit", num_restarts)
+    use_torch_optimizer = options.get("use_torch_optimizer", False)
+    batch_candidates_list = []
+    batch_acq_values_list = []
+    optimizer_options = {
+        k: v
+        for k, v in options.items()
+        if k not in ("batch_limit", "nonnegative", "use_torch_optimizer")
+    }
     start_idx = 0
     while start_idx < num_restarts:
         end_idx = min(start_idx + batch_limit, num_restarts)
         # optimize using random restart optimization
-        batch_candidates_curr, batch_acq_values_curr = gen_candidates_scipy(
-            initial_conditions=batch_initial_conditions[start_idx:end_idx],
-            acquisition_function=acq_function,
-            lower_bounds=bounds[0],
-            upper_bounds=bounds[1],
-            options={
-                k: v
-                for k, v in options.items()
-                if k not in ("batch_limit", "nonnegative")
-            },
-            inequality_constraints=inequality_constraints,
-            equality_constraints=equality_constraints,
-            fixed_features=fixed_features,
-        )
+        if not use_torch_optimizer:
+            batch_candidates_curr, batch_acq_values_curr = gen_candidates_scipy(
+                initial_conditions=batch_initial_conditions[start_idx:end_idx],
+                acquisition_function=acq_function,
+                lower_bounds=bounds[0],
+                upper_bounds=bounds[1],
+                options=optimizer_options,
+                inequality_constraints=inequality_constraints,
+                equality_constraints=equality_constraints,
+                fixed_features=fixed_features,
+            )
+        else:
+            batch_candidates_curr, batch_acq_values_curr = gen_candidates_torch(
+                initial_conditions=batch_initial_conditions[start_idx:end_idx],
+                acquisition_function=acq_function,
+                lower_bounds=bounds[0],
+                upper_bounds=bounds[1],
+                options=optimizer_options,
+                fixed_features=fixed_features,
+            )
         batch_candidates_list.append(batch_candidates_curr)
         batch_acq_values_list.append(batch_acq_values_curr)
         start_idx += batch_limit
