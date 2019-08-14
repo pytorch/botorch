@@ -133,10 +133,10 @@ UCB = UpperConfidenceBound(gp, beta=0.1)
     `;
     // Example for optimizing candidates
     const optAcqFuncExample = `${pre}python
-from botorch.optim import joint_optimize
+from botorch.optim import optimize_acqf
 
 bounds = torch.stack([torch.zeros(2), torch.ones(2)])
-candidate, acq_value = joint_optimize(
+candidate, acq_value = optimize_acqf(
     UCB, bounds=bounds, q=1, num_restarts=5, raw_samples=20,
 )
 candidate  # tensor([0.4887, 0.5063])
