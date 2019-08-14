@@ -59,7 +59,7 @@ class TestDeprecatedOptimize(TestCase):
         }
         with warnings.catch_warnings(record=True) as ws:
             candidates, acq_values = joint_optimize(**kwargs)
-            self.assertTrue(any(issubclass(w, DeprecationWarning)) for w in ws)
+            self.assertTrue(any(issubclass(w.category, DeprecationWarning) for w in ws))
             self.assertTrue(
                 any("joint_optimize is deprecated" in str(w.message) for w in ws)
             )
@@ -71,7 +71,7 @@ class TestDeprecatedOptimize(TestCase):
     def test_sequential_optimize(self, mock_optimize_acqf):
         with warnings.catch_warnings(record=True) as ws:
             candidates, acq_values = sequential_optimize(**self.shared_kwargs)
-            self.assertTrue(any(issubclass(w, DeprecationWarning)) for w in ws)
+            self.assertTrue(any(issubclass(w.category, DeprecationWarning) for w in ws))
             self.assertTrue(
                 any("sequential_optimize is deprecated" in str(w.message) for w in ws)
             )
