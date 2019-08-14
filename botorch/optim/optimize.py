@@ -21,7 +21,7 @@ from ..utils.sampling import draw_sobol_samples
 from .initializers import initialize_q_batch, initialize_q_batch_nonneg
 
 
-def sequential_optimize(
+def optimize_acqf(
     acq_function: AcquisitionFunction,
     bounds: Tensor,
     q: int,
@@ -32,8 +32,11 @@ def sequential_optimize(
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     fixed_features: Optional[Dict[int, float]] = None,
     post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
+    batch_initial_conditions: Optional[Tensor] = None,
+    return_best_only: bool = True,
+    sequential: bool = False,
 ) -> Tuple[Tensor, Tensor]:
-    r"""Generate a set of candidates via sequential multi-start optimization.
+    r"""Generate a set of candidates via multi-start optimization.
 
     Args:
         acq_function: An AcquisitionFunction
@@ -54,110 +57,75 @@ def sequential_optimize(
         post_processing_func: A function that post-processes an optimization
             result appropriately (i.e., according to `round-trip`
             transformations).
-
-    Returns:
-         A two-element tuple containing
-
-         - a `q x d`-dim tensor of generated candidates.
-         - a `q`-dim tensor of associated conditional acquisition values, where
-            the `[..., i]`-th element is the expected acquisition value
-            conditional on having observed canidates `0,1,...,i-1`.
-
-    Example
-        # generate `q=2` candidates sequentially using 20 random restarts
-        # and 500 raw samples
-        >>> qEI = qExpectedImprovement(model, best_f=0.2)
-        >>> bounds = torch.tensor([[0.], [1.]])
-        >>> candidates = sequential_optimize(qEI, bounds, 2, 20, 500)
-    """
-    candidate_list, acq_value_list = [], []
-    candidates = torch.tensor([])
-    base_X_pending = acq_function.X_pending  # pyre-ignore: [16]
-    for _ in range(q):
-        candidate, acq_value = joint_optimize(
-            acq_function=acq_function,
-            bounds=bounds,
-            q=1,
-            num_restarts=num_restarts,
-            raw_samples=raw_samples,
-            options=options or {},
-            inequality_constraints=inequality_constraints,
-            equality_constraints=equality_constraints,
-            fixed_features=fixed_features,
-        )
-        if post_processing_func is not None:
-            candidate_shape = candidate.shape
-            candidate = post_processing_func(candidate.view(-1)).view(*candidate_shape)
-        candidate_list.append(candidate)
-        acq_value_list.append(acq_value)
-        candidates = torch.cat(candidate_list, dim=-2)
-        acq_function.set_X_pending(
-            torch.cat([base_X_pending, candidates], dim=-2)
-            if base_X_pending is not None
-            else candidates
-        )
-    # Reset acq_func to previous X_pending state
-    acq_function.set_X_pending(base_X_pending)
-    return candidates, torch.stack(acq_value_list)
-
-
-def joint_optimize(
-    acq_function: AcquisitionFunction,
-    bounds: Tensor,
-    q: int,
-    num_restarts: int,
-    raw_samples: int,
-    options: Optional[Dict[str, Union[bool, float, int]]] = None,
-    inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
-    equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
-    fixed_features: Optional[Dict[int, float]] = None,
-    post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
-    batch_initial_conditions: Optional[Tensor] = None,
-    return_best_only: bool = True,
-) -> Tuple[Tensor, Tensor]:
-    r"""Generate a set of candidates via joint multi-start optimization.
-
-    Args:
-        acq_function: The acquisition function.
-        bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.
-        q: The number of candidates.
-        num_restarts: Number of starting points for multistart acquisition
-            function optimization.
-        raw_samples: Number of samples for initialization.
-        options: Options for candidate generation.
-        inequality constraints: A list of tuples (indices, coefficients, rhs),
-            with each tuple encoding an inequality constraint of the form
-            `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`
-        equality constraints: A list of tuples (indices, coefficients, rhs),
-            with each tuple encoding an inequality constraint of the form
-            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`
-        fixed_features: A map {feature_index: value} for features that should be
-            fixed to a particular value during generation.
-        post_processing_func: A function that post processes an optimization result
-            appropriately (i.e., according to `round-trip` transformations).
-            Note: post_processing_func is not used by _joint_optimize and is only
-            included to match _sequential_optimize.
         batch_initial_conditions: A tensor to specify the initial conditions. Set
             this if you do not want to use default initialization strategy.
         return_best_only: If False, outputs the solutions corresponding to all
             random restart initializations of the optimization.
+        sequential: If False, uses joint optimization, otherwise uses sequential
+            optimization.
 
-    Returns:
-         A two-element tuple containing
+        Returns:
+            A two-element tuple containing
 
-         - a `(num_restarts) x q x d`-dim tensor of generated candidates.
-         - a `(num_restarts)`-dim tensor of assoiated joint acquisition values.
+           - a `(num_restarts) x q x d`-dim tensor of generated candidates.
+           - a tensor of associated acquisiton values. If `sequential=False`,
+             this is a `(num_restarts)`-dim tensor of joint acquisition values
+             (with explicit restart dimension if `return_best_only=False`). If
+             `sequential=True`, this is a `q`-dim tensor of expected acquisition
+             values conditional on having observed canidates `0,1,...,i-1`.
 
-    Example:
-        >>> # generate `q=2` candidates jointly using 20 random restarts and
-        >>> # 500 raw samples
-        >>> qEI = qExpectedImprovement(model, best_f=0.2)
-        >>> bounds = torch.tensor([[0.], [1.]])
-        >>> candidates, acq_value = joint_optimize(qEI, bounds, 2, 20, 500)
+        Example:
+            >>> # generate `q=2` candiates jointly using 20 random restarts
+            >>> # and 512 raw samples
+            >>> candidates, acq_value = optimize_acqf(qEI, bounds, 2, 20, 512)
+
+            >>> generate `q=3` candidates sequentially using 15 random restarts
+            >>> # and 256 raw samples
+            >>> qEI = qExpectedImprovement(model, best_f=0.2)
+            >>> bounds = torch.tensor([[0.], [1.]])
+            >>> candidates, acq_value_list = optimize_acqf(
+            >>>     qEI, bounds, 3, 15, 256, sequential=True
+            >>> )
+
     """
+    if sequential:
+        if not return_best_only:
+            raise NotImplementedError(
+                "return_best_only=False only supported for joint optimization"
+            )
+        candidate_list, acq_value_list = [], []
+        candidates = torch.tensor([])
+        base_X_pending = acq_function.X_pending  # pyre-ignore: [16]
+        for _ in range(q):
+            candidate, acq_value = optimize_acqf(
+                acq_function=acq_function,
+                bounds=bounds,
+                q=1,
+                num_restarts=num_restarts,
+                raw_samples=raw_samples,
+                options=options or {},
+                inequality_constraints=inequality_constraints,
+                equality_constraints=equality_constraints,
+                fixed_features=fixed_features,
+                post_processing_func=post_processing_func,
+                batch_initial_conditions=None,
+                return_best_only=True,
+                sequential=False,
+            )
+            candidate_list.append(candidate)
+            acq_value_list.append(acq_value)
+            candidates = torch.cat(candidate_list, dim=-2)
+            acq_function.set_X_pending(
+                torch.cat([base_X_pending, candidates], dim=-2)
+                if base_X_pending is not None
+                else candidates
+            )
+        # Reset acq_func to previous X_pending state
+        acq_function.set_X_pending(base_X_pending)
+        return candidates, torch.stack(acq_value_list)
+
     # TODO: Generating initial candidates should use parameter constraints.
     options = options or {}
-
     if batch_initial_conditions is None:
         batch_initial_conditions = gen_batch_initial_conditions(
             acq_function=acq_function,
@@ -195,11 +163,90 @@ def joint_optimize(
     batch_candidates = torch.cat(batch_candidates_list)
     batch_acq_values = torch.cat(batch_acq_values_list)
 
+    if post_processing_func is not None:
+        batch_candidates = post_processing_func(batch_candidates)
+
     if return_best_only:
-        best = torch.max(batch_acq_values.view(-1), dim=0)[1].item()
+        best = torch.argmax(batch_acq_values.view(-1), dim=0)
         return batch_candidates[best], batch_acq_values[best]
     else:
         return batch_candidates, batch_acq_values
+
+
+def sequential_optimize(
+    acq_function: AcquisitionFunction,
+    bounds: Tensor,
+    q: int,
+    num_restarts: int,
+    raw_samples: int,
+    options: Optional[Dict[str, Union[bool, float, int]]] = None,
+    inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
+    equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
+    fixed_features: Optional[Dict[int, float]] = None,
+    post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
+) -> Tuple[Tensor, Tensor]:
+    r"""DEPRECATED - Use optimize_acqf with sequential=True instead."""
+    warnings.warn(
+        "sequential_optimize is deprecated. Please use optimize_acfq "
+        "with sequential=True instead.",
+        DeprecationWarning,
+    )
+    candidates, acq_values = optimize_acqf(
+        acq_function=acq_function,
+        bounds=bounds,
+        q=q,
+        num_restarts=num_restarts,
+        raw_samples=raw_samples,
+        options=options,
+        inequality_constraints=inequality_constraints,
+        equality_constraints=equality_constraints,
+        fixed_features=fixed_features,
+        post_processing_func=post_processing_func,
+        batch_initial_conditions=None,
+        return_best_only=True,
+        sequential=True,
+    )
+
+    return candidates, acq_values
+
+
+def joint_optimize(
+    acq_function: AcquisitionFunction,
+    bounds: Tensor,
+    q: int,
+    num_restarts: int,
+    raw_samples: int,
+    options: Optional[Dict[str, Union[bool, float, int]]] = None,
+    inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
+    equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
+    fixed_features: Optional[Dict[int, float]] = None,
+    post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
+    batch_initial_conditions: Optional[Tensor] = None,
+    return_best_only: bool = True,
+) -> Tuple[Tensor, Tensor]:
+    r"""DEPRECATED - Use optimize_acqf instead."""
+    warnings.warn(
+        "joint_optimize is deprecated. Please use optimize_acfq instead.",
+        DeprecationWarning,
+    )
+
+    batch_candidates, batch_acq_values = optimize_acqf(
+        acq_function=acq_function,
+        bounds=bounds,
+        q=q,
+        num_restarts=num_restarts,
+        raw_samples=raw_samples,
+        options=options,
+        inequality_constraints=inequality_constraints,
+        equality_constraints=equality_constraints,
+        fixed_features=fixed_features,
+        post_processing_func=post_processing_func,
+        batch_initial_conditions=batch_initial_conditions,
+        return_best_only=return_best_only,
+        sequential=False,
+    )
+
+    return batch_candidates, batch_acq_values
 
 
 def gen_batch_initial_conditions(
@@ -235,6 +282,7 @@ def gen_batch_initial_conditions(
         >>> Xinit = gen_batch_initial_conditions(
         >>>     qEI, bounds, q=3, num_restarts=25, raw_samples=500
         >>> )
+
     """
     options = options or {}
     seed: Optional[int] = options.get("seed")  # pyre-ignore
