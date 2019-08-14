@@ -69,7 +69,7 @@ Here's a quick run down of the main components of a Bayesian Optimization loop.
     from botorch.optim import joint_optimize
 
     bounds = torch.stack([torch.zeros(2), torch.ones(2)])
-    candidate = joint_optimize(
+    candidate, acq_value = joint_optimize(
         UCB, bounds=bounds, q=1, num_restarts=5, raw_samples=20,
     )
     ```
