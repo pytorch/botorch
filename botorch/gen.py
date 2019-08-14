@@ -248,5 +248,5 @@ def get_best_candidates(batch_candidates: Tensor, batch_values: Tensor) -> Tenso
             )
         >>> best_candidates = get_best_candidates(batch_candidates, batch_acq_values)
     """
-    best = torch.max(batch_values.view(-1), dim=0)[1].item()
+    best = torch.argmax(batch_values.view(-1), dim=0)
     return batch_candidates[best]

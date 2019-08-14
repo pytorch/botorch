@@ -99,11 +99,15 @@ class TestSequentialOptimize(TestCase):
             mock_acq_function = MockAcquisitionFunction()
             tkwargs["dtype"] = dtype
             joint_optimize_return_values = [
-                torch.tensor([[[1.1, 2.1, 3.1]]], **tkwargs) for _ in range(q)
+                (
+                    torch.tensor([[[1.1, 2.1, 3.1]]], **tkwargs),
+                    torch.tensor(0.0, **tkwargs),
+                )
+                for _ in range(q)
             ]
             mock_joint_optimize.side_effect = joint_optimize_return_values
             expected_candidates = torch.cat(
-                joint_optimize_return_values, dim=-2
+                [rv[0] for rv in joint_optimize_return_values], dim=-2
             ).round()
             bounds = torch.stack(
                 [torch.zeros(3, **tkwargs), 4 * torch.ones(3, **tkwargs)]
@@ -111,7 +115,7 @@ class TestSequentialOptimize(TestCase):
             inequality_constraints = [
                 (torch.tensor([3]), torch.tensor([4]), torch.tensor(5))
             ]
-            candidates = sequential_optimize(
+            candidates, _ = sequential_optimize(
                 acq_function=mock_acq_function,
                 bounds=bounds,
                 q=q,
@@ -146,13 +150,8 @@ class TestSequentialOptimize(TestCase):
 class TestJointOptimize(TestCase):
     @mock.patch("botorch.optim.optimize.gen_batch_initial_conditions")
     @mock.patch("botorch.optim.optimize.gen_candidates_scipy")
-    @mock.patch("botorch.optim.optimize.get_best_candidates")
     def test_joint_optimize(
-        self,
-        mock_get_best_candidates,
-        mock_gen_candidates,
-        mock_gen_batch_initial_conditions,
-        cuda=False,
+        self, mock_gen_candidates, mock_gen_batch_initial_conditions, cuda=False
     ):
         q = 3
         num_restarts = 2
@@ -166,15 +165,15 @@ class TestJointOptimize(TestCase):
             mock_gen_batch_initial_conditions.return_value = torch.zeros(
                 num_restarts, q, 3, **tkwargs
             )
-            mock_gen_candidates.return_value = torch.cat(
-                [i * torch.ones(1, q, 3, **tkwargs) for i in range(num_restarts)], dim=0
+            base_cand = torch.ones(1, q, 3, **tkwargs)
+            mock_gen_candidates.return_value = (
+                torch.cat([i * base_cand for i in range(num_restarts)], dim=0),
+                num_restarts - torch.arange(num_restarts, **tkwargs),
             )
-            mock_get_best_candidates.return_value = torch.ones(1, q, 3, **tkwargs)
-            expected_candidates = mock_get_best_candidates.return_value
             bounds = torch.stack(
                 [torch.zeros(3, **tkwargs), 4 * torch.ones(3, **tkwargs)]
             )
-            candidates = joint_optimize(
+            candidates, acq_vals = joint_optimize(
                 acq_function=mock_acq_function,
                 bounds=bounds,
                 q=q,
@@ -182,9 +181,9 @@ class TestJointOptimize(TestCase):
                 raw_samples=raw_samples,
                 options=options,
             )
-            self.assertTrue(torch.equal(candidates, expected_candidates))
+            self.assertTrue(torch.equal(candidates, 0.0 * base_cand[0]))
 
-            candidates = joint_optimize(
+            candidates, acq_vals = joint_optimize(
                 acq_function=mock_acq_function,
                 bounds=bounds,
                 q=q,
@@ -197,6 +196,7 @@ class TestJointOptimize(TestCase):
             self.assertTrue(
                 torch.equal(candidates, mock_gen_candidates.return_value[0])
             )
+            self.assertTrue(torch.equal(acq_vals, mock_gen_candidates.return_value[1]))
             self.assertEqual(mock_gen_batch_initial_conditions.call_count, cnt)
             cnt += 1
 

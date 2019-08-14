@@ -16,7 +16,7 @@ from ..acquisition import AcquisitionFunction
 from ..acquisition.analytic import AnalyticAcquisitionFunction
 from ..acquisition.utils import is_nonnegative
 from ..exceptions import BadInitialCandidatesWarning
-from ..gen import gen_candidates_scipy, get_best_candidates
+from ..gen import gen_candidates_scipy
 from ..utils.sampling import draw_sobol_samples
 from .initializers import initialize_q_batch, initialize_q_batch_nonneg
 
@@ -32,7 +32,7 @@ def sequential_optimize(
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     fixed_features: Optional[Dict[int, float]] = None,
     post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
-) -> Tensor:
+) -> Tuple[Tensor, Tensor]:
     r"""Generate a set of candidates via sequential multi-start optimization.
 
     Args:
@@ -56,7 +56,12 @@ def sequential_optimize(
             transformations).
 
     Returns:
-        The set of generated candidates.
+         A two-element tuple containing
+
+         - a `q x d`-dim tensor of generated candidates.
+         - a `q`-dim tensor of associated conditional acquisition values, where
+            the `[..., i]`-th element is the expected acquisition value
+            conditional on having observed canidates `0,1,...,i-1`.
 
     Example
         # generate `q=2` candidates sequentially using 20 random restarts
@@ -65,11 +70,11 @@ def sequential_optimize(
         >>> bounds = torch.tensor([[0.], [1.]])
         >>> candidates = sequential_optimize(qEI, bounds, 2, 20, 500)
     """
-    candidate_list = []
+    candidate_list, acq_value_list = [], []
     candidates = torch.tensor([])
     base_X_pending = acq_function.X_pending  # pyre-ignore: [16]
     for _ in range(q):
-        candidate = joint_optimize(
+        candidate, acq_value = joint_optimize(
             acq_function=acq_function,
             bounds=bounds,
             q=1,
@@ -84,6 +89,7 @@ def sequential_optimize(
             candidate_shape = candidate.shape
             candidate = post_processing_func(candidate.view(-1)).view(*candidate_shape)
         candidate_list.append(candidate)
+        acq_value_list.append(acq_value)
         candidates = torch.cat(candidate_list, dim=-2)
         acq_function.set_X_pending(
             torch.cat([base_X_pending, candidates], dim=-2)
@@ -92,7 +98,7 @@ def sequential_optimize(
         )
     # Reset acq_func to previous X_pending state
     acq_function.set_X_pending(base_X_pending)
-    return candidates
+    return candidates, torch.stack(acq_value_list)
 
 
 def joint_optimize(
@@ -108,7 +114,7 @@ def joint_optimize(
     post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
     batch_initial_conditions: Optional[Tensor] = None,
     return_best_only: bool = True,
-) -> Tensor:
+) -> Tuple[Tensor, Tensor]:
     r"""Generate a set of candidates via joint multi-start optimization.
 
     Args:
@@ -133,18 +139,21 @@ def joint_optimize(
             included to match _sequential_optimize.
         batch_initial_conditions: A tensor to specify the initial conditions. Set
             this if you do not want to use default initialization strategy.
-        return_best_only: Set this to False if you want to output the solutions
-            corresponding to all initializations.
+        return_best_only: If False, outputs the solutions corresponding to all
+            random restart initializations of the optimization.
 
     Returns:
-         A `q x d` tensor of generated candidates.
+         A two-element tuple containing
+
+         - a `(num_restarts) x q x d`-dim tensor of generated candidates.
+         - a `(num_restarts)`-dim tensor of assoiated joint acquisition values.
 
     Example:
         >>> # generate `q=2` candidates jointly using 20 random restarts and
         >>> # 500 raw samples
         >>> qEI = qExpectedImprovement(model, best_f=0.2)
         >>> bounds = torch.tensor([[0.], [1.]])
-        >>> candidates = joint_optimize(qEI, bounds, 2, 20, 500)
+        >>> candidates, acq_value = joint_optimize(qEI, bounds, 2, 20, 500)
     """
     # TODO: Generating initial candidates should use parameter constraints.
     options = options or {}
@@ -187,11 +196,10 @@ def joint_optimize(
     batch_acq_values = torch.cat(batch_acq_values_list)
 
     if return_best_only:
-        return get_best_candidates(
-            batch_candidates=batch_candidates, batch_values=batch_acq_values
-        )
+        best = torch.max(batch_acq_values.view(-1), dim=0)[1].item()
+        return batch_candidates[best], batch_acq_values[best]
     else:
-        return batch_candidates
+        return batch_candidates, batch_acq_values
 
 
 def gen_batch_initial_conditions(
