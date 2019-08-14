@@ -330,7 +330,7 @@ $$\text{image} \longrightarrow \text{image classifier} \longrightarrow \text{sco
 <div class="prompt input_prompt">In [9]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.optim</span> <span class="k">import</span> <span class="n">joint_optimize</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.optim</span> <span class="k">import</span> <span class="n">optimize_acqf</span>
 
 
 <span class="n">BATCH_SIZE</span> <span class="o">=</span> <span class="mi">3</span>
@@ -340,7 +340,7 @@ $$\text{image} \longrightarrow \text{image classifier} \longrightarrow \text{sco
     <span class="sd">"""Optimizes the acquisition function, and returns a new candidate and a noisy observation"""</span>
     
     <span class="c1"># optimize</span>
-    <span class="n">candidates</span> <span class="o">=</span> <span class="n">joint_optimize</span><span class="p">(</span>
+    <span class="n">candidates</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
         <span class="n">acq_function</span><span class="o">=</span><span class="n">acq_func</span><span class="p">,</span>
         <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
         <span class="n">q</span><span class="o">=</span><span class="n">BATCH_SIZE</span><span class="p">,</span>

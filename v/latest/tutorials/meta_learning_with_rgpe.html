@@ -580,7 +580,7 @@ $$w_i = \frac{1}{S}\sum_{s=1}^S\mathbb 1\big(i = \text{argmin}_{i'}l_{i', s}\big
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.acquisition.monte_carlo</span> <span class="k">import</span> <span class="n">qExpectedImprovement</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.samplers</span> <span class="k">import</span> <span class="n">SobolQMCNormalSampler</span>
-<span class="kn">from</span> <span class="nn">botorch.optim.optimize</span> <span class="k">import</span> <span class="n">joint_optimize</span>
+<span class="kn">from</span> <span class="nn">botorch.optim.optimize</span> <span class="k">import</span> <span class="n">optimize_acqf</span>
 
 <span class="c1"># suppress GPyTorch warnings about adding jitter</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
@@ -631,7 +631,7 @@ $$w_i = \frac{1}{S}\sum_{s=1}^S\mathbb 1\big(i = \text{argmin}_{i'}l_{i', s}\big
         <span class="n">qEI</span> <span class="o">=</span> <span class="n">qExpectedImprovement</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">best_f</span><span class="o">=</span><span class="n">best_value</span><span class="p">)</span>
         
         <span class="c1"># optimize</span>
-        <span class="n">candidate</span> <span class="o">=</span> <span class="n">joint_optimize</span><span class="p">(</span>
+        <span class="n">candidate</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
             <span class="n">acq_function</span><span class="o">=</span><span class="n">qEI</span><span class="p">,</span>
             <span class="n">bounds</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[</span><span class="mf">0.</span><span class="p">],[</span><span class="mf">1.</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">),</span>
             <span class="n">q</span><span class="o">=</span><span class="n">Q_BATCH_SIZE</span><span class="p">,</span>
@@ -662,7 +662,7 @@ $$w_i = \frac{1}{S}\sum_{s=1}^S\mathbb 1\big(i = \text{argmin}_{i'}l_{i', s}\big
             <span class="n">best_f</span><span class="o">=</span><span class="n">vanilla_ei_best_value</span><span class="p">,</span> 
             <span class="n">sampler</span><span class="o">=</span><span class="n">vanilla_ei_sampler</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">vanilla_ei_candidate</span> <span class="o">=</span> <span class="n">joint_optimize</span><span class="p">(</span>
+        <span class="n">vanilla_ei_candidate</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
             <span class="n">acq_function</span><span class="o">=</span><span class="n">vanilla_qEI</span><span class="p">,</span>
             <span class="n">bounds</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[</span><span class="mf">0.</span><span class="p">],[</span><span class="mf">1.</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">),</span>
             <span class="n">q</span><span class="o">=</span><span class="n">Q_BATCH_SIZE</span><span class="p">,</span>

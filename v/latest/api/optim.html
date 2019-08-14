@@ -339,55 +339,17 @@ functions).</p></li>
 <dl class="function">
 <dt id="botorch.optim.optimize.joint_optimize">
 <code class="sig-prename descclassname">botorch.optim.optimize.</code><code class="sig-name descname">joint_optimize</code><span class="sig-paren">(</span><em class="sig-param">acq_function</em>, <em class="sig-param">bounds</em>, <em class="sig-param">q</em>, <em class="sig-param">num_restarts</em>, <em class="sig-param">raw_samples</em>, <em class="sig-param">options=None</em>, <em class="sig-param">inequality_constraints=None</em>, <em class="sig-param">equality_constraints=None</em>, <em class="sig-param">fixed_features=None</em>, <em class="sig-param">post_processing_func=None</em>, <em class="sig-param">batch_initial_conditions=None</em>, <em class="sig-param">return_best_only=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/optimize.html#joint_optimize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.optimize.joint_optimize" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generate a set of candidates via joint multi-start optimization.</p>
+<dd><p>DEPRECATED - Use optimize_acqf instead.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>acq_function</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code></a>) – The acquisition function.</p></li>
-<li><p><strong>bounds</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of <cite>X</cite>.</p></li>
-<li><p><strong>q</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of candidates.</p></li>
-<li><p><strong>num_restarts</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of starting points for multistart acquisition
-function optimization.</p></li>
-<li><p><strong>raw_samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of samples for initialization.</p></li>
-<li><p><strong>options</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]]) – Options for candidate generation.</p></li>
-<li><p><strong>constraints</strong> (<em>equality</em>) – A list of tuples (indices, coefficients, rhs),
-with each tuple encoding an inequality constraint of the form
-<cite>sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs</cite></p></li>
-<li><p><strong>constraints</strong> – A list of tuples (indices, coefficients, rhs),
-with each tuple encoding an inequality constraint of the form
-<cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite></p></li>
-<li><p><strong>fixed_features</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]]) – A map {feature_index: value} for features that should be
-fixed to a particular value during generation.</p></li>
-<li><p><strong>post_processing_func</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]]) – A function that post processes an optimization result
-appropriately (i.e., according to <cite>round-trip</cite> transformations).
-Note: post_processing_func is not used by _joint_optimize and is only
-included to match _sequential_optimize.</p></li>
-<li><p><strong>batch_initial_conditions</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A tensor to specify the initial conditions. Set
-this if you do not want to use default initialization strategy.</p></li>
-<li><p><strong>return_best_only</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Set this to False if you want to output the solutions
-corresponding to all initializations.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>q x d</cite> tensor of generated candidates.</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</p>
 </dd>
 </dl>
-<p class="rubric">Example</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># generate `q=2` candidates jointly using 20 random restarts and</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1"># 500 raw samples</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">qEI</span> <span class="o">=</span> <span class="n">qExpectedImprovement</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">best_f</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">bounds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[</span><span class="mf">0.</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.</span><span class="p">]])</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">candidates</span> <span class="o">=</span> <span class="n">joint_optimize</span><span class="p">(</span><span class="n">qEI</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">500</span><span class="p">)</span>
-</pre></div>
-</div>
 </dd></dl>
 <dl class="function">
-<dt id="botorch.optim.optimize.sequential_optimize">
-<code class="sig-prename descclassname">botorch.optim.optimize.</code><code class="sig-name descname">sequential_optimize</code><span class="sig-paren">(</span><em class="sig-param">acq_function</em>, <em class="sig-param">bounds</em>, <em class="sig-param">q</em>, <em class="sig-param">num_restarts</em>, <em class="sig-param">raw_samples</em>, <em class="sig-param">options=None</em>, <em class="sig-param">inequality_constraints=None</em>, <em class="sig-param">equality_constraints=None</em>, <em class="sig-param">fixed_features=None</em>, <em class="sig-param">post_processing_func=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/optimize.html#sequential_optimize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.optimize.sequential_optimize" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generate a set of candidates via sequential multi-start optimization.</p>
+<dt id="botorch.optim.optimize.optimize_acqf">
+<code class="sig-prename descclassname">botorch.optim.optimize.</code><code class="sig-name descname">optimize_acqf</code><span class="sig-paren">(</span><em class="sig-param">acq_function</em>, <em class="sig-param">bounds</em>, <em class="sig-param">q</em>, <em class="sig-param">num_restarts</em>, <em class="sig-param">raw_samples</em>, <em class="sig-param">options=None</em>, <em class="sig-param">inequality_constraints=None</em>, <em class="sig-param">equality_constraints=None</em>, <em class="sig-param">fixed_features=None</em>, <em class="sig-param">post_processing_func=None</em>, <em class="sig-param">batch_initial_conditions=None</em>, <em class="sig-param">return_best_only=True</em>, <em class="sig-param">sequential=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/optimize.html#optimize_acqf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.optimize.optimize_acqf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a set of candidates via multi-start optimization.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -409,21 +371,51 @@ should be fixed to a particular value during generation.</p></li>
 <li><p><strong>post_processing_func</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]]) – A function that post-processes an optimization
 result appropriately (i.e., according to <cite>round-trip</cite>
 transformations).</p></li>
+<li><p><strong>batch_initial_conditions</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A tensor to specify the initial conditions. Set
+this if you do not want to use default initialization strategy.</p></li>
+<li><p><strong>return_best_only</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If False, outputs the solutions corresponding to all
+random restart initializations of the optimization.</p></li>
+<li><p><strong>sequential</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If False, uses joint optimization, otherwise uses sequential
+optimization.</p></li>
+<li><p><strong>Returns</strong> – <p>A two-element tuple containing</p>
+<ul>
+<li><p>a <cite>(num_restarts) x q x d</cite>-dim tensor of generated candidates.</p></li>
+<li><p>a tensor of associated acquisiton values. If <cite>sequential=False</cite>,
+this is a <cite>(num_restarts)</cite>-dim tensor of joint acquisition values
+(with explicit restart dimension if <cite>return_best_only=False</cite>). If
+<cite>sequential=True</cite>, this is a <cite>q</cite>-dim tensor of expected acquisition
+values conditional on having observed canidates <cite>0,1,…,i-1</cite>.</p></li>
+</ul>
+</p></li>
+<li><p><strong>Example</strong> – <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># generate `q=2` candiates jointly using 20 random restarts</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># and 512 raw samples</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">candidates</span><span class="p">,</span> <span class="n">acq_value</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span><span class="n">qEI</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">512</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; generate `q=3` candidates sequentially using 15 random restarts
+&gt;&gt;&gt; # and 256 raw samples
+&gt;&gt;&gt; qEI = qExpectedImprovement(model, best_f=0.2)
+&gt;&gt;&gt; bounds = torch.tensor([[0.], [1.]])
+&gt;&gt;&gt; candidates, acq_value_list = optimize_acqf(
+&gt;&gt;&gt;     qEI, bounds, 3, 15, 256, sequential=True
+&gt;&gt;&gt; )
+</pre></div>
+</div>
+</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>The set of generated candidates.</p>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</p>
 </dd>
 </dl>
-<dl class="simple">
-<dt>Example</dt><dd><p># generate <cite>q=2</cite> candidates sequentially using 20 random restarts
-# and 500 raw samples
-&gt;&gt;&gt; qEI = qExpectedImprovement(model, best_f=0.2)
-&gt;&gt;&gt; bounds = torch.tensor([[0.], [1.]])
-&gt;&gt;&gt; candidates = sequential_optimize(qEI, bounds, 2, 20, 500)</p>
+</dd></dl>
+<dl class="function">
+<dt id="botorch.optim.optimize.sequential_optimize">
+<code class="sig-prename descclassname">botorch.optim.optimize.</code><code class="sig-name descname">sequential_optimize</code><span class="sig-paren">(</span><em class="sig-param">acq_function</em>, <em class="sig-param">bounds</em>, <em class="sig-param">q</em>, <em class="sig-param">num_restarts</em>, <em class="sig-param">raw_samples</em>, <em class="sig-param">options=None</em>, <em class="sig-param">inequality_constraints=None</em>, <em class="sig-param">equality_constraints=None</em>, <em class="sig-param">fixed_features=None</em>, <em class="sig-param">post_processing_func=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/optimize.html#sequential_optimize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.optimize.sequential_optimize" title="Permalink to this definition">¶</a></dt>
+<dd><p>DEPRECATED - Use optimize_acqf with sequential=True instead.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</p>
 </dd>
 </dl>
 </dd></dl>

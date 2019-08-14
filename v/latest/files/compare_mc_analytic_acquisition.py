@@ -47,9 +47,9 @@ EI = ExpectedImprovement(model=model, best_f=best_value)
 # In[4]:
 
 
-from botorch.optim import joint_optimize
+from botorch.optim import optimize_acqf
 
-new_point_analytic = joint_optimize(
+new_point_analytic = optimize_acqf(
     acq_function=EI,
     bounds=torch.tensor([[0.0] * 6, [1.0] * 6]),
     q=1,
@@ -79,7 +79,7 @@ MC_EI = qExpectedImprovement(
     model, best_f=best_value, sampler=sampler
 )
 torch.manual_seed(seed=0) # to keep the restart conditions the same
-new_point_mc = joint_optimize(
+new_point_mc = optimize_acqf(
     acq_function=MC_EI,
     bounds=torch.tensor([[0.0] * 6, [1.0] * 6]),
     q=1,

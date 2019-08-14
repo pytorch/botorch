@@ -39,10 +39,10 @@ fit_gpytorch_model(mll)
 
 UCB = UpperConfidenceBound(gp, beta=<span class="hljs-number">0.1</span>)
 </code></pre>
-</span></div></li><li><h4>Optimize the acquisition function:</h4><div><span><pre><code class="hljs css language-python"><span class="hljs-keyword">from</span> botorch.optim <span class="hljs-keyword">import</span> joint_optimize
+</span></div></li><li><h4>Optimize the acquisition function:</h4><div><span><pre><code class="hljs css language-python"><span class="hljs-keyword">from</span> botorch.optim <span class="hljs-keyword">import</span> optimize_acqf
 
 bounds = torch.stack([torch.zeros(<span class="hljs-number">2</span>), torch.ones(<span class="hljs-number">2</span>)])
-candidate = joint_optimize(
+candidate, acq_value = optimize_acqf(
     UCB, bounds=bounds, q=<span class="hljs-number">1</span>, num_restarts=<span class="hljs-number">5</span>, raw_samples=<span class="hljs-number">20</span>,
 )
 candidate  <span class="hljs-comment"># tensor([0.4887, 0.5063])</span>

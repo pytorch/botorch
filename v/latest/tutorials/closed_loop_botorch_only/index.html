@@ -205,7 +205,7 @@ $$f(x) = -\sum_{i=1}^4 \alpha_i \exp \left( -\sum_{j=1}^6 A_{ij} (x_j - P_{ij})^
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h4 id="Define-a-helper-function-that-performs-the-essential-BO-step">Define a helper function that performs the essential BO step<a class="anchor-link" href="#Define-a-helper-function-that-performs-the-essential-BO-step">¶</a></h4><p>The helper function below takes an acquisition function as an argument, optimizes it, and returns the batch $\{x_1, x_2, \ldots x_q\}$ along with the observed function values. For this example, we'll use a small batch of $q=3$. The function <code>joint_optimize</code> optimizes the $q$ points jointly. A simple initialization heuristic is used to select the 10 restart initial locations from a set of 50 random points.</p>
+<h4 id="Define-a-helper-function-that-performs-the-essential-BO-step">Define a helper function that performs the essential BO step<a class="anchor-link" href="#Define-a-helper-function-that-performs-the-essential-BO-step">¶</a></h4><p>The helper function below takes an acquisition function as an argument, optimizes it, and returns the batch $\{x_1, x_2, \ldots x_q\}$ along with the observed function values. For this example, we'll use a small batch of $q=3$. The function <code>optimize_acqf</code> optimizes the $q$ points jointly. A simple initialization heuristic is used to select the 10 restart initial locations from a set of 50 random points.</p>
 </div>
 </div>
 </div>
@@ -214,7 +214,7 @@ $$f(x) = -\sum_{i=1}^4 \alpha_i \exp \left( -\sum_{j=1}^6 A_{ij} (x_j - P_{ij})^
 <div class="prompt input_prompt">In [5]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.optim</span> <span class="k">import</span> <span class="n">joint_optimize</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.optim</span> <span class="k">import</span> <span class="n">optimize_acqf</span>
 
 <span class="n">BATCH_SIZE</span> <span class="o">=</span> <span class="mi">3</span>
 <span class="n">bounds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[</span><span class="mf">0.0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">6</span><span class="p">,</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">6</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
@@ -223,7 +223,7 @@ $$f(x) = -\sum_{i=1}^4 \alpha_i \exp \left( -\sum_{j=1}^6 A_{ij} (x_j - P_{ij})^
 <span class="k">def</span> <span class="nf">optimize_acqf_and_get_observation</span><span class="p">(</span><span class="n">acq_func</span><span class="p">):</span>
     <span class="sd">"""Optimizes the acquisition function, and returns a new candidate and a noisy observation."""</span>
     <span class="c1"># optimize</span>
-    <span class="n">candidates</span> <span class="o">=</span> <span class="n">joint_optimize</span><span class="p">(</span>
+    <span class="n">candidates</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
         <span class="n">acq_function</span><span class="o">=</span><span class="n">acq_func</span><span class="p">,</span>
         <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
         <span class="n">q</span><span class="o">=</span><span class="n">BATCH_SIZE</span><span class="p">,</span>

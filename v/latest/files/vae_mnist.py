@@ -176,7 +176,7 @@ def initialize_model(n=5):
 # In[9]:
 
 
-from botorch.optim import joint_optimize
+from botorch.optim import optimize_acqf
 
 
 BATCH_SIZE = 3
@@ -186,7 +186,7 @@ def optimize_acqf_and_get_observation(acq_func):
     """Optimizes the acquisition function, and returns a new candidate and a noisy observation"""
     
     # optimize
-    candidates = joint_optimize(
+    candidates = optimize_acqf(
         acq_function=acq_func,
         bounds=bounds,
         q=BATCH_SIZE,

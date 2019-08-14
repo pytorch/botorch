@@ -109,12 +109,12 @@ constrained_obj = ConstrainedMCObjective(
 
 
 # #### Define a helper function that performs the essential BO step
-# The helper function below takes an acquisition function as an argument, optimizes it, and returns the batch $\{x_1, x_2, \ldots x_q\}$ along with the observed function values. For this example, we'll use a small batch of $q=3$. The function `joint_optimize` optimizes the $q$ points jointly. A simple initialization heuristic is used to select the 10 restart initial locations from a set of 50 random points. 
+# The helper function below takes an acquisition function as an argument, optimizes it, and returns the batch $\{x_1, x_2, \ldots x_q\}$ along with the observed function values. For this example, we'll use a small batch of $q=3$. The function `optimize_acqf` optimizes the $q$ points jointly. A simple initialization heuristic is used to select the 10 restart initial locations from a set of 50 random points. 
 
 # In[5]:
 
 
-from botorch.optim import joint_optimize
+from botorch.optim import optimize_acqf
 
 BATCH_SIZE = 3
 bounds = torch.tensor([[0.0] * 6, [1.0] * 6], device=device, dtype=dtype)
@@ -123,7 +123,7 @@ bounds = torch.tensor([[0.0] * 6, [1.0] * 6], device=device, dtype=dtype)
 def optimize_acqf_and_get_observation(acq_func):
     """Optimizes the acquisition function, and returns a new candidate and a noisy observation."""
     # optimize
-    candidates = joint_optimize(
+    candidates = optimize_acqf(
         acq_function=acq_func,
         bounds=bounds,
         q=BATCH_SIZE,

@@ -40,7 +40,7 @@ fit_gpytorch_model(mll);
 
 # ### Define acquisition function
 # 
-# We'll use `qExpectedImprovement` with a custom sampler that uses a small number of MC samples and re-samples upon each evaluation of the function. This results in a stochastic acquisition function that one should not attempt to optimize with the quasi-second order methods that are used by default in BoTorch's `joint_optimize` function.
+# We'll use `qExpectedImprovement` with a custom sampler that uses a small number of MC samples and re-samples upon each evaluation of the function. This results in a stochastic acquisition function that one should not attempt to optimize with the quasi-second order methods that are used by default in BoTorch's `optimize_acqf` function.
 
 # In[3]:
 

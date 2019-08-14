@@ -112,7 +112,7 @@ evaluation (t-batches) of the acquisition function to solve a single
 $b \times q \times d$-dimensional optimization problem, where the objective is
 defined as the sum of the $b$ individual q-batch acquisition values.
 The wrapper function
-<a href="../api/optim.html#botorch.optim.optimize.joint_optimize"><code>joint_optimize()</code></a>
+<a href="../api/optim.html#botorch.optim.optimize.optimize_acqf"><code>optimize_acqf()</code></a>
 uses
 <a href="../api/gen.html#botorch.gen.get_best_candidates"><code>get_best_candidates()</code></a>
 to process the output of <code>gen_candidates_scipy()</code> and return the best point
@@ -127,10 +127,9 @@ an optimization problem with a $q \times d$-dimensional decision), but when $q$
 is large, one might also consider <em>sequentially</em> selecting the $q$ points using
 successive conditioning on so-called &quot;fantasies&quot;, and solving $q$ optimization
 problems, each with a $d$-dimensional decision. The functions
-<a href="../api/optim.html#botorch.optim.optimize.joint_optimize"><code>joint_optimize()</code></a>
-and
-<a href="../api/optim.html#botorch.optim.optimize.sequential_optimize"><code>sequential_optimize()</code></a>
-provide for these two types of functionality, respectively.</p>
+<a href="../api/optim.html#botorch.optim.optimize.optimize_acqf"><code>optimize_acqf()</code></a>
+by default performs joint optimization; when specifying <code>sequential=True</code> it
+will perform sequential optimization.</p>
 <p>Our empirical observations of the <em>closed-loop Bayesian Optimization performance</em>
 for $q = 5$ show that joint optimization and sequential optimization have similar
 optimization performance on some standard benchmarks, but sequential optimization

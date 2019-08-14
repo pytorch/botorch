@@ -363,7 +363,7 @@ class RGPE(GP, GPyTorchModel):
 
 from botorch.acquisition.monte_carlo import qExpectedImprovement
 from botorch.sampling.samplers import SobolQMCNormalSampler
-from botorch.optim.optimize import joint_optimize
+from botorch.optim.optimize import optimize_acqf
 
 # suppress GPyTorch warnings about adding jitter
 import warnings
@@ -414,7 +414,7 @@ for trial in range(N_TRIALS):
         qEI = qExpectedImprovement(model=model, best_f=best_value)
         
         # optimize
-        candidate = joint_optimize(
+        candidate = optimize_acqf(
             acq_function=qEI,
             bounds=torch.tensor([[0.],[1.]], dtype=dtype, device=device),
             q=Q_BATCH_SIZE,
@@ -445,7 +445,7 @@ for trial in range(N_TRIALS):
             best_f=vanilla_ei_best_value, 
             sampler=vanilla_ei_sampler,
         )
-        vanilla_ei_candidate = joint_optimize(
+        vanilla_ei_candidate = optimize_acqf(
             acq_function=vanilla_qEI,
             bounds=torch.tensor([[0.],[1.]], dtype=dtype, device=device),
             q=Q_BATCH_SIZE,

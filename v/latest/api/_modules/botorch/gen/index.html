@@ -274,7 +274,7 @@
 <span class="sd">            )</span>
 <span class="sd">        &gt;&gt;&gt; best_candidates = get_best_candidates(batch_candidates, batch_acq_values)</span>
 <span class="sd">    """</span>
-    <span class="n">best</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">batch_values</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+    <span class="n">best</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">batch_values</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">batch_candidates</span><span class="p">[</span><span class="n">best</span><span class="p">]</span></div>
 </pre></div>
 </div>
