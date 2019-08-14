@@ -59,7 +59,7 @@ class TestEndToEnd(unittest.TestCase):
         for double in (True, False):
             self._setUp(double=double, cuda=cuda)
             qEI = qExpectedImprovement(self.model_st, best_f=0.0)
-            candidates = joint_optimize(
+            candidates, _ = joint_optimize(
                 acq_function=qEI,
                 bounds=self.bounds,
                 q=3,
@@ -70,7 +70,7 @@ class TestEndToEnd(unittest.TestCase):
             self.assertTrue(torch.all(-EPS <= candidates))
             self.assertTrue(torch.all(candidates <= 1 + EPS))
             qEI = qExpectedImprovement(self.model_fn, best_f=0.0)
-            candidates = joint_optimize(
+            candidates, _ = joint_optimize(
                 acq_function=qEI,
                 bounds=self.bounds,
                 q=3,
@@ -80,7 +80,7 @@ class TestEndToEnd(unittest.TestCase):
             )
             self.assertTrue(torch.all(-EPS <= candidates))
             self.assertTrue(torch.all(candidates <= 1 + EPS))
-            candidates_batch_limit = joint_optimize(
+            candidates_batch_limit, _ = joint_optimize(
                 acq_function=qEI,
                 bounds=self.bounds,
                 q=3,
@@ -99,7 +99,7 @@ class TestEndToEnd(unittest.TestCase):
         for double in (True, False):
             self._setUp(double=double, cuda=cuda)
             EI = ExpectedImprovement(self.model_st, best_f=0.0)
-            candidates = joint_optimize(
+            candidates, _ = joint_optimize(
                 acq_function=EI,
                 bounds=self.bounds,
                 q=1,
@@ -109,7 +109,7 @@ class TestEndToEnd(unittest.TestCase):
             )
             self.assertTrue(-EPS <= candidates <= 1 + EPS)
             EI = ExpectedImprovement(self.model_fn, best_f=0.0)
-            candidates = joint_optimize(
+            candidates, _ = joint_optimize(
                 acq_function=EI,
                 bounds=self.bounds,
                 q=1,
