@@ -26,7 +26,11 @@ from torch import Tensor
 from ..exceptions.errors import UnsupportedError
 from ..models.model import Model
 from ..sampling.samplers import MCSampler, SobolQMCNormalSampler
-from ..utils.transforms import match_batch_shape, t_batch_mode_transform
+from ..utils.transforms import (
+    concatenate_pending_points,
+    match_batch_shape,
+    t_batch_mode_transform,
+)
 from .acquisition import AcquisitionFunction
 from .objective import IdentityMCObjective, MCAcquisitionObjective
 
@@ -126,6 +130,7 @@ class qExpectedImprovement(MCAcquisitionFunction):
             best_f = torch.tensor(float(best_f))
         self.register_buffer("best_f", best_f)
 
+    @concatenate_pending_points
     @t_batch_mode_transform()
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate qExpectedImprovement on the candidate set `X`.
@@ -138,8 +143,6 @@ class qExpectedImprovement(MCAcquisitionFunction):
             A `(b)`-dim Tensor of Expected Improvement values at the given
             design points `X`.
         """
-        if self.X_pending is not None:
-            X = torch.cat([X, match_batch_shape(self.X_pending, X)], dim=-2)
         posterior = self.model.posterior(X)
         samples = self.sampler(posterior)
         obj = self.objective(samples)
@@ -195,6 +198,7 @@ class qNoisyExpectedImprovement(MCAcquisitionFunction):
         )
         self.register_buffer("X_baseline", X_baseline)
 
+    @concatenate_pending_points
     @t_batch_mode_transform()
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate qNoisyExpectedImprovement on the candidate set `X`.
@@ -207,8 +211,6 @@ class qNoisyExpectedImprovement(MCAcquisitionFunction):
             A `(b)`-dim Tensor of Noisy Expected Improvement values at the given
             design points `X`.
         """
-        if self.X_pending is not None:
-            X = torch.cat([X, match_batch_shape(self.X_pending, X)], dim=-2)
         q = X.shape[-2]
         X_full = torch.cat([X, match_batch_shape(self.X_baseline, X)], dim=-2)
         # TODO (T41248036): Implement more efficient way to compute posterior
@@ -277,6 +279,7 @@ class qProbabilityOfImprovement(MCAcquisitionFunction):
             tau = torch.tensor(float(tau))
         self.register_buffer("tau", tau)
 
+    @concatenate_pending_points
     @t_batch_mode_transform()
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate qProbabilityOfImprovement on the candidate set `X`.
@@ -289,8 +292,6 @@ class qProbabilityOfImprovement(MCAcquisitionFunction):
             A `(b)`-dim Tensor of Probability of Improvement values at the given
             design points `X`.
         """
-        if self.X_pending is not None:
-            X = torch.cat([X, match_batch_shape(self.X_pending, X)], dim=-2)
         posterior = self.model.posterior(X)
         samples = self.sampler(posterior)
         obj = self.objective(samples)
@@ -314,6 +315,7 @@ class qSimpleRegret(MCAcquisitionFunction):
         >>> qsr = qSR(test_X)
     """
 
+    @concatenate_pending_points
     @t_batch_mode_transform()
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate qSimpleRegret on the candidate set `X`.
@@ -326,8 +328,6 @@ class qSimpleRegret(MCAcquisitionFunction):
             A `(b)`-dim Tensor of Simple Regret values at the given design
             points `X`.
         """
-        if self.X_pending is not None:
-            X = torch.cat([X, match_batch_shape(self.X_pending, X)], dim=-2)
         posterior = self.model.posterior(X)
         samples = self.sampler(posterior)
         obj = self.objective(samples)
@@ -376,8 +376,9 @@ class qUpperConfidenceBound(MCAcquisitionFunction):
         super().__init__(
             model=model, sampler=sampler, objective=objective, X_pending=X_pending
         )
-        self.register_buffer("beta", torch.tensor(float(beta)))
+        self.beta_prime = math.sqrt(beta * math.pi / 2)
 
+    @concatenate_pending_points
     @t_batch_mode_transform()
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate qUpperConfidenceBound on the candidate set `X`.
@@ -390,11 +391,9 @@ class qUpperConfidenceBound(MCAcquisitionFunction):
             A `(b)`-dim Tensor of Upper Confidence Bound values at the given
             design points `X`.
         """
-        if self.X_pending is not None:
-            X = torch.cat([X, match_batch_shape(self.X_pending, X)], dim=-2)
         posterior = self.model.posterior(X)
         samples = self.sampler(posterior)
         obj = self.objective(samples)
         mean = obj.mean(dim=0)
-        ucb_samples = mean + math.sqrt(self.beta * math.pi / 2) * (obj - mean).abs()
+        ucb_samples = mean + self.beta_prime * (obj - mean).abs()
         return ucb_samples.max(dim=-1)[0].mean(dim=0)

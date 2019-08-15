@@ -140,6 +140,33 @@ def t_batch_mode_transform(
     return decorator
 
 
+def concatenate_pending_points(
+    method: Callable[[Any, Tensor], Any]
+) -> Callable[[Any, Tensor], Any]:
+    r"""Decorator concatenating X_pending into an acquisition function's argument.
+
+    This decorator works on the `forward` method of acquisition functions taking
+    a tensor `X` as the argument. If the acquisition function has an `X_pending`
+    attribute (that is not `None`), this is concatenated into the input `X`,
+    appropriately expanding the pending points to match the batch shape of `X`.
+
+    Example:
+        >>> class ExampleAcquisitionFunction:
+        >>>     @concatenate_pending_points
+        >>>     @t_batch_mode_transform()
+        >>>     def forward(self, X):
+        >>>         ...
+    """
+
+    @wraps(method)
+    def decorated(cls: Any, X: Tensor) -> Any:
+        if cls.X_pending is not None:
+            X = torch.cat([X, match_batch_shape(cls.X_pending, X)], dim=-2)
+        return method(cls, X)
+
+    return decorated
+
+
 def match_batch_shape(X: Tensor, Y: Tensor) -> Tensor:
     r"""Matches the batch dimension of a tensor to that of another tensor.
 
