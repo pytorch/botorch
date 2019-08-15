@@ -6,6 +6,7 @@ import unittest
 
 import torch
 from botorch.utils.transforms import (
+    concatenate_pending_points,
     match_batch_shape,
     normalize,
     squeeze_last_dim,
@@ -74,6 +75,10 @@ class BMIMTestClass:
     def q1_method(self, X: Tensor) -> None:
         return X
 
+    @concatenate_pending_points
+    def dummy_method(self, X: Tensor) -> Tensor:
+        return X
+
 
 class TestBatchModeTransform(unittest.TestCase):
     def test_t_batch_mode_transform(self):
@@ -113,6 +118,24 @@ class TestBatchModeTransform(unittest.TestCase):
         X = torch.zeros(1)
         with self.assertRaises(ValueError):
             c.q_method(X)
+
+
+class TestConcatenatePendingPoints(unittest.TestCase):
+    def test_concatenate_pending_points(self):
+        c = BMIMTestClass()
+        # test if no pending points
+        c.X_pending = None
+        X = torch.rand(1, 2)
+        self.assertTrue(torch.equal(c.dummy_method(X), X))
+        # basic test
+        X_pending = torch.rand(2, 2)
+        c.X_pending = X_pending
+        X_expected = torch.cat([X, X_pending], dim=-2)
+        self.assertTrue(torch.equal(c.dummy_method(X), X_expected))
+        # batch test
+        X = torch.rand(2, 1, 2)
+        X_expected = torch.cat([X, X_pending.expand(2, 2, 2)], dim=-2)
+        self.assertTrue(torch.equal(c.dummy_method(X), X_expected))
 
 
 class TestMatchBatchShape(unittest.TestCase):
