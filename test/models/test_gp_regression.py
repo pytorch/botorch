@@ -351,10 +351,13 @@ class TestHeteroskedasticSingleTaskGP(TestSingleTaskGP):
 
 
 def _get_pvar_expected(posterior, model, X, num_outputs):
+    lh_kwargs = {}
+    if isinstance(model.likelihood, FixedNoiseGaussianLikelihood):
+        lh_kwargs["noise"] = model.likelihood.noise.mean().expand(X.shape[:-1])
     if num_outputs == 1:
-        return model.likelihood(posterior.mvn, X).variance.unsqueeze(-1)
+        return model.likelihood(posterior.mvn, X, **lh_kwargs).variance.unsqueeze(-1)
     X_, odi = add_output_dim(X=X, original_batch_shape=model._input_batch_shape)
-    pvar_exp = model.likelihood(model(X_), X_).variance
+    pvar_exp = model.likelihood(model(X_), X_, **lh_kwargs).variance
     return torch.stack(
         [pvar_exp.select(dim=odi, index=i) for i in range(num_outputs)], dim=-1
     )

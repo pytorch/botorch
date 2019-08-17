@@ -4,10 +4,12 @@
 
 import math
 import unittest
+import warnings
 
 import torch
 from botorch import fit_gpytorch_model
-from botorch.exceptions import UnsupportedError
+from botorch.exceptions.errors import UnsupportedError
+from botorch.exceptions.warnings import OptimizationWarning
 from botorch.models.fidelity.gp_regression_fidelity import (
     SingleTaskGPLTKernel,
     SingleTaskMultiFidelityGP,
@@ -118,9 +120,13 @@ class TestSingleTaskGPFidelity(unittest.TestCase):
                         mll = ExactMarginalLogLikelihood(model.likelihood, model).to(
                             **tkwargs
                         )
-                        fit_gpytorch_model(
-                            mll, sequential=False, options={"maxiter": 1}
-                        )
+                        with warnings.catch_warnings():
+                            warnings.filterwarnings(
+                                "ignore", category=OptimizationWarning
+                            )
+                            fit_gpytorch_model(
+                                mll, sequential=False, options={"maxiter": 1}
+                            )
 
                         # test init
                         self.assertIsInstance(model.mean_module, ConstantMean)

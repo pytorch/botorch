@@ -17,6 +17,7 @@ import torch
 from gpytorch import settings as gpt_settings
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.lazy import lazify
+from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
 from torch import Tensor
 
 from .. import settings
@@ -181,7 +182,12 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
                 )
             mvn = self(X)
             if observation_noise:
-                mvn = self.likelihood(mvn, X)
+                if isinstance(self.likelihood, FixedNoiseGaussianLikelihood):
+                    # Use the mean of the previous noise values (TODO: be smarter here).
+                    noise = self.likelihood.noise.mean().expand(X.shape[:-1])
+                    mvn = self.likelihood(mvn, X, noise=noise)
+                else:
+                    mvn = self.likelihood(mvn, X)
             if self._num_outputs > 1:
                 mean_x = mvn.mean
                 covar_x = mvn.covariance_matrix
@@ -295,9 +301,15 @@ class ModelListGPyTorchModel(GPyTorchModel, ABC):
             if output_indices is not None:
                 mvns = [self.forward_i(i, X) for i in output_indices]
                 if observation_noise:
+                    lh_kwargs = [
+                        {"noise": lh.noise.mean().expand(X.shape[:-1])}
+                        if isinstance(lh, FixedNoiseGaussianLikelihood)
+                        else {}
+                        for lh in self.likelihood.likelihoods
+                    ]
                     mvns = [
-                        self.likelihood_i(i, mvn, X)
-                        for i, mvn in zip(output_indices, mvns)
+                        self.likelihood_i(i, mvn, X, **lkws)
+                        for i, mvn, lkws in zip(output_indices, mvns, lh_kwargs)
                     ]
             else:
                 mvns = self(*[X for _ in range(self.num_outputs)])
