@@ -8,7 +8,7 @@ import warnings
 
 import torch
 from botorch import fit_gpytorch_model
-from botorch.exceptions.warnings import OptimizationWarning
+from botorch.exceptions.warnings import BotorchWarning, OptimizationWarning
 from botorch.models import FixedNoiseGP, HeteroskedasticSingleTaskGP, SingleTaskGP
 from botorch.optim.fit import (
     OptimizationIteration,
@@ -151,7 +151,11 @@ class TestFitGPyTorchModel(unittest.TestCase):
             mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
             mll.to(device=device, dtype=dtype)
             # this will do multiple retries (and emit warnings, which is desired)
-            fit_gpytorch_model(mll, options=options, max_retries=2)
+            with warnings.catch_warnings(record=True) as ws:
+                fit_gpytorch_model(mll, options=options, max_retries=2)
+                self.assertTrue(
+                    any(issubclass(w.category, OptimizationWarning) for w in ws)
+                )
 
     def test_fit_gpytorch_model_singular_cuda(self):
         if torch.cuda.is_available():
@@ -168,8 +172,7 @@ class TestFitGPyTorchModel(unittest.TestCase):
         options = {"disp": False, "maxiter": 1}
         for double in (False, True):
             for kind in ("SingleTaskGP", "FixedNoiseGP", "HeteroskedasticSingleTaskGP"):
-                with warnings.catch_warnings():
-                    warnings.filterwarnings("ignore", category=OptimizationWarning)
+                with warnings.catch_warnings(record=True) as ws:
                     mll = self._getBatchedModel(kind=kind, double=double, cuda=cuda)
                     mll = fit_gpytorch_model(mll, options=options, max_retries=1)
                     mll = self._getBatchedModel(kind=kind, double=double, cuda=cuda)
@@ -180,6 +183,17 @@ class TestFitGPyTorchModel(unittest.TestCase):
                     mll = fit_gpytorch_model(
                         mll, options=options, sequential=False, max_retries=1
                     )
+                    if kind == "HeteroskedasticSingleTaskGP":
+                        self.assertTrue(
+                            any(issubclass(w.category, BotorchWarning) for w in ws)
+                        )
+                        self.assertTrue(
+                            any(
+                                "Failed to convert ModelList to batched model"
+                                in str(w.message)
+                                for w in ws
+                            )
+                        )
 
     def test_fit_gpytorch_model_sequential_cuda(self):
         if torch.cuda.is_available():
