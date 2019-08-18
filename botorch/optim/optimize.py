@@ -27,7 +27,7 @@ def optimize_acqf(
     q: int,
     num_restarts: int,
     raw_samples: int,
-    options: Optional[Dict[str, Union[bool, float, int]]] = None,
+    options: Optional[Dict[str, Union[bool, float, int, str]]] = None,
     inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     fixed_features: Optional[Dict[int, float]] = None,
