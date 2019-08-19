@@ -6,6 +6,7 @@ import unittest
 
 from botorch.exceptions.errors import (
     BotorchError,
+    BotorchTensorDimensionError,
     CandidateGenerationError,
     InputDataError,
     UnsupportedError,
@@ -18,10 +19,12 @@ class TestBotorchExceptions(unittest.TestCase):
         self.assertIsInstance(CandidateGenerationError(), BotorchError)
         self.assertIsInstance(InputDataError(), BotorchError)
         self.assertIsInstance(UnsupportedError(), BotorchError)
+        self.assertIsInstance(BotorchTensorDimensionError(), BotorchError)
 
     def test_raise_botorch_exceptions(self):
         for ErrorClass in (
             BotorchError,
+            BotorchTensorDimensionError,
             CandidateGenerationError,
             InputDataError,
             UnsupportedError,

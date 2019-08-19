@@ -7,6 +7,7 @@ import warnings
 
 from botorch.exceptions.warnings import (
     BadInitialCandidatesWarning,
+    BotorchTensorDimensionWarning,
     BotorchWarning,
     InputDataWarning,
     OptimizationWarning,
@@ -21,9 +22,11 @@ class TestBotorchWarnings(unittest.TestCase):
         self.assertIsInstance(InputDataWarning(), BotorchWarning)
         self.assertIsInstance(OptimizationWarning(), BotorchWarning)
         self.assertIsInstance(SamplingWarning(), BotorchWarning)
+        self.assertIsInstance(BotorchTensorDimensionWarning(), BotorchWarning)
 
     def test_botorch_warnings(self):
         for WarningClass in (
+            BotorchTensorDimensionWarning,
             BotorchWarning,
             BadInitialCandidatesWarning,
             InputDataWarning,

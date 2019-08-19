@@ -42,7 +42,7 @@ class ScalarizedObjective(AcquisitionObjective):
         r"""Affine objective.
 
         Args:
-            weights: A one-dimensional tensor with `o` elements representing the
+            weights: A one-dimensional tensor with `m` elements representing the
                 linear weights on the outputs.
             offset: An offset to be added to posterior mean.
         """
@@ -75,7 +75,7 @@ class MCAcquisitionObjective(AcquisitionObjective):
         r"""Evaluate the objective on the samples.
 
         Args:
-            samples: A `sample_shape x batch_shape x q x o`-dim Tensors of
+            samples: A `sample_shape x batch_shape x q x m`-dim Tensors of
                 samples from a model posterior.
 
         Returns:
@@ -124,7 +124,7 @@ class LinearMCObjective(MCAcquisitionObjective):
         r"""Linear Objective.
 
         Args:
-            weights: A one-dimensional tensor with `o` elements representing the
+            weights: A one-dimensional tensor with `m` elements representing the
                 linear weights on the outputs.
         """
         super().__init__()
@@ -136,7 +136,7 @@ class LinearMCObjective(MCAcquisitionObjective):
         r"""Evaluate the linear objective on the samples.
 
         Args:
-            samples: A `sample_shape x batch_shape x q x o`-dim tensors of
+            samples: A `sample_shape x batch_shape x q x m`-dim tensors of
                 samples from a model posterior.
 
         Returns:
@@ -164,7 +164,7 @@ class GenericMCObjective(MCAcquisitionObjective):
         r"""Objective generated from a generic callable.
 
         Args:
-            objective: A callable mapping a `sample_shape x batch-shape x q x o`-
+            objective: A callable mapping a `sample_shape x batch-shape x q x m`-
                 dim Tensor to a `sample_shape x batch-shape x q`-dim Tensor of
                 objective values.
         """
@@ -175,7 +175,7 @@ class GenericMCObjective(MCAcquisitionObjective):
         r"""Evaluate the feasibility-weigthed objective on the samples.
 
         Args:
-            samples: A `sample_shape x batch_shape x q x o`-dim Tensors of
+            samples: A `sample_shape x batch_shape x q x m`-dim Tensors of
                 samples from a model posterior.
 
         Returns:
@@ -218,11 +218,11 @@ class ConstrainedMCObjective(GenericMCObjective):
         r"""Feasibility-weighted objective.
 
         Args:
-            objective: A callable mapping a `sample_shape x batch-shape x q x o`-
+            objective: A callable mapping a `sample_shape x batch-shape x q x m`-
                 dim Tensor to a `sample_shape x batch-shape x q`-dim Tensor of
                 objective values.
             constraints: A list of callables, each mapping a Tensor of dimension
-                `sample_shape x batch-shape x q x o` to a Tensor of dimension
+                `sample_shape x batch-shape x q x m` to a Tensor of dimension
                 `sample_shape x batch-shape x q`, where negative values imply
                 feasibility.
             infeasible_cost: The cost of a design if all associated samples are
@@ -239,7 +239,7 @@ class ConstrainedMCObjective(GenericMCObjective):
         r"""Evaluate the feasibility-weighted objective on the samples.
 
         Args:
-            samples: A `sample_shape x batch_shape x q x o`-dim Tensors of
+            samples: A `sample_shape x batch_shape x q x m`-dim Tensors of
                 samples from a model posterior.
 
         Returns:

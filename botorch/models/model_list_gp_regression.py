@@ -47,12 +47,12 @@ class ModelListGP(IndependentModelList, ModelListGPyTorchModel):
         r"""Condition the model on new observations.
 
         Args:
-            X: A `batch_shape x m x d`-dim Tensor, where `d` is the dimension of
-                the feature space, `m` is the number of points per batch, and
+            X: A `batch_shape x n' x d`-dim Tensor, where `d` is the dimension of
+                the feature space, `n'` is the number of points per batch, and
                 `batch_shape` is the batch shape (must be compatible with the
                 batch shape of the model).
-            Y: A `batch_shape' x m x (o)`-dim Tensor, where `o` is the number of
-                model outputs, `m` is the number of points per batch, and
+            Y: A `batch_shape' x n' x m`-dim Tensor, where `m` is the number of
+                model outputs, `n'` is the number of points per batch, and
                 `batch_shape'` is the batch shape of the observations.
                 `batch_shape'` must be broadcastable to `batch_shape` using
                 standard broadcasting semantics. If `Y` has fewer batch dimensions
@@ -63,9 +63,12 @@ class ModelListGP(IndependentModelList, ModelListGPyTorchModel):
             A `ModelListGPyTorchModel` representing the original model
             conditioned on the new observations `(X, Y)` (and possibly noise
             observations passed in via kwargs). Here the `i`-th model has
-            `n_i + m` training examples, where the `m` training examples have
+            `n_i + n'` training examples, where the `n'` training examples have
             been added and all test-time caches have been updated.
         """
+        self._validate_tensor_args(
+            X=X, Y=Y, Yvar=kwargs.get("noise", None), strict=False
+        )
         inputs = [X] * self.num_outputs
         if Y.shape[-1] != self.num_outputs:
             raise ValueError(

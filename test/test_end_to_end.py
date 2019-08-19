@@ -25,7 +25,7 @@ class TestEndToEnd(unittest.TestCase):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         dtype = torch.double if double else torch.float
         train_x = torch.linspace(0, 1, 10, device=device, dtype=dtype).unsqueeze(-1)
-        train_y = torch.sin(train_x * (2 * math.pi)).squeeze(-1)
+        train_y = torch.sin(train_x * (2 * math.pi))
         train_yvar = torch.tensor(0.1 ** 2, device=device)
         noise = torch.tensor(NOISE, device=device, dtype=dtype)
         self.train_x = train_x

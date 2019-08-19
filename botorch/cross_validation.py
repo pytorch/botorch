@@ -42,9 +42,9 @@ def gen_loo_cv_folds(
     Args:
         train_X: A `n x d` or `batch_shape x n x d` (batch mode) tensor of training
             features.
-        train_Y: A `n x (o)` or `batch_shape x n x (o)` (batch mode) tensor of
+        train_Y: A `n x (m)` or `batch_shape x n x (m)` (batch mode) tensor of
             training observations.
-        train_Yvar: A `batch_shape x n x (o)` or `batch_shape x n x (o)`
+        train_Yvar: A `batch_shape x n x (m)` or `batch_shape x n x (m)`
             (batch mode) tensor of observed measurement noise.
 
     Returns:
@@ -53,13 +53,13 @@ def gen_loo_cv_folds(
         - train_X: A `n x (n-1) x d` or `batch_shape x n x (n-1) x d` tensor of
           training features.
         - test_X: A `n x 1 x d` or `batch_shape x n x 1 x d` tensor of test features.
-        - train_Y: A `n x (n-1) x o` or `batch_shape x n x (n-1) x o` tensor of
+        - train_Y: A `n x (n-1) x m` or `batch_shape x n x (n-1) x m` tensor of
           training observations.
-        - test_Y: A `n x 1 x o` or `batch_shape x n x 1 x o` tensor of test
+        - test_Y: A `n x 1 x m` or `batch_shape x n x 1 x m` tensor of test
           observations.
-        - train_Yvar: A `n x (n-1) x o` or `batch_shape x n x (n-1) x o` tensor
+        - train_Yvar: A `n x (n-1) x m` or `batch_shape x n x (n-1) x m` tensor
           of observed measurement noise.
-        - test_Yvar: A `n x 1 x o` or `batch_shape x n x 1 x o` tensor of observed
+        - test_Yvar: A `n x 1 x m` or `batch_shape x n x 1 x m` tensor of observed
           measurement noise.
 
     Example:
@@ -122,10 +122,10 @@ def batch_cross_validation(
         A CVResults tuple with the following fields
 
         - model: GPyTorchModel for batched cross validation
-        - posterior: GPyTorchPosterior where the mean has shape `n x 1 x o` or
-          `batch_shape x n x 1 x o`
-        - observed_Y: A `n x 1 x o` or `batch_shape x n x 1 x o` tensor of observations.
-        - observed_Yvar: A `n x 1 x o` or `batch_shape x n x 1 x o` tensor of observed
+        - posterior: GPyTorchPosterior where the mean has shape `n x 1 x m` or
+          `batch_shape x n x 1 x m`
+        - observed_Y: A `n x 1 x m` or `batch_shape x n x 1 x m` tensor of observations.
+        - observed_Yvar: A `n x 1 x m` or `batch_shape x n x 1 x m` tensor of observed
           measurement noise.
 
     Example:

@@ -23,7 +23,18 @@ from botorch.utils.mock import MockModel, MockPosterior
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 
 
-NEI_NOISE = [-0.099, -0.004, 0.227, -0.182, 0.018, 0.334, -0.270, 0.156, -0.237, 0.052]
+NEI_NOISE = [
+    [-0.099],
+    [-0.004],
+    [0.227],
+    [-0.182],
+    [0.018],
+    [0.334],
+    [-0.270],
+    [0.156],
+    [-0.237],
+    [0.052],
+]
 
 
 class TestAnalyticAcquisitionFunction(unittest.TestCase):
@@ -444,12 +455,11 @@ class TestNoisyExpectedImprovement(unittest.TestCase):
             "covar_module.outputscale_prior.concentration": torch.tensor(2.0),
             "covar_module.outputscale_prior.rate": torch.tensor(0.1500),
         }
-        train_x = torch.linspace(0, 1, 10, device=device, dtype=dtype)
+        train_x = torch.linspace(0, 1, 10, device=device, dtype=dtype).unsqueeze(-1)
         train_y = torch.sin(train_x * (2 * math.pi))
         noise = torch.tensor(NEI_NOISE, device=device, dtype=dtype)
         train_y += noise
         train_yvar = torch.full_like(train_y, 0.25 ** 2)
-        train_x = train_x.view(-1, 1)
         model = FixedNoiseGP(train_X=train_x, train_Y=train_y, train_Yvar=train_yvar)
         model.load_state_dict(state_dict)
         model.to(train_x)
@@ -482,7 +492,7 @@ class TestNoisyExpectedImprovement(unittest.TestCase):
             with torch.no_grad():
                 nEI(X_test)
             # test non-FixedNoiseGP model
-            other_model = SingleTaskGP(X_observed, model.train_targets)
+            other_model = SingleTaskGP(X_observed, model.train_targets.unsqueeze(-1))
             with self.assertRaises(UnsupportedError):
                 NoisyExpectedImprovement(other_model, X_observed, num_fantasies=5)
             # Test with minimize

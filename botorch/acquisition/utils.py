@@ -10,10 +10,10 @@ from typing import Callable, Optional
 
 from torch import Tensor
 
-from . import analytic, monte_carlo
 from ..models.model import Model
 from ..sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
 from ..utils.transforms import squeeze_last_dim
+from . import analytic, monte_carlo
 from .acquisition import AcquisitionFunction
 from .monte_carlo import MCAcquisitionFunction
 from .objective import MCAcquisitionObjective
@@ -115,7 +115,7 @@ def get_infeasible_cost(
         so that feasible points are preferred.
 
     Args:
-        X: A `m x d` Tensor of `m` design points to use in evaluating the
+        X: A `n x d` Tensor of `n` design points to use in evaluating the
             minimum. These points should cover the design space well. The more
             points the better the estimate, at the expense of added computation.
         model: A fitted botorch model.

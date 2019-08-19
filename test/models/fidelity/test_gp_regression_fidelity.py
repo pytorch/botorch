@@ -44,8 +44,6 @@ def _get_random_data_with_fidelity(
         )
         + (1 - s).pow(2).sum(dim=-1).unsqueeze(-1)
     )
-    if num_outputs == 1:
-        train_y = train_y.squeeze(-1)
     return train_X, train_y
 
 

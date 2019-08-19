@@ -20,14 +20,14 @@ def get_outcome_constraint_transforms(
 
     Args:
         outcome_constraints: A tuple of `(A, b)`. For `k` outcome constraints
-            and `o` outputs at `f(x)``, `A` is `k x o` and `b` is `k x 1` such
+            and `m` outputs at `f(x)``, `A` is `k x m` and `b` is `k x 1` such
             that `A f(x) <= b`.
 
     Returns:
-        A list of callables, each mapping a Tensor of size `b x q x o` to a
-        tensor of size `b x q`, where `o` is the number of outputs of the model.
+        A list of callables, each mapping a Tensor of size `b x q x m` to a
+        tensor of size `b x q`, where `m` is the number of outputs of the model.
         Negative values imply feasibility. The callables support broadcasting
-        (e.g. for calling on a tensor of shape `mc_samples x b x q x o`).
+        (e.g. for calling on a tensor of shape `mc_samples x b x q x m`).
 
     Example:
         >>> # constrain `f(x)[0] <= 0`
@@ -42,18 +42,18 @@ def get_outcome_constraint_transforms(
     def _oc(a: Tensor, rhs: Tensor, Y: Tensor) -> Tensor:
         r"""Evaluate constraints.
 
-        Note: einsum multiples Y by a and sums over the `o`-dimension. Einsum
+        Note: einsum multiples Y by a and sums over the `m`-dimension. Einsum
             is ~2x faster than using `(Y * a.view(1, 1, -1)).sum(dim-1)`.
 
         Args:
-            a: `o`-dim tensor of weights for the outcomes
+            a: `m`-dim tensor of weights for the outcomes
             rhs: Singleton tensor containing the outcome constraint value
-            Y: `... x b x q x o` tensor of function values
+            Y: `... x b x q x m` tensor of function values
 
         Returns:
             A `... x b x q`-dim tensor where negative values imply feasibility
         """
-        lhs = torch.einsum("...o, o", [Y, a])
+        lhs = torch.einsum("...m, m", [Y, a])
         return lhs - rhs
 
     return [partial(_oc, a, rhs) for a, rhs in zip(A, b)]

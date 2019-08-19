@@ -29,3 +29,9 @@ class UnsupportedError(BotorchError):
     r"""Currently unsupported feature."""
 
     pass
+
+
+class BotorchTensorDimensionError(BotorchError):
+    r"""Exception raised when a tensor violates a botorch convention."""
+
+    pass

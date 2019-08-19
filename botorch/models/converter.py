@@ -183,11 +183,15 @@ def batched_to_model_list(batch_model: BatchedMultiOutputGPyTorchModel) -> Model
         sd = {**scalar_sd, **tensor_sd}
         kwargs = {
             "train_X": batch_model.train_inputs[0].select(input_bdims, i).clone(),
-            "train_Y": batch_model.train_targets.select(input_bdims, i).clone(),
+            "train_Y": batch_model.train_targets.select(input_bdims, i)
+            .clone()
+            .unsqueeze(-1),
         }
         if isinstance(batch_model, FixedNoiseGP):
             noise_covar = batch_model.likelihood.noise_covar
-            kwargs["train_Yvar"] = noise_covar.noise.select(input_bdims, i).clone()
+            kwargs["train_Yvar"] = (
+                noise_covar.noise.select(input_bdims, i).clone().unsqueeze(-1)
+            )
         model = batch_model.__class__(**kwargs)
         model.load_state_dict(sd)
         models.append(model)

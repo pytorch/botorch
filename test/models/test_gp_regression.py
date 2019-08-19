@@ -37,8 +37,6 @@ def _get_random_data(batch_shape, num_outputs, n=10, **tkwargs):
         n, num_outputs, **tkwargs
     ).repeat(batch_shape + torch.Size([1, 1]))
 
-    if num_outputs == 1:
-        train_y = train_y.squeeze(-1)
     return train_x, train_y
 
 

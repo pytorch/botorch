@@ -4,12 +4,14 @@
 
 from .errors import (
     BotorchError,
+    BotorchTensorDimensionError,
     CandidateGenerationError,
     InputDataError,
     UnsupportedError,
 )
 from .warnings import (
     BadInitialCandidatesWarning,
+    BotorchTensorDimensionWarning,
     BotorchWarning,
     InputDataWarning,
     OptimizationWarning,
@@ -18,13 +20,16 @@ from .warnings import (
 
 
 __all__ = [
+    "BadInitialCandidatesWarning",
     "BotorchError",
-    "CandidateGenerationError",
-    "UnsupportedError",
+    "BotorchTensorDimensionError",
+    "BotorchTensorDimensionWarning",
     "BotorchWarning",
     "InputDataWarning",
     "InputDataError",
     "BadInitialCandidatesWarning",
+    "CandidateGenerationError",
     "OptimizationWarning",
     "SamplingWarning",
+    "UnsupportedError",
 ]

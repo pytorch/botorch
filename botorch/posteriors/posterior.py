@@ -33,14 +33,14 @@ class Posterior(ABC):
 
     @property
     def mean(self) -> Tensor:
-        r"""The mean of the posterior as a `(b) x n x o`-dim Tensor."""
+        r"""The mean of the posterior as a `(b) x n x m`-dim Tensor."""
         raise NotImplementedError(
             f"Property `mean` not implemented for {self.__class__.__name__}"
         )
 
     @property
     def variance(self) -> Tensor:
-        r"""The variance of the posterior as a `(b) x n x o`-dim Tensor."""
+        r"""The variance of the posterior as a `(b) x n x m`-dim Tensor."""
         raise NotImplementedError(
             f"Property `variance` not implemented for {self.__class__.__name__}"
         )

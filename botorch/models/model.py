@@ -43,7 +43,7 @@ class Model(Module, ABC):
 
         Returns:
             A `Posterior` object, representing a batch of `b` joint distributions
-            over `q` points and `o` outputs each.
+            over `q` points and `m` outputs each.
         """
         pass  # pragma: no cover
 
@@ -51,12 +51,12 @@ class Model(Module, ABC):
         r"""Condition the model on new observations.
 
         Args:
-            X: A `batch_shape x m x d`-dim Tensor, where `d` is the dimension of
-                the feature space, `m` is the number of points per batch, and
+            X: A `batch_shape x n' x d`-dim Tensor, where `d` is the dimension of
+                the feature space, `n'` is the number of points per batch, and
                 `batch_shape` is the batch shape (must be compatible with the
                 batch shape of the model).
-            Y: A `batch_shape' x m x (o)`-dim Tensor, where `o` is the number of
-                model outputs, `m` is the number of points per batch, and
+            Y: A `batch_shape' x n' x m`-dim Tensor, where `m` is the number of
+                model outputs, `n'` is the number of points per batch, and
                 `batch_shape'` is the batch shape of the observations.
                 `batch_shape'` must be broadcastable to `batch_shape` using
                 standard broadcasting semantics. If `Y` has fewer batch dimensions
@@ -87,8 +87,8 @@ class Model(Module, ABC):
         (3) condition the model on the new fake observations.
 
         Args:
-            X: A `batch_shape x m x d`-dim Tensor, where `d` is the dimension of
-                the feature space, `m` is the number of points per batch, and
+            X: A `batch_shape x n' x d`-dim Tensor, where `d` is the dimension of
+                the feature space, `n'` is the number of points per batch, and
                 `batch_shape` is the batch shape (must be compatible with the
                 batch shape of the model).
             sampler: The sampler used for sampling from the posterior at `X`.
@@ -100,5 +100,5 @@ class Model(Module, ABC):
         propagate_grads = kwargs.pop("propagate_grads", False)
         with settings.propagate_grads(propagate_grads):
             post_X = self.posterior(X, observation_noise=observation_noise)
-        Y_fantasized = sampler(post_X)  # num_fantasies x batch_shape x m x o
+        Y_fantasized = sampler(post_X)  # num_fantasies x batch_shape x n' x m
         return self.condition_on_observations(X=X, Y=Y_fantasized, **kwargs)

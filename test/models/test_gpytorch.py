@@ -5,12 +5,15 @@
 import unittest
 
 import torch
+from botorch.exceptions import (
+    BotorchTensorDimensionError,
+    BotorchTensorDimensionWarning,
+)
 from botorch.models.gpytorch import (
     BatchedMultiOutputGPyTorchModel,
     GPyTorchModel,
     ModelListGPyTorchModel,
 )
-from botorch.models.utils import multioutput_to_batch_mode_transform
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.sampling.samplers import SobolQMCNormalSampler
 from gpytorch.distributions import MultivariateNormal
@@ -20,12 +23,15 @@ from gpytorch.means import ConstantMean
 from gpytorch.models import ExactGP, IndependentModelList
 
 
-class SimpleGPyTorchModel(ExactGP, GPyTorchModel):
+class SimpleGPyTorchModel(GPyTorchModel, ExactGP):
     def __init__(self, train_X, train_Y):
+        self._validate_tensor_args(train_X, train_Y)
+        train_Y = train_Y.squeeze(-1)
         likelihood = GaussianLikelihood()
         super().__init__(train_X, train_Y, likelihood)
         self.mean_module = ConstantMean()
         self.covar_module = ScaleKernel(RBFKernel())
+        self.to(train_X)
 
     def forward(self, x):
         mean_x = self.mean_module(x)
@@ -33,12 +39,11 @@ class SimpleGPyTorchModel(ExactGP, GPyTorchModel):
         return MultivariateNormal(mean_x, covar_x)
 
 
-class SimpleBatchedMultiOutputGPyTorchModel(ExactGP, BatchedMultiOutputGPyTorchModel):
+class SimpleBatchedMultiOutputGPyTorchModel(BatchedMultiOutputGPyTorchModel, ExactGP):
     def __init__(self, train_X, train_Y):
-        train_X, train_Y, _ = self._set_dimensions(train_X=train_X, train_Y=train_Y)
-        train_X, train_Y, _ = multioutput_to_batch_mode_transform(
-            train_X=train_X, train_Y=train_Y, num_outputs=self._num_outputs
-        )
+        self._validate_tensor_args(train_X, train_Y)
+        self._set_dimensions(train_X=train_X, train_Y=train_Y)
+        train_X, train_Y, _ = self._transform_tensor_args(X=train_X, Y=train_Y)
         likelihood = GaussianLikelihood(batch_shape=self._aug_batch_shape)
         super().__init__(train_X, train_Y, likelihood)
         self.mean_module = ConstantMean(batch_shape=self._aug_batch_shape)
@@ -46,6 +51,7 @@ class SimpleBatchedMultiOutputGPyTorchModel(ExactGP, BatchedMultiOutputGPyTorchM
             RBFKernel(batch_shape=self._aug_batch_shape),
             batch_shape=self._aug_batch_shape,
         )
+        self.to(train_X)
 
     def forward(self, x):
         mean_x = self.mean_module(x)
@@ -59,77 +65,149 @@ class SimpleModelListGPyTorchModel(IndependentModelList, ModelListGPyTorchModel)
 
 
 class TestGPyTorchModel(unittest.TestCase):
-    def test_gpytorch_model(self):
-        train_X = torch.rand(5, 1)
-        train_Y = torch.sin(train_X.squeeze())
-        # basic test
-        model = SimpleGPyTorchModel(train_X, train_Y)
-        test_X = torch.rand(2, 1)
-        posterior = model.posterior(test_X)
-        self.assertIsInstance(posterior, GPyTorchPosterior)
-        self.assertEqual(posterior.mean.shape, torch.Size([2, 1]))
-        # test observation noise
-        posterior = model.posterior(test_X, observation_noise=True)
-        self.assertIsInstance(posterior, GPyTorchPosterior)
-        self.assertEqual(posterior.mean.shape, torch.Size([2, 1]))
-        # test conditioning on observations
-        cm = model.condition_on_observations(torch.rand(2, 1), torch.rand(2))
-        self.assertIsInstance(cm, SimpleGPyTorchModel)
-        self.assertEqual(cm.train_targets.shape, torch.Size([7]))
-        # test fantasize
-        sampler = SobolQMCNormalSampler(num_samples=2)
-        cm = model.fantasize(torch.rand(2, 1), sampler=sampler)
-        self.assertIsInstance(cm, SimpleGPyTorchModel)
-        self.assertEqual(cm.train_targets.shape, torch.Size([2, 7]))
-        cm = model.fantasize(torch.rand(2, 1), sampler=sampler, observation_noise=True)
-        self.assertIsInstance(cm, SimpleGPyTorchModel)
-        self.assertEqual(cm.train_targets.shape, torch.Size([2, 7]))
+    def test_gpytorch_model(self, cuda=False):
+        tkwargs = {"device": torch.device("cuda" if cuda else "cpu")}
+        for dtype in (torch.float, torch.double):
+            tkwargs["dtype"] = dtype
+            train_X = torch.rand(5, 1, **tkwargs)
+            train_Y = torch.sin(train_X)
+            # basic test
+            model = SimpleGPyTorchModel(train_X, train_Y)
+            test_X = torch.rand(2, 1, **tkwargs)
+            posterior = model.posterior(test_X)
+            self.assertIsInstance(posterior, GPyTorchPosterior)
+            self.assertEqual(posterior.mean.shape, torch.Size([2, 1]))
+            # test observation noise
+            posterior = model.posterior(test_X, observation_noise=True)
+            self.assertIsInstance(posterior, GPyTorchPosterior)
+            self.assertEqual(posterior.mean.shape, torch.Size([2, 1]))
+            # test conditioning on observations
+            cm = model.condition_on_observations(
+                torch.rand(2, 1, **tkwargs), torch.rand(2, **tkwargs)
+            )
+            self.assertIsInstance(cm, SimpleGPyTorchModel)
+            self.assertEqual(cm.train_targets.shape, torch.Size([7]))
+            # test fantasize
+            sampler = SobolQMCNormalSampler(num_samples=2)
+            cm = model.fantasize(torch.rand(2, 1, **tkwargs), sampler=sampler)
+            self.assertIsInstance(cm, SimpleGPyTorchModel)
+            self.assertEqual(cm.train_targets.shape, torch.Size([2, 7]))
+            cm = model.fantasize(
+                torch.rand(2, 1, **tkwargs), sampler=sampler, observation_noise=True
+            )
+            self.assertIsInstance(cm, SimpleGPyTorchModel)
+            self.assertEqual(cm.train_targets.shape, torch.Size([2, 7]))
+
+    def test_gpytorch_model_cuda(self):
+        if torch.cuda.is_available():
+            self.test_gpytorch_model(cuda=True)
+
+    def test_validate_tensor_args(self, cuda=False):
+        tkwargs = {"device": torch.device("cuda" if cuda else "cpu")}
+        n = 3
+        d = 2
+        for dtype in (torch.float, torch.double):
+            tkwargs["dtype"] = dtype
+            for batch_shape in (torch.Size(), torch.Size([2])):
+                X = torch.empty(batch_shape + torch.Size([n, d]), **tkwargs)
+                for output_dim_shape in (
+                    torch.Size(),
+                    torch.Size([1]),
+                    torch.Size([2]),
+                ):
+                    # test using the same batch_shape as X
+                    Y = torch.empty(
+                        batch_shape + torch.Size([n]) + output_dim_shape, **tkwargs
+                    )
+                    if len(output_dim_shape) > 0:
+                        # check that no exception is raised
+                        GPyTorchModel._validate_tensor_args(X, Y)
+                        with self.assertWarns(BotorchTensorDimensionWarning):
+                            GPyTorchModel._validate_tensor_args(X, Y, strict=False)
+                    else:
+                        with self.assertRaises(BotorchTensorDimensionError):
+                            GPyTorchModel._validate_tensor_args(X, Y)
+                        with self.assertWarns(BotorchTensorDimensionWarning):
+                            GPyTorchModel._validate_tensor_args(X, Y, strict=False)
+                    # test using different batch_shape
+                    if len(batch_shape) > 0:
+                        with self.assertRaises(BotorchTensorDimensionError):
+                            GPyTorchModel._validate_tensor_args(X, Y[0])
+                        with self.assertWarns(BotorchTensorDimensionWarning):
+                            GPyTorchModel._validate_tensor_args(X, Y[0], strict=False)
+
+    def test_validate_tensor_args_cuda(self):
+        if torch.cuda.is_available():
+            self.test_validate_tensor_args(cuda=True)
 
 
 class TestBatchedMultiOutputGPyTorchModel(unittest.TestCase):
-    def test_batched_multi_output_gpytorch_model(self):
-        train_X = torch.rand(5, 1)
-        train_Y = torch.cat([torch.sin(train_X), torch.cos(train_X)], dim=-1)
-        # basic test
-        model = SimpleBatchedMultiOutputGPyTorchModel(train_X, train_Y)
-        test_X = torch.rand(2, 1)
-        posterior = model.posterior(test_X)
-        self.assertIsInstance(posterior, GPyTorchPosterior)
-        self.assertEqual(posterior.mean.shape, torch.Size([2, 2]))
-        # test observation noise
-        posterior = model.posterior(test_X, observation_noise=True)
-        self.assertIsInstance(posterior, GPyTorchPosterior)
-        self.assertEqual(posterior.mean.shape, torch.Size([2, 2]))
-        # test conditioning on observations
-        cm = model.condition_on_observations(torch.rand(2, 1), torch.rand(2, 2))
-        self.assertIsInstance(cm, SimpleBatchedMultiOutputGPyTorchModel)
-        self.assertEqual(cm.train_targets.shape, torch.Size([2, 7]))
-        # test fantasize
-        sampler = SobolQMCNormalSampler(num_samples=2)
-        cm = model.fantasize(torch.rand(2, 1), sampler=sampler)
-        self.assertIsInstance(cm, SimpleBatchedMultiOutputGPyTorchModel)
-        self.assertEqual(cm.train_targets.shape, torch.Size([2, 2, 7]))
-        cm = model.fantasize(torch.rand(2, 1), sampler=sampler, observation_noise=True)
-        self.assertIsInstance(cm, SimpleBatchedMultiOutputGPyTorchModel)
-        self.assertEqual(cm.train_targets.shape, torch.Size([2, 2, 7]))
+    def test_batched_multi_output_gpytorch_model(self, cuda=False):
+        tkwargs = {"device": torch.device("cuda" if cuda else "cpu")}
+        for dtype in (torch.float, torch.double):
+            tkwargs["dtype"] = dtype
+            train_X = torch.rand(5, 1, **tkwargs)
+            train_Y = torch.cat([torch.sin(train_X), torch.cos(train_X)], dim=-1)
+            # basic test
+            model = SimpleBatchedMultiOutputGPyTorchModel(train_X, train_Y)
+            test_X = torch.rand(2, 1, **tkwargs)
+            posterior = model.posterior(test_X)
+            self.assertIsInstance(posterior, GPyTorchPosterior)
+            self.assertEqual(posterior.mean.shape, torch.Size([2, 2]))
+            # test observation noise
+            posterior = model.posterior(test_X, observation_noise=True)
+            self.assertIsInstance(posterior, GPyTorchPosterior)
+            self.assertEqual(posterior.mean.shape, torch.Size([2, 2]))
+            # test conditioning on observations
+            cm = model.condition_on_observations(
+                torch.rand(2, 1, **tkwargs), torch.rand(2, 2, **tkwargs)
+            )
+            self.assertIsInstance(cm, SimpleBatchedMultiOutputGPyTorchModel)
+            self.assertEqual(cm.train_targets.shape, torch.Size([2, 7]))
+            # test fantasize
+            sampler = SobolQMCNormalSampler(num_samples=2)
+            cm = model.fantasize(torch.rand(2, 1, **tkwargs), sampler=sampler)
+            self.assertIsInstance(cm, SimpleBatchedMultiOutputGPyTorchModel)
+            self.assertEqual(cm.train_targets.shape, torch.Size([2, 2, 7]))
+            cm = model.fantasize(
+                torch.rand(2, 1, **tkwargs), sampler=sampler, observation_noise=True
+            )
+            self.assertIsInstance(cm, SimpleBatchedMultiOutputGPyTorchModel)
+            self.assertEqual(cm.train_targets.shape, torch.Size([2, 2, 7]))
+
+    def test_batched_multi_output_gpytorch_model_cuda(self):
+        if torch.cuda.is_available():
+            self.test_batched_multi_output_gpytorch_model(cuda=True)
 
 
 class TestModelListGPyTorchModel(unittest.TestCase):
-    def test_model_list_gpytorch_model(self):
-        train_X1, train_X2 = torch.rand(5, 1), torch.rand(5, 1)
-        train_Y1 = torch.sin(train_X1).squeeze()
-        train_Y2 = torch.cos(train_X2).squeeze()
-        m1 = SimpleGPyTorchModel(train_X1, train_Y1)
-        m2 = SimpleGPyTorchModel(train_X2, train_Y2)
-        model = SimpleModelListGPyTorchModel(m1, m2)
-        test_X = torch.rand(2, 1)
-        posterior = model.posterior(test_X)
-        self.assertIsInstance(posterior, GPyTorchPosterior)
-        self.assertEqual(posterior.mean.shape, torch.Size([2, 2]))
-        # test observation noise
-        posterior = model.posterior(test_X, observation_noise=True)
-        self.assertIsInstance(posterior, GPyTorchPosterior)
-        self.assertEqual(posterior.mean.shape, torch.Size([2, 2]))
-        # conditioning is not implemented (see ModelListGP for tests)
-        with self.assertRaises(NotImplementedError):
-            model.condition_on_observations(X=torch.rand(2, 1), Y=torch.rand(2, 2))
+    def test_model_list_gpytorch_model(self, cuda=False):
+        tkwargs = {"device": torch.device("cuda" if cuda else "cpu")}
+        for dtype in (torch.float, torch.double):
+            tkwargs["dtype"] = dtype
+            train_X1, train_X2 = (
+                torch.rand(5, 1, **tkwargs),
+                torch.rand(5, 1, **tkwargs),
+            )
+            train_Y1 = torch.sin(train_X1)
+            train_Y2 = torch.cos(train_X2)
+            m1 = SimpleGPyTorchModel(train_X1, train_Y1)
+            m2 = SimpleGPyTorchModel(train_X2, train_Y2)
+            model = SimpleModelListGPyTorchModel(m1, m2)
+            test_X = torch.rand(2, 1, **tkwargs)
+            posterior = model.posterior(test_X)
+            self.assertIsInstance(posterior, GPyTorchPosterior)
+            self.assertEqual(posterior.mean.shape, torch.Size([2, 2]))
+            # test observation noise
+            posterior = model.posterior(test_X, observation_noise=True)
+            self.assertIsInstance(posterior, GPyTorchPosterior)
+            self.assertEqual(posterior.mean.shape, torch.Size([2, 2]))
+            # conditioning is not implemented (see ModelListGP for tests)
+            with self.assertRaises(NotImplementedError):
+                model.condition_on_observations(
+                    X=torch.rand(2, 1, **tkwargs), Y=torch.rand(2, 2, **tkwargs)
+                )
+
+    def test_model_list_gpytorch_model_cuda(self):
+        if torch.cuda.is_available():
+            self.test_model_list_gpytorch_model(cuda=True)

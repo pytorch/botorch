@@ -17,10 +17,10 @@ def get_objective_weights_transform(
 ) -> Callable[[Tensor], Tensor]:
     r"""Create a linear objective callable from a set of weights.
 
-    Create a callable mapping a Tensor of size `b x q x o` to a Tensor of size
-    `b x q`, where `o` is the number of outputs of the model using scalarization
+    Create a callable mapping a Tensor of size `b x q x m` to a Tensor of size
+    `b x q`, where `m` is the number of outputs of the model using scalarization
     via the objective weights. This callable supports broadcasting (e.g. for
-    calling on a tensor of shape `mc_samples x b x q x o`). For `o = 1`, the
+    calling on a tensor of shape `mc_samples x b x q x m`). For `m = 1`, the
     objective weight is used to determine the optimization direction.
 
     Args:
@@ -41,16 +41,16 @@ def get_objective_weights_transform(
     def _objective(Y):
         r"""Evaluate objective.
 
-        Note: einsum multiples Y by weights and sums over the `o`-dimension.
+        Note: einsum multiples Y by weights and sums over the `m`-dimension.
         Einsum is ~2x faster than using `(Y * weights.view(1, 1, -1)).sum(dim-1)`.
 
         Args:
-            Y: A `... x b x q x o` tensor of function values.
+            Y: A `... x b x q x m` tensor of function values.
 
         Returns:
             A `... x b x q`-dim tensor of objective values.
         """
-        return torch.einsum("...o, o", [Y, weights])
+        return torch.einsum("...m, m", [Y, weights])
 
     return _objective
 
@@ -68,11 +68,11 @@ def apply_constraints_nonnegative_soft(
 
     Args:
         obj: A `n_samples x b x q` Tensor of objective values.
-        constraints: A list of callables, each mapping a Tensor of size `b x q x o`
+        constraints: A list of callables, each mapping a Tensor of size `b x q x m`
             to a Tensor of size `b x q`, where negative values imply feasibility.
             This callable must support broadcasting. Only relevant for multi-
-            output models (`o` > 1).
-        samples: A `b x q x o` Tensor of samples drawn from the posterior.
+            output models (`m` > 1).
+        samples: A `b x q x m` Tensor of samples drawn from the posterior.
         eta: The temperature parameter for the sigmoid function.
 
     Returns:
@@ -121,11 +121,11 @@ def apply_constraints(
 
     Args:
         obj: A `n_samples x b x q` Tensor of objective values.
-        constraints: A list of callables, each mapping a Tensor of size `b x q x o`
+        constraints: A list of callables, each mapping a Tensor of size `b x q x m`
             to a Tensor of size `b x q`, where negative values imply feasibility.
             This callable must support broadcasting. Only relevant for multi-
-            output models (`o` > 1).
-        samples: A `b x q x o` Tensor of samples drawn from the posterior.
+            output models (`m` > 1).
+        samples: A `b x q x m` Tensor of samples drawn from the posterior.
         infeasible_cost: The infeasible value.
         eta: The temperature parameter of the sigmoid function.
 
