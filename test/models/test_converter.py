@@ -50,8 +50,8 @@ class TestConverters(unittest.TestCase):
         for dtype in (torch.float, torch.double):
             # basic test
             train_X = torch.rand(10, 2, device=device, dtype=dtype)
-            train_Y1 = train_X.sum(dim=-1)
-            train_Y2 = train_X[:, 0] - train_X[:, 1]
+            train_Y1 = train_X.sum(dim=-1, keepdim=True)
+            train_Y2 = (train_X[:, 0] - train_X[:, 1]).unsqueeze(-1)
             gp1 = SingleTaskGP(train_X, train_Y1)
             gp2 = SingleTaskGP(train_X, train_Y2)
             list_gp = ModelListGP(gp1, gp2)
@@ -70,7 +70,7 @@ class TestConverters(unittest.TestCase):
             with self.assertRaises(UnsupportedError):
                 model_list_to_batched(ModelListGP(gp1_, gp2_))
             # test list of multi-output models
-            train_Y = torch.stack([train_Y1, train_Y2], dim=-1)
+            train_Y = torch.cat([train_Y1, train_Y2], dim=-1)
             gp2 = SingleTaskGP(train_X, train_Y)
             with self.assertRaises(UnsupportedError):
                 model_list_to_batched(ModelListGP(gp1, gp2))
@@ -102,8 +102,8 @@ class TestConverters(unittest.TestCase):
                 model_list_to_batched(ModelListGP(gp2))
             # test FixedNoiseGP
             train_X = torch.rand(10, 2, device=device, dtype=dtype)
-            train_Y1 = train_X.sum(dim=-1)
-            train_Y2 = train_X[:, 0] - train_X[:, 1]
+            train_Y1 = train_X.sum(dim=-1, keepdim=True)
+            train_Y2 = (train_X[:, 0] - train_X[:, 1]).unsqueeze(-1)
             gp1_ = FixedNoiseGP(train_X, train_Y1, torch.rand_like(train_Y1))
             gp2_ = FixedNoiseGP(train_X, train_Y2, torch.rand_like(train_Y2))
             list_gp = ModelListGP(gp1_, gp2_)

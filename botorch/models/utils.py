@@ -54,29 +54,28 @@ def multioutput_to_batch_mode_transform(
     Args:
         train_X: A `n x d` or `input_batch_shape x n x d` (batch mode) tensor of
             training features.
-        train_Y: A `n x (o)` or `target_batch_shape x n x (o)` (batch mode) tensor of
+        train_Y: A `n x m` or `target_batch_shape x n x m` (batch mode) tensor of
             training observations.
         num_outputs: number of outputs
-        train_Yvar: A `target_batch_shape x n x (o)` tensor of observed measurement
-            noise.
+        train_Yvar: A `n x m` or `target_batch_shape x n x m` tensor of observed
+            measurement noise.
 
     Returns:
         3-element tuple containing
 
-        - A `input_batch_shape x (o) x n x d` tensor of training features.
-        - A `target_batch_shape x (o) x n` tensor of training observations.
-        - A `target_batch_shape x (o) x n` tensor observed measurement noise.
+        - A `input_batch_shape x m x n x d` tensor of training features.
+        - A `target_batch_shape x m x n` tensor of training observations.
+        - A `target_batch_shape x m x n` tensor observed measurement noise.
     """
-    if num_outputs > 1:
-        # make train_Y `batch_shape x o x n`
-        train_Y = train_Y.transpose(-1, -2)
-        # expand train_X to `batch_shape x o x n x d`
-        train_X = train_X.unsqueeze(-3).expand(
-            train_X.shape[:-2] + torch.Size([num_outputs]) + train_X.shape[-2:]
-        )
-        if train_Yvar is not None:
-            # make train_Yvar `batch_shape x o x n`
-            train_Yvar = train_Yvar.transpose(-1, -2)
+    # make train_Y `batch_shape x m x n`
+    train_Y = train_Y.transpose(-1, -2)
+    # expand train_X to `batch_shape x m x n x d`
+    train_X = train_X.unsqueeze(-3).expand(
+        train_X.shape[:-2] + torch.Size([num_outputs]) + train_X.shape[-2:]
+    )
+    if train_Yvar is not None:
+        # make train_Yvar `batch_shape x m x n`
+        train_Yvar = train_Yvar.transpose(-1, -2)
     return train_X, train_Y, train_Yvar
 
 
@@ -93,7 +92,7 @@ def add_output_dim(X: Tensor, original_batch_shape: torch.Size) -> Tuple[Tensor,
     Returns:
         2-element tuple containing
 
-        - A `(new_batch_shape) x (original_batch_shape) x o x n x d` tensor of
+        - A `(new_batch_shape) x (original_batch_shape) x m x n x d` tensor of
         features.
         - The index corresponding to the output dimension.
     """
@@ -106,7 +105,7 @@ def add_output_dim(X: Tensor, original_batch_shape: torch.Size) -> Tuple[Tensor,
             "batch dimensions of the training inputs."
         )
         _mul_broadcast_shape(X_batch_shape, original_batch_shape, error_msg=error_msg)
-    # insert `o` dimension
+    # insert `m` dimension
     X = X.unsqueeze(-3)
     output_dim_idx = max(len(original_batch_shape), len(X_batch_shape))
     return X, output_dim_idx

@@ -9,6 +9,7 @@ To implement your own, simply inherit from both the provided classes and a
 GPyTorch Model class such as an ExactGP.
 """
 
+import warnings
 from abc import ABC, abstractproperty
 from contextlib import ExitStack
 from typing import Any, List, Optional, Tuple
@@ -21,6 +22,8 @@ from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihoo
 from torch import Tensor
 
 from .. import settings
+from ..exceptions.errors import BotorchTensorDimensionError
+from ..exceptions.warnings import BotorchTensorDimensionWarning
 from ..posteriors.gpytorch import GPyTorchPosterior
 from .model import Model
 from .utils import _make_X_full, add_output_dim, multioutput_to_batch_mode_transform
@@ -32,6 +35,59 @@ class GPyTorchModel(Model, ABC):
     The easiest way to use this is to subclass a model from a GPyTorch model
     class (e.g. an `ExactGP`) and this `GPyTorchModel`. See e.g. `SingleTaskGP`.
     """
+
+    @staticmethod
+    def _validate_tensor_args(
+        X: Tensor, Y: Tensor, Yvar: Optional[Tensor] = None, strict: bool = True
+    ) -> None:
+        r"""Checks that `Y` and `Yvar` have an explicit output dimension if strict.
+
+        This also checks that `Yvar` has the same trailing dimensions as `Y`. Note
+        we only infer that an explicit output dimension exists when `X` and `Y` have
+        the same `batch_shape`.
+
+        Args:
+            X: A `n x d` or `batch_shape x n x d`-dim Tensor, where `d` is the
+                dimension of the feature space, `n` is the number of points per
+                batch, and `batch_shape` is the batch shape.
+            Y: A `n x m` or `batch_shape x n x m`-dim Tensor, where `m` is the
+                number of model outputs, `n'` is the number of points per batch,
+                and `batch_shape'` is the batch shape of the observations.
+            Yvar: A `n x m` or `batch_shape x n x m` (batch mode) tensor of
+                observed measurement noise. Note: this will be None when using a
+                model that infers the noise level (e.g. a `SingleTaskGP`).
+            strict: A boolean indicating whether to check that `Y` and `Yvar` have
+                an explicit output dimension.
+        """
+        if strict:
+            if X.dim() != Y.dim():
+                if (X.dim() - Y.dim() == 1) and (X.shape[:-1] == Y.shape):
+                    message = (
+                        "An explicit output dimension is required for targets."
+                        f" Expected Y with dimension: {Y.dim()} (got {X.dim()})."
+                    )
+                else:
+                    message = (
+                        f"Expected X and Y to have the same number of dimensions"
+                        f" (got X with dimension {X.dim()} and Y with dimension"
+                        f" {Y.dim()}."
+                    )
+                raise BotorchTensorDimensionError(message)
+        else:
+            warnings.warn(
+                "Non-strict enforcement of botorch tensor conventions. Ensure that "
+                f"target tensors Y{' and Yvar have' if Yvar is not None else ' has an'}"
+                f" explicit output dimension{'s' if Yvar is not None else ''}.",
+                BotorchTensorDimensionWarning,
+            )
+        # Yvar may not have the same batch dimensions, but the trailing dimensions
+        # of Yvar should be the same as the trailing dimensions of Y.
+        if Yvar is not None and Y.shape[-Yvar.dim() :] != Yvar.shape:
+            raise BotorchTensorDimensionError(
+                "An explicit output dimension is required for observation noise."
+                f" Expected Yvar with shape: {Y.shape[-Yvar.dim() :]} (got"
+                f" {Yvar.shape})."
+            )
 
     def posterior(
         self, X: Tensor, observation_noise: bool = False, **kwargs: Any
@@ -65,12 +121,12 @@ class GPyTorchModel(Model, ABC):
         r"""Condition the model on new observations.
 
         Args:
-            X: A `batch_shape x n x d`-dim Tensor, where `d` is the dimension of
-                the feature space, `n` is the number of points per batch, and
+            X: A `batch_shape x n' x d`-dim Tensor, where `d` is the dimension of
+                the feature space, `n'` is the number of points per batch, and
                 `batch_shape` is the batch shape (must be compatible with the
                 batch shape of the model).
-            Y: A `batch_shape' x n x (o)`-dim Tensor, where `o` is the number of
-                model outputs, `n` is the number of points per batch, and
+            Y: A `batch_shape' x n x m`-dim Tensor, where `m` is the number of
+                model outputs, `n'` is the number of points per batch, and
                 `batch_shape'` is the batch shape of the observations.
                 `batch_shape'` must be broadcastable to `batch_shape` using
                 standard broadcasting semantics. If `Y` has fewer batch dimensions
@@ -90,7 +146,17 @@ class GPyTorchModel(Model, ABC):
             >>> new_Y = torch.sin(new_X[:, 0]) + torch.cos(new_X[:, 1])
             >>> model = model.condition_on_observations(X=new_X, Y=new_Y)
         """
-        return self.get_fantasy_model(inputs=X, targets=Y.squeeze(dim=-1), **kwargs)
+        noise = kwargs.get("noise", None)
+        # validate using strict=False, since we cannot tell if Y has an explicit
+        # output dimension
+        self._validate_tensor_args(X=X, Y=Y, Yvar=noise, strict=False)
+        if Y.shape[-1] == 1:
+            targets = Y.squeeze(-1)
+            if noise is not None:
+                kwargs.update({"noise": noise.squeeze(-1)})
+        else:
+            targets = Y
+        return self.get_fantasy_model(inputs=X, targets=targets, **kwargs)
 
 
 class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
@@ -104,44 +170,50 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
     _input_batch_shape: torch.Size
     _aug_batch_shape: torch.Size
 
-    def _set_dimensions(
-        self, train_X: Tensor, train_Y: Tensor, train_Yvar: Optional[Tensor] = None
-    ) -> Tuple[Tensor, Tensor, Optional[Tensor]]:
+    def _set_dimensions(self, train_X: Tensor, train_Y: Tensor) -> None:
         r"""Store the number of outputs and the batch shape.
-
-        For single output targets, this also squeezes the output dimension.
 
         Args:
             train_X: A `n x d` or `batch_shape x n x d` (batch mode) tensor of training
                 features.
-            train_Y: A `n x (o)` or `batch_shape x n x (o)` (batch mode) tensor of
+            train_Y: A `n x m` or `batch_shape x n x m` (batch mode) tensor of
                 training observations.
-            train_Yvar: A `n x (o)` or `batch_shape x n x (o)` (batch mode) tensor of
+        """
+        self._num_outputs = train_Y.shape[-1]
+        self._input_batch_shape = train_X.shape[:-2]
+        self._aug_batch_shape = self._input_batch_shape
+        if self._num_outputs > 1:
+            self._aug_batch_shape += torch.Size([self._num_outputs])
+
+    def _transform_tensor_args(
+        self, X: Tensor, Y: Tensor, Yvar: Optional[Tensor] = None
+    ) -> Tuple[Tensor, Tensor, Optional[Tensor]]:
+        r"""Transforms tensor arguments: for single output models, the output
+        dimension is squeezed and for multi-output models, the output dimension is
+        transformed into the left-most batch dimension.
+
+        Args:
+            X: A `n x d` or `batch_shape x n x d` (batch mode) tensor of training
+                features.
+            Y: A `n x m` or `batch_shape x n x m` (batch mode) tensor of
+                training observations.
+            Yvar: A `n x m` or `batch_shape x n x m` (batch mode) tensor of
                 observed measurement noise. Note: this will be None when using a model
                 that infers the noise level (e.g. a `SingleTaskGP`).
 
         Returns:
             3-element tuple containing
 
-            - A `input_batch_shape x (o) x n x d` tensor of training features.
-            - A `target_batch_shape x (o) x n` tensor of training observations.
-            - A `target_batch_shape x (o) x n` tensor observed measurement noise
+            - A `input_batch_shape x (m) x n x d` tensor of training features.
+            - A `target_batch_shape x (m) x n` tensor of training observations.
+            - A `target_batch_shape x (m) x n` tensor observed measurement noise
                 (or None).
         """
-        self._num_outputs = train_Y.shape[-1] if train_Y.dim() == train_X.dim() else 1
-        self._input_batch_shape = train_X.shape[:-2]
         if self._num_outputs > 1:
-            self._aug_batch_shape = self._input_batch_shape + torch.Size(
-                [self._num_outputs]
+            return multioutput_to_batch_mode_transform(
+                train_X=X, train_Y=Y, train_Yvar=Yvar, num_outputs=self._num_outputs
             )
-        else:
-            self._aug_batch_shape = self._input_batch_shape
-            # squeeze last dim if single output
-            if train_Y.dim() == train_X.dim():
-                train_Y = train_Y.squeeze(-1)
-            if train_Yvar is not None and train_Yvar.dim() == train_X.dim():
-                train_Yvar = train_Yvar.squeeze(-1)
-        return train_X, train_Y, train_Yvar
+        return X, Y.squeeze(-1), None if Yvar is None else Yvar.squeeze(-1)
 
     def posterior(
         self,
@@ -208,12 +280,12 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
         r"""Condition the model on new observations.
 
         Args:
-            X: A `batch_shape x m x d`-dim Tensor, where `d` is the dimension of
+            X: A `batch_shape x n' x d`-dim Tensor, where `d` is the dimension of
                 the feature space, `m` is the number of points per batch, and
                 `batch_shape` is the batch shape (must be compatible with the
                 batch shape of the model).
-            Y: A `batch_shape' x m x (o)`-dim Tensor, where `o` is the number of
-                model outputs, `m` is the number of points per batch, and
+            Y: A `batch_shape' x n' x m`-dim Tensor, where `m` is the number of
+                model outputs, `n'` is the number of points per batch, and
                 `batch_shape'` is the batch shape of the observations.
                 `batch_shape'` must be broadcastable to `batch_shape` using
                 standard broadcasting semantics. If `Y` has fewer batch dimensions
@@ -222,7 +294,7 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
 
         Returns:
             A `BatchedMultiOutputGPyTorchModel` object of the same type with
-            `n + m` training examples, representing the original model
+            `n + n'` training examples, representing the original model
             conditioned on the new observations `(X, Y)` (and possibly noise
             observations passed in via kwargs).
 
@@ -237,12 +309,21 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
             >>> new_Y = torch.cat([torch.sin(new_X[:, 0]), torch.cos(new_X[:, 1])], -1)
             >>> model = model.condition_on_observations(X=new_X, Y=new_Y)
         """
-        inputs, targets, noise = multioutput_to_batch_mode_transform(
-            train_X=X,
-            train_Y=Y,
-            num_outputs=self._num_outputs,
-            train_Yvar=kwargs.get("noise", None),
-        )
+        noise = kwargs.get("noise")
+        self._validate_tensor_args(X=X, Y=Y, Yvar=noise, strict=False)
+        inputs = X
+        if self._num_outputs > 1:
+            inputs, targets, noise = multioutput_to_batch_mode_transform(
+                train_X=X, train_Y=Y, num_outputs=self._num_outputs, train_Yvar=noise
+            )
+            # `multioutput_to_batch_mode_transform` removes the output dimension,
+            # which is necessary for `condition_on_observations`
+            targets = targets.unsqueeze(-1)
+            if noise is not None:
+                noise = noise.unsqueeze(-1)
+        else:
+            inputs = X
+            targets = Y
         if noise is not None:
             kwargs.update({"noise": noise})
         fantasy_model = super().condition_on_observations(X=inputs, Y=targets, **kwargs)

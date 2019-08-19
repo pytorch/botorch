@@ -34,7 +34,7 @@ class SingleTaskMultiFidelityGP(SingleTaskGP):
     Args:
         train_X: A `n x (d + s)` or `batch_shape x n x (d + s) ` (batch mode) tensor
             of training features, s is the dimension of the fidelity parameters.
-        train_Y: A `n x (o)` or `batch_shape x n x (o)` (batch mode) tensor of
+        train_Y: A `n x m` or `batch_shape x n x m` (batch mode) tensor of
             training observations.
         train_iteration_fidelity: An indicator of whether we have the training
             iteration fidelity variable.
@@ -50,7 +50,7 @@ class SingleTaskMultiFidelityGP(SingleTaskGP):
 
     Example:
         >>> train_X = torch.rand(20, 4)
-        >>> train_Y = train_X.pow(2).sum(dim=-1)
+        >>> train_Y = train_X.pow(2).sum(dim=-1, keepdim=True)
         >>> model = SingleTaskMultiFidelityGP(train_X, train_Y)
     """
 
@@ -62,7 +62,7 @@ class SingleTaskMultiFidelityGP(SingleTaskGP):
         train_data_fidelity: bool = True,
         likelihood: Optional[Likelihood] = None,
     ) -> None:
-        train_X, train_Y, _ = self._set_dimensions(train_X=train_X, train_Y=train_Y)
+        self._set_dimensions(train_X=train_X, train_Y=train_Y)
         num_fidelity = train_iteration_fidelity + train_data_fidelity
         ard_num_dims = train_X.shape[-1] - num_fidelity
         active_dimsX = list(range(train_X.shape[-1] - num_fidelity))
@@ -117,7 +117,7 @@ class SingleTaskGPLTKernel(SingleTaskGP):
     Args:
         train_X: A `n x (d + s)` or `batch_shape x n x (d + s) ` (batch mode) tensor
             of training features, s is the dimension of the fidelity parameters.
-        train_Y: A `n x (o)` or `batch_shape x n x (o)` (batch mode) tensor of
+        train_Y: A `n x m` or `batch_shape x n x m` (batch mode) tensor of
             training observations.
         dimension: The dimension of `x`.
         nu: The smoothness parameter fo Matern kernel: either 1/2, 3/2, or 5/2.
@@ -136,7 +136,7 @@ class SingleTaskGPLTKernel(SingleTaskGP):
 
     Example:
         >>> train_X = torch.rand(20, 4)
-        >>> train_Y = train_X.pow(2).sum(dim=-1)
+        >>> train_Y = train_X.pow(2).sum(dim=-1, keepdim=True)
         >>> model = SingleTaskGPLTKernel(train_X, train_Y)
     """
 
@@ -151,7 +151,7 @@ class SingleTaskGPLTKernel(SingleTaskGP):
     ) -> None:
         if not train_iteration_fidelity and not train_data_fidelity:
             raise UnsupportedError("You should have at least one fidelity parameter.")
-        train_X, train_Y, _ = self._set_dimensions(train_X=train_X, train_Y=train_Y)
+        self._set_dimensions(train_X=train_X, train_Y=train_Y)
         kernel = LinearTruncatedFidelityKernel(
             nu=nu,
             dimension=train_X.shape[-1],

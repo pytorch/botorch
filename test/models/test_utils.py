@@ -24,22 +24,8 @@ class TestMultiOutputToBatchModeTransform(unittest.TestCase):
                 "dtype": torch.double if double else torch.float,
             }
             n = 3
-            num_outputs = 1
-            train_X = torch.rand(n, 1, **tkwargs)
-            train_Y = torch.rand(n, **tkwargs)
-            train_Yvar = torch.rand(n, **tkwargs)
-            # num_outputs = 1 and train_Y has shape `n`
-            X_out, Y_out, Yvar_out = multioutput_to_batch_mode_transform(
-                train_X=train_X,
-                train_Y=train_Y,
-                num_outputs=num_outputs,
-                train_Yvar=train_Yvar,
-            )
-            self.assertTrue(torch.equal(X_out, train_X))
-            self.assertTrue(torch.equal(Y_out, train_Y))
-            self.assertTrue(torch.equal(Yvar_out, train_Yvar))
-            # num_outputs > 1
             num_outputs = 2
+            train_X = torch.rand(n, 1, **tkwargs)
             train_Y = torch.rand(n, num_outputs, **tkwargs)
             train_Yvar = torch.rand(n, num_outputs, **tkwargs)
             X_out, Y_out, Yvar_out = multioutput_to_batch_mode_transform(

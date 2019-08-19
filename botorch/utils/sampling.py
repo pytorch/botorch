@@ -34,15 +34,15 @@ def construct_base_samples(
         batch_shape: The batch shape of the base samples to generate. Typically,
             this is used with each dimension of size 1, so as to eliminate
             sampling variance across batches.
-        output_shape: The output shape (`q x o`) of the base samples to generate.
+        output_shape: The output shape (`q x m`) of the base samples to generate.
         sample_shape: The sample shape of the samples to draw.
         qmc: If True, use quasi-MC sampling (instead of iid draws).
         seed: If provided, use as a seed for the RNG.
 
     Returns:
-        A `sample_shape x batch_shape x output_shape` dimensional tensor of base
-        samples, drawn from a N(0, I_qo) distribution (using QMC if `qmc=True`).
-        Here `output_shape = q x o`.
+        A `sample_shape x batch_shape x mutput_shape` dimensional tensor of base
+        samples, drawn from a N(0, I_qm) distribution (using QMC if `qmc=True`).
+        Here `output_shape = q x m`.
 
     Example:
         >>> batch_shape = torch.Size([2])
@@ -89,9 +89,9 @@ def construct_base_samples_from_posterior(
         seed: If provided, use as a seed for the RNG.
 
     Returns:
-        A `num_samples x 1 x q x o` dimensional Tensor of base samples, drawn
-        from a N(0, I_qo) distribution (using QMC if `qmc=True`). Here `q` and
-        `o` are the same as in the posterior's `event_shape` `b x q x o`.
+        A `num_samples x 1 x q x m` dimensional Tensor of base samples, drawn
+        from a N(0, I_qm) distribution (using QMC if `qmc=True`). Here `q` and
+        `m` are the same as in the posterior's `event_shape` `b x q x m`.
         Importantly, this only obtain a single t-batch of samples, so as to not
         introduce any sampling variance across t-batches.
 
@@ -99,7 +99,7 @@ def construct_base_samples_from_posterior(
         >>> sample_shape = torch.Size([10])
         >>> samples = construct_base_samples_from_posterior(posterior, sample_shape)
     """
-    output_shape = posterior.event_shape[-2:]  # shape of joint output: q x o
+    output_shape = posterior.event_shape[-2:]  # shape of joint output: q x m
     if collapse_batch_dims:
         batch_shape = torch.Size([1] * len(posterior.event_shape[:-2]))
     else:
@@ -135,7 +135,7 @@ def draw_sobol_samples(
 
     Example:
         >>> bounds = torch.stack([torch.zeros(3), torch.ones(3)])
-        >>> samples = draw_sobol_samples(bounds, 10, 2)a
+        >>> samples = draw_sobol_samples(bounds, 10, 2)
     """
     d = bounds.shape[-1]
     lower = bounds[0]

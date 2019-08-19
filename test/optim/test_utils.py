@@ -164,7 +164,7 @@ class TestFixFeatures(unittest.TestCase):
 class testGetExtraMllArgs(unittest.TestCase):
     def test_get_extra_mll_args(self):
         train_X = torch.rand(3, 5)
-        train_Y = torch.rand(3)
+        train_Y = torch.rand(3, 1)
         model = SingleTaskGP(train_X=train_X, train_Y=train_Y)
         # test ExactMarginalLogLikelihood
         exact_mll = ExactMarginalLogLikelihood(model.likelihood, model)
@@ -221,7 +221,7 @@ class TestSampleAllPriors(unittest.TestCase):
         device = torch.device("cuda" if cuda else "cpu")
         for dtype in (torch.float, torch.double):
             train_X = torch.rand(3, 5, device=device, dtype=dtype)
-            train_Y = torch.rand(3, device=device, dtype=dtype)
+            train_Y = torch.rand(3, 1, device=device, dtype=dtype)
             model = SingleTaskGP(train_X=train_X, train_Y=train_Y)
             mll = ExactMarginalLogLikelihood(model.likelihood, model)
             mll.to(device=device, dtype=dtype)

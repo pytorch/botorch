@@ -20,7 +20,18 @@ from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 
 
-NOISE = [0.127, -0.113, -0.345, -0.034, -0.069, -0.272, 0.013, 0.056, 0.087, -0.081]
+NOISE = [
+    [0.127],
+    [-0.113],
+    [-0.345],
+    [-0.034],
+    [-0.069],
+    [-0.272],
+    [0.013],
+    [0.056],
+    [0.087],
+    [-0.081],
+]
 
 MAX_ITER_MSG = "TOTAL NO. of ITERATIONS REACHED LIMIT"
 MAX_RETRY_MSG = "Fitting failed on all retries."
@@ -32,7 +43,7 @@ class TestFitGPyTorchModel(unittest.TestCase):
         dtype = torch.double if double else torch.float
         train_x = torch.linspace(0, 1, 10, device=device, dtype=dtype).unsqueeze(-1)
         noise = torch.tensor(NOISE, device=device, dtype=dtype)
-        train_y = torch.sin(train_x.view(-1) * (2 * math.pi)) + noise
+        train_y = torch.sin(train_x * (2 * math.pi)) + noise
         model = SingleTaskGP(train_x, train_y)
         mll = ExactMarginalLogLikelihood(model.likelihood, model)
         return mll.to(device=device, dtype=dtype)
@@ -42,9 +53,9 @@ class TestFitGPyTorchModel(unittest.TestCase):
         dtype = torch.double if double else torch.float
         train_x = torch.linspace(0, 1, 10, device=device, dtype=dtype).unsqueeze(-1)
         noise = torch.tensor(NOISE, device=device, dtype=dtype)
-        train_y1 = torch.sin(train_x.view(-1) * (2 * math.pi)) + noise
-        train_y2 = torch.sin(train_x.view(-1) * (2 * math.pi)) + noise
-        train_y = torch.stack([train_y1, train_y2], dim=-1)
+        train_y1 = torch.sin(train_x * (2 * math.pi)) + noise
+        train_y2 = torch.sin(train_x * (2 * math.pi)) + noise
+        train_y = torch.cat([train_y1, train_y2], dim=-1)
         if kind == "SingleTaskGP":
             model = SingleTaskGP(train_x, train_y)
         elif kind == "FixedNoiseGP":
@@ -143,7 +154,7 @@ class TestFitGPyTorchModel(unittest.TestCase):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
             X_train = torch.rand(2, 2, device=device, dtype=dtype)
-            Y_train = torch.zeros(2, device=device, dtype=dtype)
+            Y_train = torch.zeros(2, 1, device=device, dtype=dtype)
             test_likelihood = GaussianLikelihood(
                 noise_constraint=GreaterThan(-1.0, transform=None, initial_value=0.0)
             )

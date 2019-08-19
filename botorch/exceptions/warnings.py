@@ -32,6 +32,12 @@ class OptimizationWarning(BotorchWarning):
 
 
 class SamplingWarning(BotorchWarning):
-    r"""Sampling releated warnings."""
+    r"""Sampling related warnings."""
+
+    pass
+
+
+class BotorchTensorDimensionWarning(BotorchWarning):
+    r"""Warning raised when a tensor possibly violates a botorch convention."""
 
     pass

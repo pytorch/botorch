@@ -14,7 +14,7 @@ class TestFixedFeatureAcquisitionFunction(unittest.TestCase):
     def test_fixed_features(self, cuda=False):
         device = torch.device("cuda" if cuda else "cpu")
         train_X = torch.rand(5, 3, device=device)
-        train_Y = train_X.norm(dim=-1)
+        train_Y = train_X.norm(dim=-1, keepdim=True)
         model = SingleTaskGP(train_X, train_Y).to(device=device).eval()
         qEI = qExpectedImprovement(model, best_f=0.0)
         # test single point

@@ -7,6 +7,7 @@ import unittest
 import warnings
 
 import torch
+from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.fit import fit_gpytorch_model
 from botorch.models import ModelListGP
@@ -22,13 +23,15 @@ from gpytorch.priors import GammaPrior
 
 
 def _get_random_data(n, **tkwargs):
-    train_x1 = torch.linspace(0, 0.95, n + 1, **tkwargs) + 0.05 * torch.rand(
-        n + 1, **tkwargs
+    train_x1 = torch.linspace(0, 0.95, n + 1, **tkwargs).unsqueeze(
+        -1
+    ) + 0.05 * torch.rand(n + 1, 1, **tkwargs)
+    train_x2 = torch.linspace(0, 0.95, n, **tkwargs).unsqueeze(-1) + 0.05 * torch.rand(
+        n, 1, **tkwargs
     )
-    train_x2 = torch.linspace(0, 0.95, n, **tkwargs) + 0.05 * torch.rand(n, **tkwargs)
     train_y1 = torch.sin(train_x1 * (2 * math.pi)) + 0.2 * torch.randn_like(train_x1)
     train_y2 = torch.cos(train_x2 * (2 * math.pi)) + 0.2 * torch.randn_like(train_x2)
-    return train_x1.unsqueeze(-1), train_x2.unsqueeze(-1), train_y1, train_y2
+    return train_x1, train_x2, train_y1, train_y2
 
 
 def _get_model(n, fixed_noise=False, **tkwargs):
@@ -185,12 +188,12 @@ class TestModelListGP(unittest.TestCase):
             self.assertIsInstance(cm, ModelListGP)
 
             # test condition_on_observations (incorrect input shape error)
-            with self.assertRaises(ValueError):
+            with self.assertRaises(BotorchTensorDimensionError):
                 model.condition_on_observations(
                     f_x, torch.rand(3, 2, 3, **tkwargs), noise=noise
                 )
             # test condition_on_observations (incorrect noise shape error)
-            with self.assertRaises(ValueError):
+            with self.assertRaises(BotorchTensorDimensionError):
                 model.condition_on_observations(
                     f_x, f_y, noise=torch.rand(2, 3, **tkwargs)
                 )
@@ -208,7 +211,7 @@ class TestModelListGP(unittest.TestCase):
         model1 = SingleTaskGP(train_X=train_x1, train_Y=train_y1)
         model = ModelListGP(model1)
         model.to(**tkwargs)
-        test_x = (torch.tensor([0.25, 0.75]).type_as(model.train_targets[0]),)
+        test_x = torch.tensor([[0.25], [0.75]], **tkwargs)
         posterior = model.posterior(test_x)
         self.assertIsInstance(posterior, GPyTorchPosterior)
         self.assertIsInstance(posterior.mvn, MultivariateNormal)

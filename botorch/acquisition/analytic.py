@@ -498,7 +498,7 @@ class NoisyExpectedImprovement(ExpectedImprovement):
 
         Args:
             model: A fitted single-outcome model.
-            X_observed: A `m x d` Tensor of observed points that are likely to
+            X_observed: A `n x d` Tensor of observed points that are likely to
                 be the best observed points so far.
             num_fantasies: The number of fantasies to generate. The higher this
                 number the more accurate the model (at the expense of model
@@ -557,9 +557,9 @@ def _get_noiseless_fantasy_model(
 
     Args:
         model: a fitted FixedNoiseGP
-        batch_X_observed: A `b x m x d` tensor of inputs where `b` is the number of
+        batch_X_observed: A `b x n x d` tensor of inputs where `b` is the number of
             fantasies.
-        Y_fantasized: A `b x m` tensor of fantasized targets where `b` is the number of
+        Y_fantasized: A `b x n` tensor of fantasized targets where `b` is the number of
             fantasies.
 
     Returns:
@@ -571,8 +571,8 @@ def _get_noiseless_fantasy_model(
     # uses independent hyperparameters for each batch).
     fantasy_model = FixedNoiseGP(
         train_X=model.train_inputs[0],
-        train_Y=model.train_targets,
-        train_Yvar=model.likelihood.noise_covar.noise,
+        train_Y=model.train_targets.unsqueeze(-1),
+        train_Yvar=model.likelihood.noise_covar.noise.unsqueeze(-1),
     )
     # update training inputs/targets to be batch mode fantasies
     fantasy_model.set_train_data(

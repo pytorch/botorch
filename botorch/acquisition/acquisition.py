@@ -33,7 +33,7 @@ class AcquisitionFunction(Module, ABC):
         r"""Informs the acquisition function about pending design points.
 
         Args:
-            X_pending: `m x d` Tensor with `m` `d`-dim design points that have
+            X_pending: `n x d` Tensor with `n` `d`-dim design points that have
                 been submitted for evaluation but have not yet been evaluated.
         """
         if X_pending is not None:
