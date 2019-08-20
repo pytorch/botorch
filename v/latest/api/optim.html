@@ -165,10 +165,13 @@ is the value of the batch acquisition function to be maximized.</p></li>
 </dd>
 </dl>
 <p class="rubric">Example</p>
-<p># To get <cite>n=10</cite> starting points of q-batch size <cite>q=3</cite> for model with <cite>d=6</cite>:
-&gt;&gt;&gt; qUCB = qUpperConfidenceBound(model, beta=0.1)
-&gt;&gt;&gt; Xrnd = torch.rand(500, 3, 6)
-&gt;&gt;&gt; Xinit = initialize_q_batch(Xrnd, qUCB(Xrnd), 10)</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># To get `n=10` starting points of q-batch size `q=3`</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># for model with `d=6`:</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">qUCB</span> <span class="o">=</span> <span class="n">qUpperConfidenceBound</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Xrnd</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Xinit</span> <span class="o">=</span> <span class="n">initialize_q_batch</span><span class="p">(</span><span class="n">Xrnd</span><span class="p">,</span> <span class="n">qUCB</span><span class="p">(</span><span class="n">Xrnd</span><span class="p">),</span> <span class="mi">10</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 <dl class="function">
 <dt id="botorch.optim.initializers.initialize_q_batch_nonneg">
@@ -201,10 +204,13 @@ which to ignore samples. All input samples for which
 </dd>
 </dl>
 <p class="rubric">Example</p>
-<p># To get <cite>n=10</cite> starting points of q-batch size <cite>q=3</cite> for model with <cite>d=6</cite>:
-&gt;&gt;&gt; qEI = qExpectedImprovement(model, best_f=0.2)
-&gt;&gt;&gt; Xrnd = torch.rand(500, 3, 6)
-&gt;&gt;&gt; Xinit = initialize_q_batch(Xrnd, qEI(Xrnd), 10)</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># To get `n=10` starting points of q-batch size `q=3`</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># for model with `d=6`:</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">qEI</span> <span class="o">=</span> <span class="n">qExpectedImprovement</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">best_f</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Xrnd</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Xinit</span> <span class="o">=</span> <span class="n">initialize_q_batch</span><span class="p">(</span><span class="n">Xrnd</span><span class="p">,</span> <span class="n">qEI</span><span class="p">(</span><span class="n">Xrnd</span><span class="p">),</span> <span class="mi">10</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 </div>
 <div class="section" id="module-botorch.optim.numpy_converter">
@@ -359,7 +365,7 @@ functions).</p></li>
 <li><p><strong>num_restarts</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of starting points for multistart acquisition
 function optimization.</p></li>
 <li><p><strong>raw_samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of samples for initialization</p></li>
-<li><p><strong>options</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]]) – Options for candidate generation.</p></li>
+<li><p><strong>options</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]]) – Options for candidate generation.</p></li>
 <li><p><strong>constraints</strong> (<em>equality</em>) – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs</cite></p></li>

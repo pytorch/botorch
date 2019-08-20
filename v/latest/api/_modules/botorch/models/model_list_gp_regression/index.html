@@ -73,12 +73,12 @@
         <span class="sa">r</span><span class="sd">"""Condition the model on new observations.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            X: A `batch_shape x m x d`-dim Tensor, where `d` is the dimension of</span>
-<span class="sd">                the feature space, `m` is the number of points per batch, and</span>
+<span class="sd">            X: A `batch_shape x n' x d`-dim Tensor, where `d` is the dimension of</span>
+<span class="sd">                the feature space, `n'` is the number of points per batch, and</span>
 <span class="sd">                `batch_shape` is the batch shape (must be compatible with the</span>
 <span class="sd">                batch shape of the model).</span>
-<span class="sd">            Y: A `batch_shape' x m x (o)`-dim Tensor, where `o` is the number of</span>
-<span class="sd">                model outputs, `m` is the number of points per batch, and</span>
+<span class="sd">            Y: A `batch_shape' x n' x m`-dim Tensor, where `m` is the number of</span>
+<span class="sd">                model outputs, `n'` is the number of points per batch, and</span>
 <span class="sd">                `batch_shape'` is the batch shape of the observations.</span>
 <span class="sd">                `batch_shape'` must be broadcastable to `batch_shape` using</span>
 <span class="sd">                standard broadcasting semantics. If `Y` has fewer batch dimensions</span>
@@ -89,9 +89,12 @@
 <span class="sd">            A `ModelListGPyTorchModel` representing the original model</span>
 <span class="sd">            conditioned on the new observations `(X, Y)` (and possibly noise</span>
 <span class="sd">            observations passed in via kwargs). Here the `i`-th model has</span>
-<span class="sd">            `n_i + m` training examples, where the `m` training examples have</span>
+<span class="sd">            `n_i + n'` training examples, where the `n'` training examples have</span>
 <span class="sd">            been added and all test-time caches have been updated.</span>
 <span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_tensor_args</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"noise"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span>
         <span class="n">inputs</span> <span class="o">=</span> <span class="p">[</span><span class="n">X</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_outputs</span>
         <span class="k">if</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_outputs</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>

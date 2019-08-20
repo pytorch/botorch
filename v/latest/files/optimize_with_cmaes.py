@@ -1,21 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# ## Optimize acquisition functions using CMA-ES
-# 
-# In this tutorial, we show how to use an external optimizer (in this case [CMA-ES](https://en.wikipedia.org/wiki/CMA-ES)) for optimizing BoTorch acquisition functions. CMA-ES is a zero-th order optimizer, meaning that it only uses function evaluations and does not require gradient information. This is of course very useful if gradient informatiom about the function to be optimized is unavailable. 
-# 
-# In BoTorch, we typically do have gradient information available (thanks, autograd!). One is also generally better off using this information, rather than just ignoring it. However, for certain custom models or acquisition functions, we may not be able to backprop through the acquisition function and/or model. In such instances, using a zero-th order optimizer is appropriate.
-# 
-# For this example we use the [PyCMA](https://github.com/CMA-ES/pycma) implementation of CMA-ES. PyCMA is easily installed via pip by running `pip install cma`.
-
-# ### Setting up the acquisition function
-# 
-# For the purpose of this tutorial, we'll use a basic `UpperConfidenceBound` acquisition function on a basic model fit on synthetic data. Please see the documentation for [Models](../docs/models) and [Acquisition Functions](../docs/acquisition) for more information.
-
-# In[1]:
-
-
 import math
 import torch
 
@@ -24,34 +6,16 @@ from botorch.models import SingleTaskGP
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
 X = torch.rand(20, 2) - 0.5
-Y = torch.sin(2 * math.pi * X[:, 0]) + torch.cos(2 * math.pi * X[:, 1])
+Y = (torch.sin(2 * math.pi * X[:, 0]) + torch.cos(2 * math.pi * X[:, 1])).unsqueeze(-1)
 Y += 0.1 * torch.randn_like(Y)
 
 gp = SingleTaskGP(X, Y)
 mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
 fit_gpytorch_model(mll);
 
-
-# In[2]:
-
-
 from botorch.acquisition import UpperConfidenceBound
 
 UCB = UpperConfidenceBound(gp, beta=0.1)
-
-
-# ### Optimizing the acquisition function using CMA-ES
-# 
-# **Note:** Relative to sequential evaluations, parallel evaluations of ther acqusition function are extremely fast in botorch (due to automatic parallelization across batch dimensions). In order to exploit this, we use the "ask/tell" interface to `cma` - this way we can batch-evaluate the whole CMA-ES population in parallel.
-# 
-# In this examle we use an initial standard deviation $\sigma_0 = 0.2$ and a population size $\lambda = 50$. 
-# We also constrain the input `X` to the unit cube `[0, 1]^d`.
-# See `cma`'s [API Reference](http://cma.gforge.inria.fr/apidocs-pycma/cma.evolution_strategy.CMAEvolutionStrategy.html) for more information on these options.
-# 
-# With this, we can optimize this acquistition function as follows:
-
-# In[3]:
-
 
 import cma
 import numpy as np
@@ -85,4 +49,3 @@ with torch.no_grad():
 best_x = torch.from_numpy(es.best.x).to(X)
 
 best_x
-

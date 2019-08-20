@@ -524,7 +524,7 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted single-outcome model.</span>
-<span class="sd">            X_observed: A `m x d` Tensor of observed points that are likely to</span>
+<span class="sd">            X_observed: A `n x d` Tensor of observed points that are likely to</span>
 <span class="sd">                be the best observed points so far.</span>
 <span class="sd">            num_fantasies: The number of fantasies to generate. The higher this</span>
 <span class="sd">                number the more accurate the model (at the expense of model</span>
@@ -583,9 +583,9 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">        model: a fitted FixedNoiseGP</span>
-<span class="sd">        batch_X_observed: A `b x m x d` tensor of inputs where `b` is the number of</span>
+<span class="sd">        batch_X_observed: A `b x n x d` tensor of inputs where `b` is the number of</span>
 <span class="sd">            fantasies.</span>
-<span class="sd">        Y_fantasized: A `b x m` tensor of fantasized targets where `b` is the number of</span>
+<span class="sd">        Y_fantasized: A `b x n` tensor of fantasized targets where `b` is the number of</span>
 <span class="sd">            fantasies.</span>
 
 <span class="sd">    Returns:</span>
@@ -597,8 +597,8 @@
     <span class="c1"># uses independent hyperparameters for each batch).</span>
     <span class="n">fantasy_model</span> <span class="o">=</span> <span class="n">FixedNoiseGP</span><span class="p">(</span>
         <span class="n">train_X</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
-        <span class="n">train_Y</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">train_targets</span><span class="p">,</span>
-        <span class="n">train_Yvar</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">likelihood</span><span class="o">.</span><span class="n">noise_covar</span><span class="o">.</span><span class="n">noise</span><span class="p">,</span>
+        <span class="n">train_Y</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">train_targets</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+        <span class="n">train_Yvar</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">likelihood</span><span class="o">.</span><span class="n">noise_covar</span><span class="o">.</span><span class="n">noise</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span>
     <span class="p">)</span>
     <span class="c1"># update training inputs/targets to be batch mode fantasies</span>
     <span class="n">fantasy_model</span><span class="o">.</span><span class="n">set_train_data</span><span class="p">(</span>

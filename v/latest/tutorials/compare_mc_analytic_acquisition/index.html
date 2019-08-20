@@ -115,11 +115,48 @@
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">train_x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
-<span class="n">train_obj</span> <span class="o">=</span> <span class="n">neg_hartmann6</span><span class="p">(</span><span class="n">train_x</span><span class="p">)</span>
+<span class="n">train_obj</span> <span class="o">=</span> <span class="n">neg_hartmann6</span><span class="p">(</span><span class="n">train_x</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="o">=</span><span class="n">train_x</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_obj</span><span class="p">)</span>
 <span class="n">mll</span> <span class="o">=</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
-<span class="n">fit_gpytorch_model</span><span class="p">(</span><span class="n">mll</span><span class="p">);</span>
+<span class="n">fit_gpytorch_model</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>
 </pre></div>
+</div>
+</div>
+</div>
+<div class="output_wrapper">
+<div class="output">
+<div class="output_area">
+<div class="prompt output_prompt">Out[2]:</div>
+<div class="output_text output_subarea output_execute_result">
+<pre>ExactMarginalLogLikelihood(
+  (likelihood): GaussianLikelihood(
+    (quadrature): GaussHermiteQuadrature1D()
+    (noise_covar): HomoskedasticNoise(
+      (noise_prior): GammaPrior()
+      (raw_noise_constraint): GreaterThan(1.000E-04)
+    )
+  )
+  (model): SingleTaskGP(
+    (likelihood): GaussianLikelihood(
+      (quadrature): GaussHermiteQuadrature1D()
+      (noise_covar): HomoskedasticNoise(
+        (noise_prior): GammaPrior()
+        (raw_noise_constraint): GreaterThan(1.000E-04)
+      )
+    )
+    (mean_module): ConstantMean()
+    (covar_module): ScaleKernel(
+      (base_kernel): MaternKernel(
+        (lengthscale_prior): GammaPrior()
+        (raw_lengthscale_constraint): Positive()
+        (distance_module): Distance()
+      )
+      (outputscale_prior): GammaPrior()
+      (raw_outputscale_constraint): Positive()
+    )
+  )
+)</pre>
+</div>
 </div>
 </div>
 </div>
@@ -159,7 +196,7 @@
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.optim</span> <span class="k">import</span> <span class="n">optimize_acqf</span>
 
-<span class="n">new_point_analytic</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
+<span class="n">new_point_analytic</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
     <span class="n">acq_function</span><span class="o">=</span><span class="n">EI</span><span class="p">,</span>
     <span class="n">bounds</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[</span><span class="mf">0.0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">6</span><span class="p">,</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">6</span><span class="p">]),</span>
     <span class="n">q</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
@@ -187,7 +224,7 @@
 <div class="output_area">
 <div class="prompt output_prompt">Out[5]:</div>
 <div class="output_text output_subarea output_execute_result">
-<pre>tensor([[0.2553, 0.4734, 0.1621, 0.3114, 0.3896, 0.1460]])</pre>
+<pre>tensor([[0.1245, 0.2060, 0.4040, 0.4277, 0.5593, 0.7896]])</pre>
 </div>
 </div>
 </div>
@@ -214,7 +251,7 @@
     <span class="n">model</span><span class="p">,</span> <span class="n">best_f</span><span class="o">=</span><span class="n">best_value</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span>
 <span class="p">)</span>
 <span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="c1"># to keep the restart conditions the same</span>
-<span class="n">new_point_mc</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
+<span class="n">new_point_mc</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
     <span class="n">acq_function</span><span class="o">=</span><span class="n">MC_EI</span><span class="p">,</span>
     <span class="n">bounds</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[</span><span class="mf">0.0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">6</span><span class="p">,</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">6</span><span class="p">]),</span>
     <span class="n">q</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
@@ -242,7 +279,7 @@
 <div class="output_area">
 <div class="prompt output_prompt">Out[7]:</div>
 <div class="output_text output_subarea output_execute_result">
-<pre>tensor([[0.2553, 0.4736, 0.1621, 0.3114, 0.3897, 0.1460]])</pre>
+<pre>tensor([[0.1244, 0.2056, 0.4038, 0.4278, 0.5594, 0.7896]])</pre>
 </div>
 </div>
 </div>
@@ -270,7 +307,7 @@
 <div class="output_area">
 <div class="prompt output_prompt">Out[8]:</div>
 <div class="output_text output_subarea output_execute_result">
-<pre>tensor(0.0002)</pre>
+<pre>tensor(0.0004)</pre>
 </div>
 </div>
 </div>
@@ -336,7 +373,7 @@
 <div class="output_area">
 <div class="prompt output_prompt">Out[10]:</div>
 <div class="output_text output_subarea output_execute_result">
-<pre>tensor([[0.2553, 0.4731, 0.1623, 0.3106, 0.3893, 0.1455]])</pre>
+<pre>tensor([[0.1235, 0.2063, 0.4040, 0.4283, 0.5598, 0.7908]])</pre>
 </div>
 </div>
 </div>
@@ -357,7 +394,7 @@
 <div class="output_area">
 <div class="prompt output_prompt">Out[11]:</div>
 <div class="output_text output_subarea output_execute_result">
-<pre>tensor(0.0010)</pre>
+<pre>tensor(0.0018)</pre>
 </div>
 </div>
 </div>
@@ -407,7 +444,7 @@
 <div class="output_area">
 <div class="prompt output_prompt">Out[13]:</div>
 <div class="output_text output_subarea output_execute_result">
-<pre>tensor([[0.2566, 0.4745, 0.1638, 0.3110, 0.3896, 0.1485]])</pre>
+<pre>tensor([[0.1200, 0.2288, 0.4098, 0.4290, 0.5729, 0.7978]])</pre>
 </div>
 </div>
 </div>
@@ -428,8 +465,19 @@
 <div class="output_area">
 <div class="prompt output_prompt">Out[14]:</div>
 <div class="output_text output_subarea output_execute_result">
-<pre>tensor(0.0035)</pre>
+<pre>tensor(0.0288)</pre>
 </div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [ ]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span> 
+</pre></div>
 </div>
 </div>
 </div>

@@ -60,15 +60,15 @@
 <span class="sd">        batch_shape: The batch shape of the base samples to generate. Typically,</span>
 <span class="sd">            this is used with each dimension of size 1, so as to eliminate</span>
 <span class="sd">            sampling variance across batches.</span>
-<span class="sd">        output_shape: The output shape (`q x o`) of the base samples to generate.</span>
+<span class="sd">        output_shape: The output shape (`q x m`) of the base samples to generate.</span>
 <span class="sd">        sample_shape: The sample shape of the samples to draw.</span>
 <span class="sd">        qmc: If True, use quasi-MC sampling (instead of iid draws).</span>
 <span class="sd">        seed: If provided, use as a seed for the RNG.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        A `sample_shape x batch_shape x output_shape` dimensional tensor of base</span>
-<span class="sd">        samples, drawn from a N(0, I_qo) distribution (using QMC if `qmc=True`).</span>
-<span class="sd">        Here `output_shape = q x o`.</span>
+<span class="sd">        A `sample_shape x batch_shape x mutput_shape` dimensional tensor of base</span>
+<span class="sd">        samples, drawn from a N(0, I_qm) distribution (using QMC if `qmc=True`).</span>
+<span class="sd">        Here `output_shape = q x m`.</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; batch_shape = torch.Size([2])</span>
@@ -115,9 +115,9 @@
 <span class="sd">        seed: If provided, use as a seed for the RNG.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        A `num_samples x 1 x q x o` dimensional Tensor of base samples, drawn</span>
-<span class="sd">        from a N(0, I_qo) distribution (using QMC if `qmc=True`). Here `q` and</span>
-<span class="sd">        `o` are the same as in the posterior's `event_shape` `b x q x o`.</span>
+<span class="sd">        A `num_samples x 1 x q x m` dimensional Tensor of base samples, drawn</span>
+<span class="sd">        from a N(0, I_qm) distribution (using QMC if `qmc=True`). Here `q` and</span>
+<span class="sd">        `m` are the same as in the posterior's `event_shape` `b x q x m`.</span>
 <span class="sd">        Importantly, this only obtain a single t-batch of samples, so as to not</span>
 <span class="sd">        introduce any sampling variance across t-batches.</span>
 
@@ -125,7 +125,7 @@
 <span class="sd">        &gt;&gt;&gt; sample_shape = torch.Size([10])</span>
 <span class="sd">        &gt;&gt;&gt; samples = construct_base_samples_from_posterior(posterior, sample_shape)</span>
 <span class="sd">    """</span>
-    <span class="n">output_shape</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">event_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>  <span class="c1"># shape of joint output: q x o</span>
+    <span class="n">output_shape</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">event_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>  <span class="c1"># shape of joint output: q x m</span>
     <span class="k">if</span> <span class="n">collapse_batch_dims</span><span class="p">:</span>
         <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">posterior</span><span class="o">.</span><span class="n">event_shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]))</span>
     <span class="k">else</span><span class="p">:</span>
@@ -161,7 +161,7 @@
 
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; bounds = torch.stack([torch.zeros(3), torch.ones(3)])</span>
-<span class="sd">        &gt;&gt;&gt; samples = draw_sobol_samples(bounds, 10, 2)a</span>
+<span class="sd">        &gt;&gt;&gt; samples = draw_sobol_samples(bounds, 10, 2)</span>
 <span class="sd">    """</span>
     <span class="n">d</span> <span class="o">=</span> <span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
     <span class="n">lower</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>

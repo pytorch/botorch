@@ -166,6 +166,33 @@
     <span class="k">return</span> <span class="n">decorator</span></div>
 
 
+<div class="viewcode-block" id="concatenate_pending_points"><a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.concatenate_pending_points">[docs]</a><span class="k">def</span> <span class="nf">concatenate_pending_points</span><span class="p">(</span>
+    <span class="n">method</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">Any</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">Any</span><span class="p">]:</span>
+    <span class="sa">r</span><span class="sd">"""Decorator concatenating X_pending into an acquisition function's argument.</span>
+
+<span class="sd">    This decorator works on the `forward` method of acquisition functions taking</span>
+<span class="sd">    a tensor `X` as the argument. If the acquisition function has an `X_pending`</span>
+<span class="sd">    attribute (that is not `None`), this is concatenated into the input `X`,</span>
+<span class="sd">    appropriately expanding the pending points to match the batch shape of `X`.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; class ExampleAcquisitionFunction:</span>
+<span class="sd">        &gt;&gt;&gt;     @concatenate_pending_points</span>
+<span class="sd">        &gt;&gt;&gt;     @t_batch_mode_transform()</span>
+<span class="sd">        &gt;&gt;&gt;     def forward(self, X):</span>
+<span class="sd">        &gt;&gt;&gt;         ...</span>
+<span class="sd">    """</span>
+
+    <span class="nd">@wraps</span><span class="p">(</span><span class="n">method</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">decorated</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">X_pending</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">X</span><span class="p">,</span> <span class="n">match_batch_shape</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">X_pending</span><span class="p">,</span> <span class="n">X</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">method</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">decorated</span></div>
+
+
 <div class="viewcode-block" id="match_batch_shape"><a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.match_batch_shape">[docs]</a><span class="k">def</span> <span class="nf">match_batch_shape</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
     <span class="sa">r</span><span class="sd">"""Matches the batch dimension of a tensor to that of another tensor.</span>
 

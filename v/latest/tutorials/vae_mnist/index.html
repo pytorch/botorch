@@ -100,7 +100,7 @@
 <span class="kn">from</span> <span class="nn">torchvision</span> <span class="k">import</span> <span class="n">datasets</span> <span class="c1"># transforms</span>
 
 <span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">"cuda"</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">"cpu"</span><span class="p">)</span>
-<span class="n">dtype</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">float</span>
+<span class="n">dtype</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">double</span>
 </pre></div>
 </div>
 </div>
@@ -157,7 +157,7 @@ $$\text{image} \longrightarrow \text{image classifier} \longrightarrow \text{sco
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">PRETRAINED_LOCATION</span> <span class="o">=</span> <span class="s2">"./pretrained_models"</span>
 
-<span class="n">cnn_model</span> <span class="o">=</span> <span class="n">Net</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+<span class="n">cnn_model</span> <span class="o">=</span> <span class="n">Net</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
 <span class="n">cnn_state_dict</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">PRETRAINED_LOCATION</span><span class="p">,</span> <span class="s2">"mnist_cnn.pt"</span><span class="p">),</span> <span class="n">map_location</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
 <span class="n">cnn_model</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">cnn_state_dict</span><span class="p">);</span>
 </pre></div>
@@ -204,7 +204,7 @@ $$\text{image} \longrightarrow \text{image classifier} \longrightarrow \text{sco
         <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reparameterize</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">logvar</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">z</span><span class="p">),</span> <span class="n">mu</span><span class="p">,</span> <span class="n">logvar</span>
 
-<span class="n">vae_model</span> <span class="o">=</span> <span class="n">VAE</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+<span class="n">vae_model</span> <span class="o">=</span> <span class="n">VAE</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
 <span class="n">vae_state_dict</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">PRETRAINED_LOCATION</span><span class="p">,</span> <span class="s2">"mnist_vae.pt"</span><span class="p">),</span> <span class="n">map_location</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
 <span class="n">vae_model</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">vae_state_dict</span><span class="p">);</span>
 </pre></div>
@@ -294,25 +294,28 @@ $$\text{image} \longrightarrow \text{image classifier} \longrightarrow \text{sco
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.models</span> <span class="k">import</span> <span class="n">SingleTaskGP</span>
 <span class="kn">from</span> <span class="nn">gpytorch.mlls.exact_marginal_log_likelihood</span> <span class="k">import</span> <span class="n">ExactMarginalLogLikelihood</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="k">import</span> <span class="n">standardize</span><span class="p">,</span> <span class="n">normalize</span><span class="p">,</span> <span class="n">unnormalize</span>
+
+<span class="n">d</span> <span class="o">=</span> <span class="mi">20</span>
+<span class="n">bounds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[</span><span class="o">-</span><span class="mf">6.0</span><span class="p">]</span> <span class="o">*</span> <span class="n">d</span><span class="p">,</span> <span class="p">[</span><span class="mf">6.0</span><span class="p">]</span> <span class="o">*</span> <span class="n">d</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
 
 
-<span class="n">bounds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[</span><span class="o">-</span><span class="mf">6.0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">20</span><span class="p">,</span> <span class="p">[</span><span class="mf">6.0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">20</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
-
-
-<span class="k">def</span> <span class="nf">initialize_model</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">gen_initial_data</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
     <span class="c1"># generate training data  </span>
-    <span class="n">train_x</span> <span class="o">=</span> <span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span> <span class="o">+</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">train_obj</span> <span class="o">=</span> <span class="n">score_image_recognition</span><span class="p">(</span><span class="n">decode</span><span class="p">(</span><span class="n">train_x</span><span class="p">))</span>
+    <span class="n">train_x</span> <span class="o">=</span> <span class="n">unnormalize</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">),</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">)</span>
+    <span class="n">train_obj</span> <span class="o">=</span> <span class="n">score_image_recognition</span><span class="p">(</span><span class="n">decode</span><span class="p">(</span><span class="n">train_x</span><span class="p">))</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># add output dimension</span>
     <span class="n">best_observed_value</span> <span class="o">=</span> <span class="n">train_obj</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
-    
-    <span class="c1"># define models for objective and constraint</span>
+    <span class="k">return</span> <span class="n">train_x</span><span class="p">,</span> <span class="n">train_obj</span><span class="p">,</span> <span class="n">best_observed_value</span>
+
+<span class="k">def</span> <span class="nf">get_fitted_model</span><span class="p">(</span><span class="n">train_x</span><span class="p">,</span> <span class="n">train_obj</span><span class="p">,</span> <span class="n">state_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="c1"># initialize and fit model</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="o">=</span><span class="n">train_x</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_obj</span><span class="p">)</span>
-    <span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_x</span><span class="p">)</span>
-    
+    <span class="k">if</span> <span class="n">state_dict</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">state_dict</span><span class="p">)</span>
     <span class="n">mll</span> <span class="o">=</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
-    <span class="n">mll</span> <span class="o">=</span> <span class="n">mll</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_x</span><span class="p">)</span>
-    
-    <span class="k">return</span> <span class="n">train_x</span><span class="p">,</span> <span class="n">train_obj</span><span class="p">,</span> <span class="n">mll</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">best_observed_value</span>
+    <span class="n">mll</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_x</span><span class="p">)</span>
+    <span class="n">fit_gpytorch_model</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">model</span>
 </pre></div>
 </div>
 </div>
@@ -327,7 +330,7 @@ $$\text{image} \longrightarrow \text{image classifier} \longrightarrow \text{sco
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In [9]:</div>
+<div class="prompt input_prompt">In [11]:</div>
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.optim</span> <span class="k">import</span> <span class="n">optimize_acqf</span>
@@ -340,17 +343,20 @@ $$\text{image} \longrightarrow \text{image classifier} \longrightarrow \text{sco
     <span class="sd">"""Optimizes the acquisition function, and returns a new candidate and a noisy observation"""</span>
     
     <span class="c1"># optimize</span>
-    <span class="n">candidates</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
+    <span class="n">candidates</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
         <span class="n">acq_function</span><span class="o">=</span><span class="n">acq_func</span><span class="p">,</span>
-        <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">),</span> 
+            <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">),</span>
+        <span class="p">]),</span>
         <span class="n">q</span><span class="o">=</span><span class="n">BATCH_SIZE</span><span class="p">,</span>
         <span class="n">num_restarts</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
         <span class="n">raw_samples</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># observe new values </span>
-    <span class="n">new_x</span> <span class="o">=</span> <span class="n">candidates</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
-    <span class="n">new_obj</span> <span class="o">=</span> <span class="n">score_image_recognition</span><span class="p">(</span><span class="n">decode</span><span class="p">(</span><span class="n">new_x</span><span class="p">))</span>
+    <span class="n">new_x</span> <span class="o">=</span> <span class="n">unnormalize</span><span class="p">(</span><span class="n">candidates</span><span class="o">.</span><span class="n">detach</span><span class="p">(),</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">)</span>
+    <span class="n">new_obj</span> <span class="o">=</span> <span class="n">score_image_recognition</span><span class="p">(</span><span class="n">decode</span><span class="p">(</span><span class="n">new_x</span><span class="p">))</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># add output dimension</span>
     <span class="k">return</span> <span class="n">new_x</span><span class="p">,</span> <span class="n">new_obj</span>
 </pre></div>
 </div>
@@ -366,7 +372,7 @@ $$\text{image} \longrightarrow \text{image classifier} \longrightarrow \text{sco
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In [10]:</div>
+<div class="prompt input_prompt">In [12]:</div>
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch</span> <span class="k">import</span> <span class="n">fit_gpytorch_model</span>
@@ -381,7 +387,7 @@ $$\text{image} \longrightarrow \text{image classifier} \longrightarrow \text{sco
 <span class="n">best_observed</span> <span class="o">=</span> <span class="p">[]</span>
 
 <span class="c1"># call helper function to initialize model</span>
-<span class="n">train_x</span><span class="p">,</span> <span class="n">train_obj</span><span class="p">,</span> <span class="n">mll</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">best_value</span> <span class="o">=</span> <span class="n">initialize_model</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">train_x</span><span class="p">,</span> <span class="n">train_obj</span><span class="p">,</span> <span class="n">best_value</span> <span class="o">=</span> <span class="n">gen_initial_data</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 <span class="n">best_observed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">best_value</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -397,7 +403,7 @@ $$\text{image} \longrightarrow \text{image classifier} \longrightarrow \text{sco
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In [11]:</div>
+<div class="prompt input_prompt">In [13]:</div>
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">warnings</span>
@@ -406,15 +412,20 @@ $$\text{image} \longrightarrow \text{image classifier} \longrightarrow \text{sco
 <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Running BO "</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s1">''</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="k">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
 
+<span class="n">state_dict</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="c1"># run N_BATCH rounds of BayesOpt after the initial random batch</span>
 <span class="k">for</span> <span class="n">iteration</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N_BATCH</span><span class="p">):</span>    
 
     <span class="c1"># fit the model</span>
-    <span class="n">fit_gpytorch_model</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>
-
+    <span class="n">model</span> <span class="o">=</span> <span class="n">get_fitted_model</span><span class="p">(</span>
+        <span class="n">normalize</span><span class="p">(</span><span class="n">train_x</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">),</span> 
+        <span class="n">standardize</span><span class="p">(</span><span class="n">train_obj</span><span class="p">),</span> 
+        <span class="n">state_dict</span><span class="o">=</span><span class="n">state_dict</span><span class="p">,</span>
+    <span class="p">)</span>
+    
     <span class="c1"># define the qNEI acquisition module using a QMC sampler</span>
     <span class="n">qmc_sampler</span> <span class="o">=</span> <span class="n">SobolQMCNormalSampler</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="n">MC_SAMPLES</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
-    <span class="n">qEI</span> <span class="o">=</span> <span class="n">qExpectedImprovement</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="n">qmc_sampler</span><span class="p">,</span> <span class="n">best_f</span><span class="o">=</span><span class="n">best_value</span><span class="p">)</span>
+    <span class="n">qEI</span> <span class="o">=</span> <span class="n">qExpectedImprovement</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="n">qmc_sampler</span><span class="p">,</span> <span class="n">best_f</span><span class="o">=</span><span class="n">standardize</span><span class="p">(</span><span class="n">train_obj</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
 
     <span class="c1"># optimize and get new observation</span>
     <span class="n">new_x</span><span class="p">,</span> <span class="n">new_obj</span> <span class="o">=</span> <span class="n">optimize_acqf_and_get_observation</span><span class="p">(</span><span class="n">qEI</span><span class="p">)</span>
@@ -424,11 +435,10 @@ $$\text{image} \longrightarrow \text{image classifier} \longrightarrow \text{sco
     <span class="n">train_obj</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">train_obj</span><span class="p">,</span> <span class="n">new_obj</span><span class="p">))</span>
 
     <span class="c1"># update progress</span>
-    <span class="n">best_value</span> <span class="o">=</span> <span class="n">score_image_recognition</span><span class="p">(</span><span class="n">decode</span><span class="p">(</span><span class="n">train_x</span><span class="p">))</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+    <span class="n">best_value</span> <span class="o">=</span> <span class="n">train_obj</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
     <span class="n">best_observed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">best_value</span><span class="p">)</span>
-
-    <span class="c1"># reinitialize the model so it is ready for fitting on next iteration</span>
-    <span class="n">model</span><span class="o">.</span><span class="n">set_train_data</span><span class="p">(</span><span class="n">train_x</span><span class="p">,</span> <span class="n">train_obj</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    
+    <span class="n">state_dict</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span>
     
     <span class="nb">print</span><span class="p">(</span><span class="s2">"."</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s1">''</span><span class="p">)</span>
 </pre></div>
@@ -456,7 +466,7 @@ Running BO ..................................................</pre>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In [12]:</div>
+<div class="prompt input_prompt">In [14]:</div>
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -482,9 +492,118 @@ Running BO ..................................................</pre>
 <div class="output_area">
 <div class="prompt"></div>
 <div class="output_png output_subarea">
-<img src="data:image/png;base64,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
+<img src="data:image/png;base64,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
+eaZlclGUVX/V5qb4eRHl2TFtm1zU+u89emYwrr/Z9+NXQC5KGB+3DwW5KI1cNM6341fvgGUkCIJj
+jDH7JZ1emABV0sDAgMIw1MDAQJ27S862bdukwsClq6tLK1eujHX7tZ7aKyWfz2vevHmp/5TqmjVr
+anl6y+Si+HO4nZ2dGhoa0rXXXms9Hr0krNL7Er0k7Morr2yov+JlYPPnz9drr72mXbt2NbS9WrVr
+Loqy6q/az5Pi50VU0p8f5MLdX63fA5988olV33rrrQ33pgxzSy7iycX3339v1TfffHPDvYlcZIZc
+uJXKRb0Dli2SFkn6R+G/rzTUXYaKc1bCMIx9sCLHyDeXy9X0+uI1502y7kPL5KK4XseZZ56p7du3
+N3zt//Lly6t4VvWKA5Tu7u7UByt1aJlcpO2EE05o6PWerwdELkpo4Tkr1SAXJbTq3IQqkYsS2iUX
+FQcsQRD8StJfJM2SdCAIgj5Jv5P0VBAEyyTtkfT3dNqFL8gFXMgFXMgFXMgFXMgFXKqZdD9c+HWG
+qPnJtIRmQC7gQi7gQi7gQi7gQi7gwkr3AAAAALxV7xwWVKmzs9OqBwcHrbqjo8Oqi5O90dzi+rGF
+onZfP8RXb7zxhlVPmTLFqht937Zu3VrFs4545513JEn79+/XO++8o7GxsYb2j/oUf8ylWvz7bg+V
+1uuKIhftgVxUhzMsAAAAALzFgAUAAACAtxiwAAAAAPBWy89hqTSXIO1rAWu9VhHZmDTp8Fg+l8tp
+0qRJFecCbNq0Kdb9RxemhJ+iK5JH57BE112KrstUyYEDB6z6qKOOKvv8pUuXSoV1m26//faa9oX6
+dXd3S5KOP/54dXd369hjj826JXhow4YNWbcAD5GL6nCGBQAAAIC3GLAAAAAA8BYDFgAAAADeark5
+LLWuf1F8fj6f186dO/XMM89Yjz/44IOx9odsROcWRNfPKCWfz2vHjh0N7/+pp56y6iAIrDp6zTvr
+ZzSHSy65JNbt3XvvvVZdac5KV1dXrPtHdUp9z+TzeV1zzTWJ7z+aizfffNOqi3Pwoorfc+26jkPS
+yuWinrW5ent7rfq5554r+/zoXMozzzyz7PPvv/9+SdL06dPV19enzZs319wjKiMX8eAMCwAAAABv
+MWABAAAA4C0GLAAAAAC81fRzWOq5/q+cxYsXl62j6yh0dnbGun/E4+ijj7bqauesxCW6jsr69evL
+1tEcR9fvQGvo6Oiw6sHBwYa2d/DgwQY7gsuCBQusOjq3KG5xf4/Vur8VK1ZY9fbt21Ptp1lEP5eH
+hoYS3d+tt95atm7ULbfcIhXmUixevPjHuoi5TtUhF+ngDAsAAAAAbzFgAQAAAOAtBiwAAAAAvNV0
+c1jy+Xym+1+9enWi24/+fn5xDZDi73U/8sgj1uMbN25MtJ9mlfU12LNnz67p+ZWuCZ01a5ZVP/ro
+o5Kkd999V6+++upPrrmHnxqdsxJ1xhlnWPXHH38c6/bbVdJzVnyzbt06q2buglvScxN8E53rRC7c
+yEU6ueAMCwAAAABvMWABAAAA4C0GLAAAAAC81XRzWI477rhU9/fBBx9Y9QsvvJDo/opzVkpZvny5
+VV9//fVWfdFFFyXSl+/OPvvsTPef9DWcmzdvdt7f0dGhGTNm/OSa0iuuuMKqP//880T7g9vdd9+d
+6PafffZZq+Ya8/qcfPLJZR//5ptvrPryyy+36u+//16SFIah+vv7a95/dI7a7t27a3p92uu4tIvo
+nNLoukcXXnihVUfX3yqqNxcXXHCBVQ8PD1v16Oho2deTi2SQi2xwhgUAAACAtxiwAAAAAPAWAxYA
+AAAA3mq6OSxJGxkZserrrrsus15QvaTnCkT5PlcgOrfpvvvuy6yXdhZdt+nOO+8s+/xmvba42c2Y
+McOq58yZY9UHDhxIdP+1zllBOnK5nFV3dXWluv+s1xODG7nIBmdYAAAAAHiLAQsAAAAAbzFgAQAA
+AOCtppvDMm/ePKvO5/Oxbv/iiy+OdXuVNHrN+pQpU2LrpZn19fVZddxzAdKes9Jo/4sWLbJq5rBk
+o9a5D7Nnz7bqwcHBmDuCy4cffph1C/BQqfUz0N7IRTY4wwIAAADAW1WdYQmC4AFJ3YXn3ydpSNIm
+SR2SPpd0rTGm/NKaaDnkAi7kAi7kAlFkAi7kAi4Vz7AEQfBrSecYY+ZIukzSXyXdI2mDMaZb0keS
+bkinXfiCXMCFXMCFXCCKTMCFXKCUas6wbJO0o3D7K0lTJc2TtLxw30uS+iX9LcE+f7Rv375Yt7dw
+4UJJUm9vrx544IFYt+3SQusseJWLqK+//tqqTzzxxCzaqBq5gFr72mhyEaMW+bwgEzEjF3BpkVxU
+HrAYYw5JKq6muETSPyUtmHA67gtJpyXbJnxDLuBCLuBCLhBFJuBCLlBK1b8SFgTBbyWFkn4jadeE
+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
+AABJRU5ErkJggg==
 "/>
 </div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In [ ]:</div>
+<div class="inner_cell">
+<div class="input_area">
+<div class="highlight hl-ipython3"><pre><span></span> 
+</pre></div>
 </div>
 </div>
 </div>

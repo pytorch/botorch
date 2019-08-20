@@ -60,7 +60,8 @@
 <span class="sd">        A `n x q x d` tensor of `n` `q`-batch initial conditions.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        # To get `n=10` starting points of q-batch size `q=3` for model with `d=6`:</span>
+<span class="sd">        &gt;&gt;&gt; # To get `n=10` starting points of q-batch size `q=3`</span>
+<span class="sd">        &gt;&gt;&gt; # for model with `d=6`:</span>
 <span class="sd">        &gt;&gt;&gt; qUCB = qUpperConfidenceBound(model, beta=0.1)</span>
 <span class="sd">        &gt;&gt;&gt; Xrnd = torch.rand(500, 3, 6)</span>
 <span class="sd">        &gt;&gt;&gt; Xinit = initialize_q_batch(Xrnd, qUCB(Xrnd), 10)</span>
@@ -123,7 +124,8 @@
 <span class="sd">        A `n x q x d` tensor of `n` `q`-batch initial conditions.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        # To get `n=10` starting points of q-batch size `q=3` for model with `d=6`:</span>
+<span class="sd">        &gt;&gt;&gt; # To get `n=10` starting points of q-batch size `q=3`</span>
+<span class="sd">        &gt;&gt;&gt; # for model with `d=6`:</span>
 <span class="sd">        &gt;&gt;&gt; qEI = qExpectedImprovement(model, best_f=0.2)</span>
 <span class="sd">        &gt;&gt;&gt; Xrnd = torch.rand(500, 3, 6)</span>
 <span class="sd">        &gt;&gt;&gt; Xinit = initialize_q_batch(Xrnd, qEI(Xrnd), 10)</span>

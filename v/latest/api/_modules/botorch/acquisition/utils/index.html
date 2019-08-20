@@ -36,10 +36,10 @@
 
 <span class="kn">from</span> <span class="nn">torch</span> <span class="k">import</span> <span class="n">Tensor</span>
 
-<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">analytic</span><span class="p">,</span> <span class="n">monte_carlo</span>
 <span class="kn">from</span> <span class="nn">..models.model</span> <span class="k">import</span> <span class="n">Model</span>
 <span class="kn">from</span> <span class="nn">..sampling.samplers</span> <span class="k">import</span> <span class="n">IIDNormalSampler</span><span class="p">,</span> <span class="n">SobolQMCNormalSampler</span>
 <span class="kn">from</span> <span class="nn">..utils.transforms</span> <span class="k">import</span> <span class="n">squeeze_last_dim</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">analytic</span><span class="p">,</span> <span class="n">monte_carlo</span>
 <span class="kn">from</span> <span class="nn">.acquisition</span> <span class="k">import</span> <span class="n">AcquisitionFunction</span>
 <span class="kn">from</span> <span class="nn">.monte_carlo</span> <span class="k">import</span> <span class="n">MCAcquisitionFunction</span>
 <span class="kn">from</span> <span class="nn">.objective</span> <span class="k">import</span> <span class="n">MCAcquisitionObjective</span>
@@ -141,7 +141,7 @@
 <span class="sd">        so that feasible points are preferred.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        X: A `m x d` Tensor of `m` design points to use in evaluating the</span>
+<span class="sd">        X: A `n x d` Tensor of `n` design points to use in evaluating the</span>
 <span class="sd">            minimum. These points should cover the design space well. The more</span>
 <span class="sd">            points the better the estimate, at the expense of added computation.</span>
 <span class="sd">        model: A fitted botorch model.</span>

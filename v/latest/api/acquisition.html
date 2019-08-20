@@ -64,7 +64,7 @@ design points <cite>X</cite>.</p>
 <dd><p>Informs the acquisition function about pending design points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>X_pending</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – <cite>m x d</cite> Tensor with <cite>m</cite> <cite>d</cite>-dim design points that have
+<dd class="field-odd"><p><strong>X_pending</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – <cite>n x d</cite> Tensor with <cite>n</cite> <cite>d</cite>-dim design points that have
 been submitted for evaluation but have not yet been evaluated.</p>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -101,7 +101,7 @@ Monte-Carlo sampling.</p>
 <dd><p>Informs the acquisition function about pending design points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>X_pending</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – <cite>m x d</cite> Tensor with <cite>m</cite> <cite>d</cite>-dim design points that have
+<dd class="field-odd"><p><strong>X_pending</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – <cite>n x d</cite> Tensor with <cite>n</cite> <cite>d</cite>-dim design points that have
 been submitted for evaluation but have not yet been evaluated.</p>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -391,7 +391,7 @@ for noiseless fantasies).</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.gpytorch.GPyTorchModel" title="botorch.models.gpytorch.GPyTorchModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">GPyTorchModel</span></code></a>) – A fitted single-outcome model.</p></li>
-<li><p><strong>X_observed</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>m x d</cite> Tensor of observed points that are likely to
+<li><p><strong>X_observed</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>n x d</cite> Tensor of observed points that are likely to
 be the best observed points so far.</p></li>
 <li><p><strong>num_fantasies</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of fantasies to generate. The higher this
 number the more accurate the model (at the expense of model
@@ -834,7 +834,7 @@ covariance matrix <cite>Sigma</cite>, this yields a single-output posterior with
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>weights</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A one-dimensional tensor with <cite>o</cite> elements representing the
+<li><p><strong>weights</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A one-dimensional tensor with <cite>m</cite> elements representing the
 linear weights on the outputs.</p></li>
 <li><p><strong>offset</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – An offset to be added to posterior mean.</p></li>
 </ul>
@@ -871,7 +871,7 @@ elements in <cite>self.weights</cite>.</p>
 <dd><p>Evaluate the objective on the samples.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>sample_shape x batch_shape x q x o</cite>-dim Tensors of
+<dd class="field-odd"><p><strong>samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>sample_shape x batch_shape x q x m</cite>-dim Tensors of
 samples from a model posterior.</p>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -910,7 +910,7 @@ values (assuming maximization).</p>
 <dd><p>Evaluate the objective on the samples.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>sample_shape x batch_shape x q x o</cite>-dim Tensors of
+<dd class="field-odd"><p><strong>samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>sample_shape x batch_shape x q x m</cite>-dim Tensors of
 samples from a model posterior.</p>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -950,7 +950,7 @@ values (assuming maximization).</p>
 <p>Linear Objective.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>weights</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A one-dimensional tensor with <cite>o</cite> elements representing the
+<dd class="field-odd"><p><strong>weights</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A one-dimensional tensor with <cite>m</cite> elements representing the
 linear weights on the outputs.</p>
 </dd>
 </dl>
@@ -960,7 +960,7 @@ linear weights on the outputs.</p>
 <dd><p>Evaluate the linear objective on the samples.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>sample_shape x batch_shape x q x o</cite>-dim tensors of
+<dd class="field-odd"><p><strong>samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>sample_shape x batch_shape x q x m</cite>-dim tensors of
 samples from a model posterior.</p>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -991,7 +991,7 @@ optimization it should be possible to backpropagate through the callable.</p>
 <p>Objective generated from a generic callable.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>objective</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A callable mapping a <cite>sample_shape x batch-shape x q x o</cite>-
+<dd class="field-odd"><p><strong>objective</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A callable mapping a <cite>sample_shape x batch-shape x q x m</cite>-
 dim Tensor to a <cite>sample_shape x batch-shape x q</cite>-dim Tensor of
 objective values.</p>
 </dd>
@@ -1002,7 +1002,7 @@ objective values.</p>
 <dd><p>Evaluate the feasibility-weigthed objective on the samples.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>sample_shape x batch_shape x q x o</cite>-dim Tensors of
+<dd class="field-odd"><p><strong>samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>sample_shape x batch_shape x q x m</cite>-dim Tensors of
 samples from a model posterior.</p>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -1043,11 +1043,11 @@ handling.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>objective</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A callable mapping a <cite>sample_shape x batch-shape x q x o</cite>-
+<li><p><strong>objective</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A callable mapping a <cite>sample_shape x batch-shape x q x m</cite>-
 dim Tensor to a <cite>sample_shape x batch-shape x q</cite>-dim Tensor of
 objective values.</p></li>
 <li><p><strong>constraints</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]]) – A list of callables, each mapping a Tensor of dimension
-<cite>sample_shape x batch-shape x q x o</cite> to a Tensor of dimension
+<cite>sample_shape x batch-shape x q x m</cite> to a Tensor of dimension
 <cite>sample_shape x batch-shape x q</cite>, where negative values imply
 feasibility.</p></li>
 <li><p><strong>infeasible_cost</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – The cost of a design if all associated samples are
@@ -1063,7 +1063,7 @@ the constraint.</p></li>
 <dd><p>Evaluate the feasibility-weighted objective on the samples.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>sample_shape x batch_shape x q x o</cite>-dim Tensors of
+<dd class="field-odd"><p><strong>samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>sample_shape x batch_shape x q x m</cite>-dim Tensors of
 samples from a model posterior.</p>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -1127,7 +1127,7 @@ function to optimize is fixed and not stochastic).</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>m x d</cite> Tensor of <cite>m</cite> design points to use in evaluating the
+<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>n x d</cite> Tensor of <cite>n</cite> design points to use in evaluating the
 minimum. These points should cover the design space well. The more
 points the better the estimate, at the expense of added computation.</p></li>
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a>) – A fitted botorch model.</p></li>

@@ -68,7 +68,7 @@
         <span class="sa">r</span><span class="sd">"""Affine objective.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            weights: A one-dimensional tensor with `o` elements representing the</span>
+<span class="sd">            weights: A one-dimensional tensor with `m` elements representing the</span>
 <span class="sd">                linear weights on the outputs.</span>
 <span class="sd">            offset: An offset to be added to posterior mean.</span>
 <span class="sd">        """</span>
@@ -101,7 +101,7 @@
         <span class="sa">r</span><span class="sd">"""Evaluate the objective on the samples.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            samples: A `sample_shape x batch_shape x q x o`-dim Tensors of</span>
+<span class="sd">            samples: A `sample_shape x batch_shape x q x m`-dim Tensors of</span>
 <span class="sd">                samples from a model posterior.</span>
 
 <span class="sd">        Returns:</span>
@@ -150,7 +150,7 @@
         <span class="sa">r</span><span class="sd">"""Linear Objective.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            weights: A one-dimensional tensor with `o` elements representing the</span>
+<span class="sd">            weights: A one-dimensional tensor with `m` elements representing the</span>
 <span class="sd">                linear weights on the outputs.</span>
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -162,7 +162,7 @@
         <span class="sa">r</span><span class="sd">"""Evaluate the linear objective on the samples.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            samples: A `sample_shape x batch_shape x q x o`-dim tensors of</span>
+<span class="sd">            samples: A `sample_shape x batch_shape x q x m`-dim tensors of</span>
 <span class="sd">                samples from a model posterior.</span>
 
 <span class="sd">        Returns:</span>
@@ -190,7 +190,7 @@
         <span class="sa">r</span><span class="sd">"""Objective generated from a generic callable.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            objective: A callable mapping a `sample_shape x batch-shape x q x o`-</span>
+<span class="sd">            objective: A callable mapping a `sample_shape x batch-shape x q x m`-</span>
 <span class="sd">                dim Tensor to a `sample_shape x batch-shape x q`-dim Tensor of</span>
 <span class="sd">                objective values.</span>
 <span class="sd">        """</span>
@@ -201,7 +201,7 @@
         <span class="sa">r</span><span class="sd">"""Evaluate the feasibility-weigthed objective on the samples.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            samples: A `sample_shape x batch_shape x q x o`-dim Tensors of</span>
+<span class="sd">            samples: A `sample_shape x batch_shape x q x m`-dim Tensors of</span>
 <span class="sd">                samples from a model posterior.</span>
 
 <span class="sd">        Returns:</span>
@@ -244,11 +244,11 @@
         <span class="sa">r</span><span class="sd">"""Feasibility-weighted objective.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            objective: A callable mapping a `sample_shape x batch-shape x q x o`-</span>
+<span class="sd">            objective: A callable mapping a `sample_shape x batch-shape x q x m`-</span>
 <span class="sd">                dim Tensor to a `sample_shape x batch-shape x q`-dim Tensor of</span>
 <span class="sd">                objective values.</span>
 <span class="sd">            constraints: A list of callables, each mapping a Tensor of dimension</span>
-<span class="sd">                `sample_shape x batch-shape x q x o` to a Tensor of dimension</span>
+<span class="sd">                `sample_shape x batch-shape x q x m` to a Tensor of dimension</span>
 <span class="sd">                `sample_shape x batch-shape x q`, where negative values imply</span>
 <span class="sd">                feasibility.</span>
 <span class="sd">            infeasible_cost: The cost of a design if all associated samples are</span>
@@ -265,7 +265,7 @@
         <span class="sa">r</span><span class="sd">"""Evaluate the feasibility-weighted objective on the samples.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            samples: A `sample_shape x batch_shape x q x o`-dim Tensors of</span>
+<span class="sd">            samples: A `sample_shape x batch_shape x q x m`-dim Tensors of</span>
 <span class="sd">                samples from a model posterior.</span>
 
 <span class="sd">        Returns:</span>

@@ -59,14 +59,14 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">mean</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The mean of the posterior as a `(b) x n x o`-dim Tensor."""</span>
+        <span class="sa">r</span><span class="sd">"""The mean of the posterior as a `(b) x n x m`-dim Tensor."""</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
             <span class="n">f</span><span class="s2">"Property `mean` not implemented for </span><span class="si">{self.__class__.__name__}</span><span class="s2">"</span>
         <span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">variance</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The variance of the posterior as a `(b) x n x o`-dim Tensor."""</span>
+        <span class="sa">r</span><span class="sd">"""The variance of the posterior as a `(b) x n x m`-dim Tensor."""</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
             <span class="n">f</span><span class="s2">"Property `variance` not implemented for </span><span class="si">{self.__class__.__name__}</span><span class="s2">"</span>
         <span class="p">)</span>
