@@ -2,7 +2,7 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-import unittest
+
 import warnings
 
 from botorch import settings
@@ -15,8 +15,10 @@ from botorch.exceptions.warnings import (
     SamplingWarning,
 )
 
+from ..botorch_test_case import BotorchTestCase
 
-class TestBotorchWarnings(unittest.TestCase):
+
+class TestBotorchWarnings(BotorchTestCase):
     def test_botorch_warnings_hierarchy(self):
         self.assertIsInstance(BotorchWarning(), Warning)
         self.assertIsInstance(BadInitialCandidatesWarning(), BotorchWarning)

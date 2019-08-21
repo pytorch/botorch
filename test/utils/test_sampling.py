@@ -2,7 +2,7 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-import unittest
+
 import warnings
 
 import torch
@@ -17,8 +17,10 @@ from botorch.utils.sampling import (
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from torch.quasirandom import SobolEngine
 
+from ..botorch_test_case import BotorchTestCase
 
-class TestConstructBaseSamples(unittest.TestCase):
+
+class TestConstructBaseSamples(BotorchTestCase):
     def test_construct_base_samples(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         test_shapes = [
@@ -154,7 +156,7 @@ class TestConstructBaseSamples(unittest.TestCase):
             self.test_construct_base_samples_from_posterior(cuda=True)
 
 
-class TestManualSeed(unittest.TestCase):
+class TestManualSeed(BotorchTestCase):
     def test_manual_seed(self):
         initial_state = torch.random.get_rng_state()
         with manual_seed():

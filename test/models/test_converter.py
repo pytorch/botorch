@@ -2,7 +2,6 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-import unittest
 
 import torch
 from botorch.exceptions import UnsupportedError
@@ -15,10 +14,11 @@ from botorch.models import (
 from botorch.models.converter import batched_to_model_list, model_list_to_batched
 from gpytorch.likelihoods import GaussianLikelihood
 
+from ..botorch_test_case import BotorchTestCase
 from .test_gpytorch import SimpleGPyTorchModel
 
 
-class TestConverters(unittest.TestCase):
+class TestConverters(BotorchTestCase):
     def test_batched_to_model_list(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):

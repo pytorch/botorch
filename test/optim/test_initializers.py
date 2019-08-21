@@ -2,7 +2,7 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-import unittest
+
 import warnings
 
 import torch
@@ -10,8 +10,10 @@ from botorch import settings
 from botorch.exceptions import BadInitialCandidatesWarning
 from botorch.optim import initialize_q_batch, initialize_q_batch_nonneg
 
+from ..botorch_test_case import BotorchTestCase
 
-class TestInitializeQBatch(unittest.TestCase):
+
+class TestInitializeQBatch(BotorchTestCase):
     def test_initialize_q_batch_nonneg(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):

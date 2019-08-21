@@ -2,11 +2,12 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-import unittest
 
 import torch
 from botorch.utils import apply_constraints, get_objective_weights_transform
 from torch import Tensor
+
+from ..botorch_test_case import BotorchTestCase
 
 
 def ones_f(samples: Tensor) -> Tensor:
@@ -21,7 +22,7 @@ def minus_one_f(samples: Tensor) -> Tensor:
     return -torch.ones(samples.shape[0:-1], device=samples.device, dtype=samples.dtype)
 
 
-class TestApplyConstraints(unittest.TestCase):
+class TestApplyConstraints(BotorchTestCase):
     def test_apply_constraints(self):
         # nonnegative objective, one constraint
         samples = torch.randn(1)
@@ -61,7 +62,7 @@ class TestApplyConstraints(unittest.TestCase):
             )
 
 
-class TestGetObjectiveWeightsTransform(unittest.TestCase):
+class TestGetObjectiveWeightsTransform(BotorchTestCase):
     def test_NoWeights(self):
         Y = torch.ones(5, 2, 4, 1)
         objective_transform = get_objective_weights_transform(None)

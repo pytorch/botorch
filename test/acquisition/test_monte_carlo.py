@@ -2,7 +2,6 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-import unittest
 import warnings
 
 import torch
@@ -20,14 +19,16 @@ from botorch.exceptions import BotorchWarning, UnsupportedError
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.mock import MockModel, MockPosterior
 
+from ..botorch_test_case import BotorchTestCase
 
-class TestMCAcquisitionFunction(unittest.TestCase):
+
+class TestMCAcquisitionFunction(BotorchTestCase):
     def test_abstract_raises(self):
         with self.assertRaises(TypeError):
             MCAcquisitionFunction()
 
 
-class TestQExpectedImprovement(unittest.TestCase):
+class TestQExpectedImprovement(BotorchTestCase):
     def test_q_expected_improvement(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
@@ -182,7 +183,7 @@ class TestQExpectedImprovement(unittest.TestCase):
     # TODO: Test different objectives (incl. constraints)
 
 
-class TestQNoisyExpectedImprovement(unittest.TestCase):
+class TestQNoisyExpectedImprovement(BotorchTestCase):
     def test_q_noisy_expected_improvement(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
@@ -349,7 +350,7 @@ class TestQNoisyExpectedImprovement(unittest.TestCase):
     # TODO: Test different objectives (incl. constraints)
 
 
-class TestQProbabilityOfImprovement(unittest.TestCase):
+class TestQProbabilityOfImprovement(BotorchTestCase):
     def test_q_probability_of_improvement(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
@@ -488,7 +489,7 @@ class TestQProbabilityOfImprovement(unittest.TestCase):
     # TODO: Test different objectives (incl. constraints)
 
 
-class TestQSimpleRegret(unittest.TestCase):
+class TestQSimpleRegret(BotorchTestCase):
     def test_q_simple_regret(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
@@ -626,7 +627,7 @@ class TestQSimpleRegret(unittest.TestCase):
     # TODO: Test different objectives (incl. constraints)
 
 
-class TestQUpperConfidenceBound(unittest.TestCase):
+class TestQUpperConfidenceBound(BotorchTestCase):
     def test_q_upper_confidence_bound(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):

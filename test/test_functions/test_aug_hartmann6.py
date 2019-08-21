@@ -2,14 +2,15 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-import unittest
 
 import torch
 from botorch.test_functions.aug_hartmann6 import GLOBAL_MAXIMIZER, neg_aug_hartmann6
 from botorch.test_functions.hartmann6 import GLOBAL_MAXIMUM
 
+from ..botorch_test_case import BotorchTestCase
 
-class TestNegAugHartmann6(unittest.TestCase):
+
+class TestNegAugHartmann6(BotorchTestCase):
     def test_single_eval_neg_aug_hartmann6(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):

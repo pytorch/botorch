@@ -2,14 +2,16 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-import unittest
+
 import warnings
 
 from botorch import settings
 from botorch.exceptions import BotorchWarning
 
+from .botorch_test_case import BotorchTestCase
 
-class TestSettings(unittest.TestCase):
+
+class TestSettings(BotorchTestCase):
     def test_flags(self):
         for flag in (settings.debug, settings.propagate_grads):
             self.assertFalse(flag.on())

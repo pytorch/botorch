@@ -4,7 +4,7 @@
 
 import warnings
 from typing import Optional
-from unittest import TestCase, mock
+from unittest import mock
 
 import torch
 from botorch import settings
@@ -16,6 +16,8 @@ from botorch.optim.optimize import (
     sequential_optimize,
 )
 from torch import Tensor
+
+from ..botorch_test_case import BotorchTestCase
 
 
 class MockAcquisitionFunction:
@@ -36,7 +38,7 @@ def rounding_func(X: Tensor) -> Tensor:
     return X_round.view(*batch_shape, d)
 
 
-class TestDeprecatedOptimize(TestCase):
+class TestDeprecatedOptimize(BotorchTestCase):
 
     shared_kwargs = {
         "acq_function": MockAcquisitionFunction(),
@@ -86,7 +88,7 @@ class TestDeprecatedOptimize(TestCase):
             self.assertIsNone(acq_values)
 
 
-class TestGenBatchInitialcandidates(TestCase):
+class TestGenBatchInitialcandidates(BotorchTestCase):
     def test_gen_batch_initial_conditions(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
@@ -141,7 +143,7 @@ class TestGenBatchInitialcandidates(TestCase):
             self.test_gen_batch_initial_conditions_simple_warning(cuda=True)
 
 
-class TestOptimizeAcqf(TestCase):
+class TestOptimizeAcqf(BotorchTestCase):
     @mock.patch("botorch.optim.optimize.gen_batch_initial_conditions")
     @mock.patch("botorch.optim.optimize.gen_candidates_scipy")
     def test_optimize_acqf_joint(

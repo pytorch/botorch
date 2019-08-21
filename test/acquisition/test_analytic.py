@@ -3,7 +3,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 import math
-import unittest
 
 import torch
 from botorch.acquisition.analytic import (
@@ -22,6 +21,8 @@ from botorch.posteriors import GPyTorchPosterior
 from botorch.utils.mock import MockModel, MockPosterior
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 
+from ..botorch_test_case import BotorchTestCase
+
 
 NEI_NOISE = [
     [-0.099],
@@ -37,13 +38,13 @@ NEI_NOISE = [
 ]
 
 
-class TestAnalyticAcquisitionFunction(unittest.TestCase):
+class TestAnalyticAcquisitionFunction(BotorchTestCase):
     def test_abstract_raises(self):
         with self.assertRaises(TypeError):
             AnalyticAcquisitionFunction()
 
 
-class TestExpectedImprovement(unittest.TestCase):
+class TestExpectedImprovement(BotorchTestCase):
     def test_expected_improvement(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
@@ -163,7 +164,7 @@ class TestExpectedImprovement(unittest.TestCase):
             self.test_expected_improvement_batch(cuda=True)
 
 
-class TestPosteriorMean(unittest.TestCase):
+class TestPosteriorMean(BotorchTestCase):
     def test_posterior_mean(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
@@ -207,7 +208,7 @@ class TestPosteriorMean(unittest.TestCase):
             self.test_posterior_mean_batch(cuda=True)
 
 
-class TestProbabilityOfImprovement(unittest.TestCase):
+class TestProbabilityOfImprovement(BotorchTestCase):
     def test_probability_of_improvement(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
@@ -265,7 +266,7 @@ class TestProbabilityOfImprovement(unittest.TestCase):
             self.test_probability_of_improvement_batch(cuda=True)
 
 
-class TestUpperConfidenceBound(unittest.TestCase):
+class TestUpperConfidenceBound(BotorchTestCase):
     def test_upper_confidence_bound(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
@@ -323,7 +324,7 @@ class TestUpperConfidenceBound(unittest.TestCase):
             self.test_upper_confidence_bound_batch(cuda=True)
 
 
-class TestConstrainedExpectedImprovement(unittest.TestCase):
+class TestConstrainedExpectedImprovement(BotorchTestCase):
     def test_constrained_expected_improvement(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
@@ -441,7 +442,7 @@ class TestConstrainedExpectedImprovement(unittest.TestCase):
             self.test_constrained_expected_improvement_batch(cuda=True)
 
 
-class TestNoisyExpectedImprovement(unittest.TestCase):
+class TestNoisyExpectedImprovement(BotorchTestCase):
     def _get_model(self, cuda=False, dtype=torch.float):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         state_dict = {

@@ -2,7 +2,7 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-import unittest
+
 import warnings
 
 import torch
@@ -16,8 +16,10 @@ from botorch.models.utils import (
     multioutput_to_batch_mode_transform,
 )
 
+from ..botorch_test_case import BotorchTestCase
 
-class TestMultiOutputToBatchModeTransform(unittest.TestCase):
+
+class TestMultiOutputToBatchModeTransform(BotorchTestCase):
     def test_multioutput_to_batch_mode_transform(self, cuda=False):
         for double in (False, True):
             tkwargs = {
@@ -45,7 +47,7 @@ class TestMultiOutputToBatchModeTransform(unittest.TestCase):
             self.test_multioutput_to_batch_mode_transform(cuda=True)
 
 
-class TestAddOutputDim(unittest.TestCase):
+class TestAddOutputDim(BotorchTestCase):
     def test_add_output_dim(self, cuda=False):
         for double in (False, True):
             tkwargs = {
@@ -77,7 +79,7 @@ class TestAddOutputDim(unittest.TestCase):
             self.test_add_output_dim(cuda=True)
 
 
-class TestInputDataChecks(unittest.TestCase):
+class TestInputDataChecks(BotorchTestCase):
     def test_check_no_nans(self):
         check_no_nans(torch.tensor([1.0, 2.0]))
         with self.assertRaises(InputDataError):

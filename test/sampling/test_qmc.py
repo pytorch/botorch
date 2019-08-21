@@ -3,7 +3,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 import math
-import unittest
 
 import numpy as np
 import torch
@@ -11,8 +10,10 @@ from botorch.sampling.qmc import MultivariateNormalQMCEngine, NormalQMCEngine
 from botorch.utils.sampling import manual_seed
 from scipy.stats import shapiro
 
+from ..botorch_test_case import BotorchTestCase
 
-class NormalQMCTests(unittest.TestCase):
+
+class NormalQMCTests(BotorchTestCase):
     def test_NormalQMCEngine(self):
         # d = 1
         engine = NormalQMCEngine(d=1)
@@ -139,7 +140,7 @@ class NormalQMCTests(unittest.TestCase):
         self.assertLess(np.abs(cov[0, 1]), 1e-2)
 
 
-class MultivariateNormalQMCTests(unittest.TestCase):
+class MultivariateNormalQMCTests(BotorchTestCase):
     def test_MultivariateNormalQMCEngineShapeErrors(self):
         with self.assertRaises(ValueError):
             MultivariateNormalQMCEngine(mean=torch.zeros(2), cov=torch.zeros(2, 1))

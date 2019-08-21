@@ -2,7 +2,7 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-import unittest
+
 from unittest import mock
 
 import torch
@@ -12,14 +12,17 @@ from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.mock import MockModel, MockPosterior
 from torch import Tensor
 
+from ..botorch_test_case import BotorchTestCase
+
 
 class DummyMCObjective(MCAcquisitionObjective):
     def forward(self, samples: Tensor) -> Tensor:
         return samples.sum(-1)
 
 
-class TestGetAcquisitionFunction(unittest.TestCase):
+class TestGetAcquisitionFunction(BotorchTestCase):
     def setUp(self):
+        super().setUp()
         self.model = mock.MagicMock()
         self.objective = DummyMCObjective()
         self.X_observed = torch.tensor([[1.0, 2.0, 3.0], [2.0, 3.0, 4.0]])
@@ -270,7 +273,7 @@ class TestGetAcquisitionFunction(unittest.TestCase):
             )
 
 
-class TestGetInfeasibleCost(unittest.TestCase):
+class TestGetInfeasibleCost(BotorchTestCase):
     def test_get_infeasible_cost(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):

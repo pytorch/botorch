@@ -2,7 +2,6 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-import unittest
 
 import numpy as np
 import torch
@@ -14,6 +13,8 @@ from gpytorch.means.constant_mean import ConstantMean
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.models.exact_gp import ExactGP
 
+from ..botorch_test_case import BotorchTestCase
+
 
 def _get_index(property_dict, parameter_name):
     idx = 0
@@ -24,7 +25,7 @@ def _get_index(property_dict, parameter_name):
     return idx
 
 
-class TestModuleToArray(unittest.TestCase):
+class TestModuleToArray(BotorchTestCase):
     def test_basic(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
@@ -156,7 +157,7 @@ class TestModuleToArray(unittest.TestCase):
             self.test_module_bounds(cuda=True)
 
 
-class TestSetParamsWithArray(unittest.TestCase):
+class TestSetParamsWithArray(BotorchTestCase):
     def test_set_parameters(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):

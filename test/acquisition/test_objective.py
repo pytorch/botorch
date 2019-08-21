@@ -2,7 +2,6 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-import unittest
 
 import torch
 from botorch.acquisition.objective import (
@@ -16,6 +15,7 @@ from botorch.acquisition.objective import (
 from botorch.utils import apply_constraints
 from torch import Tensor
 
+from ..botorch_test_case import BotorchTestCase
 from ..posteriors.test_gpytorch import _get_test_posterior
 
 
@@ -31,7 +31,7 @@ def feasible_con(samples: Tensor) -> Tensor:
     return -torch.ones(samples.shape[0:-1], device=samples.device, dtype=samples.dtype)
 
 
-class TestScalarizedObjective(unittest.TestCase):
+class TestScalarizedObjective(BotorchTestCase):
     def test_affine_acquisition_objective(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
@@ -63,13 +63,13 @@ class TestScalarizedObjective(unittest.TestCase):
             self.test_affine_acquisition_objective(cuda=True)
 
 
-class TestMCAcquisitionObjective(unittest.TestCase):
+class TestMCAcquisitionObjective(BotorchTestCase):
     def test_abstract_raises(self):
         with self.assertRaises(TypeError):
             MCAcquisitionObjective()
 
 
-class TestGenericMCObjective(unittest.TestCase):
+class TestGenericMCObjective(BotorchTestCase):
     def test_generic_mc_objective(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
@@ -88,7 +88,7 @@ class TestGenericMCObjective(unittest.TestCase):
             self.test_generic_mc_objective(cuda=True)
 
 
-class TestConstrainedMCObjective(unittest.TestCase):
+class TestConstrainedMCObjective(BotorchTestCase):
     def test_constrained_mc_objective(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
@@ -167,7 +167,7 @@ class TestConstrainedMCObjective(unittest.TestCase):
             self.test_constrained_mc_objective(cuda=True)
 
 
-class TestIdentityMCObjective(unittest.TestCase):
+class TestIdentityMCObjective(BotorchTestCase):
     def test_identity_mc_objective(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
@@ -190,7 +190,7 @@ class TestIdentityMCObjective(unittest.TestCase):
             self.test_identity_mc_objective(cuda=True)
 
 
-class TestLinearMCObjective(unittest.TestCase):
+class TestLinearMCObjective(BotorchTestCase):
     def test_linear_mc_objective(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):

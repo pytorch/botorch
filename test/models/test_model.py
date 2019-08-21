@@ -2,9 +2,10 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-import unittest
 
 from botorch.models.model import Model
+
+from ..botorch_test_case import BotorchTestCase
 
 
 class NotSoAbstractBaseModel(Model):
@@ -12,7 +13,7 @@ class NotSoAbstractBaseModel(Model):
         pass
 
 
-class TestBaseModel(unittest.TestCase):
+class TestBaseModel(BotorchTestCase):
     def test_abstract_base_model(self):
         with self.assertRaises(TypeError):
             Model()

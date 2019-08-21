@@ -3,8 +3,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 
-import unittest
-
 import torch
 from botorch.exceptions import UnsupportedError
 from botorch.models.fidelity_kernels.linear_truncated_fidelity import (
@@ -15,8 +13,10 @@ from gpytorch.kernels.rbf_kernel import RBFKernel
 from gpytorch.priors.torch_priors import GammaPrior, NormalPrior
 from gpytorch.test.base_kernel_test_case import BaseKernelTestCase
 
+from ...botorch_test_case import BotorchTestCase
 
-class TestLinearTruncatedFidelityKernel(unittest.TestCase, BaseKernelTestCase):
+
+class TestLinearTruncatedFidelityKernel(BotorchTestCase, BaseKernelTestCase):
     def create_kernel_no_ard(self, **kwargs):
         return LinearTruncatedFidelityKernel(**kwargs)
 

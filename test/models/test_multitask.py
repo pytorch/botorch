@@ -3,7 +3,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 import math
-import unittest
 import warnings
 
 import torch
@@ -17,6 +16,8 @@ from gpytorch.likelihoods import FixedNoiseGaussianLikelihood, GaussianLikelihoo
 from gpytorch.means import ConstantMean
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.priors import GammaPrior
+
+from ..botorch_test_case import BotorchTestCase
 
 
 def _get_random_mt_data(**tkwargs):
@@ -61,7 +62,7 @@ def _get_fixed_noise_model_single_output(**tkwargs):
     return model.to(**tkwargs)
 
 
-class TestMultiTaskGP(unittest.TestCase):
+class TestMultiTaskGP(BotorchTestCase):
     def test_MultiTaskGP(self, cuda=False):
         for double in (False, True):
             tkwargs = {
@@ -180,7 +181,7 @@ class TestMultiTaskGP(unittest.TestCase):
             self.test_MultiTaskGP_single_output(cuda=True)
 
 
-class TestFixedNoiseMultiTaskGP(unittest.TestCase):
+class TestFixedNoiseMultiTaskGP(BotorchTestCase):
     def test_FixedNoiseMultiTaskGP(self, cuda=False):
         for double in (False, True):
             tkwargs = {

@@ -2,7 +2,6 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-import unittest
 
 import torch
 from botorch.test_functions.eggholder import (
@@ -11,8 +10,10 @@ from botorch.test_functions.eggholder import (
     neg_eggholder,
 )
 
+from ..botorch_test_case import BotorchTestCase
 
-class TestNegEggholder(unittest.TestCase):
+
+class TestNegEggholder(BotorchTestCase):
     def test_single_eval_neg_eggholder(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):

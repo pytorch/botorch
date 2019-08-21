@@ -2,7 +2,6 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-import unittest
 
 import torch
 from botorch.exceptions.errors import UnsupportedError
@@ -10,6 +9,8 @@ from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling.samplers import IIDNormalSampler, MCSampler, SobolQMCNormalSampler
 from gpytorch.distributions import MultivariateNormal
 from gpytorch.lazy import DiagLazyTensor
+
+from ..botorch_test_case import BotorchTestCase
 
 
 def _get_posterior(cuda=False, dtype=torch.float):
@@ -28,13 +29,13 @@ def _get_posterior_batched(cuda=False, dtype=torch.float):
     return GPyTorchPosterior(mvn)
 
 
-class TestBaseMCSampler(unittest.TestCase):
+class TestBaseMCSampler(BotorchTestCase):
     def test_MCSampler_abstract_raises(self):
         with self.assertRaises(TypeError):
             MCSampler()
 
 
-class TestIIDNormalSampler(unittest.TestCase):
+class TestIIDNormalSampler(BotorchTestCase):
     def test_get_base_sample_shape(self):
         sampler = IIDNormalSampler(num_samples=4)
         self.assertFalse(sampler.resample)
@@ -168,7 +169,7 @@ class TestIIDNormalSampler(unittest.TestCase):
             self.test_forward_no_collapse(cuda=True)
 
 
-class TestSobolQMCNormalSampler(unittest.TestCase):
+class TestSobolQMCNormalSampler(BotorchTestCase):
     def test_get_base_sample_shape(self):
         sampler = SobolQMCNormalSampler(num_samples=4)
         self.assertFalse(sampler.resample)

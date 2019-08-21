@@ -3,13 +3,14 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 import math
-import unittest
 
 import torch
 from botorch.test_functions.aug_branin import GLOBAL_MAXIMUM, neg_aug_branin
 
+from ..botorch_test_case import BotorchTestCase
 
-class TestNegAugBranin(unittest.TestCase):
+
+class TestNegAugBranin(BotorchTestCase):
     def test_single_eval_neg_aug_branin(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):

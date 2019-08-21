@@ -2,16 +2,17 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-import unittest
 
 import torch
 from botorch.test_functions.shekel import GLOBAL_MAXIMIZER, GLOBAL_MAXIMUM, neg_shekel
+
+from ..botorch_test_case import BotorchTestCase
 
 
 DIMENSION = 4
 
 
-class TestShekel(unittest.TestCase):
+class TestShekel(BotorchTestCase):
     def test_single_eval_neg_shekel(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):

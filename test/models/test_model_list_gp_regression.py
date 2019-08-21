@@ -3,7 +3,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 import math
-import unittest
 import warnings
 
 import torch
@@ -20,6 +19,8 @@ from gpytorch.means import ConstantMean
 from gpytorch.mlls import SumMarginalLogLikelihood
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.priors import GammaPrior
+
+from ..botorch_test_case import BotorchTestCase
 
 
 def _get_random_data(n, **tkwargs):
@@ -52,7 +53,7 @@ def _get_model(n, fixed_noise=False, **tkwargs):
     return model.to(**tkwargs)
 
 
-class TestModelListGP(unittest.TestCase):
+class TestModelListGP(BotorchTestCase):
     def test_ModelListGP(self, cuda=False):
         for double in (False, True):
             tkwargs = {

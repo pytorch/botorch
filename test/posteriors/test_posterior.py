@@ -2,9 +2,10 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-import unittest
 
 from botorch.posteriors import Posterior
+
+from ..botorch_test_case import BotorchTestCase
 
 
 class NotSoAbstractPosterior(Posterior):
@@ -24,7 +25,7 @@ class NotSoAbstractPosterior(Posterior):
         pass
 
 
-class TestPosterior(unittest.TestCase):
+class TestPosterior(BotorchTestCase):
     def test_abstract_base_posterior(self):
         with self.assertRaises(TypeError):
             Posterior()

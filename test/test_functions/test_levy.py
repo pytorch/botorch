@@ -2,16 +2,17 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-import unittest
 
 import torch
 from botorch.test_functions.levy import GLOBAL_MAXIMIZER, GLOBAL_MAXIMUM, neg_levy
+
+from ..botorch_test_case import BotorchTestCase
 
 
 DIMENSION = 4
 
 
-class TestNegLevy(unittest.TestCase):
+class TestNegLevy(BotorchTestCase):
     def test_single_eval_neg_levy(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):

@@ -3,7 +3,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 import math
-import unittest
 import warnings
 
 import torch
@@ -28,6 +27,8 @@ from gpytorch.means import ConstantMean
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.priors import GammaPrior
 
+from ..botorch_test_case import BotorchTestCase
+
 
 def _get_random_data(batch_shape, num_outputs, n=10, **tkwargs):
     train_x = torch.linspace(0, 0.95, n, **tkwargs).unsqueeze(-1) + 0.05 * torch.rand(
@@ -40,7 +41,7 @@ def _get_random_data(batch_shape, num_outputs, n=10, **tkwargs):
     return train_x, train_y
 
 
-class TestSingleTaskGP(unittest.TestCase):
+class TestSingleTaskGP(BotorchTestCase):
     def _get_model_and_data(self, batch_shape, num_outputs, **tkwargs):
         train_X, train_Y = _get_random_data(
             batch_shape=batch_shape, num_outputs=num_outputs, **tkwargs
