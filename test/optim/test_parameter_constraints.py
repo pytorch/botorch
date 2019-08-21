@@ -2,7 +2,6 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-import unittest
 
 import numpy as np
 import torch
@@ -17,8 +16,10 @@ from botorch.optim.parameter_constraints import (
 )
 from scipy.optimize import Bounds
 
+from ..botorch_test_case import BotorchTestCase
 
-class TestParameterConstraints(unittest.TestCase):
+
+class TestParameterConstraints(BotorchTestCase):
     def test_arrayify(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double, torch.int, torch.long):
@@ -200,7 +201,7 @@ class TestParameterConstraints(unittest.TestCase):
             self.test_make_scipy_linear_constraints(cuda=True)
 
 
-class TestMakeScipyBounds(unittest.TestCase):
+class TestMakeScipyBounds(BotorchTestCase):
     def test_make_scipy_bounds(self):
         X = torch.zeros(3, 1, 2)
         # both None

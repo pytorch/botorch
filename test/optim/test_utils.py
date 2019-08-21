@@ -2,7 +2,7 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-import unittest
+
 import warnings
 from copy import deepcopy
 
@@ -27,8 +27,10 @@ from gpytorch.mlls.variational_elbo import VariationalELBO
 from gpytorch.priors.smoothed_box_prior import SmoothedBoxPrior
 from gpytorch.priors.torch_priors import GammaPrior
 
+from ..botorch_test_case import BotorchTestCase
 
-class TestCheckConvergence(unittest.TestCase):
+
+class TestCheckConvergence(BotorchTestCase):
     def test_check_convergence(self, cuda=False):
         losses = torch.rand(5).tolist()
         self.assertTrue(
@@ -47,8 +49,9 @@ class TestCheckConvergence(unittest.TestCase):
             self.test_check_convergence(cuda=True)
 
 
-class TestColumnWiseClamp(unittest.TestCase):
+class TestColumnWiseClamp(BotorchTestCase):
     def setUp(self):
+        super().setUp()
         self.X = torch.tensor([[-2, 1], [0.5, -0.5]])
         self.X_expected = torch.tensor([[-1, 0.5], [0.5, -0.5]])
 
@@ -112,7 +115,7 @@ class TestColumnWiseClamp(unittest.TestCase):
             self.test_column_wise_clamp_raise_on_violation(cuda=True)
 
 
-class TestFixFeatures(unittest.TestCase):
+class TestFixFeatures(BotorchTestCase):
     def _getTensors(self, device):
         X = torch.tensor([[-2, 1, 3], [0.5, -0.5, 1.0]], device=device)
         X_null_two = torch.tensor([[-2, 1, 3], [0.5, -0.5, 1.0]], device=device)
@@ -162,7 +165,7 @@ class TestFixFeatures(unittest.TestCase):
             self.test_fix_features(cuda=True)
 
 
-class testGetExtraMllArgs(unittest.TestCase):
+class testGetExtraMllArgs(BotorchTestCase):
     def test_get_extra_mll_args(self):
         train_X = torch.rand(3, 5)
         train_Y = torch.rand(3, 1)
@@ -192,7 +195,7 @@ class testGetExtraMllArgs(unittest.TestCase):
             _get_extra_mll_args(mll=unsupported_mll)
 
 
-class testExpandBounds(unittest.TestCase):
+class testExpandBounds(BotorchTestCase):
     def test_expand_bounds(self):
         X = torch.zeros(2, 3)
         expected_bounds = torch.zeros(1, 3)
@@ -217,7 +220,7 @@ class testExpandBounds(unittest.TestCase):
         self.assertIsNone(expanded_bounds)
 
 
-class TestSampleAllPriors(unittest.TestCase):
+class TestSampleAllPriors(BotorchTestCase):
     def test_sample_all_priors(self, cuda=False):
         device = torch.device("cuda" if cuda else "cpu")
         for dtype in (torch.float, torch.double):

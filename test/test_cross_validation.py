@@ -3,7 +3,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 import math
-import unittest
 import warnings
 
 import torch
@@ -11,6 +10,8 @@ from botorch.cross_validation import batch_cross_validation, gen_loo_cv_folds
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.models.gp_regression import FixedNoiseGP, SingleTaskGP
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
+
+from .botorch_test_case import BotorchTestCase
 
 
 def _get_random_data(batch_shape, num_outputs, n=10, **tkwargs):
@@ -26,7 +27,7 @@ def _get_random_data(batch_shape, num_outputs, n=10, **tkwargs):
     return train_x, train_y
 
 
-class TestFitBatchCrossValidation(unittest.TestCase):
+class TestFitBatchCrossValidation(BotorchTestCase):
     def test_single_task_batch_cv(self, cuda=False):
         n = 10
         for batch_shape in (torch.Size([]), torch.Size([2])):

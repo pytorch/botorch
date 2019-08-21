@@ -2,7 +2,7 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-import unittest
+
 import warnings
 
 import torch
@@ -10,6 +10,8 @@ from botorch.exceptions.errors import UnsupportedError
 from botorch.posteriors.gpytorch import GPyTorchPosterior, scalarize_posterior
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.lazy.non_lazy_tensor import lazify
+
+from ..botorch_test_case import BotorchTestCase
 
 
 def _get_test_posterior(batch_shape, device, dtype, q=1, o=1):
@@ -22,7 +24,7 @@ def _get_test_posterior(batch_shape, device, dtype, q=1, o=1):
     return GPyTorchPosterior(mvn)
 
 
-class TestGPyTorchPosterior(unittest.TestCase):
+class TestGPyTorchPosterior(BotorchTestCase):
     def test_GPyTorchPosterior(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):

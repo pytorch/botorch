@@ -2,7 +2,6 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-import unittest
 
 import torch
 from botorch.test_functions.holder_table import (
@@ -11,8 +10,10 @@ from botorch.test_functions.holder_table import (
     neg_holder_table,
 )
 
+from ..botorch_test_case import BotorchTestCase
 
-class TestNegHolderTable(unittest.TestCase):
+
+class TestNegHolderTable(BotorchTestCase):
     def test_single_eval_neg_holder_table(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):

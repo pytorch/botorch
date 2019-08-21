@@ -3,7 +3,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 import math
-import unittest
 import warnings
 
 import torch
@@ -14,13 +13,14 @@ from botorch.gen import gen_candidates_scipy, gen_candidates_torch
 from botorch.models import SingleTaskGP
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 
+from .botorch_test_case import BotorchTestCase
 from .test_fit import NOISE
 
 
 EPS = 1e-8
 
 
-class TestBaseCandidateGeneration(unittest.TestCase):
+class TestBaseCandidateGeneration(BotorchTestCase):
     def _setUp(self, double=False, cuda=False, expand=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         dtype = torch.double if double else torch.float

@@ -2,16 +2,17 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-import unittest
 
 import torch
 from botorch.test_functions.cosine8 import GLOBAL_MAXIMIZER, GLOBAL_MAXIMUM, cosine8
+
+from ..botorch_test_case import BotorchTestCase
 
 
 DIMENSION = 8
 
 
-class TestCosine8(unittest.TestCase):
+class TestCosine8(BotorchTestCase):
     def test_single_eval_cosine8(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):

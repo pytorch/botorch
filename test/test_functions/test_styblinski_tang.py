@@ -2,7 +2,6 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-import unittest
 
 import torch
 from botorch.test_functions.styblinski_tang import (
@@ -11,8 +10,10 @@ from botorch.test_functions.styblinski_tang import (
     neg_styblinski_tang,
 )
 
+from ..botorch_test_case import BotorchTestCase
 
-class TestNegStyblinskiTang(unittest.TestCase):
+
+class TestNegStyblinskiTang(BotorchTestCase):
     def test_single_eval_neg_styblinski_tang(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):

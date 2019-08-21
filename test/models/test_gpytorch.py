@@ -2,7 +2,6 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-import unittest
 
 import torch
 from botorch import settings
@@ -22,6 +21,8 @@ from gpytorch.kernels import RBFKernel, ScaleKernel
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.means import ConstantMean
 from gpytorch.models import ExactGP, IndependentModelList
+
+from ..botorch_test_case import BotorchTestCase
 
 
 class SimpleGPyTorchModel(GPyTorchModel, ExactGP):
@@ -65,7 +66,7 @@ class SimpleModelListGPyTorchModel(IndependentModelList, ModelListGPyTorchModel)
         super().__init__(*gp_models)
 
 
-class TestGPyTorchModel(unittest.TestCase):
+class TestGPyTorchModel(BotorchTestCase):
     def test_gpytorch_model(self, cuda=False):
         tkwargs = {"device": torch.device("cuda" if cuda else "cpu")}
         for dtype in (torch.float, torch.double):
@@ -148,7 +149,7 @@ class TestGPyTorchModel(unittest.TestCase):
             self.test_validate_tensor_args(cuda=True)
 
 
-class TestBatchedMultiOutputGPyTorchModel(unittest.TestCase):
+class TestBatchedMultiOutputGPyTorchModel(BotorchTestCase):
     def test_batched_multi_output_gpytorch_model(self, cuda=False):
         tkwargs = {"device": torch.device("cuda" if cuda else "cpu")}
         for dtype in (torch.float, torch.double):
@@ -187,7 +188,7 @@ class TestBatchedMultiOutputGPyTorchModel(unittest.TestCase):
             self.test_batched_multi_output_gpytorch_model(cuda=True)
 
 
-class TestModelListGPyTorchModel(unittest.TestCase):
+class TestModelListGPyTorchModel(BotorchTestCase):
     def test_model_list_gpytorch_model(self, cuda=False):
         tkwargs = {"device": torch.device("cuda" if cuda else "cpu")}
         for dtype in (torch.float, torch.double):

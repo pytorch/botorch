@@ -2,7 +2,6 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-import unittest
 
 import torch
 from botorch.utils.transforms import (
@@ -16,8 +15,10 @@ from botorch.utils.transforms import (
 )
 from torch import Tensor
 
+from ..botorch_test_case import BotorchTestCase
 
-class TestStandardize(unittest.TestCase):
+
+class TestStandardize(BotorchTestCase):
     def test_standardize(self, cuda=False):
         tkwargs = {"device": torch.device("cuda" if cuda else "cpu")}
         for dtype in (torch.float, torch.double):
@@ -39,7 +40,7 @@ class TestStandardize(unittest.TestCase):
             self.test_standardize(cuda=True)
 
 
-class TestNormalizeAndUnnormalize(unittest.TestCase):
+class TestNormalizeAndUnnormalize(BotorchTestCase):
     def test_normalize_unnormalize(self, cuda=False):
         tkwargs = {"device": torch.device("cuda" if cuda else "cpu")}
         for dtype in (torch.float, torch.double):
@@ -80,7 +81,7 @@ class BMIMTestClass:
         return X
 
 
-class TestBatchModeTransform(unittest.TestCase):
+class TestBatchModeTransform(BotorchTestCase):
     def test_t_batch_mode_transform(self):
         c = BMIMTestClass()
         # test with q != 1
@@ -120,7 +121,7 @@ class TestBatchModeTransform(unittest.TestCase):
             c.q_method(X)
 
 
-class TestConcatenatePendingPoints(unittest.TestCase):
+class TestConcatenatePendingPoints(BotorchTestCase):
     def test_concatenate_pending_points(self):
         c = BMIMTestClass()
         # test if no pending points
@@ -138,7 +139,7 @@ class TestConcatenatePendingPoints(unittest.TestCase):
         self.assertTrue(torch.equal(c.dummy_method(X), X_expected))
 
 
-class TestMatchBatchShape(unittest.TestCase):
+class TestMatchBatchShape(BotorchTestCase):
     def test_match_batch_shape(self):
         X = torch.rand(3, 2)
         Y = torch.rand(1, 3, 2)
@@ -177,7 +178,7 @@ class TestMatchBatchShape(unittest.TestCase):
             match_batch_shape(X, Y)
 
 
-class TestSqueezeLastDim(unittest.TestCase):
+class TestSqueezeLastDim(BotorchTestCase):
     def test_squeeze_last_dim(self):
         Y = torch.rand(2, 1, 1)
         Y_squeezed = squeeze_last_dim(Y=Y)

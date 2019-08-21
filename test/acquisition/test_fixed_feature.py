@@ -2,15 +2,16 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-import unittest
 
 import torch
 from botorch.acquisition.fixed_feature import FixedFeatureAcquisitionFunction
 from botorch.acquisition.monte_carlo import qExpectedImprovement
 from botorch.models import SingleTaskGP
 
+from ..botorch_test_case import BotorchTestCase
 
-class TestFixedFeatureAcquisitionFunction(unittest.TestCase):
+
+class TestFixedFeatureAcquisitionFunction(BotorchTestCase):
     def test_fixed_features(self, cuda=False):
         device = torch.device("cuda" if cuda else "cpu")
         train_X = torch.rand(5, 3, device=device)

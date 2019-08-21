@@ -3,7 +3,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 import math
-import unittest
 import warnings
 
 import torch
@@ -18,6 +17,8 @@ from botorch.optim.fit import (
 from gpytorch.constraints import GreaterThan
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
+
+from .botorch_test_case import BotorchTestCase
 
 
 NOISE = [
@@ -37,7 +38,7 @@ MAX_ITER_MSG = "TOTAL NO. of ITERATIONS REACHED LIMIT"
 MAX_RETRY_MSG = "Fitting failed on all retries."
 
 
-class TestFitGPyTorchModel(unittest.TestCase):
+class TestFitGPyTorchModel(BotorchTestCase):
     def _getModel(self, double=False, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         dtype = torch.double if double else torch.float

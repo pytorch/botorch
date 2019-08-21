@@ -2,14 +2,16 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-import unittest
 
 import torch
 from botorch.utils import get_outcome_constraint_transforms
 
+from ..botorch_test_case import BotorchTestCase
 
-class TestGetOutcomeConstraintTransform(unittest.TestCase):
+
+class TestGetOutcomeConstraintTransform(BotorchTestCase):
     def setUp(self):
+        super().setUp()
         self.A = torch.tensor([[-1.0, 0.0, 0.0], [0.0, 1.0, 1.0]])
         self.b = torch.tensor([[-0.5], [1.0]])
         self.Ys = torch.tensor([[0.75, 1.0, 0.5], [0.25, 1.5, 1.0]]).unsqueeze(0)

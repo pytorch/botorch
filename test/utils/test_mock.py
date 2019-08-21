@@ -2,13 +2,14 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-import unittest
 
 import torch
 from botorch.utils.mock import MockModel, MockPosterior
 
+from ..botorch_test_case import BotorchTestCase
 
-class TestMock(unittest.TestCase):
+
+class TestMock(BotorchTestCase):
     def test_MockPosterior(self):
         # test basic logic
         mp = MockPosterior()

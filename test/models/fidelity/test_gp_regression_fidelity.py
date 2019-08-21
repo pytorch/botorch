@@ -3,7 +3,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 import math
-import unittest
 import warnings
 
 import torch
@@ -20,6 +19,8 @@ from botorch.sampling import SobolQMCNormalSampler
 from gpytorch.kernels.scale_kernel import ScaleKernel
 from gpytorch.means import ConstantMean
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
+
+from ...botorch_test_case import BotorchTestCase
 
 
 def _get_random_data_with_fidelity(
@@ -47,7 +48,7 @@ def _get_random_data_with_fidelity(
     return train_X, train_y
 
 
-class TestSingleTaskGPFidelity(unittest.TestCase):
+class TestSingleTaskGPFidelity(BotorchTestCase):
     def _get_model(self):
         return SingleTaskMultiFidelityGP
 

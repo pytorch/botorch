@@ -2,7 +2,6 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-import unittest
 
 import torch
 from botorch.test_functions.aug_rosenbrock import (
@@ -11,11 +10,13 @@ from botorch.test_functions.aug_rosenbrock import (
     neg_aug_rosenbrock,
 )
 
+from ..botorch_test_case import BotorchTestCase
+
 
 DIMENSION = 5
 
 
-class TestNegAugRosenbrock(unittest.TestCase):
+class TestNegAugRosenbrock(BotorchTestCase):
     def test_single_eval_neg_aug_rosenbrock(self, cuda=False):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):

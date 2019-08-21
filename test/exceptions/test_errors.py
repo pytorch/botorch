@@ -2,7 +2,6 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-import unittest
 
 from botorch.exceptions.errors import (
     BotorchError,
@@ -12,8 +11,10 @@ from botorch.exceptions.errors import (
     UnsupportedError,
 )
 
+from ..botorch_test_case import BotorchTestCase
 
-class TestBotorchExceptions(unittest.TestCase):
+
+class TestBotorchExceptions(BotorchTestCase):
     def test_botorch_exception_hierarchy(self):
         self.assertIsInstance(BotorchError(), Exception)
         self.assertIsInstance(CandidateGenerationError(), BotorchError)
