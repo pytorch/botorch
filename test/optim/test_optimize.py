@@ -7,6 +7,7 @@ from typing import Optional
 from unittest import TestCase, mock
 
 import torch
+from botorch import settings
 from botorch.exceptions.warnings import BadInitialCandidatesWarning
 from botorch.optim.optimize import (
     gen_batch_initial_conditions,
@@ -112,7 +113,7 @@ class TestGenBatchInitialcandidates(TestCase):
         device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
             bounds = torch.tensor([[0, 0], [1, 1]], device=device, dtype=dtype)
-            with warnings.catch_warnings(record=True) as ws:
+            with warnings.catch_warnings(record=True) as ws, settings.debug(True):
                 with mock.patch(
                     "botorch.optim.optimize.draw_sobol_samples",
                     return_value=torch.zeros(10, 1, 2, device=device, dtype=dtype),
@@ -193,9 +194,9 @@ class TestOptimizeAcqf(TestCase):
             self.assertEqual(mock_gen_batch_initial_conditions.call_count, cnt)
             cnt += 1
 
-    def test_optimize_acqf_cuda(self):
+    def test_optimize_acqf_joint_cuda(self):
         if torch.cuda.is_available():
-            self.test_optimize_acqf(cuda=True)
+            self.test_optimize_acqf_joint(cuda=True)
 
     @mock.patch("botorch.optim.optimize.gen_batch_initial_conditions")
     @mock.patch("botorch.optim.optimize.gen_candidates_scipy")

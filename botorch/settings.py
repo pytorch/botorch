@@ -7,6 +7,9 @@ BoTorch settings.
 """
 
 import typing  # noqa F401
+import warnings
+
+from .exceptions import BotorchWarning
 
 
 class _Flag:
@@ -45,3 +48,29 @@ class propagate_grads(_Flag):
     """
 
     _state: bool = False
+
+
+def suppress_botorch_warnings(suppress: bool) -> None:
+    r"""Set botorch warning filter.
+
+    Args:
+        state: A boolean indicating whether warnings should be prints
+    """
+    warnings.simplefilter("ignore" if suppress else "default", BotorchWarning)
+
+
+class debug(_Flag):
+    r"""Flag for printing verbose BotorchWarnings.
+
+    When set to `True`, verbose `BotorchWarning`s will be printed for debuggability.
+    Warnings that are not subclasses of `BotorchWarning` will not be affected by
+    this context_manager.
+    """
+
+    _state: bool = False
+    suppress_botorch_warnings(suppress=not _state)
+
+    @classmethod
+    def _set_state(cls, state: bool) -> None:
+        cls._state = state
+        suppress_botorch_warnings(suppress=not cls._state)

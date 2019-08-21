@@ -7,7 +7,7 @@ import unittest
 import warnings
 
 import torch
-from botorch import fit_gpytorch_model
+from botorch import fit_gpytorch_model, settings
 from botorch.exceptions.warnings import BotorchWarning, OptimizationWarning
 from botorch.models import FixedNoiseGP, HeteroskedasticSingleTaskGP, SingleTaskGP
 from botorch.optim.fit import (
@@ -73,7 +73,7 @@ class TestFitGPyTorchModel(unittest.TestCase):
         options = {"disp": False, "maxiter": 5}
         for double in (False, True):
             mll = self._getModel(double=double, cuda=cuda)
-            with warnings.catch_warnings(record=True) as ws:
+            with warnings.catch_warnings(record=True) as ws, settings.debug(True):
                 mll = fit_gpytorch_model(
                     mll, optimizer=optimizer, options=options, max_retries=1
                 )
@@ -91,7 +91,7 @@ class TestFitGPyTorchModel(unittest.TestCase):
 
             # test overriding the default bounds with user supplied bounds
             mll = self._getModel(double=double, cuda=cuda)
-            with warnings.catch_warnings(record=True) as ws:
+            with warnings.catch_warnings(record=True) as ws, settings.debug(True):
                 mll = fit_gpytorch_model(
                     mll,
                     optimizer=optimizer,
@@ -115,7 +115,7 @@ class TestFitGPyTorchModel(unittest.TestCase):
             mll = self._getModel(double=double, cuda=cuda)
             if optimizer is fit_gpytorch_torch:
                 options["disp"] = True
-            with warnings.catch_warnings(record=True) as ws:
+            with warnings.catch_warnings(record=True) as ws, settings.debug(True):
                 mll, iterations = optimizer(mll, options=options, track_iterations=True)
                 if optimizer == fit_gpytorch_scipy:
                     self.assertEqual(len(ws), 1)
@@ -136,7 +136,7 @@ class TestFitGPyTorchModel(unittest.TestCase):
                     )
                 ),
             )
-            with warnings.catch_warnings(record=True) as ws:
+            with warnings.catch_warnings(record=True) as ws, settings.debug(True):
                 mll = fit_gpytorch_model(
                     mll, optimizer=optimizer, options=options, max_retries=1
                 )
@@ -162,7 +162,7 @@ class TestFitGPyTorchModel(unittest.TestCase):
             mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
             mll.to(device=device, dtype=dtype)
             # this will do multiple retries (and emit warnings, which is desired)
-            with warnings.catch_warnings(record=True) as ws:
+            with warnings.catch_warnings(record=True) as ws, settings.debug(True):
                 fit_gpytorch_model(mll, options=options, max_retries=2)
                 self.assertTrue(
                     any(issubclass(w.category, OptimizationWarning) for w in ws)
@@ -183,7 +183,7 @@ class TestFitGPyTorchModel(unittest.TestCase):
         options = {"disp": False, "maxiter": 1}
         for double in (False, True):
             for kind in ("SingleTaskGP", "FixedNoiseGP", "HeteroskedasticSingleTaskGP"):
-                with warnings.catch_warnings(record=True) as ws:
+                with warnings.catch_warnings(record=True) as ws, settings.debug(True):
                     mll = self._getBatchedModel(kind=kind, double=double, cuda=cuda)
                     mll = fit_gpytorch_model(mll, options=options, max_retries=1)
                     mll = self._getBatchedModel(kind=kind, double=double, cuda=cuda)

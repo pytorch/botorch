@@ -7,6 +7,7 @@ import warnings
 from copy import deepcopy
 
 import torch
+from botorch import settings
 from botorch.exceptions import BotorchError
 from botorch.models import ModelListGP, SingleTaskGP
 from botorch.optim.utils import (
@@ -246,7 +247,7 @@ class TestSampleAllPriors(unittest.TestCase):
                 outputscale_prior=GammaPrior(2.0, 0.15),
             )
             original_state_dict = dict(deepcopy(mll.model.state_dict()))
-            with warnings.catch_warnings(record=True) as ws:
+            with warnings.catch_warnings(record=True) as ws, settings.debug(True):
                 sample_all_priors(model)
                 self.assertEqual(len(ws), 1)
                 self.assertTrue("rsample" in str(ws[0].message))
