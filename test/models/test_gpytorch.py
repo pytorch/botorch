@@ -5,6 +5,7 @@
 import unittest
 
 import torch
+from botorch import settings
 from botorch.exceptions import (
     BotorchTensorDimensionError,
     BotorchTensorDimensionWarning,
@@ -122,18 +123,24 @@ class TestGPyTorchModel(unittest.TestCase):
                     if len(output_dim_shape) > 0:
                         # check that no exception is raised
                         GPyTorchModel._validate_tensor_args(X, Y)
-                        with self.assertWarns(BotorchTensorDimensionWarning):
+                        with settings.debug(True), self.assertWarns(
+                            BotorchTensorDimensionWarning
+                        ):
                             GPyTorchModel._validate_tensor_args(X, Y, strict=False)
                     else:
                         with self.assertRaises(BotorchTensorDimensionError):
                             GPyTorchModel._validate_tensor_args(X, Y)
-                        with self.assertWarns(BotorchTensorDimensionWarning):
+                        with settings.debug(True), self.assertWarns(
+                            BotorchTensorDimensionWarning
+                        ):
                             GPyTorchModel._validate_tensor_args(X, Y, strict=False)
                     # test using different batch_shape
                     if len(batch_shape) > 0:
                         with self.assertRaises(BotorchTensorDimensionError):
                             GPyTorchModel._validate_tensor_args(X, Y[0])
-                        with self.assertWarns(BotorchTensorDimensionWarning):
+                        with settings.debug(True), self.assertWarns(
+                            BotorchTensorDimensionWarning
+                        ):
                             GPyTorchModel._validate_tensor_args(X, Y[0], strict=False)
 
     def test_validate_tensor_args_cuda(self):

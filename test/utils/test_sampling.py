@@ -6,6 +6,7 @@ import unittest
 import warnings
 
 import torch
+from botorch import settings
 from botorch.exceptions.warnings import SamplingWarning
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.utils.sampling import (
@@ -46,7 +47,7 @@ class TestConstructBaseSamples(unittest.TestCase):
                         self.assertEqual(samples.device.type, device.type)
                         self.assertEqual(samples.dtype, dtype)
         # check that warning is issued if dimensionality is too large
-        with warnings.catch_warnings(record=True) as w:
+        with warnings.catch_warnings(record=True) as w, settings.debug(True):
             construct_base_samples(
                 batch_shape=torch.Size(),
                 output_shape=torch.Size([200, 6]),

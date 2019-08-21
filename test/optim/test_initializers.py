@@ -6,6 +6,7 @@ import unittest
 import warnings
 
 import torch
+from botorch import settings
 from botorch.exceptions import BadInitialCandidatesWarning
 from botorch.optim import initialize_q_batch, initialize_q_batch_nonneg
 
@@ -32,7 +33,7 @@ class TestInitializeQBatch(unittest.TestCase):
             self.assertEqual(ics.dtype, X.dtype)
             # ensure raises correct warning
             Y = torch.zeros(5, device=device, dtype=dtype)
-            with warnings.catch_warnings(record=True) as w:
+            with warnings.catch_warnings(record=True) as w, settings.debug(True):
                 ics = initialize_q_batch_nonneg(X=X, Y=Y, n=2)
                 self.assertEqual(len(w), 1)
                 self.assertTrue(issubclass(w[-1].category, BadInitialCandidatesWarning))
@@ -73,7 +74,7 @@ class TestInitializeQBatch(unittest.TestCase):
             self.assertTrue(torch.equal(X, ics))
             # ensure raises correct warning
             Y = torch.zeros(5, device=device, dtype=dtype)
-            with warnings.catch_warnings(record=True) as w:
+            with warnings.catch_warnings(record=True) as w, settings.debug(True):
                 ics = initialize_q_batch(X=X, Y=Y, n=2)
                 self.assertEqual(len(w), 1)
                 self.assertTrue(issubclass(w[-1].category, BadInitialCandidatesWarning))
