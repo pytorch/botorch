@@ -5,6 +5,7 @@
 import unittest
 import warnings
 
+from botorch import settings
 from botorch.exceptions.warnings import (
     BadInitialCandidatesWarning,
     BotorchTensorDimensionWarning,
@@ -33,7 +34,7 @@ class TestBotorchWarnings(unittest.TestCase):
             OptimizationWarning,
             SamplingWarning,
         ):
-            with warnings.catch_warnings(record=True) as ws:
+            with warnings.catch_warnings(record=True) as ws, settings.debug(True):
                 warnings.warn("message", WarningClass)
                 self.assertEqual(len(ws), 1)
                 self.assertTrue(issubclass(ws[-1].category, WarningClass))

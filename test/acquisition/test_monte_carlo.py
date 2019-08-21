@@ -6,6 +6,7 @@ import unittest
 import warnings
 
 import torch
+from botorch import settings
 from botorch.acquisition.monte_carlo import (
     MCAcquisitionFunction,
     qExpectedImprovement,
@@ -86,7 +87,7 @@ class TestQExpectedImprovement(unittest.TestCase):
             self.assertEqual(acqf.X_pending, X)
             res = acqf(X)
             X2 = torch.zeros(1, 1, 1, device=device, dtype=dtype, requires_grad=True)
-            with warnings.catch_warnings(record=True) as ws:
+            with warnings.catch_warnings(record=True) as ws, settings.debug(True):
                 acqf.set_X_pending(X2)
                 self.assertEqual(acqf.X_pending, X2)
                 self.assertEqual(len(ws), 1)
@@ -256,7 +257,7 @@ class TestQNoisyExpectedImprovement(unittest.TestCase):
             self.assertEqual(acqf.X_pending, X)
             res = acqf(X)
             X2 = torch.zeros(1, 1, 1, device=device, dtype=dtype, requires_grad=True)
-            with warnings.catch_warnings(record=True) as ws:
+            with warnings.catch_warnings(record=True) as ws, settings.debug(True):
                 acqf.set_X_pending(X2)
                 self.assertEqual(acqf.X_pending, X2)
                 self.assertEqual(len(ws), 1)
@@ -403,7 +404,7 @@ class TestQProbabilityOfImprovement(unittest.TestCase):
             self.assertEqual(acqf.X_pending, X)
             res = acqf(X)
             X2 = torch.zeros(1, 1, 1, device=device, dtype=dtype, requires_grad=True)
-            with warnings.catch_warnings(record=True) as ws:
+            with warnings.catch_warnings(record=True) as ws, settings.debug(True):
                 acqf.set_X_pending(X2)
                 self.assertEqual(acqf.X_pending, X2)
                 self.assertEqual(len(ws), 1)
@@ -542,7 +543,7 @@ class TestQSimpleRegret(unittest.TestCase):
             self.assertEqual(acqf.X_pending, X)
             res = acqf(X)
             X2 = torch.zeros(1, 1, 1, device=device, dtype=dtype, requires_grad=True)
-            with warnings.catch_warnings(record=True) as ws:
+            with warnings.catch_warnings(record=True) as ws, settings.debug(True):
                 acqf.set_X_pending(X2)
                 self.assertEqual(acqf.X_pending, X2)
                 self.assertEqual(len(ws), 1)
@@ -680,7 +681,7 @@ class TestQUpperConfidenceBound(unittest.TestCase):
             self.assertEqual(acqf.X_pending, X)
             res = acqf(X)
             X2 = torch.zeros(1, 1, 1, device=device, dtype=dtype, requires_grad=True)
-            with warnings.catch_warnings(record=True) as ws:
+            with warnings.catch_warnings(record=True) as ws, settings.debug(True):
                 acqf.set_X_pending(X2)
                 self.assertEqual(acqf.X_pending, X2)
                 self.assertEqual(len(ws), 1)
@@ -765,7 +766,7 @@ class TestQUpperConfidenceBound(unittest.TestCase):
             self.assertEqual(acqf.X_pending, X)
             res = acqf(X)
             X2 = torch.zeros(1, 1, 1, device=device, dtype=dtype, requires_grad=True)
-            with warnings.catch_warnings(record=True) as ws:
+            with warnings.catch_warnings(record=True) as ws, settings.debug(True):
                 acqf.set_X_pending(X2)
                 self.assertEqual(acqf.X_pending, X2)
                 self.assertEqual(len(ws), 1)
