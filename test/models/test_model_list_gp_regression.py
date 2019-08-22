@@ -123,7 +123,7 @@ class TestModelListGP(BotorchTestCase):
             self.assertIsInstance(cm, ModelListGP)
 
             # test condition_on_observations (incorrect input shape error)
-            with self.assertRaises(ValueError):
+            with self.assertRaises(BotorchTensorDimensionError):
                 model.condition_on_observations(f_x, torch.rand(3, 2, 3, **tkwargs))
 
     def test_ModelListGP_cuda(self):
@@ -194,6 +194,7 @@ class TestModelListGP(BotorchTestCase):
                     f_x, torch.rand(3, 2, 3, **tkwargs), noise=noise
                 )
             # test condition_on_observations (incorrect noise shape error)
+            f_y = torch.rand(2, 2, **tkwargs)
             with self.assertRaises(BotorchTensorDimensionError):
                 model.condition_on_observations(
                     f_x, f_y, noise=torch.rand(2, 3, **tkwargs)

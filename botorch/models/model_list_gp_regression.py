@@ -11,6 +11,7 @@ from typing import Any
 from gpytorch.models import IndependentModelList
 from torch import Tensor
 
+from ..exceptions.errors import BotorchTensorDimensionError
 from .gpytorch import GPyTorchModel, ModelListGPyTorchModel
 
 
@@ -71,7 +72,7 @@ class ModelListGP(IndependentModelList, ModelListGPyTorchModel):
         )
         inputs = [X] * self.num_outputs
         if Y.shape[-1] != self.num_outputs:
-            raise ValueError(
+            raise BotorchTensorDimensionError(
                 "Incorrect number of outputs for observations. Received "
                 f"{Y.shape[-1]} observation outputs, but model has "
                 f"{self.num_outputs} outputs."
@@ -79,12 +80,7 @@ class ModelListGP(IndependentModelList, ModelListGPyTorchModel):
         targets = [Y[..., i] for i in range(Y.shape[-1])]
         if "noise" in kwargs:
             noise = kwargs.pop("noise")
-            if noise.shape[-1] != self.num_outputs:
-                raise ValueError(
-                    "Incorrect number of outputs for noise observations. "
-                    f"Received {noise.shape[-1]} observation outputs, but "
-                    f"model has {self.num_outputs} outputs."
-                )
+            # Note: dimension checks were performed in _validate_tensor_args
             kwargs_ = {**kwargs, "noise": [noise[..., i] for i in range(Y.shape[-1])]}
         else:
             kwargs_ = kwargs
