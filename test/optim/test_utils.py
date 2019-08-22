@@ -237,6 +237,9 @@ class TestSampleAllPriors(BotorchTestCase):
                 dict(model.state_dict())["likelihood.noise_covar.raw_noise"]
                 != original_state_dict["likelihood.noise_covar.raw_noise"]
             )
+            # check that lengthscales are all different
+            ls = model.covar_module.base_kernel.raw_lengthscale.view(-1).tolist()
+            self.assertTrue(all(ls[0] != ls[i]) for i in range(1, len(ls)))
 
             # change one of the priors to SmoothedBoxPrior
             model.covar_module = ScaleKernel(

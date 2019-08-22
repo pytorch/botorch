@@ -28,13 +28,13 @@ def sample_all_priors(model: GPyTorchModel) -> None:
     Args:
         model: A GPyTorchModel.
     """
-    for _, prior, _, setting_closure in model.named_priors():
+    for _, prior, closure, setting_closure in model.named_priors():
         if setting_closure is None:
             raise RuntimeError(
                 "Must provide inverse transform to be able to sample from prior."
             )
         try:
-            setting_closure(prior.sample())
+            setting_closure(prior.sample(closure().shape))
         except NotImplementedError:
             warnings.warn(
                 f"`rsample` not implemented for {type(prior)}. Skipping.",
