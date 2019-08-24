@@ -11,13 +11,15 @@ from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import torch
 from torch import Tensor
+from torch.quasirandom import SobolEngine
 
+from .. import settings
 from ..acquisition import AcquisitionFunction
 from ..acquisition.analytic import AnalyticAcquisitionFunction
 from ..acquisition.utils import is_nonnegative
-from ..exceptions import BadInitialCandidatesWarning
+from ..exceptions import BadInitialCandidatesWarning, SamplingWarning
 from ..gen import gen_candidates_scipy
-from ..utils.sampling import draw_sobol_samples
+from ..utils.sampling import draw_sobol_samples, manual_seed
 from .initializers import initialize_q_batch, initialize_q_batch_nonneg
 
 
@@ -285,8 +287,8 @@ def gen_batch_initial_conditions(
 
     """
     options = options or {}
-    seed: Optional[int] = options.get("seed")  # pyre-ignore
-    batch_limit: Optional[int] = options.get("batch_limit")  # pyre-ignore
+    seed: Optional[int] = options.get("seed")
+    batch_limit: Optional[int] = options.get("batch_limit")
     batch_initial_arms: Tensor
     factor, max_factor = 1, 5
     init_kwargs = {}
@@ -299,14 +301,27 @@ def gen_batch_initial_conditions(
     else:
         init_func = initialize_q_batch
 
+    q = 1 if q is None else q
+    # the dimension the samples are drawn from
+    dim = bounds.shape[-1] * q
+    if dim > SobolEngine.MAXDIM and settings.debug.on():
+        warnings.warn(
+            f"Sample dimension q*d={dim} exceeding Sobol max dimension "
+            f"({SobolEngine.MAXDIM}). Using iid samples instead.",
+            SamplingWarning,
+        )
+
     while factor < max_factor:
         with warnings.catch_warnings(record=True) as ws:
-            X_rnd = draw_sobol_samples(
-                bounds=bounds,
-                n=raw_samples * factor,
-                q=1 if q is None else q,
-                seed=seed,
-            )
+            n = raw_samples * factor
+            if dim <= SobolEngine.MAXDIM:
+                X_rnd = draw_sobol_samples(bounds=bounds, n=n, q=q, seed=seed)
+            else:
+                with manual_seed(seed):
+                    X_rnd_nlzd = torch.rand(
+                        n * dim, device=bounds.device, dtype=bounds.dtype
+                    ).view(n, q, bounds.shape[-1])
+                X_rnd = bounds[0] + (bounds[1] - bounds[0]) * X_rnd_nlzd
             with torch.no_grad():
                 if batch_limit is None:
                     batch_limit = X_rnd.shape[0]
@@ -325,6 +340,8 @@ def gen_batch_initial_conditions(
                 return batch_initial_conditions
             if factor < max_factor:
                 factor += 1
+                if seed is not None:
+                    seed += 1  # make sure to sample different X_rnd
     warnings.warn(
         "Unable to find non-zero acquisition function values - initial conditions "
         "are being selected randomly.",

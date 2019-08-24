@@ -3,12 +3,13 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 import warnings
+from contextlib import ExitStack
 from typing import Optional
 from unittest import mock
 
 import torch
 from botorch import settings
-from botorch.exceptions.warnings import BadInitialCandidatesWarning
+from botorch.exceptions.warnings import BadInitialCandidatesWarning, SamplingWarning
 from botorch.optim.optimize import (
     gen_batch_initial_conditions,
     joint_optimize,
@@ -94,53 +95,101 @@ class TestGenBatchInitialcandidates(BotorchTestCase):
         for dtype in (torch.float, torch.double):
             bounds = torch.tensor([[0, 0], [1, 1]], device=device, dtype=dtype)
             for nonnegative in (True, False):
-                batch_initial_conditions = gen_batch_initial_conditions(
-                    acq_function=MockAcquisitionFunction(),
-                    bounds=bounds,
-                    q=1,
-                    num_restarts=2,
-                    raw_samples=10,
-                    options={"nonnegative": nonnegative, "eta": 0.01, "alpha": 0.1},
-                )
-                expected_shape = torch.Size([2, 1, 2])
-                self.assertEqual(batch_initial_conditions.shape, expected_shape)
-                self.assertEqual(batch_initial_conditions.device, bounds.device)
-                self.assertEqual(batch_initial_conditions.dtype, bounds.dtype)
-
-    def test_gen_batch_initial_conditions_cuda(self):
-        if torch.cuda.is_available():
-            self.test_gen_batch_initial_conditions(cuda=True)
-
-    def test_gen_batch_initial_conditions_simple_warning(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
-        for dtype in (torch.float, torch.double):
-            bounds = torch.tensor([[0, 0], [1, 1]], device=device, dtype=dtype)
-            with warnings.catch_warnings(record=True) as ws, settings.debug(True):
-                with mock.patch(
-                    "botorch.optim.optimize.draw_sobol_samples",
-                    return_value=torch.zeros(10, 1, 2, device=device, dtype=dtype),
-                ):
+                for seed in (None, 1234):
                     batch_initial_conditions = gen_batch_initial_conditions(
                         acq_function=MockAcquisitionFunction(),
                         bounds=bounds,
                         q=1,
                         num_restarts=2,
                         raw_samples=10,
+                        options={
+                            "nonnegative": nonnegative,
+                            "eta": 0.01,
+                            "alpha": 0.1,
+                            "seed": seed,
+                        },
                     )
-                    self.assertEqual(len(ws), 1)
-                    self.assertTrue(
-                        issubclass(ws[-1].category, BadInitialCandidatesWarning)
-                    )
-                    self.assertTrue(
-                        torch.equal(
-                            batch_initial_conditions,
-                            torch.zeros(2, 1, 2, device=device, dtype=dtype),
-                        )
-                    )
+                    expected_shape = torch.Size([2, 1, 2])
+                    self.assertEqual(batch_initial_conditions.shape, expected_shape)
+                    self.assertEqual(batch_initial_conditions.device, bounds.device)
+                    self.assertEqual(batch_initial_conditions.dtype, bounds.dtype)
 
-    def test_gen_batch_initial_conditions_simple_raises_cuda(self):
+    def test_gen_batch_initial_conditions_cuda(self):
         if torch.cuda.is_available():
-            self.test_gen_batch_initial_conditions_simple_warning(cuda=True)
+            self.test_gen_batch_initial_conditions(cuda=True)
+
+    def test_gen_batch_initial_conditions_highdim(self, cuda=False):
+        d = 120
+        bounds = torch.stack([torch.zeros(d), torch.ones(d)])
+        device = torch.device("cuda") if cuda else torch.device("cpu")
+        for dtype in (torch.float, torch.double):
+            bounds = bounds.to(device=device, dtype=dtype)
+            for nonnegative in (True, False):
+                for seed in (None, 1234):
+                    with warnings.catch_warnings(record=True) as ws, settings.debug(
+                        True
+                    ):
+                        batch_initial_conditions = gen_batch_initial_conditions(
+                            acq_function=MockAcquisitionFunction(),
+                            bounds=bounds,
+                            q=10,
+                            num_restarts=1,
+                            raw_samples=2,
+                            options={
+                                "nonnegative": nonnegative,
+                                "eta": 0.01,
+                                "alpha": 0.1,
+                                "seed": seed,
+                            },
+                        )
+                        self.assertTrue(
+                            any(issubclass(w.category, SamplingWarning) for w in ws)
+                        )
+                    expected_shape = torch.Size([1, 10, d])
+                    self.assertEqual(batch_initial_conditions.shape, expected_shape)
+                    self.assertEqual(batch_initial_conditions.device, bounds.device)
+                    self.assertEqual(batch_initial_conditions.dtype, bounds.dtype)
+
+    def test_gen_batch_initial_conditions_highdim_cuda(self):
+        if torch.cuda.is_available():
+            self.test_gen_batch_initial_conditions_highdim(cuda=True)
+
+    def test_gen_batch_initial_conditions_warning(self, cuda=False):
+        device = torch.device("cuda") if cuda else torch.device("cpu")
+        for dtype in (torch.float, torch.double):
+            bounds = torch.tensor([[0, 0], [1, 1]], device=device, dtype=dtype)
+            samples = torch.zeros(10, 1, 2, device=device, dtype=dtype)
+            with ExitStack() as es:
+                ws = es.enter_context(warnings.catch_warnings(record=True))
+                es.enter_context(settings.debug(True))
+                es.enter_context(
+                    mock.patch(
+                        "botorch.optim.optimize.draw_sobol_samples",
+                        return_value=samples,
+                    )
+                )
+                batch_initial_conditions = gen_batch_initial_conditions(
+                    acq_function=MockAcquisitionFunction(),
+                    bounds=bounds,
+                    q=1,
+                    num_restarts=2,
+                    raw_samples=10,
+                    options={"seed": 1234},
+                )
+                self.assertEqual(len(ws), 1)
+                self.assertTrue(
+                    any(issubclass(w.category, BadInitialCandidatesWarning) for w in ws)
+                )
+                self.assertTrue(
+                    torch.equal(
+                        batch_initial_conditions,
+                        torch.zeros(2, 1, 2, device=device, dtype=dtype),
+                    )
+                )
+
+    def test_gen_batch_initial_conditions_warning_cuda(self):
+        if torch.cuda.is_available():
+            self.test_gen_batch_initial_conditions_warning(cuda=True)
 
 
 class TestOptimizeAcqf(BotorchTestCase):
