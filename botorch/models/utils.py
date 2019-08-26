@@ -7,7 +7,7 @@ Utiltiy functions for models.
 """
 
 import warnings
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Any
 
 import torch
 from gpytorch.utils.broadcasting import _mul_broadcast_shape
@@ -20,6 +20,7 @@ from .models import HeteroskedasticSingleTaskGP
 from ..sampling import IIDNormalSampler
 from gpytorch.constraints import GreaterThan
 from gpytorch.mlls import ExactMarginalLogLikelihood
+from gpytorch.module import Module
 
 from gpytorch.kernels.scale_kernel import ScaleKernel
 from gpytorch.kernels.rbf_kernel import RBFKernel
