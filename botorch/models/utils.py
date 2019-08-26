@@ -26,7 +26,6 @@ from gpytorch.kernels.scale_kernel import ScaleKernel
 from gpytorch.kernels.rbf_kernel import RBFKernel
 
 
-
 def _make_X_full(X: Tensor, output_indices: List[int], tf: int) -> Tensor:
     r"""Helper to construct input tensor with task indices.
 
@@ -200,7 +199,7 @@ def fit_most_likely_HeteroskedasticGP(
     max_iter: int = 10,
     atol_mean: float = 1e-04,
     atol_var: float = 1e-04,
- ) -> HeteroskedasticSingleTaskGP:
+) -> HeteroskedasticSingleTaskGP:
     r"""Fit the Most Likely Heteroskedastic GP.
 
     The original algorithm is described in 
@@ -230,70 +229,85 @@ def fit_most_likely_HeteroskedasticGP(
     # check_standardization(train_Y)
 
     # fit initial homoskedastic model used to estimate noise levels
-    homo_model = SingleTaskGP(train_X=train_X, train_Y=train_Y,
-                              covar_module=covar_module)
-    homo_model.likelihood.noise_covar.register_constraint("raw_noise",
-                                                          GreaterThan(1e-5))
-    homo_mll = gpytorch.mlls.ExactMarginalLogLikelihood(homo_model.likelihood,
-                                                        homo_model)
+    homo_model = SingleTaskGP(
+        train_X=train_X, train_Y=train_Y, covar_module=covar_module
+    )
+    homo_model.likelihood.noise_covar.register_constraint(
+        "raw_noise", GreaterThan(1e-5)
+    )
+    homo_mll = gpytorch.mlls.ExactMarginalLogLikelihood(
+        homo_model.likelihood, homo_model
+    )
     botorch.fit.fit_gpytorch_model(homo_mll)
 
-    # get estimates of noise 
+    # get estimates of noise
     homo_mll.eval()
     with torch.no_grad():
         homo_posterior = homo_mll.model.posterior(train_X.clone())
-        homo_predictive_posterior = homo_mll.model.posterior(train_X.clone(),
-                                                             observation_noise=True)
+        homo_predictive_posterior = homo_mll.model.posterior(
+            train_X.clone(), observation_noise=True
+        )
     sampler = IIDNormalSampler(num_samples=num_var_samples, resample=True)
     predictive_samples = sampler(homo_predictive_posterior)
-    observed_var = 0.5 * ((predictive_samples - train_Y.reshape(-1,1))**2).mean(dim=0)
+    observed_var = 0.5 * ((predictive_samples - train_Y.reshape(-1, 1)) ** 2).mean(
+        dim=0
+    )
 
     # save mean and variance to check if they change later
     saved_mean = homo_posterior.mean
     saved_var = homo_posterior.variance
 
-    for i in range(max_iter): 
+    for i in range(max_iter):
 
         # now train hetero model using computed noise
-        hetero_model = HeteroskedasticSingleTaskGP(train_X=train_X, train_Y=train_Y,
-                                                   train_Yvar=observed_var)
-        hetero_mll = gpytorch.mlls.ExactMarginalLogLikelihood(hetero_model.likelihood,
-                                                              hetero_model)
+        hetero_model = HeteroskedasticSingleTaskGP(
+            train_X=train_X, train_Y=train_Y, train_Yvar=observed_var
+        )
+        hetero_mll = gpytorch.mlls.ExactMarginalLogLikelihood(
+            hetero_model.likelihood, hetero_model
+        )
         try:
             botorch.fit.fit_gpytorch_model(hetero_mll)
         except Exception as e:
-            msg = f'Fitting failed on iteration {i}. Returning the current MLL'
+            msg = f"Fitting failed on iteration {i}. Returning the current MLL"
             warnings.warn(msg, e)
             return saved_hetero_mll
 
         hetero_mll.eval()
         with torch.no_grad():
             hetero_posterior = hetero_mll.model.posterior(train_X.clone())
-            hetero_predictive_posterior = hetero_mll.model.posterior(train_X.clone(),
-                                                                     observation_noise=True)
-           
+            hetero_predictive_posterior = hetero_mll.model.posterior(
+                train_X.clone(), observation_noise=True
+            )
+
         new_mean = hetero_posterior.mean
         new_var = hetero_posterior.variance
-        
-        mean_equality = torch.all(torch.lt(torch.abs(torch.add(saved_mean, -new_mean)), atol_mean))
+
+        mean_equality = torch.all(
+            torch.lt(torch.abs(torch.add(saved_mean, -new_mean)), atol_mean)
+        )
         max_change_in_means = torch.max(torch.abs(torch.add(saved_mean, -new_mean)))
 
-        var_equality = torch.all(torch.lt(torch.abs(torch.add(saved_var, -new_var)), atol_var))
+        var_equality = torch.all(
+            torch.lt(torch.abs(torch.add(saved_var, -new_var)), atol_var)
+        )
         max_change_in_var = torch.max(torch.abs(torch.add(saved_var, -new_var)))
-        
+
         if mean_equality and var_equality:
             return hetero_mll
         else:
             saved_hetero_mll = hetero_mll
-              
+
         saved_mean = new_mean
         saved_var = new_var
-        
+
         # get new noise estimate
         sampler = IIDNormalSampler(num_samples=num_var_samples, resample=True)
         predictive_samples = sampler(hetero_predictive_posterior)
-        observed_var = 0.5 * ((predictive_samples - train_Y.reshape(-1,1))**2).mean(dim=0)
-                  
-    msg = f'Did not reach convergence after {max_iter} iterations. Returning the current MLL.'
+        observed_var = 0.5 * ((predictive_samples - train_Y.reshape(-1, 1)) ** 2).mean(
+            dim=0
+        )
+
+    msg = f"Did not reach convergence after {max_iter} iterations. Returning the current MLL."
     warnings.warn(msg)
     return hetero_mll
