@@ -54,13 +54,13 @@
 <span class="sd">    Args:</span>
 <span class="sd">        model: A GPyTorchModel.</span>
 <span class="sd">    """</span>
-    <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">prior</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">setting_closure</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">named_priors</span><span class="p">():</span>
+    <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">prior</span><span class="p">,</span> <span class="n">closure</span><span class="p">,</span> <span class="n">setting_closure</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">named_priors</span><span class="p">():</span>
         <span class="k">if</span> <span class="n">setting_closure</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
                 <span class="s2">"Must provide inverse transform to be able to sample from prior."</span>
             <span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">setting_closure</span><span class="p">(</span><span class="n">prior</span><span class="o">.</span><span class="n">sample</span><span class="p">())</span>
+            <span class="n">setting_closure</span><span class="p">(</span><span class="n">prior</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">closure</span><span class="p">()</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
         <span class="k">except</span> <span class="ne">NotImplementedError</span><span class="p">:</span>
             <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
                 <span class="n">f</span><span class="s2">"`rsample` not implemented for {type(prior)}. Skipping."</span><span class="p">,</span>

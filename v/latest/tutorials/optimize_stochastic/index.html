@@ -126,7 +126,7 @@
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Define-acquisition-function">Define acquisition function<a class="anchor-link" href="#Define-acquisition-function">¶</a></h3><p>We'll use <code>qExpectedImprovement</code> with a custom sampler that uses a small number of MC samples and re-samples upon each evaluation of the function. This results in a stochastic acquisition function that one should not attempt to optimize with the quasi-second order methods that are used by default in BoTorch's <code>joint_optimize</code> function.</p>
+<h3 id="Define-acquisition-function">Define acquisition function<a class="anchor-link" href="#Define-acquisition-function">¶</a></h3><p>We'll use <code>qExpectedImprovement</code> with a custom sampler that uses a small number of MC samples and re-samples upon each evaluation of the function. This results in a stochastic acquisition function that one should not attempt to optimize with the quasi-second order methods that are used by default in BoTorch's <code>optimize_acqf</code> function.</p>
 </div>
 </div>
 </div>

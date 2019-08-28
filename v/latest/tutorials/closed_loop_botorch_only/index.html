@@ -205,7 +205,7 @@ $$f(x) = -\sum_{i=1}^4 \alpha_i \exp \left( -\sum_{j=1}^6 A_{ij} (x_j - P_{ij})^
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h4 id="Define-a-helper-function-that-performs-the-essential-BO-step">Define a helper function that performs the essential BO step<a class="anchor-link" href="#Define-a-helper-function-that-performs-the-essential-BO-step">¶</a></h4><p>The helper function below takes an acquisition function as an argument, optimizes it, and returns the batch $\{x_1, x_2, \ldots x_q\}$ along with the observed function values. For this example, we'll use a small batch of $q=3$. The function <code>joint_optimize</code> optimizes the $q$ points jointly. A simple initialization heuristic is used to select the 10 restart initial locations from a set of 50 random points.</p>
+<h4 id="Define-a-helper-function-that-performs-the-essential-BO-step">Define a helper function that performs the essential BO step<a class="anchor-link" href="#Define-a-helper-function-that-performs-the-essential-BO-step">¶</a></h4><p>The helper function below takes an acquisition function as an argument, optimizes it, and returns the batch $\{x_1, x_2, \ldots x_q\}$ along with the observed function values. For this example, we'll use a small batch of $q=3$. The function <code>optimize_acqf</code> optimizes the $q$ points jointly. A simple initialization heuristic is used to select the 10 restart initial locations from a set of 50 random points.</p>
 </div>
 </div>
 </div>
