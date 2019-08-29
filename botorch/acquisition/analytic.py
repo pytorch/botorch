@@ -368,8 +368,8 @@ class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
             design points `X`.
         """
         posterior = self._get_posterior(X=X, check_single_output=False)
-        means = posterior.mean.squeeze(dim=-2)  # (b) x t
-        sigmas = posterior.variance.squeeze(dim=-2).sqrt().clamp_min(1e-9)  # (b) x t
+        means = posterior.mean.squeeze(dim=-2)  # (b) x m
+        sigmas = posterior.variance.squeeze(dim=-2).sqrt().clamp_min(1e-9)  # (b) x m
 
         # (b) x 1
         mean_obj = means[..., [self.objective_index]]
@@ -436,10 +436,10 @@ class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
         Args:
             X: A `(b) x 1 x d`-dim Tensor of `(b)` t-batches of `d`-dim design
                 points each.
-            means: A `(b) x t`-dim Tensor of means.
-            sigmas: A `(b) x t`-dim Tensor of standard deviations.
+            means: A `(b) x m`-dim Tensor of means.
+            sigmas: A `(b) x m`-dim Tensor of standard deviations.
         Returns:
-            A `(b) x 1 x 1`-dim tensor of feasibility probabilities
+            A `(b) x 1`-dim tensor of feasibility probabilities
 
         Note: This function does case-work for upper bound, lower bound, and both-sided
         bounds. Another way to do it would be to use 'inf' and -'inf' for the
@@ -447,8 +447,7 @@ class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
         causes an issue with autograd since we get 0 * inf.
         TODO: Investigate further.
         """
-        output_shape = list(X.shape)
-        output_shape[-1] = 1
+        output_shape = X.shape[:-2] + torch.Size([1])
         prob_feas = torch.ones(output_shape, device=X.device, dtype=X.dtype)
 
         if len(self.constraint_lower_inds) > 0:
