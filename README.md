@@ -117,7 +117,8 @@ For more details see our [Documentation](https://botorch.org/docs/introduction) 
   from gpytorch.mlls import ExactMarginalLogLikelihood
 
   train_X = torch.rand(10, 2)
-  Y = 1 - torch.norm(train_X - 0.5, dim=-1) + 0.1 * torch.rand(10)
+  Y = 1 - (train_X - 0.5).norm(dim=-1, keepdim=True)  # explicit output dimension
+  Y += 0.1 * torch.rand_like(Y)
   train_Y = (Y - Y.mean()) / Y.std()
 
   gp = SingleTaskGP(train_X, train_Y)
