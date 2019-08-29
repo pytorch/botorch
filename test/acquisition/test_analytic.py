@@ -431,6 +431,7 @@ class TestConstrainedExpectedImprovement(BotorchTestCase):
             )
             X = torch.empty(3, 1, 1, device=device, dtype=dtype)  # dummy
             ei = module(X)
+            self.assertTrue(ei.shape == torch.Size([3]))
             ei_expected_unconstrained = torch.tensor(
                 [0.19780, 0.39894, 0.69780], device=device, dtype=dtype
             )
