@@ -15,7 +15,6 @@ from torch.quasirandom import SobolEngine
 
 from .. import settings
 from ..acquisition import AcquisitionFunction
-from ..acquisition.analytic import AnalyticAcquisitionFunction
 from ..acquisition.utils import is_nonnegative
 from ..exceptions import BadInitialCandidatesWarning, SamplingWarning
 from ..gen import gen_candidates_scipy
@@ -132,7 +131,7 @@ def optimize_acqf(
         batch_initial_conditions = gen_batch_initial_conditions(
             acq_function=acq_function,
             bounds=bounds,
-            q=None if isinstance(acq_function, AnalyticAcquisitionFunction) else q,
+            q=q,
             num_restarts=num_restarts,
             raw_samples=raw_samples,
             options=options,
