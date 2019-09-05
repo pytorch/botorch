@@ -146,6 +146,35 @@ class TestFitGPyTorchModel(BotorchTestCase):
                     self.assertTrue(MAX_RETRY_MSG in str(ws[0].message))
             self.assertTrue(mll.dummy_param.grad is None)
 
+            # test excluding a parameter
+            mll = self._getModel(double=double, cuda=cuda)
+            original_raw_noise = mll.model.likelihood.noise_covar.raw_noise.item()
+            original_mean_module_constant = mll.model.mean_module.constant.item()
+            options["exclude"] = [
+                "model.mean_module.constant",
+                "likelihood.noise_covar.raw_noise",
+            ]
+            with warnings.catch_warnings(record=True) as ws, settings.debug(True):
+                mll = fit_gpytorch_model(
+                    mll, optimizer=optimizer, options=options, max_retries=1
+                )
+                if optimizer == fit_gpytorch_scipy:
+                    self.assertEqual(len(ws), 1)
+                    self.assertTrue(MAX_RETRY_MSG in str(ws[0].message))
+            model = mll.model
+            # Make excluded params did not change
+            self.assertEqual(
+                model.likelihood.noise_covar.raw_noise.item(), original_raw_noise
+            )
+            self.assertEqual(
+                model.mean_module.constant.item(), original_mean_module_constant
+            )
+            # Make sure other params did change
+            self.assertGreater(
+                model.covar_module.base_kernel.raw_lengthscale.abs().item(), 0.1
+            )
+            self.assertGreater(model.covar_module.raw_outputscale.abs().item(), 1e-3)
+
     def test_fit_gpytorch_model_cuda(self):
         if torch.cuda.is_available():
             self.test_fit_gpytorch_model(cuda=True)

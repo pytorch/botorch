@@ -74,8 +74,15 @@ def fit_gpytorch_torch(
     """
     optim_options = {"maxiter": 100, "disp": True, "lr": 0.05}
     optim_options.update(options or {})
+    exclude = optim_options.pop("exclude", None)
+    if exclude is not None:
+        mll_params = [
+            t for p_name, t in mll.named_parameters() if p_name not in exclude
+        ]
+    else:
+        mll_params = list(mll.parameters())
     optimizer = optimizer_cls(
-        params=[{"params": mll.parameters()}],
+        params=[{"params": mll_params}],
         **_filter_kwargs(optimizer_cls, **optim_options),
     )
 
@@ -166,7 +173,10 @@ def fit_gpytorch_scipy(
         >>> fit_gpytorch_scipy(mll)
         >>> mll.eval()
     """
-    x0, property_dict, bounds = module_to_array(module=mll, bounds=bounds)
+    options = options or {}
+    x0, property_dict, bounds = module_to_array(
+        module=mll, bounds=bounds, exclude=options.pop("exclude", None)
+    )
     x0 = x0.astype(np.float64)
     if bounds is not None:
         bounds = Bounds(lb=bounds[0], ub=bounds[1], keep_feasible=True)
