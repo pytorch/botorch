@@ -9,7 +9,7 @@ Tools for model fitting.
 import time
 import warnings
 from collections import OrderedDict
-from typing import Any, Dict, List, NamedTuple, Optional, Tuple
+from typing import Any, Dict, List, NamedTuple, Optional, Tuple, Union
 
 import numpy as np
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
@@ -38,7 +38,7 @@ def fit_gpytorch_torch(
     optimizer_cls: Optimizer = Adam,
     options: Optional[Dict[str, Any]] = None,
     track_iterations: bool = True,
-) -> Tuple[MarginalLogLikelihood, List[OptimizationIteration]]:
+) -> Tuple[MarginalLogLikelihood, Dict[str, Union[float, List[OptimizationIteration]]]]:
     r"""Fit a gpytorch model by maximizing MLL with a torch optimizer.
 
     The model and likelihood in mll must already be in train mode.
@@ -60,10 +60,12 @@ def fit_gpytorch_torch(
 
     Returns:
         2-element tuple containing
-
         - mll with parameters optimized in-place.
-        - List of OptimizationIteration objects with information on each
-          iteration. If track_iterations is False, this will be an empty list.
+        - Dictionary with the following key/values:
+        "fopt": Best mll value.
+        "wall_time": Wall time of fitting.
+        "iterations": List of OptimizationIteration objects with information on each
+        iteration. If track_iterations is False, will be empty.
 
     Example:
         >>> gp = SingleTaskGP(train_X, train_Y)
@@ -135,7 +137,12 @@ def fit_gpytorch_torch(
             param_trajectory=param_trajectory,
             options={"maxiter": optim_options["maxiter"]},
         )
-    return mll, iterations
+    info_dict = {
+        "fopt": loss_trajectory[-1],
+        "wall_time": time.time() - t1,
+        "iterations": iterations,
+    }
+    return mll, info_dict
 
 
 def fit_gpytorch_scipy(
@@ -144,7 +151,7 @@ def fit_gpytorch_scipy(
     method: str = "L-BFGS-B",
     options: Optional[Dict[str, Any]] = None,
     track_iterations: bool = True,
-) -> Tuple[MarginalLogLikelihood, List[OptimizationIteration]]:
+) -> Tuple[MarginalLogLikelihood, Dict[str, Union[float, List[OptimizationIteration]]]]:
     r"""Fit a gpytorch model by maximizing MLL with a scipy optimizer.
 
     The model and likelihood in mll must already be in train mode.
@@ -161,10 +168,12 @@ def fit_gpytorch_scipy(
 
     Returns:
         2-element tuple containing
-
         - MarginalLogLikelihood with parameters optimized in-place.
-        - List of OptimizationIteration objects with information on each
-          iteration. If track_iterations is False, this will be an empty list.
+        - Dictionary with the following key/values:
+        "fopt": Best mll value.
+        "wall_time": Wall time of fitting.
+        "iterations": List of OptimizationIteration objects with information on each
+        iteration. If track_iterations is False, will be empty.
 
     Example:
         >>> gp = SingleTaskGP(train_X, train_Y)
@@ -208,14 +217,25 @@ def fit_gpytorch_scipy(
                 x=xk, mll=mll, property_dict=property_dict
             )
             iterations.append(OptimizationIteration(i, obj, ts[i]))
+    # Construct info dict
+    info_dict = {
+        "fopt": float(res.fun),
+        "wall_time": time.time() - t1,
+        "iterations": iterations,
+    }
     if not res.success:
-        msg = res.message.decode("ascii")
+        try:
+            # Some res.message are bytes
+            msg = res.message.decode("ascii")
+        except AttributeError:
+            # Others are str
+            msg = res.message
         warnings.warn(
             f"Fitting failed with the optimizer reporting '{msg}'", OptimizationWarning
         )
     # Set to optimum
     mll = set_params_with_array(mll, res.x, property_dict)
-    return mll, iterations
+    return mll, info_dict
 
 
 def _scipy_objective_and_grad(
