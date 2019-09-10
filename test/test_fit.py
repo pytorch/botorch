@@ -117,12 +117,26 @@ class TestFitGPyTorchModel(BotorchTestCase):
             if optimizer is fit_gpytorch_torch:
                 options["disp"] = True
             with warnings.catch_warnings(record=True) as ws, settings.debug(True):
-                mll, iterations = optimizer(mll, options=options, track_iterations=True)
+                mll, info_dict = optimizer(mll, options=options, track_iterations=True)
                 if optimizer == fit_gpytorch_scipy:
                     self.assertEqual(len(ws), 1)
                     self.assertTrue(MAX_ITER_MSG in str(ws[0].message))
-            self.assertEqual(len(iterations), options["maxiter"])
-            self.assertIsInstance(iterations[0], OptimizationIteration)
+            self.assertEqual(len(info_dict["iterations"]), options["maxiter"])
+            self.assertIsInstance(info_dict["iterations"][0], OptimizationIteration)
+            self.assertTrue("fopt" in info_dict)
+            self.assertTrue("wall_time" in info_dict)
+
+            # Test different optimizer, for scipy optimizer,
+            # because of different scipy OptimizeResult.message type
+            if optimizer == fit_gpytorch_scipy:
+                with warnings.catch_warnings(record=True) as ws, settings.debug(True):
+                    mll, info_dict = optimizer(
+                        mll, options=options, track_iterations=False, method="slsqp"
+                    )
+                self.assertEqual(len(ws), 1)
+                self.assertEqual(len(info_dict["iterations"]), 0)
+                self.assertTrue("fopt" in info_dict)
+                self.assertTrue("wall_time" in info_dict)
 
             # test extra param that does not affect loss
             options["disp"] = False
