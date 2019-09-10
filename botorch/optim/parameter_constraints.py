@@ -242,7 +242,9 @@ def _make_linear_constraints(
             for a in indices:
                 b = a.tolist()
                 idxr.append(i * offsets[0] + b[0] * offsets[1] + b[1])
-            fun = partial(eval_lin_constraint, flat_idxr=idxr, coeffs=coeffs, rhs=rhs)
+            fun = partial(
+                eval_lin_constraint, flat_idxr=idxr, coeffs=coeffs, rhs=float(rhs)
+            )
             jac = partial(lin_constraint_jac, flat_idxr=idxr, coeffs=coeffs, n=n)
             constraints.append({"type": ctype, "fun": fun, "jac": jac})
     elif indices.dim() == 1:
@@ -254,7 +256,7 @@ def _make_linear_constraints(
             for j in range(shapeX[1]):
                 idxr = (i * offsets[0] + j * offsets[1] + indices).tolist()
                 fun = partial(
-                    eval_lin_constraint, flat_idxr=idxr, coeffs=coeffs, rhs=rhs
+                    eval_lin_constraint, flat_idxr=idxr, coeffs=coeffs, rhs=float(rhs)
                 )
                 jac = partial(lin_constraint_jac, flat_idxr=idxr, coeffs=coeffs, n=n)
                 constraints.append({"type": ctype, "fun": fun, "jac": jac})
