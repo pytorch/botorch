@@ -23,17 +23,22 @@ class TestStandardize(BotorchTestCase):
         tkwargs = {"device": torch.device("cuda" if cuda else "cpu")}
         for dtype in (torch.float, torch.double):
             tkwargs["dtype"] = dtype
-            X = torch.tensor([0.0, 0.0], **tkwargs)
-            self.assertTrue(torch.equal(X, standardize(X)))
-            X2 = torch.tensor([0.0, 1.0, 1.0, 1.0], **tkwargs)
-            expected_X2_stdized = torch.tensor([-1.5, 0.5, 0.5, 0.5], **tkwargs)
-            self.assertTrue(torch.equal(expected_X2_stdized, standardize(X2)))
-            X3 = torch.tensor(
+            Y = torch.tensor([0.0, 0.0], **tkwargs)
+            self.assertTrue(torch.equal(Y, standardize(Y)))
+            Y2 = torch.tensor([0.0, 1.0, 1.0, 1.0], **tkwargs)
+            expected_Y2_stdized = torch.tensor([-1.5, 0.5, 0.5, 0.5], **tkwargs)
+            self.assertTrue(torch.equal(expected_Y2_stdized, standardize(Y2)))
+            Y3 = torch.tensor(
                 [[0.0, 1.0, 1.0, 1.0], [0.0, 0.0, 0.0, 0.0]], **tkwargs
             ).transpose(1, 0)
-            X3_stdized = standardize(X3)
-            self.assertTrue(torch.equal(X3_stdized[:, 0], expected_X2_stdized))
-            self.assertTrue(torch.equal(X3_stdized[:, 1], torch.zeros(4, **tkwargs)))
+            Y3_stdized = standardize(Y3)
+            self.assertTrue(torch.equal(Y3_stdized[:, 0], expected_Y2_stdized))
+            self.assertTrue(torch.equal(Y3_stdized[:, 1], torch.zeros(4, **tkwargs)))
+            Y4 = torch.cat([Y3, Y2.unsqueeze(-1)], dim=-1)
+            Y4_stdized = standardize(Y4)
+            self.assertTrue(torch.equal(Y4_stdized[:, 0], expected_Y2_stdized))
+            self.assertTrue(torch.equal(Y4_stdized[:, 1], torch.zeros(4, **tkwargs)))
+            self.assertTrue(torch.equal(Y4_stdized[:, 2], expected_Y2_stdized))
 
     def test_standardize_cuda(self):
         if torch.cuda.is_available():

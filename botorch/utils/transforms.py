@@ -29,22 +29,27 @@ def squeeze_last_dim(Y: Tensor) -> Tensor:
     return Y.squeeze(-1)
 
 
-def standardize(X: Tensor) -> Tensor:
-    r"""Standardize a tensor by dim=0.
+def standardize(Y: Tensor) -> Tensor:
+    r"""Standardizes (zero mean, unit variance) a tensor by dim=-2.
+
+    If the tensor is single-dimensional, simply standardizes the tensor.
+    If for some batch index all elements are equal (of if there is only a single
+    data point), this function will return 0 for that batch index.
 
     Args:
-        X: A `n` or `n x d`-dim tensor
+        Y: A `batch_shape x n x m`-dim tensor.
 
     Returns:
-        The standardized `X`.
+        The standardized `Y`.
 
     Example:
-        >>> X = torch.rand(4, 3)
-        >>> X_standardized = standardize(X)
+        >>> Y = torch.rand(4, 3)
+        >>> Y_standardized = standardize(Y)
     """
-    X_std = X.std(dim=0)
-    X_std = X_std.where(X_std >= 1e-9, torch.full_like(X_std, 1.0))
-    return (X - X.mean(dim=0)) / X_std
+    stddim = -1 if Y.dim() < 2 else -2
+    Y_std = Y.std(dim=stddim, keepdim=True)
+    Y_std = Y_std.where(Y_std >= 1e-9, torch.full_like(Y_std, 1.0))
+    return (Y - Y.mean(dim=stddim, keepdim=True)) / Y_std
 
 
 def normalize(X: Tensor, bounds: Tensor) -> Tensor:
