@@ -11,9 +11,9 @@ from botorch.exceptions.warnings import OptimizationWarning
 from botorch.fit import fit_gpytorch_model
 from botorch.gen import gen_candidates_scipy, gen_candidates_torch
 from botorch.models import SingleTaskGP
+from botorch.utils.testing import BotorchTestCase
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 
-from .botorch_test_case import BotorchTestCase
 from .test_fit import NOISE
 
 
@@ -21,23 +21,24 @@ EPS = 1e-8
 
 
 class TestBaseCandidateGeneration(BotorchTestCase):
-    def _setUp(self, double=False, cuda=False, expand=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def _setUp(self, double=False, expand=False):
         dtype = torch.double if double else torch.float
-        train_x = torch.linspace(0, 1, 10, device=device, dtype=dtype).unsqueeze(-1)
+        train_x = torch.linspace(0, 1, 10, device=self.device, dtype=dtype).unsqueeze(
+            -1
+        )
         train_y = torch.sin(train_x * (2 * math.pi))
-        noise = torch.tensor(NOISE, device=device, dtype=dtype)
+        noise = torch.tensor(NOISE, device=self.device, dtype=dtype)
         self.train_x = train_x
         self.train_y = train_y + noise
         if expand:
             self.train_x = self.train_x.expand(-1, 2)
-            ics = torch.tensor([[0.5, 1.0]], device=device, dtype=dtype)
+            ics = torch.tensor([[0.5, 1.0]], device=self.device, dtype=dtype)
         else:
-            ics = torch.tensor([[0.5]], device=device, dtype=dtype)
+            ics = torch.tensor([[0.5]], device=self.device, dtype=dtype)
         self.initial_conditions = ics
         self.f_best = self.train_y.max().item()
         model = SingleTaskGP(self.train_x, self.train_y)
-        self.model = model.to(device=device, dtype=dtype)
+        self.model = model.to(device=self.device, dtype=dtype)
         self.mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=OptimizationWarning)
@@ -47,9 +48,9 @@ class TestBaseCandidateGeneration(BotorchTestCase):
 
 
 class TestGenCandidates(TestBaseCandidateGeneration):
-    def test_gen_candidates(self, cuda=False, gen_candidates=gen_candidates_scipy):
+    def test_gen_candidates(self, gen_candidates=gen_candidates_scipy):
         for double in (True, False):
-            self._setUp(double=double, cuda=cuda)
+            self._setUp(double=double)
             qEI = qExpectedImprovement(self.model, best_f=self.f_best)
             candidates, _ = gen_candidates(
                 initial_conditions=self.initial_conditions,
@@ -59,22 +60,14 @@ class TestGenCandidates(TestBaseCandidateGeneration):
             )
             self.assertTrue(-EPS <= candidates <= 1 + EPS)
 
-    def test_gen_candidates_scipy_cuda(self):
-        if torch.cuda.is_available():
-            self.test_gen_candidates(cuda=True)
-
-    def test_gen_candidates_torch(self, cuda=False):
-        self.test_gen_candidates(cuda=cuda, gen_candidates=gen_candidates_torch)
-
-    def test_gen_candidates_torch_cuda(self):
-        if torch.cuda.is_available():
-            self.test_gen_candidates_torch(cuda=True)
+    def test_gen_candidates_torch(self):
+        self.test_gen_candidates(gen_candidates=gen_candidates_torch)
 
     def test_gen_candidates_with_none_fixed_features(
-        self, cuda=False, gen_candidates=gen_candidates_scipy
+        self, gen_candidates=gen_candidates_scipy
     ):
         for double in (True, False):
-            self._setUp(double=double, cuda=cuda, expand=True)
+            self._setUp(double=double, expand=True)
             qEI = qExpectedImprovement(self.model, best_f=self.f_best)
             candidates, _ = gen_candidates(
                 initial_conditions=self.initial_conditions,
@@ -87,24 +80,16 @@ class TestGenCandidates(TestBaseCandidateGeneration):
             self.assertTrue(-EPS <= candidates[0] <= 1 + EPS)
             self.assertTrue(candidates[1].item() == 1.0)
 
-    def test_gen_candidates_scipy_with_none_fixed_features_cuda(self):
-        if torch.cuda.is_available():
-            self.test_gen_candidates_with_none_fixed_features(cuda=True)
-
-    def test_gen_candidates_torch_with_none_fixed_features(self, cuda=False):
+    def test_gen_candidates_torch_with_none_fixed_features(self):
         self.test_gen_candidates_with_none_fixed_features(
-            cuda=cuda, gen_candidates=gen_candidates_torch
+            gen_candidates=gen_candidates_torch
         )
 
-    def test_gen_candidates_torch_with_none_fixed_features_cuda(self):
-        if torch.cuda.is_available():
-            self.test_gen_candidates_torch_with_none_fixed_features(cuda=True)
-
     def test_gen_candidates_with_fixed_features(
-        self, cuda=False, gen_candidates=gen_candidates_scipy
+        self, gen_candidates=gen_candidates_scipy
     ):
         for double in (True, False):
-            self._setUp(double=double, cuda=cuda, expand=True)
+            self._setUp(double=double, expand=True)
             qEI = qExpectedImprovement(self.model, best_f=self.f_best)
             candidates, _ = gen_candidates(
                 initial_conditions=self.initial_conditions,
@@ -117,15 +102,7 @@ class TestGenCandidates(TestBaseCandidateGeneration):
             self.assertTrue(-EPS <= candidates[0] <= 1 + EPS)
             self.assertTrue(candidates[1].item() == 0.25)
 
-    def test_gen_candidates_scipy_with_fixed_features_cuda(self, cuda=False):
-        if torch.cuda.is_available():
-            self.test_gen_candidates_with_fixed_features(cuda=True)
-
-    def test_gen_candidates_torch_with_fixed_features(self, cuda=False):
+    def test_gen_candidates_torch_with_fixed_features(self):
         self.test_gen_candidates_with_fixed_features(
-            cuda=cuda, gen_candidates=gen_candidates_torch
+            gen_candidates=gen_candidates_torch
         )
-
-    def test_gen_candidates_torch_with_fixed_features_cuda(self, cuda=False):
-        if torch.cuda.is_available():
-            self.test_gen_candidates_torch_with_fixed_features(cuda=True)

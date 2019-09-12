@@ -2,7 +2,6 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-
 from botorch.exceptions.errors import (
     BotorchError,
     BotorchTensorDimensionError,
@@ -10,8 +9,7 @@ from botorch.exceptions.errors import (
     InputDataError,
     UnsupportedError,
 )
-
-from ..botorch_test_case import BotorchTestCase
+from botorch.utils.testing import BotorchTestCase
 
 
 class TestBotorchExceptions(BotorchTestCase):

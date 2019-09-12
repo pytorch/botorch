@@ -14,9 +14,9 @@ EPS = 1e-8
 
 
 class TestRandomRestartOptimization(TestBaseCandidateGeneration):
-    def test_random_restart_optimization(self, cuda=False):
+    def test_random_restart_optimization(self):
         for double in (True, False):
-            self._setUp(double=double, cuda=cuda)
+            self._setUp(double=double)
             with gpt_settings.debug(False):
                 best_f = self.model(self.train_x).mean.max().item()
             qEI = qExpectedImprovement(self.model, best_f=best_f)
@@ -33,7 +33,3 @@ class TestRandomRestartOptimization(TestBaseCandidateGeneration):
                 batch_candidates=batch_candidates, batch_values=batch_acq_values
             )
             self.assertTrue(-EPS <= candidates <= 1 + EPS)
-
-    def test_random_restart_optimization_cuda(self):
-        if torch.cuda.is_available():
-            self.test_random_restart_optimization(cuda=True)

@@ -2,7 +2,6 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-
 import torch
 from botorch.acquisition.objective import (
     ConstrainedMCObjective,
@@ -13,9 +12,9 @@ from botorch.acquisition.objective import (
     ScalarizedObjective,
 )
 from botorch.utils import apply_constraints
+from botorch.utils.testing import BotorchTestCase
 from torch import Tensor
 
-from ..botorch_test_case import BotorchTestCase
 from ..posteriors.test_gpytorch import _get_test_posterior
 
 
@@ -32,15 +31,16 @@ def feasible_con(samples: Tensor) -> Tensor:
 
 
 class TestScalarizedObjective(BotorchTestCase):
-    def test_affine_acquisition_objective(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_affine_acquisition_objective(self):
         for dtype in (torch.float, torch.double):
             offset = torch.rand(1).item()
             for batch_shape in ([], [3]):
                 for o in (1, 2):
-                    weights = torch.randn(o, device=device, dtype=dtype)
+                    weights = torch.randn(o, device=self.device, dtype=dtype)
                     obj = ScalarizedObjective(weights=weights, offset=offset)
-                    posterior = _get_test_posterior(batch_shape, device, dtype, o=o)
+                    posterior = _get_test_posterior(
+                        batch_shape, self.device, dtype, o=o
+                    )
                     mean, covar = posterior.mvn.mean, posterior.mvn.covariance_matrix
                     new_posterior = obj(posterior)
                     exp_size = torch.Size(batch_shape + [1, 1])
@@ -58,10 +58,6 @@ class TestScalarizedObjective(BotorchTestCase):
                     with self.assertRaises(ValueError):
                         ScalarizedObjective(weights=torch.rand(2, o))
 
-    def test_affine_acquisition_objective_cuda(self, cuda=False):
-        if torch.cuda.is_available():
-            self.test_affine_acquisition_objective(cuda=True)
-
 
 class TestMCAcquisitionObjective(BotorchTestCase):
     def test_abstract_raises(self):
@@ -70,33 +66,27 @@ class TestMCAcquisitionObjective(BotorchTestCase):
 
 
 class TestGenericMCObjective(BotorchTestCase):
-    def test_generic_mc_objective(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_generic_mc_objective(self):
         for dtype in (torch.float, torch.double):
             obj = GenericMCObjective(generic_obj)
-            samples = torch.randn(1, device=device, dtype=dtype)
+            samples = torch.randn(1, device=self.device, dtype=dtype)
             self.assertTrue(torch.equal(obj(samples), generic_obj(samples)))
-            samples = torch.randn(2, device=device, dtype=dtype)
+            samples = torch.randn(2, device=self.device, dtype=dtype)
             self.assertTrue(torch.equal(obj(samples), generic_obj(samples)))
-            samples = torch.randn(3, 1, device=device, dtype=dtype)
+            samples = torch.randn(3, 1, device=self.device, dtype=dtype)
             self.assertTrue(torch.equal(obj(samples), generic_obj(samples)))
-            samples = torch.randn(3, 2, device=device, dtype=dtype)
+            samples = torch.randn(3, 2, device=self.device, dtype=dtype)
             self.assertTrue(torch.equal(obj(samples), generic_obj(samples)))
-
-    def test_generic_mc_objective_cuda(self, cuda=False):
-        if torch.cuda.is_available():
-            self.test_generic_mc_objective(cuda=True)
 
 
 class TestConstrainedMCObjective(BotorchTestCase):
-    def test_constrained_mc_objective(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_constrained_mc_objective(self):
         for dtype in (torch.float, torch.double):
             # one feasible constraint
             obj = ConstrainedMCObjective(
                 objective=generic_obj, constraints=[feasible_con]
             )
-            samples = torch.randn(1, device=device, dtype=dtype)
+            samples = torch.randn(1, device=self.device, dtype=dtype)
             constrained_obj = generic_obj(samples)
             constrained_obj = apply_constraints(
                 obj=constrained_obj,
@@ -109,7 +99,7 @@ class TestConstrainedMCObjective(BotorchTestCase):
             obj = ConstrainedMCObjective(
                 objective=generic_obj, constraints=[infeasible_con]
             )
-            samples = torch.randn(2, device=device, dtype=dtype)
+            samples = torch.randn(2, device=self.device, dtype=dtype)
             constrained_obj = generic_obj(samples)
             constrained_obj = apply_constraints(
                 obj=constrained_obj,
@@ -122,7 +112,7 @@ class TestConstrainedMCObjective(BotorchTestCase):
             obj = ConstrainedMCObjective(
                 objective=generic_obj, constraints=[feasible_con, infeasible_con]
             )
-            samples = torch.randn(2, 1, device=device, dtype=dtype)
+            samples = torch.randn(2, 1, device=self.device, dtype=dtype)
             constrained_obj = generic_obj(samples)
             constrained_obj = apply_constraints(
                 obj=constrained_obj,
@@ -137,7 +127,7 @@ class TestConstrainedMCObjective(BotorchTestCase):
                 constraints=[feasible_con, infeasible_con],
                 infeasible_cost=5.0,
             )
-            samples = torch.randn(3, 2, device=device, dtype=dtype)
+            samples = torch.randn(3, 2, device=self.device, dtype=dtype)
             constrained_obj = generic_obj(samples)
             constrained_obj = apply_constraints(
                 obj=constrained_obj,
@@ -152,7 +142,7 @@ class TestConstrainedMCObjective(BotorchTestCase):
                 constraints=[feasible_con, infeasible_con],
                 infeasible_cost=5.0,
             )
-            samples = torch.randn(4, 3, 2, device=device, dtype=dtype)
+            samples = torch.randn(4, 3, 2, device=self.device, dtype=dtype)
             constrained_obj = generic_obj(samples)
             constrained_obj = apply_constraints(
                 obj=constrained_obj,
@@ -162,59 +152,49 @@ class TestConstrainedMCObjective(BotorchTestCase):
             )
             self.assertTrue(torch.equal(obj(samples), constrained_obj))
 
-    def test_constrained_mc_objective_cuda(self, cuda=False):
-        if torch.cuda.is_available():
-            self.test_constrained_mc_objective(cuda=True)
-
 
 class TestIdentityMCObjective(BotorchTestCase):
-    def test_identity_mc_objective(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_identity_mc_objective(self):
         for dtype in (torch.float, torch.double):
             obj = IdentityMCObjective()
             # single-element tensor
-            samples = torch.randn(1, device=device, dtype=dtype)
+            samples = torch.randn(1, device=self.device, dtype=dtype)
             self.assertTrue(torch.equal(obj(samples), samples[0]))
             # single-dimensional non-squeezable tensor
-            samples = torch.randn(2, device=device, dtype=dtype)
+            samples = torch.randn(2, device=self.device, dtype=dtype)
             self.assertTrue(torch.equal(obj(samples), samples))
             # two-dimensional squeezable tensor
-            samples = torch.randn(3, 1, device=device, dtype=dtype)
+            samples = torch.randn(3, 1, device=self.device, dtype=dtype)
             self.assertTrue(torch.equal(obj(samples), samples.squeeze(-1)))
             # two-dimensional non-squeezable tensor
-            samples = torch.randn(3, 2, device=device, dtype=dtype)
+            samples = torch.randn(3, 2, device=self.device, dtype=dtype)
             self.assertTrue(torch.equal(obj(samples), samples))
-
-    def test_identity_mc_objective_cuda(self, cuda=False):
-        if torch.cuda.is_available():
-            self.test_identity_mc_objective(cuda=True)
 
 
 class TestLinearMCObjective(BotorchTestCase):
-    def test_linear_mc_objective(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_linear_mc_objective(self):
         for dtype in (torch.float, torch.double):
-            weights = torch.rand(3, device=device, dtype=dtype)
+            weights = torch.rand(3, device=self.device, dtype=dtype)
             obj = LinearMCObjective(weights=weights)
-            samples = torch.randn(4, 2, 3, device=device, dtype=dtype)
+            samples = torch.randn(4, 2, 3, device=self.device, dtype=dtype)
             self.assertTrue(
                 torch.allclose(obj(samples), (samples * weights).sum(dim=-1))
             )
-            samples = torch.randn(5, 4, 2, 3, device=device, dtype=dtype)
+            samples = torch.randn(5, 4, 2, 3, device=self.device, dtype=dtype)
             self.assertTrue(
                 torch.allclose(obj(samples), (samples * weights).sum(dim=-1))
             )
             # make sure this errors if sample output dimensions are incompatible
             with self.assertRaises(RuntimeError):
-                obj(samples=torch.randn(2, device=device, dtype=dtype))
+                obj(samples=torch.randn(2, device=self.device, dtype=dtype))
             with self.assertRaises(RuntimeError):
-                obj(samples=torch.randn(1, device=device, dtype=dtype))
+                obj(samples=torch.randn(1, device=self.device, dtype=dtype))
             # make sure we can't construct objectives with multi-dim. weights
             with self.assertRaises(ValueError):
-                LinearMCObjective(weights=torch.rand(2, 3, device=device, dtype=dtype))
+                LinearMCObjective(
+                    weights=torch.rand(2, 3, device=self.device, dtype=dtype)
+                )
             with self.assertRaises(ValueError):
-                LinearMCObjective(weights=torch.tensor(1.0, device=device, dtype=dtype))
-
-    def test_linear_mc_objective_cuda(self, cuda=False):
-        if torch.cuda.is_available():
-            self.test_linear_mc_objective(cuda=True)
+                LinearMCObjective(
+                    weights=torch.tensor(1.0, device=self.device, dtype=dtype)
+                )

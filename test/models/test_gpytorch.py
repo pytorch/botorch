@@ -2,7 +2,6 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-
 import torch
 from botorch import settings
 from botorch.exceptions import (
@@ -16,13 +15,12 @@ from botorch.models.gpytorch import (
 )
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.sampling.samplers import SobolQMCNormalSampler
+from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions import MultivariateNormal
 from gpytorch.kernels import RBFKernel, ScaleKernel
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.means import ConstantMean
 from gpytorch.models import ExactGP, IndependentModelList
-
-from ..botorch_test_case import BotorchTestCase
 
 
 class SimpleGPyTorchModel(GPyTorchModel, ExactGP):
@@ -67,10 +65,9 @@ class SimpleModelListGPyTorchModel(IndependentModelList, ModelListGPyTorchModel)
 
 
 class TestGPyTorchModel(BotorchTestCase):
-    def test_gpytorch_model(self, cuda=False):
-        tkwargs = {"device": torch.device("cuda" if cuda else "cpu")}
+    def test_gpytorch_model(self):
         for dtype in (torch.float, torch.double):
-            tkwargs["dtype"] = dtype
+            tkwargs = {"device": self.device, "dtype": dtype}
             train_X = torch.rand(5, 1, **tkwargs)
             train_Y = torch.sin(train_X)
             # basic test
@@ -100,16 +97,10 @@ class TestGPyTorchModel(BotorchTestCase):
             self.assertIsInstance(cm, SimpleGPyTorchModel)
             self.assertEqual(cm.train_targets.shape, torch.Size([2, 7]))
 
-    def test_gpytorch_model_cuda(self):
-        if torch.cuda.is_available():
-            self.test_gpytorch_model(cuda=True)
-
-    def test_validate_tensor_args(self, cuda=False):
-        tkwargs = {"device": torch.device("cuda" if cuda else "cpu")}
-        n = 3
-        d = 2
+    def test_validate_tensor_args(self):
+        n, d = 3, 2
         for dtype in (torch.float, torch.double):
-            tkwargs["dtype"] = dtype
+            tkwargs = {"device": self.device, "dtype": dtype}
             for batch_shape in (torch.Size(), torch.Size([2])):
                 X = torch.empty(batch_shape + torch.Size([n, d]), **tkwargs)
                 for output_dim_shape in (
@@ -144,16 +135,11 @@ class TestGPyTorchModel(BotorchTestCase):
                         ):
                             GPyTorchModel._validate_tensor_args(X, Y[0], strict=False)
 
-    def test_validate_tensor_args_cuda(self):
-        if torch.cuda.is_available():
-            self.test_validate_tensor_args(cuda=True)
-
 
 class TestBatchedMultiOutputGPyTorchModel(BotorchTestCase):
-    def test_batched_multi_output_gpytorch_model(self, cuda=False):
-        tkwargs = {"device": torch.device("cuda" if cuda else "cpu")}
+    def test_batched_multi_output_gpytorch_model(self):
         for dtype in (torch.float, torch.double):
-            tkwargs["dtype"] = dtype
+            tkwargs = {"device": self.device, "dtype": dtype}
             train_X = torch.rand(5, 1, **tkwargs)
             train_Y = torch.cat([torch.sin(train_X), torch.cos(train_X)], dim=-1)
             # basic test
@@ -183,16 +169,11 @@ class TestBatchedMultiOutputGPyTorchModel(BotorchTestCase):
             self.assertIsInstance(cm, SimpleBatchedMultiOutputGPyTorchModel)
             self.assertEqual(cm.train_targets.shape, torch.Size([2, 2, 7]))
 
-    def test_batched_multi_output_gpytorch_model_cuda(self):
-        if torch.cuda.is_available():
-            self.test_batched_multi_output_gpytorch_model(cuda=True)
-
 
 class TestModelListGPyTorchModel(BotorchTestCase):
-    def test_model_list_gpytorch_model(self, cuda=False):
-        tkwargs = {"device": torch.device("cuda" if cuda else "cpu")}
+    def test_model_list_gpytorch_model(self):
         for dtype in (torch.float, torch.double):
-            tkwargs["dtype"] = dtype
+            tkwargs = {"device": self.device, "dtype": dtype}
             train_X1, train_X2 = (
                 torch.rand(5, 1, **tkwargs),
                 torch.rand(5, 1, **tkwargs),
@@ -215,7 +196,3 @@ class TestModelListGPyTorchModel(BotorchTestCase):
                 model.condition_on_observations(
                     X=torch.rand(2, 1, **tkwargs), Y=torch.rand(2, 2, **tkwargs)
                 )
-
-    def test_model_list_gpytorch_model_cuda(self):
-        if torch.cuda.is_available():
-            self.test_model_list_gpytorch_model(cuda=True)

@@ -2,7 +2,6 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-
 import warnings
 
 import torch
@@ -14,15 +13,13 @@ from botorch.utils.sampling import (
     construct_base_samples_from_posterior,
     manual_seed,
 )
+from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from torch.quasirandom import SobolEngine
 
-from ..botorch_test_case import BotorchTestCase
-
 
 class TestConstructBaseSamples(BotorchTestCase):
-    def test_construct_base_samples(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_construct_base_samples(self):
         test_shapes = [
             {"batch": [2], "output": [4, 3], "sample": [5]},
             {"batch": [1], "output": [5, 3], "sample": [5, 6]},
@@ -42,11 +39,11 @@ class TestConstructBaseSamples(BotorchTestCase):
                             sample_shape=sample_shape,
                             qmc=qmc,
                             seed=seed,
-                            device=device,
+                            device=self.device,
                             dtype=dtype,
                         )
                         self.assertEqual(samples.shape, expected_shape)
-                        self.assertEqual(samples.device.type, device.type)
+                        self.assertEqual(samples.device.type, self.device.type)
                         self.assertEqual(samples.dtype, dtype)
         # check that warning is issued if dimensionality is too large
         with warnings.catch_warnings(record=True) as w, settings.debug(True):
@@ -61,16 +58,11 @@ class TestConstructBaseSamples(BotorchTestCase):
             exp_str = f"maximum supported by qmc ({SobolEngine.MAXDIM})"
             self.assertTrue(exp_str in str(w[-1].message))
 
-    def test_construct_base_samples_cuda(self):
-        if torch.cuda.is_available():
-            self.test_construct_base_samples(cuda=True)
-
-    def test_construct_base_samples_from_posterior(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_construct_base_samples_from_posterior(self):  # noqa: C901
         for dtype in (torch.float, torch.double):
             # single-output
-            mean = torch.zeros(2, device=device, dtype=dtype)
-            cov = torch.eye(2, device=device, dtype=dtype)
+            mean = torch.zeros(2, device=self.device, dtype=dtype)
+            cov = torch.eye(2, device=self.device, dtype=dtype)
             mvn = MultivariateNormal(mean=mean, covariance_matrix=cov)
             posterior = GPyTorchPosterior(mvn=mvn)
             for sample_shape in (torch.Size([5]), torch.Size([5, 3])):
@@ -84,11 +76,11 @@ class TestConstructBaseSamples(BotorchTestCase):
                             seed=seed,
                         )
                         self.assertEqual(samples.shape, expected_shape)
-                        self.assertEqual(samples.device.type, device.type)
+                        self.assertEqual(samples.device.type, self.device.type)
                         self.assertEqual(samples.dtype, dtype)
             # single-output, batch mode
-            mean = torch.zeros(2, 2, device=device, dtype=dtype)
-            cov = torch.eye(2, device=device, dtype=dtype).expand(2, 2, 2)
+            mean = torch.zeros(2, 2, device=self.device, dtype=dtype)
+            cov = torch.eye(2, device=self.device, dtype=dtype).expand(2, 2, 2)
             mvn = MultivariateNormal(mean=mean, covariance_matrix=cov)
             posterior = GPyTorchPosterior(mvn=mvn)
             for sample_shape in (torch.Size([5]), torch.Size([5, 3])):
@@ -107,11 +99,11 @@ class TestConstructBaseSamples(BotorchTestCase):
                                 seed=seed,
                             )
                             self.assertEqual(samples.shape, expected_shape)
-                            self.assertEqual(samples.device.type, device.type)
+                            self.assertEqual(samples.device.type, self.device.type)
                             self.assertEqual(samples.dtype, dtype)
             # multi-output
-            mean = torch.zeros(2, 2, device=device, dtype=dtype)
-            cov = torch.eye(4, device=device, dtype=dtype)
+            mean = torch.zeros(2, 2, device=self.device, dtype=dtype)
+            cov = torch.eye(4, device=self.device, dtype=dtype)
             mtmvn = MultitaskMultivariateNormal(mean=mean, covariance_matrix=cov)
             posterior = GPyTorchPosterior(mvn=mtmvn)
             for sample_shape in (torch.Size([5]), torch.Size([5, 3])):
@@ -125,11 +117,11 @@ class TestConstructBaseSamples(BotorchTestCase):
                             seed=seed,
                         )
                         self.assertEqual(samples.shape, expected_shape)
-                        self.assertEqual(samples.device.type, device.type)
+                        self.assertEqual(samples.device.type, self.device.type)
                         self.assertEqual(samples.dtype, dtype)
             # multi-output, batch mode
-            mean = torch.zeros(2, 2, 2, device=device, dtype=dtype)
-            cov = torch.eye(4, device=device, dtype=dtype).expand(2, 4, 4)
+            mean = torch.zeros(2, 2, 2, device=self.device, dtype=dtype)
+            cov = torch.eye(4, device=self.device, dtype=dtype).expand(2, 4, 4)
             mtmvn = MultitaskMultivariateNormal(mean=mean, covariance_matrix=cov)
             posterior = GPyTorchPosterior(mvn=mtmvn)
             for sample_shape in (torch.Size([5]), torch.Size([5, 3])):
@@ -148,12 +140,8 @@ class TestConstructBaseSamples(BotorchTestCase):
                                 seed=seed,
                             )
                             self.assertEqual(samples.shape, expected_shape)
-                            self.assertEqual(samples.device.type, device.type)
+                            self.assertEqual(samples.device.type, self.device.type)
                             self.assertEqual(samples.dtype, dtype)
-
-    def test_construct_base_samples_from_posterior_cuda(self):
-        if torch.cuda.is_available():
-            self.test_construct_base_samples_from_posterior(cuda=True)
 
 
 class TestManualSeed(BotorchTestCase):

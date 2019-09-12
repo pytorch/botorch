@@ -2,17 +2,14 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-
 from unittest import mock
 
 import torch
 from botorch.acquisition import monte_carlo, utils
 from botorch.acquisition.objective import MCAcquisitionObjective
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
-from botorch.utils.mock import MockModel, MockPosterior
+from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 from torch import Tensor
-
-from ..botorch_test_case import BotorchTestCase
 
 
 class DummyMCObjective(MCAcquisitionObjective):
@@ -274,13 +271,14 @@ class TestGetAcquisitionFunction(BotorchTestCase):
 
 
 class TestGetInfeasibleCost(BotorchTestCase):
-    def test_get_infeasible_cost(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_get_infeasible_cost(self):
         for dtype in (torch.float, torch.double):
-            X = torch.zeros(5, 1, device=device, dtype=dtype)
-            means = torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0], device=device, dtype=dtype)
+            X = torch.zeros(5, 1, device=self.device, dtype=dtype)
+            means = torch.tensor(
+                [1.0, 2.0, 3.0, 4.0, 5.0], device=self.device, dtype=dtype
+            )
             variances = torch.tensor(
-                [0.09, 0.25, 0.36, 0.25, 0.09], device=device, dtype=dtype
+                [0.09, 0.25, 0.36, 0.25, 0.09], device=self.device, dtype=dtype
             )
             mm = MockModel(MockPosterior(mean=means, variance=variances))
             # means - 6 * std = [-0.8, -1, -0.6, 1, 3.2]. After applying the
@@ -289,7 +287,3 @@ class TestGetInfeasibleCost(BotorchTestCase):
                 X=X, model=mm, objective=lambda Y: Y.squeeze(-1) - 5.0
             )
             self.assertEqual(M, 6.0)
-
-    def test_get_infeasible_cost_cuda(self):
-        if torch.cuda.is_available():
-            self.test_get_infeasible_cost(cuda=True)

@@ -2,18 +2,16 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-
 import numpy as np
 import torch
 from botorch.optim.numpy_converter import module_to_array, set_params_with_array
+from botorch.utils.testing import BotorchTestCase
 from gpytorch.constraints import GreaterThan
 from gpytorch.kernels.rbf_kernel import RBFKernel
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.means.constant_mean import ConstantMean
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.models.exact_gp import ExactGP
-
-from ..botorch_test_case import BotorchTestCase
 
 
 def _get_index(property_dict, parameter_name):
@@ -26,17 +24,16 @@ def _get_index(property_dict, parameter_name):
 
 
 class TestModuleToArray(BotorchTestCase):
-    def test_basic(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_basic(self):
         for dtype in (torch.float, torch.double):
             # get a test module
-            train_x = torch.tensor([[1.0, 2.0, 3.0]], device=device, dtype=dtype)
-            train_y = torch.tensor([4.0], device=device, dtype=dtype)
+            train_x = torch.tensor([[1.0, 2.0, 3.0]], device=self.device, dtype=dtype)
+            train_y = torch.tensor([4.0], device=self.device, dtype=dtype)
             likelihood = GaussianLikelihood()
             model = ExactGP(train_x, train_y, likelihood)
             model.covar_module = RBFKernel(ard_num_dims=3)
             model.mean_module = ConstantMean()
-            model.to(device=device, dtype=dtype)
+            model.to(device=self.device, dtype=dtype)
             mll = ExactMarginalLogLikelihood(likelihood, model)
             # test the basic case
             x, pdict, bounds = module_to_array(module=mll)
@@ -50,20 +47,19 @@ class TestModuleToArray(BotorchTestCase):
             for pname, val in pdict.items():
                 self.assertEqual(val.dtype, dtype)
                 self.assertEqual(val.shape, expected_sizes[pname])
-                self.assertEqual(val.device.type, device.type)
+                self.assertEqual(val.device.type, self.device.type)
             self.assertIsNone(bounds)
 
-    def test_exclude(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_exclude(self):
         for dtype in (torch.float, torch.double):
             # get a test module
-            train_x = torch.tensor([[1.0, 2.0, 3.0]], device=device, dtype=dtype)
-            train_y = torch.tensor([4.0], device=device, dtype=dtype)
+            train_x = torch.tensor([[1.0, 2.0, 3.0]], device=self.device, dtype=dtype)
+            train_y = torch.tensor([4.0], device=self.device, dtype=dtype)
             likelihood = GaussianLikelihood()
             model = ExactGP(train_x, train_y, likelihood)
             model.covar_module = RBFKernel(ard_num_dims=3)
             model.mean_module = ConstantMean()
-            model.to(device=device, dtype=dtype)
+            model.to(device=self.device, dtype=dtype)
             mll = ExactMarginalLogLikelihood(likelihood, model)
             # test the basic case
             x, pdict, bounds = module_to_array(
@@ -78,20 +74,19 @@ class TestModuleToArray(BotorchTestCase):
             for pname, val in pdict.items():
                 self.assertEqual(val.dtype, dtype)
                 self.assertEqual(val.shape, expected_sizes[pname])
-                self.assertEqual(val.device.type, device.type)
+                self.assertEqual(val.device.type, self.device.type)
             self.assertIsNone(bounds)
 
-    def test_manual_bounds(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_manual_bounds(self):
         for dtype in (torch.float, torch.double):
             # get a test module
-            train_x = torch.tensor([[1.0, 2.0, 3.0]], device=device, dtype=dtype)
-            train_y = torch.tensor([4.0], device=device, dtype=dtype)
+            train_x = torch.tensor([[1.0, 2.0, 3.0]], device=self.device, dtype=dtype)
+            train_y = torch.tensor([4.0], device=self.device, dtype=dtype)
             likelihood = GaussianLikelihood()
             model = ExactGP(train_x, train_y, likelihood)
             model.covar_module = RBFKernel(ard_num_dims=3)
             model.mean_module = ConstantMean()
-            model.to(device=device, dtype=dtype)
+            model.to(device=self.device, dtype=dtype)
             mll = ExactMarginalLogLikelihood(likelihood, model)
             # test the basic case
             x, pdict, bounds = module_to_array(
@@ -107,26 +102,25 @@ class TestModuleToArray(BotorchTestCase):
             for pname, val in pdict.items():
                 self.assertEqual(val.dtype, dtype)
                 self.assertEqual(val.shape, expected_sizes[pname])
-                self.assertEqual(val.device.type, device.type)
+                self.assertEqual(val.device.type, self.device.type)
             lower_exp = np.full_like(x, 0.1)
             for p in ("likelihood.noise_covar.raw_noise", "model.mean_module.constant"):
                 lower_exp[_get_index(pdict, p)] = -np.inf
             self.assertTrue(np.equal(bounds[0], lower_exp).all())
             self.assertTrue(np.equal(bounds[1], np.full_like(x, np.inf)).all())
 
-    def test_module_bounds(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_module_bounds(self):
         for dtype in (torch.float, torch.double):
             # get a test module
-            train_x = torch.tensor([[1.0, 2.0, 3.0]], device=device, dtype=dtype)
-            train_y = torch.tensor([4.0], device=device, dtype=dtype)
+            train_x = torch.tensor([[1.0, 2.0, 3.0]], device=self.device, dtype=dtype)
+            train_y = torch.tensor([4.0], device=self.device, dtype=dtype)
             likelihood = GaussianLikelihood(
                 noise_constraint=GreaterThan(1e-5, transform=None)
             )
             model = ExactGP(train_x, train_y, likelihood)
             model.covar_module = RBFKernel(ard_num_dims=3)
             model.mean_module = ConstantMean()
-            model.to(device=device, dtype=dtype)
+            model.to(device=self.device, dtype=dtype)
             mll = ExactMarginalLogLikelihood(likelihood, model)
             # test the basic case
             x, pdict, bounds = module_to_array(
@@ -142,33 +136,25 @@ class TestModuleToArray(BotorchTestCase):
             for pname, val in pdict.items():
                 self.assertEqual(val.dtype, dtype)
                 self.assertEqual(val.shape, expected_sizes[pname])
-                self.assertEqual(val.device.type, device.type)
+                self.assertEqual(val.device.type, self.device.type)
             lower_exp = np.full_like(x, 0.1)
             lower_exp[_get_index(pdict, "model.mean_module.constant")] = -np.inf
             lower_exp[_get_index(pdict, "likelihood.noise_covar.raw_noise")] = 1e-5
             self.assertTrue(np.allclose(bounds[0], lower_exp))
             self.assertTrue(np.equal(bounds[1], np.full_like(x, np.inf)).all())
 
-    def test_cuda(self):
-        if torch.cuda.is_available():
-            self.test_basic(cuda=True)
-            self.test_exclude(cuda=True)
-            self.test_manual_bounds(cuda=True)
-            self.test_module_bounds(cuda=True)
-
 
 class TestSetParamsWithArray(BotorchTestCase):
-    def test_set_parameters(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_set_parameters(self):
         for dtype in (torch.float, torch.double):
             # get a test module
-            train_x = torch.tensor([[1.0, 2.0, 3.0]], device=device, dtype=dtype)
-            train_y = torch.tensor([4.0], device=device, dtype=dtype)
+            train_x = torch.tensor([[1.0, 2.0, 3.0]], device=self.device, dtype=dtype)
+            train_y = torch.tensor([4.0], device=self.device, dtype=dtype)
             likelihood = GaussianLikelihood()
             model = ExactGP(train_x, train_y, likelihood)
             model.covar_module = RBFKernel(ard_num_dims=3)
             model.mean_module = ConstantMean()
-            model.to(device=device, dtype=dtype)
+            model.to(device=self.device, dtype=dtype)
             mll = ExactMarginalLogLikelihood(likelihood, model)
             # get parameters
             x, pdict, bounds = module_to_array(module=mll)
@@ -179,26 +165,22 @@ class TestSetParamsWithArray(BotorchTestCase):
             self.assertTrue(
                 torch.equal(
                     z["likelihood.noise_covar.raw_noise"],
-                    torch.tensor([1.0], device=device, dtype=dtype),
+                    torch.tensor([1.0], device=self.device, dtype=dtype),
                 )
             )
             self.assertTrue(
                 torch.equal(
                     z["model.covar_module.raw_lengthscale"],
-                    torch.tensor([[2.0, 3.0, 4.0]], device=device, dtype=dtype),
+                    torch.tensor([[2.0, 3.0, 4.0]], device=self.device, dtype=dtype),
                 )
             )
             self.assertTrue(
                 torch.equal(
                     z["model.mean_module.constant"],
-                    torch.tensor([5.0], device=device, dtype=dtype),
+                    torch.tensor([5.0], device=self.device, dtype=dtype),
                 )
             )
 
             # Extract again
             x2, pdict2, bounds2 = module_to_array(module=mll)
             self.assertTrue(np.array_equal(x2, np.array([1.0, 2.0, 3.0, 4.0, 5.0])))
-
-    def test_set_parameters_cuda(self, cuda=False):
-        if torch.cuda.is_available():
-            self.test_set_parameters(cuda=True)

@@ -2,7 +2,6 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-
 import warnings
 
 import torch
@@ -15,15 +14,14 @@ from botorch.models.utils import (
     check_standardization,
     multioutput_to_batch_mode_transform,
 )
-
-from ..botorch_test_case import BotorchTestCase
+from botorch.utils.testing import BotorchTestCase
 
 
 class TestMultiOutputToBatchModeTransform(BotorchTestCase):
-    def test_multioutput_to_batch_mode_transform(self, cuda=False):
+    def test_multioutput_to_batch_mode_transform(self):
         for double in (False, True):
             tkwargs = {
-                "device": torch.device("cuda") if cuda else torch.device("cpu"),
+                "device": self.device,
                 "dtype": torch.double if double else torch.float,
             }
             n = 3
@@ -42,16 +40,12 @@ class TestMultiOutputToBatchModeTransform(BotorchTestCase):
             self.assertTrue(torch.equal(Y_out, train_Y.transpose(0, 1)))
             self.assertTrue(torch.equal(Yvar_out, train_Yvar.transpose(0, 1)))
 
-    def test_multioutput_to_batch_mode_transform_cuda(self):
-        if torch.cuda.is_available():
-            self.test_multioutput_to_batch_mode_transform(cuda=True)
-
 
 class TestAddOutputDim(BotorchTestCase):
-    def test_add_output_dim(self, cuda=False):
+    def test_add_output_dim(self):
         for double in (False, True):
             tkwargs = {
-                "device": torch.device("cuda") if cuda else torch.device("cpu"),
+                "device": self.device,
                 "dtype": torch.double if double else torch.float,
             }
             original_batch_shape = torch.Size([2])
@@ -73,10 +67,6 @@ class TestAddOutputDim(BotorchTestCase):
             )
             self.assertTrue(torch.equal(X_out, X.unsqueeze(2)))
             self.assertEqual(output_dim_idx, 2)
-
-    def test_add_output_dim_cuda(self, cuda=False):
-        if torch.cuda.is_available():
-            self.test_add_output_dim(cuda=True)
 
 
 class TestInputDataChecks(BotorchTestCase):

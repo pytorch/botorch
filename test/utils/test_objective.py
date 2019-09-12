@@ -5,9 +5,8 @@
 
 import torch
 from botorch.utils import apply_constraints, get_objective_weights_transform
+from botorch.utils.testing import BotorchTestCase
 from torch import Tensor
-
-from ..botorch_test_case import BotorchTestCase
 
 
 def ones_f(samples: Tensor) -> Tensor:

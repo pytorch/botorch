@@ -17,9 +17,7 @@ from botorch.acquisition.monte_carlo import (
 from botorch.acquisition.objective import ScalarizedObjective
 from botorch.exceptions import BotorchWarning, UnsupportedError
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
-from botorch.utils.mock import MockModel, MockPosterior
-
-from ..botorch_test_case import BotorchTestCase
+from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 
 
 class TestMCAcquisitionFunction(BotorchTestCase):
@@ -29,14 +27,13 @@ class TestMCAcquisitionFunction(BotorchTestCase):
 
 
 class TestQExpectedImprovement(BotorchTestCase):
-    def test_q_expected_improvement(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_q_expected_improvement(self):
         for dtype in (torch.float, torch.double):
             # the event shape is `b x q x t` = 1 x 1 x 1
-            samples = torch.zeros(1, 1, 1, device=device, dtype=dtype)
+            samples = torch.zeros(1, 1, 1, device=self.device, dtype=dtype)
             mm = MockModel(MockPosterior(samples=samples))
             # X is `q x d` = 1 x 1. X is a dummy and unused b/c of mocking
-            X = torch.zeros(1, 1, device=device, dtype=dtype)
+            X = torch.zeros(1, 1, device=self.device, dtype=dtype)
 
             # basic test
             sampler = IIDNormalSampler(num_samples=2)
@@ -87,7 +84,9 @@ class TestQExpectedImprovement(BotorchTestCase):
             acqf.set_X_pending(X)
             self.assertEqual(acqf.X_pending, X)
             res = acqf(X)
-            X2 = torch.zeros(1, 1, 1, device=device, dtype=dtype, requires_grad=True)
+            X2 = torch.zeros(
+                1, 1, 1, device=self.device, dtype=dtype, requires_grad=True
+            )
             with warnings.catch_warnings(record=True) as ws, settings.debug(True):
                 acqf.set_X_pending(X2)
                 self.assertEqual(acqf.X_pending, X2)
@@ -95,24 +94,21 @@ class TestQExpectedImprovement(BotorchTestCase):
                 self.assertTrue(issubclass(ws[-1].category, BotorchWarning))
 
         # test bad objective type
-        obj = ScalarizedObjective(weights=torch.rand(2, device=device, dtype=dtype))
+        obj = ScalarizedObjective(
+            weights=torch.rand(2, device=self.device, dtype=dtype)
+        )
         with self.assertRaises(UnsupportedError):
             qExpectedImprovement(model=mm, best_f=0, sampler=sampler, objective=obj)
 
-    def test_q_expected_improvement_cuda(self):
-        if torch.cuda.is_available():
-            self.test_q_expected_improvement(cuda=True)
-
-    def test_q_expected_improvement_batch(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_q_expected_improvement_batch(self):
         for dtype in (torch.float, torch.double):
             # the event shape is `b x q x t` = 2 x 2 x 1
-            samples = torch.zeros(2, 2, 1, device=device, dtype=dtype)
+            samples = torch.zeros(2, 2, 1, device=self.device, dtype=dtype)
             samples[0, 0, 0] = 1.0
             mm = MockModel(MockPosterior(samples=samples))
 
             # X is a dummy and unused b/c of mocking
-            X = torch.zeros(1, 1, 1, device=device, dtype=dtype)
+            X = torch.zeros(1, 1, 1, device=self.device, dtype=dtype)
 
             # test batch mode
             sampler = IIDNormalSampler(num_samples=2)
@@ -176,25 +172,20 @@ class TestQExpectedImprovement(BotorchTestCase):
             acqf(X.expand(2, 1, 1))
             self.assertFalse(torch.equal(acqf.sampler.base_samples, bs))
 
-    def test_q_expected_improvement_batch_cuda(self):
-        if torch.cuda.is_available():
-            self.test_q_expected_improvement_batch(cuda=True)
-
     # TODO: Test different objectives (incl. constraints)
 
 
 class TestQNoisyExpectedImprovement(BotorchTestCase):
-    def test_q_noisy_expected_improvement(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_q_noisy_expected_improvement(self):
         for dtype in (torch.float, torch.double):
             # the event shape is `b x q x t` = 1 x 2 x 1
-            samples_noisy = torch.tensor([1.0, 0.0], device=device, dtype=dtype)
+            samples_noisy = torch.tensor([1.0, 0.0], device=self.device, dtype=dtype)
             samples_noisy = samples_noisy.view(1, 2, 1)
             # X_baseline is `q' x d` = 1 x 1
-            X_baseline = torch.zeros(1, 1, device=device, dtype=dtype)
+            X_baseline = torch.zeros(1, 1, device=self.device, dtype=dtype)
             mm_noisy = MockModel(MockPosterior(samples=samples_noisy))
             # X is `q x d` = 1 x 1
-            X = torch.zeros(1, 1, device=device, dtype=dtype)
+            X = torch.zeros(1, 1, device=self.device, dtype=dtype)
 
             # basic test
             sampler = IIDNormalSampler(num_samples=2)
@@ -243,7 +234,7 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
             # basic test for X_pending and warning
             sampler = SobolQMCNormalSampler(num_samples=2)
             samples_noisy_pending = torch.tensor(
-                [1.0, 0.0, 0.0], device=device, dtype=dtype
+                [1.0, 0.0, 0.0], device=self.device, dtype=dtype
             )
             samples_noisy_pending = samples_noisy_pending.view(1, 3, 1)
             mm_noisy_pending = MockModel(MockPosterior(samples=samples_noisy_pending))
@@ -257,27 +248,24 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
             acqf.set_X_pending(X)
             self.assertEqual(acqf.X_pending, X)
             res = acqf(X)
-            X2 = torch.zeros(1, 1, 1, device=device, dtype=dtype, requires_grad=True)
+            X2 = torch.zeros(
+                1, 1, 1, device=self.device, dtype=dtype, requires_grad=True
+            )
             with warnings.catch_warnings(record=True) as ws, settings.debug(True):
                 acqf.set_X_pending(X2)
                 self.assertEqual(acqf.X_pending, X2)
                 self.assertEqual(len(ws), 1)
                 self.assertTrue(issubclass(ws[-1].category, BotorchWarning))
 
-    def test_q_noisy_expected_improvement_cuda(self):
-        if torch.cuda.is_available():
-            self.test_q_noisy_expected_improvement(cuda=True)
-
-    def test_q_noisy_expected_improvement_batch(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_q_noisy_expected_improvement_batch(self):
         for dtype in (torch.float, torch.double):
             # the event shape is `b x q x t` = 2 x 3 x 1
-            samples_noisy = torch.zeros(2, 3, 1, device=device, dtype=dtype)
+            samples_noisy = torch.zeros(2, 3, 1, device=self.device, dtype=dtype)
             samples_noisy[0, 0, 0] = 1.0
             mm_noisy = MockModel(MockPosterior(samples=samples_noisy))
             # X is `q x d` = 1 x 1
-            X = torch.zeros(1, 1, 1, device=device, dtype=dtype)
-            X_baseline = torch.zeros(1, 1, device=device, dtype=dtype)
+            X = torch.zeros(1, 1, 1, device=self.device, dtype=dtype)
+            X_baseline = torch.zeros(1, 1, device=self.device, dtype=dtype)
 
             # test batch mode
             sampler = IIDNormalSampler(num_samples=2)
@@ -343,22 +331,17 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
             acqf(X.expand(2, 1, 1))
             self.assertFalse(torch.equal(acqf.sampler.base_samples, bs))
 
-    def test_q_noisy_expected_improvement_batch_cuda(self):
-        if torch.cuda.is_available():
-            self.test_q_noisy_expected_improvement_batch(cuda=True)
-
     # TODO: Test different objectives (incl. constraints)
 
 
 class TestQProbabilityOfImprovement(BotorchTestCase):
-    def test_q_probability_of_improvement(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_q_probability_of_improvement(self):
         for dtype in (torch.float, torch.double):
             # the event shape is `b x q x t` = 1 x 1 x 1
-            samples = torch.zeros(1, 1, 1, device=device, dtype=dtype)
+            samples = torch.zeros(1, 1, 1, device=self.device, dtype=dtype)
             mm = MockModel(MockPosterior(samples=samples))
             # X is `q x d` = 1 x 1. X is a dummy and unused b/c of mocking
-            X = torch.zeros(1, 1, device=device, dtype=dtype)
+            X = torch.zeros(1, 1, device=self.device, dtype=dtype)
 
             # basic test
             sampler = IIDNormalSampler(num_samples=2)
@@ -404,27 +387,24 @@ class TestQProbabilityOfImprovement(BotorchTestCase):
             acqf.set_X_pending(X)
             self.assertEqual(acqf.X_pending, X)
             res = acqf(X)
-            X2 = torch.zeros(1, 1, 1, device=device, dtype=dtype, requires_grad=True)
+            X2 = torch.zeros(
+                1, 1, 1, device=self.device, dtype=dtype, requires_grad=True
+            )
             with warnings.catch_warnings(record=True) as ws, settings.debug(True):
                 acqf.set_X_pending(X2)
                 self.assertEqual(acqf.X_pending, X2)
                 self.assertEqual(len(ws), 1)
                 self.assertTrue(issubclass(ws[-1].category, BotorchWarning))
 
-    def test_q_probability_of_improvement_cuda(self):
-        if torch.cuda.is_available():
-            self.test_q_probability_of_improvement(cuda=True)
-
-    def test_q_probability_of_improvement_batch(self, cuda=False):
+    def test_q_probability_of_improvement_batch(self):
         # the event shape is `b x q x t` = 2 x 2 x 1
-        device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
-            samples = torch.zeros(2, 2, 1, device=device, dtype=dtype)
+            samples = torch.zeros(2, 2, 1, device=self.device, dtype=dtype)
             samples[0, 0, 0] = 1.0
             mm = MockModel(MockPosterior(samples=samples))
 
             # X is a dummy and unused b/c of mocking
-            X = torch.zeros(1, 1, 1, device=device, dtype=dtype)
+            X = torch.zeros(1, 1, 1, device=self.device, dtype=dtype)
 
             # test batch mode
             sampler = IIDNormalSampler(num_samples=2)
@@ -481,23 +461,18 @@ class TestQProbabilityOfImprovement(BotorchTestCase):
             bs = acqf.sampler.base_samples.clone()
             acqf(X.expand(2, 1, 1))
             self.assertFalse(torch.equal(acqf.sampler.base_samples, bs))
-
-    def test_q_probability_of_improvement_batch_cuda(self):
-        if torch.cuda.is_available():
-            self.test_q_probability_of_improvement_batch(cuda=True)
 
     # TODO: Test different objectives (incl. constraints)
 
 
 class TestQSimpleRegret(BotorchTestCase):
-    def test_q_simple_regret(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_q_simple_regret(self):
         for dtype in (torch.float, torch.double):
             # the event shape is `b x q x t` = 1 x 1 x 1
-            samples = torch.zeros(1, 1, 1, device=device, dtype=dtype)
+            samples = torch.zeros(1, 1, 1, device=self.device, dtype=dtype)
             mm = MockModel(MockPosterior(samples=samples))
             # X is `q x d` = 1 x 1. X is a dummy and unused b/c of mocking
-            X = torch.zeros(1, 1, device=device, dtype=dtype)
+            X = torch.zeros(1, 1, device=self.device, dtype=dtype)
 
             # basic test
             sampler = IIDNormalSampler(num_samples=2)
@@ -543,26 +518,23 @@ class TestQSimpleRegret(BotorchTestCase):
             acqf.set_X_pending(X)
             self.assertEqual(acqf.X_pending, X)
             res = acqf(X)
-            X2 = torch.zeros(1, 1, 1, device=device, dtype=dtype, requires_grad=True)
+            X2 = torch.zeros(
+                1, 1, 1, device=self.device, dtype=dtype, requires_grad=True
+            )
             with warnings.catch_warnings(record=True) as ws, settings.debug(True):
                 acqf.set_X_pending(X2)
                 self.assertEqual(acqf.X_pending, X2)
                 self.assertEqual(len(ws), 1)
                 self.assertTrue(issubclass(ws[-1].category, BotorchWarning))
 
-    def test_q_simple_regret_cuda(self):
-        if torch.cuda.is_available():
-            self.test_q_simple_regret(cuda=True)
-
-    def test_q_simple_regret_batch(self, cuda=False):
+    def test_q_simple_regret_batch(self):
         # the event shape is `b x q x t` = 2 x 2 x 1
-        device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
-            samples = torch.zeros(2, 2, 1, device=device, dtype=dtype)
+            samples = torch.zeros(2, 2, 1, device=self.device, dtype=dtype)
             samples[0, 0, 0] = 1.0
             mm = MockModel(MockPosterior(samples=samples))
             # X is a dummy and unused b/c of mocking
-            X = torch.zeros(1, 1, 1, device=device, dtype=dtype)
+            X = torch.zeros(1, 1, 1, device=self.device, dtype=dtype)
 
             # test batch mode
             sampler = IIDNormalSampler(num_samples=2)
@@ -619,23 +591,18 @@ class TestQSimpleRegret(BotorchTestCase):
             bs = acqf.sampler.base_samples.clone()
             acqf(X.expand(2, 1, 1))
             self.assertFalse(torch.equal(acqf.sampler.base_samples, bs))
-
-    def test_q_simple_regret_batch_cuda(self):
-        if torch.cuda.is_available():
-            self.test_q_simple_regret_batch(cuda=True)
 
     # TODO: Test different objectives (incl. constraints)
 
 
 class TestQUpperConfidenceBound(BotorchTestCase):
-    def test_q_upper_confidence_bound(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_q_upper_confidence_bound(self):
         for dtype in (torch.float, torch.double):
             # the event shape is `b x q x t` = 1 x 1 x 1
-            samples = torch.zeros(1, 1, 1, device=device, dtype=dtype)
+            samples = torch.zeros(1, 1, 1, device=self.device, dtype=dtype)
             mm = MockModel(MockPosterior(samples=samples))
             # X is `q x d` = 1 x 1. X is a dummy and unused b/c of mocking
-            X = torch.zeros(1, 1, device=device, dtype=dtype)
+            X = torch.zeros(1, 1, device=self.device, dtype=dtype)
 
             # basic test
             sampler = IIDNormalSampler(num_samples=2)
@@ -681,26 +648,23 @@ class TestQUpperConfidenceBound(BotorchTestCase):
             acqf.set_X_pending(X)
             self.assertEqual(acqf.X_pending, X)
             res = acqf(X)
-            X2 = torch.zeros(1, 1, 1, device=device, dtype=dtype, requires_grad=True)
+            X2 = torch.zeros(
+                1, 1, 1, device=self.device, dtype=dtype, requires_grad=True
+            )
             with warnings.catch_warnings(record=True) as ws, settings.debug(True):
                 acqf.set_X_pending(X2)
                 self.assertEqual(acqf.X_pending, X2)
                 self.assertEqual(len(ws), 1)
                 self.assertTrue(issubclass(ws[-1].category, BotorchWarning))
 
-    def test_q_upper_confidence_bound_cuda(self):
-        if torch.cuda.is_available():
-            self.test_q_upper_confidence_bound(cuda=True)
-
-    def test_q_upper_confidence_bound_batch(self, cuda=False):
+    def test_q_upper_confidence_bound_batch(self):
         # TODO: T41739913 Implement tests for all MCAcquisitionFunctions
-        device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
-            samples = torch.zeros(2, 2, 1, device=device, dtype=dtype)
+            samples = torch.zeros(2, 2, 1, device=self.device, dtype=dtype)
             samples[0, 0, 0] = 1.0
             mm = MockModel(MockPosterior(samples=samples))
             # X is a dummy and unused b/c of mocking
-            X = torch.zeros(1, 1, 1, device=device, dtype=dtype)
+            X = torch.zeros(1, 1, 1, device=self.device, dtype=dtype)
 
             # test batch mode
             sampler = IIDNormalSampler(num_samples=2)
@@ -766,15 +730,13 @@ class TestQUpperConfidenceBound(BotorchTestCase):
             acqf.set_X_pending(X)
             self.assertEqual(acqf.X_pending, X)
             res = acqf(X)
-            X2 = torch.zeros(1, 1, 1, device=device, dtype=dtype, requires_grad=True)
+            X2 = torch.zeros(
+                1, 1, 1, device=self.device, dtype=dtype, requires_grad=True
+            )
             with warnings.catch_warnings(record=True) as ws, settings.debug(True):
                 acqf.set_X_pending(X2)
                 self.assertEqual(acqf.X_pending, X2)
                 self.assertEqual(len(ws), 1)
                 self.assertTrue(issubclass(ws[-1].category, BotorchWarning))
-
-    def test_q_upper_confidence_bound_batch_cuda(self):
-        if torch.cuda.is_available():
-            self.test_q_upper_confidence_bound_batch(cuda=True)
 
     # TODO: Test different objectives (incl. constraints)

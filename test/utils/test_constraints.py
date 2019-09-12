@@ -2,11 +2,9 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-
 import torch
 from botorch.utils import get_outcome_constraint_transforms
-
-from ..botorch_test_case import BotorchTestCase
+from botorch.utils.testing import BotorchTestCase
 
 
 class TestGetOutcomeConstraintTransform(BotorchTestCase):
@@ -20,13 +18,12 @@ class TestGetOutcomeConstraintTransform(BotorchTestCase):
     def test_None(self):
         self.assertIsNone(get_outcome_constraint_transforms(None))
 
-    def test_BasicEvaluation(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_BasicEvaluation(self):
         for dtype in (torch.float, torch.double):
-            A = self.A.to(dtype=dtype, device=device)
-            b = self.b.to(dtype=dtype, device=device)
-            Ys = self.Ys.to(dtype=dtype, device=device)
-            results = self.results.to(dtype=dtype, device=device)
+            A = self.A.to(dtype=dtype, device=self.device)
+            b = self.b.to(dtype=dtype, device=self.device)
+            Ys = self.Ys.to(dtype=dtype, device=self.device)
+            results = self.results.to(dtype=dtype, device=self.device)
             ocs = get_outcome_constraint_transforms((A, b))
             self.assertEqual(len(ocs), 2)
             for i in (0, 1):
@@ -35,22 +32,13 @@ class TestGetOutcomeConstraintTransform(BotorchTestCase):
                     print(f"Expected: {results[:, i, j]}")
                     self.assertTrue(torch.equal(ocs[j](Ys[:, i]), results[:, i, j]))
 
-    def test_BasicEvaluation_cuda(self):
-        if torch.cuda.is_available():
-            self.test_BasicEvaluation(cuda=True)
-
-    def test_BroadcastEvaluation(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_BroadcastEvaluation(self):
         k, t = 3, 4
         mc_samples, b, q = 6, 4, 5
         for dtype in (torch.float, torch.double):
-            A_ = torch.randn(k, t, dtype=dtype, device=device)
-            b_ = torch.randn(k, 1, dtype=dtype, device=device)
-            Y = torch.randn(mc_samples, b, q, t, dtype=dtype, device=device)
+            A_ = torch.randn(k, t, dtype=dtype, device=self.device)
+            b_ = torch.randn(k, 1, dtype=dtype, device=self.device)
+            Y = torch.randn(mc_samples, b, q, t, dtype=dtype, device=self.device)
             ocs = get_outcome_constraint_transforms((A_, b_))
             self.assertEqual(len(ocs), k)
             self.assertEqual(ocs[0](Y).shape, torch.Size([mc_samples, b, q]))
-
-    def test_BroadcastEvaluation_cuda(self):
-        if torch.cuda.is_available():
-            self.test_BroadcastEvaluation(cuda=True)

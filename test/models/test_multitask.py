@@ -10,14 +10,13 @@ from botorch.exceptions.warnings import OptimizationWarning
 from botorch.fit import fit_gpytorch_model
 from botorch.models.multitask import FixedNoiseMultiTaskGP, MultiTaskGP
 from botorch.posteriors import GPyTorchPosterior
+from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.kernels import IndexKernel, MaternKernel, ScaleKernel
 from gpytorch.likelihoods import FixedNoiseGaussianLikelihood, GaussianLikelihood
 from gpytorch.means import ConstantMean
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.priors import GammaPrior
-
-from ..botorch_test_case import BotorchTestCase
 
 
 def _get_random_mt_data(**tkwargs):
@@ -63,10 +62,10 @@ def _get_fixed_noise_model_single_output(**tkwargs):
 
 
 class TestMultiTaskGP(BotorchTestCase):
-    def test_MultiTaskGP(self, cuda=False):
+    def test_MultiTaskGP(self):
         for double in (False, True):
             tkwargs = {
-                "device": torch.device("cuda") if cuda else torch.device("cpu"),
+                "device": self.device,
                 "dtype": torch.double if double else torch.float,
             }
             model = _get_model(**tkwargs)
@@ -134,14 +133,10 @@ class TestMultiTaskGP(BotorchTestCase):
             with self.assertRaises(RuntimeError):
                 MultiTaskGP(train_X, train_Y, 0, output_tasks=[2])
 
-    def test_MultiTaskGP_cuda(self):
-        if torch.cuda.is_available():
-            self.test_MultiTaskGP(cuda=True)
-
-    def test_MultiTaskGP_single_output(self, cuda=False):
+    def test_MultiTaskGP_single_output(self):
         for double in (False, True):
             tkwargs = {
-                "device": torch.device("cuda") if cuda else torch.device("cpu"),
+                "device": self.device,
                 "dtype": torch.double if double else torch.float,
             }
             model = _get_model_single_output(**tkwargs)
@@ -176,16 +171,12 @@ class TestMultiTaskGP(BotorchTestCase):
             self.assertIsInstance(posterior_f, GPyTorchPosterior)
             self.assertIsInstance(posterior_f.mvn, MultivariateNormal)
 
-    def test_MultiTaskGP_single_output_cuda(self):
-        if torch.cuda.is_available():
-            self.test_MultiTaskGP_single_output(cuda=True)
-
 
 class TestFixedNoiseMultiTaskGP(BotorchTestCase):
-    def test_FixedNoiseMultiTaskGP(self, cuda=False):
+    def test_FixedNoiseMultiTaskGP(self):
         for double in (False, True):
             tkwargs = {
-                "device": torch.device("cuda") if cuda else torch.device("cpu"),
+                "device": self.device,
                 "dtype": torch.double if double else torch.float,
             }
             model = _get_fixed_noise_model(**tkwargs)
@@ -251,14 +242,10 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
             with self.assertRaises(RuntimeError):
                 FixedNoiseMultiTaskGP(train_X, train_Y, train_Yvar, 0, output_tasks=[2])
 
-    def test_FixedNoiseMultiTaskGP_cuda(self):
-        if torch.cuda.is_available():
-            self.test_FixedNoiseMultiTaskGP(cuda=True)
-
-    def test_FixedNoiseMultiTaskGP_single_output(self, cuda=False):
+    def test_FixedNoiseMultiTaskGP_single_output(self):
         for double in (False, True):
             tkwargs = {
-                "device": torch.device("cuda") if cuda else torch.device("cpu"),
+                "device": self.device,
                 "dtype": torch.double if double else torch.float,
             }
             model = _get_fixed_noise_model_single_output(**tkwargs)
@@ -292,7 +279,3 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
             posterior_f = model.posterior(test_x)
             self.assertIsInstance(posterior_f, GPyTorchPosterior)
             self.assertIsInstance(posterior_f.mvn, MultivariateNormal)
-
-    def test_FixedNoiseMultiTaskGP_single_output_cuda(self):
-        if torch.cuda.is_available():
-            self.test_FixedNoiseMultiTaskGP_single_output(cuda=True)

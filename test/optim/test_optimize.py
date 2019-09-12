@@ -16,9 +16,8 @@ from botorch.optim.optimize import (
     optimize_acqf,
     sequential_optimize,
 )
+from botorch.utils.testing import BotorchTestCase
 from torch import Tensor
-
-from ..botorch_test_case import BotorchTestCase
 
 
 class MockAcquisitionFunction:
@@ -90,10 +89,9 @@ class TestDeprecatedOptimize(BotorchTestCase):
 
 
 class TestGenBatchInitialcandidates(BotorchTestCase):
-    def test_gen_batch_initial_conditions(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_gen_batch_initial_conditions(self):
         for dtype in (torch.float, torch.double):
-            bounds = torch.tensor([[0, 0], [1, 1]], device=device, dtype=dtype)
+            bounds = torch.tensor([[0, 0], [1, 1]], device=self.device, dtype=dtype)
             for nonnegative in (True, False):
                 for seed in (None, 1234):
                     batch_initial_conditions = gen_batch_initial_conditions(
@@ -114,16 +112,11 @@ class TestGenBatchInitialcandidates(BotorchTestCase):
                     self.assertEqual(batch_initial_conditions.device, bounds.device)
                     self.assertEqual(batch_initial_conditions.dtype, bounds.dtype)
 
-    def test_gen_batch_initial_conditions_cuda(self):
-        if torch.cuda.is_available():
-            self.test_gen_batch_initial_conditions(cuda=True)
-
-    def test_gen_batch_initial_conditions_highdim(self, cuda=False):
+    def test_gen_batch_initial_conditions_highdim(self):
         d = 120
         bounds = torch.stack([torch.zeros(d), torch.ones(d)])
-        device = torch.device("cuda") if cuda else torch.device("cpu")
         for dtype in (torch.float, torch.double):
-            bounds = bounds.to(device=device, dtype=dtype)
+            bounds = bounds.to(device=self.device, dtype=dtype)
             for nonnegative in (True, False):
                 for seed in (None, 1234):
                     with warnings.catch_warnings(record=True) as ws, settings.debug(
@@ -150,15 +143,10 @@ class TestGenBatchInitialcandidates(BotorchTestCase):
                     self.assertEqual(batch_initial_conditions.device, bounds.device)
                     self.assertEqual(batch_initial_conditions.dtype, bounds.dtype)
 
-    def test_gen_batch_initial_conditions_highdim_cuda(self):
-        if torch.cuda.is_available():
-            self.test_gen_batch_initial_conditions_highdim(cuda=True)
-
-    def test_gen_batch_initial_conditions_warning(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_gen_batch_initial_conditions_warning(self):
         for dtype in (torch.float, torch.double):
-            bounds = torch.tensor([[0, 0], [1, 1]], device=device, dtype=dtype)
-            samples = torch.zeros(10, 1, 2, device=device, dtype=dtype)
+            bounds = torch.tensor([[0, 0], [1, 1]], device=self.device, dtype=dtype)
+            samples = torch.zeros(10, 1, 2, device=self.device, dtype=dtype)
             with ExitStack() as es:
                 ws = es.enter_context(warnings.catch_warnings(record=True))
                 es.enter_context(settings.debug(True))
@@ -183,41 +171,40 @@ class TestGenBatchInitialcandidates(BotorchTestCase):
                 self.assertTrue(
                     torch.equal(
                         batch_initial_conditions,
-                        torch.zeros(2, 1, 2, device=device, dtype=dtype),
+                        torch.zeros(2, 1, 2, device=self.device, dtype=dtype),
                     )
                 )
-
-    def test_gen_batch_initial_conditions_warning_cuda(self):
-        if torch.cuda.is_available():
-            self.test_gen_batch_initial_conditions_warning(cuda=True)
 
 
 class TestOptimizeAcqf(BotorchTestCase):
     @mock.patch("botorch.optim.optimize.gen_batch_initial_conditions")
     @mock.patch("botorch.optim.optimize.gen_candidates_scipy")
     def test_optimize_acqf_joint(
-        self, mock_gen_candidates, mock_gen_batch_initial_conditions, cuda=False
+        self, mock_gen_candidates, mock_gen_batch_initial_conditions
     ):
         q = 3
         num_restarts = 2
         raw_samples = 10
         options = {}
         mock_acq_function = MockAcquisitionFunction()
-        tkwargs = {"device": torch.device("cuda") if cuda else torch.device("cpu")}
         cnt = 1
         for dtype in (torch.float, torch.double):
-            tkwargs["dtype"] = dtype
             mock_gen_batch_initial_conditions.return_value = torch.zeros(
-                num_restarts, q, 3, **tkwargs
+                num_restarts, q, 3, device=self.device, dtype=dtype
             )
-            base_cand = torch.ones(1, q, 3, **tkwargs)
+            base_cand = torch.ones(1, q, 3, device=self.device, dtype=dtype)
             mock_candidates = torch.cat(
                 [i * base_cand for i in range(num_restarts)], dim=0
             )
-            mock_acq_values = num_restarts - torch.arange(num_restarts, **tkwargs)
+            mock_acq_values = num_restarts - torch.arange(
+                num_restarts, device=self.device, dtype=dtype
+            )
             mock_gen_candidates.return_value = (mock_candidates, mock_acq_values)
             bounds = torch.stack(
-                [torch.zeros(3, **tkwargs), 4 * torch.ones(3, **tkwargs)]
+                [
+                    torch.zeros(3, device=self.device, dtype=dtype),
+                    4 * torch.ones(3, device=self.device, dtype=dtype),
+                ]
             )
             candidates, acq_vals = optimize_acqf(
                 acq_function=mock_acq_function,
@@ -238,37 +225,34 @@ class TestOptimizeAcqf(BotorchTestCase):
                 raw_samples=raw_samples,
                 options=options,
                 return_best_only=False,
-                batch_initial_conditions=torch.zeros(num_restarts, q, 3, **tkwargs),
+                batch_initial_conditions=torch.zeros(
+                    num_restarts, q, 3, device=self.device, dtype=dtype
+                ),
             )
             self.assertTrue(torch.equal(candidates, mock_candidates))
             self.assertTrue(torch.equal(acq_vals, mock_acq_values))
             self.assertEqual(mock_gen_batch_initial_conditions.call_count, cnt)
             cnt += 1
 
-    def test_optimize_acqf_joint_cuda(self):
-        if torch.cuda.is_available():
-            self.test_optimize_acqf_joint(cuda=True)
-
     @mock.patch("botorch.optim.optimize.gen_batch_initial_conditions")
     @mock.patch("botorch.optim.optimize.gen_candidates_scipy")
     def test_optimize_acqf_sequential(
-        self, mock_gen_candidates_scipy, mock_gen_batch_initial_conditions, cuda=False
+        self, mock_gen_candidates_scipy, mock_gen_batch_initial_conditions
     ):
         q = 3
         num_restarts = 2
         raw_samples = 10
         options = {}
-        tkwargs = {"device": torch.device("cuda") if cuda else torch.device("cpu")}
         for dtype in (torch.float, torch.double):
             mock_acq_function = MockAcquisitionFunction()
-            tkwargs["dtype"] = dtype
             mock_gen_batch_initial_conditions.side_effect = [
-                torch.zeros(num_restarts, **tkwargs) for _ in range(q)
+                torch.zeros(num_restarts, device=self.device, dtype=dtype)
+                for _ in range(q)
             ]
             gcs_return_vals = [
                 (
-                    torch.tensor([[[1.1, 2.1, 3.1]]], **tkwargs),
-                    torch.tensor([i], **tkwargs),
+                    torch.tensor([[[1.1, 2.1, 3.1]]], device=self.device, dtype=dtype),
+                    torch.tensor([i], device=self.device, dtype=dtype),
                 )
                 for i in range(q)
             ]
@@ -277,7 +261,10 @@ class TestOptimizeAcqf(BotorchTestCase):
                 [rv[0][0] for rv in gcs_return_vals], dim=-2
             ).round()
             bounds = torch.stack(
-                [torch.zeros(3, **tkwargs), 4 * torch.ones(3, **tkwargs)]
+                [
+                    torch.zeros(3, device=self.device, dtype=dtype),
+                    4 * torch.ones(3, device=self.device, dtype=dtype),
+                ]
             )
             inequality_constraints = [
                 (torch.tensor([3]), torch.tensor([4]), torch.tensor(5))
@@ -309,7 +296,3 @@ class TestOptimizeAcqf(BotorchTestCase):
                 return_best_only=False,
                 sequential=True,
             )
-
-    def test_optimize_acqf_sequential_cuda(self):
-        if torch.cuda.is_available():
-            self.test_optimize_acqf_sequential(cuda=True)

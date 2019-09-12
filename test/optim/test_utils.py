@@ -2,7 +2,6 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-
 import warnings
 from copy import deepcopy
 
@@ -18,6 +17,7 @@ from botorch.optim.utils import (
     fix_features,
     sample_all_priors,
 )
+from botorch.utils.testing import BotorchTestCase
 from gpytorch.kernels.matern_kernel import MaternKernel
 from gpytorch.kernels.scale_kernel import ScaleKernel
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
@@ -27,11 +27,9 @@ from gpytorch.mlls.variational_elbo import VariationalELBO
 from gpytorch.priors.smoothed_box_prior import SmoothedBoxPrior
 from gpytorch.priors.torch_priors import GammaPrior
 
-from ..botorch_test_case import BotorchTestCase
-
 
 class TestCheckConvergence(BotorchTestCase):
-    def test_check_convergence(self, cuda=False):
+    def test_check_convergence(self):
         losses = torch.rand(5).tolist()
         self.assertTrue(
             check_convergence(
@@ -44,20 +42,15 @@ class TestCheckConvergence(BotorchTestCase):
             )
         )
 
-    def test_check_convergence_cuda(self):
-        if torch.cuda.is_available():
-            self.test_check_convergence(cuda=True)
-
 
 class TestColumnWiseClamp(BotorchTestCase):
     def setUp(self):
         super().setUp()
-        self.X = torch.tensor([[-2, 1], [0.5, -0.5]])
-        self.X_expected = torch.tensor([[-1, 0.5], [0.5, -0.5]])
+        self.X = torch.tensor([[-2, 1], [0.5, -0.5]], device=self.device)
+        self.X_expected = torch.tensor([[-1, 0.5], [0.5, -0.5]], device=self.device)
 
-    def test_column_wise_clamp_scalars(self, cuda=False):
-        X = self.X.cuda() if cuda else self.X
-        X_expected = self.X_expected.cuda() if cuda else self.X_expected
+    def test_column_wise_clamp_scalars(self):
+        X, X_expected = self.X, self.X_expected
         with self.assertRaises(ValueError):
             X_clmp = columnwise_clamp(X, 1, -1)
         X_clmp = columnwise_clamp(X, -1, 0.5)
@@ -65,13 +58,8 @@ class TestColumnWiseClamp(BotorchTestCase):
         X_clmp = columnwise_clamp(X, -3, 3)
         self.assertTrue(torch.equal(X_clmp, X))
 
-    def test_column_wise_clamp_scalars_cuda(self):
-        if torch.cuda.is_available():
-            self.test_column_wise_clamp_scalars(cuda=True)
-
-    def test_column_wise_clamp_scalar_tensors(self, cuda=False):
-        X = self.X.cuda() if cuda else self.X
-        X_expected = self.X_expected.cuda() if cuda else self.X_expected
+    def test_column_wise_clamp_scalar_tensors(self):
+        X, X_expected = self.X, self.X_expected
         with self.assertRaises(ValueError):
             X_clmp = columnwise_clamp(X, torch.tensor(1), torch.tensor(-1))
         X_clmp = columnwise_clamp(X, torch.tensor(-1), torch.tensor(0.5))
@@ -79,13 +67,8 @@ class TestColumnWiseClamp(BotorchTestCase):
         X_clmp = columnwise_clamp(X, torch.tensor(-3), torch.tensor(3))
         self.assertTrue(torch.equal(X_clmp, X))
 
-    def test_column_wise_clamp_scalar_tensors_cuda(self):
-        if torch.cuda.is_available():
-            self.test_column_wise_clamp_scalar_tensors(cuda=True)
-
-    def test_column_wise_clamp_tensors(self, cuda=False):
-        X = self.X.cuda() if cuda else self.X
-        X_expected = self.X_expected.cuda() if cuda else self.X_expected
+    def test_column_wise_clamp_tensors(self):
+        X, X_expected = self.X, self.X_expected
         with self.assertRaises(ValueError):
             X_clmp = columnwise_clamp(X, torch.ones(2), torch.zeros(2))
         with self.assertRaises(RuntimeError):
@@ -95,12 +78,8 @@ class TestColumnWiseClamp(BotorchTestCase):
         X_clmp = columnwise_clamp(X, torch.tensor([-3, -3]), torch.tensor([3, 3]))
         self.assertTrue(torch.equal(X_clmp, X))
 
-    def test_column_wise_clamp_tensors_cuda(self):
-        if torch.cuda.is_available():
-            self.test_column_wise_clamp_tensors(cuda=True)
-
-    def test_column_wise_clamp_raise_on_violation(self, cuda=False):
-        X = self.X.cuda() if cuda else self.X
+    def test_column_wise_clamp_raise_on_violation(self):
+        X = self.X
         with self.assertRaises(BotorchError):
             X_clmp = columnwise_clamp(
                 X, torch.zeros(2), torch.ones(2), raise_on_violation=True
@@ -110,22 +89,19 @@ class TestColumnWiseClamp(BotorchTestCase):
         )
         self.assertTrue(torch.equal(X_clmp, X))
 
-    def test_column_wise_clamp_raise_on_violation_cuda(self):
-        if torch.cuda.is_available():
-            self.test_column_wise_clamp_raise_on_violation(cuda=True)
-
 
 class TestFixFeatures(BotorchTestCase):
-    def _getTensors(self, device):
-        X = torch.tensor([[-2, 1, 3], [0.5, -0.5, 1.0]], device=device)
-        X_null_two = torch.tensor([[-2, 1, 3], [0.5, -0.5, 1.0]], device=device)
-        X_expected = torch.tensor([[-1, 1, -2], [-1, -0.5, -2]], device=device)
-        X_expected_null_two = torch.tensor([[-1, 1, 3], [-1, -0.5, 1.0]], device=device)
+    def _getTensors(self):
+        X = torch.tensor([[-2, 1, 3], [0.5, -0.5, 1.0]], device=self.device)
+        X_null_two = torch.tensor([[-2, 1, 3], [0.5, -0.5, 1.0]], device=self.device)
+        X_expected = torch.tensor([[-1, 1, -2], [-1, -0.5, -2]], device=self.device)
+        X_expected_null_two = torch.tensor(
+            [[-1, 1, 3], [-1, -0.5, 1.0]], device=self.device
+        )
         return X, X_null_two, X_expected, X_expected_null_two
 
-    def test_fix_features(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
-        X, X_null_two, X_expected, X_expected_null_two = self._getTensors(device)
+    def test_fix_features(self):
+        X, X_null_two, X_expected, X_expected_null_two = self._getTensors()
         X.requires_grad_(True)
         X_null_two.requires_grad_(True)
 
@@ -145,7 +121,8 @@ class TestFixFeatures(BotorchTestCase):
         f(X_fix).backward()
         self.assertTrue(
             torch.equal(
-                X.grad, torch.tensor([[0.0, 1.0, 0.0], [0.0, 1.0, 0.0]], device=device)
+                X.grad,
+                torch.tensor([[0.0, 1.0, 0.0], [0.0, 1.0, 0.0]], device=self.device),
             )
         )
 
@@ -156,13 +133,9 @@ class TestFixFeatures(BotorchTestCase):
         self.assertTrue(
             torch.equal(
                 X_null_two.grad,
-                torch.tensor([[0.0, 1.0, 0.0], [0.0, 1.0, 0.0]], device=device),
+                torch.tensor([[0.0, 1.0, 0.0], [0.0, 1.0, 0.0]], device=self.device),
             )
         )
-
-    def test_fix_features_cuda(self):
-        if torch.cuda.is_available():
-            self.test_fix_features(cuda=True)
 
 
 class testGetExtraMllArgs(BotorchTestCase):
@@ -221,14 +194,13 @@ class testExpandBounds(BotorchTestCase):
 
 
 class TestSampleAllPriors(BotorchTestCase):
-    def test_sample_all_priors(self, cuda=False):
-        device = torch.device("cuda" if cuda else "cpu")
+    def test_sample_all_priors(self):
         for dtype in (torch.float, torch.double):
-            train_X = torch.rand(3, 5, device=device, dtype=dtype)
-            train_Y = torch.rand(3, 1, device=device, dtype=dtype)
+            train_X = torch.rand(3, 5, device=self.device, dtype=dtype)
+            train_Y = torch.rand(3, 1, device=self.device, dtype=dtype)
             model = SingleTaskGP(train_X=train_X, train_Y=train_Y)
             mll = ExactMarginalLogLikelihood(model.likelihood, model)
-            mll.to(device=device, dtype=dtype)
+            mll.to(device=self.device, dtype=dtype)
             original_state_dict = dict(deepcopy(mll.model.state_dict()))
             sample_all_priors(model)
 
@@ -278,7 +250,3 @@ class TestSampleAllPriors(BotorchTestCase):
             )
             with self.assertRaises(RuntimeError):
                 sample_all_priors(model)
-
-    def test_sample_all_priors_cuda(self):
-        if torch.cuda.is_available():
-            self.test_sample_all_priors(cuda=True)
