@@ -12,18 +12,17 @@ from botorch.models import (
     SingleTaskGP,
 )
 from botorch.models.converter import batched_to_model_list, model_list_to_batched
+from botorch.utils.testing import BotorchTestCase
 from gpytorch.likelihoods import GaussianLikelihood
 
-from ..botorch_test_case import BotorchTestCase
 from .test_gpytorch import SimpleGPyTorchModel
 
 
 class TestConverters(BotorchTestCase):
-    def test_batched_to_model_list(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_batched_to_model_list(self):
         for dtype in (torch.float, torch.double):
             # test SingleTaskGP
-            train_X = torch.rand(10, 2, device=device, dtype=dtype)
+            train_X = torch.rand(10, 2, device=self.device, dtype=dtype)
             train_Y1 = train_X.sum(dim=-1)
             train_Y2 = train_X[:, 0] - train_X[:, 1]
             train_Y = torch.stack([train_Y1, train_Y2], dim=-1)
@@ -41,15 +40,10 @@ class TestConverters(BotorchTestCase):
             with self.assertRaises(NotImplementedError):
                 batched_to_model_list(batch_gp)
 
-    def test_batched_to_model_list_cuda(self):
-        if torch.cuda.is_available():
-            self.test_batched_to_model_list(cuda=True)
-
-    def test_model_list_to_batched(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_model_list_to_batched(self):
         for dtype in (torch.float, torch.double):
             # basic test
-            train_X = torch.rand(10, 2, device=device, dtype=dtype)
+            train_X = torch.rand(10, 2, device=self.device, dtype=dtype)
             train_Y1 = train_X.sum(dim=-1, keepdim=True)
             train_Y2 = (train_X[:, 0] - train_X[:, 1]).unsqueeze(-1)
             gp1 = SingleTaskGP(train_X, train_Y1)
@@ -86,7 +80,7 @@ class TestConverters(BotorchTestCase):
             # check tensor shape agreement
             gp2 = SingleTaskGP(train_X, train_Y2)
             gp2.covar_module.raw_outputscale = torch.nn.Parameter(
-                torch.tensor([0.0], device=device, dtype=dtype)
+                torch.tensor([0.0], device=self.device, dtype=dtype)
             )
             with self.assertRaises(UnsupportedError):
                 model_list_to_batched(ModelListGP(gp1, gp2))
@@ -101,7 +95,7 @@ class TestConverters(BotorchTestCase):
             with self.assertRaises(NotImplementedError):
                 model_list_to_batched(ModelListGP(gp2))
             # test FixedNoiseGP
-            train_X = torch.rand(10, 2, device=device, dtype=dtype)
+            train_X = torch.rand(10, 2, device=self.device, dtype=dtype)
             train_Y1 = train_X.sum(dim=-1, keepdim=True)
             train_Y2 = (train_X[:, 0] - train_X[:, 1]).unsqueeze(-1)
             gp1_ = FixedNoiseGP(train_X, train_Y1, torch.rand_like(train_Y1))
@@ -109,14 +103,9 @@ class TestConverters(BotorchTestCase):
             list_gp = ModelListGP(gp1_, gp2_)
             batch_gp = model_list_to_batched(list_gp)
 
-    def test_model_list_to_batched_cuda(self):
-        if torch.cuda.is_available():
-            self.test_model_list_to_batched(cuda=True)
-
-    def test_roundtrip(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_roundtrip(self):
         for dtype in (torch.float, torch.double):
-            train_X = torch.rand(10, 2, device=device, dtype=dtype)
+            train_X = torch.rand(10, 2, device=self.device, dtype=dtype)
             train_Y1 = train_X.sum(dim=-1)
             train_Y2 = train_X[:, 0] - train_X[:, 1]
             train_Y = torch.stack([train_Y1, train_Y2], dim=-1)
@@ -136,7 +125,3 @@ class TestConverters(BotorchTestCase):
             sd_recov = batch_gp_recov.state_dict()
             self.assertTrue(set(sd_orig) == set(sd_recov))
             self.assertTrue(all(torch.equal(sd_orig[k], sd_recov[k]) for k in sd_orig))
-
-    def test_roundtrip_cuda(self):
-        if torch.cuda.is_available():
-            self.test_roundtrip(cuda=True)

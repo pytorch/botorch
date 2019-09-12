@@ -2,10 +2,8 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-
 from botorch.models.model import Model
-
-from ..botorch_test_case import BotorchTestCase
+from botorch.utils.testing import BotorchTestCase
 
 
 class NotSoAbstractBaseModel(Model):

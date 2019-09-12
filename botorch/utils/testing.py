@@ -2,8 +2,10 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
+import warnings
 from collections import OrderedDict
 from typing import List, Optional
+from unittest import TestCase
 
 import torch
 from torch import Tensor
@@ -13,6 +15,20 @@ from ..posteriors import Posterior
 
 
 EMPTY_SIZE = torch.Size()
+
+
+class BotorchTestCase(TestCase):
+    r"""Basic test case for Botorch.
+
+    This
+        1. sets the default device to be `torch.device("cpu")`
+        2. ensures that no warnings are suppressed by default.
+    """
+
+    device = torch.device("cpu")
+
+    def setUp(self):
+        warnings.simplefilter("always")
 
 
 class MockPosterior(Posterior):

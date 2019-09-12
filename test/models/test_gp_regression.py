@@ -16,6 +16,7 @@ from botorch.models.gp_regression import (
 from botorch.models.utils import add_output_dim
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling import SobolQMCNormalSampler
+from botorch.utils.testing import BotorchTestCase
 from gpytorch.kernels import MaternKernel, ScaleKernel
 from gpytorch.likelihoods import (
     FixedNoiseGaussianLikelihood,
@@ -26,8 +27,6 @@ from gpytorch.likelihoods import (
 from gpytorch.means import ConstantMean
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.priors import GammaPrior
-
-from ..botorch_test_case import BotorchTestCase
 
 
 def _get_random_data(batch_shape, num_outputs, n=10, **tkwargs):
@@ -50,12 +49,12 @@ class TestSingleTaskGP(BotorchTestCase):
         model = SingleTaskGP(**model_kwargs)
         return model, model_kwargs
 
-    def test_gp(self, cuda=False):
+    def test_gp(self):
         for batch_shape in (torch.Size(), torch.Size([2])):
             for num_outputs in (1, 2):
                 for double in (False, True):
                     tkwargs = {
-                        "device": torch.device("cuda") if cuda else torch.device("cpu"),
+                        "device": self.device,
                         "dtype": torch.double if double else torch.float,
                     }
                     model, _ = self._get_model_and_data(
@@ -121,16 +120,12 @@ class TestSingleTaskGP(BotorchTestCase):
                         torch.allclose(pvar, pvar_exp, rtol=1e-4, atol=1e-05)
                     )
 
-    def test_gp_cuda(self):
-        if torch.cuda.is_available():
-            self.test_gp(cuda=True)
-
-    def test_condition_on_observations(self, cuda=False):
+    def test_condition_on_observations(self):
         for batch_shape in (torch.Size(), torch.Size([2])):
             for num_outputs in (1, 2):
                 for double in (False, True):
                     tkwargs = {
-                        "device": torch.device("cuda") if cuda else torch.device("cpu"),
+                        "device": self.device,
                         "dtype": torch.double if double else torch.float,
                     }
                     model, model_kwargs = self._get_model_and_data(
@@ -231,16 +226,12 @@ class TestSingleTaskGP(BotorchTestCase):
                                 )
                             )
 
-    def test_condition_on_observations_cuda(self):
-        if torch.cuda.is_available():
-            self.test_condition_on_observations(cuda=True)
-
-    def test_fantasize(self, cuda=False):
+    def test_fantasize(self):
         for batch_shape in (torch.Size(), torch.Size([2])):
             for num_outputs in (1, 2):
                 for double in (False, True):
                     tkwargs = {
-                        "device": torch.device("cuda") if cuda else torch.device("cpu"),
+                        "device": self.device,
                         "dtype": torch.double if double else torch.float,
                     }
                     model, model_kwargs = self._get_model_and_data(
@@ -258,10 +249,6 @@ class TestSingleTaskGP(BotorchTestCase):
                     )
                     self.assertIsInstance(fm, model.__class__)
 
-    def test_fantasize_cuda(self):
-        if torch.cuda.is_available():
-            self.test_fantasize(cuda=True)
-
 
 class TestFixedNoiseGP(TestSingleTaskGP):
     def _get_model_and_data(self, batch_shape, num_outputs, **tkwargs):
@@ -276,12 +263,12 @@ class TestFixedNoiseGP(TestSingleTaskGP):
         model = FixedNoiseGP(**model_kwargs)
         return model, model_kwargs
 
-    def test_fixed_noise_likelihood(self, cuda=False):
+    def test_fixed_noise_likelihood(self):
         for batch_shape in (torch.Size(), torch.Size([2])):
             for num_outputs in (1, 2):
                 for double in (False, True):
                     tkwargs = {
-                        "device": torch.device("cuda") if cuda else torch.device("cpu"),
+                        "device": self.device,
                         "dtype": torch.double if double else torch.float,
                     }
                     model, model_kwargs = self._get_model_and_data(
@@ -296,10 +283,6 @@ class TestFixedNoiseGP(TestSingleTaskGP):
                             model_kwargs["train_Yvar"].contiguous().view(-1),
                         )
                     )
-
-    def test_fixed_noise_likelihood_cuda(self):
-        if torch.cuda.is_available():
-            self.test_fixed_noise_likelihood(cuda=True)
 
 
 class TestHeteroskedasticSingleTaskGP(TestSingleTaskGP):
@@ -316,12 +299,12 @@ class TestHeteroskedasticSingleTaskGP(TestSingleTaskGP):
         model = HeteroskedasticSingleTaskGP(**model_kwargs)
         return model, model_kwargs
 
-    def test_heteroskedastic_likelihood(self, cuda=False):
+    def test_heteroskedastic_likelihood(self):
         for batch_shape in (torch.Size(), torch.Size([2])):
             for num_outputs in (1, 2):
                 for double in (False, True):
                     tkwargs = {
-                        "device": torch.device("cuda") if cuda else torch.device("cpu"),
+                        "device": self.device,
                         "dtype": torch.double if double else torch.float,
                     }
                     model, _ = self._get_model_and_data(
@@ -336,17 +319,13 @@ class TestHeteroskedasticSingleTaskGP(TestSingleTaskGP):
                         model.likelihood.noise_covar.noise_model, SingleTaskGP
                     )
 
-    def test_heteroskedastic_likelihood_cuda(self):
-        if torch.cuda.is_available():
-            self.test_heteroskedastic_likelihood(cuda=True)
-
-    def test_condition_on_observations(self, cuda=False):
+    def test_condition_on_observations(self):
         with self.assertRaises(NotImplementedError):
-            super().test_condition_on_observations(cuda=cuda)
+            super().test_condition_on_observations()
 
-    def test_fantasize(self, cuda=False):
+    def test_fantasize(self):
         with self.assertRaises(NotImplementedError):
-            super().test_fantasize(cuda=cuda)
+            super().test_fantasize()
 
 
 def _get_pvar_expected(posterior, model, X, num_outputs):

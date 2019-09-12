@@ -2,8 +2,8 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-
 import torch
+from botorch.utils.testing import BotorchTestCase
 from botorch.utils.transforms import (
     concatenate_pending_points,
     match_batch_shape,
@@ -15,14 +15,11 @@ from botorch.utils.transforms import (
 )
 from torch import Tensor
 
-from ..botorch_test_case import BotorchTestCase
-
 
 class TestStandardize(BotorchTestCase):
-    def test_standardize(self, cuda=False):
-        tkwargs = {"device": torch.device("cuda" if cuda else "cpu")}
+    def test_standardize(self):
         for dtype in (torch.float, torch.double):
-            tkwargs["dtype"] = dtype
+            tkwargs = {"device": self.device, "dtype": dtype}
             Y = torch.tensor([0.0, 0.0], **tkwargs)
             self.assertTrue(torch.equal(Y, standardize(Y)))
             Y2 = torch.tensor([0.0, 1.0, 1.0, 1.0], **tkwargs)
@@ -40,36 +37,34 @@ class TestStandardize(BotorchTestCase):
             self.assertTrue(torch.equal(Y4_stdized[:, 1], torch.zeros(4, **tkwargs)))
             self.assertTrue(torch.equal(Y4_stdized[:, 2], expected_Y2_stdized))
 
-    def test_standardize_cuda(self):
-        if torch.cuda.is_available():
-            self.test_standardize(cuda=True)
-
 
 class TestNormalizeAndUnnormalize(BotorchTestCase):
-    def test_normalize_unnormalize(self, cuda=False):
-        tkwargs = {"device": torch.device("cuda" if cuda else "cpu")}
+    def test_normalize_unnormalize(self):
         for dtype in (torch.float, torch.double):
-            tkwargs["dtype"] = dtype
-            X = torch.tensor([0.0, 0.25, 0.5], **tkwargs).view(-1, 1)
-            expected_X_normalized = torch.tensor([0.0, 0.5, 1.0], **tkwargs).view(-1, 1)
-            bounds = torch.tensor([0.0, 0.5], **tkwargs).view(-1, 1)
+            X = torch.tensor([0.0, 0.25, 0.5], device=self.device, dtype=dtype).view(
+                -1, 1
+            )
+            expected_X_normalized = torch.tensor(
+                [0.0, 0.5, 1.0], device=self.device, dtype=dtype
+            ).view(-1, 1)
+            bounds = torch.tensor([0.0, 0.5], device=self.device, dtype=dtype).view(
+                -1, 1
+            )
             X_normalized = normalize(X, bounds=bounds)
             self.assertTrue(torch.equal(expected_X_normalized, X_normalized))
             self.assertTrue(torch.equal(X, unnormalize(X_normalized, bounds=bounds)))
             X2 = torch.tensor(
-                [[0.25, 0.125, 0.0], [0.25, 0.0, 0.5]], **tkwargs
+                [[0.25, 0.125, 0.0], [0.25, 0.0, 0.5]], device=self.device, dtype=dtype
             ).transpose(1, 0)
             expected_X2_normalized = torch.tensor(
-                [[1.0, 0.5, 0.0], [0.5, 0.0, 1.0]], **tkwargs
+                [[1.0, 0.5, 0.0], [0.5, 0.0, 1.0]], device=self.device, dtype=dtype
             ).transpose(1, 0)
-            bounds2 = torch.tensor([[0.0, 0.0], [0.25, 0.5]], **tkwargs)
+            bounds2 = torch.tensor(
+                [[0.0, 0.0], [0.25, 0.5]], device=self.device, dtype=dtype
+            )
             X2_normalized = normalize(X2, bounds=bounds2)
             self.assertTrue(torch.equal(X2_normalized, expected_X2_normalized))
             self.assertTrue(torch.equal(X2, unnormalize(X2_normalized, bounds=bounds2)))
-
-    def test_normalize_unnormalize_cuda(self):
-        if torch.cuda.is_available():
-            self.test_normalize_unnormalize(cuda=True)
 
 
 class BMIMTestClass:

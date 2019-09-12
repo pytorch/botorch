@@ -8,9 +8,8 @@ import numpy as np
 import torch
 from botorch.sampling.qmc import MultivariateNormalQMCEngine, NormalQMCEngine
 from botorch.utils.sampling import manual_seed
+from botorch.utils.testing import BotorchTestCase
 from scipy.stats import shapiro
-
-from ..botorch_test_case import BotorchTestCase
 
 
 class NormalQMCTests(BotorchTestCase):
@@ -147,131 +146,105 @@ class MultivariateNormalQMCTests(BotorchTestCase):
         with self.assertRaises(ValueError):
             MultivariateNormalQMCEngine(mean=torch.zeros(1), cov=torch.eye(2))
 
-    def test_MultivariateNormalQMCEngineNonPSD(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_MultivariateNormalQMCEngineNonPSD(self):
         for dtype in (torch.float, torch.double):
             # try with non-psd, non-pd cov and expect an assertion error
-            mean = torch.zeros(2, device=device, dtype=dtype)
-            cov = torch.tensor([[1, 2], [2, 1]], device=device, dtype=dtype)
+            mean = torch.zeros(2, device=self.device, dtype=dtype)
+            cov = torch.tensor([[1, 2], [2, 1]], device=self.device, dtype=dtype)
             with self.assertRaises(ValueError):
                 MultivariateNormalQMCEngine(mean=mean, cov=cov)
 
-    def test_MultivariateNormalQMCEngineNonPSD_cuda(self):
-        if torch.cuda.is_available():
-            self.test_MultivariateNormalQMCEngineNonPSD(cuda=True)
-
-    def test_MultivariateNormalQMCEngineNonPD(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_MultivariateNormalQMCEngineNonPD(self):
         for dtype in (torch.float, torch.double):
-            mean = torch.zeros(3, device=device, dtype=dtype)
+            mean = torch.zeros(3, device=self.device, dtype=dtype)
             cov = torch.tensor(
-                [[1, 0, 1], [0, 1, 1], [1, 1, 2]], device=device, dtype=dtype
+                [[1, 0, 1], [0, 1, 1], [1, 1, 2]], device=self.device, dtype=dtype
             )
             # try with non-pd but psd cov; should work
             engine = MultivariateNormalQMCEngine(mean=mean, cov=cov)
             self.assertTrue(engine._corr_matrix is not None)
 
-    def test_MultivariateNormalQMCEngineNonPD_cuda(self):
-        if torch.cuda.is_available():
-            self.test_MultivariateNormalQMCEngineNonPD(cuda=True)
-
-    def test_MultivariateNormalQMCEngineSymmetric(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_MultivariateNormalQMCEngineSymmetric(self):
         for dtype in (torch.float, torch.double):
             # try with non-symmetric cov and expect an error
-            mean = torch.zeros(2, device=device, dtype=dtype)
-            cov = torch.tensor([[1, 0], [2, 1]], device=device, dtype=dtype)
+            mean = torch.zeros(2, device=self.device, dtype=dtype)
+            cov = torch.tensor([[1, 0], [2, 1]], device=self.device, dtype=dtype)
             with self.assertRaises(ValueError):
                 MultivariateNormalQMCEngine(mean=mean, cov=cov)
 
-    def test_MultivariateNormalQMCEngineSymmetric_cuda(self):
-        if torch.cuda.is_available():
-            self.test_MultivariateNormalQMCEngineSymmetric(cuda=True)
-
-    def test_MultivariateNormalQMCEngine(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_MultivariateNormalQMCEngine(self):
         for dtype in (torch.float, torch.double):
 
             # d = 1 scalar
-            mean = torch.tensor([0], device=device, dtype=dtype)
-            cov = torch.tensor([[5]], device=device, dtype=dtype)
+            mean = torch.tensor([0], device=self.device, dtype=dtype)
+            cov = torch.tensor([[5]], device=self.device, dtype=dtype)
             engine = MultivariateNormalQMCEngine(mean=mean, cov=cov)
             samples = engine.draw()
             self.assertEqual(samples.dtype, dtype)
-            self.assertEqual(samples.device.type, device.type)
+            self.assertEqual(samples.device.type, self.device.type)
             self.assertEqual(samples.shape, torch.Size([1, 1]))
             samples = engine.draw(n=5)
             self.assertEqual(samples.shape, torch.Size([5, 1]))
 
             # d = 2 list
-            mean = torch.tensor([0, 1], device=device, dtype=dtype)
-            cov = torch.eye(2, device=device, dtype=dtype)
+            mean = torch.tensor([0, 1], device=self.device, dtype=dtype)
+            cov = torch.eye(2, device=self.device, dtype=dtype)
             engine = MultivariateNormalQMCEngine(mean=mean, cov=cov)
             samples = engine.draw()
             self.assertEqual(samples.dtype, dtype)
-            self.assertEqual(samples.device.type, device.type)
+            self.assertEqual(samples.device.type, self.device.type)
             self.assertEqual(samples.shape, torch.Size([1, 2]))
             samples = engine.draw(n=5)
             self.assertEqual(samples.shape, torch.Size([5, 2]))
 
             # d = 3 Tensor
-            mean = torch.tensor([0, 1, 2], device=device, dtype=dtype)
-            cov = torch.eye(3, device=device, dtype=dtype)
+            mean = torch.tensor([0, 1, 2], device=self.device, dtype=dtype)
+            cov = torch.eye(3, device=self.device, dtype=dtype)
             engine = MultivariateNormalQMCEngine(mean=mean, cov=cov)
             samples = engine.draw()
             self.assertEqual(samples.dtype, dtype)
-            self.assertEqual(samples.device.type, device.type)
+            self.assertEqual(samples.device.type, self.device.type)
             self.assertEqual(samples.shape, torch.Size([1, 3]))
             samples = engine.draw(n=5)
             self.assertEqual(samples.shape, torch.Size([5, 3]))
 
-    def test_MultivariateNormalQMCEngine_cuda(self):
-        if torch.cuda.is_available():
-            self.test_MultivariateNormalQMCEngine(cuda=True)
-
-    def test_MultivariateNormalQMCEngineInvTransform(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_MultivariateNormalQMCEngineInvTransform(self):
         for dtype in (torch.float, torch.double):
 
             # d = 1 scalar
-            mean = torch.tensor([0], device=device, dtype=dtype)
-            cov = torch.tensor([[5]], device=device, dtype=dtype)
+            mean = torch.tensor([0], device=self.device, dtype=dtype)
+            cov = torch.tensor([[5]], device=self.device, dtype=dtype)
             engine = MultivariateNormalQMCEngine(mean=mean, cov=cov, inv_transform=True)
             samples = engine.draw()
             self.assertEqual(samples.dtype, dtype)
-            self.assertEqual(samples.device.type, device.type)
+            self.assertEqual(samples.device.type, self.device.type)
             self.assertEqual(samples.shape, torch.Size([1, 1]))
             samples = engine.draw(n=5)
             self.assertEqual(samples.shape, torch.Size([5, 1]))
 
             # d = 2 list
-            mean = torch.tensor([0, 1], device=device, dtype=dtype)
-            cov = torch.eye(2, device=device, dtype=dtype)
+            mean = torch.tensor([0, 1], device=self.device, dtype=dtype)
+            cov = torch.eye(2, device=self.device, dtype=dtype)
             engine = MultivariateNormalQMCEngine(mean=mean, cov=cov, inv_transform=True)
             samples = engine.draw()
             self.assertEqual(samples.dtype, dtype)
-            self.assertEqual(samples.device.type, device.type)
+            self.assertEqual(samples.device.type, self.device.type)
             self.assertEqual(samples.shape, torch.Size([1, 2]))
             samples = engine.draw(n=5)
             self.assertEqual(samples.shape, torch.Size([5, 2]))
 
             # d = 3 Tensor
-            mean = torch.tensor([0, 1, 2], device=device, dtype=dtype)
-            cov = torch.eye(3, device=device, dtype=dtype)
+            mean = torch.tensor([0, 1, 2], device=self.device, dtype=dtype)
+            cov = torch.eye(3, device=self.device, dtype=dtype)
             engine = MultivariateNormalQMCEngine(mean=mean, cov=cov, inv_transform=True)
             samples = engine.draw()
             self.assertEqual(samples.dtype, dtype)
-            self.assertEqual(samples.device.type, device.type)
+            self.assertEqual(samples.device.type, self.device.type)
             self.assertEqual(samples.shape, torch.Size([1, 3]))
             samples = engine.draw(n=5)
             self.assertEqual(samples.shape, torch.Size([5, 3]))
 
-    def test_MultivariateNormalQMCEngineInvTransform_cuda(self):
-        if torch.cuda.is_available():
-            self.test_MultivariateNormalQMCEngineInvTransform(cuda=True)
-
-    def test_MultivariateNormalQMCEngineSeeded(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_MultivariateNormalQMCEngineSeeded(self):
         for dtype in (torch.float, torch.double):
 
             # test even dimension
@@ -279,15 +252,15 @@ class MultivariateNormalQMCTests(BotorchTestCase):
                 a = torch.randn(2, 2)
                 cov = a @ a.transpose(-1, -2) + torch.rand(2).diag()
 
-            mean = torch.zeros(2, device=device, dtype=dtype)
-            cov = cov.to(device=device, dtype=dtype)
+            mean = torch.zeros(2, device=self.device, dtype=dtype)
+            cov = cov.to(device=self.device, dtype=dtype)
             engine = MultivariateNormalQMCEngine(mean=mean, cov=cov, seed=12345)
             samples = engine.draw(n=2)
             self.assertEqual(samples.dtype, dtype)
-            self.assertEqual(samples.device.type, device.type)
+            self.assertEqual(samples.device.type, self.device.type)
             samples_expected = torch.tensor(
                 [[-0.849047422, -0.713852942], [0.398635030, 1.350660801]],
-                device=device,
+                device=self.device,
                 dtype=dtype,
             )
             self.assertTrue(torch.allclose(samples, samples_expected))
@@ -297,28 +270,23 @@ class MultivariateNormalQMCTests(BotorchTestCase):
                 a = torch.randn(3, 3)
                 cov = a @ a.transpose(-1, -2) + torch.rand(3).diag()
 
-            mean = torch.zeros(3, device=device, dtype=dtype)
-            cov = cov.to(device=device, dtype=dtype)
+            mean = torch.zeros(3, device=self.device, dtype=dtype)
+            cov = cov.to(device=self.device, dtype=dtype)
             engine = MultivariateNormalQMCEngine(mean, cov, seed=12345)
             samples = engine.draw(n=2)
             self.assertEqual(samples.dtype, dtype)
-            self.assertEqual(samples.device.type, device.type)
+            self.assertEqual(samples.device.type, self.device.type)
             samples_expected = torch.tensor(
                 [
                     [3.113158941, -3.262257099, -0.819938779],
                     [0.621987879, 2.352285624, -1.992680788],
                 ],
-                device=device,
+                device=self.device,
                 dtype=dtype,
             )
             self.assertTrue(torch.allclose(samples, samples_expected))
 
-    def test_MultivariateNormalQMCEngineSeeded_cuda(self):
-        if torch.cuda.is_available():
-            self.test_MultivariateNormalQMCEngineSeeded(cuda=True)
-
-    def test_MultivariateNormalQMCEngineSeededOut(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_MultivariateNormalQMCEngineSeededOut(self):
         for dtype in (torch.float, torch.double):
 
             # test even dimension
@@ -326,14 +294,14 @@ class MultivariateNormalQMCTests(BotorchTestCase):
                 a = torch.randn(2, 2)
                 cov = a @ a.transpose(-1, -2) + torch.rand(2).diag()
 
-            mean = torch.zeros(2, device=device, dtype=dtype)
-            cov = cov.to(device=device, dtype=dtype)
+            mean = torch.zeros(2, device=self.device, dtype=dtype)
+            cov = cov.to(device=self.device, dtype=dtype)
             engine = MultivariateNormalQMCEngine(mean=mean, cov=cov, seed=12345)
-            out = torch.empty(2, 2, device=device, dtype=dtype)
+            out = torch.empty(2, 2, device=self.device, dtype=dtype)
             self.assertIsNone(engine.draw(n=2, out=out))
             samples_expected = torch.tensor(
                 [[-0.849047422, -0.713852942], [0.398635030, 1.350660801]],
-                device=device,
+                device=self.device,
                 dtype=dtype,
             )
             self.assertTrue(torch.allclose(out, samples_expected))
@@ -343,44 +311,39 @@ class MultivariateNormalQMCTests(BotorchTestCase):
                 a = torch.randn(3, 3)
                 cov = a @ a.transpose(-1, -2) + torch.rand(3).diag()
 
-            mean = torch.zeros(3, device=device, dtype=dtype)
-            cov = cov.to(device=device, dtype=dtype)
+            mean = torch.zeros(3, device=self.device, dtype=dtype)
+            cov = cov.to(device=self.device, dtype=dtype)
             engine = MultivariateNormalQMCEngine(mean, cov, seed=12345)
-            out = torch.empty(2, 3, device=device, dtype=dtype)
+            out = torch.empty(2, 3, device=self.device, dtype=dtype)
             self.assertIsNone(engine.draw(n=2, out=out))
             samples_expected = torch.tensor(
                 [
                     [3.113158941, -3.262257099, -0.819938779],
                     [0.621987879, 2.352285624, -1.992680788],
                 ],
-                device=device,
+                device=self.device,
                 dtype=dtype,
             )
             self.assertTrue(torch.allclose(out, samples_expected))
 
-    def test_MultivariateNormalQMCEngineSeededOut_cuda(self):
-        if torch.cuda.is_available():
-            self.test_MultivariateNormalQMCEngineSeededOut(cuda=True)
-
-    def test_MultivariateNormalQMCEngineSeededInvTransform(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_MultivariateNormalQMCEngineSeededInvTransform(self):
         for dtype in (torch.float, torch.double):
             # test even dimension
             with manual_seed(54321):
                 a = torch.randn(2, 2)
                 cov = a @ a.transpose(-1, -2) + torch.rand(2).diag()
 
-            mean = torch.zeros(2, device=device, dtype=dtype)
-            cov = cov.to(device=device, dtype=dtype)
+            mean = torch.zeros(2, device=self.device, dtype=dtype)
+            cov = cov.to(device=self.device, dtype=dtype)
             engine = MultivariateNormalQMCEngine(
                 mean=mean, cov=cov, seed=12345, inv_transform=True
             )
             samples = engine.draw(n=2)
             self.assertEqual(samples.dtype, dtype)
-            self.assertEqual(samples.device.type, device.type)
+            self.assertEqual(samples.device.type, self.device.type)
             samples_expected = torch.tensor(
                 [[-0.560064316, 0.629113674], [-1.292604208, -0.048077226]],
-                device=device,
+                device=self.device,
                 dtype=dtype,
             )
             self.assertTrue(torch.allclose(samples, samples_expected))
@@ -390,38 +353,33 @@ class MultivariateNormalQMCTests(BotorchTestCase):
                 a = torch.randn(3, 3)
                 cov = a @ a.transpose(-1, -2) + torch.rand(3).diag()
 
-            mean = torch.zeros(3, device=device, dtype=dtype)
-            cov = cov.to(device=device, dtype=dtype)
+            mean = torch.zeros(3, device=self.device, dtype=dtype)
+            cov = cov.to(device=self.device, dtype=dtype)
             engine = MultivariateNormalQMCEngine(
                 mean=mean, cov=cov, seed=12345, inv_transform=True
             )
             samples = engine.draw(n=2)
             self.assertEqual(samples.dtype, dtype)
-            self.assertEqual(samples.device.type, device.type)
+            self.assertEqual(samples.device.type, self.device.type)
             samples_expected = torch.tensor(
                 [
                     [-2.388370037, 3.071142435, -0.319439292],
                     [-0.282978594, -4.350236893, -1.085214734],
                 ],
-                device=device,
+                device=self.device,
                 dtype=dtype,
             )
             self.assertTrue(torch.allclose(samples, samples_expected))
 
-    def test_MultivariateNormalQMCEngineSeededInvTransform_cuda(self):
-        if torch.cuda.is_available():
-            self.test_MultivariateNormalQMCEngineSeededInvTransform(cuda=True)
-
-    def test_MultivariateNormalQMCEngineShapiro(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_MultivariateNormalQMCEngineShapiro(self):
         for dtype in (torch.float, torch.double):
             # test the standard case
-            mean = torch.zeros(2, device=device, dtype=dtype)
-            cov = torch.eye(2, device=device, dtype=dtype)
+            mean = torch.zeros(2, device=self.device, dtype=dtype)
+            cov = torch.eye(2, device=self.device, dtype=dtype)
             engine = MultivariateNormalQMCEngine(mean=mean, cov=cov, seed=12345)
             samples = engine.draw(n=250)
             self.assertEqual(samples.dtype, dtype)
-            self.assertEqual(samples.device.type, device.type)
+            self.assertEqual(samples.device.type, self.device.type)
             self.assertTrue(torch.all(torch.abs(samples.mean(dim=0)) < 1e-2))
             self.assertTrue(torch.all(torch.abs(samples.std(dim=0) - 1) < 1e-2))
             # perform Shapiro-Wilk test for normality
@@ -434,12 +392,14 @@ class MultivariateNormalQMCTests(BotorchTestCase):
             self.assertLess(np.abs(cov[0, 1]), 1e-2)
 
             # test the correlated, non-zero mean case
-            mean = torch.tensor([1.0, 2.0], device=device, dtype=dtype)
-            cov = torch.tensor([[1.5, 0.5], [0.5, 1.5]], device=device, dtype=dtype)
+            mean = torch.tensor([1.0, 2.0], device=self.device, dtype=dtype)
+            cov = torch.tensor(
+                [[1.5, 0.5], [0.5, 1.5]], device=self.device, dtype=dtype
+            )
             engine = MultivariateNormalQMCEngine(mean=mean, cov=cov, seed=12345)
             samples = engine.draw(n=250)
             self.assertEqual(samples.dtype, dtype)
-            self.assertEqual(samples.device.type, device.type)
+            self.assertEqual(samples.device.type, self.device.type)
             self.assertTrue(torch.all(torch.abs(samples.mean(dim=0) - mean) < 1e-2))
             self.assertTrue(
                 torch.all(torch.abs(samples.std(dim=0) - math.sqrt(1.5)) < 1e-2)
@@ -453,22 +413,17 @@ class MultivariateNormalQMCTests(BotorchTestCase):
             cov = np.cov(samples.transpose())
             self.assertLess(np.abs(cov[0, 1] - 0.5), 1e-2)
 
-    def test_MultivariateNormalQMCEngineShapiro_cuda(self):
-        if torch.cuda.is_available():
-            self.test_MultivariateNormalQMCEngineShapiro(cuda=True)
-
-    def test_MultivariateNormalQMCEngineShapiroInvTransform(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_MultivariateNormalQMCEngineShapiroInvTransform(self):
         for dtype in (torch.float, torch.double):
             # test the standard case
-            mean = torch.zeros(2, device=device, dtype=dtype)
-            cov = torch.eye(2, device=device, dtype=dtype)
+            mean = torch.zeros(2, device=self.device, dtype=dtype)
+            cov = torch.eye(2, device=self.device, dtype=dtype)
             engine = MultivariateNormalQMCEngine(
                 mean=mean, cov=cov, seed=12345, inv_transform=True
             )
             samples = engine.draw(n=250)
             self.assertEqual(samples.dtype, dtype)
-            self.assertEqual(samples.device.type, device.type)
+            self.assertEqual(samples.device.type, self.device.type)
             self.assertTrue(torch.all(torch.abs(samples.mean(dim=0)) < 1e-2))
             self.assertTrue(torch.all(torch.abs(samples.std(dim=0) - 1) < 1e-2))
             # perform Shapiro-Wilk test for normality
@@ -481,14 +436,16 @@ class MultivariateNormalQMCTests(BotorchTestCase):
             self.assertLess(np.abs(cov[0, 1]), 1e-2)
 
             # test the correlated, non-zero mean case
-            mean = torch.tensor([1.0, 2.0], device=device, dtype=dtype)
-            cov = torch.tensor([[1.5, 0.5], [0.5, 1.5]], device=device, dtype=dtype)
+            mean = torch.tensor([1.0, 2.0], device=self.device, dtype=dtype)
+            cov = torch.tensor(
+                [[1.5, 0.5], [0.5, 1.5]], device=self.device, dtype=dtype
+            )
             engine = MultivariateNormalQMCEngine(
                 mean=mean, cov=cov, seed=12345, inv_transform=True
             )
             samples = engine.draw(n=250)
             self.assertEqual(samples.dtype, dtype)
-            self.assertEqual(samples.device.type, device.type)
+            self.assertEqual(samples.device.type, self.device.type)
             self.assertTrue(torch.all(torch.abs(samples.mean(dim=0) - mean) < 1e-2))
             self.assertTrue(
                 torch.all(torch.abs(samples.std(dim=0) - math.sqrt(1.5)) < 1e-2)
@@ -502,22 +459,17 @@ class MultivariateNormalQMCTests(BotorchTestCase):
             cov = np.cov(samples.transpose())
             self.assertLess(np.abs(cov[0, 1] - 0.5), 1e-2)
 
-    def test_MultivariateNormalQMCEngineShapiroInvTransform_cuda(self):
-        if torch.cuda.is_available():
-            self.test_MultivariateNormalQMCEngineShapiroInvTransform(cuda=True)
-
-    def test_MultivariateNormalQMCEngineDegenerate(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_MultivariateNormalQMCEngineDegenerate(self):
         for dtype in (torch.float, torch.double):
             # X, Y iid standard Normal and Z = X + Y, random vector (X, Y, Z)
-            mean = torch.zeros(3, device=device, dtype=dtype)
+            mean = torch.zeros(3, device=self.device, dtype=dtype)
             cov = torch.tensor(
-                [[1, 0, 1], [0, 1, 1], [1, 1, 2]], device=device, dtype=dtype
+                [[1, 0, 1], [0, 1, 1], [1, 1, 2]], device=self.device, dtype=dtype
             )
             engine = MultivariateNormalQMCEngine(mean=mean, cov=cov, seed=12345)
             samples = engine.draw(n=2000)
             self.assertEqual(samples.dtype, dtype)
-            self.assertEqual(samples.device.type, device.type)
+            self.assertEqual(samples.device.type, self.device.type)
             self.assertTrue(torch.all(torch.abs(samples.mean(dim=0)) < 1e-2))
             self.assertTrue(torch.abs(torch.std(samples[:, 0]) - 1) < 1e-2)
             self.assertTrue(torch.abs(torch.std(samples[:, 1]) - 1) < 1e-2)
@@ -534,7 +486,3 @@ class MultivariateNormalQMCTests(BotorchTestCase):
                     torch.abs(samples[:, 0] + samples[:, 1] - samples[:, 2]) < 1e-5
                 )
             )
-
-    def test_MultivariateNormalQMCEngineDegenerate_cuda(self):
-        if torch.cuda.is_available():
-            self.test_MultivariateNormalQMCEngineDegenerate(cuda=True)

@@ -2,11 +2,8 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-
 import torch
-from botorch.utils.mock import MockModel, MockPosterior
-
-from ..botorch_test_case import BotorchTestCase
+from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 
 
 class TestMock(BotorchTestCase):

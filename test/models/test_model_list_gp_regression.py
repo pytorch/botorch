@@ -12,6 +12,7 @@ from botorch.fit import fit_gpytorch_model
 from botorch.models import ModelListGP
 from botorch.models.gp_regression import FixedNoiseGP, SingleTaskGP
 from botorch.posteriors import GPyTorchPosterior
+from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.kernels import MaternKernel, ScaleKernel
 from gpytorch.likelihoods import LikelihoodList
@@ -19,8 +20,6 @@ from gpytorch.means import ConstantMean
 from gpytorch.mlls import SumMarginalLogLikelihood
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.priors import GammaPrior
-
-from ..botorch_test_case import BotorchTestCase
 
 
 def _get_random_data(n, **tkwargs):
@@ -54,10 +53,10 @@ def _get_model(n, fixed_noise=False, **tkwargs):
 
 
 class TestModelListGP(BotorchTestCase):
-    def test_ModelListGP(self, cuda=False):
+    def test_ModelListGP(self):
         for double in (False, True):
             tkwargs = {
-                "device": torch.device("cuda") if cuda else torch.device("cpu"),
+                "device": self.device,
                 "dtype": torch.double if double else torch.float,
             }
             model = _get_model(n=10, **tkwargs)
@@ -126,14 +125,10 @@ class TestModelListGP(BotorchTestCase):
             with self.assertRaises(BotorchTensorDimensionError):
                 model.condition_on_observations(f_x, torch.rand(3, 2, 3, **tkwargs))
 
-    def test_ModelListGP_cuda(self):
-        if torch.cuda.is_available():
-            self.test_ModelListGP(cuda=True)
-
-    def test_ModelListGP_fixed_noise(self, cuda=False):
+    def test_ModelListGP_fixed_noise(self):
         for double in (False, True):
             tkwargs = {
-                "device": torch.device("cuda") if cuda else torch.device("cpu"),
+                "device": self.device,
                 "dtype": torch.double if double else torch.float,
             }
             model = _get_model(n=10, fixed_noise=True, **tkwargs)
@@ -200,15 +195,8 @@ class TestModelListGP(BotorchTestCase):
                     f_x, f_y, noise=torch.rand(2, 3, **tkwargs)
                 )
 
-    def test_ModelListGP_fixed_noise_cuda(self):
-        if torch.cuda.is_available():
-            self.test_ModelListGP_fixed_noise(cuda=True)
-
-    def test_ModelListGP_single(self, cuda=False):
-        tkwargs = {
-            "device": torch.device("cuda") if cuda else torch.device("cpu"),
-            "dtype": torch.float,
-        }
+    def test_ModelListGP_single(self):
+        tkwargs = {"device": self.device, "dtype": torch.float}
         train_x1, train_x2, train_y1, train_y2 = _get_random_data(n=10, **tkwargs)
         model1 = SingleTaskGP(train_X=train_x1, train_Y=train_y1)
         model = ModelListGP(model1)
@@ -217,7 +205,3 @@ class TestModelListGP(BotorchTestCase):
         posterior = model.posterior(test_x)
         self.assertIsInstance(posterior, GPyTorchPosterior)
         self.assertIsInstance(posterior.mvn, MultivariateNormal)
-
-    def test_ModelListGP_single_cuda(self):
-        if torch.cuda.is_available():
-            self.test_ModelListGP_single(cuda=True)

@@ -2,10 +2,8 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-
 from botorch.acquisition.acquisition import AcquisitionFunction
-
-from ..botorch_test_case import BotorchTestCase
+from botorch.utils.testing import BotorchTestCase
 
 
 class TestAcquisitionFunction(BotorchTestCase):

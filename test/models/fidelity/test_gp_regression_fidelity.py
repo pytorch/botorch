@@ -16,11 +16,10 @@ from botorch.models.fidelity.gp_regression_fidelity import (
 from botorch.models.gp_regression import FixedNoiseGP
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling import SobolQMCNormalSampler
+from botorch.utils.testing import BotorchTestCase
 from gpytorch.kernels.scale_kernel import ScaleKernel
 from gpytorch.means import ConstantMean
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
-
-from ...botorch_test_case import BotorchTestCase
 
 
 def _get_random_data_with_fidelity(
@@ -77,8 +76,8 @@ class TestSingleTaskGPFidelity(BotorchTestCase):
         model = gp_model(**model_kwargs)
         return model, model_kwargs
 
-    def test_exception_message(self, cuda=False):
-        train_X = torch.rand(20, 4, device=torch.device("cuda" if cuda else "cpu"))
+    def test_exception_message(self):
+        train_X = torch.rand(20, 4, device=self.device)
         train_Y = train_X.pow(2).sum(dim=-1)
         gp_model = self._get_model()
         with self.assertRaises(UnsupportedError):
@@ -89,11 +88,7 @@ class TestSingleTaskGPFidelity(BotorchTestCase):
                 train_data_fidelity=False,
             )
 
-    def test_exception_message_cuda(self):
-        if torch.cuda.is_available():
-            self.test_exception_message(cuda=True)
-
-    def test_gp(self, cuda=False):
+    def test_gp(self):
         for (train_iteration_fidelity, train_data_fidelity) in [
             (False, True),
             (True, False),
@@ -104,9 +99,7 @@ class TestSingleTaskGPFidelity(BotorchTestCase):
                     for double in (False, True):
                         num_dim = 1 + train_iteration_fidelity + train_data_fidelity
                         tkwargs = {
-                            "device": torch.device("cuda")
-                            if cuda
-                            else torch.device("cpu"),
+                            "device": self.device,
                             "dtype": torch.double if double else torch.float,
                         }
                         model, _ = self._get_model_and_data(
@@ -164,11 +157,7 @@ class TestSingleTaskGPFidelity(BotorchTestCase):
                             + torch.Size([3, num_outputs]),
                         )
 
-    def test_gp_cuda(self):
-        if torch.cuda.is_available():
-            self.test_gp(cuda=True)
-
-    def test_condition_on_observations(self, cuda=False):
+    def test_condition_on_observations(self):
         for (train_iteration_fidelity, train_data_fidelity) in [
             (False, True),
             (True, False),
@@ -179,9 +168,7 @@ class TestSingleTaskGPFidelity(BotorchTestCase):
                     for double in (False, True):
                         num_dim = 1 + train_iteration_fidelity + train_data_fidelity
                         tkwargs = {
-                            "device": torch.device("cuda")
-                            if cuda
-                            else torch.device("cpu"),
+                            "device": self.device,
                             "dtype": torch.double if double else torch.float,
                         }
                         model, model_kwargs = self._get_model_and_data(
@@ -301,11 +288,7 @@ class TestSingleTaskGPFidelity(BotorchTestCase):
                                     )
                                 )
 
-    def test_condition_on_observations_cuda(self):
-        if torch.cuda.is_available():
-            self.test_condition_on_observations(cuda=True)
-
-    def test_fantasize(self, cuda=False):
+    def test_fantasize(self):
         for (train_iteration_fidelity, train_data_fidelity) in [
             (False, True),
             (True, False),
@@ -316,9 +299,7 @@ class TestSingleTaskGPFidelity(BotorchTestCase):
                 for num_outputs in (1, 2):
                     for double in (False, True):
                         tkwargs = {
-                            "device": torch.device("cuda")
-                            if cuda
-                            else torch.device("cpu"),
+                            "device": self.device,
                             "dtype": torch.double if double else torch.float,
                         }
                         model, model_kwargs = self._get_model_and_data(
@@ -340,10 +321,6 @@ class TestSingleTaskGPFidelity(BotorchTestCase):
                             X=X_f, sampler=sampler, observation_noise=False
                         )
                         self.assertIsInstance(fm, model.__class__)
-
-    def test_fantasize_cuda(self):
-        if torch.cuda.is_available():
-            self.test_fantasize(cuda=True)
 
 
 class TestSingleTaskGPLTKernel(TestSingleTaskGPFidelity):

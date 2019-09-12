@@ -2,7 +2,6 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-
 import numpy as np
 import torch
 from botorch.exceptions.errors import UnsupportedError
@@ -14,23 +13,17 @@ from botorch.optim.parameter_constraints import (
     make_scipy_bounds,
     make_scipy_linear_constraints,
 )
+from botorch.utils.testing import BotorchTestCase
 from scipy.optimize import Bounds
-
-from ..botorch_test_case import BotorchTestCase
 
 
 class TestParameterConstraints(BotorchTestCase):
-    def test_arrayify(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_arrayify(self):
         for dtype in (torch.float, torch.double, torch.int, torch.long):
-            t = torch.tensor([[1, 2], [3, 4]], device=device).type(dtype)
+            t = torch.tensor([[1, 2], [3, 4]], device=self.device).type(dtype)
             t_np = _arrayify(t)
             self.assertIsInstance(t_np, np.ndarray)
             self.assertTrue(t_np.dtype == np.float64)
-
-    def test_arrayify_cuda(self):
-        if torch.cuda.is_available():
-            self.test_arrayify(cuda=True)
 
     def test_eval_lin_constraint(self):
         res = eval_lin_constraint(
@@ -48,12 +41,11 @@ class TestParameterConstraints(BotorchTestCase):
         )
         self.assertTrue(all(np.equal(res, np.array([1.0, 0.0, -2.0]))))
 
-    def test_make_linear_constraints(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
-        indices = torch.tensor([1, 2], dtype=torch.long, device=device)
+    def test_make_linear_constraints(self):
+        indices = torch.tensor([1, 2], dtype=torch.long, device=self.device)
         shapeX = torch.Size([3, 2, 4])
         for dtype in (torch.float, torch.double):
-            coefficients = torch.tensor([1.0, 2.0], dtype=dtype, device=device)
+            coefficients = torch.tensor([1.0, 2.0], dtype=dtype, device=self.device)
             constraints = _make_linear_constraints(
                 indices=indices,
                 coefficients=coefficients,
@@ -87,11 +79,10 @@ class TestParameterConstraints(BotorchTestCase):
         self.assertEqual(lcs[0]["type"], "ineq")
 
         # check constraint across q-batch
-        device = torch.device("cuda") if cuda else torch.device("cpu")
-        indices = torch.tensor([[0, 3], [1, 2]], dtype=torch.long, device=device)
+        indices = torch.tensor([[0, 3], [1, 2]], dtype=torch.long, device=self.device)
         shapeX = torch.Size([3, 2, 4])
         for dtype in (torch.float, torch.double):
-            coefficients = torch.tensor([1.0, 2.0], dtype=dtype, device=device)
+            coefficients = torch.tensor([1.0, 2.0], dtype=dtype, device=self.device)
             constraints = _make_linear_constraints(
                 indices=indices,
                 coefficients=coefficients,
@@ -115,19 +106,14 @@ class TestParameterConstraints(BotorchTestCase):
                 jac_exp[[pos1, pos2]] = [1, 2]
                 self.assertTrue(np.allclose(constraints[i]["jac"](x), jac_exp))
 
-    def test_make_linear_constraints_cuda(self):
-        if torch.cuda.is_available():
-            self.test_make_linear_constraints(cuda=True)
-
-    def test_make_scipy_linear_constraints(self, cuda=False):
-        device = torch.device("cuda") if cuda else torch.device("cpu")
+    def test_make_scipy_linear_constraints(self):
         shapeX = torch.Size([2, 1, 4])
         res = make_scipy_linear_constraints(
             shapeX=shapeX, inequality_constraints=None, equality_constraints=None
         )
         self.assertEqual(res, [])
-        indices = torch.tensor([0, 1], dtype=torch.long, device=device)
-        coefficients = torch.tensor([1.5, -1.0], device=device)
+        indices = torch.tensor([0, 1], dtype=torch.long, device=self.device)
+        coefficients = torch.tensor([1.5, -1.0], device=self.device)
         cs = make_scipy_linear_constraints(
             shapeX=shapeX,
             inequality_constraints=[(indices, coefficients, 1.0)],
@@ -171,7 +157,7 @@ class TestParameterConstraints(BotorchTestCase):
                 equality_constraints=[(indices, coefficients, 1.0)],
             )
         # test that out of bounds index raises an error
-        indices = torch.tensor([0, 4], dtype=torch.long, device=device)
+        indices = torch.tensor([0, 4], dtype=torch.long, device=self.device)
         with self.assertRaises(RuntimeError):
             make_scipy_linear_constraints(
                 shapeX=shapeX,
@@ -180,7 +166,7 @@ class TestParameterConstraints(BotorchTestCase):
             )
         # test that two-d index out-of-bounds raises an error
         # q out of bounds
-        indices = torch.tensor([[0, 0], [1, 0]], dtype=torch.long, device=device)
+        indices = torch.tensor([[0, 0], [1, 0]], dtype=torch.long, device=self.device)
         with self.assertRaises(RuntimeError):
             make_scipy_linear_constraints(
                 shapeX=shapeX,
@@ -188,17 +174,13 @@ class TestParameterConstraints(BotorchTestCase):
                 equality_constraints=[(indices, coefficients, 1.0)],
             )
         # d out of bounds
-        indices = torch.tensor([[0, 0], [0, 4]], dtype=torch.long, device=device)
+        indices = torch.tensor([[0, 0], [0, 4]], dtype=torch.long, device=self.device)
         with self.assertRaises(RuntimeError):
             make_scipy_linear_constraints(
                 shapeX=shapeX,
                 inequality_constraints=[(indices, coefficients, 1.0)],
                 equality_constraints=[(indices, coefficients, 1.0)],
             )
-
-    def test_make_scipy_linear_constraints_cuda(self):
-        if torch.cuda.is_available():
-            self.test_make_scipy_linear_constraints(cuda=True)
 
 
 class TestMakeScipyBounds(BotorchTestCase):

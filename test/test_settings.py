@@ -2,13 +2,11 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-
 import warnings
 
 from botorch import settings
 from botorch.exceptions import BotorchWarning
-
-from .botorch_test_case import BotorchTestCase
+from botorch.utils.testing import BotorchTestCase
 
 
 class TestSettings(BotorchTestCase):
