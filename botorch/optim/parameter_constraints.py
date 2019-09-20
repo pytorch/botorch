@@ -194,10 +194,11 @@ def _make_linear_constraints(
 
     Args:
         indices: A tensor of shape `c` or `c x 2`, where c is the number of terms
-            in the constraint.  If single-dimensional, contains the indices of
-            the dimensions of the feature space that occur in the linear constraint.  If
-            two-dimensional, contains pairs of indices of the q-batch (0) and
-            the feature space (1) that occur in the linear constraint.
+            in the constraint. If single-dimensional, contains the indices of
+            the dimensions of the feature space that occur in the linear
+            constraint. If two-dimensional, contains pairs of indices of the
+            q-batch (0) and the feature space (1) that occur in the linear
+            constraint.
         coefficients: A single-dimensional tensor of coefficients with the same
             number of elements as `indices`.
         rhs: The right hand side of the constraint.
@@ -260,4 +261,6 @@ def _make_linear_constraints(
                 )
                 jac = partial(lin_constraint_jac, flat_idxr=idxr, coeffs=coeffs, n=n)
                 constraints.append({"type": ctype, "fun": fun, "jac": jac})
+    else:
+        raise ValueError("`indices` must be at least one-dimensional")
     return constraints
