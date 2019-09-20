@@ -105,6 +105,15 @@ class TestParameterConstraints(BotorchTestCase):
                 jac_exp = np.zeros(shapeX.numel())
                 jac_exp[[pos1, pos2]] = [1, 2]
                 self.assertTrue(np.allclose(constraints[i]["jac"](x), jac_exp))
+        # make sure error is raised for scalar tensors
+        with self.assertRaises(ValueError):
+            constraints = _make_linear_constraints(
+                indices=torch.tensor(0),
+                coefficients=torch.tensor([1.0]),
+                rhs=1.0,
+                shapeX=torch.Size([1, 1, 2]),
+                eq=False,
+            )
 
     def test_make_scipy_linear_constraints(self):
         shapeX = torch.Size([2, 1, 4])
