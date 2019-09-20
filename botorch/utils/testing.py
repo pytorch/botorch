@@ -32,7 +32,7 @@ class BotorchTestCase(TestCase):
 
 
 class MockPosterior(Posterior):
-    """Mock object that implements dummy methods and feeds through specified outputs"""
+    r"""Mock object that implements dummy methods and feeds through specified outputs"""
 
     def __init__(self, mean=None, variance=None, samples=None):
         self._mean = mean
@@ -88,7 +88,7 @@ class MockPosterior(Posterior):
 
 
 class MockModel(Model):
-    """Mock object that implements dummy methods and feeds through specified outputs"""
+    r"""Mock object that implements dummy methods and feeds through specified outputs"""
 
     def __init__(self, posterior: MockPosterior) -> None:
         super(Model, self).__init__()
@@ -114,3 +114,17 @@ class MockModel(Model):
         self, state_dict: Optional[OrderedDict] = None, strict: bool = False
     ) -> None:
         pass
+
+
+class MockAcquisitionFunction:
+    r"""Mock acquisition function object that implements dummy methods."""
+
+    def __init__(self):
+        self.model = None
+        self.X_pending = None
+
+    def __call__(self, X):
+        return X[..., 0].max(dim=-1)[0]
+
+    def set_X_pending(self, X_pending: Optional[Tensor] = None):
+        self.X_pending = X_pending
