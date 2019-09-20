@@ -19,7 +19,12 @@ from .optim.parameter_constraints import (
     make_scipy_bounds,
     make_scipy_linear_constraints,
 )
-from .optim.utils import check_convergence, columnwise_clamp, fix_features
+from .optim.utils import (
+    ConvergenceCriterion,
+    _filter_kwargs,
+    columnwise_clamp,
+    fix_features,
+)
 
 
 def gen_candidates_scipy(
@@ -190,6 +195,9 @@ def gen_candidates_torch(
     loss_trajectory: List[float] = []
     i = 0
     converged = False
+    convergence_criterion = ConvergenceCriterion(
+        **_filter_kwargs(ConvergenceCriterion, **options)
+    )
     while not converged:
         i += 1
         loss = -acquisition_function(candidates).sum()
@@ -209,11 +217,7 @@ def gen_candidates_torch(
             clamped_candidates, lower_bounds, upper_bounds
         )
         candidates = fix_features(clamped_candidates, fixed_features)
-        converged = check_convergence(
-            loss_trajectory=loss_trajectory,
-            param_trajectory=param_trajectory,
-            options=options,
-        )
+        converged = convergence_criterion.evaluate(fvals=loss.detach())
     clamped_candidates = columnwise_clamp(
         X=candidates, lower=lower_bounds, upper=upper_bounds, raise_on_violation=True
     )

@@ -20,6 +20,7 @@ from ..exceptions import BadInitialCandidatesWarning, SamplingWarning
 from ..gen import gen_candidates_scipy
 from ..utils.sampling import draw_sobol_samples, manual_seed
 from .initializers import initialize_q_batch, initialize_q_batch_nonneg
+from .utils import ConvergenceCriterion
 
 
 def optimize_acqf(
@@ -172,6 +173,119 @@ def optimize_acqf(
         return batch_candidates[best], batch_acq_values[best]
     else:
         return batch_candidates, batch_acq_values
+
+
+def optimize_acqf_cyclic(
+    acq_function: AcquisitionFunction,
+    bounds: Tensor,
+    q: int,
+    num_restarts: int,
+    raw_samples: int,
+    options: Optional[Dict[str, Union[bool, float, int, str]]] = None,
+    inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
+    equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
+    fixed_features: Optional[Dict[int, float]] = None,
+    post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
+    batch_initial_conditions: Optional[Tensor] = None,
+    cyclic_options: Optional[Dict[str, Union[bool, float, int, str]]] = None,
+) -> float:
+    r"""Generate a set of `q` candidates via cyclic optimization.
+
+    Args:
+        acq_function: An AcquisitionFunction
+        bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.
+        q: The number of candidates.
+        num_restarts:  Number of starting points for multistart acquisition
+            function optimization.
+        raw_samples: Number of samples for initialization
+        options: Options for candidate generation.
+        inequality constraints: A list of tuples (indices, coefficients, rhs),
+            with each tuple encoding an inequality constraint of the form
+            `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`
+        equality constraints: A list of tuples (indices, coefficients, rhs),
+            with each tuple encoding an inequality constraint of the form
+            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`
+        fixed_features: A map `{feature_index: value}` for features that
+            should be fixed to a particular value during generation.
+        post_processing_func: A function that post-processes an optimization
+            result appropriately (i.e., according to `round-trip`
+            transformations).
+        batch_initial_conditions: A tensor to specify the initial conditions.
+            If no initial conditions are provided, the default initialization will
+            be used.
+        cyclic_options: Options for convergence criterion for outer cyclic
+            optimization.
+        Returns:
+            A two-element tuple containing
+
+           - a `q x d`-dim tensor of generated candidates.
+           - a `q`-dim tensor of expected acquisition
+             values, where the `i`th value is the acquistion value conditional on
+             having observed all candidates except candidate `i`.
+
+        Example:
+            >>> # generate `q=3` candidates cyclically using 15 random restarts
+            >>> # 256 raw samples, and 4 cycles
+            >>>
+            >>> qEI = qExpectedImprovement(model, best_f=0.2)
+            >>> bounds = torch.tensor([[0.], [1.]])
+            >>> candidates, acq_value_list = optimize_acqf_cyclic(
+            >>>     qEI, bounds, 3, 15, 256, cyclic_options={"maxiter": 4}
+            >>> )
+
+    """
+    # for the first cycle, optimize the q candidates sequentially
+    candidates, acq_vals = optimize_acqf(
+        acq_function=acq_function,
+        bounds=bounds,
+        q=q,
+        num_restarts=num_restarts,
+        raw_samples=raw_samples,
+        options=options,
+        inequality_constraints=inequality_constraints,
+        equality_constraints=equality_constraints,
+        fixed_features=fixed_features,
+        post_processing_func=post_processing_func,
+        batch_initial_conditions=batch_initial_conditions,
+        return_best_only=True,
+        sequential=True,
+    )
+    if q > 1:
+        cyclic_options = cyclic_options or {}
+        convergence_criterion = ConvergenceCriterion(**cyclic_options)
+        converged = convergence_criterion.evaluate(fvals=acq_vals)
+        base_X_pending = acq_function.X_pending
+        idxr = torch.ones(q, dtype=torch.bool, device=bounds.device)
+        while not converged:
+            for i in range(q):
+                # optimize only candidate i
+                idxr[i] = 0
+                acq_function.set_X_pending(
+                    torch.cat([base_X_pending, candidates[idxr]], dim=-2)
+                    if base_X_pending is not None
+                    else candidates[idxr]
+                )
+                candidate_i, acq_val_i = optimize_acqf(
+                    acq_function=acq_function,
+                    bounds=bounds,
+                    q=1,
+                    num_restarts=num_restarts,
+                    raw_samples=raw_samples,
+                    options=options,
+                    inequality_constraints=inequality_constraints,
+                    equality_constraints=equality_constraints,
+                    fixed_features=fixed_features,
+                    post_processing_func=post_processing_func,
+                    batch_initial_conditions=candidates[i].unsqueeze(0),
+                    return_best_only=True,
+                    sequential=True,
+                )
+                candidates[i] = candidate_i
+                acq_vals[i] = acq_val_i
+                idxr[i] = 1
+            converged = convergence_criterion.evaluate(fvals=acq_vals)
+        acq_function.set_X_pending(base_X_pending)
+    return candidates, acq_vals
 
 
 def sequential_optimize(
