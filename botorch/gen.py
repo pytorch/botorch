@@ -129,7 +129,8 @@ def gen_candidates_scipy(
     clamped_candidates = columnwise_clamp(
         X=candidates, lower=lower_bounds, upper=upper_bounds, raise_on_violation=True
     )
-    batch_acquisition = acquisition_function(clamped_candidates)
+    with torch.no_grad():
+        batch_acquisition = acquisition_function(clamped_candidates)
     return clamped_candidates, batch_acquisition
 
 
@@ -221,7 +222,8 @@ def gen_candidates_torch(
     clamped_candidates = columnwise_clamp(
         X=candidates, lower=lower_bounds, upper=upper_bounds, raise_on_violation=True
     )
-    batch_acquisition = acquisition_function(candidates)
+    with torch.no_grad():
+        batch_acquisition = acquisition_function(candidates)
     return candidates, batch_acquisition
 
 
