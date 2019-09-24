@@ -3,14 +3,11 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 import warnings
-from contextlib import ExitStack
 from unittest import mock
 
 import torch
-from botorch import settings
-from botorch.exceptions.warnings import BadInitialCandidatesWarning, SamplingWarning
+from botorch.acquisition.acquisition import OneShotAcquisitionFunction
 from botorch.optim.optimize import (
-    gen_batch_initial_conditions,
     joint_optimize,
     optimize_acqf,
     optimize_acqf_cyclic,
@@ -18,6 +15,23 @@ from botorch.optim.optimize import (
 )
 from botorch.utils.testing import BotorchTestCase, MockAcquisitionFunction
 from torch import Tensor
+
+
+class MockOneShotAcquisitionFunction(
+    MockAcquisitionFunction, OneShotAcquisitionFunction
+):
+    def __init__(self, num_fantasies=2):
+        super().__init__()
+        self.num_fantasies = num_fantasies
+
+    def get_augmented_q_batch_size(self, q: int) -> int:
+        return q + self.num_fantasies
+
+    def extract_candidates(self, X_full: Tensor) -> Tensor:
+        return X_full[..., : -self.num_fantasies, :]
+
+    def forward(self, X):
+        pass
 
 
 def rounding_func(X: Tensor) -> Tensor:
@@ -74,94 +88,6 @@ class TestDeprecatedOptimize(BotorchTestCase):
             )
             self.assertIsNone(candidates)
             self.assertIsNone(acq_values)
-
-
-class TestGenBatchInitialcandidates(BotorchTestCase):
-    def test_gen_batch_initial_conditions(self):
-        for dtype in (torch.float, torch.double):
-            bounds = torch.tensor([[0, 0], [1, 1]], device=self.device, dtype=dtype)
-            for nonnegative in (True, False):
-                for seed in (None, 1234):
-                    batch_initial_conditions = gen_batch_initial_conditions(
-                        acq_function=MockAcquisitionFunction(),
-                        bounds=bounds,
-                        q=1,
-                        num_restarts=2,
-                        raw_samples=10,
-                        options={
-                            "nonnegative": nonnegative,
-                            "eta": 0.01,
-                            "alpha": 0.1,
-                            "seed": seed,
-                        },
-                    )
-                    expected_shape = torch.Size([2, 1, 2])
-                    self.assertEqual(batch_initial_conditions.shape, expected_shape)
-                    self.assertEqual(batch_initial_conditions.device, bounds.device)
-                    self.assertEqual(batch_initial_conditions.dtype, bounds.dtype)
-
-    def test_gen_batch_initial_conditions_highdim(self):
-        d = 120
-        bounds = torch.stack([torch.zeros(d), torch.ones(d)])
-        for dtype in (torch.float, torch.double):
-            bounds = bounds.to(device=self.device, dtype=dtype)
-            for nonnegative in (True, False):
-                for seed in (None, 1234):
-                    with warnings.catch_warnings(record=True) as ws, settings.debug(
-                        True
-                    ):
-                        batch_initial_conditions = gen_batch_initial_conditions(
-                            acq_function=MockAcquisitionFunction(),
-                            bounds=bounds,
-                            q=10,
-                            num_restarts=1,
-                            raw_samples=2,
-                            options={
-                                "nonnegative": nonnegative,
-                                "eta": 0.01,
-                                "alpha": 0.1,
-                                "seed": seed,
-                            },
-                        )
-                        self.assertTrue(
-                            any(issubclass(w.category, SamplingWarning) for w in ws)
-                        )
-                    expected_shape = torch.Size([1, 10, d])
-                    self.assertEqual(batch_initial_conditions.shape, expected_shape)
-                    self.assertEqual(batch_initial_conditions.device, bounds.device)
-                    self.assertEqual(batch_initial_conditions.dtype, bounds.dtype)
-
-    def test_gen_batch_initial_conditions_warning(self):
-        for dtype in (torch.float, torch.double):
-            bounds = torch.tensor([[0, 0], [1, 1]], device=self.device, dtype=dtype)
-            samples = torch.zeros(10, 1, 2, device=self.device, dtype=dtype)
-            with ExitStack() as es:
-                ws = es.enter_context(warnings.catch_warnings(record=True))
-                es.enter_context(settings.debug(True))
-                es.enter_context(
-                    mock.patch(
-                        "botorch.optim.optimize.draw_sobol_samples",
-                        return_value=samples,
-                    )
-                )
-                batch_initial_conditions = gen_batch_initial_conditions(
-                    acq_function=MockAcquisitionFunction(),
-                    bounds=bounds,
-                    q=1,
-                    num_restarts=2,
-                    raw_samples=10,
-                    options={"seed": 1234},
-                )
-                self.assertEqual(len(ws), 1)
-                self.assertTrue(
-                    any(issubclass(w.category, BadInitialCandidatesWarning) for w in ws)
-                )
-                self.assertTrue(
-                    torch.equal(
-                        batch_initial_conditions,
-                        torch.zeros(2, 1, 2, device=self.device, dtype=dtype),
-                    )
-                )
 
 
 class TestOptimizeAcqf(BotorchTestCase):
@@ -222,6 +148,23 @@ class TestOptimizeAcqf(BotorchTestCase):
             self.assertEqual(mock_gen_batch_initial_conditions.call_count, cnt)
             cnt += 1
 
+        # test OneShotAcquisitionFunction
+        mock_acq_function = MockOneShotAcquisitionFunction()
+        candidates, acq_vals = optimize_acqf(
+            acq_function=mock_acq_function,
+            bounds=bounds,
+            q=q,
+            num_restarts=num_restarts,
+            raw_samples=raw_samples,
+            options=options,
+        )
+        self.assertTrue(
+            torch.equal(
+                candidates, mock_acq_function.extract_candidates(mock_candidates[0])
+            )
+        )
+        self.assertTrue(torch.equal(acq_vals, mock_acq_values[0]))
+
     @mock.patch("botorch.optim.optimize.gen_batch_initial_conditions")
     @mock.patch("botorch.optim.optimize.gen_candidates_scipy")
     def test_optimize_acqf_sequential(
@@ -271,6 +214,16 @@ class TestOptimizeAcqf(BotorchTestCase):
             self.assertTrue(torch.equal(candidates, expected_candidates))
             self.assertTrue(
                 torch.equal(acq_value, torch.cat([rv[1] for rv in gcs_return_vals]))
+            )
+        # verify error when using a OneShotAcquisitionFunction
+        with self.assertRaises(NotImplementedError):
+            optimize_acqf(
+                acq_function=mock.Mock(spec=OneShotAcquisitionFunction),
+                bounds=bounds,
+                q=q,
+                num_restarts=num_restarts,
+                raw_samples=raw_samples,
+                sequential=True,
             )
 
     def test_optimize_acqf_sequential_notimplemented(self):

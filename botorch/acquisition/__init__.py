@@ -2,7 +2,7 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
-from .acquisition import AcquisitionFunction
+from .acquisition import AcquisitionFunction, OneShotAcquisitionFunction
 from .analytic import (
     AnalyticAcquisitionFunction,
     ConstrainedExpectedImprovement,
@@ -13,6 +13,7 @@ from .analytic import (
     UpperConfidenceBound,
 )
 from .fixed_feature import FixedFeatureAcquisitionFunction
+from .knowledge_gradient import qKnowledgeGradient
 from .monte_carlo import (
     MCAcquisitionFunction,
     qExpectedImprovement,
@@ -39,10 +40,12 @@ __all__ = [
     "ExpectedImprovement",
     "FixedFeatureAcquisitionFunction",
     "NoisyExpectedImprovement",
+    "OneShotAcquisitionFunction",
     "PosteriorMean",
     "ProbabilityOfImprovement",
     "UpperConfidenceBound",
     "qExpectedImprovement",
+    "qKnowledgeGradient",
     "qNoisyExpectedImprovement",
     "qProbabilityOfImprovement",
     "qSimpleRegret",

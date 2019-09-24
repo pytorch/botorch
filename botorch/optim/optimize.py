@@ -11,15 +11,14 @@ from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import torch
 from torch import Tensor
-from torch.quasirandom import SobolEngine
 
-from .. import settings
-from ..acquisition import AcquisitionFunction
-from ..acquisition.utils import is_nonnegative
-from ..exceptions import BadInitialCandidatesWarning, SamplingWarning
+from ..acquisition.acquisition import AcquisitionFunction, OneShotAcquisitionFunction
+from ..acquisition.knowledge_gradient import qKnowledgeGradient
 from ..gen import gen_candidates_scipy
-from ..utils.sampling import draw_sobol_samples, manual_seed
-from .initializers import initialize_q_batch, initialize_q_batch_nonneg
+from .initializers import (
+    gen_batch_initial_conditions,
+    gen_one_shot_kg_initial_conditions,
+)
 from .utils import ConvergenceCriterion
 
 
@@ -41,12 +40,12 @@ def optimize_acqf(
     r"""Generate a set of candidates via multi-start optimization.
 
     Args:
-        acq_function: An AcquisitionFunction
+        acq_function: An AcquisitionFunction.
         bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.
         q: The number of candidates.
-        num_restarts:  Number of starting points for multistart acquisition
+        num_restarts: The number of starting points for multistart acquisition
             function optimization.
-        raw_samples: Number of samples for initialization
+        raw_samples: The number of samples for initialization.
         options: Options for candidate generation.
         inequality constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
@@ -77,7 +76,7 @@ def optimize_acqf(
              values conditional on having observed canidates `0,1,...,i-1`.
 
         Example:
-            >>> # generate `q=2` candiates jointly using 20 random restarts
+            >>> # generate `q=2` candidates jointly using 20 random restarts
             >>> # and 512 raw samples
             >>> candidates, acq_value = optimize_acqf(qEI, bounds, 2, 20, 512)
 
@@ -95,9 +94,14 @@ def optimize_acqf(
             raise NotImplementedError(
                 "return_best_only=False only supported for joint optimization"
             )
+        if isinstance(acq_function, OneShotAcquisitionFunction):
+            raise NotImplementedError(
+                "sequential optimization currently not supported for one-shot "
+                "acquisition functions. Must have `sequential=False`."
+            )
         candidate_list, acq_value_list = [], []
         candidates = torch.tensor([])
-        base_X_pending = acq_function.X_pending  # pyre-ignore: [16]
+        base_X_pending = acq_function.X_pending
         for _ in range(q):
             candidate, acq_value = optimize_acqf(
                 acq_function=acq_function,
@@ -126,10 +130,16 @@ def optimize_acqf(
         acq_function.set_X_pending(base_X_pending)
         return candidates, torch.stack(acq_value_list)
 
-    # TODO: Generating initial candidates should use parameter constraints.
     options = options or {}
+
     if batch_initial_conditions is None:
-        batch_initial_conditions = gen_batch_initial_conditions(
+        ic_gen = (
+            gen_one_shot_kg_initial_conditions
+            if isinstance(acq_function, qKnowledgeGradient)
+            else gen_batch_initial_conditions
+        )
+        # TODO: Generating initial candidates should use parameter constraints.
+        batch_initial_conditions = ic_gen(
             acq_function=acq_function,
             bounds=bounds,
             q=q,
@@ -170,9 +180,13 @@ def optimize_acqf(
 
     if return_best_only:
         best = torch.argmax(batch_acq_values.view(-1), dim=0)
-        return batch_candidates[best], batch_acq_values[best]
-    else:
-        return batch_candidates, batch_acq_values
+        batch_candidates = batch_candidates[best]
+        batch_acq_values = batch_acq_values[best]
+
+    if isinstance(acq_function, OneShotAcquisitionFunction):
+        batch_candidates = acq_function.extract_candidates(X_full=batch_candidates)
+
+    return batch_candidates, batch_acq_values
 
 
 def optimize_acqf_cyclic(
@@ -362,102 +376,3 @@ def joint_optimize(
     )
 
     return batch_candidates, batch_acq_values
-
-
-def gen_batch_initial_conditions(
-    acq_function: AcquisitionFunction,
-    bounds: Tensor,
-    q: int,
-    num_restarts: int,
-    raw_samples: int,
-    options: Optional[Dict[str, Union[bool, float, int]]] = None,
-) -> Tensor:
-    r"""Generate a batch of initial conditions for random-restart optimziation.
-
-    Args:
-        acq_function: The acquisition function to be optimized.
-        bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.
-        q: The number of candidates to consider.
-        num_restarts: The number of starting points for multistart acquisition
-            function optimization.
-        raw_samples: The number of raw samples to consider in the initialization
-            heuristic.
-        options: Options for initial condition generation. For valid options see
-            `initialize_q_batch` and `initialize_q_batch_nonneg`. If `options`
-            contains a `nonnegative=True` entry, then `acq_function` is
-            assumed to be non-negative (useful when using custom acquisition
-            functions).
-
-    Returns:
-        A `num_restarts x q x d` tensor of initial conditions.
-
-    Example:
-        >>> qEI = qExpectedImprovement(model, best_f=0.2)
-        >>> bounds = torch.tensor([[0.], [1.]])
-        >>> Xinit = gen_batch_initial_conditions(
-        >>>     qEI, bounds, q=3, num_restarts=25, raw_samples=500
-        >>> )
-
-    """
-    options = options or {}
-    seed: Optional[int] = options.get("seed")
-    batch_limit: Optional[int] = options.get("batch_limit")
-    batch_initial_arms: Tensor
-    factor, max_factor = 1, 5
-    init_kwargs = {}
-    if "eta" in options:
-        init_kwargs["eta"] = options.get("eta")
-    if options.get("nonnegative") or is_nonnegative(acq_function):
-        init_func = initialize_q_batch_nonneg
-        if "alpha" in options:
-            init_kwargs["alpha"] = options.get("alpha")
-    else:
-        init_func = initialize_q_batch
-
-    q = 1 if q is None else q
-    # the dimension the samples are drawn from
-    dim = bounds.shape[-1] * q
-    if dim > SobolEngine.MAXDIM and settings.debug.on():
-        warnings.warn(
-            f"Sample dimension q*d={dim} exceeding Sobol max dimension "
-            f"({SobolEngine.MAXDIM}). Using iid samples instead.",
-            SamplingWarning,
-        )
-
-    while factor < max_factor:
-        with warnings.catch_warnings(record=True) as ws:
-            n = raw_samples * factor
-            if dim <= SobolEngine.MAXDIM:
-                X_rnd = draw_sobol_samples(bounds=bounds, n=n, q=q, seed=seed)
-            else:
-                with manual_seed(seed):
-                    X_rnd_nlzd = torch.rand(
-                        n * dim, device=bounds.device, dtype=bounds.dtype
-                    ).view(n, q, bounds.shape[-1])
-                X_rnd = bounds[0] + (bounds[1] - bounds[0]) * X_rnd_nlzd
-            with torch.no_grad():
-                if batch_limit is None:
-                    batch_limit = X_rnd.shape[0]
-                Y_rnd_list = []
-                start_idx = 0
-                while start_idx < X_rnd.shape[0]:
-                    end_idx = min(start_idx + batch_limit, X_rnd.shape[0])
-                    Y_rnd_curr = acq_function(X_rnd[start_idx:end_idx])
-                    Y_rnd_list.append(Y_rnd_curr)
-                    start_idx += batch_limit
-                Y_rnd = torch.cat(Y_rnd_list).to(X_rnd)
-            batch_initial_conditions = init_func(
-                X=X_rnd, Y=Y_rnd, n=num_restarts, **init_kwargs
-            )
-            if not any(issubclass(w.category, BadInitialCandidatesWarning) for w in ws):
-                return batch_initial_conditions
-            if factor < max_factor:
-                factor += 1
-                if seed is not None:
-                    seed += 1  # make sure to sample different X_rnd
-    warnings.warn(
-        "Unable to find non-zero acquisition function values - initial conditions "
-        "are being selected randomly.",
-        BadInitialCandidatesWarning,
-    )
-    return batch_initial_conditions
