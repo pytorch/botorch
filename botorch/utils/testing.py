@@ -12,6 +12,7 @@ from torch import Tensor
 
 from ..models.model import Model
 from ..posteriors import Posterior
+from ..test_functions.synthetic import SyntheticTestFunction
 
 
 EMPTY_SIZE = torch.Size()
@@ -29,6 +30,51 @@ class BotorchTestCase(TestCase):
 
     def setUp(self):
         warnings.simplefilter("always")
+
+
+class SyntheticTestFunctionBaseTestCase:
+
+    functions: List[SyntheticTestFunction]
+
+    def test_forward(self):
+        for dtype in (torch.float, torch.double):
+            for batch_shape in (torch.Size(), torch.Size([2])):
+                for f in self.functions:
+                    f.to(device=self.device, dtype=dtype)
+                    X = torch.rand(*batch_shape, f.dim, device=self.device, dtype=dtype)
+                    X = f.bounds[0, :] + X * (f.bounds[1, :] - f.bounds[0, :])
+                    res = f(X)
+                    f(X, noise=False)
+                    self.assertEqual(res.dtype, dtype)
+                    self.assertEqual(res.device.type, self.device.type)
+                    self.assertEqual(res.shape, batch_shape)
+
+    def test_optimal_value(self):
+        for dtype in (torch.float, torch.double):
+            for f in self.functions:
+                f.to(device=self.device, dtype=dtype)
+                try:
+                    optval = f.optimal_value
+                    optval_exp = -f._optimal_value if f.negate else f._optimal_value
+                    self.assertEqual(optval, optval_exp)
+                except NotImplementedError:
+                    pass
+
+    def test_optimizer(self):
+        for dtype in (torch.float, torch.double):
+            for f in self.functions:
+                f.to(device=self.device, dtype=dtype)
+                try:
+                    Xopt = f.optimizers.clone().requires_grad_(True)
+                except NotImplementedError:
+                    continue
+                res = f(Xopt, noise=False)
+                # if we have optimizers, we have the optimal value
+                res_exp = torch.full_like(res, f.optimal_value)
+                self.assertTrue(torch.allclose(res, res_exp, atol=1e-3, rtol=1e-3))
+                if f._check_grad_at_opt:
+                    grad = torch.autograd.grad([*res], Xopt)[0]
+                    self.assertLess(grad.abs().max().item(), 1e-3)
 
 
 class MockPosterior(Posterior):
