@@ -60,3 +60,33 @@ class AcquisitionFunction(Module, ABC):
             design points `X`.
         """
         pass  # pragma: no cover
+
+
+class OneShotAcquisitionFunction(AcquisitionFunction, ABC):
+    r"""Abstract base class for acquisition functions using one-shot optimization"""
+
+    @abstractmethod
+    def get_augmented_q_batch_size(self, q: int) -> int:
+        r"""Get augmented q batch size for one-shot optimzation.
+
+        Args:
+            q: The number of candidates to consider jointly.
+
+        Returns:
+            The augmented size for one-shot optimzation (including variables
+            parameterizing the fantasy solutions).
+        """
+        pass  # pragma: no cover
+
+    @abstractmethod
+    def extract_candidates(self, X_full: Tensor) -> Tensor:
+        r"""Extract the candidates from a full "one-shot" parameterization.
+
+        Args:
+            X_full: A `b x q_aug x d`-dim Tensor with `b` t-batches of `q_aug`
+                design points each.
+
+        Returns:
+            A `b x q x d`-dim Tensor with `b` t-batches of `q` design points each.
+        """
+        pass  # pragma: no cover
