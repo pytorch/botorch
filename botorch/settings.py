@@ -74,3 +74,18 @@ class debug(_Flag):
     def _set_state(cls, state: bool) -> None:
         cls._state = state
         suppress_botorch_warnings(suppress=not cls._state)
+
+
+class validate_input_scaling(_Flag):
+    r"""Flag for validating input normalization/standardization.
+
+    When set to `True`, standard botorch models will validate (up to reasonable
+    tolerance) that
+    (i) none of the inputs contain NaN values
+    (ii) the training data (`train_X`) is normalized to the unit cube
+    (iii) the training targets (`train_Y`) are standardized (zero mean, unit var)
+    No checks (other than the NaN check) are performed for observed variances
+    (`train_Y_var`) at this point.
+    """
+
+    _state: bool = True

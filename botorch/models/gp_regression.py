@@ -29,6 +29,7 @@ from torch import Tensor
 
 from ..sampling.samplers import MCSampler
 from .gpytorch import BatchedMultiOutputGPyTorchModel
+from .utils import validate_input_scaling
 
 
 MIN_INFERRED_NOISE_LEVEL = 1e-4
@@ -75,6 +76,7 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
             >>> train_Y = torch.sin(train_X).sum(dim=1, keepdim=True)
             >>> model = SingleTaskGP(train_X, train_Y)
         """
+        validate_input_scaling(train_X=train_X, train_Y=train_Y)
         self._validate_tensor_args(X=train_X, Y=train_Y)
         self._set_dimensions(train_X=train_X, train_Y=train_Y)
         train_X, train_Y, _ = self._transform_tensor_args(X=train_X, Y=train_Y)
@@ -143,6 +145,7 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
             >>> train_Yvar = torch.full_like(train_Y, 0.2)
             >>> model = FixedNoiseGP(train_X, train_Y, train_Yvar)
         """
+        validate_input_scaling(train_X=train_X, train_Y=train_Y, train_Yvar=train_Yvar)
         self._validate_tensor_args(X=train_X, Y=train_Y, Yvar=train_Yvar)
         self._set_dimensions(train_X=train_X, train_Y=train_Y)
         train_X, train_Y, train_Yvar = self._transform_tensor_args(
@@ -238,6 +241,7 @@ class HeteroskedasticSingleTaskGP(SingleTaskGP):
             >>> train_Yvar = 0.1 + se * torch.rand_like(train_Y)
             >>> model = HeteroskedasticSingleTaskGP(train_X, train_Y, train_Yvar)
         """
+        validate_input_scaling(train_X=train_X, train_Y=train_Y, train_Yvar=train_Yvar)
         self._validate_tensor_args(X=train_X, Y=train_Y, Yvar=train_Yvar)
         self._set_dimensions(train_X=train_X, train_Y=train_Y)
         noise_likelihood = GaussianLikelihood(
