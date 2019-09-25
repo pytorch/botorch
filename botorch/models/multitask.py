@@ -70,6 +70,7 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
             >>> train_Y = torch.cat(f1(X1), f2(X2))
             >>> model = MultiTaskGP(train_X, train_Y, task_feature=-1)
         """
+        # TODO: Validate input normalization/scaling
         if train_X.ndimension() != 2:
             # Currently, batch mode MTGPs are blocked upstream in GPyTorch
             raise ValueError(f"Unsupported shape {train_X.shape} for train_X.")

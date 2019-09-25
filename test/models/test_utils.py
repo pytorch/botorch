@@ -13,6 +13,7 @@ from botorch.models.utils import (
     check_no_nans,
     check_standardization,
     multioutput_to_batch_mode_transform,
+    validate_input_scaling,
 )
 from botorch.utils.testing import BotorchTestCase
 
@@ -156,3 +157,47 @@ class TestInputDataChecks(BotorchTestCase):
                 self.assertTrue(any("not standardized" in str(w.message) for w in ws))
             with self.assertRaises(InputDataError):
                 check_standardization(Y=Yst * 2, raise_on_fail=True)
+
+    def test_validate_input_scaling(self):
+        train_X = 2 + torch.rand(3, 4, 3)
+        train_Y = torch.randn(3, 4, 2)
+        # check that nothing is being checked
+        with settings.validate_input_scaling(False), settings.debug(True):
+            with warnings.catch_warnings(record=True) as ws:
+                validate_input_scaling(train_X=train_X, train_Y=train_Y)
+                self.assertFalse(
+                    any(issubclass(w.category, InputDataWarning) for w in ws)
+                )
+        # check that warnings are being issued
+        with settings.debug(True), warnings.catch_warnings(record=True) as ws:
+            validate_input_scaling(train_X=train_X, train_Y=train_Y)
+            self.assertTrue(any(issubclass(w.category, InputDataWarning) for w in ws))
+        # check that errors are raised when requested
+        with settings.debug(True):
+            with self.assertRaises(InputDataError):
+                validate_input_scaling(
+                    train_X=train_X, train_Y=train_Y, raise_on_fail=True
+                )
+        # check that no errors are being raised if everything is standardized
+        train_X_min = train_X.min(dim=-1, keepdim=True)[0]
+        train_X_max = train_X.max(dim=-1, keepdim=True)[0]
+        train_X_std = (train_X - train_X_min) / (train_X_max - train_X_min)
+        train_Y_std = (train_Y - train_Y.mean(dim=-2, keepdim=True)) / train_Y.std(
+            dim=-2, keepdim=True
+        )
+        with settings.debug(True), warnings.catch_warnings(record=True) as ws:
+            validate_input_scaling(train_X=train_X_std, train_Y=train_Y_std)
+            self.assertFalse(any(issubclass(w.category, InputDataWarning) for w in ws))
+        # test that negative variances raise an error
+        train_Yvar = torch.rand_like(train_Y_std)
+        train_Yvar[0, 0, 1] = -0.5
+        with settings.debug(True):
+            with self.assertRaises(InputDataError):
+                validate_input_scaling(
+                    train_X=train_X_std, train_Y=train_Y_std, train_Yvar=train_Yvar
+                )
+        # check that NaNs raise errors
+        train_X_std[0, 0, 0] = float("nan")
+        with settings.debug(True):
+            with self.assertRaises(InputDataError):
+                validate_input_scaling(train_X=train_X_std, train_Y=train_Y_std)

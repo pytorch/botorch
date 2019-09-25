@@ -13,6 +13,7 @@ import torch
 from gpytorch.utils.broadcasting import _mul_broadcast_shape
 from torch import Tensor
 
+from .. import settings
 from ..exceptions import InputDataError, InputDataWarning
 
 
@@ -179,3 +180,42 @@ def check_standardization(
             if raise_on_fail:
                 raise InputDataError(msg)
             warnings.warn(msg, InputDataWarning)
+
+
+def validate_input_scaling(
+    train_X: Tensor,
+    train_Y: Tensor,
+    train_Yvar: Optional[Tensor] = None,
+    raise_on_fail: bool = False,
+) -> None:
+    r"""Helper function to validate input data to models.
+
+    Args:
+        train_X: A `n x d` or `batch_shape x n x d` (batch mode) tensor of
+            training features.
+        train_Y: A `n x m` or `batch_shape x n x m` (batch mode) tensor of
+            training observations.
+        train_Yvar: A `batch_shape x n x m` or `batch_shape x n x m` (batch mode)
+            tensor of observed measurement noise.
+        raise_on_fail: If True, raise an error instead of emitting a warning
+            (only for normalization/standardization checks, an error is always
+            raised if NaN values are present).
+
+    This function is typically called inside the constructor of standard BoTorch
+    models. It validates the following:
+    (i) none of the inputs contain NaN values
+    (ii) the training data (`train_X`) is normalized to the unit cube
+    (iii) the training targets (`train_Y`) are standardized (zero mean, unit var)
+    No checks (other than the NaN check) are performed for observed variances
+    (`train_Yvar`) at this point.
+    """
+    if settings.validate_input_scaling.off():
+        return
+    check_no_nans(train_X)
+    check_no_nans(train_Y)
+    if train_Yvar is not None:
+        check_no_nans(train_Yvar)
+        if torch.any(train_Yvar < 0):
+            raise InputDataError("Input data contains negative variances.")
+    check_min_max_scaling(X=train_X, raise_on_fail=raise_on_fail)
+    check_standardization(Y=train_Y, raise_on_fail=raise_on_fail)
