@@ -60,12 +60,15 @@ Optimization simply use Ax.
 The latest release of BoTorch is easily installed either via
 [Anaconda](https://www.anaconda.com/distribution/#download-section) (recommended):
 ```bash
-conda install botorch -c pytorch
+conda install botorch -c pytorch -c gpytorch
 ```
 or via `pip`:
 ```bash
 pip install botorch
 ```
+
+You can customize your PyTorch installation (i.e. CUDA version, CPU only option)
+by following the [PyTorch installation instructions](https://pytorch.org/get-started/locally/).
 
 ***Important note for MacOS users:***
 * You will want to make sure your PyTorch build is linked against MKL (the

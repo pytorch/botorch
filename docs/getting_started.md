@@ -25,7 +25,7 @@ or `pip`:
 <!--DOCUSAURUS_CODE_TABS-->
 <!--conda-->
 ```bash
-conda install botorch -c pytorch
+conda install botorch -c pytorch -c gpytorch
 ```
 <!--pip-->
 ```bash
