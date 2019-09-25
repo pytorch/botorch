@@ -30,9 +30,8 @@ from gpytorch.priors.torch_priors import GammaPrior
 
 class TestConvergenceCriterion(BotorchTestCase):
     def test_convergence_criterion(self, cuda=False):
-        tkwargs = {"device": torch.device("cuda" if cuda else "cpu")}
         for dtype in (torch.float, torch.double):
-            tkwargs["dtype"] = dtype
+            tkwargs = {"device": self.device, "dtype": dtype}
 
             # test max iter
             max_iter_convergence_criterion = ConvergenceCriterion(maxiter=2)
@@ -66,10 +65,6 @@ class TestConvergenceCriterion(BotorchTestCase):
                         fvals=(-1) ** exp * torch.tensor([0.0, -0.5], **tkwargs)
                     )
                 )
-
-    def test_convergence_criterion_cuda(self):
-        if torch.cuda.is_available():
-            self.test_convergence_criterion(cuda=True)
 
 
 class TestColumnWiseClamp(BotorchTestCase):
