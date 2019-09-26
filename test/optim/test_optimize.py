@@ -359,7 +359,3 @@ class TestOptimizeAcqfCyclic(BotorchTestCase):
                             )
                         else:
                             self.assertEqual(expected_call_args[k], v)
-
-    def test_optimize_acqf_cyclic_cuda(self):
-        if torch.cuda.is_available():
-            self.test_optimize_acqf_cyclic(cuda=True)

@@ -153,7 +153,7 @@ candidate  # tensor([0.4887, 0.5063])
             <li>
               <h4>Install BoTorch:</h4>
               <a>via conda (recommended):</a>
-              <MarkdownBlock>{bash`conda install botorch -c pytorch`}</MarkdownBlock>
+              <MarkdownBlock>{bash`conda install botorch -c pytorch -c gpytorch`}</MarkdownBlock>
               <a>via pip:</a>
               <MarkdownBlock>{bash`pip install botorch`}</MarkdownBlock>
             </li>
