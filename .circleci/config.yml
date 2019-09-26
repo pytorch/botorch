@@ -70,11 +70,8 @@ commands:
     steps:
       - run:
           name: "Deploy website to GitHub Pages"
-            # TODO: make docusaurus installation above conditional on there being relevant changes (no need to install if there are none)
           command: |
-            if ! git diff-tree --no-commit-id --name-only -r HEAD | grep -E "(^docs\/.*)|(^website\/.*)|(^scripts\/.*)|(^sphinx\/.*)|(^tutorials\/.*)"; then
-              echo "Skipping deploy. No relevant website files have changed"
-            elif [[ $CIRCLE_PROJECT_USERNAME == "pytorch" && -z $CI_PULL_REQUEST && -z $CIRCLE_PR_USERNAME ]]; then
+            if [[ $CIRCLE_PROJECT_USERNAME == "pytorch" && -z $CI_PULL_REQUEST && -z $CIRCLE_PR_USERNAME ]]; then
               ./scripts/publish_site.sh -d
             else
               echo "Skipping deploy."

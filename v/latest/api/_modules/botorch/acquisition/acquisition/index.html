@@ -86,6 +86,36 @@
 <span class="sd">            design points `X`.</span>
 <span class="sd">        """</span>
         <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div></div>
+
+
+<span class="k">class</span> <span class="nc">OneShotAcquisitionFunction</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""Abstract base class for acquisition functions using one-shot optimization"""</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_augmented_q_batch_size</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Get augmented q batch size for one-shot optimzation.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            q: The number of candidates to consider jointly.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The augmented size for one-shot optimzation (including variables</span>
+<span class="sd">            parameterizing the fantasy solutions).</span>
+<span class="sd">        """</span>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">extract_candidates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_full</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Extract the candidates from a full "one-shot" parameterization.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X_full: A `b x q_aug x d`-dim Tensor with `b` t-batches of `q_aug`</span>
+<span class="sd">                design points each.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `b x q x d`-dim Tensor with `b` t-batches of `q` design points each.</span>
+<span class="sd">        """</span>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
 </pre></div>
 </div>
 </div>

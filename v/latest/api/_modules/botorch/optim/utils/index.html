@@ -68,31 +68,58 @@
             <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="check_convergence"><a class="viewcode-back" href="../../../optim.html#botorch.optim.utils.check_convergence">[docs]</a><span class="k">def</span> <span class="nf">check_convergence</span><span class="p">(</span>
-    <span class="n">loss_trajectory</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
-    <span class="n">param_trajectory</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]],</span>
-    <span class="n">options</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Check convergence of optimization for pytorch optimizers.</span>
-
-<span class="sd">    Right now this is just a dummy function and only checks for maxiter.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        loss_trajectory: A list containing the loss value at each iteration.</span>
-<span class="sd">        param_trajectory: A dictionary mapping each parameter name to a list of Tensors</span>
-<span class="sd">            where the `i`th Tensor is the parameter value at iteration `i`.</span>
-<span class="sd">        options: dictionary of options. Currently only "maxiter" is supported.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        A boolean indicating whether optimization has converged.</span>
+<div class="viewcode-block" id="ConvergenceCriterion"><a class="viewcode-back" href="../../../optim.html#botorch.optim.utils.ConvergenceCriterion">[docs]</a><span class="k">class</span> <span class="nc">ConvergenceCriterion</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""Basic class for evaluating optimization convergence.</span>
 <span class="sd">    """</span>
-    <span class="n">maxiter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"maxiter"</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
-    <span class="c1"># TODO: Be A LOT smarter about this</span>
-    <span class="c1"># TODO: Make this work in batch mode (see parallel L-BFGS-P)</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">loss_trajectory</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">maxiter</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">True</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">False</span></div>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">maxiter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">15000</span><span class="p">,</span>
+        <span class="n">ftol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.220446049250313e-09</span><span class="p">,</span>
+        <span class="n">minimize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Constructor for ConvergenceCriterion.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            maxiter: maximum number of iterations.</span>
+<span class="sd">            ftol: Function value relative tolerance for termination.</span>
+<span class="sd">            minimize: boolean indicating the optimization direction.</span>
+<span class="sd">        """</span>
+        <span class="c1"># by default, use the scipy defaults</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">maxiter</span> <span class="o">=</span> <span class="n">maxiter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ftol</span> <span class="o">=</span> <span class="n">ftol</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">minimize</span> <span class="o">=</span> <span class="n">minimize</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prev_fvals</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">iter</span> <span class="o">=</span> <span class="mi">0</span>
+
+<div class="viewcode-block" id="ConvergenceCriterion.evaluate"><a class="viewcode-back" href="../../../optim.html#botorch.optim.utils.ConvergenceCriterion.evaluate">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fvals</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Evaluate convergence criterion.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            fvals: tensor containing function values for the current iteration.</span>
+<span class="sd">                If `fvals` contains more than one element, then the relative</span>
+<span class="sd">                tolerance criterion is evaluated element-wise and True is returned</span>
+<span class="sd">                if all elements have converged.</span>
+
+<span class="sd">        TODO: add support for utilizing gradient information</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            bool: convergence indicator</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">iter</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">maxiter</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">prev_fvals</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fmax</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
+                <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">prev_fvals</span><span class="o">.</span><span class="n">abs</span><span class="p">(),</span> <span class="n">fvals</span><span class="o">.</span><span class="n">abs</span><span class="p">(),</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">fvals</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">f_delta</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prev_fvals</span> <span class="o">-</span> <span class="n">fvals</span><span class="p">)</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">fmax</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">minimize</span><span class="p">:</span>
+                <span class="n">f_delta</span> <span class="o">*=</span> <span class="o">-</span><span class="mi">1</span>
+            <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">f_delta</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ftol</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prev_fvals</span> <span class="o">=</span> <span class="n">fvals</span>
+        <span class="k">return</span> <span class="kc">False</span></div></div>
 
 
 <div class="viewcode-block" id="columnwise_clamp"><a class="viewcode-back" href="../../../optim.html#botorch.optim.utils.columnwise_clamp">[docs]</a><span class="k">def</span> <span class="nf">columnwise_clamp</span><span class="p">(</span>

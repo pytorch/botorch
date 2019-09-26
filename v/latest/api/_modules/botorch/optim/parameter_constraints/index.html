@@ -220,10 +220,11 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">        indices: A tensor of shape `c` or `c x 2`, where c is the number of terms</span>
-<span class="sd">            in the constraint.  If single-dimensional, contains the indices of</span>
-<span class="sd">            the dimensions of the feature space that occur in the linear constraint.  If</span>
-<span class="sd">            two-dimensional, contains pairs of indices of the q-batch (0) and</span>
-<span class="sd">            the feature space (1) that occur in the linear constraint.</span>
+<span class="sd">            in the constraint. If single-dimensional, contains the indices of</span>
+<span class="sd">            the dimensions of the feature space that occur in the linear</span>
+<span class="sd">            constraint. If two-dimensional, contains pairs of indices of the</span>
+<span class="sd">            q-batch (0) and the feature space (1) that occur in the linear</span>
+<span class="sd">            constraint.</span>
 <span class="sd">        coefficients: A single-dimensional tensor of coefficients with the same</span>
 <span class="sd">            number of elements as `indices`.</span>
 <span class="sd">        rhs: The right hand side of the constraint.</span>
@@ -286,6 +287,8 @@
                 <span class="p">)</span>
                 <span class="n">jac</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">lin_constraint_jac</span><span class="p">,</span> <span class="n">flat_idxr</span><span class="o">=</span><span class="n">idxr</span><span class="p">,</span> <span class="n">coeffs</span><span class="o">=</span><span class="n">coeffs</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
                 <span class="n">constraints</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"type"</span><span class="p">:</span> <span class="n">ctype</span><span class="p">,</span> <span class="s2">"fun"</span><span class="p">:</span> <span class="n">fun</span><span class="p">,</span> <span class="s2">"jac"</span><span class="p">:</span> <span class="n">jac</span><span class="p">})</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"`indices` must be at least one-dimensional"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">constraints</span>
 </pre></div>
 </div>

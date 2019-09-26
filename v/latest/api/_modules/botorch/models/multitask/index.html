@@ -96,6 +96,7 @@
 <span class="sd">            &gt;&gt;&gt; train_Y = torch.cat(f1(X1), f2(X2))</span>
 <span class="sd">            &gt;&gt;&gt; model = MultiTaskGP(train_X, train_Y, task_feature=-1)</span>
 <span class="sd">        """</span>
+        <span class="c1"># TODO: Validate input normalization/scaling</span>
         <span class="k">if</span> <span class="n">train_X</span><span class="o">.</span><span class="n">ndimension</span><span class="p">()</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
             <span class="c1"># Currently, batch mode MTGPs are blocked upstream in GPyTorch</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">f</span><span class="s2">"Unsupported shape </span><span class="si">{train_X.shape}</span><span class="s2"> for train_X."</span><span class="p">)</span>

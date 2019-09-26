@@ -46,7 +46,7 @@
 
 <span class="kn">from</span> <span class="nn">..exceptions.warnings</span> <span class="k">import</span> <span class="n">OptimizationWarning</span>
 <span class="kn">from</span> <span class="nn">.numpy_converter</span> <span class="k">import</span> <span class="n">TorchAttr</span><span class="p">,</span> <span class="n">module_to_array</span><span class="p">,</span> <span class="n">set_params_with_array</span>
-<span class="kn">from</span> <span class="nn">.utils</span> <span class="k">import</span> <span class="n">_filter_kwargs</span><span class="p">,</span> <span class="n">_get_extra_mll_args</span><span class="p">,</span> <span class="n">check_convergence</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="k">import</span> <span class="n">ConvergenceCriterion</span><span class="p">,</span> <span class="n">_filter_kwargs</span><span class="p">,</span> <span class="n">_get_extra_mll_args</span>
 
 
 <span class="n">ParameterBounds</span> <span class="o">=</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]]]</span>
@@ -134,6 +134,9 @@
     <span class="n">loss_trajectory</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">converged</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">convergence_criterion</span> <span class="o">=</span> <span class="n">ConvergenceCriterion</span><span class="p">(</span>
+        <span class="o">**</span><span class="n">_filter_kwargs</span><span class="p">(</span><span class="n">ConvergenceCriterion</span><span class="p">,</span> <span class="o">**</span><span class="n">optim_options</span><span class="p">)</span>
+    <span class="p">)</span>
     <span class="n">train_inputs</span><span class="p">,</span> <span class="n">train_targets</span> <span class="o">=</span> <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">,</span> <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train_targets</span>
     <span class="k">while</span> <span class="ow">not</span> <span class="n">converged</span><span class="p">:</span>
         <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
@@ -158,11 +161,7 @@
                 <span class="k">if</span> <span class="n">pname</span> <span class="ow">in</span> <span class="n">bounds_</span><span class="p">:</span>
                     <span class="n">param</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="o">*</span><span class="n">bounds_</span><span class="p">[</span><span class="n">pname</span><span class="p">])</span>
         <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
-        <span class="n">converged</span> <span class="o">=</span> <span class="n">check_convergence</span><span class="p">(</span>
-            <span class="n">loss_trajectory</span><span class="o">=</span><span class="n">loss_trajectory</span><span class="p">,</span>
-            <span class="n">param_trajectory</span><span class="o">=</span><span class="n">param_trajectory</span><span class="p">,</span>
-            <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="s2">"maxiter"</span><span class="p">:</span> <span class="n">optim_options</span><span class="p">[</span><span class="s2">"maxiter"</span><span class="p">]},</span>
-        <span class="p">)</span>
+        <span class="n">converged</span> <span class="o">=</span> <span class="n">convergence_criterion</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">fvals</span><span class="o">=</span><span class="n">loss</span><span class="o">.</span><span class="n">detach</span><span class="p">())</span>
     <span class="n">info_dict</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">"fopt"</span><span class="p">:</span> <span class="n">loss_trajectory</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
         <span class="s2">"wall_time"</span><span class="p">:</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">t1</span><span class="p">,</span>
