@@ -209,12 +209,13 @@ else
   python3 botorch-master/scripts/update_versions_html.py -p "${WORK_DIR}"
   cp -R botorch-master/.circleci new-site/
 
-  # Init as Git repo and push to gh-pages
-  cd new-site || exit
-  git init
+  # move contents of newsite to botorch-gh-pages, preserving commit history
+  rm -rfv ./botorch-gh-pages/*
+  rsync -avh ./new-site/ ./botorch-gh-pages/
+  cd botorch-gh-pages || exit
   git add --all
   git commit -m "Publish version ${VERSION} of site"
-  git push --force "git@github.com:pytorch/botorch.git" master:gh-pages
+  git push
 
 fi
 
