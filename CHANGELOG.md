@@ -2,6 +2,48 @@
 
 The release log for BoTorch.
 
+## [0.1.4] - Oct 1, 2019
+
+Knowledge Gradient acquisition function (one-shot), various maintenance
+
+#### Breaking Changes
+* Require explicit output dimensions in BoTorch models (#238)
+* Make `joint_optimize` / `sequential_optimize` return acquisition function
+  values (#149) [note deprecation notice below]
+* `standardize` now works on the second to last dimension (#263)
+* Refactor synthetic test functions (#273)
+
+#### New Features
+* Add `qKnowledgeGradient` acquisition function (#272, #276)
+* Add input scaling check to standard models (#267)
+* Add `cyclic_optimize`, convergence criterion class (#269)
+* Add `settings.debug` context manager (#242)
+
+#### Deprecations
+* Consolidate `sequential_optimize` and `joint_optimize` into `optimize_acqf`
+  (#150)
+
+#### Bug fixes
+* Properly pass noise levels to GPs using a `FixedNoiseGaussianLikelihood` (#241)
+  [requires gpytorch > 0.3.5]
+* Fix q-batch dimension issue in `ConstrainedExpectedImprovement`
+  (6c067185f56d3a244c4093393b8a97388fb1c0b3)
+* Fix parameter constraint issues on GPU (#260)
+
+#### Minor changes
+* Add decorator for concatenating pending points (#240)
+* Draw independent sample from prior for each hyperparameter (#244)
+* Allow `dim > 1111` for `gen_batch_initial_conditions` (#249)
+* Allow `optimize_acqf` to use `q>1` for `AnalyticAcquisitionFunction` (#257)
+* Allow excluding parameters in fit functions (#259)
+* Track the final iteration objective value in `fit_gpytorch_scipy` (#258)
+* Error out on unexpected dims in parameter constraint generation (#270)
+* Compute acquisition values in gen_ functions w/o grad (#274)
+
+#### Tests
+* Introduce BotorchTestCase to simplify test code (#243)
+* Refactor tests to have monolithic cuda tests (#261)
+
 
 ## [0.1.3] - Aug 9, 2019
 
