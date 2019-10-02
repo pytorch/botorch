@@ -46,14 +46,14 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">        outcome_constraints: A tuple of `(A, b)`. For `k` outcome constraints</span>
-<span class="sd">            and `o` outputs at `f(x)``, `A` is `k x o` and `b` is `k x 1` such</span>
+<span class="sd">            and `m` outputs at `f(x)``, `A` is `k x m` and `b` is `k x 1` such</span>
 <span class="sd">            that `A f(x) &lt;= b`.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        A list of callables, each mapping a Tensor of size `b x q x o` to a</span>
-<span class="sd">        tensor of size `b x q`, where `o` is the number of outputs of the model.</span>
+<span class="sd">        A list of callables, each mapping a Tensor of size `b x q x m` to a</span>
+<span class="sd">        tensor of size `b x q`, where `m` is the number of outputs of the model.</span>
 <span class="sd">        Negative values imply feasibility. The callables support broadcasting</span>
-<span class="sd">        (e.g. for calling on a tensor of shape `mc_samples x b x q x o`).</span>
+<span class="sd">        (e.g. for calling on a tensor of shape `mc_samples x b x q x m`).</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; # constrain `f(x)[0] &lt;= 0`</span>
@@ -68,18 +68,18 @@
     <span class="k">def</span> <span class="nf">_oc</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">rhs</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Evaluate constraints.</span>
 
-<span class="sd">        Note: einsum multiples Y by a and sums over the `o`-dimension. Einsum</span>
+<span class="sd">        Note: einsum multiples Y by a and sums over the `m`-dimension. Einsum</span>
 <span class="sd">            is ~2x faster than using `(Y * a.view(1, 1, -1)).sum(dim-1)`.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            a: `o`-dim tensor of weights for the outcomes</span>
+<span class="sd">            a: `m`-dim tensor of weights for the outcomes</span>
 <span class="sd">            rhs: Singleton tensor containing the outcome constraint value</span>
-<span class="sd">            Y: `... x b x q x o` tensor of function values</span>
+<span class="sd">            Y: `... x b x q x m` tensor of function values</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A `... x b x q`-dim tensor where negative values imply feasibility</span>
 <span class="sd">        """</span>
-        <span class="n">lhs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">"...o, o"</span><span class="p">,</span> <span class="p">[</span><span class="n">Y</span><span class="p">,</span> <span class="n">a</span><span class="p">])</span>
+        <span class="n">lhs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">"...m, m"</span><span class="p">,</span> <span class="p">[</span><span class="n">Y</span><span class="p">,</span> <span class="n">a</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">lhs</span> <span class="o">-</span> <span class="n">rhs</span>
 
     <span class="k">return</span> <span class="p">[</span><span class="n">partial</span><span class="p">(</span><span class="n">_oc</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">rhs</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">rhs</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">b</span><span class="p">)]</span></div>
@@ -127,7 +127,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials">Tutorials</a><a href="/api">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2019 Facebook Inc.</section></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2019 Facebook Inc.</section></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
                 document.addEventListener('keyup', function(e) {
                   if (e.target !== document.body) {
                     return;

@@ -55,7 +55,7 @@
 
 <span class="kn">from</span> <span class="nn">..sampling.samplers</span> <span class="k">import</span> <span class="n">MCSampler</span>
 <span class="kn">from</span> <span class="nn">.gpytorch</span> <span class="k">import</span> <span class="n">BatchedMultiOutputGPyTorchModel</span>
-<span class="kn">from</span> <span class="nn">.utils</span> <span class="k">import</span> <span class="n">multioutput_to_batch_mode_transform</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="k">import</span> <span class="n">validate_input_scaling</span>
 
 
 <span class="n">MIN_INFERRED_NOISE_LEVEL</span> <span class="o">=</span> <span class="mf">1e-4</span>
@@ -90,7 +90,7 @@
 <span class="sd">        Args:</span>
 <span class="sd">            train_X: A `n x d` or `batch_shape x n x d` (batch mode) tensor of training</span>
 <span class="sd">                features.</span>
-<span class="sd">            train_Y: A `n x (o)` or `batch_shape x n x (o)` (batch mode) tensor of</span>
+<span class="sd">            train_Y: A `n x m` or `batch_shape x n x m` (batch mode) tensor of</span>
 <span class="sd">                training observations.</span>
 <span class="sd">            likelihood: A likelihood. If omitted, use a standard</span>
 <span class="sd">                GaussianLikelihood with inferred noise level.</span>
@@ -99,13 +99,13 @@
 
 <span class="sd">        Example:</span>
 <span class="sd">            &gt;&gt;&gt; train_X = torch.rand(20, 2)</span>
-<span class="sd">            &gt;&gt;&gt; train_Y = torch.sin(train_X[:, 0]) + torch.cos(train_X[:, 1])</span>
+<span class="sd">            &gt;&gt;&gt; train_Y = torch.sin(train_X).sum(dim=1, keepdim=True)</span>
 <span class="sd">            &gt;&gt;&gt; model = SingleTaskGP(train_X, train_Y)</span>
 <span class="sd">        """</span>
-        <span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_set_dimensions</span><span class="p">(</span><span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">)</span>
-        <span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">multioutput_to_batch_mode_transform</span><span class="p">(</span>
-            <span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span> <span class="n">num_outputs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_num_outputs</span>
-        <span class="p">)</span>
+        <span class="n">validate_input_scaling</span><span class="p">(</span><span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_tensor_args</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_dimensions</span><span class="p">(</span><span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">)</span>
+        <span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform_tensor_args</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">likelihood</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">noise_prior</span> <span class="o">=</span> <span class="n">GammaPrior</span><span class="p">(</span><span class="mf">1.1</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">)</span>
             <span class="n">noise_prior_mode</span> <span class="o">=</span> <span class="p">(</span><span class="n">noise_prior</span><span class="o">.</span><span class="n">concentration</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">noise_prior</span><span class="o">.</span><span class="n">rate</span>
@@ -160,25 +160,22 @@
 <span class="sd">        Args:</span>
 <span class="sd">            train_X: A `n x d` or `batch_shape x n x d` (batch mode) tensor of training</span>
 <span class="sd">                features.</span>
-<span class="sd">            train_Y: A `n x (o)` or `batch_shape x n x (o)` (batch mode) tensor of</span>
+<span class="sd">            train_Y: A `n x m` or `batch_shape x n x m` (batch mode) tensor of</span>
 <span class="sd">                training observations.</span>
-<span class="sd">            train_Yvar: A `batch_shape x n x (o)` or `batch_shape x n x (o)`</span>
+<span class="sd">            train_Yvar: A `batch_shape x n x m` or `batch_shape x n x m`</span>
 <span class="sd">                (batch mode) tensor of observed measurement noise.</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">            &gt;&gt;&gt; train_X = torch.rand(20, 2)</span>
-<span class="sd">            &gt;&gt;&gt; train_Y = torch.sin(train_X[:, 0]]) + torch.cos(train_X[:, 1])</span>
+<span class="sd">            &gt;&gt;&gt; train_Y = torch.sin(train_X).sum(dim=1, keepdim=True)</span>
 <span class="sd">            &gt;&gt;&gt; train_Yvar = torch.full_like(train_Y, 0.2)</span>
 <span class="sd">            &gt;&gt;&gt; model = FixedNoiseGP(train_X, train_Y, train_Yvar)</span>
 <span class="sd">        """</span>
-        <span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_set_dimensions</span><span class="p">(</span>
-            <span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="o">=</span><span class="n">train_Yvar</span>
-        <span class="p">)</span>
-        <span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span> <span class="o">=</span> <span class="n">multioutput_to_batch_mode_transform</span><span class="p">(</span>
-            <span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span>
-            <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span>
-            <span class="n">num_outputs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_num_outputs</span><span class="p">,</span>
-            <span class="n">train_Yvar</span><span class="o">=</span><span class="n">train_Yvar</span><span class="p">,</span>
+        <span class="n">validate_input_scaling</span><span class="p">(</span><span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="o">=</span><span class="n">train_Yvar</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_tensor_args</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span> <span class="n">Yvar</span><span class="o">=</span><span class="n">train_Yvar</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_dimensions</span><span class="p">(</span><span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">)</span>
+        <span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform_tensor_args</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span> <span class="n">Yvar</span><span class="o">=</span><span class="n">train_Yvar</span>
         <span class="p">)</span>
         <span class="n">likelihood</span> <span class="o">=</span> <span class="n">FixedNoiseGaussianLikelihood</span><span class="p">(</span>
             <span class="n">noise</span><span class="o">=</span><span class="n">train_Yvar</span><span class="p">,</span> <span class="n">batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span>
@@ -217,8 +214,8 @@
 <span class="sd">        (3) condition the model on the new fake observations.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            X: A `batch_shape x m x d`-dim Tensor, where `d` is the dimension of</span>
-<span class="sd">                the feature space, `m` is the number of points per batch, and</span>
+<span class="sd">            X: A `batch_shape x n' x d`-dim Tensor, where `d` is the dimension of</span>
+<span class="sd">                the feature space, `n'` is the number of points per batch, and</span>
 <span class="sd">                `batch_shape` is the batch shape (must be compatible with the</span>
 <span class="sd">                batch shape of the model).</span>
 <span class="sd">            sampler: The sampler used for sampling from the posterior at `X`.</span>
@@ -230,14 +227,11 @@
 <span class="sd">            The constructed fantasy model.</span>
 <span class="sd">        """</span>
         <span class="n">post_X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">observation_noise</span><span class="o">=</span><span class="n">observation_noise</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="n">Y_fantasized</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">post_X</span><span class="p">)</span>  <span class="c1"># num_fantasies x batch_shape x m x o</span>
+        <span class="n">Y_fantasized</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">post_X</span><span class="p">)</span>  <span class="c1"># num_fantasies x batch_shape x n' x m</span>
         <span class="c1"># Use the mean of the previous noise values (TODO: be smarter here).</span>
-        <span class="c1"># noise should be batch_shape x q x o when X is batch_shape x q x d, and</span>
-        <span class="c1"># Y_fantasized is num_fantasies x batch_shape x q x o.</span>
+        <span class="c1"># noise should be batch_shape x q x m when X is batch_shape x q x d, and</span>
+        <span class="c1"># Y_fantasized is num_fantasies x batch_shape x q x m.</span>
         <span class="n">noise_shape</span> <span class="o">=</span> <span class="n">Y_fantasized</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
-        <span class="k">if</span> <span class="n">noise_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="c1"># If single output, do not include an output dimension.</span>
-            <span class="n">noise_shape</span> <span class="o">=</span> <span class="n">noise_shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
         <span class="n">noise</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="o">.</span><span class="n">noise</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">noise_shape</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">condition_on_observations</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">Y_fantasized</span><span class="p">,</span> <span class="n">noise</span><span class="o">=</span><span class="n">noise</span><span class="p">)</span></div>
 
@@ -261,28 +255,21 @@
 <span class="sd">        Args:</span>
 <span class="sd">            train_X: A `n x d` or `batch_shape x n x d` (batch mode) tensor of training</span>
 <span class="sd">                features.</span>
-<span class="sd">            train_Y: A `n x (o)` or `batch_shape x n x (o)` (batch mode) tensor of</span>
+<span class="sd">            train_Y: A `n x m` or `batch_shape x n x m` (batch mode) tensor of</span>
 <span class="sd">                training observations.</span>
-<span class="sd">            train_Yvar: A `batch_shape x n x (o)` or `batch_shape x n x (o)`</span>
+<span class="sd">            train_Yvar: A `batch_shape x n x m` or `batch_shape x n x m`</span>
 <span class="sd">                (batch mode) tensor of observed measurement noise.</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">            &gt;&gt;&gt; train_X = torch.rand(20, 2)</span>
-<span class="sd">            &gt;&gt;&gt; train_Y = torch.sin(train_X[:, 0]]) + torch.cos(train_X[:, 1])</span>
-<span class="sd">            &gt;&gt;&gt; se = torch.norm(train_X - 0.5, dim=-1)</span>
+<span class="sd">            &gt;&gt;&gt; train_Y = torch.sin(train_X).sum(dim=1, keepdim=True)</span>
+<span class="sd">            &gt;&gt;&gt; se = torch.norm(train_X, dim=1, keepdim=True)</span>
 <span class="sd">            &gt;&gt;&gt; train_Yvar = 0.1 + se * torch.rand_like(train_Y)</span>
 <span class="sd">            &gt;&gt;&gt; model = HeteroskedasticSingleTaskGP(train_X, train_Y, train_Yvar)</span>
 <span class="sd">        """</span>
-        <span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_set_dimensions</span><span class="p">(</span>
-            <span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="o">=</span><span class="n">train_Yvar</span>
-        <span class="p">)</span>
-        <span class="n">train_X_tf</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">train_Yvar_tf</span> <span class="o">=</span> <span class="n">multioutput_to_batch_mode_transform</span><span class="p">(</span>
-            <span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span>
-            <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span>
-            <span class="n">num_outputs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_num_outputs</span><span class="p">,</span>
-            <span class="n">train_Yvar</span><span class="o">=</span><span class="n">train_Yvar</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">train_Y_log_var_tf</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">train_Yvar_tf</span><span class="p">)</span>
+        <span class="n">validate_input_scaling</span><span class="p">(</span><span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="o">=</span><span class="n">train_Yvar</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_tensor_args</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span> <span class="n">Yvar</span><span class="o">=</span><span class="n">train_Yvar</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_dimensions</span><span class="p">(</span><span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">)</span>
         <span class="n">noise_likelihood</span> <span class="o">=</span> <span class="n">GaussianLikelihood</span><span class="p">(</span>
             <span class="n">noise_prior</span><span class="o">=</span><span class="n">SmoothedBoxPrior</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">),</span>
             <span class="n">batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span><span class="p">,</span>
@@ -291,7 +278,7 @@
             <span class="p">),</span>
         <span class="p">)</span>
         <span class="n">noise_model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span>
-            <span class="n">train_X</span><span class="o">=</span><span class="n">train_X_tf</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y_log_var_tf</span><span class="p">,</span> <span class="n">likelihood</span><span class="o">=</span><span class="n">noise_likelihood</span>
+            <span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Yvar</span><span class="o">.</span><span class="n">log</span><span class="p">(),</span> <span class="n">likelihood</span><span class="o">=</span><span class="n">noise_likelihood</span>
         <span class="p">)</span>
 
         <span class="n">likelihood</span> <span class="o">=</span> <span class="n">_GaussianLikelihoodBase</span><span class="p">(</span><span class="n">HeteroskedasticNoise</span><span class="p">(</span><span class="n">noise_model</span><span class="p">))</span>
@@ -346,7 +333,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials">Tutorials</a><a href="/api">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2019 Facebook Inc.</section></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2019 Facebook Inc.</section></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
                 document.addEventListener('keyup', function(e) {
                   if (e.target !== document.body) {
                     return;

@@ -112,7 +112,7 @@ evaluation (t-batches) of the acquisition function to solve a single
 $b \times q \times d$-dimensional optimization problem, where the objective is
 defined as the sum of the $b$ individual q-batch acquisition values.
 The wrapper function
-<a href="../api/optim.html#botorch.optim.optimize.joint_optimize"><code>joint_optimize()</code></a>
+<a href="../api/optim.html#botorch.optim.optimize.optimize_acqf"><code>optimize_acqf()</code></a>
 uses
 <a href="../api/gen.html#botorch.gen.get_best_candidates"><code>get_best_candidates()</code></a>
 to process the output of <code>gen_candidates_scipy()</code> and return the best point
@@ -127,10 +127,9 @@ an optimization problem with a $q \times d$-dimensional decision), but when $q$
 is large, one might also consider <em>sequentially</em> selecting the $q$ points using
 successive conditioning on so-called &quot;fantasies&quot;, and solving $q$ optimization
 problems, each with a $d$-dimensional decision. The functions
-<a href="../api/optim.html#botorch.optim.optimize.joint_optimize"><code>joint_optimize()</code></a>
-and
-<a href="../api/optim.html#botorch.optim.optimize.sequential_optimize"><code>sequential_optimize()</code></a>
-provide for these two types of functionality, respectively.</p>
+<a href="../api/optim.html#botorch.optim.optimize.optimize_acqf"><code>optimize_acqf()</code></a>
+by default performs joint optimization; when specifying <code>sequential=True</code> it
+will perform sequential optimization.</p>
 <p>Our empirical observations of the <em>closed-loop Bayesian Optimization performance</em>
 for $q = 5$ show that joint optimization and sequential optimization have similar
 optimization performance on some standard benchmarks, but sequential optimization
@@ -149,7 +148,7 @@ Functions for Bayesian Optimization. NeurIPS, 2018. <a href="#fnref1" class="foo
 </li>
 </ol>
 </section>
-</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/docs/acquisition"><span class="arrow-prev">← </span><span>Acquisition Functions</span></a><a class="docs-next button" href="/docs/batching"><span>Batching</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#model-fitting">Model Fitting</a></li><li><a href="#optimizing-acquisition-functions">Optimizing Acquisition Functions</a><ul class="toc-headings"><li><a href="#multiple-random-restarts">Multiple Random Restarts</a></li><li><a href="#joint-vs-sequential-candidate-generation-for-batch-acquisition-functions">Joint vs. Sequential Candidate Generation for Batch Acquisition Functions</a></li></ul></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials">Tutorials</a><a href="/api">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2019 Facebook Inc.</section></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/docs/acquisition"><span class="arrow-prev">← </span><span>Acquisition Functions</span></a><a class="docs-next button" href="/docs/batching"><span>Batching</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#model-fitting">Model Fitting</a></li><li><a href="#optimizing-acquisition-functions">Optimizing Acquisition Functions</a><ul class="toc-headings"><li><a href="#multiple-random-restarts">Multiple Random Restarts</a></li><li><a href="#joint-vs-sequential-candidate-generation-for-batch-acquisition-functions">Joint vs. Sequential Candidate Generation for Batch Acquisition Functions</a></li></ul></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2019 Facebook Inc.</section></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
                 document.addEventListener('keyup', function(e) {
                   if (e.target !== document.body) {
                     return;

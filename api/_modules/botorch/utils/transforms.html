@@ -55,22 +55,27 @@
     <span class="k">return</span> <span class="n">Y</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="standardize"><a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.standardize">[docs]</a><span class="k">def</span> <span class="nf">standardize</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">"""Standardize a tensor by dim=0.</span>
+<div class="viewcode-block" id="standardize"><a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.standardize">[docs]</a><span class="k">def</span> <span class="nf">standardize</span><span class="p">(</span><span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""Standardizes (zero mean, unit variance) a tensor by dim=-2.</span>
+
+<span class="sd">    If the tensor is single-dimensional, simply standardizes the tensor.</span>
+<span class="sd">    If for some batch index all elements are equal (of if there is only a single</span>
+<span class="sd">    data point), this function will return 0 for that batch index.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        X: A `n` or `n x d`-dim tensor</span>
+<span class="sd">        Y: A `batch_shape x n x m`-dim tensor.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        The standardized `X`.</span>
+<span class="sd">        The standardized `Y`.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; X = torch.rand(4, 3)</span>
-<span class="sd">        &gt;&gt;&gt; X_standardized = standardize(X)</span>
+<span class="sd">        &gt;&gt;&gt; Y = torch.rand(4, 3)</span>
+<span class="sd">        &gt;&gt;&gt; Y_standardized = standardize(Y)</span>
 <span class="sd">    """</span>
-    <span class="n">X_std</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-    <span class="n">X_std</span> <span class="o">=</span> <span class="n">X_std</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">X_std</span> <span class="o">&gt;=</span> <span class="mf">1e-9</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">X_std</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))</span>
-    <span class="k">return</span> <span class="p">(</span><span class="n">X</span> <span class="o">-</span> <span class="n">X</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span> <span class="o">/</span> <span class="n">X_std</span></div>
+    <span class="n">stddim</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="k">if</span> <span class="n">Y</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="k">else</span> <span class="o">-</span><span class="mi">2</span>
+    <span class="n">Y_std</span> <span class="o">=</span> <span class="n">Y</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">stddim</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">Y_std</span> <span class="o">=</span> <span class="n">Y_std</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">Y_std</span> <span class="o">&gt;=</span> <span class="mf">1e-9</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">Y_std</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">Y</span> <span class="o">-</span> <span class="n">Y</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">stddim</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span> <span class="o">/</span> <span class="n">Y_std</span></div>
 
 
 <div class="viewcode-block" id="normalize"><a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.normalize">[docs]</a><span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
@@ -166,6 +171,33 @@
     <span class="k">return</span> <span class="n">decorator</span></div>
 
 
+<div class="viewcode-block" id="concatenate_pending_points"><a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.concatenate_pending_points">[docs]</a><span class="k">def</span> <span class="nf">concatenate_pending_points</span><span class="p">(</span>
+    <span class="n">method</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">Any</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">Any</span><span class="p">]:</span>
+    <span class="sa">r</span><span class="sd">"""Decorator concatenating X_pending into an acquisition function's argument.</span>
+
+<span class="sd">    This decorator works on the `forward` method of acquisition functions taking</span>
+<span class="sd">    a tensor `X` as the argument. If the acquisition function has an `X_pending`</span>
+<span class="sd">    attribute (that is not `None`), this is concatenated into the input `X`,</span>
+<span class="sd">    appropriately expanding the pending points to match the batch shape of `X`.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; class ExampleAcquisitionFunction:</span>
+<span class="sd">        &gt;&gt;&gt;     @concatenate_pending_points</span>
+<span class="sd">        &gt;&gt;&gt;     @t_batch_mode_transform()</span>
+<span class="sd">        &gt;&gt;&gt;     def forward(self, X):</span>
+<span class="sd">        &gt;&gt;&gt;         ...</span>
+<span class="sd">    """</span>
+
+    <span class="nd">@wraps</span><span class="p">(</span><span class="n">method</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">decorated</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">X_pending</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">X</span><span class="p">,</span> <span class="n">match_batch_shape</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">X_pending</span><span class="p">,</span> <span class="n">X</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">method</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">decorated</span></div>
+
+
 <div class="viewcode-block" id="match_batch_shape"><a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.match_batch_shape">[docs]</a><span class="k">def</span> <span class="nf">match_batch_shape</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
     <span class="sa">r</span><span class="sd">"""Matches the batch dimension of a tensor to that of another tensor.</span>
 
@@ -239,7 +271,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials">Tutorials</a><a href="/api">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2019 Facebook Inc.</section></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2019 Facebook Inc.</section></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
                 document.addEventListener('keyup', function(e) {
                   if (e.target !== document.body) {
                     return;

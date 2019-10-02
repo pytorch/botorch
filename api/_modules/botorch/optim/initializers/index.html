@@ -28,13 +28,218 @@
 
 <span class="c1"># Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved</span>
 
-<span class="kn">import</span> <span class="nn">typing</span>  <span class="c1"># noqa F401</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="k">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span> <span class="nn">torch.quasirandom</span> <span class="k">import</span> <span class="n">SobolEngine</span>
 
-<span class="kn">from</span> <span class="nn">..exceptions.warnings</span> <span class="k">import</span> <span class="n">BadInitialCandidatesWarning</span>
+<span class="kn">from</span> <span class="nn">..</span> <span class="k">import</span> <span class="n">settings</span>
+<span class="kn">from</span> <span class="nn">..acquisition.acquisition</span> <span class="k">import</span> <span class="n">AcquisitionFunction</span>
+<span class="kn">from</span> <span class="nn">..acquisition.knowledge_gradient</span> <span class="k">import</span> <span class="n">_get_value_function</span><span class="p">,</span> <span class="n">qKnowledgeGradient</span>
+<span class="kn">from</span> <span class="nn">..acquisition.utils</span> <span class="k">import</span> <span class="n">is_nonnegative</span>
+<span class="kn">from</span> <span class="nn">..exceptions.warnings</span> <span class="k">import</span> <span class="n">BadInitialCandidatesWarning</span><span class="p">,</span> <span class="n">SamplingWarning</span>
+<span class="kn">from</span> <span class="nn">..utils.sampling</span> <span class="k">import</span> <span class="n">draw_sobol_samples</span><span class="p">,</span> <span class="n">manual_seed</span>
+<span class="kn">from</span> <span class="nn">..utils.transforms</span> <span class="k">import</span> <span class="n">standardize</span>
+
+
+<div class="viewcode-block" id="gen_batch_initial_conditions"><a class="viewcode-back" href="../../../optim.html#botorch.optim.initializers.gen_batch_initial_conditions">[docs]</a><span class="k">def</span> <span class="nf">gen_batch_initial_conditions</span><span class="p">(</span>
+    <span class="n">acq_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">num_restarts</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">raw_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""Generate a batch of initial conditions for random-restart optimziation.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        acq_function: The acquisition function to be optimized.</span>
+<span class="sd">        bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.</span>
+<span class="sd">        q: The number of candidates to consider.</span>
+<span class="sd">        num_restarts: The number of starting points for multistart acquisition</span>
+<span class="sd">            function optimization.</span>
+<span class="sd">        raw_samples: The number of raw samples to consider in the initialization</span>
+<span class="sd">            heuristic.</span>
+<span class="sd">        options: Options for initial condition generation. For valid options see</span>
+<span class="sd">            `initialize_q_batch` and `initialize_q_batch_nonneg`. If `options`</span>
+<span class="sd">            contains a `nonnegative=True` entry, then `acq_function` is</span>
+<span class="sd">            assumed to be non-negative (useful when using custom acquisition</span>
+<span class="sd">            functions).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A `num_restarts x q x d` tensor of initial conditions.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; qEI = qExpectedImprovement(model, best_f=0.2)</span>
+<span class="sd">        &gt;&gt;&gt; bounds = torch.tensor([[0.], [1.]])</span>
+<span class="sd">        &gt;&gt;&gt; Xinit = gen_batch_initial_conditions(</span>
+<span class="sd">        &gt;&gt;&gt;     qEI, bounds, q=3, num_restarts=25, raw_samples=500</span>
+<span class="sd">        &gt;&gt;&gt; )</span>
+<span class="sd">    """</span>
+    <span class="n">options</span> <span class="o">=</span> <span class="n">options</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"seed"</span><span class="p">)</span>
+    <span class="n">batch_limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"batch_limit"</span><span class="p">)</span>
+    <span class="n">batch_initial_arms</span><span class="p">:</span> <span class="n">Tensor</span>
+    <span class="n">factor</span><span class="p">,</span> <span class="n">max_factor</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">5</span>
+    <span class="n">init_kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="s2">"eta"</span> <span class="ow">in</span> <span class="n">options</span><span class="p">:</span>
+        <span class="n">init_kwargs</span><span class="p">[</span><span class="s2">"eta"</span><span class="p">]</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"eta"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"nonnegative"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">is_nonnegative</span><span class="p">(</span><span class="n">acq_function</span><span class="p">):</span>
+        <span class="n">init_func</span> <span class="o">=</span> <span class="n">initialize_q_batch_nonneg</span>
+        <span class="k">if</span> <span class="s2">"alpha"</span> <span class="ow">in</span> <span class="n">options</span><span class="p">:</span>
+            <span class="n">init_kwargs</span><span class="p">[</span><span class="s2">"alpha"</span><span class="p">]</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"alpha"</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">init_func</span> <span class="o">=</span> <span class="n">initialize_q_batch</span>
+
+    <span class="n">q</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">q</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">q</span>
+    <span class="c1"># the dimension the samples are drawn from</span>
+    <span class="n">dim</span> <span class="o">=</span> <span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">q</span>
+    <span class="k">if</span> <span class="n">dim</span> <span class="o">&gt;</span> <span class="n">SobolEngine</span><span class="o">.</span><span class="n">MAXDIM</span> <span class="ow">and</span> <span class="n">settings</span><span class="o">.</span><span class="n">debug</span><span class="o">.</span><span class="n">on</span><span class="p">():</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="n">f</span><span class="s2">"Sample dimension q*d=</span><span class="si">{dim}</span><span class="s2"> exceeding Sobol max dimension "</span>
+            <span class="n">f</span><span class="s2">"(</span><span class="si">{SobolEngine.MAXDIM}</span><span class="s2">). Using iid samples instead."</span><span class="p">,</span>
+            <span class="n">SamplingWarning</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">while</span> <span class="n">factor</span> <span class="o">&lt;</span> <span class="n">max_factor</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">(</span><span class="n">record</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">ws</span><span class="p">:</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="n">raw_samples</span> <span class="o">*</span> <span class="n">factor</span>
+            <span class="k">if</span> <span class="n">dim</span> <span class="o">&lt;=</span> <span class="n">SobolEngine</span><span class="o">.</span><span class="n">MAXDIM</span><span class="p">:</span>
+                <span class="n">X_rnd</span> <span class="o">=</span> <span class="n">draw_sobol_samples</span><span class="p">(</span><span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="n">q</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">with</span> <span class="n">manual_seed</span><span class="p">(</span><span class="n">seed</span><span class="p">):</span>
+                    <span class="n">X_rnd_nlzd</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span>
+                        <span class="n">n</span> <span class="o">*</span> <span class="n">dim</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">bounds</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">bounds</span><span class="o">.</span><span class="n">dtype</span>
+                    <span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+                <span class="n">X_rnd</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">X_rnd_nlzd</span>
+            <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">batch_limit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">batch_limit</span> <span class="o">=</span> <span class="n">X_rnd</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">Y_rnd_list</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">start_idx</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">while</span> <span class="n">start_idx</span> <span class="o">&lt;</span> <span class="n">X_rnd</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+                    <span class="n">end_idx</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">start_idx</span> <span class="o">+</span> <span class="n">batch_limit</span><span class="p">,</span> <span class="n">X_rnd</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                    <span class="n">Y_rnd_curr</span> <span class="o">=</span> <span class="n">acq_function</span><span class="p">(</span><span class="n">X_rnd</span><span class="p">[</span><span class="n">start_idx</span><span class="p">:</span><span class="n">end_idx</span><span class="p">])</span>
+                    <span class="n">Y_rnd_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Y_rnd_curr</span><span class="p">)</span>
+                    <span class="n">start_idx</span> <span class="o">+=</span> <span class="n">batch_limit</span>
+                <span class="n">Y_rnd</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">Y_rnd_list</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">X_rnd</span><span class="p">)</span>
+            <span class="n">batch_initial_conditions</span> <span class="o">=</span> <span class="n">init_func</span><span class="p">(</span>
+                <span class="n">X</span><span class="o">=</span><span class="n">X_rnd</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">Y_rnd</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">num_restarts</span><span class="p">,</span> <span class="o">**</span><span class="n">init_kwargs</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="nb">issubclass</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">BadInitialCandidatesWarning</span><span class="p">)</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">ws</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">batch_initial_conditions</span>
+            <span class="k">if</span> <span class="n">factor</span> <span class="o">&lt;</span> <span class="n">max_factor</span><span class="p">:</span>
+                <span class="n">factor</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">seed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">seed</span> <span class="o">+=</span> <span class="mi">1</span>  <span class="c1"># make sure to sample different X_rnd</span>
+    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+        <span class="s2">"Unable to find non-zero acquisition function values - initial conditions "</span>
+        <span class="s2">"are being selected randomly."</span><span class="p">,</span>
+        <span class="n">BadInitialCandidatesWarning</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">batch_initial_conditions</span></div>
+
+
+<div class="viewcode-block" id="gen_one_shot_kg_initial_conditions"><a class="viewcode-back" href="../../../optim.html#botorch.optim.initializers.gen_one_shot_kg_initial_conditions">[docs]</a><span class="k">def</span> <span class="nf">gen_one_shot_kg_initial_conditions</span><span class="p">(</span>
+    <span class="n">acq_function</span><span class="p">:</span> <span class="n">qKnowledgeGradient</span><span class="p">,</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">num_restarts</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">raw_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
+    <span class="sa">r</span><span class="sd">"""Generate a batch of smart initializations for qKnowledgeGradient.</span>
+
+<span class="sd">    This function generates initial conditions for optimizing one-shot KG using</span>
+<span class="sd">    the maximizer of the posterior objective. Intutively, the maximizer of the</span>
+<span class="sd">    fantasized posterior will often be close to a maximizer of the current</span>
+<span class="sd">    posterior. This function uses that fact to generate the initital conditions</span>
+<span class="sd">    for the fantasy points. Specifically, a fraction of `1 - frac_random` (see</span>
+<span class="sd">    options) is generated by sampling from the set of maximizers of the</span>
+<span class="sd">    posterior objective (obtained via random restart optimization) according to</span>
+<span class="sd">    a softmax transformation of their respective values. This means that this</span>
+<span class="sd">    initialization strategy internally solves an acquisition function</span>
+<span class="sd">    maximization problem. The remaining `frac_random` fantasy points as well as</span>
+<span class="sd">    all `q` candidate points are chosen according to the standard initialization</span>
+<span class="sd">    strategy in `gen_batch_initial_conditions`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        acq_function: The qKnowledgeGradient instance to be optimized.</span>
+<span class="sd">        bounds: A `2 x d` tensor of lower and upper bounds for each column of</span>
+<span class="sd">            task features.</span>
+<span class="sd">        q: The number of candidates to consider.</span>
+<span class="sd">        num_restarts: The number of starting points for multistart acquisition</span>
+<span class="sd">            function optimization.</span>
+<span class="sd">        raw_samples: The number of raw samples to consider in the initialization</span>
+<span class="sd">            heuristic.</span>
+<span class="sd">        options: Options for initial condition generation. These contain all</span>
+<span class="sd">            settings for the standard heuristic initialization from</span>
+<span class="sd">            `gen_batch_initial_conditions`. In addition, they contain</span>
+<span class="sd">            `frac_random` (the fraction of fully random fantasy points),</span>
+<span class="sd">            `num_inner_restarts` and `raw_inner_samples` (the number of random</span>
+<span class="sd">            restarts and raw samples for solving the posterior objective</span>
+<span class="sd">            maximization problem, respectively) and `eta` (temperature parameter</span>
+<span class="sd">            for sampling heuristic from posterior objective maximizers).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A `num_restarts x q' x d` tensor that can be used as initial conditions</span>
+<span class="sd">        for `optimize_acqf()`. Here `q' = q + num_fantasies` is the total number</span>
+<span class="sd">        of points (candidate points plus fantasy points).</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; qKG = qKnowledgeGradient(model, num_fantasies=64)</span>
+<span class="sd">        &gt;&gt;&gt; bounds = torch.tensor([[0., 0.], [1., 1.]])</span>
+<span class="sd">        &gt;&gt;&gt; Xinit = gen_one_shot_kg_initial_conditions(</span>
+<span class="sd">        &gt;&gt;&gt;     qKG, bounds, q=3, num_restarts=10, raw_samples=512,</span>
+<span class="sd">        &gt;&gt;&gt;     options={"frac_random": 0.25},</span>
+<span class="sd">        &gt;&gt;&gt; )</span>
+<span class="sd">    """</span>
+    <span class="n">options</span> <span class="o">=</span> <span class="n">options</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="n">frac_random</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"frac_random"</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">frac_random</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="n">f</span><span class="s2">"frac_random must take on values in (0,1). Value: </span><span class="si">{frac_random}</span><span class="s2">"</span>
+        <span class="p">)</span>
+    <span class="n">q_aug</span> <span class="o">=</span> <span class="n">acq_function</span><span class="o">.</span><span class="n">get_augmented_q_batch_size</span><span class="p">(</span><span class="n">q</span><span class="o">=</span><span class="n">q</span><span class="p">)</span>
+
+    <span class="c1"># TODO: Avoid unnecessary computation by not generating all candidates</span>
+    <span class="n">ics</span> <span class="o">=</span> <span class="n">gen_batch_initial_conditions</span><span class="p">(</span>
+        <span class="n">acq_function</span><span class="o">=</span><span class="n">acq_function</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+        <span class="n">q</span><span class="o">=</span><span class="n">q_aug</span><span class="p">,</span>
+        <span class="n">num_restarts</span><span class="o">=</span><span class="n">num_restarts</span><span class="p">,</span>
+        <span class="n">raw_samples</span><span class="o">=</span><span class="n">raw_samples</span><span class="p">,</span>
+        <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># compute maximizer of the value function</span>
+    <span class="n">value_function</span> <span class="o">=</span> <span class="n">_get_value_function</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">acq_function</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+        <span class="n">objective</span><span class="o">=</span><span class="n">acq_function</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span>
+        <span class="n">sampler</span><span class="o">=</span><span class="n">acq_function</span><span class="o">.</span><span class="n">inner_sampler</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="kn">from</span> <span class="nn">.optimize</span> <span class="k">import</span> <span class="n">optimize_acqf</span>
+
+    <span class="n">fantasy_cands</span><span class="p">,</span> <span class="n">fantasy_vals</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
+        <span class="n">acq_function</span><span class="o">=</span><span class="n">value_function</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+        <span class="n">q</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">num_restarts</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"num_inner_restarts"</span><span class="p">,</span> <span class="mi">20</span><span class="p">),</span>
+        <span class="n">raw_samples</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"raw_inner_samples"</span><span class="p">,</span> <span class="mi">1024</span><span class="p">),</span>
+        <span class="n">return_best_only</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># sampling from the optimizers</span>
+    <span class="n">n_value</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="mi">1</span> <span class="o">-</span> <span class="n">frac_random</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">q_aug</span> <span class="o">-</span> <span class="n">q</span><span class="p">))</span>  <span class="c1"># number of non-random ICs</span>
+    <span class="n">eta</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"eta"</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">)</span>
+    <span class="n">weights</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">eta</span> <span class="o">*</span> <span class="n">standardize</span><span class="p">(</span><span class="n">fantasy_vals</span><span class="p">))</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">multinomial</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">num_restarts</span> <span class="o">*</span> <span class="n">n_value</span><span class="p">,</span> <span class="n">replacement</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># set the respective initial conditions to the sampled optimizers</span>
+    <span class="n">ics</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">-</span><span class="n">n_value</span><span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">fantasy_cands</span><span class="p">[</span><span class="n">idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">num_restarts</span><span class="p">,</span> <span class="n">n_value</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ics</span></div>
 
 
 <div class="viewcode-block" id="initialize_q_batch"><a class="viewcode-back" href="../../../optim.html#botorch.optim.initializers.initialize_q_batch">[docs]</a><span class="k">def</span> <span class="nf">initialize_q_batch</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">eta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
@@ -60,7 +265,8 @@
 <span class="sd">        A `n x q x d` tensor of `n` `q`-batch initial conditions.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        # To get `n=10` starting points of q-batch size `q=3` for model with `d=6`:</span>
+<span class="sd">        &gt;&gt;&gt; # To get `n=10` starting points of q-batch size `q=3`</span>
+<span class="sd">        &gt;&gt;&gt; # for model with `d=6`:</span>
 <span class="sd">        &gt;&gt;&gt; qUCB = qUpperConfidenceBound(model, beta=0.1)</span>
 <span class="sd">        &gt;&gt;&gt; Xrnd = torch.rand(500, 3, 6)</span>
 <span class="sd">        &gt;&gt;&gt; Xinit = initialize_q_batch(Xrnd, qUCB(Xrnd), 10)</span>
@@ -123,7 +329,8 @@
 <span class="sd">        A `n x q x d` tensor of `n` `q`-batch initial conditions.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        # To get `n=10` starting points of q-batch size `q=3` for model with `d=6`:</span>
+<span class="sd">        &gt;&gt;&gt; # To get `n=10` starting points of q-batch size `q=3`</span>
+<span class="sd">        &gt;&gt;&gt; # for model with `d=6`:</span>
 <span class="sd">        &gt;&gt;&gt; qEI = qExpectedImprovement(model, best_f=0.2)</span>
 <span class="sd">        &gt;&gt;&gt; Xrnd = torch.rand(500, 3, 6)</span>
 <span class="sd">        &gt;&gt;&gt; Xinit = initialize_q_batch(Xrnd, qEI(Xrnd), 10)</span>
@@ -210,7 +417,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials">Tutorials</a><a href="/api">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2019 Facebook Inc.</section></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2019 Facebook Inc.</section></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
                 document.addEventListener('keyup', function(e) {
                   if (e.target !== document.body) {
                     return;

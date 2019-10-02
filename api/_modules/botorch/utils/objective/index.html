@@ -43,10 +43,10 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]:</span>
     <span class="sa">r</span><span class="sd">"""Create a linear objective callable from a set of weights.</span>
 
-<span class="sd">    Create a callable mapping a Tensor of size `b x q x o` to a Tensor of size</span>
-<span class="sd">    `b x q`, where `o` is the number of outputs of the model using scalarization</span>
+<span class="sd">    Create a callable mapping a Tensor of size `b x q x m` to a Tensor of size</span>
+<span class="sd">    `b x q`, where `m` is the number of outputs of the model using scalarization</span>
 <span class="sd">    via the objective weights. This callable supports broadcasting (e.g. for</span>
-<span class="sd">    calling on a tensor of shape `mc_samples x b x q x o`). For `o = 1`, the</span>
+<span class="sd">    calling on a tensor of shape `mc_samples x b x q x m`). For `m = 1`, the</span>
 <span class="sd">    objective weight is used to determine the optimization direction.</span>
 
 <span class="sd">    Args:</span>
@@ -67,16 +67,16 @@
     <span class="k">def</span> <span class="nf">_objective</span><span class="p">(</span><span class="n">Y</span><span class="p">):</span>
         <span class="sa">r</span><span class="sd">"""Evaluate objective.</span>
 
-<span class="sd">        Note: einsum multiples Y by weights and sums over the `o`-dimension.</span>
+<span class="sd">        Note: einsum multiples Y by weights and sums over the `m`-dimension.</span>
 <span class="sd">        Einsum is ~2x faster than using `(Y * weights.view(1, 1, -1)).sum(dim-1)`.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            Y: A `... x b x q x o` tensor of function values.</span>
+<span class="sd">            Y: A `... x b x q x m` tensor of function values.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A `... x b x q`-dim tensor of objective values.</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">"...o, o"</span><span class="p">,</span> <span class="p">[</span><span class="n">Y</span><span class="p">,</span> <span class="n">weights</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">"...m, m"</span><span class="p">,</span> <span class="p">[</span><span class="n">Y</span><span class="p">,</span> <span class="n">weights</span><span class="p">])</span>
 
     <span class="k">return</span> <span class="n">_objective</span></div>
 
@@ -94,11 +94,11 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">        obj: A `n_samples x b x q` Tensor of objective values.</span>
-<span class="sd">        constraints: A list of callables, each mapping a Tensor of size `b x q x o`</span>
+<span class="sd">        constraints: A list of callables, each mapping a Tensor of size `b x q x m`</span>
 <span class="sd">            to a Tensor of size `b x q`, where negative values imply feasibility.</span>
 <span class="sd">            This callable must support broadcasting. Only relevant for multi-</span>
-<span class="sd">            output models (`o` &gt; 1).</span>
-<span class="sd">        samples: A `b x q x o` Tensor of samples drawn from the posterior.</span>
+<span class="sd">            output models (`m` &gt; 1).</span>
+<span class="sd">        samples: A `b x q x m` Tensor of samples drawn from the posterior.</span>
 <span class="sd">        eta: The temperature parameter for the sigmoid function.</span>
 
 <span class="sd">    Returns:</span>
@@ -147,11 +147,11 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">        obj: A `n_samples x b x q` Tensor of objective values.</span>
-<span class="sd">        constraints: A list of callables, each mapping a Tensor of size `b x q x o`</span>
+<span class="sd">        constraints: A list of callables, each mapping a Tensor of size `b x q x m`</span>
 <span class="sd">            to a Tensor of size `b x q`, where negative values imply feasibility.</span>
 <span class="sd">            This callable must support broadcasting. Only relevant for multi-</span>
-<span class="sd">            output models (`o` &gt; 1).</span>
-<span class="sd">        samples: A `b x q x o` Tensor of samples drawn from the posterior.</span>
+<span class="sd">            output models (`m` &gt; 1).</span>
+<span class="sd">        samples: A `b x q x m` Tensor of samples drawn from the posterior.</span>
 <span class="sd">        infeasible_cost: The infeasible value.</span>
 <span class="sd">        eta: The temperature parameter of the sigmoid function.</span>
 
@@ -208,7 +208,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials">Tutorials</a><a href="/api">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2019 Facebook Inc.</section></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2019 Facebook Inc.</section></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
                 document.addEventListener('keyup', function(e) {
                   if (e.target !== document.body) {
                     return;

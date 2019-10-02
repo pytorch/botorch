@@ -82,7 +82,7 @@
 <p>BoTorch is easily installed via
 <a href="https://www.anaconda.com/distribution/#download-section">Anaconda</a> (recommended)
 or <code>pip</code>:</p>
-<div class="tabs"><div class="nav-tabs"><div id="tab-group-4-tab-5" class="nav-link active" data-group="group_4" data-tab="tab-group-4-content-5">conda</div><div id="tab-group-4-tab-6" class="nav-link" data-group="group_4" data-tab="tab-group-4-content-6">pip</div></div><div class="tab-content"><div id="tab-group-4-content-5" class="tab-pane active" data-group="group_4" tabindex="-1"><div><span><pre><code class="hljs css language-bash">conda install botorch -c pytorch<br /></code></pre>
+<div class="tabs"><div class="nav-tabs"><div id="tab-group-4-tab-5" class="nav-link active" data-group="group_4" data-tab="tab-group-4-content-5">conda</div><div id="tab-group-4-tab-6" class="nav-link" data-group="group_4" data-tab="tab-group-4-content-6">pip</div></div><div class="tab-content"><div id="tab-group-4-content-5" class="tab-pane active" data-group="group_4" tabindex="-1"><div><span><pre><code class="hljs css language-bash">conda install botorch -c pytorch -c gpytorch<br /></code></pre>
 </span></div></div><div id="tab-group-4-content-6" class="tab-pane" data-group="group_4" tabindex="-1"><div><span><pre><code class="hljs css language-bash">pip install botorch<br /></code></pre>
 </span></div></div></div></div>
 <p>For more detailed installation instructions, please see the
@@ -98,7 +98,8 @@ on GitHub.</p>
 <span class="hljs-keyword">from</span> gpytorch.mlls <span class="hljs-keyword">import</span> ExactMarginalLogLikelihood
 
 train_X = torch.rand(<span class="hljs-number">10</span>, <span class="hljs-number">2</span>)
-Y = <span class="hljs-number">1</span> - torch.norm(train_X - <span class="hljs-number">0.5</span>, dim=<span class="hljs-number">-1</span>) + <span class="hljs-number">0.1</span> * torch.rand(<span class="hljs-number">10</span>)
+Y = <span class="hljs-number">1</span> - (train_X - <span class="hljs-number">0.5</span>).norm(dim=<span class="hljs-number">-1</span>, keepdim=<span class="hljs-literal">True</span>)  <span class="hljs-comment"># explicit output dimension</span>
+Y += <span class="hljs-number">0.1</span> * torch.rand_like(Y)
 train_Y = (Y - Y.mean()) / Y.std()
 
 gp = SingleTaskGP(train_X, train_Y)
@@ -111,10 +112,10 @@ fit_gpytorch_model(mll);
 UCB = UpperConfidenceBound(gp, beta=<span class="hljs-number">0.1</span>)
 </code></pre></li>
 <li><p>Optimize the acquisition function</p>
-<pre><code class="hljs css language-python"><span class="hljs-keyword">from</span> botorch.optim <span class="hljs-keyword">import</span> joint_optimize
+<pre><code class="hljs css language-python"><span class="hljs-keyword">from</span> botorch.optim <span class="hljs-keyword">import</span> optimize_acqf
 
 bounds = torch.stack([torch.zeros(<span class="hljs-number">2</span>), torch.ones(<span class="hljs-number">2</span>)])
-candidate = joint_optimize(
+candidate, acq_value = optimize_acqf(
     UCB, bounds=bounds, q=<span class="hljs-number">1</span>, num_restarts=<span class="hljs-number">5</span>, raw_samples=<span class="hljs-number">20</span>,
 )
 </code></pre></li>
@@ -129,7 +130,7 @@ View and download them <a href="../tutorials">here</a>.</p>
 <p>You'd like to contribute to BoTorch? Great! Please see
 <a href="https://github.com/pytorch/botorch/blob/master/CONTRIBUTING.md">here</a>
 for how to help out.</p>
-</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/docs/botorch_and_ax"><span class="arrow-prev">← </span><span class="function-name-prevnext">Using BoTorch with Ax</span></a><a class="docs-next button" href="/docs/overview"><span>Overview</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#installing-botorch">Installing BoTorch</a></li><li><a href="#basic-components">Basic Components</a></li><li><a href="#tutorials">Tutorials</a></li><li><a href="#api-reference">API Reference</a></li><li><a href="#contributing">Contributing</a></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials">Tutorials</a><a href="/api">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2019 Facebook Inc.</section></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/docs/botorch_and_ax"><span class="arrow-prev">← </span><span class="function-name-prevnext">Using BoTorch with Ax</span></a><a class="docs-next button" href="/docs/overview"><span>Overview</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#installing-botorch">Installing BoTorch</a></li><li><a href="#basic-components">Basic Components</a></li><li><a href="#tutorials">Tutorials</a></li><li><a href="#api-reference">API Reference</a></li><li><a href="#contributing">Contributing</a></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2019 Facebook Inc.</section></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
                 document.addEventListener('keyup', function(e) {
                   if (e.target !== document.body) {
                     return;

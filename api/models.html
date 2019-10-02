@@ -40,12 +40,12 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x m x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of
-the feature space, <cite>m</cite> is the number of points per batch, and
+<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n’ x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of
+the feature space, <cite>n’</cite> is the number of points per batch, and
 <cite>batch_shape</cite> is the batch shape (must be compatible with the
 batch shape of the model).</p></li>
-<li><p><strong>Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape’ x m x (o)</cite>-dim Tensor, where <cite>o</cite> is the number of
-model outputs, <cite>m</cite> is the number of points per batch, and
+<li><p><strong>Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape’ x n’ x m</cite>-dim Tensor, where <cite>m</cite> is the number of
+model outputs, <cite>n’</cite> is the number of points per batch, and
 <cite>batch_shape’</cite> is the batch shape of the observations.
 <cite>batch_shape’</cite> must be broadcastable to <cite>batch_shape</cite> using
 standard broadcasting semantics. If <cite>Y</cite> has fewer batch dimensions
@@ -76,8 +76,8 @@ observations.
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x m x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of
-the feature space, <cite>m</cite> is the number of points per batch, and
+<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n’ x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of
+the feature space, <cite>n’</cite> is the number of points per batch, and
 <cite>batch_shape</cite> is the batch shape (must be compatible with the
 batch shape of the model).</p></li>
 <li><p><strong>sampler</strong> (<a class="reference internal" href="sampling.html#botorch.sampling.samplers.MCSampler" title="botorch.sampling.samplers.MCSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">MCSampler</span></code></a>) – The sampler used for sampling from the posterior at <cite>X</cite>.</p></li>
@@ -115,7 +115,7 @@ computes the posterior over all model outputs.</p></li>
 </dd>
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p>A <cite>Posterior</cite> object, representing a batch of <cite>b</cite> joint distributions
-over <cite>q</cite> points and <cite>o</cite> outputs each.</p>
+over <cite>q</cite> points and <cite>m</cite> outputs each.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -136,12 +136,12 @@ class (e.g. an <cite>ExactGP</cite>) and this <cite>GPyTorchModel</cite>. See e.
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of
-the feature space, <cite>n</cite> is the number of points per batch, and
+<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n’ x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of
+the feature space, <cite>n’</cite> is the number of points per batch, and
 <cite>batch_shape</cite> is the batch shape (must be compatible with the
 batch shape of the model).</p></li>
-<li><p><strong>Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape’ x n x (o)</cite>-dim Tensor, where <cite>o</cite> is the number of
-model outputs, <cite>n</cite> is the number of points per batch, and
+<li><p><strong>Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape’ x n x m</cite>-dim Tensor, where <cite>m</cite> is the number of
+model outputs, <cite>n’</cite> is the number of points per batch, and
 <cite>batch_shape’</cite> is the batch shape of the observations.
 <cite>batch_shape’</cite> must be broadcastable to <cite>batch_shape</cite> using
 standard broadcasting semantics. If <cite>Y</cite> has fewer batch dimensions
@@ -207,12 +207,12 @@ Outputs are modeled independently by using a different batch for each output.</p
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x m x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of
+<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n’ x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of
 the feature space, <cite>m</cite> is the number of points per batch, and
 <cite>batch_shape</cite> is the batch shape (must be compatible with the
 batch shape of the model).</p></li>
-<li><p><strong>Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape’ x m x (o)</cite>-dim Tensor, where <cite>o</cite> is the number of
-model outputs, <cite>m</cite> is the number of points per batch, and
+<li><p><strong>Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape’ x n’ x m</cite>-dim Tensor, where <cite>m</cite> is the number of
+model outputs, <cite>n’</cite> is the number of points per batch, and
 <cite>batch_shape’</cite> is the batch shape of the observations.
 <cite>batch_shape’</cite> must be broadcastable to <cite>batch_shape</cite> using
 standard broadcasting semantics. If <cite>Y</cite> has fewer batch dimensions
@@ -225,7 +225,7 @@ the same for all <cite>Y</cite>.</p></li>
 </dd>
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p>A <cite>BatchedMultiOutputGPyTorchModel</cite> object of the same type with
-<cite>n + m</cite> training examples, representing the original model
+<cite>n + n’</cite> training examples, representing the original model
 conditioned on the new observations <cite>(X, Y)</cite> (and possibly noise
 observations passed in via kwargs).</p>
 </dd>
@@ -287,12 +287,12 @@ evaluation of submodels.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of
-the feature space, <cite>n</cite> is the number of points per batch, and
+<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n’ x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of
+the feature space, <cite>n’</cite> is the number of points per batch, and
 <cite>batch_shape</cite> is the batch shape (must be compatible with the
 batch shape of the model).</p></li>
-<li><p><strong>Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape’ x n x (o)</cite>-dim Tensor, where <cite>o</cite> is the number of
-model outputs, <cite>n</cite> is the number of points per batch, and
+<li><p><strong>Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape’ x n x m</cite>-dim Tensor, where <cite>m</cite> is the number of
+model outputs, <cite>n’</cite> is the number of points per batch, and
 <cite>batch_shape’</cite> is the batch shape of the observations.
 <cite>batch_shape’</cite> must be broadcastable to <cite>batch_shape</cite> using
 standard broadcasting semantics. If <cite>Y</cite> has fewer batch dimensions
@@ -424,7 +424,7 @@ the MultiTaskGP.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>train_X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>n x d</cite> or <cite>batch_shape x n x d</cite> (batch mode) tensor of training
 features.</p></li>
-<li><p><strong>train_Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>n x (o)</cite> or <cite>batch_shape x n x (o)</cite> (batch mode) tensor of
+<li><p><strong>train_Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>n x m</cite> or <cite>batch_shape x n x m</cite> (batch mode) tensor of
 training observations.</p></li>
 <li><p><strong>likelihood</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Likelihood</span></code>]) – A likelihood. If omitted, use a standard
 GaussianLikelihood with inferred noise level.</p></li>
@@ -435,7 +435,7 @@ MaternKernel.</p></li>
 </dl>
 <p class="rubric">Example</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">train_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">train_Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">train_X</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">train_X</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">train_Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -458,16 +458,16 @@ standardized (zero mean, unit variance).</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>train_X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>n x d</cite> or <cite>batch_shape x n x d</cite> (batch mode) tensor of training
 features.</p></li>
-<li><p><strong>train_Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>n x (o)</cite> or <cite>batch_shape x n x (o)</cite> (batch mode) tensor of
+<li><p><strong>train_Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>n x m</cite> or <cite>batch_shape x n x m</cite> (batch mode) tensor of
 training observations.</p></li>
-<li><p><strong>train_Yvar</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x (o)</cite> or <cite>batch_shape x n x (o)</cite>
+<li><p><strong>train_Yvar</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x m</cite> or <cite>batch_shape x n x m</cite>
 (batch mode) tensor of observed measurement noise.</p></li>
 </ul>
 </dd>
 </dl>
 <p class="rubric">Example</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">train_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">train_Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">train_X</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]])</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">train_X</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">train_Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">train_Yvar</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">train_Y</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">FixedNoiseGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">)</span>
 </pre></div>
@@ -486,8 +486,8 @@ observations.
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x m x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of
-the feature space, <cite>m</cite> is the number of points per batch, and
+<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n’ x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of
+the feature space, <cite>n’</cite> is the number of points per batch, and
 <cite>batch_shape</cite> is the batch shape (must be compatible with the
 batch shape of the model).</p></li>
 <li><p><strong>sampler</strong> (<a class="reference internal" href="sampling.html#botorch.sampling.samplers.MCSampler" title="botorch.sampling.samplers.MCSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">MCSampler</span></code></a>) – The sampler used for sampling from the posterior at <cite>X</cite>.</p></li>
@@ -539,17 +539,17 @@ observation noise levels.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>train_X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>n x d</cite> or <cite>batch_shape x n x d</cite> (batch mode) tensor of training
 features.</p></li>
-<li><p><strong>train_Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>n x (o)</cite> or <cite>batch_shape x n x (o)</cite> (batch mode) tensor of
+<li><p><strong>train_Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>n x m</cite> or <cite>batch_shape x n x m</cite> (batch mode) tensor of
 training observations.</p></li>
-<li><p><strong>train_Yvar</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x (o)</cite> or <cite>batch_shape x n x (o)</cite>
+<li><p><strong>train_Yvar</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x m</cite> or <cite>batch_shape x n x m</cite>
 (batch mode) tensor of observed measurement noise.</p></li>
 </ul>
 </dd>
 </dl>
 <p class="rubric">Example</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">train_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">train_Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">train_X</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]])</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">train_X</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">se</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">train_X</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">train_Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">se</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">train_Yvar</span> <span class="o">=</span> <span class="mf">0.1</span> <span class="o">+</span> <span class="n">se</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand_like</span><span class="p">(</span><span class="n">train_Y</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">HeteroskedasticSingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">)</span>
 </pre></div>
@@ -561,12 +561,12 @@ training observations.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x m x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of
+<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n’ x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of
 the feature space, <cite>m</cite> is the number of points per batch, and
 <cite>batch_shape</cite> is the batch shape (must be compatible with the
 batch shape of the model).</p></li>
-<li><p><strong>Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape’ x m x (o)</cite>-dim Tensor, where <cite>o</cite> is the number of
-model outputs, <cite>m</cite> is the number of points per batch, and
+<li><p><strong>Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape’ x n’ x m</cite>-dim Tensor, where <cite>m</cite> is the number of
+model outputs, <cite>n’</cite> is the number of points per batch, and
 <cite>batch_shape’</cite> is the batch shape of the observations.
 <cite>batch_shape’</cite> must be broadcastable to <cite>batch_shape</cite> using
 standard broadcasting semantics. If <cite>Y</cite> has fewer batch dimensions
@@ -579,7 +579,7 @@ the same for all <cite>Y</cite>.</p></li>
 </dd>
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p>A <cite>BatchedMultiOutputGPyTorchModel</cite> object of the same type with
-<cite>n + m</cite> training examples, representing the original model
+<cite>n + n’</cite> training examples, representing the original model
 conditioned on the new observations <cite>(X, Y)</cite> (and possibly noise
 observations passed in via kwargs).</p>
 </dd>
@@ -631,12 +631,12 @@ structure, you should consider using a batched GP model instead).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x m x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of
-the feature space, <cite>m</cite> is the number of points per batch, and
+<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n’ x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of
+the feature space, <cite>n’</cite> is the number of points per batch, and
 <cite>batch_shape</cite> is the batch shape (must be compatible with the
 batch shape of the model).</p></li>
-<li><p><strong>Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape’ x m x (o)</cite>-dim Tensor, where <cite>o</cite> is the number of
-model outputs, <cite>m</cite> is the number of points per batch, and
+<li><p><strong>Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape’ x n’ x m</cite>-dim Tensor, where <cite>m</cite> is the number of
+model outputs, <cite>n’</cite> is the number of points per batch, and
 <cite>batch_shape’</cite> is the batch shape of the observations.
 <cite>batch_shape’</cite> must be broadcastable to <cite>batch_shape</cite> using
 standard broadcasting semantics. If <cite>Y</cite> has fewer batch dimensions
@@ -651,7 +651,7 @@ the same for all <cite>Y</cite>.</p></li>
 <dd class="field-odd"><p>A <cite>ModelListGPyTorchModel</cite> representing the original model
 conditioned on the new observations <cite>(X, Y)</cite> (and possibly noise
 observations passed in via kwargs). Here the <cite>i</cite>-th model has
-<cite>n_i + m</cite> training examples, where the <cite>m</cite> training examples have
+<cite>n_i + n’</cite> training examples, where the <cite>n’</cite> training examples have
 been added and all test-time caches have been updated.</p>
 </dd>
 </dl>
@@ -808,7 +808,7 @@ full rank (i.e. number of tasks) kernel.</p></li>
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials">Tutorials</a><a href="/api">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2019 Facebook Inc.</section></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2019 Facebook Inc.</section></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
                 document.addEventListener('keyup', function(e) {
                   if (e.target !== document.body) {
                     return;

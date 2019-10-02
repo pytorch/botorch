@@ -69,7 +69,7 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A `Posterior` object, representing a batch of `b` joint distributions</span>
-<span class="sd">            over `q` points and `o` outputs each.</span>
+<span class="sd">            over `q` points and `m` outputs each.</span>
 <span class="sd">        """</span>
         <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
 
@@ -77,12 +77,12 @@
         <span class="sa">r</span><span class="sd">"""Condition the model on new observations.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            X: A `batch_shape x m x d`-dim Tensor, where `d` is the dimension of</span>
-<span class="sd">                the feature space, `m` is the number of points per batch, and</span>
+<span class="sd">            X: A `batch_shape x n' x d`-dim Tensor, where `d` is the dimension of</span>
+<span class="sd">                the feature space, `n'` is the number of points per batch, and</span>
 <span class="sd">                `batch_shape` is the batch shape (must be compatible with the</span>
 <span class="sd">                batch shape of the model).</span>
-<span class="sd">            Y: A `batch_shape' x m x (o)`-dim Tensor, where `o` is the number of</span>
-<span class="sd">                model outputs, `m` is the number of points per batch, and</span>
+<span class="sd">            Y: A `batch_shape' x n' x m`-dim Tensor, where `m` is the number of</span>
+<span class="sd">                model outputs, `n'` is the number of points per batch, and</span>
 <span class="sd">                `batch_shape'` is the batch shape of the observations.</span>
 <span class="sd">                `batch_shape'` must be broadcastable to `batch_shape` using</span>
 <span class="sd">                standard broadcasting semantics. If `Y` has fewer batch dimensions</span>
@@ -113,8 +113,8 @@
 <span class="sd">        (3) condition the model on the new fake observations.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            X: A `batch_shape x m x d`-dim Tensor, where `d` is the dimension of</span>
-<span class="sd">                the feature space, `m` is the number of points per batch, and</span>
+<span class="sd">            X: A `batch_shape x n' x d`-dim Tensor, where `d` is the dimension of</span>
+<span class="sd">                the feature space, `n'` is the number of points per batch, and</span>
 <span class="sd">                `batch_shape` is the batch shape (must be compatible with the</span>
 <span class="sd">                batch shape of the model).</span>
 <span class="sd">            sampler: The sampler used for sampling from the posterior at `X`.</span>
@@ -126,7 +126,7 @@
         <span class="n">propagate_grads</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"propagate_grads"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
         <span class="k">with</span> <span class="n">settings</span><span class="o">.</span><span class="n">propagate_grads</span><span class="p">(</span><span class="n">propagate_grads</span><span class="p">):</span>
             <span class="n">post_X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">observation_noise</span><span class="o">=</span><span class="n">observation_noise</span><span class="p">)</span>
-        <span class="n">Y_fantasized</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">post_X</span><span class="p">)</span>  <span class="c1"># num_fantasies x batch_shape x m x o</span>
+        <span class="n">Y_fantasized</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">post_X</span><span class="p">)</span>  <span class="c1"># num_fantasies x batch_shape x n' x m</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">condition_on_observations</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">Y_fantasized</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div></div>
 </pre></div>
 </div>
@@ -172,7 +172,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials">Tutorials</a><a href="/api">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2019 Facebook Inc.</section></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2019 Facebook Inc.</section></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
                 document.addEventListener('keyup', function(e) {
                   if (e.target !== document.body) {
                     return;
