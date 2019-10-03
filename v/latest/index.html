@@ -25,11 +25,13 @@
 </span></div></li><li><h4>Fit a model:</h4><div><span><pre><code class="hljs css language-python"><span class="hljs-keyword">import</span> torch
 <span class="hljs-keyword">from</span> botorch.models <span class="hljs-keyword">import</span> SingleTaskGP
 <span class="hljs-keyword">from</span> botorch.fit <span class="hljs-keyword">import</span> fit_gpytorch_model
+<span class="hljs-keyword">from</span> botorch.utils <span class="hljs-keyword">import</span> standardize
 <span class="hljs-keyword">from</span> gpytorch.mlls <span class="hljs-keyword">import</span> ExactMarginalLogLikelihood
 
 train_X = torch.rand(<span class="hljs-number">10</span>, <span class="hljs-number">2</span>)
-Y = <span class="hljs-number">1</span> - torch.norm(train_X - <span class="hljs-number">0.5</span>, dim=<span class="hljs-number">-1</span>) + <span class="hljs-number">0.1</span> * torch.rand(<span class="hljs-number">10</span>)
-train_Y = (Y - Y.mean()) / Y.std()
+Y = <span class="hljs-number">1</span> - torch.norm(train_X - <span class="hljs-number">0.5</span>, dim=<span class="hljs-number">-1</span>, keepdim=<span class="hljs-literal">True</span>)
+Y = Y + <span class="hljs-number">0.1</span> * torch.randn_like(Y)  <span class="hljs-comment"># add some noise</span>
+train_Y = standardize(Y)
 
 gp = SingleTaskGP(train_X, train_Y)
 mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
