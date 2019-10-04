@@ -35,6 +35,10 @@
     {
       "id": "custom_acquisition",
       "title": "Writing a custom acquisition function"
+    },
+    {
+      "id": "one_shot_kg",
+      "title": "The one-shot Knowledge Gradient acquisition function"
     }
   ],
   "Advanced Usage": [
