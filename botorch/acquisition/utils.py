@@ -89,6 +89,7 @@ def get_acquisition_function(
             sampler=sampler,
             objective=objective,
             X_pending=X_pending,
+            prune_baseline=kwargs.get("prune_baseline", False),
         )
     elif acquisition_function_name == "qSR":
         return monte_carlo.qSimpleRegret(
