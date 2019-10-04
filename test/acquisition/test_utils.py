@@ -5,8 +5,14 @@
 from unittest import mock
 
 import torch
-from botorch.acquisition import monte_carlo, utils
-from botorch.acquisition.objective import MCAcquisitionObjective
+from botorch.acquisition import monte_carlo
+from botorch.acquisition.objective import GenericMCObjective, MCAcquisitionObjective
+from botorch.acquisition.utils import (
+    get_acquisition_function,
+    get_infeasible_cost,
+    prune_inferior_points,
+)
+from botorch.exceptions import UnsupportedError
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 from torch import Tensor
@@ -30,7 +36,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
 
     @mock.patch(f"{monte_carlo.__name__}.qExpectedImprovement")
     def test_GetQEI(self, mock_acqf):
-        acqf = utils.get_acquisition_function(
+        acqf = get_acquisition_function(
             acquisition_function_name="qEI",
             model=self.model,
             objective=self.objective,
@@ -59,7 +65,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
     @mock.patch(f"{monte_carlo.__name__}.qProbabilityOfImprovement")
     def test_GetQPI(self, mock_acqf):
         # basic test
-        acqf = utils.get_acquisition_function(
+        acqf = get_acquisition_function(
             acquisition_function_name="qPI",
             model=self.model,
             objective=self.objective,
@@ -86,7 +92,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         self.assertEqual(sampler.seed, 1)
         self.assertTrue(torch.equal(kwargs["X_pending"], self.X_pending))
         # test with different tau, non-qmc
-        acqf = utils.get_acquisition_function(
+        acqf = get_acquisition_function(
             acquisition_function_name="qPI",
             model=self.model,
             objective=self.objective,
@@ -110,7 +116,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
     @mock.patch(f"{monte_carlo.__name__}.qNoisyExpectedImprovement")
     def test_GetQNEI(self, mock_acqf):
         # basic test
-        acqf = utils.get_acquisition_function(
+        acqf = get_acquisition_function(
             acquisition_function_name="qNEI",
             model=self.model,
             objective=self.objective,
@@ -130,7 +136,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
         self.assertEqual(sampler.seed, 1)
         # test with non-qmc, no X_pending
-        acqf = utils.get_acquisition_function(
+        acqf = get_acquisition_function(
             acquisition_function_name="qNEI",
             model=self.model,
             objective=self.objective,
@@ -154,7 +160,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
     @mock.patch(f"{monte_carlo.__name__}.qSimpleRegret")
     def test_GetQSR(self, mock_acqf):
         # basic test
-        acqf = utils.get_acquisition_function(
+        acqf = get_acquisition_function(
             acquisition_function_name="qSR",
             model=self.model,
             objective=self.objective,
@@ -178,7 +184,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         self.assertEqual(sampler.seed, 1)
         self.assertTrue(torch.equal(kwargs["X_pending"], self.X_pending))
         # test with non-qmc
-        acqf = utils.get_acquisition_function(
+        acqf = get_acquisition_function(
             acquisition_function_name="qSR",
             model=self.model,
             objective=self.objective,
@@ -201,7 +207,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
     def test_GetQUCB(self, mock_acqf):
         # make sure beta is specified
         with self.assertRaises(ValueError):
-            acqf = utils.get_acquisition_function(
+            acqf = get_acquisition_function(
                 acquisition_function_name="qUCB",
                 model=self.model,
                 objective=self.objective,
@@ -210,7 +216,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
                 mc_samples=self.mc_samples,
                 seed=self.seed,
             )
-        acqf = utils.get_acquisition_function(
+        acqf = get_acquisition_function(
             acquisition_function_name="qUCB",
             model=self.model,
             objective=self.objective,
@@ -236,7 +242,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         self.assertEqual(sampler.seed, 1)
         self.assertTrue(torch.equal(kwargs["X_pending"], self.X_pending))
         # test with different tau, non-qmc
-        acqf = utils.get_acquisition_function(
+        acqf = get_acquisition_function(
             acquisition_function_name="qUCB",
             model=self.model,
             objective=self.objective,
@@ -259,7 +265,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
 
     def test_GetUnknownAcquisitionFunction(self):
         with self.assertRaises(NotImplementedError):
-            utils.get_acquisition_function(
+            get_acquisition_function(
                 acquisition_function_name="foo",
                 model=self.model,
                 objective=self.objective,
@@ -283,7 +289,56 @@ class TestGetInfeasibleCost(BotorchTestCase):
             mm = MockModel(MockPosterior(mean=means, variance=variances))
             # means - 6 * std = [-0.8, -1, -0.6, 1, 3.2]. After applying the
             # objective, the minimum becomes -6.0, so 6.0 should be returned.
-            M = utils.get_infeasible_cost(
+            M = get_infeasible_cost(
                 X=X, model=mm, objective=lambda Y: Y.squeeze(-1) - 5.0
             )
             self.assertEqual(M, 6.0)
+
+
+class TestPruneInferiorPoints(BotorchTestCase):
+    def test_prune_inferior_points(self):
+        for dtype in (torch.float, torch.double):
+            X = torch.rand(3, 2, device=self.device, dtype=dtype)
+            # the event shape is `q x t` = 3 x 1
+            samples = torch.tensor(
+                [[-1.0], [0.0], [1.0]], device=self.device, dtype=dtype
+            )
+            mm = MockModel(MockPosterior(samples=samples))
+            # test that a batched X raises errors
+            with self.assertRaises(UnsupportedError):
+                prune_inferior_points(model=mm, X=X.expand(2, 3, 2))
+            # test that a batched model raises errors (event shape is `q x t` = 3 x 1)
+            mm2 = MockModel(MockPosterior(samples=samples.expand(2, 3, 1)))
+            with self.assertRaises(UnsupportedError):
+                prune_inferior_points(model=mm2, X=X)
+            # test that invalid max_frac is checked properly
+            with self.assertRaises(ValueError):
+                prune_inferior_points(model=mm, X=X, max_frac=1.1)
+            # test basic behaviour
+            X_pruned = prune_inferior_points(model=mm, X=X)
+            self.assertTrue(torch.equal(X_pruned, X[[-1]]))
+            # test custom objective
+            neg_id_obj = GenericMCObjective(lambda X: -X.squeeze(-1))
+            X_pruned = prune_inferior_points(model=mm, X=X, objective=neg_id_obj)
+            self.assertTrue(torch.equal(X_pruned, X[[0]]))
+            # test non-repeated samples (requires mocking out MockPosterior's rsample)
+            samples = torch.tensor(
+                [[[3.0], [0.0], [0.0]], [[0.0], [2.0], [0.0]], [[0.0], [0.0], [1.0]]],
+                device=self.device,
+                dtype=dtype,
+            )
+            with mock.patch.object(MockPosterior, "rsample", return_value=samples):
+                mm = MockModel(MockPosterior(samples=samples))
+                X_pruned = prune_inferior_points(model=mm, X=X)
+            self.assertTrue(torch.equal(X_pruned, X))
+            # test max_frac limiting
+            with mock.patch.object(MockPosterior, "rsample", return_value=samples):
+                mm = MockModel(MockPosterior(samples=samples))
+                X_pruned = prune_inferior_points(model=mm, X=X, max_frac=2 / 3)
+            self.assertTrue(torch.equal(X_pruned, X[:2]))
+            # test that zero-probability is in fact pruned
+            samples[2, 0, 0] = 10
+            with mock.patch.object(MockPosterior, "rsample", return_value=samples):
+                mm = MockModel(MockPosterior(samples=samples))
+                X_pruned = prune_inferior_points(model=mm, X=X)
+            self.assertTrue(torch.equal(X_pruned, X[:2]))
