@@ -21,6 +21,7 @@ from gpytorch.likelihoods.gaussian_likelihood import (
 from gpytorch.likelihoods.likelihood import Likelihood
 from gpytorch.likelihoods.noise_models import HeteroskedasticNoise
 from gpytorch.means.constant_mean import ConstantMean
+from gpytorch.mlls.noise_model_added_loss_term import NoiseModelAddedLossTerm
 from gpytorch.models.exact_gp import ExactGP
 from gpytorch.module import Module
 from gpytorch.priors.smoothed_box_prior import SmoothedBoxPrior
@@ -257,6 +258,10 @@ class HeteroskedasticSingleTaskGP(SingleTaskGP):
 
         likelihood = _GaussianLikelihoodBase(HeteroskedasticNoise(noise_model))
         super().__init__(train_X=train_X, train_Y=train_Y, likelihood=likelihood)
+        self.register_added_loss_term("noise_added_loss")
+        self.update_added_loss_term(
+            "noise_added_loss", NoiseModelAddedLossTerm(noise_model)
+        )
         self.to(train_X)
 
     def condition_on_observations(

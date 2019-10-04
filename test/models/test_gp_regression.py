@@ -26,6 +26,7 @@ from gpytorch.likelihoods import (
 )
 from gpytorch.means import ConstantMean
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
+from gpytorch.mlls.noise_model_added_loss_term import NoiseModelAddedLossTerm
 from gpytorch.priors import GammaPrior
 
 
@@ -317,6 +318,10 @@ class TestHeteroskedasticSingleTaskGP(TestSingleTaskGP):
                     )
                     self.assertIsInstance(
                         model.likelihood.noise_covar.noise_model, SingleTaskGP
+                    )
+                    self.assertIsInstance(
+                        model._added_loss_terms["noise_added_loss"],
+                        NoiseModelAddedLossTerm,
                     )
 
     def test_condition_on_observations(self):
