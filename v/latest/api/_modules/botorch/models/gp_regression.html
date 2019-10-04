@@ -47,6 +47,7 @@
 <span class="kn">from</span> <span class="nn">gpytorch.likelihoods.likelihood</span> <span class="k">import</span> <span class="n">Likelihood</span>
 <span class="kn">from</span> <span class="nn">gpytorch.likelihoods.noise_models</span> <span class="k">import</span> <span class="n">HeteroskedasticNoise</span>
 <span class="kn">from</span> <span class="nn">gpytorch.means.constant_mean</span> <span class="k">import</span> <span class="n">ConstantMean</span>
+<span class="kn">from</span> <span class="nn">gpytorch.mlls.noise_model_added_loss_term</span> <span class="k">import</span> <span class="n">NoiseModelAddedLossTerm</span>
 <span class="kn">from</span> <span class="nn">gpytorch.models.exact_gp</span> <span class="k">import</span> <span class="n">ExactGP</span>
 <span class="kn">from</span> <span class="nn">gpytorch.module</span> <span class="k">import</span> <span class="n">Module</span>
 <span class="kn">from</span> <span class="nn">gpytorch.priors.smoothed_box_prior</span> <span class="k">import</span> <span class="n">SmoothedBoxPrior</span>
@@ -283,6 +284,10 @@
 
         <span class="n">likelihood</span> <span class="o">=</span> <span class="n">_GaussianLikelihoodBase</span><span class="p">(</span><span class="n">HeteroskedasticNoise</span><span class="p">(</span><span class="n">noise_model</span><span class="p">))</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span> <span class="n">likelihood</span><span class="o">=</span><span class="n">likelihood</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_added_loss_term</span><span class="p">(</span><span class="s2">"noise_added_loss"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_added_loss_term</span><span class="p">(</span>
+            <span class="s2">"noise_added_loss"</span><span class="p">,</span> <span class="n">NoiseModelAddedLossTerm</span><span class="p">(</span><span class="n">noise_model</span><span class="p">)</span>
+        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
 
 <div class="viewcode-block" id="HeteroskedasticSingleTaskGP.condition_on_observations"><a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression.HeteroskedasticSingleTaskGP.condition_on_observations">[docs]</a>    <span class="k">def</span> <span class="nf">condition_on_observations</span><span class="p">(</span>

@@ -1,8 +1,6 @@
 import torch
 import math
 
-from torch import Tensor
-
 torch.manual_seed(29)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 dtype = torch.double
@@ -13,37 +11,41 @@ def task_shift(task):
     """
     Fetch shift amount for task.
     """
-    return math.pi * (task + 9) / 8.0
-
+    return math.pi * task /12.0
 # set shift for target task
-TARGET_SHIFT = math.pi
+
+TARGET_SHIFT = 0.0
 
 BOUNDS = torch.tensor([[-10.0], [10.0]], dtype=dtype, device=device)
 
-def f(X: Tensor, shift: float = TARGET_SHIFT) -> Tensor:
+def f(X, shift=TARGET_SHIFT):
     """
     Torch-compatible objective function for the target_task
     """
-    f_X = 0.1*(X-1) * (torch.sin(X + shift) + 0.1)
+    f_X = X * torch.sin(X + math.pi + shift) + X/10.0
     return f_X
 
 from botorch.utils.sampling import draw_sobol_samples
 from botorch.utils.transforms import normalize, unnormalize
 
+noise_std = 0.05 
+
 # Sample data for each base task
 data_by_task = {}
 for task in range(NUM_BASE_TASKS):
-    num_training_points = torch.randint(low=15, high=26, size=(1,)).item()
+    num_training_points = 20
     # draw points from a sobol sequence
     raw_x = draw_sobol_samples(bounds=BOUNDS, n=num_training_points, q=1, seed=task+5397923).squeeze(1)    
     # get observed values
-    f_x = f(raw_x, task_shift(task))
-    train_y = f_x + 0.05*torch.randn_like(f_x)
+    f_x = f(raw_x, task_shift(task+1))
+    train_y = f_x + noise_std*torch.randn_like(f_x)
+    train_yvar = torch.full_like(train_y, noise_std**2)
     # store training data
     data_by_task[task] = {
         # scale x to [0, 1]
         'train_x': normalize(raw_x, bounds=BOUNDS),
         'train_y': train_y,
+        'train_yvar': train_yvar,
     }         
 
 from matplotlib import pyplot as plt
@@ -63,7 +65,7 @@ for task in data_by_task:
     )
     ax.plot(
         x.detach().numpy(),
-        f(x, task_shift(task)).cpu().numpy(),
+        f(x, task_shift(task+1)).cpu().numpy(),
         label=f"Base task {task}",
         color=t[0].get_color(), 
     )
@@ -79,90 +81,106 @@ ax.legend(loc="lower right", fontsize=10)
 plt.tight_layout()
 
 from gpytorch.mlls import ExactMarginalLogLikelihood
-from botorch.models import SingleTaskGP
+from botorch.models import FixedNoiseGP
 from botorch.fit import fit_gpytorch_model
 
 
-def get_fitted_model(train_X: Tensor, train_Y: Tensor) -> SingleTaskGP:
+def get_fitted_model(train_X, train_Y, train_Yvar, state_dict=None):
     """
-    Fit SingleTaskGP with torch.optim.Adam.
+    Get a single task GP. The model will be fit unless a state_dict with model 
+        hyperparameters is provided.
     """
-    model = SingleTaskGP(train_X, train_Y)
-    mll = ExactMarginalLogLikelihood(model.likelihood, model).to(train_X)
-    fit_gpytorch_model(mll)
+    Y_mean = train_Y.mean(dim=-2, keepdim=True)
+    Y_std = train_Y.std(dim=-2, keepdim=True)
+    model = FixedNoiseGP(train_X, (train_Y - Y_mean)/Y_std, train_Yvar)
+    model.Y_mean = Y_mean
+    model.Y_std = Y_std
+    if state_dict is None:
+        mll = ExactMarginalLogLikelihood(model.likelihood, model).to(train_X)
+        fit_gpytorch_model(mll)
+    else:
+        model.load_state_dict(state_dict)
     return model
 
 # Fit base model
 base_model_list = []
 for task in range(NUM_BASE_TASKS):
     print(f"Fitting base model {task}")
-    model = get_fitted_model(data_by_task[task]['train_x'], data_by_task[task]['train_y'])
+    model = get_fitted_model(
+        data_by_task[task]['train_x'], 
+        data_by_task[task]['train_y'], 
+        data_by_task[task]['train_yvar'],
+    )
     base_model_list.append(model)  
 
-def roll_col(X: Tensor, shift: int) -> Tensor:  
+def roll_col(X, shift):  
     """
     Rotate columns to right by shift.
     """
-    return torch.cat((X[:, -shift:], X[:, :-shift]), dim=1)
+    return torch.cat((X[..., -shift:], X[..., :-shift]), dim=-1)
 
 
-def compute_ranking_loss(f_samps: Tensor, target_y: Tensor) -> Tensor:
+def compute_ranking_loss(f_samps, target_y):
     """
     Compute ranking loss for each sample from the posterior over target points.
     
     Args:
-        f_samps: `n_samples x n`-dim tensor of samples
+        f_samps: `n_samples x (n) x n`-dim tensor of samples
         target_y: `n x 1`-dim tensor of targets
     Returns:
         Tensor: `n_samples`-dim tensor containing the ranking loss across each sample
     """
-    y_stack = target_y.squeeze(-1).expand(f_samps.shape)
-    rank_loss = torch.zeros(f_samps.shape[0], dtype=torch.long, device=target_y.device)
-    for i in range(1,target_y.shape[0]):
-        rank_loss += torch.sum(
-            (roll_col(f_samps, i) < f_samps) ^ (roll_col(y_stack, i) < y_stack), 
-            dim=1
-        )
+    n = target_y.shape[0]
+    if f_samps.ndim == 3:
+        # Compute ranking loss for target model
+        # take cartesian product of target_y
+        cartesian_y = torch.cartesian_prod(
+            target_y.squeeze(-1), 
+            target_y.squeeze(-1),
+        ).view(n, n, 2)
+        # the diagonal of f_samps are the out-of-sample predictions
+        # for each LOO model, compare the out of sample predictions to each in-sample prediction
+        rank_loss = ((f_samps.diagonal(dim1=1, dim2=2).unsqueeze(-1) < f_samps) ^ (cartesian_y[..., 0] < cartesian_y[..., 1])).sum(dim=-1).sum(dim=-1)
+    else:
+        rank_loss = torch.zeros(f_samps.shape[0], dtype=torch.long, device=target_y.device)
+        y_stack = target_y.squeeze(-1).expand(f_samps.shape)
+        for i in range(1,target_y.shape[0]):
+            rank_loss += ((roll_col(f_samps, i) < f_samps) ^ (roll_col(y_stack, i) < y_stack)).sum(dim=-1) 
     return rank_loss
 
 
-def get_target_model_loocv_sample_preds(train_x: Tensor, train_y: Tensor, num_samples: int) -> Tensor:
+def get_target_model_loocv_sample_preds(train_x, train_y, train_yvar, target_model, num_samples):
     """
-    Use LOOCV to fit `b=n` independent GPs using batch mode and sample from
-        their independent posteriors.
+    Create a batch-mode LOOCV GP and draw a joint sample across all points from the target task.
     
     Args:
         train_x: `n x d` tensor of training points
         train_y: `n x 1` tensor of training targets
-        num_sample: number of mc samples to draw
+        target_model: fitted target model
+        num_samples: number of mc samples to draw
     
-    Return: `num_samples x n`-dim tensor of samples for each target point from the corresponding GP
-        (which was training without that point).
+    Return: `num_samples x n x n`-dim tensor of samples, where dim=1 represents the `n` LOO models,
+        and dim=2 represents the `n` training points.
     """
     batch_size = len(train_x)
-    masks = torch.eye(len(train_x), dtype=torch.uint8)
+    masks = torch.eye(len(train_x), dtype=torch.uint8, device=device).bool()
     train_x_cv = torch.stack([train_x[~m] for m in masks])
     train_y_cv = torch.stack([train_y[~m] for m in masks])
-    test_x_cv = torch.stack([train_x[m] for m in masks])
-    test_y_cv = torch.stack([train_y[m] for m in masks])
-    model = get_fitted_model(train_x_cv, train_y_cv)
+    train_yvar_cv = torch.stack([train_yvar[~m] for m in masks])
+    state_dict = target_model.state_dict()
+    # expand to batch size of batch_mode LOOCV model
+    state_dict_expanded = {name: t.expand(batch_size, *[-1 for _ in range(t.ndim)]) for name, t in state_dict.items()}
+    model = get_fitted_model(train_x_cv, train_y_cv, train_yvar_cv, state_dict=state_dict_expanded)
     with torch.no_grad():
-        # test_x_cv here is `n (batch dimension) x 1 (num points) x 1 (num dimensions)`.
-        posterior = model.posterior(test_x_cv)
+        posterior = model.posterior(train_x)
         # Since we have a batch mode gp and model.posterior always returns an output dimension,
-        # the output from `posterior.sample()` here `num_samples x n x 1 x 1`, so let's squeeze
-        # the last two dimensions.
-        return posterior.sample(sample_shape=torch.Size([num_samples])).squeeze(-1).squeeze(-1)
+        # the output from `posterior.sample()` here `num_samples x n x n x 1`, so let's squeeze
+        # the last dimension.
+        sampler = SobolQMCNormalSampler(num_samples=num_samples)
+        return sampler(posterior).squeeze(-1)
     
 
-from typing import List
-
-def compute_rank_weights(
-    train_x: Tensor, 
-    train_y: Tensor, 
-    base_models: List[SingleTaskGP], 
-    num_samples: int
-) -> Tensor:
+def compute_rank_weights(train_x,train_y, base_models, target_model, num_samples):
     """
     Compute ranking weights for each base model and the target model (using 
         LOOCV for the target model). Note: This implementation does not currently 
@@ -171,7 +189,8 @@ def compute_rank_weights(
     Args:
         train_x: `n x d` tensor of training points (for target task)
         train_y: `n` tensor of training targets (for target task)
-        base_models: list of `n_t` base models
+        base_models: list of base models
+        target_model: target model
         num_samples: number of mc samples
     
     Returns:
@@ -183,12 +202,14 @@ def compute_rank_weights(
         model = base_models[task]
         # compute posterior over training points for target task
         posterior = model.posterior(train_x)
-        f_samps = posterior.sample(sample_shape=torch.Size((num_samples,))).squeeze(-1).squeeze(-1)
+        sampler = SobolQMCNormalSampler(num_samples=num_samples)
+        base_f_samps = sampler(posterior).squeeze(-1).squeeze(-1)
         # compute and save ranking loss
-        ranking_losses.append(compute_ranking_loss(f_samps, train_y))
+        ranking_losses.append(compute_ranking_loss(base_f_samps, train_y))
     # compute ranking loss for target model using LOOCV
-    f_samps = get_target_model_loocv_sample_preds(train_x, train_y, num_samples)
-    ranking_losses.append(compute_ranking_loss(f_samps, train_y))
+    # f_samps
+    target_f_samps = get_target_model_loocv_sample_preds(train_x, train_y, train_yvar, target_model, num_samples)
+    ranking_losses.append(compute_ranking_loss(target_f_samps, train_y))
     ranking_loss_tensor = torch.stack(ranking_losses)
     # compute best model (minimum ranking loss) for each sample
     best_models = torch.argmin(ranking_loss_tensor, dim=0)
@@ -199,6 +220,7 @@ def compute_rank_weights(
 from botorch.models.gpytorch import GPyTorchModel
 from gpytorch.models import GP
 from gpytorch.distributions import MultivariateNormal
+from gpytorch.lazy import PsdSumLazyTensor
 from gpytorch.likelihoods import LikelihoodList
 from torch.nn import ModuleList
 
@@ -208,7 +230,7 @@ class RGPE(GP, GPyTorchModel):
     Rank-weighted GP ensemble. Note: this class inherits from GPyTorchModel which provides an 
         interface for GPyTorch models in botorch.
     """
-    def __init__(self, models: List[SingleTaskGP], weights: Tensor) -> None:
+    def __init__(self, models, weights):
         super().__init__()
         self.models = ModuleList(models)
         for m in models:
@@ -220,12 +242,9 @@ class RGPE(GP, GPyTorchModel):
         self.weights = weights
         self.to(dtype=weights.dtype, device=weights.device)
         
-    def forward(self, x: Tensor) -> MultivariateNormal:
-        # compute posterior for each model
-        posteriors = [model.posterior(x) for model in self.models]
+    def forward(self, x):
         weighted_means = []
         weighted_covars = []
-        
         # filter model with zero weights
         # weights on covariance matrices are weight**2
         non_zero_weight_indices = (self.weights**2 > 0).nonzero()
@@ -235,18 +254,22 @@ class RGPE(GP, GPyTorchModel):
         
         for non_zero_weight_idx in range(non_zero_weight_indices.shape[0]):
             raw_idx = non_zero_weight_indices[non_zero_weight_idx].item()
-            posterior = posteriors[raw_idx]
+            model = self.models[raw_idx]
+            posterior = model.posterior(x)
+            # unstandardize predictions
+            posterior_mean = posterior.mean.squeeze(-1)*model.Y_std + model.Y_mean
+            posterior_cov = posterior.mvn.lazy_covariance_matrix * model.Y_std.pow(2)
+            # apply weight
             weight = non_zero_weights[non_zero_weight_idx]
-            weighted_means.append(weight * posterior.mean.squeeze(-1))
-            # Use lazy covariance matrix
-            weighted_covars.append(posterior.mvn.lazy_covariance_matrix * weight**2)
+            weighted_means.append(weight * posterior_mean)
+            weighted_covars.append(posterior_cov * weight**2)
         # set mean and covariance to be the rank-weighted sum the means and covariances of the
         # base models and target model
-        mean_x = torch.sum(torch.stack(weighted_means), dim=0)
-        covar_x = gpytorch.lazy.PsdSumLazyTensor(*weighted_covars)
-        return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
+        mean_x = torch.stack(weighted_means).sum(dim=0)
+        covar_x = PsdSumLazyTensor(*weighted_covars)
+        return MultivariateNormal(mean_x, covar_x)
 
-from botorch.acquisition.monte_carlo import qExpectedImprovement
+from botorch.acquisition.monte_carlo import qNoisyExpectedImprovement
 from botorch.sampling.samplers import SobolQMCNormalSampler
 from botorch.optim.optimize import optimize_acqf
 
@@ -257,15 +280,14 @@ warnings.filterwarnings("ignore", "^.*jitter.*", category=RuntimeWarning)
     
 best_rgpe_all = []
 best_random_all = []
-best_vanilla_ei_all = []
-N_BATCH = 5
-INNER_OPTIMIZER_LOOPS = 15
-NUM_POSTERIOR_SAMPLES = 10
-RANDOM_INITIALIZATION_SIZE = 4
+best_vanilla_nei_all = []
+N_BATCH = 10
+NUM_POSTERIOR_SAMPLES = 256
+RANDOM_INITIALIZATION_SIZE = 3
 N_TRIALS = 20
-MC_SAMPLES = 1000
-N_RESTART_CANDIDATES = 100
-N_RESTARTS = 5
+MC_SAMPLES = 512
+N_RESTART_CANDIDATES = 512
+N_RESTARTS = 10
 Q_BATCH_SIZE = 1
 
 # Average over multiple trials
@@ -273,34 +295,47 @@ for trial in range(N_TRIALS):
     print(f"Trial {trial + 1} of {N_TRIALS}")
     best_rgpe = []
     best_random = [] 
-    best_vanilla_ei = []
+    best_vanilla_nei = []
     # Initial random observations
     raw_x = draw_sobol_samples(bounds=BOUNDS, n=RANDOM_INITIALIZATION_SIZE, q=1, seed=trial).squeeze(1)    
     train_x = normalize(raw_x, bounds=BOUNDS)
-    train_y = f(train_x)
-    vanilla_ei_train_x = train_x.clone()
-    vanilla_ei_train_y = train_y.clone()
+    train_y_noiseless = f(raw_x) 
+    train_y = train_y_noiseless + noise_std*torch.randn_like(train_y_noiseless)
+    train_yvar = torch.full_like(train_y, noise_std**2)
+    vanilla_nei_train_x = train_x.clone()
+    vanilla_nei_train_y = train_y.clone()
+    vanilla_nei_train_yvar = train_yvar.clone()
     # keep track of the best observed point at each iteration
     best_value = train_y.max().item()
     best_rgpe.append(best_value)
     best_random.append(best_value)
-    vanilla_ei_best_value = best_value
-    best_vanilla_ei.append(vanilla_ei_best_value)
+    vanilla_nei_best_value = best_value
+    best_vanilla_nei.append(vanilla_nei_best_value)
 
     # Run N_BATCH rounds of BayesOpt after the initial random batch
     for iteration in range(N_BATCH): 
-        target_model = get_fitted_model(train_x, train_y)
+        target_model = get_fitted_model(train_x, train_y, train_yvar)
         model_list = base_model_list + [target_model]
-        rank_weights = compute_rank_weights(train_x, train_y, base_model_list, NUM_POSTERIOR_SAMPLES)
+        rank_weights = compute_rank_weights(
+            train_x, 
+            train_y, 
+            base_model_list, 
+            target_model, 
+            NUM_POSTERIOR_SAMPLES,
+        )
        
         # create model and acquisition function
         rgpe_model = RGPE(model_list, rank_weights)
-        sampler_qei = SobolQMCNormalSampler(num_samples=MC_SAMPLES)
-        qEI = qExpectedImprovement(model=model, best_f=best_value)
+        sampler_qnei = SobolQMCNormalSampler(num_samples=MC_SAMPLES)
+        qNEI = qNoisyExpectedImprovement(
+            model=rgpe_model, 
+            X_baseline=train_x,
+            sampler=sampler_qnei,
+        )
         
         # optimize
         candidate, _ = optimize_acqf(
-            acq_function=qEI,
+            acq_function=qNEI,
             bounds=torch.tensor([[0.],[1.]], dtype=dtype, device=device),
             q=Q_BATCH_SIZE,
             num_restarts=N_RESTARTS,
@@ -309,75 +344,87 @@ for trial in range(N_TRIALS):
 
         # fetch the new values 
         new_x = candidate.detach()
-        new_y = f(unnormalize(new_x, bounds=BOUNDS))
+        new_y_noiseless = f(unnormalize(new_x, bounds=BOUNDS))
+        new_y = new_y_noiseless + noise_std*torch.randn_like(new_y_noiseless)
+        new_yvar = torch.full_like(new_y, noise_std**2)
 
         # update training points
         train_x = torch.cat((train_x, new_x))
         train_y = torch.cat((train_y, new_y))
+        train_yvar = torch.cat((train_yvar, new_yvar))
         random_candidate = torch.rand(1, dtype=dtype, device=device)
-        next_random_best = f(unnormalize(random_candidate, bounds=BOUNDS)).max().item()
+        next_random_noiseless = f(unnormalize(random_candidate, bounds=BOUNDS))
+        next_random = next_random_noiseless + noise_std * torch.randn_like(next_random_noiseless)
+        next_random_best = next_random.max().item()
         best_random.append(max(best_random[-1], next_random_best))
 
         # get the new best observed value
         best_value = train_y.max().item()
         best_rgpe.append(best_value)
 
-        # Run Vanilla EI for comparison
-        vanilla_ei_model = get_fitted_model(vanilla_ei_train_x, vanilla_ei_train_y)
-        vanilla_ei_sampler = SobolQMCNormalSampler(num_samples=MC_SAMPLES)
-        vanilla_qEI = qExpectedImprovement(
-            model=vanilla_ei_model, 
-            best_f=vanilla_ei_best_value, 
-            sampler=vanilla_ei_sampler,
+        # Run Vanilla NEI for comparison
+        vanilla_nei_model = get_fitted_model(
+            vanilla_nei_train_x, 
+            vanilla_nei_train_y, 
+            vanilla_nei_train_yvar,
         )
-        vanilla_ei_candidate, _ = optimize_acqf(
-            acq_function=vanilla_qEI,
+        vanilla_nei_sampler = SobolQMCNormalSampler(num_samples=MC_SAMPLES)
+        vanilla_qNEI = qNoisyExpectedImprovement(
+            model=vanilla_nei_model, 
+            X_baseline=vanilla_nei_train_x,
+            sampler=vanilla_nei_sampler,
+        )
+        vanilla_nei_candidate, _ = optimize_acqf(
+            acq_function=vanilla_qNEI,
             bounds=torch.tensor([[0.],[1.]], dtype=dtype, device=device),
             q=Q_BATCH_SIZE,
             num_restarts=N_RESTARTS,
             raw_samples=N_RESTART_CANDIDATES,
         )
         # fetch the new values 
-        vanilla_ei_new_x = vanilla_ei_candidate.detach()
-        vanilla_ei_new_y = f(unnormalize(vanilla_ei_new_x, bounds=BOUNDS))
+        vanilla_nei_new_x = vanilla_nei_candidate.detach()
+        vanilla_nei_new_y_noiseless = f(unnormalize(vanilla_nei_new_x, bounds=BOUNDS))
+        vanilla_nei_new_y = vanilla_nei_new_y_noiseless + noise_std*torch.randn_like(new_y_noiseless)
+        vanilla_nei_new_yvar = torch.full_like(vanilla_nei_new_y, noise_std**2)
 
         # update training points
-        vanilla_ei_train_x = torch.cat([vanilla_ei_train_x, vanilla_ei_new_x])
-        vanilla_ei_train_y = torch.cat([vanilla_ei_train_y, vanilla_ei_new_y])
+        vanilla_nei_train_x = torch.cat([vanilla_nei_train_x, vanilla_nei_new_x])
+        vanilla_nei_train_y = torch.cat([vanilla_nei_train_y, vanilla_nei_new_y])
+        vanilla_nei_train_yvar = torch.cat([vanilla_nei_train_yvar, vanilla_nei_new_yvar])
 
         # get the new best observed value
-        vanilla_ei_best_value = vanilla_ei_train_y.max().item()
-        best_vanilla_ei.append(vanilla_ei_best_value)
+        vanilla_nei_best_value = vanilla_nei_train_y.max().item()
+        best_vanilla_nei.append(vanilla_nei_best_value)
         
     best_rgpe_all.append(best_rgpe)
     best_random_all.append(best_random)
-    best_vanilla_ei_all.append(best_vanilla_ei)
+    best_vanilla_nei_all.append(best_vanilla_nei)
 
 import numpy as np
 
 best_rgpe_all = np.array(best_rgpe_all)
 best_random_all = np.array(best_random_all)
-best_vanilla_ei_all = np.array(best_vanilla_ei_all)
+best_vanilla_nei_all = np.array(best_vanilla_nei_all)
 
 x = range(RANDOM_INITIALIZATION_SIZE, RANDOM_INITIALIZATION_SIZE + N_BATCH + 1)
 
 fig, ax = plt.subplots(1, 1, figsize=(10, 6))
-# Plot RGPE - EI
+# Plot RGPE - NEI
 ax.errorbar(
     x, 
     best_rgpe_all.mean(axis=0), 
     yerr=1.96 * best_rgpe_all.std(axis=0) / math.sqrt(N_TRIALS), 
-    label="RGPE - EI", 
+    label="RGPE - NEI", 
     linewidth=3, 
     capsize=5,
     capthick=3,
 )
-# Plot SingleTaskGP - EI
+# Plot FixedNoiseGP - NEI
 ax.errorbar(
     x, 
-    best_vanilla_ei_all.mean(axis=0), 
-    yerr=1.96 * best_vanilla_ei_all.std(axis=0) / math.sqrt(N_TRIALS), 
-    label="SingleTaskGP - EI", 
+    best_vanilla_nei_all.mean(axis=0), 
+    yerr=1.96 * best_vanilla_nei_all.std(axis=0) / math.sqrt(N_TRIALS), 
+    label="FixedNoiseGP - NEI", 
     linewidth=3,
     capsize=5,
     capthick=3,
