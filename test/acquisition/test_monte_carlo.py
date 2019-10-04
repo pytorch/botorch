@@ -3,6 +3,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 import warnings
+from unittest import mock
 
 import torch
 from botorch import settings
@@ -330,6 +331,19 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
             bs = acqf.sampler.base_samples.clone()
             acqf(X.expand(2, 1, 1))
             self.assertFalse(torch.equal(acqf.sampler.base_samples, bs))
+
+    def test_prune_baseline(self):
+        prune = "botorch.acquisition.monte_carlo.prune_inferior_points"
+        for dtype in (torch.float, torch.double):
+            X_baseline = torch.zeros(1, 1, device=self.device, dtype=dtype)
+            X_pruned = torch.rand(1, 1, device=self.device, dtype=dtype)
+            mm = MockModel(mock.Mock())
+            with mock.patch(prune, return_value=X_pruned) as mock_prune:
+                acqf = qNoisyExpectedImprovement(
+                    model=mm, X_baseline=X_baseline, prune_baseline=True
+                )
+            mock_prune.assert_called_once()
+            self.assertTrue(torch.equal(acqf.X_baseline, X_pruned))
 
     # TODO: Test different objectives (incl. constraints)
 

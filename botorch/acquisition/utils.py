@@ -6,17 +6,20 @@ r"""
 Utilities for acquisition functions.
 """
 
+import math
 from typing import Callable, Optional
 
+import torch
 from torch import Tensor
 
+from ..exceptions.errors import UnsupportedError
 from ..models.model import Model
 from ..sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
 from ..utils.transforms import squeeze_last_dim
-from . import analytic, monte_carlo
+from . import monte_carlo  # noqa F401
+from . import analytic
 from .acquisition import AcquisitionFunction
-from .monte_carlo import MCAcquisitionFunction
-from .objective import MCAcquisitionObjective
+from .objective import IdentityMCObjective, MCAcquisitionObjective
 
 
 def get_acquisition_function(
@@ -29,7 +32,7 @@ def get_acquisition_function(
     qmc: bool = True,
     seed: Optional[int] = None,
     **kwargs,
-) -> MCAcquisitionFunction:
+) -> "monte_carlo.MCAcquisitionFunction":
     r"""Convenience function for initializing botorch acquisition functions.
 
     Args:
@@ -161,3 +164,67 @@ def is_nonnegative(acq_function: AcquisitionFunction) -> bool:
             monte_carlo.qProbabilityOfImprovement,
         ),
     )
+
+
+def prune_inferior_points(
+    model: Model,
+    X: Tensor,
+    objective: Optional[MCAcquisitionObjective] = None,
+    num_samples: int = 2048,
+    max_frac: float = 1.0,
+) -> Tensor:
+    r"""Prune points from an input tensor that are unlikely to be the best point.
+
+    Given a model, an objective, and an input tensor `X`, this function returns
+    the subset of points in `X` that have some probability of being the best
+    point under the objective. This function uses sampling to estimate the
+    probabilities, the higher the number of points `n` in `X` the higher the
+    number of samples `num_samples` should be to obtain accurate estimates.
+
+    Args:
+        model: A fitted model. Batched models are currently not supported.
+        X: An input tensor of shape `n x d`. Batched inputs are currently not
+            supported.
+        objective: The objective under which to evaluate the posterior.
+        num_samples: The number of samples used to compute empirical
+            probabilities of being the best point.
+        max_frac: The maximum fraction of points to retain. Must satisfy
+            `0 < max_frac <= 1`. Ensures that the number of elements in the
+            returned tensor does not exceed `ceil(max_frac * n)`.
+
+    Returns:
+        A `n' x d` with subset of points in `X`, where
+
+            n' = min(N_nz, ceil(max_frac * n))
+
+        with `N_nz` the number of points in `X` that have non-zero (empirical,
+        under `num_samples` samples) probability of being the best point.
+    """
+    if X.ndim > 2:
+        # TODO: support batched inputs (req. dealing with ragged tensors)
+        raise UnsupportedError(
+            "Batched inputs `X` are currently unsupported by prune_inferior_points"
+        )
+    max_points = math.ceil(max_frac * X.size(-2))
+    if max_points < 1 or max_points > X.size(-2):
+        raise ValueError(f"max_frac must take values in (0, 1], is {max_frac}")
+    sampler = SobolQMCNormalSampler(num_samples=num_samples)
+    with torch.no_grad():
+        posterior = model.posterior(X=X)
+        samples = sampler(posterior)
+    if objective is None:
+        objective = IdentityMCObjective()
+    obj_vals = objective(samples)
+    if obj_vals.ndim > 2:
+        # TODO: support batched inputs (req. dealing with ragged tensors)
+        raise UnsupportedError(
+            "Batched models are currently unsupported by prune_inferior_points"
+        )
+    is_best = torch.argmax(obj_vals, dim=-1)
+    idcs, counts = torch.unique(is_best, return_counts=True)
+
+    if len(idcs) > max_points:
+        counts, order_idcs = torch.sort(counts, descending=True)
+        idcs = order_idcs[:max_points]
+
+    return X[idcs]

@@ -33,6 +33,7 @@ from ..utils.transforms import (
 )
 from .acquisition import AcquisitionFunction
 from .objective import IdentityMCObjective, MCAcquisitionObjective
+from .utils import prune_inferior_points
 
 
 class MCAcquisitionFunction(AcquisitionFunction, ABC):
@@ -175,6 +176,7 @@ class qNoisyExpectedImprovement(MCAcquisitionFunction):
         sampler: Optional[MCSampler] = None,
         objective: Optional[MCAcquisitionObjective] = None,
         X_pending: Optional[Tensor] = None,
+        prune_baseline: bool = False,
     ) -> None:
         r"""q-Noisy Expected Improvement.
 
@@ -191,10 +193,20 @@ class qNoisyExpectedImprovement(MCAcquisitionFunction):
                 points that have been submitted for function evaluation
                 but have not yet been evaluated.  Concatenated into X upon
                 forward call.  Copied and set to have no gradient.
+            prune_baseline: If True, remove points in `X_baseline` that are
+                highly unlikely to be the best point. This can significantly
+                improve performance and is generally recommended. In order to
+                customize pruning parameters, instead manually call
+                `botorch.acquisition.utils.prune_inferior_points` on `X_baseline`
+                before instantiating the acquisition function.
         """
         super().__init__(
             model=model, sampler=sampler, objective=objective, X_pending=X_pending
         )
+        if prune_baseline:
+            X_baseline = prune_inferior_points(
+                model=model, X=X_baseline, objective=objective
+            )
         self.register_buffer("X_baseline", X_baseline)
 
     @concatenate_pending_points
