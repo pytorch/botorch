@@ -32,17 +32,20 @@
 <span class="sd">Utilities for acquisition functions.</span>
 <span class="sd">"""</span>
 
+<span class="kn">import</span> <span class="nn">math</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span>
 
+<span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="k">import</span> <span class="n">Tensor</span>
 
+<span class="kn">from</span> <span class="nn">..exceptions.errors</span> <span class="k">import</span> <span class="n">UnsupportedError</span>
 <span class="kn">from</span> <span class="nn">..models.model</span> <span class="k">import</span> <span class="n">Model</span>
 <span class="kn">from</span> <span class="nn">..sampling.samplers</span> <span class="k">import</span> <span class="n">IIDNormalSampler</span><span class="p">,</span> <span class="n">SobolQMCNormalSampler</span>
 <span class="kn">from</span> <span class="nn">..utils.transforms</span> <span class="k">import</span> <span class="n">squeeze_last_dim</span>
-<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">analytic</span><span class="p">,</span> <span class="n">monte_carlo</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">monte_carlo</span>  <span class="c1"># noqa F401</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">analytic</span>
 <span class="kn">from</span> <span class="nn">.acquisition</span> <span class="k">import</span> <span class="n">AcquisitionFunction</span>
-<span class="kn">from</span> <span class="nn">.monte_carlo</span> <span class="k">import</span> <span class="n">MCAcquisitionFunction</span>
-<span class="kn">from</span> <span class="nn">.objective</span> <span class="k">import</span> <span class="n">MCAcquisitionObjective</span>
+<span class="kn">from</span> <span class="nn">.objective</span> <span class="k">import</span> <span class="n">IdentityMCObjective</span><span class="p">,</span> <span class="n">MCAcquisitionObjective</span>
 
 
 <div class="viewcode-block" id="get_acquisition_function"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.utils.get_acquisition_function">[docs]</a><span class="k">def</span> <span class="nf">get_acquisition_function</span><span class="p">(</span>
@@ -55,7 +58,7 @@
     <span class="n">qmc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCAcquisitionFunction</span><span class="p">:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"monte_carlo.MCAcquisitionFunction"</span><span class="p">:</span>
     <span class="sa">r</span><span class="sd">"""Convenience function for initializing botorch acquisition functions.</span>
 
 <span class="sd">    Args:</span>
@@ -112,6 +115,7 @@
             <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
             <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
             <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
+            <span class="n">prune_baseline</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"prune_baseline"</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
         <span class="p">)</span>
     <span class="k">elif</span> <span class="n">acquisition_function_name</span> <span class="o">==</span> <span class="s2">"qSR"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">monte_carlo</span><span class="o">.</span><span class="n">qSimpleRegret</span><span class="p">(</span>
@@ -187,6 +191,70 @@
             <span class="n">monte_carlo</span><span class="o">.</span><span class="n">qProbabilityOfImprovement</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="prune_inferior_points"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.utils.prune_inferior_points">[docs]</a><span class="k">def</span> <span class="nf">prune_inferior_points</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+    <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCAcquisitionObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2048</span><span class="p">,</span>
+    <span class="n">max_frac</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""Prune points from an input tensor that are unlikely to be the best point.</span>
+
+<span class="sd">    Given a model, an objective, and an input tensor `X`, this function returns</span>
+<span class="sd">    the subset of points in `X` that have some probability of being the best</span>
+<span class="sd">    point under the objective. This function uses sampling to estimate the</span>
+<span class="sd">    probabilities, the higher the number of points `n` in `X` the higher the</span>
+<span class="sd">    number of samples `num_samples` should be to obtain accurate estimates.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        model: A fitted model. Batched models are currently not supported.</span>
+<span class="sd">        X: An input tensor of shape `n x d`. Batched inputs are currently not</span>
+<span class="sd">            supported.</span>
+<span class="sd">        objective: The objective under which to evaluate the posterior.</span>
+<span class="sd">        num_samples: The number of samples used to compute empirical</span>
+<span class="sd">            probabilities of being the best point.</span>
+<span class="sd">        max_frac: The maximum fraction of points to retain. Must satisfy</span>
+<span class="sd">            `0 &lt; max_frac &lt;= 1`. Ensures that the number of elements in the</span>
+<span class="sd">            returned tensor does not exceed `ceil(max_frac * n)`.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A `n' x d` with subset of points in `X`, where</span>
+
+<span class="sd">            n' = min(N_nz, ceil(max_frac * n))</span>
+
+<span class="sd">        with `N_nz` the number of points in `X` that have non-zero (empirical,</span>
+<span class="sd">        under `num_samples` samples) probability of being the best point.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="c1"># TODO: support batched inputs (req. dealing with ragged tensors)</span>
+        <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+            <span class="s2">"Batched inputs `X` are currently unsupported by prune_inferior_points"</span>
+        <span class="p">)</span>
+    <span class="n">max_points</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">max_frac</span> <span class="o">*</span> <span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">max_points</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">max_points</span> <span class="o">&gt;</span> <span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">f</span><span class="s2">"max_frac must take values in (0, 1], is </span><span class="si">{max_frac}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">sampler</span> <span class="o">=</span> <span class="n">SobolQMCNormalSampler</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="n">num_samples</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+        <span class="n">posterior</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">samples</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">objective</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">objective</span> <span class="o">=</span> <span class="n">IdentityMCObjective</span><span class="p">()</span>
+    <span class="n">obj_vals</span> <span class="o">=</span> <span class="n">objective</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">obj_vals</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="c1"># TODO: support batched inputs (req. dealing with ragged tensors)</span>
+        <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+            <span class="s2">"Batched models are currently unsupported by prune_inferior_points"</span>
+        <span class="p">)</span>
+    <span class="n">is_best</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">obj_vals</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">idcs</span><span class="p">,</span> <span class="n">counts</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">is_best</span><span class="p">,</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">idcs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">max_points</span><span class="p">:</span>
+        <span class="n">counts</span><span class="p">,</span> <span class="n">order_idcs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">counts</span><span class="p">,</span> <span class="n">descending</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">idcs</span> <span class="o">=</span> <span class="n">order_idcs</span><span class="p">[:</span><span class="n">max_points</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">X</span><span class="p">[</span><span class="n">idcs</span><span class="p">]</span></div>
 </pre></div>
 </div>
 </div>

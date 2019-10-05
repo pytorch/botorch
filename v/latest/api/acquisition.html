@@ -588,7 +588,7 @@ design points <cite>X</cite>.</p>
 <h3><span class="hidden-section">qNoisyExpectedImprovement</span><a class="headerlink" href="#qnoisyexpectedimprovement" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="botorch.acquisition.monte_carlo.qNoisyExpectedImprovement">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.acquisition.monte_carlo.</code><code class="sig-name descname">qNoisyExpectedImprovement</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">X_baseline</em>, <em class="sig-param">sampler=None</em>, <em class="sig-param">objective=None</em>, <em class="sig-param">X_pending=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/monte_carlo.html#qNoisyExpectedImprovement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.monte_carlo.qNoisyExpectedImprovement" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">botorch.acquisition.monte_carlo.</code><code class="sig-name descname">qNoisyExpectedImprovement</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">X_baseline</em>, <em class="sig-param">sampler=None</em>, <em class="sig-param">objective=None</em>, <em class="sig-param">X_pending=None</em>, <em class="sig-param">prune_baseline=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/monte_carlo.html#qNoisyExpectedImprovement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.monte_carlo.qNoisyExpectedImprovement" title="Permalink to this definition">¶</a></dt>
 <dd><p>MC-based batch Noisy Expected Improvement.</p>
 <p>This function does not assume a <cite>best_f</cite> is known (which would require
 noiseless observations). Instead, it uses samples from the joint posterior
@@ -619,6 +619,12 @@ evaluated. Defaults to <cite>IdentityMCObjective()</cite>.</p></li>
 points that have been submitted for function evaluation
 but have not yet been evaluated.  Concatenated into X upon
 forward call.  Copied and set to have no gradient.</p></li>
+<li><p><strong>prune_baseline</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, remove points in <cite>X_baseline</cite> that are
+highly unlikely to be the best point. This can significantly
+improve performance and is generally recommended. In order to
+customize pruning parameters, instead manually call
+<cite>botorch.acquisition.utils.prune_inferior_points</cite> on <cite>X_baseline</cite>
+before instantiating the acquisition function.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1167,6 +1173,43 @@ is unknown (for custom acquisition functions).</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">is_nonnegative</span><span class="p">(</span><span class="n">qEI</span><span class="p">)</span>  <span class="c1"># returns True</span>
 </pre></div>
 </div>
+</dd></dl>
+<dl class="function">
+<dt id="botorch.acquisition.utils.prune_inferior_points">
+<code class="sig-prename descclassname">botorch.acquisition.utils.</code><code class="sig-name descname">prune_inferior_points</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">X</em>, <em class="sig-param">objective=None</em>, <em class="sig-param">num_samples=2048</em>, <em class="sig-param">max_frac=1.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/utils.html#prune_inferior_points"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.utils.prune_inferior_points" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prune points from an input tensor that are unlikely to be the best point.</p>
+<p>Given a model, an objective, and an input tensor <cite>X</cite>, this function returns
+the subset of points in <cite>X</cite> that have some probability of being the best
+point under the objective. This function uses sampling to estimate the
+probabilities, the higher the number of points <cite>n</cite> in <cite>X</cite> the higher the
+number of samples <cite>num_samples</cite> should be to obtain accurate estimates.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a>) – A fitted model. Batched models are currently not supported.</p></li>
+<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – An input tensor of shape <cite>n x d</cite>. Batched inputs are currently not
+supported.</p></li>
+<li><p><strong>objective</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="#botorch.acquisition.objective.MCAcquisitionObjective" title="botorch.acquisition.objective.MCAcquisitionObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">MCAcquisitionObjective</span></code></a>]) – The objective under which to evaluate the posterior.</p></li>
+<li><p><strong>num_samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of samples used to compute empirical
+probabilities of being the best point.</p></li>
+<li><p><strong>max_frac</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – The maximum fraction of points to retain. Must satisfy
+<cite>0 &lt; max_frac &lt;= 1</cite>. Ensures that the number of elements in the
+returned tensor does not exceed <cite>ceil(max_frac * n)</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><p>A <cite>n’ x d</cite> with subset of points in <cite>X</cite>, where</p>
+<blockquote>
+<div><p>n’ = min(N_nz, ceil(max_frac * n))</p>
+</div></blockquote>
+<p>with <cite>N_nz</cite> the number of points in <cite>X</cite> that have non-zero (empirical,
+under <cite>num_samples</cite> samples) probability of being the best point.</p>
+</p>
+</dd>
+</dl>
 </dd></dl>
 </div>
 </div>
