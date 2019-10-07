@@ -25,6 +25,12 @@ class InputDataWarning(BotorchWarning):
     pass
 
 
+class CostAwareWarning(BotorchWarning):
+    r"""Warning raised in the context of cost-aware acquisition strategies."""
+
+    pass
+
+
 class OptimizationWarning(BotorchWarning):
     r"""Optimization-releated warnings."""
 
