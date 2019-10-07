@@ -144,7 +144,7 @@ class LinearMCObjective(MCAcquisitionObjective):
         """
         if samples.shape[-1] != self.weights.shape[-1]:
             raise RuntimeError("Output shape of samples not equal to that of weights")
-        return torch.einsum("...o, o", [samples, self.weights])
+        return torch.einsum("...m, m", [samples, self.weights])
 
 
 class GenericMCObjective(MCAcquisitionObjective):

@@ -12,6 +12,7 @@ from .analytic import (
     ProbabilityOfImprovement,
     UpperConfidenceBound,
 )
+from .cost_aware import GenericCostAwareUtility, InverseCostWeightedUtility
 from .fixed_feature import FixedFeatureAcquisitionFunction
 from .knowledge_gradient import qKnowledgeGradient
 from .monte_carlo import (
@@ -39,6 +40,8 @@ __all__ = [
     "ConstrainedExpectedImprovement",
     "ExpectedImprovement",
     "FixedFeatureAcquisitionFunction",
+    "GenericCostAwareUtility",
+    "InverseCostWeightedUtility",
     "NoisyExpectedImprovement",
     "OneShotAcquisitionFunction",
     "PosteriorMean",

@@ -9,6 +9,7 @@ from botorch.exceptions.warnings import (
     BadInitialCandidatesWarning,
     BotorchTensorDimensionWarning,
     BotorchWarning,
+    CostAwareWarning,
     InputDataWarning,
     OptimizationWarning,
     SamplingWarning,
@@ -20,6 +21,7 @@ class TestBotorchWarnings(BotorchTestCase):
     def test_botorch_warnings_hierarchy(self):
         self.assertIsInstance(BotorchWarning(), Warning)
         self.assertIsInstance(BadInitialCandidatesWarning(), BotorchWarning)
+        self.assertIsInstance(CostAwareWarning(), BotorchWarning)
         self.assertIsInstance(InputDataWarning(), BotorchWarning)
         self.assertIsInstance(OptimizationWarning(), BotorchWarning)
         self.assertIsInstance(SamplingWarning(), BotorchWarning)
@@ -30,6 +32,7 @@ class TestBotorchWarnings(BotorchTestCase):
             BotorchTensorDimensionWarning,
             BotorchWarning,
             BadInitialCandidatesWarning,
+            CostAwareWarning,
             InputDataWarning,
             OptimizationWarning,
             SamplingWarning,
