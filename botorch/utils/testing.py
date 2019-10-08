@@ -10,6 +10,7 @@ from unittest import TestCase
 import torch
 from torch import Tensor
 
+from .. import settings
 from ..models.model import Model
 from ..posteriors import Posterior
 from ..test_functions.synthetic import SyntheticTestFunction
@@ -29,7 +30,9 @@ class BotorchTestCase(TestCase):
     device = torch.device("cpu")
 
     def setUp(self):
-        warnings.simplefilter("always")
+        warnings.resetwarnings()
+        settings.debug._set_state(False)
+        warnings.simplefilter("always", append=True)
 
 
 class SyntheticTestFunctionBaseTestCase:

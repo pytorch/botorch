@@ -12,24 +12,23 @@ to the GPU running out of memory.
 
 import unittest
 from typing import Union
-from unittest import TestCase, TestSuite
 
 import torch
 from botorch.utils.testing import BotorchTestCase
 
 
 @unittest.skipIf(not torch.cuda.is_available(), "CUDA not available")
-class TestBotorchCUDA(TestCase):
+class TestBotorchCUDA(unittest.TestCase):
     def test_cuda(self):
         tests = unittest.TestLoader().discover(".")
         run_cuda_tests(tests)
 
 
-def run_cuda_tests(tests: Union[TestCase, TestSuite]) -> None:
+def run_cuda_tests(tests: Union[unittest.TestCase, unittest.TestSuite]) -> None:
     """Function for running all tests on cuda (except TestBotorchCUDA itself)"""
     if isinstance(tests, BotorchTestCase):
         tests.device = torch.device("cuda")
         tests.run()
-    elif isinstance(tests, TestSuite):
+    elif isinstance(tests, unittest.TestSuite):
         for tests_ in tests:
             run_cuda_tests(tests_)
