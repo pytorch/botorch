@@ -25,9 +25,9 @@ sudo pip install --upgrade pip
 # Install CPU version to save download size (don't let gpytorch install the full one)
 if [[ $PYTORCH_NIGHLTY == true ]]; then
   sudo pip install --progress-bar off numpy
-  sudo pip install --progress-bar off torch -f https://download.pytorch.org/whl/nightly/cpu/torch.html
+  sudo pip install --progress-bar off torch -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
 else
-  sudo pip install --progress-bar off torch==1.2.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
+  sudo pip install --progress-bar off torch -f https://download.pytorch.org/whl/torch_stable.html
 fi
 
 # install gpytorch master
