@@ -869,6 +869,7 @@ elements in <cite>self.weights</cite>.</p>
 <dt id="botorch.acquisition.objective.MCAcquisitionObjective">
 <em class="property">class </em><code class="sig-prename descclassname">botorch.acquisition.objective.</code><code class="sig-name descname">MCAcquisitionObjective</code><a class="reference internal" href="_modules/botorch/acquisition/objective.html#MCAcquisitionObjective"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.objective.MCAcquisitionObjective" title="Permalink to this definition">¶</a></dt>
 <dd><p>Abstract base class for MC-based objectives.</p>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
 <dl class="method">
 <dt id="botorch.acquisition.objective.MCAcquisitionObjective.forward">
 <em class="property">abstract </em><code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param">samples</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/objective.html#MCAcquisitionObjective.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.objective.MCAcquisitionObjective.forward" title="Permalink to this definition">¶</a></dt>
@@ -908,6 +909,7 @@ values (assuming maximization).</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">objective</span> <span class="o">=</span> <span class="n">identity_objective</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
 </pre></div>
 </div>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
 <dl class="method">
 <dt id="botorch.acquisition.objective.IdentityMCObjective.forward">
 <code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param">samples</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/objective.html#IdentityMCObjective.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.objective.IdentityMCObjective.forward" title="Permalink to this definition">¶</a></dt>

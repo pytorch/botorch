@@ -33,6 +33,7 @@
 <dt id="botorch.models.model.Model">
 <em class="property">class </em><code class="sig-prename descclassname">botorch.models.model.</code><code class="sig-name descname">Model</code><a class="reference internal" href="_modules/botorch/models/model.html#Model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.model.Model" title="Permalink to this definition">¶</a></dt>
 <dd><p>Abstract base class for BoTorch models.</p>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
 <dl class="method">
 <dt id="botorch.models.model.Model.condition_on_observations">
 <code class="sig-name descname">condition_on_observations</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">Y</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model.html#Model.condition_on_observations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.model.Model.condition_on_observations" title="Permalink to this definition">¶</a></dt>
@@ -129,6 +130,7 @@ over <cite>q</cite> points and <cite>m</cite> outputs each.</p>
 <dd><p>Abstract base class for models based on GPyTorch models.</p>
 <p>The easiest way to use this is to subclass a model from a GPyTorch model
 class (e.g. an <cite>ExactGP</cite>) and this <cite>GPyTorchModel</cite>. See e.g. <cite>SingleTaskGP</cite>.</p>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
 <dl class="method">
 <dt id="botorch.models.gpytorch.GPyTorchModel.condition_on_observations">
 <code class="sig-name descname">condition_on_observations</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">Y</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gpytorch.html#GPyTorchModel.condition_on_observations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gpytorch.GPyTorchModel.condition_on_observations" title="Permalink to this definition">¶</a></dt>
@@ -200,6 +202,7 @@ distributions over <cite>q</cite> points. Includes observation noise if
 <dd><p>Base class for batched multi-output GPyTorch models with independent outputs.</p>
 <p>This model should be used when the same training data is used for all outputs.
 Outputs are modeled independently by using a different batch for each output.</p>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
 <dl class="method">
 <dt id="botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel.condition_on_observations">
 <code class="sig-name descname">condition_on_observations</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">Y</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gpytorch.html#BatchedMultiOutputGPyTorchModel.condition_on_observations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel.condition_on_observations" title="Permalink to this definition">¶</a></dt>
@@ -280,6 +283,7 @@ distributions over <cite>q</cite> points and the outputs selected by
 <dd><p>Abstract base class for models based on multi-output GPyTorch models.</p>
 <p>This is meant to be used with a gpytorch ModelList wrapper for independent
 evaluation of submodels.</p>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
 <dl class="method">
 <dt id="botorch.models.gpytorch.ModelListGPyTorchModel.condition_on_observations">
 <code class="sig-name descname">condition_on_observations</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">Y</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gpytorch.html#ModelListGPyTorchModel.condition_on_observations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gpytorch.ModelListGPyTorchModel.condition_on_observations" title="Permalink to this definition">¶</a></dt>
@@ -368,6 +372,7 @@ distributions over <cite>q</cite> points and the outputs selected by
 <dd><p>Abstract base class for multi-task models baed on GPyTorch models.</p>
 <p>This class provides the <cite>posterior</cite> method to models that implement a
 “long-format” multi-task GP in the style of <cite>MultiTaskGP</cite>.</p>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
 <dl class="method">
 <dt id="botorch.models.gpytorch.MultiTaskGPyTorchModel.posterior">
 <code class="sig-name descname">posterior</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">output_indices=None</em>, <em class="sig-param">observation_noise=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gpytorch.html#MultiTaskGPyTorchModel.posterior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gpytorch.MultiTaskGPyTorchModel.posterior" title="Permalink to this definition">¶</a></dt>
