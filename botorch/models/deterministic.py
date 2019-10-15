@@ -94,7 +94,7 @@ class AffineDeterministicModel(DeterministicModel):
                 different offset values for for the `m` different outputs).
         """
         if not a.ndim == 2:
-            raise ValueError("a must be have two dimensions")
+            raise ValueError("a must be two-dimensional")
         if not torch.is_tensor(b):
             b = torch.tensor([b])
         if not b.ndim == 1:
