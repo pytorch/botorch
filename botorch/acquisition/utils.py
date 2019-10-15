@@ -7,7 +7,7 @@ Utilities for acquisition functions.
 """
 
 import math
-from typing import Callable, Optional
+from typing import Callable, Dict, List, Optional
 
 import torch
 from torch import Tensor
@@ -229,3 +229,91 @@ def prune_inferior_points(
         idcs = order_idcs[:max_points]
 
     return X[idcs]
+
+
+def project_to_target_fidelity(
+    X: Tensor, target_fidelities: Optional[Dict[int, float]] = None
+) -> Tensor:
+    r"""Project `X` onto the target set of fidelities.
+
+    This function assumes that the set of feasible fidelities is a box, so
+    projecting here just means setting each fidelity parameter to its target
+    value.
+
+    Args:
+        X: A `batch_shape x q x d`-dim Tensor of with `q` `d`-dim design points
+            for each t-batch.
+        target_fidelities: A dictionary mapping a subset of columns of `X` (the
+            fidelity parameters) to their respective target fidelity value. If
+            omitted, assumes that the last column of X is the fidelity parameter
+            with a target value of 1.0.
+
+    Return:
+        A `batch_shape x q x d`-dim Tensor `X_proj` with fidelity parameters
+            projected to the provided fidelity values.
+    """
+    if target_fidelities is None:
+        target_fidelities = {-1: 1.0}
+    d = X.size(-1)
+    # normalize to positive indices
+    tfs = {k if k >= 0 else d + k: v for k, v in target_fidelities.items()}
+    ones = torch.ones(*X.shape[:-1], device=X.device, dtype=X.dtype)
+    # here we're looping through the feature dimension of X - this could be
+    # slow for large `d`, we should optimize this for that case
+    X_proj = torch.stack(
+        [X[..., i] if i not in tfs else tfs[i] * ones for i in range(d)], dim=-1
+    )
+    return X_proj
+
+
+def expand_trace_observations(
+    X: Tensor, fidelity_dims: Optional[List[int]] = None, num_trace_obs: int = 0
+) -> Tensor:
+    r"""Expand `X` with trace observations.
+
+    Expand a tensor of inputs with "trace observations" that are obtained during
+    the evaluation of the candidate set. This is used in multi-fidelity
+    optimization. It can be though of as augmenting the `q`-batch with additional
+    points that are the expected trace observations.
+
+    Let `f_i` be the `i`-th fidelity parameter. Then this functions assumes that
+    for each element of the q-batch, besides the fidelity `f_i`, we will observe
+    additonal fidelities `f_i1, ..., f_iK`, where `K = num_trace_obs`, during
+    evaluation of the candidate set `X`. Specifically, this function assumes
+    that `f_ij = (K-j) / (num_trace_obs + 1) * f_i` for all `i`. That is, the
+    expansion is performed in parallel for all fidelities (it does not expand
+    out all possible combinations).
+
+    Args:
+        X: A `batch_shape x q x d`-dim Tensor of with `q` `d`-dim design points
+            (incl. the fidelity parameters) for each t-batch.
+        fidelity_dims: The indices of the fidelity parameters. If omitted,
+            assumes that the last column of X contains the fidelity parameters.
+        num_trace_obs: The number of trace observations to use.
+
+    Return:
+        A `batch_shape x (q + num_trace_obs x q) x d` Tensor `X_expanded` that
+            expands `X` with trace observations.
+    """
+    if num_trace_obs == 0:  # No need to expand if we don't use trace observations
+        return X
+
+    if fidelity_dims is None:
+        fidelity_dims = [-1]
+
+    # The general strategy in the following is to expand `X` to the desired
+    # shape, and then multiply it (point-wise) with a tensor of scaling factors
+    reps = [1] * (X.ndim - 2) + [1 + num_trace_obs, 1]
+    X_expanded = X.repeat(*reps)  # batch_shape x (q + num_trace_obs x q) x d
+    scale_fac = torch.ones_like(X_expanded)
+    s_pad = 1 / (num_trace_obs + 1)
+    # tensor of  num_trace_obs scaling factors equally space between 1-s_pad and s_pad
+    sf = torch.linspace(1 - s_pad, s_pad, num_trace_obs, device=X.device, dtype=X.dtype)
+    # repeat each element q times
+    q = X.size(-2)
+    sf = torch.repeat_interleave(sf, q)  # num_trace_obs * q
+    # now expand this to num_trace_obs x q x num_fidelities
+    sf = sf.unsqueeze(-1).expand(X_expanded.size(-2) - q, len(fidelity_dims))
+    # change relevant emtries of the scaling tensor
+    scale_fac[..., q:, fidelity_dims] = sf
+    return scale_fac * X_expanded
