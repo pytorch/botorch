@@ -33,7 +33,7 @@
 <span class="sd">"""</span>
 
 <span class="kn">import</span> <span class="nn">math</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="k">import</span> <span class="n">Tensor</span>
@@ -255,6 +255,94 @@
         <span class="n">idcs</span> <span class="o">=</span> <span class="n">order_idcs</span><span class="p">[:</span><span class="n">max_points</span><span class="p">]</span>
 
     <span class="k">return</span> <span class="n">X</span><span class="p">[</span><span class="n">idcs</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="project_to_target_fidelity"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.utils.project_to_target_fidelity">[docs]</a><span class="k">def</span> <span class="nf">project_to_target_fidelity</span><span class="p">(</span>
+    <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">target_fidelities</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""Project `X` onto the target set of fidelities.</span>
+
+<span class="sd">    This function assumes that the set of feasible fidelities is a box, so</span>
+<span class="sd">    projecting here just means setting each fidelity parameter to its target</span>
+<span class="sd">    value.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        X: A `batch_shape x q x d`-dim Tensor of with `q` `d`-dim design points</span>
+<span class="sd">            for each t-batch.</span>
+<span class="sd">        target_fidelities: A dictionary mapping a subset of columns of `X` (the</span>
+<span class="sd">            fidelity parameters) to their respective target fidelity value. If</span>
+<span class="sd">            omitted, assumes that the last column of X is the fidelity parameter</span>
+<span class="sd">            with a target value of 1.0.</span>
+
+<span class="sd">    Return:</span>
+<span class="sd">        A `batch_shape x q x d`-dim Tensor `X_proj` with fidelity parameters</span>
+<span class="sd">            projected to the provided fidelity values.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">target_fidelities</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">target_fidelities</span> <span class="o">=</span> <span class="p">{</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">}</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># normalize to positive indices</span>
+    <span class="n">tfs</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span> <span class="k">if</span> <span class="n">k</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">d</span> <span class="o">+</span> <span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">target_fidelities</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+    <span class="n">ones</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="c1"># here we're looping through the feature dimension of X - this could be</span>
+    <span class="c1"># slow for large `d`, we should optimize this for that case</span>
+    <span class="n">X_proj</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tfs</span> <span class="k">else</span> <span class="n">tfs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">ones</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">d</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">X_proj</span></div>
+
+
+<div class="viewcode-block" id="expand_trace_observations"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.utils.expand_trace_observations">[docs]</a><span class="k">def</span> <span class="nf">expand_trace_observations</span><span class="p">(</span>
+    <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">fidelity_dims</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">num_trace_obs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""Expand `X` with trace observations.</span>
+
+<span class="sd">    Expand a tensor of inputs with "trace observations" that are obtained during</span>
+<span class="sd">    the evaluation of the candidate set. This is used in multi-fidelity</span>
+<span class="sd">    optimization. It can be though of as augmenting the `q`-batch with additional</span>
+<span class="sd">    points that are the expected trace observations.</span>
+
+<span class="sd">    Let `f_i` be the `i`-th fidelity parameter. Then this functions assumes that</span>
+<span class="sd">    for each element of the q-batch, besides the fidelity `f_i`, we will observe</span>
+<span class="sd">    additonal fidelities `f_i1, ..., f_iK`, where `K = num_trace_obs`, during</span>
+<span class="sd">    evaluation of the candidate set `X`. Specifically, this function assumes</span>
+<span class="sd">    that `f_ij = (K-j) / (num_trace_obs + 1) * f_i` for all `i`. That is, the</span>
+<span class="sd">    expansion is performed in parallel for all fidelities (it does not expand</span>
+<span class="sd">    out all possible combinations).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        X: A `batch_shape x q x d`-dim Tensor of with `q` `d`-dim design points</span>
+<span class="sd">            (incl. the fidelity parameters) for each t-batch.</span>
+<span class="sd">        fidelity_dims: The indices of the fidelity parameters. If omitted,</span>
+<span class="sd">            assumes that the last column of X contains the fidelity parameters.</span>
+<span class="sd">        num_trace_obs: The number of trace observations to use.</span>
+
+<span class="sd">    Return:</span>
+<span class="sd">        A `batch_shape x (q + num_trace_obs x q) x d` Tensor `X_expanded` that</span>
+<span class="sd">            expands `X` with trace observations.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">num_trace_obs</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># No need to expand if we don't use trace observations</span>
+        <span class="k">return</span> <span class="n">X</span>
+
+    <span class="k">if</span> <span class="n">fidelity_dims</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">fidelity_dims</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="c1"># The general strategy in the following is to expand `X` to the desired</span>
+    <span class="c1"># shape, and then multiply it (point-wise) with a tensor of scaling factors</span>
+    <span class="n">reps</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="p">[</span><span class="mi">1</span> <span class="o">+</span> <span class="n">num_trace_obs</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">X_expanded</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="o">*</span><span class="n">reps</span><span class="p">)</span>  <span class="c1"># batch_shape x (q + num_trace_obs x q) x d</span>
+    <span class="n">scale_fac</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">X_expanded</span><span class="p">)</span>
+    <span class="n">s_pad</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="n">num_trace_obs</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># tensor of  num_trace_obs scaling factors equally space between 1-s_pad and s_pad</span>
+    <span class="n">sf</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">s_pad</span><span class="p">,</span> <span class="n">s_pad</span><span class="p">,</span> <span class="n">num_trace_obs</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="c1"># repeat each element q times</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">sf</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">repeat_interleave</span><span class="p">(</span><span class="n">sf</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span>  <span class="c1"># num_trace_obs * q</span>
+    <span class="c1"># now expand this to num_trace_obs x q x num_fidelities</span>
+    <span class="n">sf</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">X_expanded</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">q</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">fidelity_dims</span><span class="p">))</span>
+    <span class="c1"># change relevant emtries of the scaling tensor</span>
+    <span class="n">scale_fac</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">q</span><span class="p">:,</span> <span class="n">fidelity_dims</span><span class="p">]</span> <span class="o">=</span> <span class="n">sf</span>
+    <span class="k">return</span> <span class="n">scale_fac</span> <span class="o">*</span> <span class="n">X_expanded</span></div>
 </pre></div>
 </div>
 </div>

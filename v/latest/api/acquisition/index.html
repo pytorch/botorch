@@ -1088,6 +1088,43 @@ weighted by feasibility (assuming maximization).</p>
 <span id="botorch-acquisition-utils"></span><h2>botorch.acquisition.utils<a class="headerlink" href="#module-botorch.acquisition.utils" title="Permalink to this headline">¶</a></h2>
 <p>Utilities for acquisition functions.</p>
 <dl class="function">
+<dt id="botorch.acquisition.utils.expand_trace_observations">
+<code class="sig-prename descclassname">botorch.acquisition.utils.</code><code class="sig-name descname">expand_trace_observations</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">fidelity_dims=None</em>, <em class="sig-param">num_trace_obs=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/utils.html#expand_trace_observations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.utils.expand_trace_observations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Expand <cite>X</cite> with trace observations.</p>
+<p>Expand a tensor of inputs with “trace observations” that are obtained during
+the evaluation of the candidate set. This is used in multi-fidelity
+optimization. It can be though of as augmenting the <cite>q</cite>-batch with additional
+points that are the expected trace observations.</p>
+<p>Let <cite>f_i</cite> be the <cite>i</cite>-th fidelity parameter. Then this functions assumes that
+for each element of the q-batch, besides the fidelity <cite>f_i</cite>, we will observe
+additonal fidelities <cite>f_i1, …, f_iK</cite>, where <cite>K = num_trace_obs</cite>, during
+evaluation of the candidate set <cite>X</cite>. Specifically, this function assumes
+that <cite>f_ij = (K-j) / (num_trace_obs + 1) * f_i</cite> for all <cite>i</cite>. That is, the
+expansion is performed in parallel for all fidelities (it does not expand
+out all possible combinations).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x q x d</cite>-dim Tensor of with <cite>q</cite> <cite>d</cite>-dim design points
+(incl. the fidelity parameters) for each t-batch.</p></li>
+<li><p><strong>fidelity_dims</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]) – The indices of the fidelity parameters. If omitted,
+assumes that the last column of X contains the fidelity parameters.</p></li>
+<li><p><strong>num_trace_obs</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of trace observations to use.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>A <cite>batch_shape x (q + num_trace_obs x q) x d</cite> Tensor <cite>X_expanded</cite> that</dt><dd><p>expands <cite>X</cite> with trace observations.</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="function">
 <dt id="botorch.acquisition.utils.get_acquisition_function">
 <code class="sig-prename descclassname">botorch.acquisition.utils.</code><code class="sig-name descname">get_acquisition_function</code><span class="sig-paren">(</span><em class="sig-param">acquisition_function_name</em>, <em class="sig-param">model</em>, <em class="sig-param">objective</em>, <em class="sig-param">X_observed</em>, <em class="sig-param">X_pending=None</em>, <em class="sig-param">mc_samples=500</em>, <em class="sig-param">qmc=True</em>, <em class="sig-param">seed=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/utils.html#get_acquisition_function"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.utils.get_acquisition_function" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convenience function for initializing botorch acquisition functions.</p>
@@ -1175,6 +1212,36 @@ is unknown (for custom acquisition functions).</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">is_nonnegative</span><span class="p">(</span><span class="n">qEI</span><span class="p">)</span>  <span class="c1"># returns True</span>
 </pre></div>
 </div>
+</dd></dl>
+<dl class="function">
+<dt id="botorch.acquisition.utils.project_to_target_fidelity">
+<code class="sig-prename descclassname">botorch.acquisition.utils.</code><code class="sig-name descname">project_to_target_fidelity</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">target_fidelities=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/utils.html#project_to_target_fidelity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.utils.project_to_target_fidelity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Project <cite>X</cite> onto the target set of fidelities.</p>
+<p>This function assumes that the set of feasible fidelities is a box, so
+projecting here just means setting each fidelity parameter to its target
+value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x q x d</cite>-dim Tensor of with <cite>q</cite> <cite>d</cite>-dim design points
+for each t-batch.</p></li>
+<li><p><strong>target_fidelities</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]]) – A dictionary mapping a subset of columns of <cite>X</cite> (the
+fidelity parameters) to their respective target fidelity value. If
+omitted, assumes that the last column of X is the fidelity parameter
+with a target value of 1.0.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>A <cite>batch_shape x q x d</cite>-dim Tensor <cite>X_proj</cite> with fidelity parameters</dt><dd><p>projected to the provided fidelity values.</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
 </dd></dl>
 <dl class="function">
 <dt id="botorch.acquisition.utils.prune_inferior_points">
