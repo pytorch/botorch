@@ -155,13 +155,12 @@ class TestModelListGP(BotorchTestCase):
             self.assertIsInstance(posterior, GPyTorchPosterior)
             self.assertIsInstance(posterior.mvn, MultitaskMultivariateNormal)
 
-            # TODO: Add test back in once gpytorch > 0.3.5 is released
-            # # test output_indices
-            # posterior = model.posterior(
-            #     test_x, output_indices=[0], observation_noise=True
-            # )
-            # self.assertIsInstance(posterior, GPyTorchPosterior)
-            # self.assertIsInstance(posterior.mvn, MultivariateNormal)
+            # test output_indices
+            posterior = model.posterior(
+                test_x, output_indices=[0], observation_noise=True
+            )
+            self.assertIsInstance(posterior, GPyTorchPosterior)
+            self.assertIsInstance(posterior.mvn, MultivariateNormal)
 
             # test condition_on_observations
             f_x = torch.rand(2, 1, **tkwargs)
