@@ -147,6 +147,22 @@ For more details see our [Documentation](https://botorch.org/docs/introduction) 
   ```
 
 
+## Citing BoTorch
+
+If you use BoTorch, please cite the following paper:
+> [M. Balandat, B. Karrer, D. R. Jiang, S. Daulton, B. Letham, A. G. Wilson, and E. Bakshy. BoTorch: Programmable Bayesian Optimization in PyTorch. ArXiv e-prints, 2019.](http://arxiv.org/abs/1910.06403)
+
+```
+@article{balandat2019botorch,
+  Author = {Balandat, Maximilian and Karrer, Brian and Jiang, Daniel R. and Daulton, Samuel and Letham, Benjamin and Wilson, Andrew Gordon and Bakshy, Eytan},
+  Journal = {arxiv e-prints},
+  Title = {{BoTorch: Programmable Bayesian Optimization in PyTorch}},
+  Year = {2019},
+  url = {http://arxiv.org/abs/1910.06403}
+}
+```
+
+
 ## Contributing
 See the [CONTRIBUTING](CONTRIBUTING.md) file for how to help out.
 
