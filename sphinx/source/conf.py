@@ -75,7 +75,11 @@ exclude_patterns = []
 pygments_style = "sphinx"
 
 # Default options for autodoc directives. Applied to all autodoc directives
-autodoc_default_options = {}
+autodoc_default_options = {
+    "undoc-members": True,
+    "show-inheritance": True,
+    "member-order": "bysource",
+}
 
 # Inlcude init docstrings into body of autoclass directives
 autoclass_content = "both"

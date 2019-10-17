@@ -1,31 +1,33 @@
 .. role:: hidden
     :class: hidden-section
 
+
 botorch.utils
-===================================
+========================================================
 .. automodule:: botorch.utils
-.. currentmodule:: botorch.utils
 
 
-botorch.utils.constraints
-----------------------------
+Constraints
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.utils.constraints
 		:members:
 
-
-botorch.utils.objective
-----------------------------
+Objective
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.utils.objective
 		:members:
 
-
-botorch.utils.sampling
-----------------------------
+Sampling
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.utils.sampling
 		:members:
 
+Testing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.utils.testing
+		:members:
 
-botorch.utils.transforms
-----------------------------
+Transformations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.utils.transforms
 		:members:

@@ -10,8 +10,8 @@ from typing import Optional
 
 import torch
 from botorch.exceptions import UnsupportedError
-from botorch.models.fidelity_kernels.downsampling_kernel import DownsamplingKernel
-from botorch.models.fidelity_kernels.exponential_decay_kernel import ExpDecayKernel
+from botorch.models.fidelity_kernels.downsampling import DownsamplingKernel
+from botorch.models.fidelity_kernels.exponential_decay import ExponentialDecayKernel
 from botorch.models.fidelity_kernels.linear_truncated_fidelity import (
     LinearTruncatedFidelityKernel,
 )
@@ -27,15 +27,14 @@ from ..gp_regression import SingleTaskGP
 class SingleTaskMultiFidelityGP(SingleTaskGP):
     r"""A single task multi-fidelity GP model.
 
-    A sub-class of SingleTaskGP model. By default the last two dimensions of train_X
+    A sub-class of SingleTaskGP model. By default the last two input dimensions
     are the fidelity parameters: training iterations, training data points.
-    The kernel comes from this paper `https://arxiv.org/abs/1903.04703`
+    The kernel comes from this paper https://arxiv.org/abs/1903.04703
 
     Args:
-        train_X: A `n x (d + s)` or `batch_shape x n x (d + s) ` (batch mode) tensor
-            of training features, s is the dimension of the fidelity parameters.
-        train_Y: A `n x m` or `batch_shape x n x m` (batch mode) tensor of
-            training observations.
+        train_X: A `batch_shape x n x (d + s) ` tensor of training features,
+            where `s` is the dimension of the fidelity parameters.
+        train_Y: A `batch_shape x n x m` tensor of training observations.
         train_iteration_fidelity: An indicator of whether we have the training
             iteration fidelity variable.
         train_data_fidelity: An indicator of whether we have the downsampling
@@ -43,10 +42,10 @@ class SingleTaskMultiFidelityGP(SingleTaskGP):
             are both True, the last and second last columns are treated as the
             training data points fidelity parameter and training iteration
             number fidelity parameter respectively. Otherwise the last column of
-            train_X is treated as the fidelity parameter with True indicator.
-            We assume train_X has at least one fidelity parameter.
-        likelihood: A likelihood. If omitted, use a standard
-            GaussianLikelihood with inferred noise level.
+            `train_X` is treated as the fidelity parameter with True indicator.
+            We assume that `train_X` has at least one fidelity parameter.
+        likelihood: A likelihood. If omitted, use a standard GaussianLikelihood
+            with inferred noise level.
 
     Example:
         >>> train_X = torch.rand(20, 4)
@@ -72,7 +71,7 @@ class SingleTaskMultiFidelityGP(SingleTaskGP):
             lengthscale_prior=GammaPrior(3.0, 6.0),
             active_dims=active_dimsX,
         )
-        exp_kernel = ExpDecayKernel(
+        exp_kernel = ExponentialDecayKernel(
             batch_shape=self._aug_batch_shape,
             lengthscale_prior=GammaPrior(3.0, 6.0),
             offset_prior=GammaPrior(3.0, 6.0),
@@ -111,14 +110,13 @@ class SingleTaskMultiFidelityGP(SingleTaskGP):
 class SingleTaskGPLTKernel(SingleTaskGP):
     r"""A single task multi-fidelity GP model wiht Linear Truncated kernel.
 
-    A sub-class of SingleTaskGP model. By default the last two dimensions of train_X
+    A sub-class of SingleTaskGP model. By default the last two input dimensions
     are the fidelity parameters: training iterations, training data points.
 
     Args:
-        train_X: A `n x (d + s)` or `batch_shape x n x (d + s) ` (batch mode) tensor
-            of training features, s is the dimension of the fidelity parameters.
-        train_Y: A `n x m` or `batch_shape x n x m` (batch mode) tensor of
-            training observations.
+        train_X: A `batch_shape x n x (d + s) ` tensor of training features,
+            where `s` is the dimension of the fidelity parameters.
+        train_Y: A `batch_shape x n x m` tensor of training observations.
         dimension: The dimension of `x`.
         nu: The smoothness parameter fo Matern kernel: either 1/2, 3/2, or 5/2.
             Default: '2.5'
@@ -130,7 +128,7 @@ class SingleTaskGPLTKernel(SingleTaskGP):
             training data points fidelity parameter and training iteration
             number fidelity parameter respectively. Otherwise the last column of
             train_X is treated as the fidelity parameter with True indicator.
-            We assume train_X has at least one fidelity parameter.
+            We assume that `train_X` has at least one fidelity parameter.
         likelihood: A likelihood. If omitted, use a standard
             GaussianLikelihood with inferred noise level.
 
