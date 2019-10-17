@@ -3,147 +3,75 @@
 
 
 botorch.acquisition
-===============================
+========================================================
+.. automodule:: botorch.acquisition
 
 
-:hidden:`botorch.acquisition.acquisition`
------------------------------------------
+Acquisition Function APIs
+-------------------------------------------
+
+Abstract Acquisition Function APIs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.acquisition.acquisition
+    :members:
 
-:hidden:`AcquisitionFunction`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: AcquisitionFunction
-   :members:
-
-
-
-botorch.acquisition.analytic
-----------------------------
-Analytic acquisition functions (not using (q-)MC sampling).
-
-.. automodule:: botorch.acquisition.analytic
-
-:hidden:`AnalyticAcquisitionFunction`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Analytic Acquisition Function API
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. currentmodule:: botorch.acquisition.analytic
 .. autoclass:: AnalyticAcquisitionFunction
-   :members:
+    :members:
 
-:hidden:`ExpectedImprovement`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: ExpectedImprovement
-   :members:
-
-:hidden:`PosteriorMean`
-~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: PosteriorMean
-   :members:
-
-:hidden:`ProbabilityOfImprovement`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: ProbabilityOfImprovement
-   :members:
-
-:hidden:`UpperConfidenceBound`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: UpperConfidenceBound
-   :members:
-
-:hidden:`ConstrainedExpectedImprovement`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: ConstrainedExpectedImprovement
-   :members:
-
-:hidden:`NoisyExpectedImprovement`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: NoisyExpectedImprovement
-   :members:
-
-
-botorch.acquisition.fixed_feature
----------------------------------
-Derived Acquisition Function for fixing features during optimization.
-
-.. automodule:: botorch.acquisition.fixed_feature
-
-:hidden:`FixedFeatureAcquisitionFunction`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: FixedFeatureAcquisitionFunction
-  :members:
-
-
-botorch.acquisition.monte_carlo
--------------------------------
-.. automodule:: botorch.acquisition.monte_carlo
-
-:hidden:`MCAcquisitionFunction`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Monte-Carlo Acquisition Function API
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. currentmodule:: botorch.acquisition.monte_carlo
 .. autoclass:: MCAcquisitionFunction
-   :members:
-
-:hidden:`qExpectedImprovement`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: qExpectedImprovement
-   :members:
-
-:hidden:`qNoisyExpectedImprovement`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: qNoisyExpectedImprovement
-   :members:
-
-:hidden:`qProbabilityOfImprovement`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: qProbabilityOfImprovement
-   :members:
-
-:hidden:`qSimpleRegret`
-~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: qSimpleRegret
-   :members:
-
-:hidden:`qUpperConfidenceBound`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: qUpperConfidenceBound
-   :members:
+    :members:
 
 
-botorch.acquisition.objective
------------------------------
+Acquisition Functions
+-------------------------------------------
+
+Analytic Acquisition Functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.acquisition.analytic
+    :members:
+    :exclude-members: AnalyticAcquisitionFunction
+
+Monte-Carlo Acquisition Functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.acquisition.monte_carlo
+    :members:
+    :exclude-members: MCAcquisitionFunction
+
+The One-Shot Knowledge Gradient
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.acquisition.knowledge_gradient
+    :members:
+
+
+Objectives and Cost-Aware Utilities
+-------------------------------------------
+
+Objectives
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.acquisition.objective
+    :members:
+
+Cost-Aware Utility
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.acquisition.cost_aware
+    :members:
 
 
-:hidden:`ScalarizedObjective`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: ScalarizedObjective
-   :members:
+Utilities
+-------------------------------------------
 
-:hidden:`MCAcquisitionObjective`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: MCAcquisitionObjective
-   :members:
+Fixed Feature Acquisition Function
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.acquisition.fixed_feature
+    :members:
 
-:hidden:`IdentityMCObjective`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: IdentityMCObjective
-   :members:
-
-:hidden:`LinearMCObjective`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: LinearMCObjective
-   :members:
-
-:hidden:`GenericMCObjective`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: GenericMCObjective
-  :members:
-
-:hidden:`ConstrainedMCObjective`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: ConstrainedMCObjective
- :members:
-
-
-
-botorch.acquisition.utils
--------------------------
+General Utilities for Acquisition Functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.acquisition.utils
-   :members:
+    :members:

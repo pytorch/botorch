@@ -11,35 +11,28 @@ from gpytorch.priors import Prior
 from torch import Tensor
 
 
-class ExpDecayKernel(Kernel):
-    r"""
+class ExponentialDecayKernel(Kernel):
+    r"""GPyTorch Exponential Decay Kernel
+
     Computes a covariance matrix based on the exponential decay kernel
-    between inputs :math:`\mathbf{x_1}` and :math:`\mathbf{x_2}` (we expect d = 1):
+    between inputs `x_1` and `x_2` (we expect `d = 1`):
 
-    .. math::
-        \begin{equation*}
-            k_\text{expdecay}(\mathbf{x_1}, \mathbf{x_2}) = w +
-            \frac{\beta^{\alpha}}{(\mathbf{x_1} + \mathbf{x_2} + \beta)^{\alpha}}.
-        \end{equation*}
+        K(x_1, x_2) = w + beta^alpha / (x_1 + x_2 + beta)^alpha.
 
-    where
+    where `w` is anoffset parameter, `beta` is a lenthscale parameter, and
+    `alpha` is a power parameter
 
-    * :math:`w` is an :attr:`offset` parameter, `\beta` is an :attr:'lenthscale'
-            parameter `\alpha` is an :attr:`power` parameter
     Args:
-        :attr:`lengthscale_constraint` (Constraint, optional):
-            Constraint to place on lengthscale parameter. Default: `Positive`.
-        :attr:`lengthscale_prior` (:class:`gpytorch.priors.Prior`):
-            Prior over the lengthscale parameter (default `None`).
-        :attr:`power_constraint` (Constraint, optional):
-            Constraint to place on power parameter. Default: `Positive`.
-        :attr:`power_prior` (:class:`gpytorch.priors.Prior`):
-            Prior over the power parameter (default `None`).
-        :attr:`offset_constraint` (Constraint, optional):
-            Constraint to place on offset parameter. Default: `Positive`.
-        :attr:`active_dims` (list):
-            List of data dimensions to operate on.
-            `len(active_dims)` should equal `num_dimensions`.
+        lengthscale_constraint: Constraint to place on lengthscale parameter.
+            Default is `Positive`.
+        lengthscale_prior: Prior over the lengthscale parameter.
+        power_constraint: Constraint to place on power parameter. Default is
+            `Positive`.
+        power_prior: Prior over the power parameter.
+        offset_constraint: Constraint to place on offset parameter. Default is
+            `Positive`.
+        active_dims: List of data dimensions to operate on. `len(active_dims)`
+            should equal `num_dimensions`.
     """
 
     def __init__(

@@ -1,77 +1,84 @@
 .. role:: hidden
     :class: hidden-section
 
-botorch.models
-==============
-.. automodule:: botorch.models
-.. currentmodule:: botorch.models
 
+botorch.models
+========================================================
+.. automodule:: botorch.models
+
+
+Model APIs
+-------------------------------------------
 
 Abstract Model API
-------------------
-.. currentmodule:: botorch.models.model
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.model
+    :members:
 
-:hidden:`Model`
-~~~~~~~~~~~~~~~
-.. autoclass:: Model
-   :members:
+GPyTorch Model API
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.gpytorch
+    :members:
 
-:hidden:`GPyTorchModel`
-~~~~~~~~~~~~~~~~~~~~~~~
-.. currentmodule:: botorch.models.gpytorch
-.. autoclass:: GPyTorchModel
-   :members:
+Deterministic Model API
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.deterministic
+    :members:
 
-:hidden:`BatchedMultiOutputGPyTorchModel`
+
+Models
+-------------------------------------------
+
+Cost Models (for cost-aware optimization)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: BatchedMultiOutputGPyTorchModel
-  :members:
+.. automodule:: botorch.models.cost
+    :members:
 
-:hidden:`ModelListGPyTorchModel`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: ModelListGPyTorchModel
-  :members:
+GP Regression Models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.gp_regression
+    :members:
 
-:hidden:`MultiTaskGPyTorchModel`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: MultiTaskGPyTorchModel
-  :members:
+Model List GP Regression Models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.model_list_gp_regression
+    :members:
+
+Multitask GP Models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.multitask
+    :members:
 
 
-GPyTorch Regression Models
---------------------------
-.. currentmodule:: botorch.models.gp_regression
+Utilities
+-------------------------------------------
 
-:hidden:`SingleTaskGP`
-~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: SingleTaskGP
-  :members:
-  :exclude-members: forward
+Model Conversion
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.converter
+    :members:
 
-:hidden:`FixedNoiseGP`
-~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: FixedNoiseGP
-  :members:
+Other Utilties
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.utils
+    :members:
 
-:hidden:`HeteroskedasticSingleTaskGP`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: HeteroskedasticSingleTaskGP
-  :members:
 
-:hidden:`ModelListGP`
-~~~~~~~~~~~~~~~~~~~~~~~
-.. currentmodule:: botorch.models.model_list_gp_regression
-.. autoclass:: ModelListGP
-  :members:
+Multi-Fidelity Functionality
+-------------------------------------------
 
-:hidden:`MultiTaskGP`
-~~~~~~~~~~~~~~~~~~~~~
-.. currentmodule:: botorch.models.multitask
-.. autoclass:: MultiTaskGP
-  :members:
+Multi-Fidelity Models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.fidelity.gp_regression_fidelity
+    :members:
 
-:hidden:`FixedNoiseMultiTaskGP`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. currentmodule:: botorch.models.multitask
-.. autoclass:: FixedNoiseMultiTaskGP
-   :members:
+Multi-Fidelity Kernels
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.fidelity_kernels.downsampling
+.. autoclass:: DownsamplingKernel
+
+.. automodule:: botorch.models.fidelity_kernels.exponential_decay
+.. autoclass:: ExponentialDecayKernel
+
+.. automodule:: botorch.models.fidelity_kernels.linear_truncated_fidelity
+.. autoclass:: LinearTruncatedFidelityKernel

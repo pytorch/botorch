@@ -1,38 +1,46 @@
 .. role:: hidden
     :class: hidden-section
 
+
 botorch.optim
-=============
+========================================================
 .. automodule:: botorch.optim
-.. currentmodule:: botorch.optim
 
 
-botorch.optim.fit
------------------
-.. automodule:: botorch.optim.fit
-   :members:
+Optimization
+-------------------------------------------
 
-botorch.optim.initializers
---------------------------
-.. automodule:: botorch.optim.initializers
-   :members:
-
-botorch.optim.numpy_converter
------------------------------
-.. automodule:: botorch.optim.numpy_converter
-   :members:
-
-botorch.optim.optimize
-----------------------
+Acquisition Function Optimization
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.optim.optimize
-   :members:
+    :members:
 
-botorch.optim.parameter_constraints
------------------------------------
+Model Fitting Optimization
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.optim.fit
+    :members:
+    :exclude-members: OptimizationIteration
+
+Initialization Helpers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.optim.initializers
+    :members:
+
+
+Utilities
+-------------------------------------------
+
+Numpy - Torch Conversion Tools
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.optim.numpy_converter
+    :members:
+
+Parameter Constraint Utilities
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.optim.parameter_constraints
-   :members:
+    :members:
 
-botorch.optim.utils
--------------------
+General Optimization Utilities
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.optim.utils
-   :members:
+    :members:

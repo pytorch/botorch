@@ -12,30 +12,24 @@ from torch import Tensor
 
 
 class DownsamplingKernel(Kernel):
-    r"""
-    Computes a covariance matrix based on the down sampling kernel
-    between inputs :math:`\mathbf{x_1}` and :math:`\mathbf{x_2}` (we expect 'd = 1'):
+    r"""GPyTorch Downsampling Kernel.
 
-    .. math::
-        \begin{equation*}
-            k_\text{ds}(\mathbf{x_1}, \mathbf{x_2}) = c +
-            (1 - \mathbf{x_1})^{1 + \delta} * (1 - \mathbf{x_2})^{1 + \delta}.
-        \end{equation*}
+    Computes a covariance matrix based on the down sampling kernel between
+    inputs `x_1` and `x_2` (we expect `d = 1`):
 
-    where
+        K(\mathbf{x_1}, \mathbf{x_2}) = c + (1 - x_1)^(1 + delta) *
+            (1 - x_2)^(1 + delta).
 
-    * :math:`c` is an :attr:`offset` parameter,
-            `\delta` is an :attr:`power` parameter
+    where `c` is an offset parameter, and `delta` is a power parameter.
+
     Args:
-        :attr:`power_constraint` (Constraint, optional):
-            Constraint to place on power parameter. Default: `Positive`.
-        :attr:`power_prior` (:class:`gpytorch.priors.Prior`):
-            Prior over the power parameter (default `None`).
-        :attr:`offset_constraint` (Constraint, optional):
-            Constraint to place on offset parameter. Default: `Positive`.
-        :attr:`active_dims` (list):
-            List of data dimensions to operate on.
-            `len(active_dims)` should equal `num_dimensions`.
+        power_constraint: Constraint to place on power parameter. Default is
+            `Positive`.
+        power_prior: Prior over the power parameter.
+        offset_constraint: Constraint to place on offset parameter. Default is
+            `Positive`.
+        active_dims: List of data dimensions to operate on. `len(active_dims)`
+            should equal `num_dimensions`.
     """
 
     def __init__(

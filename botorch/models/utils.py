@@ -87,14 +87,15 @@ def add_output_dim(X: Tensor, original_batch_shape: torch.Size) -> Tuple[Tensor,
     of the training inputs, but can also include extra batch dimensions.
 
     Args:
-        X: A `(new_batch_shape) x (original_batch_shape) x n x d` tensor of features.
+        X: A `(new_batch_shape) x (original_batch_shape) x n x d` tensor of
+            features.
         original_batch_shape: the batch shape of the model's training inputs.
 
     Returns:
         2-element tuple containing
 
         - A `(new_batch_shape) x (original_batch_shape) x m x n x d` tensor of
-        features.
+            features.
         - The index corresponding to the output dimension.
     """
     X_batch_shape = X.shape[:-2]

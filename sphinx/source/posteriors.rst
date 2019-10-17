@@ -1,29 +1,30 @@
 .. role:: hidden
     :class: hidden-section
 
+
 botorch.posteriors
-===================================
+========================================================
 .. automodule:: botorch.posteriors
-.. currentmodule:: botorch.posteriors
 
 
-botorch.posteriors.posterior
-----------------------------
+Posterior APIs
+-------------------------------------------
+
+Abstract Posterior API
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.posteriors.posterior
+    :members:
 
 
-:hidden:`Posterior`
-~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: Posterior
-   :members:
+Posteriors
+-------------------------------------------
 
-
-botorch.posteriors.gpytorch
----------------------------
+GPyTorch Posterior
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.posteriors.gpytorch
+    :members:
 
-
-:hidden:`GPyTorchPosterior`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: GPyTorchPosterior
-   :members:
+Determinstic Posterior
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.posteriors.deterministic
+    :members:

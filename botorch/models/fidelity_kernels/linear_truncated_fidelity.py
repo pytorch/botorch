@@ -14,85 +14,62 @@ from gpytorch.priors.torch_priors import GammaPrior
 
 
 class LinearTruncatedFidelityKernel(Kernel):
-    r"""
+    r"""GPyTorch Linear Truncated Fidelity Kernel.
+
     Computes a covariance matrix based on the Linear truncated kernel
-    between inputs :math:`\mathbf{x_1}` and :math:`\mathbf{x_2}`:
+    between inputs `x_1` and `x_2`:
 
-    .. math::
-
-       \begin{equation*}
-          k_{\text{LinearTruncated}}(\mathbf{x_1}, \mathbf{x_2}) = k_0
-            + c_1(\mathbf{x_1},\mathbf{x_1})k_1 + c_2(\mathbf{x_1},\mathbf{x_2})k_2
-            + c_3(\mathbf{x_2},\mathbf{x_2})k_3
-       \end{equation*}
+        K(x_1, x_2) = k_0 + c_1(x_1, x_1)k_1 + c_2(x_1,x_2)k_2 + c_3(x_2,x_2)k_3
 
     where
 
-    * :math:`k_i(i=0,1,2,3)` are Matern kernels calculated between `\mathbf{x_1}[:-2]`
-       and `\mathbf{x_2}[:-2]` with different priors.
-    * :math:`c_1=(1-\mathbf{x_1}[-1])(1-\mathbf{x_2}[-1]))(1+\mathbf{x_1}[-1]
-        \mathbf{x_2}[-1])^p` is the kernel of bias term, which can be decomposed
+    - `k_i(i=0,1,2,3)` are Matern kernels calculated between `x_1[:-2]`
+        and `x_2[:-2]` with different priors.
+    - `c_1=(1 - x_1[-1])(1 - x_2[-1]))(1 + x_1[-1] x_2[-1])^p` is the kernel of
+        thjebias term, which can be decomposed
         into a determistic part and a polynomial kernel.
-      :math:`c_3` is the same as `c_1` but is calculated from the second last entries
-       of `\mathbf{x_1}` and `\mathbf{x_2}`.
-      :math:`c_2` is the interaction term with four deterministic terms and the
-       polynomial kernel between `\mathbf{x_1}[-2:]` and `\mathbf{x_2}[-2:]`
-    * :math:`p` is the order of the polynomial kernel.
+    - `c_3` is the same as `c_1` but is calculated from the second last entries
+        of `x_1` and `x_2`.
+    - `c_2` is the interaction term with four deterministic terms and the
+        polynomial kernel between `x_1[-2:]` and `x_2[-2:]`
+    - `p` is the order of the polynomial kernel.
 
-    .. note::
-
-        We assume the last two dimensions of input `x` are the fidelity parameters.
+    We assume the last two dimensions of input `x` are the fidelity parameters.
 
     Args:
-        :attr:`dimension` (int):
-            The dimension of `x`. This is not needed if active_dims is specified.
-            Default: `3`
-        :attr:`nu` (float):
-            The smoothness parameter fo Matern kernel: either 1/2, 3/2, or 5/2.
-            Default: '2.5'
-        :attr:`batch_shape` (torch.Size, optional):
-            Set this if you want a separate lengthscale for each
-             batch of input data. It should be `b` if :attr:`x1` is a
-             `b x n x d` tensor. Default: `torch.Size([])`
-        :attr:`active_dims` (tuple of ints, optional):
-            Set this if you want to
-            compute the covariance of only a few input dimensions. The ints
-            corresponds to the indices of the dimensions. Default: `None`.
-        :attr:`lengthscale_prior` (Prior, optional):
-            Set this if you want to apply a prior to the lengthscale parameter
-            of Matern kernel `k_0`.  Default: `Gamma(1.1, 1/20)`
-        :attr:`lengthscale_constraint` (Constraint, optional):
-            Set this if you want to apply a constraint to the lengthscale parameter
-            of Matern kernel `k_0`. Default: `Positive`
-        :attr:`lengthscale_2_prior` (Prior, optional):
-            Set this if you want to apply a prior to the lengthscale parameter
-            of Matern kernel `k_i(i>0)`.  Default: `Gamma(5, 1/20)`
-        :attr:`lengthscale_2_constraint` (Constraint, optional):
-            Set this if you want to apply a constraint to the lengthscale parameter
-            of Matern kernel `k_i(i>0)`. Default: `Positive`
-        :attr:`power_prior` (Prior, optional):
-            Set this if you want to apply a prior to the power parameter of
-            polynomial kernel.  Default: `None`
-        :attr:`power_constraint` (Constraint, optional):
-            Set this if you want to apply a constraint to the power parameter
-            polynomial kernel. Default: `Positive`
-        :attr:`train_iteration_fidelity` (bool):
-            Set this to True if your data contains iteration fidelity parameter.
-            Default: 'True'
-        :attr:`train_data_fidelity` (bool):
-            Set this to True if your data contains training data fidelity parameter.
-            Default: 'True'
-        :attr: `covar_module_1` (Kernel):
-            Set this if you want a different kernel for the unbiased part.
-            Default: 'MaternKernel'
-        :attr: `covar_module_2` (Kernel):
-            Set this if you want a different kernel for the biased part.
-            Default: 'MaternKernel'
-
-
-    Attributes:
-        :attr:`lengthscale` (Tensor):
-            The lengthscale parameter. Size/shape of parameter.
+        dimension: The dimension of `x`. This is not needed if active_dims is
+            specified.
+        nu: The smoothness parameter fo Matern kernel: either 1/2, 3/2, or 5/2.
+        batch_shape: Set this if you want a separate lengthscale for each batch
+            of input data. It should be `batch_shape` if x1` is a
+            `batch_shape x n x d` tensor.
+        active_dims: Set this if you want to compute the covariance of only a
+            few input dimensions. The numbers corresponds to the indices of the
+            dimensions.
+        lengthscale_prior: Set this if you want to apply a prior to the
+            lengthscale parameter of Matern kernel `k_0`. Default is
+            `Gamma(1.1, 1/20)`.
+        lengthscale_constraint: Set this if you want to apply a constraint to
+            the lengthscale parameter of the Matern kernel `k_0`. Default is
+            `Positive`.
+        lengthscale_2_prior: Set this if you want to apply a prior to the
+            lengthscale parameter of Matern kernels `k_i(i>0)`. Default is
+            `Gamma(5, 1/20)`.
+        lengthscale_2_constraint: Set this if you want to apply a constraint to
+            the lengthscale parameter of Matern kernels `k_i(i>0)`. Default is
+            `Positive`.
+        power_prior: Set this if you want to apply a prior to the power parameter
+            of the polynomial kernel. Default is `None`.
+        power_constraint: Set this if you want to apply a constraint to the power
+            parameter of the polynomial kernel. Default is `Positive`.
+        train_iteration_fidelity: Set this to True if your data contains
+            iteration fidelity parameter.
+        train_data_fidelity: Set this to True if your data contains training
+            data fidelity parameter.
+        covar_module_1: Set this if you want a different kernel for the
+            unbiased part. Default is `MaternKernel`.
+        covar_module_2: Set this if you want a different kernel for the biased
+            part. Default is `MaternKernel`.
 
     Example:
         >>> x = torch.randn(10, 5)
@@ -199,6 +176,7 @@ class LinearTruncatedFidelityKernel(Kernel):
         self.initialize(raw_power=self.raw_power_constraint.inverse_transform(value))
 
     def forward(self, x1: torch.Tensor, x2: torch.Tensor, **params) -> torch.Tensor:
+        r""""""
         power = self.power.view(*self.batch_shape, 1, 1)
 
         m = self.train_iteration_fidelity + self.train_data_fidelity

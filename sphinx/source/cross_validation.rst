@@ -2,7 +2,7 @@
     :class: hidden-section
 
 
-botorch.gen
+botorch.cross_validation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. automodule:: botorch.gen
+.. automodule:: botorch.cross_validation
     :members:

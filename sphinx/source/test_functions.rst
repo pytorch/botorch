@@ -2,10 +2,16 @@
     :class: hidden-section
 
 botorch.test_functions
-======================
-
-Synthetic test functions for testing and benchmarking purposes.
-
-.. currentmodule:: botorch.test_functions
+========================================================
 .. automodule:: botorch.test_functions
-   :members:
+
+
+Synthetic Test Functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.test_functions.synthetic
+    :members:
+
+Multi-Fidelity Synthetic Test Functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.test_functions.multi_fidelity
+    :members:
