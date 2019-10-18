@@ -71,18 +71,17 @@ You can customize your PyTorch installation (i.e. CUDA version, CPU only option)
 by following the [PyTorch installation instructions](https://pytorch.org/get-started/locally/).
 
 ***Important note for MacOS users:***
-* You will want to make sure your PyTorch build is linked against MKL (the
-  non-optimized version of BoTorch can be up to an order of magnitude slower in
-  some settings). Setting this up manually on MacOS can be tricky - to ensure
-  this works properly please follow the
-  [PyTorch installation instructions](https://pytorch.org/get-started/locally/).
+* Make sure your PyTorch build is linked against MKL (the non-optimized version
+  of BoTorch can be up to an order of magnitude slower in some settings).
+  Setting this up manually on MacOS can be tricky - to ensure this works properly,
+  please follow the [PyTorch installation instructions](https://pytorch.org/get-started/locally/).
 * If you need CUDA on MacOS, you will need to build PyTorch from source. Please
   consult the PyTorch installation instructions above.
 
 
 ##### Installing from latest master
 
-If you'd like to try our bleeding edge features (and don't mind potentially
+If you would like to try our bleeding edge features (and don't mind potentially
 running into the occasional bug here or there), you can install the latest
 master directly from GitHub (this will also require installing the current GPyTorch master):
 ```bash
