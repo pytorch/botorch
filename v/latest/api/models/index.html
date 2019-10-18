@@ -25,15 +25,44 @@
 <div class="body" role="main">
 <div class="section" id="module-botorch.models">
 <span id="botorch-models"></span><h1>botorch.models<a class="headerlink" href="#module-botorch.models" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="abstract-model-api">
-<h2>Abstract Model API<a class="headerlink" href="#abstract-model-api" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="model">
-<h3><span class="hidden-section">Model</span><a class="headerlink" href="#model" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="model-apis">
+<h2>Model APIs<a class="headerlink" href="#model-apis" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-botorch.models.model">
+<span id="abstract-model-api"></span><h3>Abstract Model API<a class="headerlink" href="#module-botorch.models.model" title="Permalink to this headline">¶</a></h3>
+<p>Abstract base module for all BoTorch models.</p>
 <dl class="class">
 <dt id="botorch.models.model.Model">
 <em class="property">class </em><code class="sig-prename descclassname">botorch.models.model.</code><code class="sig-name descname">Model</code><a class="reference internal" href="_modules/botorch/models/model.html#Model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.model.Model" title="Permalink to this definition">¶</a></dt>
-<dd><p>Abstract base class for BoTorch models.</p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>Abstract base class for BoTorch models.</p>
 <p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="method">
+<dt id="botorch.models.model.Model.posterior">
+<em class="property">abstract </em><code class="sig-name descname">posterior</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">output_indices=None</em>, <em class="sig-param">observation_noise=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model.html#Model.posterior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.model.Model.posterior" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the posterior over model outputs at the provided points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>b x q x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of the
+feature space, <cite>q</cite> is the number of points considered jointly,
+and <cite>b</cite> is the batch dimension.</p></li>
+<li><p><strong>output_indices</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]) – A list of indices, corresponding to the outputs over
+which to compute the posterior (if the model is multi-output).
+Can be used to speed up computation if only a subset of the
+model’s outputs are required for optimization. If omitted,
+computes the posterior over all model outputs.</p></li>
+<li><p><strong>observation_noise</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, add observation noise to the posterior.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="posteriors.html#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">Posterior</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>Posterior</cite> object, representing a batch of <cite>b</cite> joint distributions
+over <cite>q</cite> points and <cite>m</cite> outputs each.</p>
+</dd>
+</dl>
+</dd></dl>
 <dl class="method">
 <dt id="botorch.models.model.Model.condition_on_observations">
 <code class="sig-name descname">condition_on_observations</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">Y</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model.html#Model.condition_on_observations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.model.Model.condition_on_observations" title="Permalink to this definition">¶</a></dt>
@@ -93,44 +122,43 @@ batch shape of the model).</p></li>
 </dd>
 </dl>
 </dd></dl>
+</dd></dl>
+</div>
+<div class="section" id="module-botorch.models.gpytorch">
+<span id="gpytorch-model-api"></span><h3>GPyTorch Model API<a class="headerlink" href="#module-botorch.models.gpytorch" title="Permalink to this headline">¶</a></h3>
+<p>Abstract model class for all GPyTorch-based botorch models.</p>
+<p>To implement your own, simply inherit from both the provided classes and a
+GPyTorch Model class such as an ExactGP.</p>
+<dl class="class">
+<dt id="botorch.models.gpytorch.GPyTorchModel">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.gpytorch.</code><code class="sig-name descname">GPyTorchModel</code><a class="reference internal" href="_modules/botorch/models/gpytorch.html#GPyTorchModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gpytorch.GPyTorchModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.model.Model</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>Abstract base class for models based on GPyTorch models.</p>
+<p>The easiest way to use this is to subclass a model from a GPyTorch model
+class (e.g. an <cite>ExactGP</cite>) and this <cite>GPyTorchModel</cite>. See e.g. <cite>SingleTaskGP</cite>.</p>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
 <dl class="method">
-<dt id="botorch.models.model.Model.posterior">
-<em class="property">abstract </em><code class="sig-name descname">posterior</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">output_indices=None</em>, <em class="sig-param">observation_noise=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model.html#Model.posterior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.model.Model.posterior" title="Permalink to this definition">¶</a></dt>
+<dt id="botorch.models.gpytorch.GPyTorchModel.posterior">
+<code class="sig-name descname">posterior</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">observation_noise=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gpytorch.html#GPyTorchModel.posterior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gpytorch.GPyTorchModel.posterior" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes the posterior over model outputs at the provided points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>b x q x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of the
-feature space, <cite>q</cite> is the number of points considered jointly,
-and <cite>b</cite> is the batch dimension.</p></li>
-<li><p><strong>output_indices</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]) – A list of indices, corresponding to the outputs over
-which to compute the posterior (if the model is multi-output).
-Can be used to speed up computation if only a subset of the
-model’s outputs are required for optimization. If omitted,
-computes the posterior over all model outputs.</p></li>
+<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>(batch_shape) x q x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of the
+feature space and <cite>q</cite> is the number of points considered jointly.</p></li>
 <li><p><strong>observation_noise</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, add observation noise to the posterior.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><a class="reference internal" href="posteriors.html#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">Posterior</span></code></a></p>
+<dd class="field-even"><p><a class="reference internal" href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">GPyTorchPosterior</span></code></a></p>
 </dd>
 <dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>Posterior</cite> object, representing a batch of <cite>b</cite> joint distributions
-over <cite>q</cite> points and <cite>m</cite> outputs each.</p>
+<dd class="field-odd"><p>A <cite>GPyTorchPosterior</cite> object, representing a batch of <cite>b</cite> joint
+distributions over <cite>q</cite> points. Includes observation noise if
+<cite>observation_noise=True</cite>.</p>
 </dd>
 </dl>
 </dd></dl>
-</dd></dl>
-</div>
-<div class="section" id="gpytorchmodel">
-<h3><span class="hidden-section">GPyTorchModel</span><a class="headerlink" href="#gpytorchmodel" title="Permalink to this headline">¶</a></h3>
-<dl class="class">
-<dt id="botorch.models.gpytorch.GPyTorchModel">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.models.gpytorch.</code><code class="sig-name descname">GPyTorchModel</code><a class="reference internal" href="_modules/botorch/models/gpytorch.html#GPyTorchModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gpytorch.GPyTorchModel" title="Permalink to this definition">¶</a></dt>
-<dd><p>Abstract base class for models based on GPyTorch models.</p>
-<p>The easiest way to use this is to subclass a model from a GPyTorch model
-class (e.g. an <cite>ExactGP</cite>) and this <cite>GPyTorchModel</cite>. See e.g. <cite>SingleTaskGP</cite>.</p>
-<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
 <dl class="method">
 <dt id="botorch.models.gpytorch.GPyTorchModel.condition_on_observations">
 <code class="sig-name descname">condition_on_observations</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">Y</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gpytorch.html#GPyTorchModel.condition_on_observations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gpytorch.GPyTorchModel.condition_on_observations" title="Permalink to this definition">¶</a></dt>
@@ -170,15 +198,29 @@ observations passed in via kwargs).</p>
 </pre></div>
 </div>
 </dd></dl>
+</dd></dl>
+<dl class="class">
+<dt id="botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.gpytorch.</code><code class="sig-name descname">BatchedMultiOutputGPyTorchModel</code><a class="reference internal" href="_modules/botorch/models/gpytorch.html#BatchedMultiOutputGPyTorchModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.gpytorch.GPyTorchModel" title="botorch.models.gpytorch.GPyTorchModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.gpytorch.GPyTorchModel</span></code></a></p>
+<p>Base class for batched multi-output GPyTorch models with independent outputs.</p>
+<p>This model should be used when the same training data is used for all outputs.
+Outputs are modeled independently by using a different batch for each output.</p>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
 <dl class="method">
-<dt id="botorch.models.gpytorch.GPyTorchModel.posterior">
-<code class="sig-name descname">posterior</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">observation_noise=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gpytorch.html#GPyTorchModel.posterior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gpytorch.GPyTorchModel.posterior" title="Permalink to this definition">¶</a></dt>
+<dt id="botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel.posterior">
+<code class="sig-name descname">posterior</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">output_indices=None</em>, <em class="sig-param">observation_noise=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gpytorch.html#BatchedMultiOutputGPyTorchModel.posterior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel.posterior" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes the posterior over model outputs at the provided points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>(batch_shape) x q x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of the
 feature space and <cite>q</cite> is the number of points considered jointly.</p></li>
+<li><p><strong>output_indices</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]) – A list of indices, corresponding to the outputs over
+which to compute the posterior (if the model is multi-output).
+Can be used to speed up computation if only a subset of the
+model’s outputs are required for optimization. If omitted,
+computes the posterior over all model outputs.</p></li>
 <li><p><strong>observation_noise</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, add observation noise to the posterior.</p></li>
 </ul>
 </dd>
@@ -186,23 +228,13 @@ feature space and <cite>q</cite> is the number of points considered jointly.</p>
 <dd class="field-even"><p><a class="reference internal" href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">GPyTorchPosterior</span></code></a></p>
 </dd>
 <dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>GPyTorchPosterior</cite> object, representing a batch of <cite>b</cite> joint
-distributions over <cite>q</cite> points. Includes observation noise if
+<dd class="field-odd"><p>A <cite>GPyTorchPosterior</cite> object, representing <cite>batch_shape</cite> joint
+distributions over <cite>q</cite> points and the outputs selected by
+<cite>output_indices</cite> each. Includes observation noise if
 <cite>observation_noise=True</cite>.</p>
 </dd>
 </dl>
 </dd></dl>
-</dd></dl>
-</div>
-<div class="section" id="batchedmultioutputgpytorchmodel">
-<h3><span class="hidden-section">BatchedMultiOutputGPyTorchModel</span><a class="headerlink" href="#batchedmultioutputgpytorchmodel" title="Permalink to this headline">¶</a></h3>
-<dl class="class">
-<dt id="botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.models.gpytorch.</code><code class="sig-name descname">BatchedMultiOutputGPyTorchModel</code><a class="reference internal" href="_modules/botorch/models/gpytorch.html#BatchedMultiOutputGPyTorchModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel" title="Permalink to this definition">¶</a></dt>
-<dd><p>Base class for batched multi-output GPyTorch models with independent outputs.</p>
-<p>This model should be used when the same training data is used for all outputs.
-Outputs are modeled independently by using a different batch for each output.</p>
-<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
 <dl class="method">
 <dt id="botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel.condition_on_observations">
 <code class="sig-name descname">condition_on_observations</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">Y</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gpytorch.html#BatchedMultiOutputGPyTorchModel.condition_on_observations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel.condition_on_observations" title="Permalink to this definition">¶</a></dt>
@@ -245,84 +277,15 @@ observations passed in via kwargs).</p>
 </pre></div>
 </div>
 </dd></dl>
-<dl class="method">
-<dt id="botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel.posterior">
-<code class="sig-name descname">posterior</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">output_indices=None</em>, <em class="sig-param">observation_noise=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gpytorch.html#BatchedMultiOutputGPyTorchModel.posterior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel.posterior" title="Permalink to this definition">¶</a></dt>
-<dd><p>Computes the posterior over model outputs at the provided points.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>(batch_shape) x q x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of the
-feature space and <cite>q</cite> is the number of points considered jointly.</p></li>
-<li><p><strong>output_indices</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]) – A list of indices, corresponding to the outputs over
-which to compute the posterior (if the model is multi-output).
-Can be used to speed up computation if only a subset of the
-model’s outputs are required for optimization. If omitted,
-computes the posterior over all model outputs.</p></li>
-<li><p><strong>observation_noise</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, add observation noise to the posterior.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><a class="reference internal" href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">GPyTorchPosterior</span></code></a></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>GPyTorchPosterior</cite> object, representing <cite>batch_shape</cite> joint
-distributions over <cite>q</cite> points and the outputs selected by
-<cite>output_indices</cite> each. Includes observation noise if
-<cite>observation_noise=True</cite>.</p>
-</dd>
-</dl>
 </dd></dl>
-</dd></dl>
-</div>
-<div class="section" id="modellistgpytorchmodel">
-<h3><span class="hidden-section">ModelListGPyTorchModel</span><a class="headerlink" href="#modellistgpytorchmodel" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="botorch.models.gpytorch.ModelListGPyTorchModel">
 <em class="property">class </em><code class="sig-prename descclassname">botorch.models.gpytorch.</code><code class="sig-name descname">ModelListGPyTorchModel</code><a class="reference internal" href="_modules/botorch/models/gpytorch.html#ModelListGPyTorchModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gpytorch.ModelListGPyTorchModel" title="Permalink to this definition">¶</a></dt>
-<dd><p>Abstract base class for models based on multi-output GPyTorch models.</p>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.gpytorch.GPyTorchModel" title="botorch.models.gpytorch.GPyTorchModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.gpytorch.GPyTorchModel</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>Abstract base class for models based on multi-output GPyTorch models.</p>
 <p>This is meant to be used with a gpytorch ModelList wrapper for independent
 evaluation of submodels.</p>
 <p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
-<dl class="method">
-<dt id="botorch.models.gpytorch.ModelListGPyTorchModel.condition_on_observations">
-<code class="sig-name descname">condition_on_observations</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">Y</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gpytorch.html#ModelListGPyTorchModel.condition_on_observations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gpytorch.ModelListGPyTorchModel.condition_on_observations" title="Permalink to this definition">¶</a></dt>
-<dd><p>Condition the model on new observations.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n’ x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of
-the feature space, <cite>n’</cite> is the number of points per batch, and
-<cite>batch_shape</cite> is the batch shape (must be compatible with the
-batch shape of the model).</p></li>
-<li><p><strong>Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape’ x n x m</cite>-dim Tensor, where <cite>m</cite> is the number of
-model outputs, <cite>n’</cite> is the number of points per batch, and
-<cite>batch_shape’</cite> is the batch shape of the observations.
-<cite>batch_shape’</cite> must be broadcastable to <cite>batch_shape</cite> using
-standard broadcasting semantics. If <cite>Y</cite> has fewer batch dimensions
-than <cite>X</cite>, its is assumed that the missing batch dimensions are
-the same for all <cite>Y</cite>.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><a class="reference internal" href="#botorch.models.gpytorch.ModelListGPyTorchModel" title="botorch.models.gpytorch.ModelListGPyTorchModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">ModelListGPyTorchModel</span></code></a></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>Model</cite> object of the same type, representing the original model
-conditioned on the new observations <cite>(X, Y)</cite> (and possibly noise
-observations passed in via kwargs).</p>
-</dd>
-</dl>
-<p class="rubric">Example</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">train_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">train_Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">train_X</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">train_X</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">new_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">new_Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">new_X</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">new_X</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">condition_on_observations</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">new_X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">new_Y</span><span class="p">)</span>
-</pre></div>
-</div>
-</dd></dl>
 <dl class="method">
 <dt id="botorch.models.gpytorch.ModelListGPyTorchModel.num_outputs">
 <em class="property">abstract property </em><code class="sig-name descname">num_outputs</code><a class="headerlink" href="#botorch.models.gpytorch.ModelListGPyTorchModel.num_outputs" title="Permalink to this definition">¶</a></dt>
@@ -362,14 +325,51 @@ distributions over <cite>q</cite> points and the outputs selected by
 </dd>
 </dl>
 </dd></dl>
-</dd></dl>
+<dl class="method">
+<dt id="botorch.models.gpytorch.ModelListGPyTorchModel.condition_on_observations">
+<code class="sig-name descname">condition_on_observations</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">Y</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gpytorch.html#ModelListGPyTorchModel.condition_on_observations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gpytorch.ModelListGPyTorchModel.condition_on_observations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Condition the model on new observations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n’ x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of
+the feature space, <cite>n’</cite> is the number of points per batch, and
+<cite>batch_shape</cite> is the batch shape (must be compatible with the
+batch shape of the model).</p></li>
+<li><p><strong>Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape’ x n x m</cite>-dim Tensor, where <cite>m</cite> is the number of
+model outputs, <cite>n’</cite> is the number of points per batch, and
+<cite>batch_shape’</cite> is the batch shape of the observations.
+<cite>batch_shape’</cite> must be broadcastable to <cite>batch_shape</cite> using
+standard broadcasting semantics. If <cite>Y</cite> has fewer batch dimensions
+than <cite>X</cite>, its is assumed that the missing batch dimensions are
+the same for all <cite>Y</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#botorch.models.gpytorch.ModelListGPyTorchModel" title="botorch.models.gpytorch.ModelListGPyTorchModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">ModelListGPyTorchModel</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>Model</cite> object of the same type, representing the original model
+conditioned on the new observations <cite>(X, Y)</cite> (and possibly noise
+observations passed in via kwargs).</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">train_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">train_Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">train_X</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">train_X</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">new_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">new_Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">new_X</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">new_X</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">condition_on_observations</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">new_X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">new_Y</span><span class="p">)</span>
+</pre></div>
 </div>
-<div class="section" id="multitaskgpytorchmodel">
-<h3><span class="hidden-section">MultiTaskGPyTorchModel</span><a class="headerlink" href="#multitaskgpytorchmodel" title="Permalink to this headline">¶</a></h3>
+</dd></dl>
+</dd></dl>
 <dl class="class">
 <dt id="botorch.models.gpytorch.MultiTaskGPyTorchModel">
 <em class="property">class </em><code class="sig-prename descclassname">botorch.models.gpytorch.</code><code class="sig-name descname">MultiTaskGPyTorchModel</code><a class="reference internal" href="_modules/botorch/models/gpytorch.html#MultiTaskGPyTorchModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gpytorch.MultiTaskGPyTorchModel" title="Permalink to this definition">¶</a></dt>
-<dd><p>Abstract base class for multi-task models baed on GPyTorch models.</p>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.gpytorch.GPyTorchModel" title="botorch.models.gpytorch.GPyTorchModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.gpytorch.GPyTorchModel</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>Abstract base class for multi-task models baed on GPyTorch models.</p>
 <p>This class provides the <cite>posterior</cite> method to models that implement a
 “long-format” multi-task GP in the style of <cite>MultiTaskGP</cite>.</p>
 <p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
@@ -404,15 +404,175 @@ distributions over <cite>q</cite> points and the outputs selected by
 </dd></dl>
 </dd></dl>
 </div>
+<div class="section" id="module-botorch.models.deterministic">
+<span id="deterministic-model-api"></span><h3>Deterministic Model API<a class="headerlink" href="#module-botorch.models.deterministic" title="Permalink to this headline">¶</a></h3>
+<p>Deterministic Models. Simple wrappers that allow the usage of deterministic
+mappings via the BoTorch Model and Posterior APIs. Useful e.g. for defining
+known cost functions for cost-aware acquisition utilities.</p>
+<dl class="class">
+<dt id="botorch.models.deterministic.DeterministicModel">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.deterministic.</code><code class="sig-name descname">DeterministicModel</code><a class="reference internal" href="_modules/botorch/models/deterministic.html#DeterministicModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.deterministic.DeterministicModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.model.Model</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>Abstract base class for deterministic models.</p>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="method">
+<dt id="botorch.models.deterministic.DeterministicModel.forward">
+<em class="property">abstract </em><code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param">X</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/deterministic.html#DeterministicModel.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.deterministic.DeterministicModel.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the (deterministic) model output at X.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x d</cite>-dim input tensor <cite>X</cite>.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>batch_shape x n x m</cite>-dimensional output tensor (the outcome
+dimension <cite>m</cite> must be explicit if <cite>m=1</cite>).</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="method">
+<dt id="botorch.models.deterministic.DeterministicModel.posterior">
+<code class="sig-name descname">posterior</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">output_indices=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/deterministic.html#DeterministicModel.posterior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.deterministic.DeterministicModel.posterior" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the (deterministic) posterior at X.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="posteriors.html#botorch.posteriors.deterministic.DeterministicPosterior" title="botorch.posteriors.deterministic.DeterministicPosterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">DeterministicPosterior</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="class">
+<dt id="botorch.models.deterministic.GenericDeterministicModel">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.deterministic.</code><code class="sig-name descname">GenericDeterministicModel</code><span class="sig-paren">(</span><em class="sig-param">f</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/deterministic.html#GenericDeterministicModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.deterministic.GenericDeterministicModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.deterministic.DeterministicModel" title="botorch.models.deterministic.DeterministicModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.deterministic.DeterministicModel</span></code></a></p>
+<p>A generic deterministic model constructed from a callable.</p>
+<p>A generic deterministic model constructed from a callable.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>f</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A callable mapping a <cite>batch_shape x n x d</cite>-dim input tensor <cite>X</cite>
+to a <cite>batch_shape x n x m</cite>-dimensional output tensor (the
+outcome dimension <cite>m</cite> must be explicit, even if <cite>m=1</cite>).</p>
+</dd>
+</dl>
+<dl class="method">
+<dt id="botorch.models.deterministic.GenericDeterministicModel.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param">X</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/deterministic.html#GenericDeterministicModel.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.deterministic.GenericDeterministicModel.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the (deterministic) model output at X.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x d</cite>-dim input tensor <cite>X</cite>.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>batch_shape x n x m</cite>-dimensional output tensor.</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="class">
+<dt id="botorch.models.deterministic.AffineDeterministicModel">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.deterministic.</code><code class="sig-name descname">AffineDeterministicModel</code><span class="sig-paren">(</span><em class="sig-param">a</em>, <em class="sig-param">b=0.01</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/deterministic.html#AffineDeterministicModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.deterministic.AffineDeterministicModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.deterministic.DeterministicModel" title="botorch.models.deterministic.DeterministicModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.deterministic.DeterministicModel</span></code></a></p>
+<p>An affine deterministic model.</p>
+<p>Affine deterministic model from weights and offset terms.</p>
+<p>A simple model of the form</p>
+<blockquote>
+<div><p>y[…, m] = b[m] + sum_{i=1}^d a[i, m] * X[…, i]</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>d x m</cite>-dim tensor of linear weights, where <cite>m</cite> is the number
+of outputs (must be explicit if <cite>m=1</cite>)</p></li>
+<li><p><strong>b</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – The affine (offset) term. Either a float (for single-output
+models or if the offset is shared), or a <cite>m</cite>-dim tensor (with
+different offset values for for the <cite>m</cite> different outputs).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="botorch.models.deterministic.AffineDeterministicModel.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param">X</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/deterministic.html#AffineDeterministicModel.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.deterministic.AffineDeterministicModel.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the (deterministic) model output at X.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x d</cite>-dim input tensor <cite>X</cite>.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>batch_shape x n x m</cite>-dimensional output tensor (the outcome
+dimension <cite>m</cite> must be explicit if <cite>m=1</cite>).</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
 </div>
-<div class="section" id="gpytorch-regression-models">
-<h2>GPyTorch Regression Models<a class="headerlink" href="#gpytorch-regression-models" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="singletaskgp">
-<h3><span class="hidden-section">SingleTaskGP</span><a class="headerlink" href="#singletaskgp" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="models">
+<h2>Models<a class="headerlink" href="#models" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-botorch.models.cost">
+<span id="cost-models-for-cost-aware-optimization"></span><h3>Cost Models (for cost-aware optimization)<a class="headerlink" href="#module-botorch.models.cost" title="Permalink to this headline">¶</a></h3>
+<p>Cost models to be used with multi-fidelity optimization.</p>
+<dl class="class">
+<dt id="botorch.models.cost.AffineFidelityCostModel">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.cost.</code><code class="sig-name descname">AffineFidelityCostModel</code><span class="sig-paren">(</span><em class="sig-param">fidelity_weights=None</em>, <em class="sig-param">fixed_cost=0.01</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/cost.html#AffineFidelityCostModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.cost.AffineFidelityCostModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.deterministic.DeterministicModel" title="botorch.models.deterministic.DeterministicModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.deterministic.DeterministicModel</span></code></a></p>
+<p>Affine cost model operating on fidelity parameters.</p>
+<p>For each (q-batch) element of a candidate set <cite>X</cite>, this module computes a
+cost of the form</p>
+<blockquote>
+<div><p>cost = fixed_cost + sum_j weights[j] * X[fidelity_dims[j]]</p>
+</div></blockquote>
+<p>Affine cost model operating on fidelity parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fidelity_weights</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]]) – A dictionary mapping a subset of columns of <cite>X</cite>
+(the fidelity parameters) to it’s associated weight in the
+affine cost expression. If omitted, assumes that the last
+column of X is the fidelity parameter with a weight of 1.0.</p></li>
+<li><p><strong>fixed_cost</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – The fixed cost of running a single candidate point (i.e.
+an element of a q-batch).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="botorch.models.cost.AffineFidelityCostModel.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param">X</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/cost.html#AffineFidelityCostModel.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.cost.AffineFidelityCostModel.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the cost on a candidate set X.</p>
+<p>Computes a cost of the form</p>
+<blockquote>
+<div><p>cost = fixed_cost + sum_j weights[j] * X[fidelity_dims[j]]</p>
+</div></blockquote>
+<p>for each element of the q-batch</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x q x d’</cite>-dim tensor of candidate points.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>batch_shape x q x 1</cite>-dim tensor of costs.</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+</div>
+<div class="section" id="module-botorch.models.gp_regression">
+<span id="gp-regression-models"></span><h3>GP Regression Models<a class="headerlink" href="#module-botorch.models.gp_regression" title="Permalink to this headline">¶</a></h3>
+<p>Gaussian Process Regression models based on GPyTorch models.</p>
 <dl class="class">
 <dt id="botorch.models.gp_regression.SingleTaskGP">
 <em class="property">class </em><code class="sig-prename descclassname">botorch.models.gp_regression.</code><code class="sig-name descname">SingleTaskGP</code><span class="sig-paren">(</span><em class="sig-param">train_X</em>, <em class="sig-param">train_Y</em>, <em class="sig-param">likelihood=None</em>, <em class="sig-param">covar_module=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#SingleTaskGP"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gp_regression.SingleTaskGP" title="Permalink to this definition">¶</a></dt>
-<dd><p>A single-task exact GP model.</p>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel" title="botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">gpytorch.models.exact_gp.ExactGP</span></code></p>
+<p>A single-task exact GP model.</p>
 <p>A single-task exact GP using relatively strong priors on the Kernel
 hyperparameters, which work best when covariates are normalized to the unit
 cube and outcomes are standardized (zero mean, unit variance).</p>
@@ -444,14 +604,30 @@ MaternKernel.</p></li>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
 </pre></div>
 </div>
-</dd></dl>
+<dl class="method">
+<dt id="botorch.models.gp_regression.SingleTaskGP.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param">x</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#SingleTaskGP.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gp_regression.SingleTaskGP.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
 </div>
-<div class="section" id="fixednoisegp">
-<h3><span class="hidden-section">FixedNoiseGP</span><a class="headerlink" href="#fixednoisegp" title="Permalink to this headline">¶</a></h3>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">MultivariateNormal</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
 <dl class="class">
 <dt id="botorch.models.gp_regression.FixedNoiseGP">
 <em class="property">class </em><code class="sig-prename descclassname">botorch.models.gp_regression.</code><code class="sig-name descname">FixedNoiseGP</code><span class="sig-paren">(</span><em class="sig-param">train_X</em>, <em class="sig-param">train_Y</em>, <em class="sig-param">train_Yvar</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#FixedNoiseGP"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gp_regression.FixedNoiseGP" title="Permalink to this definition">¶</a></dt>
-<dd><p>A single-task exact GP model using fixed noise levels.</p>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel" title="botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">gpytorch.models.exact_gp.ExactGP</span></code></p>
+<p>A single-task exact GP model using fixed noise levels.</p>
 <p>A single-task exact GP that uses fixed observation noise levels. This model
 also uses relatively strong priors on the Kernel hyperparameters, which work
 best when covariates are normalized to the unit cube and outcomes are
@@ -528,13 +704,11 @@ registered hooks while the latter silently ignores them.</p>
 </dl>
 </dd></dl>
 </dd></dl>
-</div>
-<div class="section" id="heteroskedasticsingletaskgp">
-<h3><span class="hidden-section">HeteroskedasticSingleTaskGP</span><a class="headerlink" href="#heteroskedasticsingletaskgp" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="botorch.models.gp_regression.HeteroskedasticSingleTaskGP">
 <em class="property">class </em><code class="sig-prename descclassname">botorch.models.gp_regression.</code><code class="sig-name descname">HeteroskedasticSingleTaskGP</code><span class="sig-paren">(</span><em class="sig-param">train_X</em>, <em class="sig-param">train_Y</em>, <em class="sig-param">train_Yvar</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#HeteroskedasticSingleTaskGP"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gp_regression.HeteroskedasticSingleTaskGP" title="Permalink to this definition">¶</a></dt>
-<dd><p>A single-task exact GP model using a heteroskeastic noise model.</p>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.gp_regression.SingleTaskGP" title="botorch.models.gp_regression.SingleTaskGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.gp_regression.SingleTaskGP</span></code></a></p>
+<p>A single-task exact GP model using a heteroskeastic noise model.</p>
 <p>This model internally wraps another GP (a SingleTaskGP) to model the observation
 noise. This allows the likelihood to make out-of-sample predictions for the
 observation noise levels.</p>
@@ -603,12 +777,14 @@ observations passed in via kwargs).</p>
 </dd></dl>
 </dd></dl>
 </div>
-<div class="section" id="modellistgp">
-<h3><span class="hidden-section">ModelListGP</span><a class="headerlink" href="#modellistgp" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="module-botorch.models.model_list_gp_regression">
+<span id="model-list-gp-regression-models"></span><h3>Model List GP Regression Models<a class="headerlink" href="#module-botorch.models.model_list_gp_regression" title="Permalink to this headline">¶</a></h3>
+<p>Model List GP Regression models.</p>
 <dl class="class">
 <dt id="botorch.models.model_list_gp_regression.ModelListGP">
 <em class="property">class </em><code class="sig-prename descclassname">botorch.models.model_list_gp_regression.</code><code class="sig-name descname">ModelListGP</code><span class="sig-paren">(</span><em class="sig-param">*gp_models</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model_list_gp_regression.html#ModelListGP"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.model_list_gp_regression.ModelListGP" title="Permalink to this definition">¶</a></dt>
-<dd><p>A multi-output GP model with independent GPs for the outputs.</p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">gpytorch.models.model_list.IndependentModelList</span></code>, <a class="reference internal" href="#botorch.models.gpytorch.ModelListGPyTorchModel" title="botorch.models.gpytorch.ModelListGPyTorchModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.gpytorch.ModelListGPyTorchModel</span></code></a></p>
+<p>A multi-output GP model with independent GPs for the outputs.</p>
 <p>This model supports different-shaped training inputs for each of its
 sub-models. It can be used with any BoTorch models.</p>
 <p>Internally, this model is just a list of individual models, but it implements
@@ -663,12 +839,14 @@ been added and all test-time caches have been updated.</p>
 </dd></dl>
 </dd></dl>
 </div>
-<div class="section" id="multitaskgp">
-<h3><span class="hidden-section">MultiTaskGP</span><a class="headerlink" href="#multitaskgp" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="module-botorch.models.multitask">
+<span id="multitask-gp-models"></span><h3>Multitask GP Models<a class="headerlink" href="#module-botorch.models.multitask" title="Permalink to this headline">¶</a></h3>
+<p>Multi-Task GP models.</p>
 <dl class="class">
 <dt id="botorch.models.multitask.MultiTaskGP">
 <em class="property">class </em><code class="sig-prename descclassname">botorch.models.multitask.</code><code class="sig-name descname">MultiTaskGP</code><span class="sig-paren">(</span><em class="sig-param">train_X</em>, <em class="sig-param">train_Y</em>, <em class="sig-param">task_feature</em>, <em class="sig-param">output_tasks=None</em>, <em class="sig-param">rank=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/multitask.html#MultiTaskGP"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.multitask.MultiTaskGP" title="Permalink to this definition">¶</a></dt>
-<dd><p>Multi-Task GP model using an ICM kernel, inferring observation noise.</p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">gpytorch.models.exact_gp.ExactGP</span></code>, <a class="reference internal" href="#botorch.models.gpytorch.MultiTaskGPyTorchModel" title="botorch.models.gpytorch.MultiTaskGPyTorchModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.gpytorch.MultiTaskGPyTorchModel</span></code></a></p>
+<p>Multi-Task GP model using an ICM kernel, inferring observation noise.</p>
 <p>Multi-task exact GP that uses a simple ICM kernel. Can be single-output or
 multi-output. This model uses relatively strong priors on the base Kernel
 hyperparameters, which work best when covariates are normalized to the unit
@@ -723,13 +901,11 @@ registered hooks while the latter silently ignores them.</p>
 </dl>
 </dd></dl>
 </dd></dl>
-</div>
-<div class="section" id="fixednoisemultitaskgp">
-<h3><span class="hidden-section">FixedNoiseMultiTaskGP</span><a class="headerlink" href="#fixednoisemultitaskgp" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="botorch.models.multitask.FixedNoiseMultiTaskGP">
 <em class="property">class </em><code class="sig-prename descclassname">botorch.models.multitask.</code><code class="sig-name descname">FixedNoiseMultiTaskGP</code><span class="sig-paren">(</span><em class="sig-param">train_X</em>, <em class="sig-param">train_Y</em>, <em class="sig-param">train_Yvar</em>, <em class="sig-param">task_feature</em>, <em class="sig-param">output_tasks=None</em>, <em class="sig-param">rank=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/multitask.html#FixedNoiseMultiTaskGP"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.multitask.FixedNoiseMultiTaskGP" title="Permalink to this definition">¶</a></dt>
-<dd><p>Multi-Task GP model using an ICM kernel, with known observation noise.</p>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.multitask.MultiTaskGP" title="botorch.models.multitask.MultiTaskGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.multitask.MultiTaskGP</span></code></a></p>
+<p>Multi-Task GP model using an ICM kernel, with known observation noise.</p>
 <p>Multi-task exact GP that uses a simple ICM kernel. Can be single-output or
 multi-output. This model uses relatively strong priors on the base Kernel
 hyperparameters, which work best when covariates are normalized to the unit
@@ -769,6 +945,486 @@ full rank (i.e. number of tasks) kernel.</p></li>
 </dd></dl>
 </div>
 </div>
+<div class="section" id="utilities">
+<h2>Utilities<a class="headerlink" href="#utilities" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-botorch.models.converter">
+<span id="model-conversion"></span><h3>Model Conversion<a class="headerlink" href="#module-botorch.models.converter" title="Permalink to this headline">¶</a></h3>
+<p>Utilities for converting between different models.</p>
+<dl class="function">
+<dt id="botorch.models.converter.model_list_to_batched">
+<code class="sig-prename descclassname">botorch.models.converter.</code><code class="sig-name descname">model_list_to_batched</code><span class="sig-paren">(</span><em class="sig-param">model_list</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/converter.html#model_list_to_batched"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.converter.model_list_to_batched" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a ModelListGP to a BatchedMultiOutputGPyTorchModel.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>model_list</strong> (<a class="reference internal" href="#botorch.models.model_list_gp_regression.ModelListGP" title="botorch.models.model_list_gp_regression.ModelListGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">ModelListGP</span></code></a>) – The <cite>ModelListGP</cite> to be converted to the appropriate
+<cite>BatchedMultiOutputGPyTorchModel</cite>. All sub-models must be of the same
+type and have the shape (batch shape and number of training inputs).</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel" title="botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">BatchedMultiOutputGPyTorchModel</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The model converted into a <cite>BatchedMultiOutputGPyTorchModel</cite>.</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">list_gp</span> <span class="o">=</span> <span class="n">ModelListGP</span><span class="p">(</span><span class="n">gp1</span><span class="p">,</span> <span class="n">gp2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">batch_gp</span> <span class="o">=</span> <span class="n">model_list_to_batched</span><span class="p">(</span><span class="n">list_gp</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+<dl class="function">
+<dt id="botorch.models.converter.batched_to_model_list">
+<code class="sig-prename descclassname">botorch.models.converter.</code><code class="sig-name descname">batched_to_model_list</code><span class="sig-paren">(</span><em class="sig-param">batch_model</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/converter.html#batched_to_model_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.converter.batched_to_model_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a BatchedMultiOutputGPyTorchModel to a ModelListGP.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>model_list</strong> – The <cite>BatchedMultiOutputGPyTorchModel</cite> to be converted to a
+<cite>ModelListGP</cite>.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#botorch.models.model_list_gp_regression.ModelListGP" title="botorch.models.model_list_gp_regression.ModelListGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">ModelListGP</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The model converted into a <cite>ModelListGP</cite>.</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">train_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">train_Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">batch_gp</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">list_gp</span> <span class="o">=</span> <span class="n">batched_to_model_list</span><span class="p">(</span><span class="n">batch_gp</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+</div>
+<div class="section" id="module-botorch.models.utils">
+<span id="other-utilties"></span><h3>Other Utilties<a class="headerlink" href="#module-botorch.models.utils" title="Permalink to this headline">¶</a></h3>
+<p>Utiltiy functions for models.</p>
+<dl class="function">
+<dt id="botorch.models.utils.multioutput_to_batch_mode_transform">
+<code class="sig-prename descclassname">botorch.models.utils.</code><code class="sig-name descname">multioutput_to_batch_mode_transform</code><span class="sig-paren">(</span><em class="sig-param">train_X</em>, <em class="sig-param">train_Y</em>, <em class="sig-param">num_outputs</em>, <em class="sig-param">train_Yvar=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/utils.html#multioutput_to_batch_mode_transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.utils.multioutput_to_batch_mode_transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transforms training inputs for a multi-output model.</p>
+<p>Used for multi-output models that internally are represented by a
+batched single output model, where each output is modeled as an
+independent batch.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>train_X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>n x d</cite> or <cite>input_batch_shape x n x d</cite> (batch mode) tensor of
+training features.</p></li>
+<li><p><strong>train_Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>n x m</cite> or <cite>target_batch_shape x n x m</cite> (batch mode) tensor of
+training observations.</p></li>
+<li><p><strong>num_outputs</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – number of outputs</p></li>
+<li><p><strong>train_Yvar</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>n x m</cite> or <cite>target_batch_shape x n x m</cite> tensor of observed
+measurement noise.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><p>3-element tuple containing</p>
+<ul class="simple">
+<li><p>A <cite>input_batch_shape x m x n x d</cite> tensor of training features.</p></li>
+<li><p>A <cite>target_batch_shape x m x n</cite> tensor of training observations.</p></li>
+<li><p>A <cite>target_batch_shape x m x n</cite> tensor observed measurement noise.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="function">
+<dt id="botorch.models.utils.add_output_dim">
+<code class="sig-prename descclassname">botorch.models.utils.</code><code class="sig-name descname">add_output_dim</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">original_batch_shape</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/utils.html#add_output_dim"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.utils.add_output_dim" title="Permalink to this definition">¶</a></dt>
+<dd><p>Insert the output dimension at the correct location.</p>
+<p>The trailing batch dimensions of X must match the original batch dimensions
+of the training inputs, but can also include extra batch dimensions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>(new_batch_shape) x (original_batch_shape) x n x d</cite> tensor of
+features.</p></li>
+<li><p><strong>original_batch_shape</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code>) – the batch shape of the model’s training inputs.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><p>2-element tuple containing</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt>A <cite>(new_batch_shape) x (original_batch_shape) x m x n x d</cite> tensor of</dt><dd><p>features.</p>
+</dd>
+</dl>
+</li>
+<li><p>The index corresponding to the output dimension.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="function">
+<dt id="botorch.models.utils.check_no_nans">
+<code class="sig-prename descclassname">botorch.models.utils.</code><code class="sig-name descname">check_no_nans</code><span class="sig-paren">(</span><em class="sig-param">Z</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/utils.html#check_no_nans"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.utils.check_no_nans" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check that tensor does not contain NaN values.</p>
+<p>Raises an InputDataError if <cite>Z</cite> contains NaN values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>Z</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – The input tensor.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="function">
+<dt id="botorch.models.utils.check_min_max_scaling">
+<code class="sig-prename descclassname">botorch.models.utils.</code><code class="sig-name descname">check_min_max_scaling</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">strict=False</em>, <em class="sig-param">atol=0.01</em>, <em class="sig-param">raise_on_fail=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/utils.html#check_min_max_scaling"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.utils.check_min_max_scaling" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check that tensor is normalized to the unit cube.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x d</cite> input tensor. Typically the training inputs
+of a model.</p></li>
+<li><p><strong>strict</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, require <cite>X</cite> to be scaled to the unit cube (rather than
+just to be contained within the unit cube).</p></li>
+<li><p><strong>atol</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – The tolerance for the boundary check. Only used if <cite>strict=True</cite>.</p></li>
+<li><p><strong>raise_on_fail</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, raise an exception instead of a warning.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="function">
+<dt id="botorch.models.utils.check_standardization">
+<code class="sig-prename descclassname">botorch.models.utils.</code><code class="sig-name descname">check_standardization</code><span class="sig-paren">(</span><em class="sig-param">Y</em>, <em class="sig-param">atol_mean=0.01</em>, <em class="sig-param">atol_std=0.01</em>, <em class="sig-param">raise_on_fail=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/utils.html#check_standardization"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.utils.check_standardization" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check that tensor is standardized (zero mean, unit variance).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – The input tensor of shape <cite>batch_shape x n x m</cite>. Typically the
+train targets of a model. Standardization is checked across the
+<cite>n</cite>-dimension.</p></li>
+<li><p><strong>atol_mean</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – The tolerance for the mean check.</p></li>
+<li><p><strong>atol_std</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – The tolerance for the std check.</p></li>
+<li><p><strong>raise_on_fail</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, raise an exception instead of a warning.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="function">
+<dt id="botorch.models.utils.validate_input_scaling">
+<code class="sig-prename descclassname">botorch.models.utils.</code><code class="sig-name descname">validate_input_scaling</code><span class="sig-paren">(</span><em class="sig-param">train_X</em>, <em class="sig-param">train_Y</em>, <em class="sig-param">train_Yvar=None</em>, <em class="sig-param">raise_on_fail=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/utils.html#validate_input_scaling"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.utils.validate_input_scaling" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function to validate input data to models.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>train_X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>n x d</cite> or <cite>batch_shape x n x d</cite> (batch mode) tensor of
+training features.</p></li>
+<li><p><strong>train_Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>n x m</cite> or <cite>batch_shape x n x m</cite> (batch mode) tensor of
+training observations.</p></li>
+<li><p><strong>train_Yvar</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>batch_shape x n x m</cite> or <cite>batch_shape x n x m</cite> (batch mode)
+tensor of observed measurement noise.</p></li>
+<li><p><strong>raise_on_fail</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, raise an error instead of emitting a warning
+(only for normalization/standardization checks, an error is always
+raised if NaN values are present).</p></li>
+</ul>
+</dd>
+</dl>
+<p>This function is typically called inside the constructor of standard BoTorch
+models. It validates the following:
+(i) none of the inputs contain NaN values
+(ii) the training data (<cite>train_X</cite>) is normalized to the unit cube
+(iii) the training targets (<cite>train_Y</cite>) are standardized (zero mean, unit var)
+No checks (other than the NaN check) are performed for observed variances
+(<cite>train_Yvar</cite>) at this point.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+</div>
+</div>
+<div class="section" id="multi-fidelity-functionality">
+<h2>Multi-Fidelity Functionality<a class="headerlink" href="#multi-fidelity-functionality" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-botorch.models.fidelity.gp_regression_fidelity">
+<span id="multi-fidelity-models"></span><h3>Multi-Fidelity Models<a class="headerlink" href="#module-botorch.models.fidelity.gp_regression_fidelity" title="Permalink to this headline">¶</a></h3>
+<p>Gaussian Process Regression models based on GPyTorch models.</p>
+<dl class="class">
+<dt id="botorch.models.fidelity.gp_regression_fidelity.SingleTaskMultiFidelityGP">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.fidelity.gp_regression_fidelity.</code><code class="sig-name descname">SingleTaskMultiFidelityGP</code><span class="sig-paren">(</span><em class="sig-param">train_X</em>, <em class="sig-param">train_Y</em>, <em class="sig-param">train_iteration_fidelity=True</em>, <em class="sig-param">train_data_fidelity=True</em>, <em class="sig-param">likelihood=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fidelity/gp_regression_fidelity.html#SingleTaskMultiFidelityGP"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.fidelity.gp_regression_fidelity.SingleTaskMultiFidelityGP" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.gp_regression.SingleTaskGP" title="botorch.models.gp_regression.SingleTaskGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.gp_regression.SingleTaskGP</span></code></a></p>
+<p>A single task multi-fidelity GP model.</p>
+<p>A sub-class of SingleTaskGP model. By default the last two input dimensions
+are the fidelity parameters: training iterations, training data points.
+The kernel comes from this paper <a class="reference external" href="https://arxiv.org/abs/1903.04703">https://arxiv.org/abs/1903.04703</a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>train_X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x (d + s) ` tensor of training features,
+where `s</cite> is the dimension of the fidelity parameters.</p></li>
+<li><p><strong>train_Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x m</cite> tensor of training observations.</p></li>
+<li><p><strong>train_iteration_fidelity</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – An indicator of whether we have the training
+iteration fidelity variable.</p></li>
+<li><p><strong>train_data_fidelity</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – An indicator of whether we have the downsampling
+fidelity variable. If train_iteration_fidelity and train_data_fidelity
+are both True, the last and second last columns are treated as the
+training data points fidelity parameter and training iteration
+number fidelity parameter respectively. Otherwise the last column of
+<cite>train_X</cite> is treated as the fidelity parameter with True indicator.
+We assume that <cite>train_X</cite> has at least one fidelity parameter.</p></li>
+<li><p><strong>likelihood</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Likelihood</span></code>]) – A likelihood. If omitted, use a standard GaussianLikelihood
+with inferred noise level.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">train_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">train_Y</span> <span class="o">=</span> <span class="n">train_X</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskMultiFidelityGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>A single-task exact GP model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>train_X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>n x d</cite> or <cite>batch_shape x n x d</cite> (batch mode) tensor of training
+features.</p></li>
+<li><p><strong>train_Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>n x m</cite> or <cite>batch_shape x n x m</cite> (batch mode) tensor of
+training observations.</p></li>
+<li><p><strong>likelihood</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Likelihood</span></code>]) – A likelihood. If omitted, use a standard
+GaussianLikelihood with inferred noise level.</p></li>
+<li><p><strong>covar_module</strong> – The covariance (kernel) matrix. If omitted, use the
+MaternKernel.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">train_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">train_Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+<dl class="class">
+<dt id="botorch.models.fidelity.gp_regression_fidelity.SingleTaskGPLTKernel">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.fidelity.gp_regression_fidelity.</code><code class="sig-name descname">SingleTaskGPLTKernel</code><span class="sig-paren">(</span><em class="sig-param">train_X</em>, <em class="sig-param">train_Y</em>, <em class="sig-param">nu=2.5</em>, <em class="sig-param">train_iteration_fidelity=True</em>, <em class="sig-param">train_data_fidelity=True</em>, <em class="sig-param">likelihood=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fidelity/gp_regression_fidelity.html#SingleTaskGPLTKernel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.fidelity.gp_regression_fidelity.SingleTaskGPLTKernel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.gp_regression.SingleTaskGP" title="botorch.models.gp_regression.SingleTaskGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.gp_regression.SingleTaskGP</span></code></a></p>
+<p>A single task multi-fidelity GP model wiht Linear Truncated kernel.</p>
+<p>A sub-class of SingleTaskGP model. By default the last two input dimensions
+are the fidelity parameters: training iterations, training data points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>train_X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x (d + s) ` tensor of training features,
+where `s</cite> is the dimension of the fidelity parameters.</p></li>
+<li><p><strong>train_Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x m</cite> tensor of training observations.</p></li>
+<li><p><strong>dimension</strong> – The dimension of <cite>x</cite>.</p></li>
+<li><p><strong>nu</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – The smoothness parameter fo Matern kernel: either 1/2, 3/2, or 5/2.
+Default: ‘2.5’</p></li>
+<li><p><strong>train_iteration_fidelity</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – An indicator of whether we have the training
+iteration fidelity variable.</p></li>
+<li><p><strong>train_data_fidelity</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – An indicator of whether we have the downsampling
+fidelity variable. If train_iteration_fidelity and train_data_fidelity
+are both True, the last and second last columns are treated as the
+training data points fidelity parameter and training iteration
+number fidelity parameter respectively. Otherwise the last column of
+train_X is treated as the fidelity parameter with True indicator.
+We assume that <cite>train_X</cite> has at least one fidelity parameter.</p></li>
+<li><p><strong>likelihood</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Likelihood</span></code>]) – A likelihood. If omitted, use a standard
+GaussianLikelihood with inferred noise level.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">train_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">train_Y</span> <span class="o">=</span> <span class="n">train_X</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGPLTKernel</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>A single-task exact GP model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>train_X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>n x d</cite> or <cite>batch_shape x n x d</cite> (batch mode) tensor of training
+features.</p></li>
+<li><p><strong>train_Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>n x m</cite> or <cite>batch_shape x n x m</cite> (batch mode) tensor of
+training observations.</p></li>
+<li><p><strong>likelihood</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Likelihood</span></code>]) – A likelihood. If omitted, use a standard
+GaussianLikelihood with inferred noise level.</p></li>
+<li><p><strong>covar_module</strong> – The covariance (kernel) matrix. If omitted, use the
+MaternKernel.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">train_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">train_Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+</div>
+<div class="section" id="module-botorch.models.fidelity_kernels.downsampling">
+<span id="multi-fidelity-kernels"></span><h3>Multi-Fidelity Kernels<a class="headerlink" href="#module-botorch.models.fidelity_kernels.downsampling" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="botorch.models.fidelity_kernels.downsampling.DownsamplingKernel">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.fidelity_kernels.downsampling.</code><code class="sig-name descname">DownsamplingKernel</code><span class="sig-paren">(</span><em class="sig-param">power_prior=None</em>, <em class="sig-param">offset_prior=None</em>, <em class="sig-param">power_constraint=None</em>, <em class="sig-param">offset_constraint=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fidelity_kernels/downsampling.html#DownsamplingKernel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.fidelity_kernels.downsampling.DownsamplingKernel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">gpytorch.kernels.kernel.Kernel</span></code></p>
+<p>GPyTorch Downsampling Kernel.</p>
+<p>Computes a covariance matrix based on the down sampling kernel between
+inputs <cite>x_1</cite> and <cite>x_2</cite> (we expect <cite>d = 1</cite>):</p>
+<blockquote>
+<div><dl class="simple">
+<dt>K(mathbf{x_1}, mathbf{x_2}) = c + (1 - x_1)^(1 + delta) *</dt><dd><p>(1 - x_2)^(1 + delta).</p>
+</dd>
+</dl>
+</div></blockquote>
+<p>where <cite>c</cite> is an offset parameter, and <cite>delta</cite> is a power parameter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>power_constraint</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Interval</span></code>]) – Constraint to place on power parameter. Default is
+<cite>Positive</cite>.</p></li>
+<li><p><strong>power_prior</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Prior</span></code>]) – Prior over the power parameter.</p></li>
+<li><p><strong>offset_constraint</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Interval</span></code>]) – Constraint to place on offset parameter. Default is
+<cite>Positive</cite>.</p></li>
+<li><p><strong>active_dims</strong> – List of data dimensions to operate on. <cite>len(active_dims)</cite>
+should equal <cite>num_dimensions</cite>.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+</dd></dl>
+<span class="target" id="module-botorch.models.fidelity_kernels.exponential_decay"></span><dl class="class">
+<dt id="botorch.models.fidelity_kernels.exponential_decay.ExponentialDecayKernel">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.fidelity_kernels.exponential_decay.</code><code class="sig-name descname">ExponentialDecayKernel</code><span class="sig-paren">(</span><em class="sig-param">power_prior=None</em>, <em class="sig-param">offset_prior=None</em>, <em class="sig-param">power_constraint=None</em>, <em class="sig-param">offset_constraint=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fidelity_kernels/exponential_decay.html#ExponentialDecayKernel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.fidelity_kernels.exponential_decay.ExponentialDecayKernel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">gpytorch.kernels.kernel.Kernel</span></code></p>
+<p>GPyTorch Exponential Decay Kernel</p>
+<p>Computes a covariance matrix based on the exponential decay kernel
+between inputs <cite>x_1</cite> and <cite>x_2</cite> (we expect <cite>d = 1</cite>):</p>
+<blockquote>
+<div><p>K(x_1, x_2) = w + beta^alpha / (x_1 + x_2 + beta)^alpha.</p>
+</div></blockquote>
+<p>where <cite>w</cite> is anoffset parameter, <cite>beta</cite> is a lenthscale parameter, and
+<cite>alpha</cite> is a power parameter</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lengthscale_constraint</strong> – Constraint to place on lengthscale parameter.
+Default is <cite>Positive</cite>.</p></li>
+<li><p><strong>lengthscale_prior</strong> – Prior over the lengthscale parameter.</p></li>
+<li><p><strong>power_constraint</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Interval</span></code>]) – Constraint to place on power parameter. Default is
+<cite>Positive</cite>.</p></li>
+<li><p><strong>power_prior</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Prior</span></code>]) – Prior over the power parameter.</p></li>
+<li><p><strong>offset_constraint</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Interval</span></code>]) – Constraint to place on offset parameter. Default is
+<cite>Positive</cite>.</p></li>
+<li><p><strong>active_dims</strong> – List of data dimensions to operate on. <cite>len(active_dims)</cite>
+should equal <cite>num_dimensions</cite>.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+</dd></dl>
+<span class="target" id="module-botorch.models.fidelity_kernels.linear_truncated_fidelity"></span><dl class="class">
+<dt id="botorch.models.fidelity_kernels.linear_truncated_fidelity.LinearTruncatedFidelityKernel">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.fidelity_kernels.linear_truncated_fidelity.</code><code class="sig-name descname">LinearTruncatedFidelityKernel</code><span class="sig-paren">(</span><em class="sig-param">dimension=3</em>, <em class="sig-param">nu=2.5</em>, <em class="sig-param">train_iteration_fidelity=True</em>, <em class="sig-param">train_data_fidelity=True</em>, <em class="sig-param">lengthscale_prior=None</em>, <em class="sig-param">power_prior=None</em>, <em class="sig-param">power_constraint=None</em>, <em class="sig-param">lengthscale_2_prior=None</em>, <em class="sig-param">lengthscale_2_constraint=None</em>, <em class="sig-param">lengthscale_constraint=None</em>, <em class="sig-param">covar_module_1=None</em>, <em class="sig-param">covar_module_2=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fidelity_kernels/linear_truncated_fidelity.html#LinearTruncatedFidelityKernel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.fidelity_kernels.linear_truncated_fidelity.LinearTruncatedFidelityKernel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">gpytorch.kernels.kernel.Kernel</span></code></p>
+<p>GPyTorch Linear Truncated Fidelity Kernel.</p>
+<p>Computes a covariance matrix based on the Linear truncated kernel
+between inputs <cite>x_1</cite> and <cite>x_2</cite>:</p>
+<blockquote>
+<div><p>K(x_1, x_2) = k_0 + c_1(x_1, x_1)k_1 + c_2(x_1,x_2)k_2 + c_3(x_2,x_2)k_3</p>
+</div></blockquote>
+<p>where</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt><cite>k_i(i=0,1,2,3)</cite> are Matern kernels calculated between <cite>x_1[:-2]</cite></dt><dd><p>and <cite>x_2[:-2]</cite> with different priors.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><cite>c_1=(1 - x_1[-1])(1 - x_2[-1]))(1 + x_1[-1] x_2[-1])^p</cite> is the kernel of</dt><dd><p>thjebias term, which can be decomposed
+into a determistic part and a polynomial kernel.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><cite>c_3</cite> is the same as <cite>c_1</cite> but is calculated from the second last entries</dt><dd><p>of <cite>x_1</cite> and <cite>x_2</cite>.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><cite>c_2</cite> is the interaction term with four deterministic terms and the</dt><dd><p>polynomial kernel between <cite>x_1[-2:]</cite> and <cite>x_2[-2:]</cite></p>
+</dd>
+</dl>
+</li>
+<li><p><cite>p</cite> is the order of the polynomial kernel.</p></li>
+</ul>
+<p>We assume the last two dimensions of input <cite>x</cite> are the fidelity parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dimension</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The dimension of <cite>x</cite>. This is not needed if active_dims is
+specified.</p></li>
+<li><p><strong>nu</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – The smoothness parameter fo Matern kernel: either 1/2, 3/2, or 5/2.</p></li>
+<li><p><strong>batch_shape</strong> – Set this if you want a separate lengthscale for each batch
+of input data. It should be <cite>batch_shape</cite> if x1` is a
+<cite>batch_shape x n x d</cite> tensor.</p></li>
+<li><p><strong>active_dims</strong> – Set this if you want to compute the covariance of only a
+few input dimensions. The numbers corresponds to the indices of the
+dimensions.</p></li>
+<li><p><strong>lengthscale_prior</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Prior</span></code>]) – Set this if you want to apply a prior to the
+lengthscale parameter of Matern kernel <cite>k_0</cite>. Default is
+<cite>Gamma(1.1, 1/20)</cite>.</p></li>
+<li><p><strong>lengthscale_constraint</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Interval</span></code>]) – Set this if you want to apply a constraint to
+the lengthscale parameter of the Matern kernel <cite>k_0</cite>. Default is
+<cite>Positive</cite>.</p></li>
+<li><p><strong>lengthscale_2_prior</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Prior</span></code>]) – Set this if you want to apply a prior to the
+lengthscale parameter of Matern kernels <cite>k_i(i&gt;0)</cite>. Default is
+<cite>Gamma(5, 1/20)</cite>.</p></li>
+<li><p><strong>lengthscale_2_constraint</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Interval</span></code>]) – Set this if you want to apply a constraint to
+the lengthscale parameter of Matern kernels <cite>k_i(i&gt;0)</cite>. Default is
+<cite>Positive</cite>.</p></li>
+<li><p><strong>power_prior</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Prior</span></code>]) – Set this if you want to apply a prior to the power parameter
+of the polynomial kernel. Default is <cite>None</cite>.</p></li>
+<li><p><strong>power_constraint</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Interval</span></code>]) – Set this if you want to apply a constraint to the power
+parameter of the polynomial kernel. Default is <cite>Positive</cite>.</p></li>
+<li><p><strong>train_iteration_fidelity</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Set this to True if your data contains
+iteration fidelity parameter.</p></li>
+<li><p><strong>train_data_fidelity</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Set this to True if your data contains training
+data fidelity parameter.</p></li>
+<li><p><strong>covar_module_1</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Kernel</span></code>]) – Set this if you want a different kernel for the
+unbiased part. Default is <cite>MaternKernel</cite>.</p></li>
+<li><p><strong>covar_module_2</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Kernel</span></code>]) – Set this if you want a different kernel for the biased
+part. Default is <cite>MaternKernel</cite>.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Non-batch: Simple option</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">covar_module</span> <span class="o">=</span> <span class="n">LinearTruncatedFidelityKernel</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">covar</span> <span class="o">=</span> <span class="n">covar_module</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># Output: LazyVariable of size (10 x 10)</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">batch_x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Batch: Simple option</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">covar_module</span> <span class="o">=</span> <span class="n">LinearTruncatedFidelityKernel</span><span class="p">(</span><span class="n">batch_shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">2</span><span class="p">]))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">covar</span> <span class="o">=</span> <span class="n">covar_module</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># Output: LazyVariable of size (2 x 10 x 10)</span>
+</pre></div>
+</div>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+</dd></dl>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -786,6 +1442,7 @@ full rank (i.e. number of tasks) kernel.</p></li>
 <li class="toctree-l1"><a class="reference internal" href="fit.html">botorch.fit</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gen.html">botorch.gen</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sampling.html">botorch.sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cross_validation.html">botorch.cross_validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="settings.html">botorch.settings</a></li>
 <li class="toctree-l1"><a class="reference internal" href="test_functions.html">botorch.test_functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="exceptions.html">botorch.exceptions</a></li>

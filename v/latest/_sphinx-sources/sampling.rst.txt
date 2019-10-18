@@ -1,44 +1,24 @@
 .. role:: hidden
     :class: hidden-section
 
+
 botorch.sampling
-================
+========================================================
 .. automodule:: botorch.sampling
-.. currentmodule:: botorch.sampling
 
 
-botorch.sampling.qmc
---------------------
-.. automodule:: botorch.sampling.qmc
-
-
-:hidden:`NormalQMCEngine`
-~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: NormalQMCEngine
-   :members:
-
-:hidden:`MultivariateNormalQMCEngine`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: MultivariateNormalQMCEngine
-   :members:
-
-
-botorch.sampling.samplers
--------------------------
-.. automodule:: botorch.sampling.samplers
-
-
-:hidden:`MCSampler`
-~~~~~~~~~~~~~~~~~~~
+Monte-Carlo Sampler API
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. currentmodule:: botorch.sampling.samplers
 .. autoclass:: MCSampler
-   :members:
+    :members:
 
-:hidden:`IIDNormalSampler`
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: IIDNormalSampler
-   :members:
+Monte-Carlo Samplers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.sampling.samplers
+    :members:
 
-:hidden:`SobolQMCNormalSampler`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autoclass:: SobolQMCNormalSampler
-   :members:
+QMC Base Functionality
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.sampling.qmc
+    :members:

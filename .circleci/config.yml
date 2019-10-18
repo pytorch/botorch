@@ -52,6 +52,13 @@ commands:
           name: "Run sphinx"
           command: sphinx-build -WT --keep-going sphinx/source sphinx/build
 
+  sphinx_coverage:
+    description: "Validate sphinx coverage"
+    steps:
+      - run:
+          name: "Validate sphinx coverage"
+          command: python scripts/validate_sphinx.py -p "$(pwd)"
+
   configure_docusaurus_bot:
     description: "Configure Docusaurus GitHub bot"
     steps:
@@ -98,6 +105,7 @@ jobs:
       - lint_black
       - unit_tests
       - sphinx
+      - sphinx_coverage
       - upload_coverage
 
   lint_test_py37_conda:
@@ -111,6 +119,7 @@ jobs:
       - lint_black
       - unit_tests
       - sphinx
+      - sphinx_coverage
       - upload_coverage
 
   auto_deploy_site:
