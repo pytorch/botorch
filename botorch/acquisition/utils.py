@@ -314,6 +314,6 @@ def expand_trace_observations(
     sf = torch.repeat_interleave(sf, q)  # num_trace_obs * q
     # now expand this to num_trace_obs x q x num_fidelities
     sf = sf.unsqueeze(-1).expand(X_expanded.size(-2) - q, len(fidelity_dims))
-    # change relevant emtries of the scaling tensor
+    # change relevant entries of the scaling tensor
     scale_fac[..., q:, fidelity_dims] = sf
     return scale_fac * X_expanded
