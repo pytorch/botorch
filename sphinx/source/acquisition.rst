@@ -48,6 +48,11 @@ The One-Shot Knowledge Gradient
 .. automodule:: botorch.acquisition.knowledge_gradient
     :members:
 
+Entropy-Based Acquisition Functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.acquisition.max_value_entropy_search
+    :members:
+
 
 Objectives and Cost-Aware Utilities
 -------------------------------------------

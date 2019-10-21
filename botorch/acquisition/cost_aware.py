@@ -37,7 +37,7 @@ class CostAwareUtility(Module, ABC):
                 current state at `X` for each t-batch.
 
         Returns:
-            A `batch_shape`-dim Tensor of cost-transformed utilities.
+            A `num_fantasies x batch_shape`-dim Tensor of cost-transformed utilities.
         """
         pass  # pragma: no cover
 
@@ -66,7 +66,7 @@ class GenericCostAwareUtility(CostAwareUtility):
                 current state at `X` for each t-batch.
 
         Returns:
-            A `batch_shape`-dim Tensor of cost-weighted utilities.
+            A `num_fantasies x batch_shape`-dim Tensor of cost-weighted utilities.
         """
         return self._cost_callable(X, deltas)
 
@@ -134,7 +134,7 @@ class InverseCostWeightedUtility(CostAwareUtility):
                 model (required if `use_mean=False`, ignored if `use_mean=True`).
 
         Returns:
-            A `batch_shape`-dim Tensor of cost-weighted utilities.
+            A `num_fantasies x batch_shape`-dim Tensor of cost-weighted utilities.
         """
         if not self._use_mean and sampler is None:
             raise RuntimeError("Must provide `sampler` if `use_mean=False`")

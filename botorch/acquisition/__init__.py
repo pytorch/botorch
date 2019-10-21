@@ -15,6 +15,7 @@ from .analytic import (
 from .cost_aware import GenericCostAwareUtility, InverseCostWeightedUtility
 from .fixed_feature import FixedFeatureAcquisitionFunction
 from .knowledge_gradient import qKnowledgeGradient
+from .max_value_entropy_search import qMaxValueEntropy, qMultiFidelityMaxValueEntropy
 from .monte_carlo import (
     MCAcquisitionFunction,
     qExpectedImprovement,
@@ -49,6 +50,8 @@ __all__ = [
     "UpperConfidenceBound",
     "qExpectedImprovement",
     "qKnowledgeGradient",
+    "qMaxValueEntropy",
+    "qMultiFidelityMaxValueEntropy",
     "qNoisyExpectedImprovement",
     "qProbabilityOfImprovement",
     "qSimpleRegret",
