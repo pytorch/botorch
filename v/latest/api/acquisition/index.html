@@ -12,7 +12,7 @@
             {"zIndex":100}
           )
         });
-        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/latest/versions"><h3>latest</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
 <script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/underscore.js"></script>
@@ -1001,6 +1001,165 @@ maximized at fixed <cite>X_actual[b]</cite>.</p>
 </dd></dl>
 </dd></dl>
 </div>
+<div class="section" id="module-botorch.acquisition.max_value_entropy_search">
+<span id="entropy-based-acquisition-functions"></span><h3>Entropy-Based Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.max_value_entropy_search" title="Permalink to this headline">¶</a></h3>
+<p>Acquisition functions for max-value entropy search (MES) and
+multi-fidelity MES with noisy observation and trace observations.</p>
+<p>References</p>
+<dl class="citation">
+<dt class="label" id="wang2018mves"><span class="brackets"><a class="fn-backref" href="#id6">Wang2018mves</a></span></dt>
+<dd><p>Wang, Z., Jegelka, S.,
+Max-value Entropy Search for Efficient Bayesian Optimization.
+arXiv:1703.01968v3, 2018</p>
+</dd>
+<dt class="label" id="takeno2019mfmves"><span class="brackets"><a class="fn-backref" href="#id7">Takeno2019mfmves</a></span></dt>
+<dd><p>Takeno, S., et al.,
+Multi-fidelity Bayesian Optimization with Max-value Entropy Search.
+arXiv:1901.08275v1, 2019</p>
+</dd>
+</dl>
+<dl class="class">
+<dt id="botorch.acquisition.max_value_entropy_search.qMaxValueEntropy">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.acquisition.max_value_entropy_search.</code><code class="sig-name descname">qMaxValueEntropy</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">candidate_set</em>, <em class="sig-param">num_fantasies=16</em>, <em class="sig-param">num_mv_samples=10</em>, <em class="sig-param">num_y_samples=128</em>, <em class="sig-param">use_gumbel=True</em>, <em class="sig-param">X_pending=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/max_value_entropy_search.html#qMaxValueEntropy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.max_value_entropy_search.qMaxValueEntropy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.monte_carlo.MCAcquisitionFunction" title="botorch.acquisition.monte_carlo.MCAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.monte_carlo.MCAcquisitionFunction</span></code></a></p>
+<p>The acquisition function for Max-value Entropy Search.</p>
+<p>This acquisition function computes the mutual information of
+max values and a candidate point X. See <a class="reference internal" href="#wang2018mves" id="id6"><span>[Wang2018mves]</span></a> for
+a detailed discussion.</p>
+<p>The model must be single-outcome.
+q &gt; 1 is supported through cyclic optimization and fantasies.</p>
+<p class="rubric">Example</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">candidate_set</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="n">bounds</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">candidate_set</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">candidate_set</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">MES</span> <span class="o">=</span> <span class="n">qMaxValueEntropy</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">candidate_set</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mes</span> <span class="o">=</span> <span class="n">MES</span><span class="p">(</span><span class="n">test_X</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Single-outcome max-value entropy search acquisition function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a>) – A fitted single-outcome model.</p></li>
+<li><p><strong>candidate_set</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>n x d</cite> Tensor including <cite>n</cite> candidate points to
+discretize the design space. Max values are sampled from the
+(joint) model posterior over these points.</p></li>
+<li><p><strong>num_fantasies</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of fantasies to generate. The higher this
+number the more accurate the model (at the expense of model
+complexity, wall time and memory). Ignored if <cite>X_pending</cite> is <cite>None</cite>.</p></li>
+<li><p><strong>num_mv_samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of max value samples.</p></li>
+<li><p><strong>num_y_samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of posterior samples at specific design point <cite>X</cite>.</p></li>
+<li><p><strong>use_gumbel</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, use Gumbel approximation to sample the max values.</p></li>
+<li><p><strong>X_pending</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>m x d</cite>-dim Tensor of <cite>m</cite> design points that have been
+submitted for function evaluation but have not yet been evaluated.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="botorch.acquisition.max_value_entropy_search.qMaxValueEntropy.set_X_pending">
+<code class="sig-name descname">set_X_pending</code><span class="sig-paren">(</span><em class="sig-param">X_pending=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/max_value_entropy_search.html#qMaxValueEntropy.set_X_pending"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.max_value_entropy_search.qMaxValueEntropy.set_X_pending" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set pending points.</p>
+<p>Informs the acquisition function about pending design points,
+fantasizes the model on the pending points and draws max-value samples
+from the fantasized model posterior.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X_pending</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – <cite>m x d</cite> Tensor with <cite>m</cite> <cite>d</cite>-dim design points that have
+been submitted for evaluation but have not yet been evaluated.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="method">
+<dt id="botorch.acquisition.max_value_entropy_search.qMaxValueEntropy.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param">X</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/max_value_entropy_search.html#qMaxValueEntropy.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.max_value_entropy_search.qMaxValueEntropy.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute max-value entropy at the design points <cite>X</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x 1 x d</cite>-dim Tensor of <cite>batch_shape</cite> t-batches
+with <cite>1</cite> <cite>d</cite>-dim design points each.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>batch_shape</cite>-dim Tensor of MVE values at the given design points <cite>X</cite>.</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="class">
+<dt id="botorch.acquisition.max_value_entropy_search.qMultiFidelityMaxValueEntropy">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.acquisition.max_value_entropy_search.</code><code class="sig-name descname">qMultiFidelityMaxValueEntropy</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">candidate_set</em>, <em class="sig-param">num_fantasies=16</em>, <em class="sig-param">num_mv_samples=10</em>, <em class="sig-param">num_y_samples=128</em>, <em class="sig-param">use_gumbel=True</em>, <em class="sig-param">X_pending=None</em>, <em class="sig-param">cost_aware_utility=None</em>, <em class="sig-param">project=&lt;function qMultiFidelityMaxValueEntropy.&lt;lambda&gt;&gt;</em>, <em class="sig-param">expand=&lt;function qMultiFidelityMaxValueEntropy.&lt;lambda&gt;&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/max_value_entropy_search.html#qMultiFidelityMaxValueEntropy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.max_value_entropy_search.qMultiFidelityMaxValueEntropy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.max_value_entropy_search.qMaxValueEntropy" title="botorch.acquisition.max_value_entropy_search.qMaxValueEntropy"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.max_value_entropy_search.qMaxValueEntropy</span></code></a></p>
+<p>Multi-fidelity max-value entropy.</p>
+<p>The acquisition function for multi-fidelity max-value entropy search
+with support for trace observations. See <a class="reference internal" href="#takeno2019mfmves" id="id7"><span>[Takeno2019mfmves]</span></a> for a
+detailed discussion of the basic ideas on multi-fidelity MES
+(note that this implementation is somewhat different).</p>
+<p>The model must be single-outcome.
+q &gt; 1 is supported through cyclic optimization and fantasies.</p>
+<p class="rubric">Example</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">candidate_set</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="n">bounds</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">candidate_set</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">candidate_set</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">MF_MES</span> <span class="o">=</span> <span class="n">qMultiFidelityMaxValueEntropy</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">candidate_set</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mf_mes</span> <span class="o">=</span> <span class="n">MF_MES</span><span class="p">(</span><span class="n">test_X</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Single-outcome max-value entropy search acquisition function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a>) – A fitted single-outcome model.</p></li>
+<li><p><strong>candidate_set</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>n x d</cite> Tensor including <cite>n</cite> candidate points to
+discretize the design space, which will be used to sample the
+max values from their posteriors.</p></li>
+<li><p><strong>cost_aware_utility</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="#botorch.acquisition.cost_aware.CostAwareUtility" title="botorch.acquisition.cost_aware.CostAwareUtility"><code class="xref py py-class docutils literal notranslate"><span class="pre">CostAwareUtility</span></code></a>]) – A CostAwareUtility computing the cost-transformed
+utility from a candidate set and samples of increases in utility.</p></li>
+<li><p><strong>num_fantasies</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of fantasies to generate. The higher this
+number the more accurate the model (at the expense of model
+complexity and performance) and it’s only used when <cite>X_pending</cite>
+is not <cite>None</cite>.</p></li>
+<li><p><strong>num_mv_samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of max value samples.</p></li>
+<li><p><strong>num_y_samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of posterior samples at specific design point <cite>X</cite>.</p></li>
+<li><p><strong>use_gumbel</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, use Gumbel approximation to sample the max values.</p></li>
+<li><p><strong>X_pending</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>m x d</cite>-dim Tensor of <cite>m</cite> design points that have been
+submitted for function evaluation but have not yet been evaluated.</p></li>
+<li><p><strong>cost_aware_utility</strong> – A CostAwareUtility computing the cost-transformed
+utility from a candidate set and samples of increases in utility.</p></li>
+<li><p><strong>project</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A callable mapping a <cite>batch_shape x q x d</cite> tensor of design
+points to a tensor of the same shape projected to the desired
+target set (e.g. the target fidelities in case of multi-fidelity
+optimization).</p></li>
+<li><p><strong>expand</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A callable mapping a <cite>batch_shape x q x d</cite> input tensor to
+a <cite>batch_shape x (q + q_e)’ x d</cite>-dim output tensor, where the
+<cite>q_e</cite> additional points in each q-batch correspond to
+additional (“trace”) observations.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="botorch.acquisition.max_value_entropy_search.qMultiFidelityMaxValueEntropy.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param">X</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/max_value_entropy_search.html#qMultiFidelityMaxValueEntropy.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.max_value_entropy_search.qMultiFidelityMaxValueEntropy.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluates <cite>qMultifidelityMaxValueEntropy</cite> at the design points <cite>X</cite></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x 1 x d</cite>-dim Tensor of <cite>batch_shape</cite> t-batches
+with <cite>1</cite> <cite>d</cite>-dim design point each.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>batch_shape</cite>-dim Tensor of MF-MVES values at the design points <cite>X</cite>.</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+</div>
 </div>
 <div class="section" id="objectives-and-cost-aware-utilities">
 <h2>Objectives and Cost-Aware Utilities<a class="headerlink" href="#objectives-and-cost-aware-utilities" title="Permalink to this headline">¶</a></h2>
@@ -1296,7 +1455,7 @@ current state at <cite>X</cite> for each t-batch.</p></li>
 <dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
 </dd>
 <dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>batch_shape</cite>-dim Tensor of cost-transformed utilities.</p>
+<dd class="field-odd"><p>A <cite>num_fantasies x batch_shape</cite>-dim Tensor of cost-transformed utilities.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1331,7 +1490,7 @@ current state at <cite>X</cite> for each t-batch.</p></li>
 <dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
 </dd>
 <dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>batch_shape</cite>-dim Tensor of cost-weighted utilities.</p>
+<dd class="field-odd"><p>A <cite>num_fantasies x batch_shape</cite>-dim Tensor of cost-weighted utilities.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1389,7 +1548,7 @@ model (required if <cite>use_mean=False</cite>, ignored if <cite>use_mean=True</
 <dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
 </dd>
 <dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>batch_shape</cite>-dim Tensor of cost-weighted utilities.</p>
+<dd class="field-odd"><p>A <cite>num_fantasies x batch_shape</cite>-dim Tensor of cost-weighted utilities.</p>
 </dd>
 </dl>
 </dd></dl>
