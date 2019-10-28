@@ -311,14 +311,16 @@ class qMultiFidelityKnowledgeGradient(qKnowledgeGradient):
 
         # We only concatenate X_pending into the X part after splitting
         if self.X_pending is not None:
-            X_actual = torch.cat(
+            X_eval = torch.cat(
                 [X_actual, match_batch_shape(self.X_pending, X_actual)], dim=-2
             )
+        else:
+            X_eval = X_actual
 
         # construct the fantasy model of shape `num_fantasies x b`
         # expand X (to potentially add trace observations)
         fantasy_model = self.model.fantasize(
-            X=self.expand(X_actual), sampler=self.sampler, observation_noise=True
+            X=self.expand(X_eval), sampler=self.sampler, observation_noise=True
         )
 
         # get the value function
