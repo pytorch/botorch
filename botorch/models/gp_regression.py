@@ -28,6 +28,7 @@ from gpytorch.priors.smoothed_box_prior import SmoothedBoxPrior
 from gpytorch.priors.torch_priors import GammaPrior
 from torch import Tensor
 
+from .. import settings
 from ..sampling.samplers import MCSampler
 from .gpytorch import BatchedMultiOutputGPyTorchModel
 from .utils import validate_input_scaling
@@ -201,7 +202,9 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         Returns:
             The constructed fantasy model.
         """
-        post_X = self.posterior(X, observation_noise=observation_noise, **kwargs)
+        propagate_grads = kwargs.pop("propagate_grads", False)
+        with settings.propagate_grads(propagate_grads):
+            post_X = self.posterior(X, observation_noise=observation_noise, **kwargs)
         Y_fantasized = sampler(post_X)  # num_fantasies x batch_shape x n' x m
         # Use the mean of the previous noise values (TODO: be smarter here).
         # noise should be batch_shape x q x m when X is batch_shape x q x d, and
