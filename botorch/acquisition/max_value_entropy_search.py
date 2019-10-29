@@ -23,16 +23,15 @@ from math import log
 from typing import Callable, Optional
 
 import torch
-from botorch.acquisition.cost_aware import InverseCostWeightedUtility
-from botorch.models.cost import AffineFidelityCostModel
 from scipy.optimize import brentq
 from torch import Tensor
 
+from ..models.cost import AffineFidelityCostModel
 from ..models.model import Model
 from ..models.utils import check_no_nans
 from ..sampling.samplers import SobolQMCNormalSampler
 from ..utils.transforms import match_batch_shape, t_batch_mode_transform
-from .cost_aware import CostAwareUtility
+from .cost_aware import CostAwareUtility, InverseCostWeightedUtility
 from .monte_carlo import MCAcquisitionFunction
 
 
@@ -93,6 +92,13 @@ class qMaxValueEntropy(MCAcquisitionFunction):
                 "Models with > 1 outcomes are not yet supported by qMaxValueEntropy!"
             )
 
+        # Batch GP models (e.g. fantasized models) are not currently supported
+        if self.model.train_inputs[0].ndim > 2:
+            raise NotImplementedError(
+                "Batch GP models (e.g. fantasized models) "
+                "are not yet supported by qMaxValueEntropy"
+            )
+
         self._init_model = model  # only used for the `fantasize()` in `set_X_pending()`
         train_inputs = match_batch_shape(model.train_inputs[0], candidate_set)
         self.candidate_set = torch.cat([candidate_set, train_inputs], dim=0)
@@ -128,6 +134,14 @@ class qMaxValueEntropy(MCAcquisitionFunction):
             )
             self.model = fantasy_model
             self._sample_max_values()
+        else:
+            # This is mainly for setting the model to the original model
+            # after the sequential optimization at q > 1
+            try:
+                self.model = self._init_model
+                self._sample_max_values()
+            except AttributeError:
+                pass
 
     def _sample_max_values(self):
         r"""Sample max values for MC approximation of the expectation in MES"""

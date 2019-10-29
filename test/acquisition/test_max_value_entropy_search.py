@@ -30,10 +30,17 @@ class TestMaxValueEntropySearch(BotorchTestCase):
             with self.assertRaises(TypeError):
                 qMaxValueEntropy(mm)
 
-            train_inputs = torch.rand(10, 2, device=self.device, dtype=dtype)
-            mm.train_inputs = (train_inputs,)
             candidate_set = torch.rand(1000, 2, device=self.device, dtype=dtype)
 
+            # test error in case of batch GP model
+            with self.assertRaises(NotImplementedError):
+                train_inputs = torch.rand(5, 10, 2, device=self.device, dtype=dtype)
+                mm.train_inputs = (train_inputs,)
+                mm._num_outputs = 1
+                qMaxValueEntropy(mm, candidate_set, num_mv_samples=10)
+
+            train_inputs = torch.rand(10, 2, device=self.device, dtype=dtype)
+            mm.train_inputs = (train_inputs,)
             # test error when number of outputs > 1
             with self.assertRaises(NotImplementedError):
                 mm._num_outputs = 2
@@ -56,6 +63,10 @@ class TestMaxValueEntropySearch(BotorchTestCase):
             # test evaluation
             X = torch.rand(1, 2, device=self.device, dtype=dtype)
             self.assertEqual(qMVE(X).shape, torch.Size([1]))
+
+            # test set X pending to None in case of _init_model exists
+            qMVE.set_X_pending(None)
+            self.assertEqual(qMVE.model, qMVE._init_model)
 
             # test with use_gumbel = False
             qMVE = qMaxValueEntropy(
