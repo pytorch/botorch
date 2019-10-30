@@ -2,6 +2,7 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
+from copy import deepcopy
 from typing import Any, Optional
 
 import torch
@@ -211,3 +212,9 @@ class LinearTruncatedFidelityKernel(Kernel):
                 + (1 - x11_) * (1 - x21t_) * (1 + x11_ * x21t_).pow(power) * covar_1
             )
         return res
+
+    def __getitem__(self, index):
+        new_kernel = deepcopy(self)
+        new_kernel.covar_module_1 = self.covar_module_1[index]
+        new_kernel.covar_module_2 = self.covar_module_2[index]
+        return new_kernel

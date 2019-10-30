@@ -13,7 +13,7 @@ from torch import Tensor
 
 
 def get_objective_weights_transform(
-    weights: Optional[Tensor]
+    weights: Optional[Tensor],
 ) -> Callable[[Tensor], Tensor]:
     r"""Create a linear objective callable from a set of weights.
 
