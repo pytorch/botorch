@@ -211,7 +211,7 @@ def _expand_bounds(
 
 
 def _get_extra_mll_args(
-    mll: MarginalLogLikelihood
+    mll: MarginalLogLikelihood,
 ) -> Union[List[Tensor], List[List[Tensor]]]:
     r"""Obtain extra arguments for MarginalLogLikelihood objects.
 
