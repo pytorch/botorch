@@ -12,7 +12,7 @@
             {"zIndex":100}
           )
         });
-        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/latest/versions"><h3>latest</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
 <script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/underscore.js"></script>
@@ -54,6 +54,7 @@
 <span class="kn">from</span> <span class="nn">gpytorch.priors.torch_priors</span> <span class="k">import</span> <span class="n">GammaPrior</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="k">import</span> <span class="n">Tensor</span>
 
+<span class="kn">from</span> <span class="nn">..</span> <span class="k">import</span> <span class="n">settings</span>
 <span class="kn">from</span> <span class="nn">..sampling.samplers</span> <span class="k">import</span> <span class="n">MCSampler</span>
 <span class="kn">from</span> <span class="nn">.gpytorch</span> <span class="k">import</span> <span class="n">BatchedMultiOutputGPyTorchModel</span>
 <span class="kn">from</span> <span class="nn">.utils</span> <span class="k">import</span> <span class="n">validate_input_scaling</span>
@@ -227,7 +228,9 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            The constructed fantasy model.</span>
 <span class="sd">        """</span>
-        <span class="n">post_X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">observation_noise</span><span class="o">=</span><span class="n">observation_noise</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">propagate_grads</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"propagate_grads"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">settings</span><span class="o">.</span><span class="n">propagate_grads</span><span class="p">(</span><span class="n">propagate_grads</span><span class="p">):</span>
+            <span class="n">post_X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">observation_noise</span><span class="o">=</span><span class="n">observation_noise</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">Y_fantasized</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">post_X</span><span class="p">)</span>  <span class="c1"># num_fantasies x batch_shape x n' x m</span>
         <span class="c1"># Use the mean of the previous noise values (TODO: be smarter here).</span>
         <span class="c1"># noise should be batch_shape x q x m when X is batch_shape x q x d, and</span>

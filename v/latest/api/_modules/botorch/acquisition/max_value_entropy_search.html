@@ -12,7 +12,7 @@
             {"zIndex":100}
           )
         });
-        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/latest/versions"><h3>latest</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
 <script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/underscore.js"></script>
@@ -49,16 +49,15 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.cost_aware</span> <span class="k">import</span> <span class="n">InverseCostWeightedUtility</span>
-<span class="kn">from</span> <span class="nn">botorch.models.cost</span> <span class="k">import</span> <span class="n">AffineFidelityCostModel</span>
 <span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="k">import</span> <span class="n">brentq</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="k">import</span> <span class="n">Tensor</span>
 
+<span class="kn">from</span> <span class="nn">..models.cost</span> <span class="k">import</span> <span class="n">AffineFidelityCostModel</span>
 <span class="kn">from</span> <span class="nn">..models.model</span> <span class="k">import</span> <span class="n">Model</span>
 <span class="kn">from</span> <span class="nn">..models.utils</span> <span class="k">import</span> <span class="n">check_no_nans</span>
 <span class="kn">from</span> <span class="nn">..sampling.samplers</span> <span class="k">import</span> <span class="n">SobolQMCNormalSampler</span>
 <span class="kn">from</span> <span class="nn">..utils.transforms</span> <span class="k">import</span> <span class="n">match_batch_shape</span><span class="p">,</span> <span class="n">t_batch_mode_transform</span>
-<span class="kn">from</span> <span class="nn">.cost_aware</span> <span class="k">import</span> <span class="n">CostAwareUtility</span>
+<span class="kn">from</span> <span class="nn">.cost_aware</span> <span class="k">import</span> <span class="n">CostAwareUtility</span><span class="p">,</span> <span class="n">InverseCostWeightedUtility</span>
 <span class="kn">from</span> <span class="nn">.monte_carlo</span> <span class="k">import</span> <span class="n">MCAcquisitionFunction</span>
 
 
@@ -119,6 +118,13 @@
                 <span class="s2">"Models with &gt; 1 outcomes are not yet supported by qMaxValueEntropy!"</span>
             <span class="p">)</span>
 
+        <span class="c1"># Batch GP models (e.g. fantasized models) are not currently supported</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="s2">"Batch GP models (e.g. fantasized models) "</span>
+                <span class="s2">"are not yet supported by qMaxValueEntropy"</span>
+            <span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">_init_model</span> <span class="o">=</span> <span class="n">model</span>  <span class="c1"># only used for the `fantasize()` in `set_X_pending()`</span>
         <span class="n">train_inputs</span> <span class="o">=</span> <span class="n">match_batch_shape</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">candidate_set</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">candidate_set</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">candidate_set</span><span class="p">,</span> <span class="n">train_inputs</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
@@ -153,7 +159,15 @@
                 <span class="n">X</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fantasies_sampler</span><span class="p">,</span> <span class="n">observation_noise</span><span class="o">=</span><span class="kc">True</span>
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">fantasy_model</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_sample_max_values</span><span class="p">()</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sample_max_values</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># This is mainly for setting the model to the original model</span>
+            <span class="c1"># after the sequential optimization at q &gt; 1</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_model</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_sample_max_values</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                <span class="k">pass</span></div>
 
     <span class="k">def</span> <span class="nf">_sample_max_values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sa">r</span><span class="sd">"""Sample max values for MC approximation of the expectation in MES"""</span>
