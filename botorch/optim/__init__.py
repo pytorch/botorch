@@ -10,6 +10,7 @@ from .optimize import (
     gen_batch_initial_conditions,
     joint_optimize,
     optimize_acqf,
+    optimize_acqf_cyclic,
     sequential_optimize,
 )
 
@@ -18,8 +19,9 @@ __all__ = [
     "gen_batch_initial_conditions",
     "initialize_q_batch",
     "initialize_q_batch_nonneg",
-    "optimize_acqf",
     "joint_optimize",
+    "optimize_acqf",
+    "optimize_acqf_cyclic",
     "module_to_array",
     "sequential_optimize",
     "set_params_with_array",
