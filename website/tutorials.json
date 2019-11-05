@@ -39,6 +39,10 @@
     {
       "id": "one_shot_kg",
       "title": "The one-shot Knowledge Gradient acquisition function"
+    },
+    {
+      "id": "max_value_entropy",
+      "title": "The max-value entropy search acquisition function"
     }
   ],
   "Advanced Usage": [
