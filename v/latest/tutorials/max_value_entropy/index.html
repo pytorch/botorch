@@ -76,7 +76,6 @@
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="The-max-value-entropy-search-acquisition-function">The max value entropy search acquisition function<a class="anchor-link" href="#The-max-value-entropy-search-acquisition-function">¶</a></h2><p>Max-value entropy search (MES) acquisition function quantifies the information gain about the maximum of a black-box function by observing this black-box function $f$ at the candidate set $\{\textbf{x}\}$ (see [1, 2]). BoTorch provides implementations of the MES acquisition function and its multi-fidelity (MF) version with support for trace observations. In this tutorial, we explain at a high level how the MES acquisition function works, its implementation in BoTorch and how to use the MES acquisition function to query the next point in the optimization process.</p>
-<p><br/></p>
 <h3 id="1.-MES-acquisition-function-for-$q=1$-with-noisy-observation">1. MES acquisition function for $q=1$ with noisy observation<a class="anchor-link" href="#1.-MES-acquisition-function-for-$q=1$-with-noisy-observation">¶</a></h3><p>For illustrative purposes, we focus in this section on the non-q-batch-mode case ($q=1$). We also assume that the evaluation of the black-box function is noisy. Let us first introduce some notation:</p>
 <ul>
 <li>$f^* = \max_\mathcal{X} (f(\textbf{x}))$, the maximum of the black-box function $f(\textbf{x})$ in the design space $\mathcal{X}$</li>
@@ -104,15 +103,15 @@ Here $F^*$ follows the max value distribution conditioned on $\mathcal{D}_t$, an
     H_1 &amp;= \mathbb{E}_{F^*}[h(Y \mid F^*)] \\
         &amp;\simeq \frac{1}{\left|\mathcal{F}_*\right|} \Sigma_{\mathcal{F}_*} h(Y\mid f^*))
 \end{align}
-, where $\mathcal{F}_*$ are the max value samples drawn from the posterior after observing $\mathcal{D}_t$. Without noise, $p(Y) = p(F \leq f^*)$ is a truncated normal distribution with an analytic expression for its entropy. With noise, $Y\mid F\leq f^*$ is not a truncated normal distribution anymore. Now the question is how to compute $h(Y\mid f^*)$ or equivalently $p(y\mid f \leq f^*)$?</p>
+, where $\mathcal{F}_*$ are the max value samples drawn from the posterior after observing $\mathcal{D}_t$. Without noise, $p(y \mid f^*) = p(f \mid f \leq f^*)$ is a truncated normal distribution with an analytic expression for its entropy. With noise, $Y\mid F\leq f^*$ is not a truncated normal distribution anymore. The question is then how to compute $h(Y\mid f^*)$ or equivalently $p(y\mid f \leq f^*)$?</p>
 <p>Using Bayes' theorem, 
 \begin{align}
-    p(y\mid f \leq f^*) = \frac{p(f \leq f^* \mid y) p(y)}{p(f \leq f^* )}
+    p(y\mid f \leq f^*) = \frac{P(f \leq f^* \mid y) p(y)}{P(f \leq f^* )}
 \end{align}
 , where</p>
 <ul>
-<li>$p(y)$ is the posterior PDF with observation noise.</li>
-<li>$p(f \leq f^*)$ is the posterior CDF without observation noise, given $f^*$.</li>
+<li>$p(y)$ is the posterior probability density function (PDF) with observation noise.</li>
+<li>$P(f \leq f^*)$ is the posterior cummulative distribution function (CDF) without observation noise, given any $f^*$.</li>
 </ul>
 <p>We also know from the GP predictive distribution
 \begin{align}
@@ -139,7 +138,7 @@ So
     s^2 &amp;= \sigma_f^2 - \frac{(\sigma_f^2)^2}{\sigma_f^2 + \sigma_\epsilon^2}
         = \frac{\sigma_f^2\sigma_\epsilon^2}{\sigma_f^2 + \sigma_\epsilon^2}
 \end{align}
-Thus, $p(f \leq f^* \mid y)$ is the CDF of above Gaussian.</p>
+Thus, $P(f \leq f^* \mid y)$ is the CDF of above Gaussian.</p>
 <p>Finally, given $f^*$, we have<br/>
 \begin{align}
     h(Y \mid f^*) 
@@ -148,7 +147,7 @@ Thus, $p(f \leq f^* \mid y)$ is the CDF of above Gaussian.</p>
     &amp;\simeq -\frac{1}{\left|\mathcal{Y}\right|} \Sigma_{\mathcal{Y}} Z\log(Zp(y)), \\
     Z &amp;= \frac{P(f \leq f^* \mid y)}{P(f \leq f^* )}
 \end{align}
-, where $Z$ is the ratio of two cumulative distribution functions and $\mathcal{Y}$ is the samples drawn from the posterior distribution with noisy observation. The above formulation for noisy MES is inspired from the MF-MES formulation proposed by Takeno <em>et. al</em> [1], which is essentially the same as what is outlined above.</p>
+, where $Z$ is the ratio of two CDFs and $\mathcal{Y}$ is the samples drawn from the posterior distribution with noisy observation. The above formulation for noisy MES is inspired from the MF-MES formulation proposed by Takeno <em>et. al</em> [1], which is essentially the same as what is outlined above.</p>
 <p>Putting all together, 
 \begin{align}
     \alpha_{\text{MES}}(\textbf{x}) 
@@ -172,12 +171,11 @@ Thus, $p(f \leq f^* \mid y)$ is the CDF of above Gaussian.</p>
     h_1 &amp;= -Z\log(Zp(y)) \\
 \end{align}
 This turns out to reduce the variance of the acquisition value by a significant factor, especially when the acquisition value is small, hence making the algorithm numerically more stable.</p>
-<p>For the case of $q &gt; 1$, joint optimization becomes difficult, since the q-batch-mode MES acquisiton funciton becomes not tractable due to the multivariate normal CDF functions in $Z$. Instead, the MES acquisition optimization is solved sequentially and using fantasies, <em>i. e.</em>, we generate one point each time and when we try to generate the <code>i</code>-th point, we condition the models on the <code>i-1</code> points generated prior to this (using the <code>i-1</code> points as fantasies).</p>
+<p>For the case of $q &gt; 1$, joint optimization becomes difficult, since the q-batch-mode MES acquisiton funciton becomes not tractable due to the multivariate normal CDF functions in $Z$. Instead, the MES acquisition optimization is solved sequentially and using fantasies, <em>i. e.</em>, we generate one point each time and when we try to generate the $i$-th point, we condition the models on the $i-1$ points generated prior to this (using the $i-1$ points as fantasies).</p>
 <p><br/>
 <strong>References</strong></p>
 <p>[1] <a href="https://arxiv.org/abs/1901.08275">Takeno, S., et al., <em>Multi-fidelity Bayesian Optimization with Max-value Entropy Search.</em>  arXiv:1901.08275v1, 2019</a></p>
 <p>[2] <a href="https://arxiv.org/abs/1703.01968">Wang, Z., Jegelka, S., <em>Max-value Entropy Search for Efficient Bayesian Optimization.</em> arXiv:1703.01968v3, 2018</a></p>
-<p><br/></p>
 </div>
 </div>
 </div>
@@ -244,7 +242,7 @@ This turns out to reduce the variance of the acquisition value by a significant 
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="4.-Optimizing-the-MES-acquisition-function-to-get-the-next-candidate-points">4. Optimizing the MES acquisition function to get the next candidate points<a class="anchor-link" href="#4.-Optimizing-the-MES-acquisition-function-to-get-the-next-candidate-points">¶</a></h3><p>In order to obtain the next candidate point(s) to query, we need to optimize the acquisition function over the design space. For <code>q=1</code> case, we can simply call the <code>optimize_acqf</code> function in the library. At <code>q&gt;1</code>, due to the intractability of the aquisition function in this case, we need to use either sequential or cyclic optimization (multiple cycles of sequential optimization).</p>
+<h3 id="4.-Optimizing-the-MES-acquisition-function-to-get-the-next-candidate-points">4. Optimizing the MES acquisition function to get the next candidate points<a class="anchor-link" href="#4.-Optimizing-the-MES-acquisition-function-to-get-the-next-candidate-points">¶</a></h3><p>In order to obtain the next candidate point(s) to query, we need to optimize the acquisition function over the design space. For $q=1$ case, we can simply call the <code>optimize_acqf</code> function in the library. At $q&gt;1$, due to the intractability of the aquisition function in this case, we need to use either sequential or cyclic optimization (multiple cycles of sequential optimization).</p>
 </div>
 </div>
 </div>
@@ -273,7 +271,7 @@ This turns out to reduce the variance of the acquisition value by a significant 
 <div class="output_area">
 <div class="prompt output_prompt">Out[3]:</div>
 <div class="output_text output_subarea output_execute_result">
-<pre>(tensor([[-0.3253,  0.6569]]), tensor(0.0135))</pre>
+<pre>(tensor([[1.5350, 0.0758]]), tensor(0.0121))</pre>
 </div>
 </div>
 </div>
@@ -303,8 +301,8 @@ This turns out to reduce the variance of the acquisition value by a significant 
 <div class="output_area">
 <div class="prompt output_prompt">Out[4]:</div>
 <div class="output_text output_subarea output_execute_result">
-<pre>(tensor([[-0.3240,  0.6564],
-         [-0.6646,  0.9659]]), tensor([0.0135, 0.0035]))</pre>
+<pre>(tensor([[-0.3238,  0.6565],
+         [ 1.5349,  0.0748]]), tensor([0.0135, 0.0065]))</pre>
 </div>
 </div>
 </div>
@@ -336,8 +334,8 @@ This turns out to reduce the variance of the acquisition value by a significant 
 <div class="output_area">
 <div class="prompt output_prompt">Out[5]:</div>
 <div class="output_text output_subarea output_execute_result">
-<pre>(tensor([[-0.3237,  0.6562],
-         [ 1.5325,  0.0736]]), tensor([0.0101, 0.0064]))</pre>
+<pre>(tensor([[-0.3236,  0.6563],
+         [ 1.5326,  0.0732]]), tensor([0.0101, 0.0064]))</pre>
 </div>
 </div>
 </div>

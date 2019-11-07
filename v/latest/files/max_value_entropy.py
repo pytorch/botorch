@@ -5,7 +5,6 @@
 # 
 # Max-value entropy search (MES) acquisition function quantifies the information gain about the maximum of a black-box function by observing this black-box function $f$ at the candidate set $\{\textbf{x}\}$ (see [1, 2]). BoTorch provides implementations of the MES acquisition function and its multi-fidelity (MF) version with support for trace observations. In this tutorial, we explain at a high level how the MES acquisition function works, its implementation in BoTorch and how to use the MES acquisition function to query the next point in the optimization process. 
 # 
-# <br>
 # ### 1. MES acquisition function for $q=1$ with noisy observation
 # For illustrative purposes, we focus in this section on the non-q-batch-mode case ($q=1$). We also assume that the evaluation of the black-box function is noisy. Let us first introduce some notation: 
 # + $f^* = \max_\mathcal{X} (f(\textbf{x}))$, the maximum of the black-box function $f(\textbf{x})$ in the design space $\mathcal{X}$
@@ -35,16 +34,16 @@
 #     H_1 &= \mathbb{E}_{F^*}[h(Y \mid F^*)] \\
 #         &\simeq \frac{1}{\left|\mathcal{F}_*\right|} \Sigma_{\mathcal{F}_*} h(Y\mid f^*))
 # \end{align}
-# , where $\mathcal{F}_*$ are the max value samples drawn from the posterior after observing $\mathcal{D}_t$. Without noise, $p(Y) = p(F \leq f^*)$ is a truncated normal distribution with an analytic expression for its entropy. With noise, $Y\mid F\leq f^*$ is not a truncated normal distribution anymore. Now the question is how to compute $h(Y\mid f^*)$ or equivalently $p(y\mid f \leq f^*)$?
+# , where $\mathcal{F}_*$ are the max value samples drawn from the posterior after observing $\mathcal{D}_t$. Without noise, $p(y \mid f^*) = p(f \mid f \leq f^*)$ is a truncated normal distribution with an analytic expression for its entropy. With noise, $Y\mid F\leq f^*$ is not a truncated normal distribution anymore. The question is then how to compute $h(Y\mid f^*)$ or equivalently $p(y\mid f \leq f^*)$?
 # 
 # 
 # Using Bayes' theorem, 
 # \begin{align}
-#     p(y\mid f \leq f^*) = \frac{p(f \leq f^* \mid y) p(y)}{p(f \leq f^* )}
+#     p(y\mid f \leq f^*) = \frac{P(f \leq f^* \mid y) p(y)}{P(f \leq f^* )}
 # \end{align}
 # , where 
-# + $p(y)$ is the posterior PDF with observation noise.
-# + $p(f \leq f^*)$ is the posterior CDF without observation noise, given $f^*$.
+# + $p(y)$ is the posterior probability density function (PDF) with observation noise.
+# + $P(f \leq f^*)$ is the posterior cummulative distribution function (CDF) without observation noise, given any $f^*$.
 # 
 # We also know from the GP predictive distribution
 # \begin{align}
@@ -71,7 +70,7 @@
 #     s^2 &= \sigma_f^2 - \frac{(\sigma_f^2)^2}{\sigma_f^2 + \sigma_\epsilon^2}
 #         = \frac{\sigma_f^2\sigma_\epsilon^2}{\sigma_f^2 + \sigma_\epsilon^2}
 # \end{align}
-# Thus, $p(f \leq f^* \mid y)$ is the CDF of above Gaussian. 
+# Thus, $P(f \leq f^* \mid y)$ is the CDF of above Gaussian. 
 # 
 # Finally, given $f^*$, we have  
 # \begin{align}
@@ -81,7 +80,7 @@
 #     &\simeq -\frac{1}{\left|\mathcal{Y}\right|} \Sigma_{\mathcal{Y}} Z\log(Zp(y)), \\
 #     Z &= \frac{P(f \leq f^* \mid y)}{P(f \leq f^* )}
 # \end{align}
-# , where $Z$ is the ratio of two cumulative distribution functions and $\mathcal{Y}$ is the samples drawn from the posterior distribution with noisy observation. The above formulation for noisy MES is inspired from the MF-MES formulation proposed by Takeno _et. al_ [1], which is essentially the same as what is outlined above. 
+# , where $Z$ is the ratio of two CDFs and $\mathcal{Y}$ is the samples drawn from the posterior distribution with noisy observation. The above formulation for noisy MES is inspired from the MF-MES formulation proposed by Takeno _et. al_ [1], which is essentially the same as what is outlined above. 
 # 
 # Putting all together, 
 # \begin{align}
@@ -109,7 +108,7 @@
 # \end{align}
 # This turns out to reduce the variance of the acquisition value by a significant factor, especially when the acquisition value is small, hence making the algorithm numerically more stable. 
 # 
-# For the case of $q > 1$, joint optimization becomes difficult, since the q-batch-mode MES acquisiton funciton becomes not tractable due to the multivariate normal CDF functions in $Z$. Instead, the MES acquisition optimization is solved sequentially and using fantasies, _i. e._, we generate one point each time and when we try to generate the `i`-th point, we condition the models on the `i-1` points generated prior to this (using the `i-1` points as fantasies).  
+# For the case of $q > 1$, joint optimization becomes difficult, since the q-batch-mode MES acquisiton funciton becomes not tractable due to the multivariate normal CDF functions in $Z$. Instead, the MES acquisition optimization is solved sequentially and using fantasies, _i. e._, we generate one point each time and when we try to generate the $i$-th point, we condition the models on the $i-1$ points generated prior to this (using the $i-1$ points as fantasies).  
 # 
 # <br>
 # __References__
@@ -118,7 +117,6 @@
 # 
 # [2] [Wang, Z., Jegelka, S., _Max-value Entropy Search for Efficient Bayesian Optimization._ arXiv:1703.01968v3, 2018](https://arxiv.org/abs/1703.01968)
 # 
-# <br>
 
 # ### 2. Setting up a toy model
 # We will fit a standard SingleTaskGP model on noisy observations of the synthetic 2D Branin function on the hypercube $[-5,10]\times [0, 15]$.
@@ -164,7 +162,7 @@ qMES = qMaxValueEntropy(model, candidate_set)
 
 
 # ### 4. Optimizing the MES acquisition function to get the next candidate points
-# In order to obtain the next candidate point(s) to query, we need to optimize the acquisition function over the design space. For `q=1` case, we can simply call the `optimize_acqf` function in the library. At `q>1`, due to the intractability of the aquisition function in this case, we need to use either sequential or cyclic optimization (multiple cycles of sequential optimization). 
+# In order to obtain the next candidate point(s) to query, we need to optimize the acquisition function over the design space. For $q=1$ case, we can simply call the `optimize_acqf` function in the library. At $q>1$, due to the intractability of the aquisition function in this case, we need to use either sequential or cyclic optimization (multiple cycles of sequential optimization). 
 
 # In[3]:
 
