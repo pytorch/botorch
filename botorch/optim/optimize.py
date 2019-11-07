@@ -337,7 +337,6 @@ def sequential_optimize(
         return_best_only=True,
         sequential=True,
     )
-
     return candidates, acq_values
 
 
