@@ -14,6 +14,7 @@ from collections import OrderedDict
 from typing import Any, Dict, List, NamedTuple, Optional, Tuple, Union
 
 import numpy as np
+from gpytorch import settings as gpt_settings
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from scipy.optimize import Bounds, minimize
 from torch import Tensor
@@ -40,6 +41,7 @@ def fit_gpytorch_torch(
     optimizer_cls: Optimizer = Adam,
     options: Optional[Dict[str, Any]] = None,
     track_iterations: bool = True,
+    approx_mll: bool = True,
 ) -> Tuple[MarginalLogLikelihood, Dict[str, Union[float, List[OptimizationIteration]]]]:
     r"""Fit a gpytorch model by maximizing MLL with a torch optimizer.
 
@@ -59,6 +61,10 @@ def fit_gpytorch_torch(
             to specify the maximum number of iterations.
         track_iterations: Track the function values and wall time for each
             iteration.
+        approx_mll: If True, use gpytorch's approximate MLL computation (
+            according to the gpytorch defaults based on the training at size).
+            Unlike for the deterministic algorithms use din fit_gpytorch_scipy,
+            this is not an issue for stochastic optimizers.
 
     Returns:
         2-element tuple containing
@@ -116,11 +122,12 @@ def fit_gpytorch_torch(
     train_inputs, train_targets = mll.model.train_inputs, mll.model.train_targets
     while not converged:
         optimizer.zero_grad()
-        output = mll.model(*train_inputs)
-        # we sum here to support batch mode
-        args = [output, train_targets] + _get_extra_mll_args(mll)
-        loss = -mll(*args).sum()
-        loss.backward()
+        with gpt_settings.fast_computations(log_prob=approx_mll):
+            output = mll.model(*train_inputs)
+            # we sum here to support batch mode
+            args = [output, train_targets] + _get_extra_mll_args(mll)
+            loss = -mll(*args).sum()
+            loss.backward()
         loss_trajectory.append(loss.item())
         for name, param in mll.named_parameters():
             param_trajectory[name].append(param.detach().clone())
@@ -152,11 +159,12 @@ def fit_gpytorch_scipy(
     method: str = "L-BFGS-B",
     options: Optional[Dict[str, Any]] = None,
     track_iterations: bool = True,
+    approx_mll: bool = False,
 ) -> Tuple[MarginalLogLikelihood, Dict[str, Union[float, List[OptimizationIteration]]]]:
     r"""Fit a gpytorch model by maximizing MLL with a scipy optimizer.
 
     The model and likelihood in mll must already be in train mode.
-    Note: this method requires that the model has `train_inputs` and `train_targets`.
+    This method requires that the model has `train_inputs` and `train_targets`.
 
     Args:
         mll: MarginalLogLikelihood to be maximized.
@@ -166,6 +174,10 @@ def fit_gpytorch_scipy(
         options: Dictionary of solver options, passed along to scipy.minimize.
         track_iterations: Track the function values and wall time for each
             iteration.
+        approx_mll: If True, use gpytorch's approximate MLL computation. This is
+            disabled by default since the stochasticity is an issue for
+            determistic optimizers). Enabling this is only recommended when
+            working with large training data sets (n>2000).
 
     Returns:
         2-element tuple containing
@@ -201,23 +213,24 @@ def fit_gpytorch_scipy(
 
     cb = store_iteration if track_iterations else None
 
-    res = minimize(
-        _scipy_objective_and_grad,
-        x0,
-        args=(mll, property_dict),
-        bounds=bounds,
-        method=method,
-        jac=True,
-        options=options,
-        callback=cb,
-    )
-    iterations = []
-    if track_iterations:
-        for i, xk in enumerate(xs):
-            obj, _ = _scipy_objective_and_grad(
-                x=xk, mll=mll, property_dict=property_dict
-            )
-            iterations.append(OptimizationIteration(i, obj, ts[i]))
+    with gpt_settings.fast_computations(log_prob=approx_mll):
+        res = minimize(
+            _scipy_objective_and_grad,
+            x0,
+            args=(mll, property_dict),
+            bounds=bounds,
+            method=method,
+            jac=True,
+            options=options,
+            callback=cb,
+        )
+        iterations = []
+        if track_iterations:
+            for i, xk in enumerate(xs):
+                obj, _ = _scipy_objective_and_grad(
+                    x=xk, mll=mll, property_dict=property_dict
+                )
+                iterations.append(OptimizationIteration(i, obj, ts[i]))
     # Construct info dict
     info_dict = {
         "fopt": float(res.fun),
