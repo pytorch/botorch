@@ -192,6 +192,29 @@ class TestFitGPyTorchModel(BotorchTestCase):
             )
             self.assertGreater(model.covar_module.raw_outputscale.abs().item(), 1e-3)
 
+            # test non-default setting for approximate MLL computation
+            is_scipy = optimizer == fit_gpytorch_scipy
+            mll = self._getModel(double=double)
+            with warnings.catch_warnings(record=True) as ws, settings.debug(True):
+                mll = fit_gpytorch_model(
+                    mll,
+                    optimizer=optimizer,
+                    options=options,
+                    max_retries=1,
+                    approx_mll=is_scipy,
+                )
+                if is_scipy:
+                    self.assertEqual(len(ws), 1)
+                    self.assertTrue(MAX_RETRY_MSG in str(ws[0].message))
+            model = mll.model
+            # Make sure all of the parameters changed
+            self.assertGreater(model.likelihood.raw_noise.abs().item(), 1e-3)
+            self.assertLess(model.mean_module.constant.abs().item(), 0.1)
+            self.assertGreater(
+                model.covar_module.base_kernel.raw_lengthscale.abs().item(), 0.1
+            )
+            self.assertGreater(model.covar_module.raw_outputscale.abs().item(), 1e-3)
+
     def test_fit_gpytorch_model_singular(self):
         options = {"disp": False, "maxiter": 5}
         for dtype in (torch.float, torch.double):

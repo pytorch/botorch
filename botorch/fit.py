@@ -46,7 +46,8 @@ def fit_gpytorch_model(
         optimizer: The optimizer function.
         kwargs: Arguments passed along to the optimizer function, including
             `max_retries` and `sequential` (controls the fitting of `ModelListGP`
-            and `BatchedMultiOutputGPyTorchModel` models).
+            and `BatchedMultiOutputGPyTorchModel` models) or `approx_mll`
+            (whether to use gpytorch's approximate MLL computation).
 
     Returns:
         MarginalLogLikelihood with optimized parameters.
