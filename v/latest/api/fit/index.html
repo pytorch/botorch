@@ -41,7 +41,8 @@ retries can be passed in as a <cite>max_retries</cite> kwarg (default is 5).</p>
 <li><p><strong>optimizer</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>) – The optimizer function.</p></li>
 <li><p><strong>kwargs</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>) – Arguments passed along to the optimizer function, including
 <cite>max_retries</cite> and <cite>sequential</cite> (controls the fitting of <cite>ModelListGP</cite>
-and <cite>BatchedMultiOutputGPyTorchModel</cite> models).</p></li>
+and <cite>BatchedMultiOutputGPyTorchModel</cite> models) or <cite>approx_mll</cite>
+(whether to use gpytorch’s approximate MLL computation).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>

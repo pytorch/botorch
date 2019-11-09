@@ -72,7 +72,8 @@
 <span class="sd">        optimizer: The optimizer function.</span>
 <span class="sd">        kwargs: Arguments passed along to the optimizer function, including</span>
 <span class="sd">            `max_retries` and `sequential` (controls the fitting of `ModelListGP`</span>
-<span class="sd">            and `BatchedMultiOutputGPyTorchModel` models).</span>
+<span class="sd">            and `BatchedMultiOutputGPyTorchModel` models) or `approx_mll`</span>
+<span class="sd">            (whether to use gpytorch's approximate MLL computation).</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        MarginalLogLikelihood with optimized parameters.</span>

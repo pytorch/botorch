@@ -175,7 +175,7 @@ having observed all candidates except candidate `i</cite>.</p></li>
 <p>Tools for model fitting.</p>
 <dl class="function">
 <dt id="botorch.optim.fit.fit_gpytorch_torch">
-<code class="sig-prename descclassname">botorch.optim.fit.</code><code class="sig-name descname">fit_gpytorch_torch</code><span class="sig-paren">(</span><em class="sig-param">mll</em>, <em class="sig-param">bounds=None</em>, <em class="sig-param">optimizer_cls=&lt;class 'torch.optim.adam.Adam'&gt;</em>, <em class="sig-param">options=None</em>, <em class="sig-param">track_iterations=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/fit.html#fit_gpytorch_torch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.fit.fit_gpytorch_torch" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.optim.fit.</code><code class="sig-name descname">fit_gpytorch_torch</code><span class="sig-paren">(</span><em class="sig-param">mll</em>, <em class="sig-param">bounds=None</em>, <em class="sig-param">optimizer_cls=&lt;class 'torch.optim.adam.Adam'&gt;</em>, <em class="sig-param">options=None</em>, <em class="sig-param">track_iterations=True</em>, <em class="sig-param">approx_mll=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/fit.html#fit_gpytorch_torch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.fit.fit_gpytorch_torch" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fit a gpytorch model by maximizing MLL with a torch optimizer.</p>
 <p>The model and likelihood in mll must already be in train mode.
 Note: this method requires that the model has <cite>train_inputs</cite> and <cite>train_targets</cite>.</p>
@@ -194,6 +194,10 @@ to specify whether to display model fitting diagnostics and “maxiter”
 to specify the maximum number of iterations.</p></li>
 <li><p><strong>track_iterations</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Track the function values and wall time for each
 iteration.</p></li>
+<li><p><strong>approx_mll</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, use gpytorch’s approximate MLL computation (
+according to the gpytorch defaults based on the training at size).
+Unlike for the deterministic algorithms used in fit_gpytorch_scipy,
+this is not an issue for stochastic optimizers.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -220,10 +224,10 @@ iteration. If track_iterations is False, will be empty.</p>
 </dd></dl>
 <dl class="function">
 <dt id="botorch.optim.fit.fit_gpytorch_scipy">
-<code class="sig-prename descclassname">botorch.optim.fit.</code><code class="sig-name descname">fit_gpytorch_scipy</code><span class="sig-paren">(</span><em class="sig-param">mll</em>, <em class="sig-param">bounds=None</em>, <em class="sig-param">method='L-BFGS-B'</em>, <em class="sig-param">options=None</em>, <em class="sig-param">track_iterations=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/fit.html#fit_gpytorch_scipy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.fit.fit_gpytorch_scipy" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.optim.fit.</code><code class="sig-name descname">fit_gpytorch_scipy</code><span class="sig-paren">(</span><em class="sig-param">mll</em>, <em class="sig-param">bounds=None</em>, <em class="sig-param">method='L-BFGS-B'</em>, <em class="sig-param">options=None</em>, <em class="sig-param">track_iterations=True</em>, <em class="sig-param">approx_mll=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/fit.html#fit_gpytorch_scipy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.fit.fit_gpytorch_scipy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fit a gpytorch model by maximizing MLL with a scipy optimizer.</p>
 <p>The model and likelihood in mll must already be in train mode.
-Note: this method requires that the model has <cite>train_inputs</cite> and <cite>train_targets</cite>.</p>
+This method requires that the model has <cite>train_inputs</cite> and <cite>train_targets</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -234,6 +238,10 @@ bounds.</p></li>
 <li><p><strong>options</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]) – Dictionary of solver options, passed along to scipy.minimize.</p></li>
 <li><p><strong>track_iterations</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Track the function values and wall time for each
 iteration.</p></li>
+<li><p><strong>approx_mll</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, use gpytorch’s approximate MLL computation. This is
+disabled by default since the stochasticity is an issue for
+determistic optimizers). Enabling this is only recommended when
+working with large training data sets (n&gt;2000).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
