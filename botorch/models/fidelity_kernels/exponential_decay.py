@@ -37,6 +37,8 @@ class ExponentialDecayKernel(Kernel):
             should equal `num_dimensions`.
     """
 
+    has_lengthscale = True
+
     def __init__(
         self,
         power_prior: Optional[Prior] = None,
@@ -45,7 +47,7 @@ class ExponentialDecayKernel(Kernel):
         offset_constraint: Optional[Interval] = None,
         **kwargs
     ):
-        super().__init__(has_lengthscale=True, **kwargs)
+        super().__init__(**kwargs)
 
         if power_constraint is None:
             power_constraint = Positive()
