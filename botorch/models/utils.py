@@ -38,7 +38,7 @@ def _make_X_full(X: Tensor, output_indices: List[int], tf: int) -> Tensor:
     )
     X_l, X_r = X[..., :tf], X[..., tf:]
     return torch.cat(
-        [torch.cat([X_l, indexer, X_r], dim=-1) for indexer in indexers], dim=0
+        [torch.cat([X_l, indexer, X_r], dim=-1) for indexer in indexers], dim=-2
     )
 
 
