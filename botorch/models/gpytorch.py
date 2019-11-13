@@ -13,20 +13,18 @@ GPyTorch Model class such as an ExactGP.
 
 import warnings
 from abc import ABC, abstractproperty
-from contextlib import ExitStack
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Optional, Tuple, Union
 
 import torch
-from gpytorch import settings as gpt_settings
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.lazy import lazify
 from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
 from torch import Tensor
 
-from .. import settings
 from ..exceptions.errors import BotorchTensorDimensionError
 from ..exceptions.warnings import BotorchTensorDimensionWarning
 from ..posteriors.gpytorch import GPyTorchPosterior
+from ..utils.transforms import gpt_posterior_settings
 from .model import Model
 from .utils import _make_X_full, add_output_dim, multioutput_to_batch_mode_transform
 
@@ -70,7 +68,7 @@ class GPyTorchModel(Model, ABC):
                     )
                 else:
                     message = (
-                        f"Expected X and Y to have the same number of dimensions"
+                        "Expected X and Y to have the same number of dimensions"
                         f" (got X with dimension {X.dim()} and Y with dimension"
                         f" {Y.dim()}."
                     )
@@ -92,31 +90,34 @@ class GPyTorchModel(Model, ABC):
             )
 
     def posterior(
-        self, X: Tensor, observation_noise: bool = False, **kwargs: Any
+        self, X: Tensor, observation_noise: Union[bool, Tensor] = False, **kwargs: Any
     ) -> GPyTorchPosterior:
         r"""Computes the posterior over model outputs at the provided points.
 
         Args:
-            X: A `(batch_shape) x q x d`-dim Tensor, where `d` is the dimension of the
-                feature space and `q` is the number of points considered jointly.
-            observation_noise: If True, add observation noise to the posterior.
+            X: A `(batch_shape) x q x d`-dim Tensor, where `d` is the dimension
+                of the feature space and `q` is the number of points considered
+                jointly.
+            observation_noise: If True, add the observation noise from the
+                likelihood to the posterior. If a Tensor, use it directly as the
+                observation noise (must be of shape `(batch_shape) x q`).
 
         Returns:
             A `GPyTorchPosterior` object, representing a batch of `b` joint
             distributions over `q` points. Includes observation noise if
-            `observation_noise=True`.
+            specified.
         """
         self.eval()  # make sure model is in eval mode
-        with ExitStack() as es:
-            es.enter_context(gpt_settings.debug(False))
-            es.enter_context(gpt_settings.fast_pred_var())
-            es.enter_context(
-                gpt_settings.detach_test_caches(settings.propagate_grads.off())
-            )
+        with gpt_posterior_settings():
             mvn = self(X)
-            if observation_noise:
-                # TODO: Allow passing in observation noise via kwarg
-                mvn = self.likelihood(mvn, X)
+            if observation_noise is not False:
+                if torch.is_tensor(observation_noise):
+                    self._validate_tensor_args(X=X, Y=observation_noise)
+                    if observation_noise.size(-1) == 1:
+                        observation_noise = observation_noise.squeeze(-1)
+                    mvn = self.likelihood(mvn, X, noise=observation_noise)
+                else:
+                    mvn = self.likelihood(mvn, X)
             return GPyTorchPosterior(mvn=mvn)
 
     def condition_on_observations(self, X: Tensor, Y: Tensor, **kwargs: Any) -> "Model":
@@ -221,42 +222,44 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
         self,
         X: Tensor,
         output_indices: Optional[List[int]] = None,
-        observation_noise: bool = False,
+        observation_noise: Union[bool, Tensor] = False,
         **kwargs: Any,
     ) -> GPyTorchPosterior:
         r"""Computes the posterior over model outputs at the provided points.
 
         Args:
-            X: A `(batch_shape) x q x d`-dim Tensor, where `d` is the dimension of the
-                feature space and `q` is the number of points considered jointly.
+            X: A `(batch_shape) x q x d`-dim Tensor, where `d` is the dimension
+                of the feature space and `q` is the number of points considered
+                jointly.
             output_indices: A list of indices, corresponding to the outputs over
                 which to compute the posterior (if the model is multi-output).
                 Can be used to speed up computation if only a subset of the
                 model's outputs are required for optimization. If omitted,
                 computes the posterior over all model outputs.
-            observation_noise: If True, add observation noise to the posterior.
+            observation_noise: If True, add the observation noise from the
+                likelihood to the posterior. If a Tensor, use it directly as the
+                observation noise (must be of shape `(batch_shape) x q x m`).
 
         Returns:
             A `GPyTorchPosterior` object, representing `batch_shape` joint
             distributions over `q` points and the outputs selected by
-            `output_indices` each. Includes observation noise if
-            `observation_noise=True`.
+            `output_indices` each. Includes observation noise if specified.
         """
         self.eval()  # make sure model is in eval mode
-        with ExitStack() as es:
-            es.enter_context(gpt_settings.debug(False))
-            es.enter_context(gpt_settings.fast_pred_var())
-            es.enter_context(
-                gpt_settings.detach_test_caches(settings.propagate_grads.off())
-            )
+        with gpt_posterior_settings():
             # insert a dimension for the output dimension
             if self._num_outputs > 1:
                 X, output_dim_idx = add_output_dim(
                     X=X, original_batch_shape=self._input_batch_shape
                 )
             mvn = self(X)
-            if observation_noise:
-                if isinstance(self.likelihood, FixedNoiseGaussianLikelihood):
+            if observation_noise is not False:
+                if torch.is_tensor(observation_noise):
+                    # TODO: Validate noise shape
+                    # make observation_noise `batch_shape x q x n`
+                    obs_noise = observation_noise.transpose(-1, -2)
+                    mvn = self.likelihood(mvn, X, noise=obs_noise)
+                elif isinstance(self.likelihood, FixedNoiseGaussianLikelihood):
                     # Use the mean of the previous noise values (TODO: be smarter here).
                     noise = self.likelihood.noise.mean().expand(X.shape[:-1])
                     mvn = self.likelihood(mvn, X, noise=noise)
@@ -299,7 +302,6 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
             `n + n'` training examples, representing the original model
             conditioned on the new observations `(X, Y)` (and possibly noise
             observations passed in via kwargs).
-
 
         Example:
             >>> train_X = torch.rand(20, 2)
@@ -352,7 +354,7 @@ class ModelListGPyTorchModel(GPyTorchModel, ABC):
         self,
         X: Tensor,
         output_indices: Optional[List[int]] = None,
-        observation_noise: bool = False,
+        observation_noise: Union[bool, Tensor] = False,
         **kwargs: Any,
     ) -> GPyTorchPosterior:
         r"""Computes the posterior over model outputs at the provided points.
@@ -366,39 +368,48 @@ class ModelListGPyTorchModel(GPyTorchModel, ABC):
                 Can be used to speed up computation if only a subset of the
                 model's outputs are required for optimization. If omitted,
                 computes the posterior over all model outputs.
-            observation_noise: If True, add observation noise to the posterior.
+            observation_noise: If True, add the observation noise from the
+                respective likelihoods to the posterior. If a Tensor of shape
+                `(batch_shape) x q x m`, use it directly as the observation
+                noise (with `observation_noise[...,i]` added to the posterior
+                of the `i`-th model).
 
         Returns:
             A `GPyTorchPosterior` object, representing `batch_shape` joint
             distributions over `q` points and the outputs selected by
             `output_indices` each. Includes measurement noise if
-            `observation_noise=True`.
+            `observation_noise` is specified.
         """
         self.eval()  # make sure model is in eval mode
-        with ExitStack() as es:
-            es.enter_context(gpt_settings.debug(False))
-            es.enter_context(gpt_settings.fast_pred_var())
-            es.enter_context(
-                gpt_settings.detach_test_caches(settings.propagate_grads.off())
-            )
+        with gpt_posterior_settings():
             if output_indices is not None:
                 mvns = [self.forward_i(i, X) for i in output_indices]
-                if observation_noise:
-                    lh_kwargs = [
-                        {"noise": lh.noise.mean().expand(X.shape[:-1])}
-                        if isinstance(lh, FixedNoiseGaussianLikelihood)
-                        else {}
-                        for lh in self.likelihood.likelihoods
-                    ]
+                if observation_noise is not False:
+                    if torch.is_tensor(observation_noise):
+                        lh_kwargs = [
+                            {"noise": observation_noise[..., i]}
+                            for i, lh in enumerate(self.likelihood.likelihoods)
+                        ]
+                    else:
+                        lh_kwargs = [
+                            {"noise": lh.noise.mean().expand(X.shape[:-1])}
+                            if isinstance(lh, FixedNoiseGaussianLikelihood)
+                            else {}
+                            for lh in self.likelihood.likelihoods
+                        ]
                     mvns = [
                         self.likelihood_i(i, mvn, X, **lkws)
                         for i, mvn, lkws in zip(output_indices, mvns, lh_kwargs)
                     ]
             else:
                 mvns = self(*[X for _ in range(self.num_outputs)])
-                if observation_noise:
-                    # TODO: Allow passing in observation noise via kwarg
-                    mvns = self.likelihood(*[(mvn, X) for mvn in mvns])
+                if observation_noise is not False:
+                    if torch.is_tensor(observation_noise):
+                        mvns = self.likelihood(
+                            *[(mvn, X) for mvn in mvns], noise=observation_noise
+                        )
+                    else:
+                        mvns = self.likelihood(*[(mvn, X) for mvn in mvns])
         if len(mvns) == 1:
             return GPyTorchPosterior(mvn=mvns[0])
         else:
@@ -426,7 +437,7 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
         self,
         X: Tensor,
         output_indices: Optional[List[int]] = None,
-        observation_noise: bool = False,
+        observation_noise: Union[bool, Tensor] = False,
         **kwargs: Any,
     ) -> GPyTorchPosterior:
         r"""Computes the posterior over model outputs at the provided points.
@@ -440,13 +451,15 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
                 Can be used to speed up computation if only a subset of the
                 model's outputs are required for optimization. If omitted,
                 computes the posterior over all model outputs.
-            observation_noise: If True, add observation noise to the posterior.
+            observation_noise: If True, add observation noise from the respective
+                likelihoods. If a Tensor, specifies the observation noise levels
+                to add.
 
         Returns:
             A `GPyTorchPosterior` object, representing `batch_shape` joint
             distributions over `q` points and the outputs selected by
             `output_indices`. Includes measurement noise if
-            `observation_noise=True`.
+            `observation_noise` is specified.
         """
         if output_indices is None:
             output_indices = self._output_tasks
@@ -457,16 +470,13 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
         X_full = _make_X_full(X=X, output_indices=output_indices, tf=self._task_feature)
 
         self.eval()  # make sure model is in eval mode
-        with ExitStack() as es:
-            es.enter_context(gpt_settings.debug(False))
-            es.enter_context(gpt_settings.fast_pred_var())
-            es.enter_context(
-                gpt_settings.detach_test_caches(settings.propagate_grads.off())
-            )
+        with gpt_posterior_settings():
             mvn = self(X_full)
-            if observation_noise:
-                # TODO: Allow passing in observation noise via kwarg
-                mvn = self.likelihood(mvn, X_full)
+            if observation_noise is not False:
+                raise NotImplementedError(
+                    "Specifying observation noise is not yet supported for "
+                    "MultiTaskGPyTorchModel"
+                )
         # If single-output, return the posterior of a single-output model
         if len(output_indices) == 1:
             return GPyTorchPosterior(mvn=mvn)

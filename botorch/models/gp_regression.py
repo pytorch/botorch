@@ -8,7 +8,7 @@ r"""
 Gaussian Process Regression models based on GPyTorch models.
 """
 
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 import torch
 from gpytorch.constraints.constraints import GreaterThan
@@ -178,15 +178,16 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         self,
         X: Tensor,
         sampler: MCSampler,
-        observation_noise: bool = True,
+        observation_noise: Union[bool, Tensor] = True,
         **kwargs: Any,
     ) -> "FixedNoiseGP":
         r"""Construct a fantasy model.
 
         Constructs a fantasy model in the following fashion:
         (1) compute the model posterior at `X` (if `observation_noise=True`,
-        this includes observation noise, which is taken as the mean across
-        the observation noise in the training data).
+        this includes observation noise taken as the mean across the observation
+        noise in the training data. If `observation_noise` is a Tensor, use
+        it directly as the observation noise to add).
         (2) sample from this posterior (using `sampler`) to generate "fake"
         observations.
         (3) condition the model on the new fake observations.
@@ -199,7 +200,8 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
             sampler: The sampler used for sampling from the posterior at `X`.
             observation_noise: If True, include the mean across the observation
                 noise in the training data as observation noise in the posterior
-                from which the samples are drawn.
+                from which the samples are drawn. If a Tensor, use it directly
+                as the specified measurement noise.
 
         Returns:
             The constructed fantasy model.

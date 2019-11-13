@@ -82,6 +82,14 @@ class TestGPyTorchModel(BotorchTestCase):
             posterior = model.posterior(test_X, observation_noise=True)
             self.assertIsInstance(posterior, GPyTorchPosterior)
             self.assertEqual(posterior.mean.shape, torch.Size([2, 1]))
+            posterior = model.posterior(
+                test_X, observation_noise=torch.rand(2, 1, **tkwargs)
+            )
+            self.assertIsInstance(posterior, GPyTorchPosterior)
+            self.assertEqual(posterior.mean.shape, torch.Size([2, 1]))
+            # test noise shape validation
+            with self.assertRaises(BotorchTensorDimensionError):
+                model.posterior(test_X, observation_noise=torch.rand(2, **tkwargs))
             # test conditioning on observations
             cm = model.condition_on_observations(
                 torch.rand(2, 1, **tkwargs), torch.rand(2, **tkwargs)
@@ -95,6 +103,13 @@ class TestGPyTorchModel(BotorchTestCase):
             self.assertEqual(cm.train_targets.shape, torch.Size([2, 7]))
             cm = model.fantasize(
                 torch.rand(2, 1, **tkwargs), sampler=sampler, observation_noise=True
+            )
+            self.assertIsInstance(cm, SimpleGPyTorchModel)
+            self.assertEqual(cm.train_targets.shape, torch.Size([2, 7]))
+            cm = model.fantasize(
+                torch.rand(2, 1, **tkwargs),
+                sampler=sampler,
+                observation_noise=torch.rand(2, 1, **tkwargs),
             )
             self.assertIsInstance(cm, SimpleGPyTorchModel)
             self.assertEqual(cm.train_targets.shape, torch.Size([2, 7]))
@@ -154,6 +169,11 @@ class TestBatchedMultiOutputGPyTorchModel(BotorchTestCase):
             posterior = model.posterior(test_X, observation_noise=True)
             self.assertIsInstance(posterior, GPyTorchPosterior)
             self.assertEqual(posterior.mean.shape, torch.Size([2, 2]))
+            posterior = model.posterior(
+                test_X, observation_noise=torch.rand(2, 2, **tkwargs)
+            )
+            self.assertIsInstance(posterior, GPyTorchPosterior)
+            self.assertEqual(posterior.mean.shape, torch.Size([2, 2]))
             # test conditioning on observations
             cm = model.condition_on_observations(
                 torch.rand(2, 1, **tkwargs), torch.rand(2, 2, **tkwargs)
@@ -167,6 +187,13 @@ class TestBatchedMultiOutputGPyTorchModel(BotorchTestCase):
             self.assertEqual(cm.train_targets.shape, torch.Size([2, 2, 7]))
             cm = model.fantasize(
                 torch.rand(2, 1, **tkwargs), sampler=sampler, observation_noise=True
+            )
+            self.assertIsInstance(cm, SimpleBatchedMultiOutputGPyTorchModel)
+            self.assertEqual(cm.train_targets.shape, torch.Size([2, 2, 7]))
+            cm = model.fantasize(
+                torch.rand(2, 1, **tkwargs),
+                sampler=sampler,
+                observation_noise=torch.rand(2, 2, **tkwargs),
             )
             self.assertIsInstance(cm, SimpleBatchedMultiOutputGPyTorchModel)
             self.assertEqual(cm.train_targets.shape, torch.Size([2, 2, 7]))
@@ -189,10 +216,24 @@ class TestModelListGPyTorchModel(BotorchTestCase):
             posterior = model.posterior(test_X)
             self.assertIsInstance(posterior, GPyTorchPosterior)
             self.assertEqual(posterior.mean.shape, torch.Size([2, 2]))
+            # test output indices
+            posterior = model.posterior(test_X, output_indices=[0])
+            self.assertIsInstance(posterior, GPyTorchPosterior)
+            self.assertEqual(posterior.mean.shape, torch.Size([2, 1]))
             # test observation noise
             posterior = model.posterior(test_X, observation_noise=True)
             self.assertIsInstance(posterior, GPyTorchPosterior)
             self.assertEqual(posterior.mean.shape, torch.Size([2, 2]))
+            posterior = model.posterior(
+                test_X, observation_noise=torch.rand(2, **tkwargs)
+            )
+            self.assertIsInstance(posterior, GPyTorchPosterior)
+            self.assertEqual(posterior.mean.shape, torch.Size([2, 2]))
+            posterior = model.posterior(
+                test_X, output_indices=[0], observation_noise=torch.rand(2, **tkwargs)
+            )
+            self.assertIsInstance(posterior, GPyTorchPosterior)
+            self.assertEqual(posterior.mean.shape, torch.Size([2, 1]))
             # conditioning is not implemented (see ModelListGP for tests)
             with self.assertRaises(NotImplementedError):
                 model.condition_on_observations(
