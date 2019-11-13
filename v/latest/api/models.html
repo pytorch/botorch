@@ -777,6 +777,73 @@ observations passed in via kwargs).</p>
 </dd></dl>
 </dd></dl>
 </div>
+<div class="section" id="module-botorch.models.gp_regression_fidelity">
+<span id="multi-fidelity-gp-regression-models"></span><h3>Multi-Fidelity GP Regression Models<a class="headerlink" href="#module-botorch.models.gp_regression_fidelity" title="Permalink to this headline">¶</a></h3>
+<p>Gaussian Process Regression models based on GPyTorch models.</p>
+<dl class="citation">
+<dt class="label" id="wu2019mf"><span class="brackets"><a class="fn-backref" href="#id1">Wu2019mf</a></span></dt>
+<dd><p>J. Wu, S. Toscano-Palmerin, P. I. Frazier, and A. G. Wilson. Practical
+multi-fidelity bayesian optimization for hyperparameter tuning. ArXiv 2019.</p>
+</dd>
+</dl>
+<dl class="class">
+<dt id="botorch.models.gp_regression_fidelity.SingleTaskMultiFidelityGP">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.gp_regression_fidelity.</code><code class="sig-name descname">SingleTaskMultiFidelityGP</code><span class="sig-paren">(</span><em class="sig-param">train_X</em>, <em class="sig-param">train_Y</em>, <em class="sig-param">iteration_fidelity=None</em>, <em class="sig-param">data_fidelity=None</em>, <em class="sig-param">linear_truncated=True</em>, <em class="sig-param">nu=2.5</em>, <em class="sig-param">likelihood=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression_fidelity.html#SingleTaskMultiFidelityGP"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gp_regression_fidelity.SingleTaskMultiFidelityGP" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.gp_regression.SingleTaskGP" title="botorch.models.gp_regression.SingleTaskGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.gp_regression.SingleTaskGP</span></code></a></p>
+<p>A single task multi-fidelity GP model.</p>
+<p>A SingleTaskGP model using a DownsamplingKernel for the data fidelity
+parameter (if present) and an ExponentialDecayKernel for the iteration
+fidelity parameter (if present).</p>
+<p>This kernel is described in <a class="reference internal" href="#wu2019mf" id="id1"><span>[Wu2019mf]</span></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>train_X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x (d + s)</cite> tensor of training features,
+where <cite>s</cite> is the dimension of the fidelity parameters (either one
+or two).</p></li>
+<li><p><strong>train_Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x m</cite> tensor of training observations.</p></li>
+<li><p><strong>iteration_fidelity</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The column index for the training iteration fidelity
+parameter (optional).</p></li>
+<li><p><strong>data_fidelity</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The column index for the downsampling fidelity parameter
+(optional).</p></li>
+<li><p><strong>linear_truncated</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, use a <cite>LinearTruncatedFidelityKernel</cite> instead
+of the default kernel.</p></li>
+<li><p><strong>nu</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – The smoothness parameter for the Matern kernel: either 1/2, 3/2, or
+5/2. Only used when <cite>linear_truncated=True</cite>.</p></li>
+<li><p><strong>likelihood</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Likelihood</span></code>]) – A likelihood. If omitted, use a standard GaussianLikelihood
+with inferred noise level.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">train_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">train_Y</span> <span class="o">=</span> <span class="n">train_X</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskMultiFidelityGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>A single-task exact GP model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>train_X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>n x d</cite> or <cite>batch_shape x n x d</cite> (batch mode) tensor of training
+features.</p></li>
+<li><p><strong>train_Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>n x m</cite> or <cite>batch_shape x n x m</cite> (batch mode) tensor of
+training observations.</p></li>
+<li><p><strong>likelihood</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Likelihood</span></code>]) – A likelihood. If omitted, use a standard
+GaussianLikelihood with inferred noise level.</p></li>
+<li><p><strong>covar_module</strong> – The covariance (kernel) matrix. If omitted, use the
+MaternKernel.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">train_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">train_Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+</div>
 <div class="section" id="module-botorch.models.model_list_gp_regression">
 <span id="model-list-gp-regression-models"></span><h3>Model List GP Regression Models<a class="headerlink" href="#module-botorch.models.model_list_gp_regression" title="Permalink to this headline">¶</a></h3>
 <p>Model List GP Regression models.</p>
@@ -942,6 +1009,154 @@ full rank (i.e. number of tasks) kernel.</p></li>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">FixedNoiseMultiTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
 </pre></div>
 </div>
+</dd></dl>
+</div>
+</div>
+<div class="section" id="model-components">
+<h2>Model Components<a class="headerlink" href="#model-components" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-botorch.models.kernels.downsampling">
+<span id="kernels"></span><h3>Kernels<a class="headerlink" href="#module-botorch.models.kernels.downsampling" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="botorch.models.kernels.downsampling.DownsamplingKernel">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.kernels.downsampling.</code><code class="sig-name descname">DownsamplingKernel</code><span class="sig-paren">(</span><em class="sig-param">power_prior=None</em>, <em class="sig-param">offset_prior=None</em>, <em class="sig-param">power_constraint=None</em>, <em class="sig-param">offset_constraint=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/kernels/downsampling.html#DownsamplingKernel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.kernels.downsampling.DownsamplingKernel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">gpytorch.kernels.kernel.Kernel</span></code></p>
+<p>GPyTorch Downsampling Kernel.</p>
+<p>Computes a covariance matrix based on the down sampling kernel between
+inputs <cite>x_1</cite> and <cite>x_2</cite> (we expect <cite>d = 1</cite>):</p>
+<blockquote>
+<div><dl class="simple">
+<dt>K(mathbf{x_1}, mathbf{x_2}) = c + (1 - x_1)^(1 + delta) *</dt><dd><p>(1 - x_2)^(1 + delta).</p>
+</dd>
+</dl>
+</div></blockquote>
+<p>where <cite>c</cite> is an offset parameter, and <cite>delta</cite> is a power parameter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>power_constraint</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Interval</span></code>]) – Constraint to place on power parameter. Default is
+<cite>Positive</cite>.</p></li>
+<li><p><strong>power_prior</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Prior</span></code>]) – Prior over the power parameter.</p></li>
+<li><p><strong>offset_constraint</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Interval</span></code>]) – Constraint to place on offset parameter. Default is
+<cite>Positive</cite>.</p></li>
+<li><p><strong>active_dims</strong> – List of data dimensions to operate on. <cite>len(active_dims)</cite>
+should equal <cite>num_dimensions</cite>.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+</dd></dl>
+<span class="target" id="module-botorch.models.kernels.exponential_decay"></span><dl class="class">
+<dt id="botorch.models.kernels.exponential_decay.ExponentialDecayKernel">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.kernels.exponential_decay.</code><code class="sig-name descname">ExponentialDecayKernel</code><span class="sig-paren">(</span><em class="sig-param">power_prior=None</em>, <em class="sig-param">offset_prior=None</em>, <em class="sig-param">power_constraint=None</em>, <em class="sig-param">offset_constraint=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/kernels/exponential_decay.html#ExponentialDecayKernel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.kernels.exponential_decay.ExponentialDecayKernel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">gpytorch.kernels.kernel.Kernel</span></code></p>
+<p>GPyTorch Exponential Decay Kernel.</p>
+<p>Computes a covariance matrix based on the exponential decay kernel
+between inputs <cite>x_1</cite> and <cite>x_2</cite> (we expect <cite>d = 1</cite>):</p>
+<blockquote>
+<div><p>K(x_1, x_2) = w + beta^alpha / (x_1 + x_2 + beta)^alpha.</p>
+</div></blockquote>
+<p>where <cite>w</cite> is an offset parameter, <cite>beta</cite> is a lenthscale parameter, and
+<cite>alpha</cite> is a power parameter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lengthscale_constraint</strong> – Constraint to place on lengthscale parameter.
+Default is <cite>Positive</cite>.</p></li>
+<li><p><strong>lengthscale_prior</strong> – Prior over the lengthscale parameter.</p></li>
+<li><p><strong>power_constraint</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Interval</span></code>]) – Constraint to place on power parameter. Default is
+<cite>Positive</cite>.</p></li>
+<li><p><strong>power_prior</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Prior</span></code>]) – Prior over the power parameter.</p></li>
+<li><p><strong>offset_constraint</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Interval</span></code>]) – Constraint to place on offset parameter. Default is
+<cite>Positive</cite>.</p></li>
+<li><p><strong>active_dims</strong> – List of data dimensions to operate on. <cite>len(active_dims)</cite>
+should equal <cite>num_dimensions</cite>.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+</dd></dl>
+<span class="target" id="module-botorch.models.kernels.linear_truncated_fidelity"></span><dl class="class">
+<dt id="botorch.models.kernels.linear_truncated_fidelity.LinearTruncatedFidelityKernel">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.kernels.linear_truncated_fidelity.</code><code class="sig-name descname">LinearTruncatedFidelityKernel</code><span class="sig-paren">(</span><em class="sig-param">fidelity_dims</em>, <em class="sig-param">dimension=None</em>, <em class="sig-param">power_prior=None</em>, <em class="sig-param">power_constraint=None</em>, <em class="sig-param">nu=2.5</em>, <em class="sig-param">lengthscale_prior_unbiased=None</em>, <em class="sig-param">lengthscale_prior_biased=None</em>, <em class="sig-param">lengthscale_constraint_unbiased=None</em>, <em class="sig-param">lengthscale_constraint_biased=None</em>, <em class="sig-param">covar_module_unbiased=None</em>, <em class="sig-param">covar_module_biased=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/kernels/linear_truncated_fidelity.html#LinearTruncatedFidelityKernel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.kernels.linear_truncated_fidelity.LinearTruncatedFidelityKernel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">gpytorch.kernels.kernel.Kernel</span></code></p>
+<p>GPyTorch Linear Truncated Fidelity Kernel.</p>
+<p>Computes a covariance matrix based on the Linear truncated kernel between
+inputs <cite>x_1</cite> and <cite>x_2</cite> for up to two fidelity parmeters:</p>
+<blockquote>
+<div><p>K(x_1, x_2) = k_0 + c_1(x_1, x_2)k_1 + c_2(x_1,x_2)k_2 + c_3(x_1,x_2)k_3</p>
+</div></blockquote>
+<p>where</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt><cite>k_i(i=0,1,2,3)</cite> are Matern kernels calculated between non-fidelity</dt><dd><p>parameters of <cite>x_1</cite> and <cite>x_2</cite> with different priors.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><cite>c_1=(1 - x_1[f_1])(1 - x_2[f_1]))(1 + x_1[f_1] x_2[f_1])^p</cite> is the kernel</dt><dd><p>of the the bias term, which can be decomposed into a determistic part
+and a polynomial kernel. Here <cite>f_1</cite> is the first fidelity dimension and
+<cite>p</cite> is the order of the polynomial kernel.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><cite>c_3</cite> is the same as <cite>c_1</cite> but is calculated for the second fidelity</dt><dd><p>dimension <cite>f_2</cite>.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><cite>c_2</cite> is the interaction term with four deterministic terms and the</dt><dd><p>polynomial kernel between <cite>x_1[…, [f_1, f_2]]</cite> and
+<cite>x_2[…, [f_1, f_2]]</cite>.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fidelity_dims</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – A list containing either one or two indices specifying
+the fidelity parameters of the input.</p></li>
+<li><p><strong>dimension</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The dimension of <cite>x</cite>. Unused if <cite>active_dims</cite> is specified.</p></li>
+<li><p><strong>power_prior</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Prior</span></code>]) – Prior for the power parameter of the polynomial kernel.
+Default is <cite>None</cite>.</p></li>
+<li><p><strong>power_constraint</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Interval</span></code>]) – Constraint on the power parameter of the polynomial
+kernel. Default is <cite>Positive</cite>.</p></li>
+<li><p><strong>nu</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – The smoothness parameter for the Matern kernel: either 1/2, 3/2,
+or 5/2. Unused if both <cite>covar_module_unbiased</cite> and
+<cite>covar_module_biased</cite> are specified.</p></li>
+<li><p><strong>lengthscale_prior_unbiased</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Prior</span></code>]) – Prior on the lengthscale parameter of Matern
+kernel <cite>k_0</cite>. Default is <cite>Gamma(1.1, 1/20)</cite>.</p></li>
+<li><p><strong>lengthscale_constraint_unbiased</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Interval</span></code>]) – Constraint on the lengthscale parameter
+of the Matern kernel <cite>k_0</cite>. Default is <cite>Positive</cite>.</p></li>
+<li><p><strong>lengthscale_prior_biased</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Prior</span></code>]) – Prior on the lengthscale parameter of Matern
+kernels <cite>k_i(i&gt;0)</cite>. Default is <cite>Gamma(5, 1/20)</cite>.</p></li>
+<li><p><strong>lengthscale_constraint_biased</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Interval</span></code>]) – Constraint on the lengthscale parameter
+of the Matern kernels <cite>k_i(i&gt;0)</cite>. Default is <cite>Positive</cite>.</p></li>
+<li><p><strong>covar_module_unbiased</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Kernel</span></code>]) – Specify a custom kernel for <cite>k_0</cite>. If omitted,
+use a <cite>MaternKernel</cite>.</p></li>
+<li><p><strong>covar_module_biased</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Kernel</span></code>]) – Specify a custom kernel for the biased parts
+<cite>k_i(i&gt;0)</cite>. If omitted, use a <cite>MaternKernel</cite>.</p></li>
+<li><p><strong>batch_shape</strong> – If specified, use a separate lengthscale for each batch of
+input data. If <cite>x1</cite> is a <cite>batch_shape x n x d</cite> tensor, this should
+be <cite>batch_shape</cite>.</p></li>
+<li><p><strong>active_dims</strong> – Compute the covariance of a subset of input dimensions. The
+numbers correspond to the indices of the dimensions.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Non-batch: Simple option</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">covar_module</span> <span class="o">=</span> <span class="n">LinearTruncatedFidelityKernel</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">covar</span> <span class="o">=</span> <span class="n">covar_module</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># Output: LazyVariable of size (10 x 10)</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">batch_x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Batch: Simple option</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">covar_module</span> <span class="o">=</span> <span class="n">LinearTruncatedFidelityKernel</span><span class="p">(</span><span class="n">batch_shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">2</span><span class="p">]))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">covar</span> <span class="o">=</span> <span class="n">covar_module</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># Output: LazyVariable of size (2 x 10 x 10)</span>
+</pre></div>
+</div>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
 </dd></dl>
 </div>
 </div>
@@ -1150,278 +1365,6 @@ No checks (other than the NaN check) are performed for observed variances
 <dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
-</dd></dl>
-</div>
-</div>
-<div class="section" id="multi-fidelity-functionality">
-<h2>Multi-Fidelity Functionality<a class="headerlink" href="#multi-fidelity-functionality" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="module-botorch.models.fidelity.gp_regression_fidelity">
-<span id="multi-fidelity-models"></span><h3>Multi-Fidelity Models<a class="headerlink" href="#module-botorch.models.fidelity.gp_regression_fidelity" title="Permalink to this headline">¶</a></h3>
-<p>Gaussian Process Regression models based on GPyTorch models.</p>
-<dl class="class">
-<dt id="botorch.models.fidelity.gp_regression_fidelity.SingleTaskMultiFidelityGP">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.models.fidelity.gp_regression_fidelity.</code><code class="sig-name descname">SingleTaskMultiFidelityGP</code><span class="sig-paren">(</span><em class="sig-param">train_X</em>, <em class="sig-param">train_Y</em>, <em class="sig-param">train_iteration_fidelity=True</em>, <em class="sig-param">train_data_fidelity=True</em>, <em class="sig-param">likelihood=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fidelity/gp_regression_fidelity.html#SingleTaskMultiFidelityGP"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.fidelity.gp_regression_fidelity.SingleTaskMultiFidelityGP" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.models.gp_regression.SingleTaskGP" title="botorch.models.gp_regression.SingleTaskGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.gp_regression.SingleTaskGP</span></code></a></p>
-<p>A single task multi-fidelity GP model.</p>
-<p>A sub-class of SingleTaskGP model. By default the last two input dimensions
-are the fidelity parameters: training iterations, training data points.
-The kernel comes from this paper <a class="reference external" href="https://arxiv.org/abs/1903.04703">https://arxiv.org/abs/1903.04703</a></p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>train_X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x (d + s) ` tensor of training features,
-where `s</cite> is the dimension of the fidelity parameters.</p></li>
-<li><p><strong>train_Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x m</cite> tensor of training observations.</p></li>
-<li><p><strong>train_iteration_fidelity</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – An indicator of whether we have the training
-iteration fidelity variable.</p></li>
-<li><p><strong>train_data_fidelity</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – An indicator of whether we have the downsampling
-fidelity variable. If train_iteration_fidelity and train_data_fidelity
-are both True, the last and second last columns are treated as the
-training data points fidelity parameter and training iteration
-number fidelity parameter respectively. Otherwise the last column of
-<cite>train_X</cite> is treated as the fidelity parameter with True indicator.
-We assume that <cite>train_X</cite> has at least one fidelity parameter.</p></li>
-<li><p><strong>likelihood</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Likelihood</span></code>]) – A likelihood. If omitted, use a standard GaussianLikelihood
-with inferred noise level.</p></li>
-</ul>
-</dd>
-</dl>
-<p class="rubric">Example</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">train_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">train_Y</span> <span class="o">=</span> <span class="n">train_X</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskMultiFidelityGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>A single-task exact GP model.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>train_X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>n x d</cite> or <cite>batch_shape x n x d</cite> (batch mode) tensor of training
-features.</p></li>
-<li><p><strong>train_Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>n x m</cite> or <cite>batch_shape x n x m</cite> (batch mode) tensor of
-training observations.</p></li>
-<li><p><strong>likelihood</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Likelihood</span></code>]) – A likelihood. If omitted, use a standard
-GaussianLikelihood with inferred noise level.</p></li>
-<li><p><strong>covar_module</strong> – The covariance (kernel) matrix. If omitted, use the
-MaternKernel.</p></li>
-</ul>
-</dd>
-</dl>
-<p class="rubric">Example</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">train_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">train_Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
-</pre></div>
-</div>
-</dd></dl>
-<dl class="class">
-<dt id="botorch.models.fidelity.gp_regression_fidelity.SingleTaskGPLTKernel">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.models.fidelity.gp_regression_fidelity.</code><code class="sig-name descname">SingleTaskGPLTKernel</code><span class="sig-paren">(</span><em class="sig-param">train_X</em>, <em class="sig-param">train_Y</em>, <em class="sig-param">nu=2.5</em>, <em class="sig-param">train_iteration_fidelity=True</em>, <em class="sig-param">train_data_fidelity=True</em>, <em class="sig-param">likelihood=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fidelity/gp_regression_fidelity.html#SingleTaskGPLTKernel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.fidelity.gp_regression_fidelity.SingleTaskGPLTKernel" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.models.gp_regression.SingleTaskGP" title="botorch.models.gp_regression.SingleTaskGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.gp_regression.SingleTaskGP</span></code></a></p>
-<p>A single task multi-fidelity GP model wiht Linear Truncated kernel.</p>
-<p>A sub-class of SingleTaskGP model. By default the last two input dimensions
-are the fidelity parameters: training iterations, training data points.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>train_X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x (d + s) ` tensor of training features,
-where `s</cite> is the dimension of the fidelity parameters.</p></li>
-<li><p><strong>train_Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x m</cite> tensor of training observations.</p></li>
-<li><p><strong>dimension</strong> – The dimension of <cite>x</cite>.</p></li>
-<li><p><strong>nu</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – The smoothness parameter fo Matern kernel: either 1/2, 3/2, or 5/2.
-Default: ‘2.5’</p></li>
-<li><p><strong>train_iteration_fidelity</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – An indicator of whether we have the training
-iteration fidelity variable.</p></li>
-<li><p><strong>train_data_fidelity</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – An indicator of whether we have the downsampling
-fidelity variable. If train_iteration_fidelity and train_data_fidelity
-are both True, the last and second last columns are treated as the
-training data points fidelity parameter and training iteration
-number fidelity parameter respectively. Otherwise the last column of
-train_X is treated as the fidelity parameter with True indicator.
-We assume that <cite>train_X</cite> has at least one fidelity parameter.</p></li>
-<li><p><strong>likelihood</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Likelihood</span></code>]) – A likelihood. If omitted, use a standard
-GaussianLikelihood with inferred noise level.</p></li>
-</ul>
-</dd>
-</dl>
-<p class="rubric">Example</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">train_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">train_Y</span> <span class="o">=</span> <span class="n">train_X</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGPLTKernel</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>A single-task exact GP model.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>train_X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>n x d</cite> or <cite>batch_shape x n x d</cite> (batch mode) tensor of training
-features.</p></li>
-<li><p><strong>train_Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>n x m</cite> or <cite>batch_shape x n x m</cite> (batch mode) tensor of
-training observations.</p></li>
-<li><p><strong>likelihood</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Likelihood</span></code>]) – A likelihood. If omitted, use a standard
-GaussianLikelihood with inferred noise level.</p></li>
-<li><p><strong>covar_module</strong> – The covariance (kernel) matrix. If omitted, use the
-MaternKernel.</p></li>
-</ul>
-</dd>
-</dl>
-<p class="rubric">Example</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">train_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">train_Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
-</pre></div>
-</div>
-</dd></dl>
-</div>
-<div class="section" id="module-botorch.models.fidelity_kernels.downsampling">
-<span id="multi-fidelity-kernels"></span><h3>Multi-Fidelity Kernels<a class="headerlink" href="#module-botorch.models.fidelity_kernels.downsampling" title="Permalink to this headline">¶</a></h3>
-<dl class="class">
-<dt id="botorch.models.fidelity_kernels.downsampling.DownsamplingKernel">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.models.fidelity_kernels.downsampling.</code><code class="sig-name descname">DownsamplingKernel</code><span class="sig-paren">(</span><em class="sig-param">power_prior=None</em>, <em class="sig-param">offset_prior=None</em>, <em class="sig-param">power_constraint=None</em>, <em class="sig-param">offset_constraint=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fidelity_kernels/downsampling.html#DownsamplingKernel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.fidelity_kernels.downsampling.DownsamplingKernel" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">gpytorch.kernels.kernel.Kernel</span></code></p>
-<p>GPyTorch Downsampling Kernel.</p>
-<p>Computes a covariance matrix based on the down sampling kernel between
-inputs <cite>x_1</cite> and <cite>x_2</cite> (we expect <cite>d = 1</cite>):</p>
-<blockquote>
-<div><dl class="simple">
-<dt>K(mathbf{x_1}, mathbf{x_2}) = c + (1 - x_1)^(1 + delta) *</dt><dd><p>(1 - x_2)^(1 + delta).</p>
-</dd>
-</dl>
-</div></blockquote>
-<p>where <cite>c</cite> is an offset parameter, and <cite>delta</cite> is a power parameter.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>power_constraint</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Interval</span></code>]) – Constraint to place on power parameter. Default is
-<cite>Positive</cite>.</p></li>
-<li><p><strong>power_prior</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Prior</span></code>]) – Prior over the power parameter.</p></li>
-<li><p><strong>offset_constraint</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Interval</span></code>]) – Constraint to place on offset parameter. Default is
-<cite>Positive</cite>.</p></li>
-<li><p><strong>active_dims</strong> – List of data dimensions to operate on. <cite>len(active_dims)</cite>
-should equal <cite>num_dimensions</cite>.</p></li>
-</ul>
-</dd>
-</dl>
-<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
-</dd></dl>
-<span class="target" id="module-botorch.models.fidelity_kernels.exponential_decay"></span><dl class="class">
-<dt id="botorch.models.fidelity_kernels.exponential_decay.ExponentialDecayKernel">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.models.fidelity_kernels.exponential_decay.</code><code class="sig-name descname">ExponentialDecayKernel</code><span class="sig-paren">(</span><em class="sig-param">power_prior=None</em>, <em class="sig-param">offset_prior=None</em>, <em class="sig-param">power_constraint=None</em>, <em class="sig-param">offset_constraint=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fidelity_kernels/exponential_decay.html#ExponentialDecayKernel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.fidelity_kernels.exponential_decay.ExponentialDecayKernel" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">gpytorch.kernels.kernel.Kernel</span></code></p>
-<p>GPyTorch Exponential Decay Kernel</p>
-<p>Computes a covariance matrix based on the exponential decay kernel
-between inputs <cite>x_1</cite> and <cite>x_2</cite> (we expect <cite>d = 1</cite>):</p>
-<blockquote>
-<div><p>K(x_1, x_2) = w + beta^alpha / (x_1 + x_2 + beta)^alpha.</p>
-</div></blockquote>
-<p>where <cite>w</cite> is anoffset parameter, <cite>beta</cite> is a lenthscale parameter, and
-<cite>alpha</cite> is a power parameter</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>lengthscale_constraint</strong> – Constraint to place on lengthscale parameter.
-Default is <cite>Positive</cite>.</p></li>
-<li><p><strong>lengthscale_prior</strong> – Prior over the lengthscale parameter.</p></li>
-<li><p><strong>power_constraint</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Interval</span></code>]) – Constraint to place on power parameter. Default is
-<cite>Positive</cite>.</p></li>
-<li><p><strong>power_prior</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Prior</span></code>]) – Prior over the power parameter.</p></li>
-<li><p><strong>offset_constraint</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Interval</span></code>]) – Constraint to place on offset parameter. Default is
-<cite>Positive</cite>.</p></li>
-<li><p><strong>active_dims</strong> – List of data dimensions to operate on. <cite>len(active_dims)</cite>
-should equal <cite>num_dimensions</cite>.</p></li>
-</ul>
-</dd>
-</dl>
-<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
-</dd></dl>
-<span class="target" id="module-botorch.models.fidelity_kernels.linear_truncated_fidelity"></span><dl class="class">
-<dt id="botorch.models.fidelity_kernels.linear_truncated_fidelity.LinearTruncatedFidelityKernel">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.models.fidelity_kernels.linear_truncated_fidelity.</code><code class="sig-name descname">LinearTruncatedFidelityKernel</code><span class="sig-paren">(</span><em class="sig-param">dimension=3</em>, <em class="sig-param">nu=2.5</em>, <em class="sig-param">train_iteration_fidelity=True</em>, <em class="sig-param">train_data_fidelity=True</em>, <em class="sig-param">lengthscale_prior=None</em>, <em class="sig-param">power_prior=None</em>, <em class="sig-param">power_constraint=None</em>, <em class="sig-param">lengthscale_2_prior=None</em>, <em class="sig-param">lengthscale_2_constraint=None</em>, <em class="sig-param">lengthscale_constraint=None</em>, <em class="sig-param">covar_module_1=None</em>, <em class="sig-param">covar_module_2=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/fidelity_kernels/linear_truncated_fidelity.html#LinearTruncatedFidelityKernel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.fidelity_kernels.linear_truncated_fidelity.LinearTruncatedFidelityKernel" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">gpytorch.kernels.kernel.Kernel</span></code></p>
-<p>GPyTorch Linear Truncated Fidelity Kernel.</p>
-<p>Computes a covariance matrix based on the Linear truncated kernel
-between inputs <cite>x_1</cite> and <cite>x_2</cite>:</p>
-<blockquote>
-<div><p>K(x_1, x_2) = k_0 + c_1(x_1, x_1)k_1 + c_2(x_1,x_2)k_2 + c_3(x_2,x_2)k_3</p>
-</div></blockquote>
-<p>where</p>
-<ul class="simple">
-<li><dl class="simple">
-<dt><cite>k_i(i=0,1,2,3)</cite> are Matern kernels calculated between <cite>x_1[:-2]</cite></dt><dd><p>and <cite>x_2[:-2]</cite> with different priors.</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt><cite>c_1=(1 - x_1[-1])(1 - x_2[-1]))(1 + x_1[-1] x_2[-1])^p</cite> is the kernel of</dt><dd><p>thjebias term, which can be decomposed
-into a determistic part and a polynomial kernel.</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt><cite>c_3</cite> is the same as <cite>c_1</cite> but is calculated from the second last entries</dt><dd><p>of <cite>x_1</cite> and <cite>x_2</cite>.</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt><cite>c_2</cite> is the interaction term with four deterministic terms and the</dt><dd><p>polynomial kernel between <cite>x_1[-2:]</cite> and <cite>x_2[-2:]</cite></p>
-</dd>
-</dl>
-</li>
-<li><p><cite>p</cite> is the order of the polynomial kernel.</p></li>
-</ul>
-<p>We assume the last two dimensions of input <cite>x</cite> are the fidelity parameters.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>dimension</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The dimension of <cite>x</cite>. This is not needed if active_dims is
-specified.</p></li>
-<li><p><strong>nu</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – The smoothness parameter fo Matern kernel: either 1/2, 3/2, or 5/2.</p></li>
-<li><p><strong>batch_shape</strong> – Set this if you want a separate lengthscale for each batch
-of input data. It should be <cite>batch_shape</cite> if x1` is a
-<cite>batch_shape x n x d</cite> tensor.</p></li>
-<li><p><strong>active_dims</strong> – Set this if you want to compute the covariance of only a
-few input dimensions. The numbers corresponds to the indices of the
-dimensions.</p></li>
-<li><p><strong>lengthscale_prior</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Prior</span></code>]) – Set this if you want to apply a prior to the
-lengthscale parameter of Matern kernel <cite>k_0</cite>. Default is
-<cite>Gamma(1.1, 1/20)</cite>.</p></li>
-<li><p><strong>lengthscale_constraint</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Interval</span></code>]) – Set this if you want to apply a constraint to
-the lengthscale parameter of the Matern kernel <cite>k_0</cite>. Default is
-<cite>Positive</cite>.</p></li>
-<li><p><strong>lengthscale_2_prior</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Prior</span></code>]) – Set this if you want to apply a prior to the
-lengthscale parameter of Matern kernels <cite>k_i(i&gt;0)</cite>. Default is
-<cite>Gamma(5, 1/20)</cite>.</p></li>
-<li><p><strong>lengthscale_2_constraint</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Interval</span></code>]) – Set this if you want to apply a constraint to
-the lengthscale parameter of Matern kernels <cite>k_i(i&gt;0)</cite>. Default is
-<cite>Positive</cite>.</p></li>
-<li><p><strong>power_prior</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Prior</span></code>]) – Set this if you want to apply a prior to the power parameter
-of the polynomial kernel. Default is <cite>None</cite>.</p></li>
-<li><p><strong>power_constraint</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Interval</span></code>]) – Set this if you want to apply a constraint to the power
-parameter of the polynomial kernel. Default is <cite>Positive</cite>.</p></li>
-<li><p><strong>train_iteration_fidelity</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Set this to True if your data contains
-iteration fidelity parameter.</p></li>
-<li><p><strong>train_data_fidelity</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Set this to True if your data contains training
-data fidelity parameter.</p></li>
-<li><p><strong>covar_module_1</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Kernel</span></code>]) – Set this if you want a different kernel for the
-unbiased part. Default is <cite>MaternKernel</cite>.</p></li>
-<li><p><strong>covar_module_2</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Kernel</span></code>]) – Set this if you want a different kernel for the biased
-part. Default is <cite>MaternKernel</cite>.</p></li>
-</ul>
-</dd>
-</dl>
-<p class="rubric">Example</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Non-batch: Simple option</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">covar_module</span> <span class="o">=</span> <span class="n">LinearTruncatedFidelityKernel</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">covar</span> <span class="o">=</span> <span class="n">covar_module</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># Output: LazyVariable of size (10 x 10)</span>
-<span class="go">&gt;&gt;&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">batch_x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Batch: Simple option</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">covar_module</span> <span class="o">=</span> <span class="n">LinearTruncatedFidelityKernel</span><span class="p">(</span><span class="n">batch_shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">2</span><span class="p">]))</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">covar</span> <span class="o">=</span> <span class="n">covar_module</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># Output: LazyVariable of size (2 x 10 x 10)</span>
-</pre></div>
-</div>
-<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
 </dd></dl>
 </div>
 </div>

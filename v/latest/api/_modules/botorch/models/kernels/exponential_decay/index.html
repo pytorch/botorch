@@ -23,7 +23,7 @@
 <div class="documentwrapper">
 <div class="bodywrapper">
 <div class="body" role="main">
-<h1>Source code for botorch.models.fidelity_kernels.downsampling</h1><div class="highlight"><pre>
+<h1>Source code for botorch.models.kernels.exponential_decay</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/bin/env python3</span>
 <span class="c1"># Copyright (c) Facebook, Inc. and its affiliates.</span>
 <span class="c1">#</span>
@@ -39,18 +39,21 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="k">import</span> <span class="n">Tensor</span>
 
 
-<div class="viewcode-block" id="DownsamplingKernel"><a class="viewcode-back" href="../../../../models.html#botorch.models.fidelity_kernels.downsampling.DownsamplingKernel">[docs]</a><span class="k">class</span> <span class="nc">DownsamplingKernel</span><span class="p">(</span><span class="n">Kernel</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""GPyTorch Downsampling Kernel.</span>
+<div class="viewcode-block" id="ExponentialDecayKernel"><a class="viewcode-back" href="../../../../models.html#botorch.models.kernels.exponential_decay.ExponentialDecayKernel">[docs]</a><span class="k">class</span> <span class="nc">ExponentialDecayKernel</span><span class="p">(</span><span class="n">Kernel</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""GPyTorch Exponential Decay Kernel.</span>
 
-<span class="sd">    Computes a covariance matrix based on the down sampling kernel between</span>
-<span class="sd">    inputs `x_1` and `x_2` (we expect `d = 1`):</span>
+<span class="sd">    Computes a covariance matrix based on the exponential decay kernel</span>
+<span class="sd">    between inputs `x_1` and `x_2` (we expect `d = 1`):</span>
 
-<span class="sd">        K(\mathbf{x_1}, \mathbf{x_2}) = c + (1 - x_1)^(1 + delta) *</span>
-<span class="sd">            (1 - x_2)^(1 + delta).</span>
+<span class="sd">        K(x_1, x_2) = w + beta^alpha / (x_1 + x_2 + beta)^alpha.</span>
 
-<span class="sd">    where `c` is an offset parameter, and `delta` is a power parameter.</span>
+<span class="sd">    where `w` is an offset parameter, `beta` is a lenthscale parameter, and</span>
+<span class="sd">    `alpha` is a power parameter.</span>
 
 <span class="sd">    Args:</span>
+<span class="sd">        lengthscale_constraint: Constraint to place on lengthscale parameter.</span>
+<span class="sd">            Default is `Positive`.</span>
+<span class="sd">        lengthscale_prior: Prior over the lengthscale parameter.</span>
 <span class="sd">        power_constraint: Constraint to place on power parameter. Default is</span>
 <span class="sd">            `Positive`.</span>
 <span class="sd">        power_prior: Prior over the power parameter.</span>
@@ -59,6 +62,8 @@
 <span class="sd">        active_dims: List of data dimensions to operate on. `len(active_dims)`</span>
 <span class="sd">            should equal `num_dimensions`.</span>
 <span class="sd">    """</span>
+
+    <span class="n">has_lengthscale</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -92,7 +97,7 @@
                 <span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">power</span><span class="p">,</span>
                 <span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_set_power</span><span class="p">(</span><span class="n">v</span><span class="p">),</span>
             <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">register_constraint</span><span class="p">(</span><span class="s2">"raw_power"</span><span class="p">,</span> <span class="n">power_constraint</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_constraint</span><span class="p">(</span><span class="s2">"raw_power"</span><span class="p">,</span> <span class="n">offset_constraint</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">offset_prior</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">register_prior</span><span class="p">(</span>
@@ -130,33 +135,14 @@
             <span class="n">value</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_offset</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">raw_offset</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_offset_constraint</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
 
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">x1</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
-        <span class="n">x2</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
-        <span class="n">diag</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="n">last_dim_is_batch</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">params</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x1</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">x2</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">offset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
         <span class="n">power</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">power</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">last_dim_is_batch</span><span class="p">:</span>
-            <span class="n">x1</span> <span class="o">=</span> <span class="n">x1</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-            <span class="n">x2</span> <span class="o">=</span> <span class="n">x2</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">x1_</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">x1</span>
-        <span class="n">x2_</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">x2</span>
-        <span class="k">if</span> <span class="n">diag</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">(</span><span class="n">x1_</span> <span class="o">*</span> <span class="n">x2_</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="n">power</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">offset</span>
-
-        <span class="k">if</span> <span class="n">x1</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">x2</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">addmm</span><span class="p">(</span>
-                <span class="n">offset</span><span class="p">,</span> <span class="n">x1_</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="n">power</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">x2_</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="n">power</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-            <span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">(</span>
-                <span class="n">torch</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">x1_</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="n">power</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">x2_</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="n">power</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
-                <span class="o">+</span> <span class="n">offset</span>
-            <span class="p">)</span></div>
+        <span class="n">x1_</span> <span class="o">=</span> <span class="n">x1</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lengthscale</span><span class="p">)</span>
+        <span class="n">x2_</span> <span class="o">=</span> <span class="n">x2</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lengthscale</span><span class="p">)</span>
+        <span class="n">diff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_dist</span><span class="p">(</span><span class="n">x1_</span><span class="p">,</span> <span class="o">-</span><span class="n">x2_</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">offset</span> <span class="o">+</span> <span class="p">(</span><span class="n">diff</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="o">-</span><span class="n">power</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">res</span></div>
 </pre></div>
 </div>
 </div>
