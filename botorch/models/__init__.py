@@ -7,6 +7,7 @@
 from .cost import AffineFidelityCostModel
 from .deterministic import AffineDeterministicModel, GenericDeterministicModel
 from .gp_regression import FixedNoiseGP, HeteroskedasticSingleTaskGP, SingleTaskGP
+from .gp_regression_fidelity import SingleTaskMultiFidelityGP
 from .model_list_gp_regression import ModelListGP
 from .multitask import FixedNoiseMultiTaskGP, MultiTaskGP
 
@@ -21,4 +22,5 @@ __all__ = [
     "ModelListGP",
     "MultiTaskGP",
     "SingleTaskGP",
+    "SingleTaskMultiFidelityGP",
 ]

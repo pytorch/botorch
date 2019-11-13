@@ -13,21 +13,18 @@ from gpytorch.priors import Prior
 from torch import Tensor
 
 
-class ExponentialDecayKernel(Kernel):
-    r"""GPyTorch Exponential Decay Kernel
+class DownsamplingKernel(Kernel):
+    r"""GPyTorch Downsampling Kernel.
 
-    Computes a covariance matrix based on the exponential decay kernel
-    between inputs `x_1` and `x_2` (we expect `d = 1`):
+    Computes a covariance matrix based on the down sampling kernel between
+    inputs `x_1` and `x_2` (we expect `d = 1`):
 
-        K(x_1, x_2) = w + beta^alpha / (x_1 + x_2 + beta)^alpha.
+        K(\mathbf{x_1}, \mathbf{x_2}) = c + (1 - x_1)^(1 + delta) *
+            (1 - x_2)^(1 + delta).
 
-    where `w` is anoffset parameter, `beta` is a lenthscale parameter, and
-    `alpha` is a power parameter
+    where `c` is an offset parameter, and `delta` is a power parameter.
 
     Args:
-        lengthscale_constraint: Constraint to place on lengthscale parameter.
-            Default is `Positive`.
-        lengthscale_prior: Prior over the lengthscale parameter.
         power_constraint: Constraint to place on power parameter. Default is
             `Positive`.
         power_prior: Prior over the power parameter.
@@ -43,9 +40,9 @@ class ExponentialDecayKernel(Kernel):
         offset_prior: Optional[Prior] = None,
         power_constraint: Optional[Interval] = None,
         offset_constraint: Optional[Interval] = None,
-        **kwargs
+        **kwargs,
     ):
-        super().__init__(has_lengthscale=True, **kwargs)
+        super().__init__(**kwargs)
 
         if power_constraint is None:
             power_constraint = Positive()
@@ -69,7 +66,7 @@ class ExponentialDecayKernel(Kernel):
                 lambda: self.power,
                 lambda v: self._set_power(v),
             )
-        self.register_constraint("raw_power", offset_constraint)
+        self.register_constraint("raw_power", power_constraint)
 
         if offset_prior is not None:
             self.register_prior(
@@ -78,7 +75,6 @@ class ExponentialDecayKernel(Kernel):
                 lambda: self.offset,
                 lambda v: self._set_offset(v),
             )
-
         self.register_constraint("raw_offset", offset_constraint)
 
     @property
@@ -107,11 +103,23 @@ class ExponentialDecayKernel(Kernel):
             value = torch.as_tensor(value).to(self.raw_offset)
         self.initialize(raw_offset=self.raw_offset_constraint.inverse_transform(value))
 
-    def forward(self, x1: Tensor, x2: Tensor, **params) -> Tensor:
+    def forward(
+        self,
+        x1: Tensor,
+        x2: Tensor,
+        diag: Optional[bool] = False,
+        last_dim_is_batch: Optional[bool] = False,
+        **params,
+    ) -> Tensor:
         offset = self.offset.view(*self.batch_shape, 1, 1)
-        power = self.power.view(*self.batch_shape, 1, 1)
-        x1_ = x1.div(self.lengthscale)
-        x2_ = x2.div(self.lengthscale)
-        diff = self.covar_dist(x1_, -x2_, **params)
-        res = offset + (diff + 1).pow(-power)
-        return res
+        exponent = 1 + self.power.view(*self.batch_shape, 1, 1)
+        if last_dim_is_batch:
+            x1 = x1.transpose(-1, -2).unsqueeze(-1)
+            x2 = x2.transpose(-1, -2).unsqueeze(-1)
+        x1_ = 1 - x1
+        x2_ = 1 - x2
+
+        if diag:
+            return offset + (x1_ * x2_).sum(dim=-1).pow(exponent)
+
+        return offset + x1_.pow(exponent) @ x2_.transpose(-2, -1).pow(exponent)
