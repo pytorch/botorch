@@ -14,15 +14,15 @@ from torch import Tensor
 
 
 class ExponentialDecayKernel(Kernel):
-    r"""GPyTorch Exponential Decay Kernel
+    r"""GPyTorch Exponential Decay Kernel.
 
     Computes a covariance matrix based on the exponential decay kernel
     between inputs `x_1` and `x_2` (we expect `d = 1`):
 
         K(x_1, x_2) = w + beta^alpha / (x_1 + x_2 + beta)^alpha.
 
-    where `w` is anoffset parameter, `beta` is a lenthscale parameter, and
-    `alpha` is a power parameter
+    where `w` is an offset parameter, `beta` is a lenthscale parameter, and
+    `alpha` is a power parameter.
 
     Args:
         lengthscale_constraint: Constraint to place on lengthscale parameter.
