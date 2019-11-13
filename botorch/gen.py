@@ -211,7 +211,6 @@ def gen_candidates_torch(
 
         def closure():
             bayes_optimizer.zero_grad()
-            loss = -acquisition_function(candidates).sum()
             loss.backward()
             return loss
 
