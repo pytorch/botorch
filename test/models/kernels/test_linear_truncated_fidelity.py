@@ -6,7 +6,7 @@
 
 import torch
 from botorch.exceptions import UnsupportedError
-from botorch.models.fidelity_kernels.linear_truncated_fidelity import (
+from botorch.models.kernels.linear_truncated_fidelity import (
     LinearTruncatedFidelityKernel,
 )
 from botorch.utils.testing import BotorchTestCase
@@ -18,7 +18,9 @@ from gpytorch.test.base_kernel_test_case import BaseKernelTestCase
 
 class TestLinearTruncatedFidelityKernel(BotorchTestCase, BaseKernelTestCase):
     def create_kernel_no_ard(self, **kwargs):
-        return LinearTruncatedFidelityKernel(**kwargs)
+        return LinearTruncatedFidelityKernel(
+            fidelity_dims=[1, 2], dimension=3, **kwargs
+        )
 
     def create_data_no_batch(self):
         return torch.rand(50, 10)
@@ -36,12 +38,12 @@ class TestLinearTruncatedFidelityKernel(BotorchTestCase, BaseKernelTestCase):
             2, 2
         )
         for nu in {0.5, 1.5, 2.5}:
-            for train_data_fidelity in {False, True}:
+            for fidelity_dims in ([2], [1, 2]):
                 kernel = LinearTruncatedFidelityKernel(
-                    nu=nu, dimension=3, train_data_fidelity=train_data_fidelity
+                    fidelity_dims=fidelity_dims, dimension=3, nu=nu
                 )
                 kernel.power = 1
-                if train_data_fidelity:
+                if len(fidelity_dims) > 1:
                     active_dimsM = [0]
                     t_2 = torch.tensor(
                         [0.4725, 0.2889, 0.4025, 0.2541], dtype=torch.float
@@ -72,18 +74,16 @@ class TestLinearTruncatedFidelityKernel(BotorchTestCase, BaseKernelTestCase):
             dtype=torch.float,
         ).view(2, 2, 2)
         batch_shape = torch.Size([2])
-        dimension = 3
         for nu in {0.5, 1.5, 2.5}:
-            for train_data_fidelity in {False, True}:
+            for fidelity_dims in ([2], [1, 2]):
                 kernel = LinearTruncatedFidelityKernel(
+                    fidelity_dims=fidelity_dims,
+                    dimension=3,
                     nu=nu,
-                    dimension=dimension,
-                    train_data_fidelity=train_data_fidelity,
                     batch_shape=batch_shape,
                 )
                 kernel.power = 1
-                kernel.train_data_fidelity = train_data_fidelity
-                if train_data_fidelity:
+                if len(fidelity_dims) > 1:
                     active_dimsM = [0]
                     t_2 = torch.tensor(
                         [0.0527, 0.167, 0.0383, 0.1159, 0.1159, 0.167, 0.0383, 0.0527],
@@ -107,49 +107,68 @@ class TestLinearTruncatedFidelityKernel(BotorchTestCase, BaseKernelTestCase):
                 self.assertLess(torch.norm(res - actual), 1e-4)
 
     def test_initialize_lengthscale_prior(self):
-        kernel = LinearTruncatedFidelityKernel()
-        self.assertTrue(isinstance(kernel.covar_module_1.lengthscale_prior, GammaPrior))
-        self.assertTrue(isinstance(kernel.covar_module_2.lengthscale_prior, GammaPrior))
-        kernel2 = LinearTruncatedFidelityKernel(lengthscale_prior=NormalPrior(1, 1))
+        kernel = LinearTruncatedFidelityKernel(fidelity_dims=[1, 2], dimension=3)
         self.assertTrue(
-            isinstance(kernel2.covar_module_1.lengthscale_prior, NormalPrior)
+            isinstance(kernel.covar_module_unbiased.lengthscale_prior, GammaPrior)
         )
-        kernel2 = LinearTruncatedFidelityKernel(lengthscale_2_prior=NormalPrior(1, 1))
         self.assertTrue(
-            isinstance(kernel2.covar_module_2.lengthscale_prior, NormalPrior)
+            isinstance(kernel.covar_module_biased.lengthscale_prior, GammaPrior)
+        )
+        kernel2 = LinearTruncatedFidelityKernel(
+            fidelity_dims=[1, 2],
+            dimension=3,
+            lengthscale_prior_unbiased=NormalPrior(1, 1),
+        )
+        self.assertTrue(
+            isinstance(kernel2.covar_module_unbiased.lengthscale_prior, NormalPrior)
+        )
+        kernel2 = LinearTruncatedFidelityKernel(
+            fidelity_dims=[1, 2],
+            dimension=3,
+            lengthscale_prior_biased=NormalPrior(1, 1),
+        )
+        self.assertTrue(
+            isinstance(kernel2.covar_module_biased.lengthscale_prior, NormalPrior)
         )
 
     def test_initialize_power_prior(self):
-        kernel = LinearTruncatedFidelityKernel(power_prior=NormalPrior(1, 1))
+        kernel = LinearTruncatedFidelityKernel(
+            fidelity_dims=[1, 2], dimension=3, power_prior=NormalPrior(1, 1)
+        )
         self.assertTrue(isinstance(kernel.power_prior, NormalPrior))
 
     def test_initialize_power(self):
-        kernel = LinearTruncatedFidelityKernel()
+        kernel = LinearTruncatedFidelityKernel(fidelity_dims=[1, 2], dimension=3)
         kernel.initialize(power=1)
         actual_value = torch.tensor(1, dtype=torch.float).view_as(kernel.power)
         self.assertLess(torch.norm(kernel.power - actual_value), 1e-5)
 
     def test_initialize_power_batch(self):
-        kernel = LinearTruncatedFidelityKernel(batch_shape=torch.Size([2]))
+        kernel = LinearTruncatedFidelityKernel(
+            fidelity_dims=[1, 2], dimension=3, batch_shape=torch.Size([2])
+        )
         power_init = torch.tensor([1, 2], dtype=torch.float)
         kernel.initialize(power=power_init)
         actual_value = power_init.view_as(kernel.power)
         self.assertLess(torch.norm(kernel.power - actual_value), 1e-5)
 
-    def test_raise_fidelity_error(self):
-        kernel = LinearTruncatedFidelityKernel
+    def test_raise_init_errors(self):
         with self.assertRaises(UnsupportedError):
-            kernel(train_iteration_fidelity=False, train_data_fidelity=False)
-
-    def test_raise_matern_error(self):
+            LinearTruncatedFidelityKernel(fidelity_dims=[2])
+        with self.assertRaises(UnsupportedError):
+            LinearTruncatedFidelityKernel(fidelity_dims=[0, 1, 2], dimension=3)
         with self.assertRaises(ValueError):
-            LinearTruncatedFidelityKernel(nu=1)
+            LinearTruncatedFidelityKernel(fidelity_dims=[2, 2], dimension=3)
+        with self.assertRaises(ValueError):
+            LinearTruncatedFidelityKernel(fidelity_dims=[2], dimension=2, nu=1)
 
     def test_active_dims_list(self):
-        kernel = LinearTruncatedFidelityKernel(dimension=10, active_dims=[0, 2, 4, 6])
+        kernel = LinearTruncatedFidelityKernel(
+            fidelity_dims=[1, 2], dimension=10, active_dims=[0, 2, 4, 6]
+        )
         x = self.create_data_no_batch()
         covar_mat = kernel(x).evaluate_kernel().evaluate()
-        kernel_basic = LinearTruncatedFidelityKernel(dimension=4)
+        kernel_basic = LinearTruncatedFidelityKernel(fidelity_dims=[1, 2], dimension=4)
         covar_mat_actual = kernel_basic(x[:, [0, 2, 4, 6]]).evaluate_kernel().evaluate()
         self.assertLess(
             torch.norm(covar_mat - covar_mat_actual) / covar_mat_actual.norm(), 1e-4
@@ -157,10 +176,12 @@ class TestLinearTruncatedFidelityKernel(BotorchTestCase, BaseKernelTestCase):
 
     def test_active_dims_range(self):
         active_dims = list(range(3, 9))
-        kernel = LinearTruncatedFidelityKernel(dimension=10, active_dims=active_dims)
+        kernel = LinearTruncatedFidelityKernel(
+            fidelity_dims=[1, 2], dimension=10, active_dims=active_dims
+        )
         x = self.create_data_no_batch()
         covar_mat = kernel(x).evaluate_kernel().evaluate()
-        kernel_basic = LinearTruncatedFidelityKernel(dimension=6)
+        kernel_basic = LinearTruncatedFidelityKernel(fidelity_dims=[1, 2], dimension=6)
         covar_mat_actual = kernel_basic(x[:, active_dims]).evaluate_kernel().evaluate()
 
         self.assertLess(
@@ -168,15 +189,18 @@ class TestLinearTruncatedFidelityKernel(BotorchTestCase, BaseKernelTestCase):
         )
 
     def test_initialize_covar_module(self):
-        kernel = LinearTruncatedFidelityKernel()
-        self.assertTrue(isinstance(kernel.covar_module_1, MaternKernel))
-        self.assertTrue(isinstance(kernel.covar_module_2, MaternKernel))
-        kernel.covar_module_1 = RBFKernel()
-        kernel.covar_module_2 = RBFKernel()
-        self.assertTrue(isinstance(kernel.covar_module_1, RBFKernel))
-        self.assertTrue(isinstance(kernel.covar_module_2, RBFKernel))
+        kernel = LinearTruncatedFidelityKernel(fidelity_dims=[1, 2], dimension=3)
+        self.assertTrue(isinstance(kernel.covar_module_unbiased, MaternKernel))
+        self.assertTrue(isinstance(kernel.covar_module_biased, MaternKernel))
+        kernel.covar_module_unbiased = RBFKernel()
+        kernel.covar_module_biased = RBFKernel()
+        self.assertTrue(isinstance(kernel.covar_module_unbiased, RBFKernel))
+        self.assertTrue(isinstance(kernel.covar_module_biased, RBFKernel))
         kernel2 = LinearTruncatedFidelityKernel(
-            covar_module_1=RBFKernel(), covar_module_2=RBFKernel()
+            fidelity_dims=[1, 2],
+            dimension=3,
+            covar_module_unbiased=RBFKernel(),
+            covar_module_biased=RBFKernel(),
         )
-        self.assertTrue(isinstance(kernel2.covar_module_1, RBFKernel))
-        self.assertTrue(isinstance(kernel2.covar_module_2, RBFKernel))
+        self.assertTrue(isinstance(kernel2.covar_module_unbiased, RBFKernel))
+        self.assertTrue(isinstance(kernel2.covar_module_biased, RBFKernel))

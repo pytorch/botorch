@@ -40,7 +40,7 @@ class DownsamplingKernel(Kernel):
         offset_prior: Optional[Prior] = None,
         power_constraint: Optional[Interval] = None,
         offset_constraint: Optional[Interval] = None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(**kwargs)
 
@@ -75,7 +75,6 @@ class DownsamplingKernel(Kernel):
                 lambda: self.offset,
                 lambda v: self._set_offset(v),
             )
-
         self.register_constraint("raw_offset", offset_constraint)
 
     @property
@@ -110,24 +109,17 @@ class DownsamplingKernel(Kernel):
         x2: Tensor,
         diag: Optional[bool] = False,
         last_dim_is_batch: Optional[bool] = False,
-        **params
+        **params,
     ) -> Tensor:
         offset = self.offset.view(*self.batch_shape, 1, 1)
-        power = self.power.view(*self.batch_shape, 1, 1)
+        exponent = 1 + self.power.view(*self.batch_shape, 1, 1)
         if last_dim_is_batch:
             x1 = x1.transpose(-1, -2).unsqueeze(-1)
             x2 = x2.transpose(-1, -2).unsqueeze(-1)
         x1_ = 1 - x1
         x2_ = 1 - x2
-        if diag:
-            return (x1_ * x2_).sum(dim=-1).pow(power + 1) + offset
 
-        if x1.dim() == 2 and x2.dim() == 2:
-            return torch.addmm(
-                offset, x1_.pow(power + 1), x2_.transpose(-2, -1).pow(power + 1)
-            )
-        else:
-            return (
-                torch.matmul(x1_.pow(power + 1), x2_.transpose(-2, -1).pow(power + 1))
-                + offset
-            )
+        if diag:
+            return offset + (x1_ * x2_).sum(dim=-1).pow(exponent)
+
+        return offset + x1_.pow(exponent) @ x2_.transpose(-2, -1).pow(exponent)

@@ -5,7 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import torch
-from botorch.models.fidelity_kernels.downsampling import DownsamplingKernel
+from botorch.models.kernels.downsampling import DownsamplingKernel
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.priors.torch_priors import GammaPrior, NormalPrior
 from gpytorch.test.base_kernel_test_case import BaseKernelTestCase

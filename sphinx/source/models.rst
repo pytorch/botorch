@@ -39,6 +39,11 @@ GP Regression Models
 .. automodule:: botorch.models.gp_regression
     :members:
 
+Multi-Fidelity GP Regression Models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.gp_regression_fidelity
+    :members:
+
 Model List GP Regression Models
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.models.model_list_gp_regression
@@ -48,6 +53,21 @@ Multitask GP Models
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.models.multitask
     :members:
+
+
+Model Components
+-------------------------------------------
+
+Kernels
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.kernels.downsampling
+.. autoclass:: DownsamplingKernel
+
+.. automodule:: botorch.models.kernels.exponential_decay
+.. autoclass:: ExponentialDecayKernel
+
+.. automodule:: botorch.models.kernels.linear_truncated_fidelity
+.. autoclass:: LinearTruncatedFidelityKernel
 
 
 Utilities
@@ -62,23 +82,3 @@ Other Utilties
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.models.utils
     :members:
-
-
-Multi-Fidelity Functionality
--------------------------------------------
-
-Multi-Fidelity Models
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. automodule:: botorch.models.fidelity.gp_regression_fidelity
-    :members:
-
-Multi-Fidelity Kernels
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. automodule:: botorch.models.fidelity_kernels.downsampling
-.. autoclass:: DownsamplingKernel
-
-.. automodule:: botorch.models.fidelity_kernels.exponential_decay
-.. autoclass:: ExponentialDecayKernel
-
-.. automodule:: botorch.models.fidelity_kernels.linear_truncated_fidelity
-.. autoclass:: LinearTruncatedFidelityKernel
