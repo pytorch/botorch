@@ -61,6 +61,12 @@ class TestLinearTruncatedFidelityKernel(BotorchTestCase, BaseKernelTestCase):
                 actual = t * matern_term
                 res = kernel(x1, x2).evaluate()
                 self.assertLess(torch.norm(res - actual), 1e-4)
+                # test diagonal mode
+                res_diag = kernel(x1, x2, diag=True)
+                self.assertLess(torch.norm(res_diag - actual.diag()), 1e-4)
+        # make sure that we error out if last_dim_is_batch=True
+        with self.assertRaises(NotImplementedError):
+            kernel(x1, x2, diag=True, last_dim_is_batch=True)
 
     def test_compute_linear_truncated_kernel_with_batch(self):
         x1 = torch.tensor(
@@ -105,6 +111,15 @@ class TestLinearTruncatedFidelityKernel(BotorchTestCase, BaseKernelTestCase):
                 actual = t * matern_term
                 res = kernel(x1, x2).evaluate()
                 self.assertLess(torch.norm(res - actual), 1e-4)
+                # test diagonal mode
+                res_diag = kernel(x1, x2, diag=True)
+                self.assertLess(
+                    torch.norm(res_diag - torch.diagonal(actual, dim1=-1, dim2=-2)),
+                    1e-4,
+                )
+        # make sure that we error out if last_dim_is_batch=True
+        with self.assertRaises(NotImplementedError):
+            kernel(x1, x2, diag=True, last_dim_is_batch=True)
 
     def test_initialize_lengthscale_prior(self):
         kernel = LinearTruncatedFidelityKernel(fidelity_dims=[1, 2], dimension=3)
