@@ -49,6 +49,12 @@ class TestQExpectedImprovement(BotorchTestCase):
             res = acqf(X)
             self.assertEqual(res.item(), 1.0)
 
+            # test size verification of best_f
+            with self.assertRaises(ValueError):
+                qExpectedImprovement(
+                    model=mm, best_f=torch.zeros(2, device=self.device, dtype=dtype)
+                )
+
             # basic test, no resample
             sampler = IIDNormalSampler(num_samples=2, seed=12345)
             acqf = qExpectedImprovement(model=mm, best_f=0, sampler=sampler)
