@@ -16,6 +16,7 @@ from typing import Any, Dict, List, NamedTuple, Optional, Tuple, Union
 import numpy as np
 from gpytorch import settings as gpt_settings
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
+from gpytorch.utils.errors import NanError
 from scipy.optimize import Bounds, minimize
 from torch import Tensor
 from torch.optim.adam import Adam
@@ -277,7 +278,7 @@ def _scipy_objective_and_grad(
         args = [output, train_targets] + _get_extra_mll_args(mll)
         loss = -mll(*args).sum()
     except RuntimeError as e:
-        if "singular" in e.args[0]:
+        if isinstance(e, NanError) or "singular" in e.args[0]:
             return float("nan"), np.full_like(x, "nan")
         else:
             raise e  # pragma: nocover
