@@ -14,6 +14,7 @@ from gpytorch.kernels import Kernel
 from gpytorch.kernels.matern_kernel import MaternKernel
 from gpytorch.priors import Prior
 from gpytorch.priors.torch_priors import GammaPrior
+from torch import Tensor
 
 
 class LinearTruncatedFidelityKernel(Kernel):
@@ -165,44 +166,61 @@ class LinearTruncatedFidelityKernel(Kernel):
         self.covar_module_biased = covar_module_biased
 
     @property
-    def power(self) -> torch.Tensor:
+    def power(self) -> Tensor:
         return self.raw_power_constraint.transform(self.raw_power)
 
     @power.setter
-    def power(self, value: torch.Tensor) -> None:
+    def power(self, value: Tensor) -> None:
         self._set_power(value)
 
-    def _set_power(self, value: torch.Tensor) -> None:
+    def _set_power(self, value: Tensor) -> None:
         if not torch.is_tensor(value):
             value = torch.as_tensor(value).to(self.raw_power)
         self.initialize(raw_power=self.raw_power_constraint.inverse_transform(value))
 
-    def forward(self, x1: torch.Tensor, x2: torch.Tensor, **params) -> torch.Tensor:
+    def forward(self, x1: Tensor, x2: Tensor, diag: bool = False, **params) -> Tensor:
         r""""""
+        if params.get("last_dim_is_batch", False):
+            raise NotImplementedError(
+                "last_dim_is_batch not yet supported by LinearTruncatedFidelityKernel"
+            )
+
         power = self.power.view(*self.batch_shape, 1, 1)
         active_dimsM = [i for i in range(x1.size(-1)) if i not in self.fidelity_dims]
         x1_ = x1[..., active_dimsM]
         x2_ = x2[..., active_dimsM]
-        covar_unbiased = self.covar_module_unbiased(x1_, x2_)
-        covar_biased = self.covar_module_biased(x1_, x2_)
+        covar_unbiased = self.covar_module_unbiased(x1_, x2_, diag=diag)
+        covar_biased = self.covar_module_biased(x1_, x2_, diag=diag)
 
         x11_ = x1[..., self.fidelity_dims[0]].unsqueeze(-1)
-        x21t_ = x2[..., self.fidelity_dims[0]].unsqueeze(-1).transpose(-1, -2)
+        x21t_ = x2[..., self.fidelity_dims[0]].unsqueeze(-1)
+        if not diag:
+            x21t_ = x21t_.transpose(-1, -2)
         cross_term_1 = (1 - x11_) * (1 - x21t_)
         bias_factor = cross_term_1 * (1 + x11_ * x21t_).pow(power)
 
         if len(self.fidelity_dims) > 1:
             x12_ = x1[..., self.fidelity_dims[1]].unsqueeze(-1)
-            x22t_ = x2[..., self.fidelity_dims[1]].unsqueeze(-1).transpose(-1, -2)
+            x22t_ = x2[..., self.fidelity_dims[1]].unsqueeze(-1)
+            x1b_ = torch.cat([x11_, x12_], dim=-1)
+            if diag:
+                x2bt_ = torch.cat([x21t_, x22t_], dim=-1)
+                k = (1 + (x1b_ * x2bt_).sum(dim=-1, keepdim=True)).pow(power)
+            else:
+                x22t_ = x22t_.transpose(-1, -2)
+                x2bt_ = torch.cat([x21t_, x22t_], dim=-2)
+                k = (1 + x1b_ @ x2bt_).pow(power)
+
             cross_term_2 = (1 - x12_) * (1 - x22t_)
             bias_factor += cross_term_2 * (1 + x12_ * x22t_).pow(power)
-            x1b_ = torch.cat([x11_, x12_], dim=-1)
-            x2bt_ = torch.cat([x21t_, x22t_], dim=-2)
-            bias_factor += cross_term_2 * cross_term_1 * (1 + x1b_ @ x2bt_).pow(power)
+            bias_factor += cross_term_2 * cross_term_1 * k
+
+        if diag:
+            bias_factor = bias_factor.view(covar_biased.shape)
 
         return covar_unbiased + bias_factor * covar_biased
 
-    def __getitem__(self, index):
+    def __getitem__(self, index) -> "LinearTruncatedFidelityKernel":
         new_kernel = deepcopy(self)
         new_kernel.covar_module_unbiased = self.covar_module_unbiased[index]
         new_kernel.covar_module_biased = self.covar_module_biased[index]
