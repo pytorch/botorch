@@ -130,6 +130,11 @@ class qExpectedImprovement(MCAcquisitionFunction):
         )
         if not torch.is_tensor(best_f):
             best_f = torch.tensor(float(best_f))
+        elif not (best_f.ndim < 2 and best_f.numel() == 1):
+            raise ValueError(
+                "best_f must be either a scalar or a single-elment "
+                "one-dimensional tensor."
+            )
         self.register_buffer("best_f", best_f)
 
     @concatenate_pending_points
