@@ -5,9 +5,11 @@
 # LICENSE file in the root directory of this source tree.
 
 import torch
+from botorch import settings
 from botorch.utils.testing import BotorchTestCase
 from botorch.utils.transforms import (
     concatenate_pending_points,
+    gpt_posterior_settings,
     match_batch_shape,
     normalize,
     squeeze_last_dim,
@@ -15,6 +17,7 @@ from botorch.utils.transforms import (
     t_batch_mode_transform,
     unnormalize,
 )
+from gpytorch import settings as gpt_settings
 from torch import Tensor
 
 
@@ -185,3 +188,16 @@ class TestSqueezeLastDim(BotorchTestCase):
         Y = torch.rand(2, 1, 1)
         Y_squeezed = squeeze_last_dim(Y=Y)
         self.assertTrue(torch.equal(Y_squeezed, Y.squeeze(-1)))
+
+
+class TestGPTPosteriorSettings(BotorchTestCase):
+    def test_gpt_posterior_settings(self):
+        for propagate_grads in (False, True):
+            with settings.propagate_grads(propagate_grads):
+                with gpt_posterior_settings():
+                    self.assertTrue(gpt_settings.debug.off())
+                    self.assertTrue(gpt_settings.fast_pred_var.on())
+                    if settings.propagate_grads.off():
+                        self.assertTrue(gpt_settings.detach_test_caches.on())
+                    else:
+                        self.assertTrue(gpt_settings.detach_test_caches.off())

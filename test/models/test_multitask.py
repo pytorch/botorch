@@ -98,12 +98,11 @@ class TestMultiTaskGP(BotorchTestCase):
             self.assertEqual(posterior_f.mean.shape, torch.Size([2, 2]))
             self.assertEqual(posterior_f.variance.shape, torch.Size([2, 2]))
 
-            # test posterior w/ observation noise
-            posterior_o = model.posterior(test_x, observation_noise=True)
-            self.assertIsInstance(posterior_o, GPyTorchPosterior)
-            self.assertIsInstance(posterior_f.mvn, MultitaskMultivariateNormal)
-            self.assertEqual(posterior_f.mean.shape, torch.Size([2, 2]))
-            self.assertEqual(posterior_f.variance.shape, torch.Size([2, 2]))
+            # test that posterior w/ observation noise raises appropriate error
+            with self.assertRaises(NotImplementedError):
+                model.posterior(test_x, observation_noise=True)
+            with self.assertRaises(NotImplementedError):
+                model.posterior(test_x, observation_noise=torch.rand(2, **tkwargs))
 
             # test posterior w/ single output index
             posterior_f = model.posterior(test_x, output_indices=[0])
@@ -209,7 +208,11 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
             self.assertEqual(posterior_f.mean.shape, torch.Size([2, 2]))
             self.assertEqual(posterior_f.variance.shape, torch.Size([2, 2]))
 
-            # TODO: test posterior w/ observation noise
+            # test that posterior w/ observation noise raises appropriate error
+            with self.assertRaises(NotImplementedError):
+                model.posterior(test_x, observation_noise=True)
+            with self.assertRaises(NotImplementedError):
+                model.posterior(test_x, observation_noise=torch.rand(2, **tkwargs))
 
             # test posterior w/ single output index
             posterior_f = model.posterior(test_x, output_indices=[0])
