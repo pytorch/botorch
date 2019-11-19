@@ -156,6 +156,11 @@
         <span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">is_tensor</span><span class="p">(</span><span class="n">best_f</span><span class="p">):</span>
             <span class="n">best_f</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">best_f</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="p">(</span><span class="n">best_f</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">best_f</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"best_f must be either a scalar or a single-elment "</span>
+                <span class="s2">"one-dimensional tensor."</span>
+            <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"best_f"</span><span class="p">,</span> <span class="n">best_f</span><span class="p">)</span>
 
 <div class="viewcode-block" id="qExpectedImprovement.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.qExpectedImprovement.forward">[docs]</a>    <span class="nd">@concatenate_pending_points</span>
