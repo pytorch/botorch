@@ -144,9 +144,12 @@ class (e.g. an <cite>ExactGP</cite>) and this <cite>GPyTorchModel</cite>. See e.
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>(batch_shape) x q x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of the
-feature space and <cite>q</cite> is the number of points considered jointly.</p></li>
-<li><p><strong>observation_noise</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, add observation noise to the posterior.</p></li>
+<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>(batch_shape) x q x d</cite>-dim Tensor, where <cite>d</cite> is the dimension
+of the feature space and <cite>q</cite> is the number of points considered
+jointly.</p></li>
+<li><p><strong>observation_noise</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – If True, add the observation noise from the
+likelihood to the posterior. If a Tensor, use it directly as the
+observation noise (must be of shape <cite>(batch_shape) x q</cite>).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -155,7 +158,7 @@ feature space and <cite>q</cite> is the number of points considered jointly.</p>
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p>A <cite>GPyTorchPosterior</cite> object, representing a batch of <cite>b</cite> joint
 distributions over <cite>q</cite> points. Includes observation noise if
-<cite>observation_noise=True</cite>.</p>
+specified.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -214,14 +217,17 @@ Outputs are modeled independently by using a different batch for each output.</p
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>(batch_shape) x q x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of the
-feature space and <cite>q</cite> is the number of points considered jointly.</p></li>
+<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>(batch_shape) x q x d</cite>-dim Tensor, where <cite>d</cite> is the dimension
+of the feature space and <cite>q</cite> is the number of points considered
+jointly.</p></li>
 <li><p><strong>output_indices</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]) – A list of indices, corresponding to the outputs over
 which to compute the posterior (if the model is multi-output).
 Can be used to speed up computation if only a subset of the
 model’s outputs are required for optimization. If omitted,
 computes the posterior over all model outputs.</p></li>
-<li><p><strong>observation_noise</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, add observation noise to the posterior.</p></li>
+<li><p><strong>observation_noise</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – If True, add the observation noise from the
+likelihood to the posterior. If a Tensor, use it directly as the
+observation noise (must be of shape <cite>(batch_shape) x q x m</cite>).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -230,8 +236,7 @@ computes the posterior over all model outputs.</p></li>
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p>A <cite>GPyTorchPosterior</cite> object, representing <cite>batch_shape</cite> joint
 distributions over <cite>q</cite> points and the outputs selected by
-<cite>output_indices</cite> each. Includes observation noise if
-<cite>observation_noise=True</cite>.</p>
+<cite>output_indices</cite> each. Includes observation noise if specified.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -311,7 +316,11 @@ which to compute the posterior (if the model is multi-output).
 Can be used to speed up computation if only a subset of the
 model’s outputs are required for optimization. If omitted,
 computes the posterior over all model outputs.</p></li>
-<li><p><strong>observation_noise</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, add observation noise to the posterior.</p></li>
+<li><p><strong>observation_noise</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – If True, add the observation noise from the
+respective likelihoods to the posterior. If a Tensor of shape
+<cite>(batch_shape) x q x m</cite>, use it directly as the observation
+noise (with <cite>observation_noise[…,i]</cite> added to the posterior
+of the <cite>i</cite>-th model).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -321,7 +330,7 @@ computes the posterior over all model outputs.</p></li>
 <dd class="field-odd"><p>A <cite>GPyTorchPosterior</cite> object, representing <cite>batch_shape</cite> joint
 distributions over <cite>q</cite> points and the outputs selected by
 <cite>output_indices</cite> each. Includes measurement noise if
-<cite>observation_noise=True</cite>.</p>
+<cite>observation_noise</cite> is specified.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -388,7 +397,9 @@ which to compute the posterior (if the model is multi-output).
 Can be used to speed up computation if only a subset of the
 model’s outputs are required for optimization. If omitted,
 computes the posterior over all model outputs.</p></li>
-<li><p><strong>observation_noise</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, add observation noise to the posterior.</p></li>
+<li><p><strong>observation_noise</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – If True, add observation noise from the respective
+likelihoods. If a Tensor, specifies the observation noise levels
+to add.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -398,7 +409,7 @@ computes the posterior over all model outputs.</p></li>
 <dd class="field-odd"><p>A <cite>GPyTorchPosterior</cite> object, representing <cite>batch_shape</cite> joint
 distributions over <cite>q</cite> points and the outputs selected by
 <cite>output_indices</cite>. Includes measurement noise if
-<cite>observation_noise=True</cite>.</p>
+<cite>observation_noise</cite> is specified.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -659,8 +670,9 @@ training observations.</p></li>
 <dd><p>Construct a fantasy model.</p>
 <p>Constructs a fantasy model in the following fashion:
 (1) compute the model posterior at <cite>X</cite> (if <cite>observation_noise=True</cite>,
-this includes observation noise, which is taken as the mean across
-the observation noise in the training data).
+this includes observation noise taken as the mean across the observation
+noise in the training data. If <cite>observation_noise</cite> is a Tensor, use
+it directly as the observation noise to add).
 (2) sample from this posterior (using <cite>sampler</cite>) to generate “fake”
 observations.
 (3) condition the model on the new fake observations.</p>
@@ -672,9 +684,10 @@ the feature space, <cite>n’</cite> is the number of points per batch, and
 <cite>batch_shape</cite> is the batch shape (must be compatible with the
 batch shape of the model).</p></li>
 <li><p><strong>sampler</strong> (<a class="reference internal" href="sampling.html#botorch.sampling.samplers.MCSampler" title="botorch.sampling.samplers.MCSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">MCSampler</span></code></a>) – The sampler used for sampling from the posterior at <cite>X</cite>.</p></li>
-<li><p><strong>observation_noise</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, include the mean across the observation
+<li><p><strong>observation_noise</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – If True, include the mean across the observation
 noise in the training data as observation noise in the posterior
-from which the samples are drawn.</p></li>
+from which the samples are drawn. If a Tensor, use it directly
+as the specified measurement noise.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
