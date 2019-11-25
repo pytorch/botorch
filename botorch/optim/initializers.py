@@ -60,6 +60,8 @@ def gen_batch_initial_conditions(
     batch_initial_arms: Tensor
     factor, max_factor = 1, 5
     init_kwargs = {}
+    device = bounds.device
+    bounds = bounds.cpu()
     if "eta" in options:
         init_kwargs["eta"] = options.get("eta")
     if options.get("nonnegative") or is_nonnegative(acq_function):
@@ -86,9 +88,10 @@ def gen_batch_initial_conditions(
                 X_rnd = draw_sobol_samples(bounds=bounds, n=n, q=q, seed=seed)
             else:
                 with manual_seed(seed):
-                    X_rnd_nlzd = torch.rand(
-                        n * dim, device=bounds.device, dtype=bounds.dtype
-                    ).view(n, q, bounds.shape[-1])
+                    # load on cpu
+                    X_rnd_nlzd = torch.rand(n * dim, dtype=bounds.dtype).view(
+                        n, q, bounds.shape[-1]
+                    )
                 X_rnd = bounds[0] + (bounds[1] - bounds[0]) * X_rnd_nlzd
             with torch.no_grad():
                 if batch_limit is None:
@@ -97,13 +100,15 @@ def gen_batch_initial_conditions(
                 start_idx = 0
                 while start_idx < X_rnd.shape[0]:
                     end_idx = min(start_idx + batch_limit, X_rnd.shape[0])
-                    Y_rnd_curr = acq_function(X_rnd[start_idx:end_idx])
+                    Y_rnd_curr = acq_function(
+                        X_rnd[start_idx:end_idx].to(device=device)
+                    ).cpu()
                     Y_rnd_list.append(Y_rnd_curr)
                     start_idx += batch_limit
-                Y_rnd = torch.cat(Y_rnd_list).to(X_rnd)
+                Y_rnd = torch.cat(Y_rnd_list)
             batch_initial_conditions = init_func(
                 X=X_rnd, Y=Y_rnd, n=num_restarts, **init_kwargs
-            )
+            ).to(device=device)
             if not any(issubclass(w.category, BadInitialCandidatesWarning) for w in ws):
                 return batch_initial_conditions
             if factor < max_factor:
