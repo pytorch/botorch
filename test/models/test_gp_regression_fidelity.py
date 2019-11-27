@@ -5,7 +5,6 @@
 # LICENSE file in the root directory of this source tree.
 
 import itertools
-import math
 import warnings
 
 import torch
@@ -16,7 +15,7 @@ from botorch.models.gp_regression import FixedNoiseGP
 from botorch.models.gp_regression_fidelity import SingleTaskMultiFidelityGP
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling import SobolQMCNormalSampler
-from botorch.utils.testing import BotorchTestCase
+from botorch.utils.testing import BotorchTestCase, _get_random_data
 from gpytorch.kernels.scale_kernel import ScaleKernel
 from gpytorch.means import ConstantMean
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
@@ -28,20 +27,11 @@ def _get_random_data_with_fidelity(
     r"""Construct test data.
     For this test, by convention the trailing dimesions are the fidelity dimensions
     """
-    train_x = torch.linspace(0, 0.95, n, **tkwargs).unsqueeze(-1) + 0.05 * torch.rand(
-        n, 1, **tkwargs
-    ).repeat(batch_shape + torch.Size([1, 1]))
+    train_x, train_y = _get_random_data(batch_shape, num_outputs, n, **tkwargs)
     s = torch.rand(n, n_fidelity, **tkwargs).repeat(batch_shape + torch.Size([1, 1]))
-    train_X = torch.cat((train_x, s), dim=-1)
-    train_y = (
-        torch.sin(train_x * (2 * math.pi))
-        + 0.2
-        * torch.randn(n, num_outputs, **tkwargs).repeat(
-            batch_shape + torch.Size([1, 1])
-        )
-        + (1 - s).pow(2).sum(dim=-1).unsqueeze(-1)
-    )
-    return train_X, train_y
+    train_x = torch.cat((train_x, s), dim=-1)
+    train_y = train_y + (1 - s).pow(2).sum(dim=-1).unsqueeze(-1)
+    return train_x, train_y
 
 
 def _get_model_and_data(

@@ -164,7 +164,7 @@ class TestFixFeatures(BotorchTestCase):
         )
 
 
-class testGetExtraMllArgs(BotorchTestCase):
+class TestGetExtraMllArgs(BotorchTestCase):
     def test_get_extra_mll_args(self):
         train_X = torch.rand(3, 5)
         train_Y = torch.rand(3, 1)
@@ -194,7 +194,7 @@ class testGetExtraMllArgs(BotorchTestCase):
             _get_extra_mll_args(mll=unsupported_mll)
 
 
-class testExpandBounds(BotorchTestCase):
+class TestExpandBounds(BotorchTestCase):
     def test_expand_bounds(self):
         X = torch.zeros(2, 3)
         expected_bounds = torch.zeros(1, 3)

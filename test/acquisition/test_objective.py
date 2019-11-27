@@ -4,6 +4,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import itertools
+
 import torch
 from botorch.acquisition.objective import (
     ConstrainedMCObjective,
@@ -34,31 +36,29 @@ def feasible_con(samples: Tensor) -> Tensor:
 
 class TestScalarizedObjective(BotorchTestCase):
     def test_affine_acquisition_objective(self):
-        for dtype in (torch.float, torch.double):
+        for batch_shape, m, dtype in itertools.product(
+            ([], [3]), (1, 2), (torch.float, torch.double)
+        ):
             offset = torch.rand(1).item()
-            for batch_shape in ([], [3]):
-                for o in (1, 2):
-                    weights = torch.randn(o, device=self.device, dtype=dtype)
-                    obj = ScalarizedObjective(weights=weights, offset=offset)
-                    posterior = _get_test_posterior(
-                        batch_shape, self.device, dtype, o=o
-                    )
-                    mean, covar = posterior.mvn.mean, posterior.mvn.covariance_matrix
-                    new_posterior = obj(posterior)
-                    exp_size = torch.Size(batch_shape + [1, 1])
-                    self.assertEqual(new_posterior.mean.shape, exp_size)
-                    new_mean_exp = offset + mean @ weights
-                    self.assertTrue(
-                        torch.allclose(new_posterior.mean[..., -1], new_mean_exp)
-                    )
-                    self.assertEqual(new_posterior.variance.shape, exp_size)
-                    new_covar_exp = ((covar @ weights) @ weights).unsqueeze(-1)
-                    self.assertTrue(
-                        torch.allclose(new_posterior.variance[..., -1], new_covar_exp)
-                    )
-                    # test error
-                    with self.assertRaises(ValueError):
-                        ScalarizedObjective(weights=torch.rand(2, o))
+            weights = torch.randn(m, device=self.device, dtype=dtype)
+            obj = ScalarizedObjective(weights=weights, offset=offset)
+            posterior = _get_test_posterior(
+                batch_shape, m=m, device=self.device, dtype=dtype
+            )
+            mean, covar = posterior.mvn.mean, posterior.mvn.covariance_matrix
+            new_posterior = obj(posterior)
+            exp_size = torch.Size(batch_shape + [1, 1])
+            self.assertEqual(new_posterior.mean.shape, exp_size)
+            new_mean_exp = offset + mean @ weights
+            self.assertTrue(torch.allclose(new_posterior.mean[..., -1], new_mean_exp))
+            self.assertEqual(new_posterior.variance.shape, exp_size)
+            new_covar_exp = ((covar @ weights) @ weights).unsqueeze(-1)
+            self.assertTrue(
+                torch.allclose(new_posterior.variance[..., -1], new_covar_exp)
+            )
+            # test error
+            with self.assertRaises(ValueError):
+                ScalarizedObjective(weights=torch.rand(2, m))
 
 
 class TestMCAcquisitionObjective(BotorchTestCase):

@@ -4,8 +4,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-# from unittest import mock
-
 from typing import Callable
 from unittest import mock
 
@@ -136,9 +134,6 @@ class TestMaxValueEntropySearch(BotorchTestCase):
 
 class MESMockModel(Model):
     r"""Mock object that implements dummy methods and feeds through specified outputs"""
-
-    def __init__(self) -> None:
-        super(Model, self).__init__()
 
     def posterior(self, X: Tensor, observation_noise: bool = False) -> MockPosterior:
         m_shape = X.shape[:-1]
