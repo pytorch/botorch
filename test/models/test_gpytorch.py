@@ -4,6 +4,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import itertools
+
 import torch
 from botorch import settings
 from botorch.exceptions import (
@@ -116,41 +118,37 @@ class TestGPyTorchModel(BotorchTestCase):
 
     def test_validate_tensor_args(self):
         n, d = 3, 2
-        for dtype in (torch.float, torch.double):
+        for batch_shape, output_dim_shape, dtype in itertools.product(
+            (torch.Size(), torch.Size([2])),
+            (torch.Size(), torch.Size([1]), torch.Size([2])),
+            (torch.float, torch.double),
+        ):
             tkwargs = {"device": self.device, "dtype": dtype}
-            for batch_shape in (torch.Size(), torch.Size([2])):
-                X = torch.empty(batch_shape + torch.Size([n, d]), **tkwargs)
-                for output_dim_shape in (
-                    torch.Size(),
-                    torch.Size([1]),
-                    torch.Size([2]),
+            X = torch.empty(batch_shape + torch.Size([n, d]), **tkwargs)
+            # test using the same batch_shape as X
+            Y = torch.empty(batch_shape + torch.Size([n]) + output_dim_shape, **tkwargs)
+            if len(output_dim_shape) > 0:
+                # check that no exception is raised
+                GPyTorchModel._validate_tensor_args(X, Y)
+                with settings.debug(True), self.assertWarns(
+                    BotorchTensorDimensionWarning
                 ):
-                    # test using the same batch_shape as X
-                    Y = torch.empty(
-                        batch_shape + torch.Size([n]) + output_dim_shape, **tkwargs
-                    )
-                    if len(output_dim_shape) > 0:
-                        # check that no exception is raised
-                        GPyTorchModel._validate_tensor_args(X, Y)
-                        with settings.debug(True), self.assertWarns(
-                            BotorchTensorDimensionWarning
-                        ):
-                            GPyTorchModel._validate_tensor_args(X, Y, strict=False)
-                    else:
-                        with self.assertRaises(BotorchTensorDimensionError):
-                            GPyTorchModel._validate_tensor_args(X, Y)
-                        with settings.debug(True), self.assertWarns(
-                            BotorchTensorDimensionWarning
-                        ):
-                            GPyTorchModel._validate_tensor_args(X, Y, strict=False)
-                    # test using different batch_shape
-                    if len(batch_shape) > 0:
-                        with self.assertRaises(BotorchTensorDimensionError):
-                            GPyTorchModel._validate_tensor_args(X, Y[0])
-                        with settings.debug(True), self.assertWarns(
-                            BotorchTensorDimensionWarning
-                        ):
-                            GPyTorchModel._validate_tensor_args(X, Y[0], strict=False)
+                    GPyTorchModel._validate_tensor_args(X, Y, strict=False)
+            else:
+                with self.assertRaises(BotorchTensorDimensionError):
+                    GPyTorchModel._validate_tensor_args(X, Y)
+                with settings.debug(True), self.assertWarns(
+                    BotorchTensorDimensionWarning
+                ):
+                    GPyTorchModel._validate_tensor_args(X, Y, strict=False)
+            # test using different batch_shape
+            if len(batch_shape) > 0:
+                with self.assertRaises(BotorchTensorDimensionError):
+                    GPyTorchModel._validate_tensor_args(X, Y[0])
+                with settings.debug(True), self.assertWarns(
+                    BotorchTensorDimensionWarning
+                ):
+                    GPyTorchModel._validate_tensor_args(X, Y[0], strict=False)
 
 
 class TestBatchedMultiOutputGPyTorchModel(BotorchTestCase):

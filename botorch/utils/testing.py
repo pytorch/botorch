@@ -4,9 +4,10 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import math
 import warnings
 from collections import OrderedDict
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from unittest import TestCase
 
 import torch
@@ -179,3 +180,25 @@ class MockAcquisitionFunction:
 
     def set_X_pending(self, X_pending: Optional[Tensor] = None):
         self.X_pending = X_pending
+
+
+def _get_random_data(
+    batch_shape: torch.Size, num_outputs: int, n: int = 10, **tkwargs
+) -> Tuple[Tensor, Tensor]:
+    r"""Generate random data for testing pursposes.
+
+    Args:
+        batch_shape: The batch shape of the data.
+        num_outputs: The number of outputs.
+        n: The number of data points.
+        tkwargs: `device` and `dtype` tensor constructor kwargs.
+
+    Returns:
+        A tuple `(train_X, train_Y)` with randomly generated training data.
+    """
+    rep_shape = batch_shape + torch.Size([1, 1])
+    train_x = torch.linspace(0, 0.95, n, **tkwargs).unsqueeze(-1)
+    train_x = train_x + 0.05 * torch.rand(n, 1, **tkwargs).repeat(rep_shape)
+    train_y = torch.sin(train_x * (2 * math.pi))
+    train_y = train_y + 0.2 * torch.randn(n, num_outputs, **tkwargs).repeat(rep_shape)
+    return train_x, train_y

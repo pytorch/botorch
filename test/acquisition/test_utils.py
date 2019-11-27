@@ -4,6 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import itertools
 from unittest import mock
 
 import torch
@@ -350,101 +351,81 @@ class TestPruneInferiorPoints(BotorchTestCase):
 
 class TestFidelityUtils(BotorchTestCase):
     def test_project_to_target_fidelity(self):
-        for dtype in (torch.float, torch.double):
-            for batch_shape in ([], [2]):
-                X = torch.rand(*batch_shape, 3, 4, device=self.device, dtype=dtype)
-                # test default behavior
-                X_proj = project_to_target_fidelity(X)
-                ones = torch.ones(*X.shape[:-1], 1, device=self.device, dtype=dtype)
-                self.assertTrue(torch.equal(X_proj[..., :, [-1]], ones))
-                self.assertTrue(torch.equal(X_proj[..., :-1], X[..., :-1]))
-                # test custom target fidelity
-                target_fids = {2: 0.5}
-                X_proj = project_to_target_fidelity(X, target_fidelities=target_fids)
-                self.assertTrue(torch.equal(X_proj[..., :, [2]], 0.5 * ones))
-                # test multiple target fidelities
-                target_fids = {2: 0.5, 0: 0.1}
-                X_proj = project_to_target_fidelity(X, target_fidelities=target_fids)
-                self.assertTrue(torch.equal(X_proj[..., :, [0]], 0.1 * ones))
-                self.assertTrue(torch.equal(X_proj[..., :, [2]], 0.5 * ones))
-                # test gradients
-                X.requires_grad_(True)
-                X_proj = project_to_target_fidelity(X, target_fidelities=target_fids)
-                out = (X_proj ** 2).sum()
-                out.backward()
-                self.assertTrue(torch.all(X.grad[..., [0, 2]] == 0))
-                self.assertTrue(torch.equal(X.grad[..., [1, 3]], 2 * X[..., [1, 3]]))
+        for batch_shape, dtype in itertools.product(
+            ([], [2]), (torch.float, torch.double)
+        ):
+            X = torch.rand(*batch_shape, 3, 4, device=self.device, dtype=dtype)
+            # test default behavior
+            X_proj = project_to_target_fidelity(X)
+            ones = torch.ones(*X.shape[:-1], 1, device=self.device, dtype=dtype)
+            self.assertTrue(torch.equal(X_proj[..., :, [-1]], ones))
+            self.assertTrue(torch.equal(X_proj[..., :-1], X[..., :-1]))
+            # test custom target fidelity
+            target_fids = {2: 0.5}
+            X_proj = project_to_target_fidelity(X, target_fidelities=target_fids)
+            self.assertTrue(torch.equal(X_proj[..., :, [2]], 0.5 * ones))
+            # test multiple target fidelities
+            target_fids = {2: 0.5, 0: 0.1}
+            X_proj = project_to_target_fidelity(X, target_fidelities=target_fids)
+            self.assertTrue(torch.equal(X_proj[..., :, [0]], 0.1 * ones))
+            self.assertTrue(torch.equal(X_proj[..., :, [2]], 0.5 * ones))
+            # test gradients
+            X.requires_grad_(True)
+            X_proj = project_to_target_fidelity(X, target_fidelities=target_fids)
+            out = (X_proj ** 2).sum()
+            out.backward()
+            self.assertTrue(torch.all(X.grad[..., [0, 2]] == 0))
+            self.assertTrue(torch.equal(X.grad[..., [1, 3]], 2 * X[..., [1, 3]]))
 
     def test_expand_trace_observations(self):
-        for dtype in (torch.float, torch.double):
-            for batch_shape in ([], [2]):
-                q, d = 3, 4
-                X = torch.rand(*batch_shape, q, d, device=self.device, dtype=dtype)
-                # test nullop behavior
-                self.assertTrue(torch.equal(expand_trace_observations(X), X))
-                self.assertTrue(
-                    torch.equal(expand_trace_observations(X, fidelity_dims=[1]), X)
-                )
-                # test default behavior
-                num_tr = 2
-                X_expanded = expand_trace_observations(X, num_trace_obs=num_tr)
-                self.assertEqual(
-                    X_expanded.shape, torch.Size(batch_shape + [q * (1 + num_tr), d])
-                )
-                self.assertTrue(
-                    all(
-                        torch.equal(
-                            X_expanded[..., q * i : q * (i + 1), :-1], X[..., :-1]
-                        )
-                        for i in range(num_tr)
-                    )
-                )
-                self.assertTrue(
-                    all(
-                        torch.allclose(
-                            X_expanded[..., q * i : q * (i + 1), -1],
-                            (1 - i / (num_tr + 1)) * X[..., :q, -1],
-                        )
-                        for i in range(num_tr)
-                    )
-                )
-                # test custom fidelity dims
-                fdims = [0, 2]
-                num_tr = 3
-                X_expanded = expand_trace_observations(
-                    X, fidelity_dims=fdims, num_trace_obs=num_tr
-                )
-                self.assertEqual(
-                    X_expanded.shape, torch.Size(batch_shape + [q * (1 + num_tr), d])
-                )
-                self.assertTrue(
-                    all(
-                        torch.equal(X_expanded[..., q * i : q * (i + 1), j], X[..., j])
-                        for i in range(num_tr)
-                    )
-                    for j in [1, 3]
-                )
-                self.assertTrue(
-                    all(
-                        torch.allclose(
-                            X_expanded[..., q * i : q * (i + 1), j],
-                            (1 - i / (1 + num_tr)) * X[..., :q, j],
-                        )
-                        for i in range(num_tr)
-                        for j in fdims
-                    )
-                )
-                # test gradients
-                num_tr = 2
-                fdims = [1]
-                X.requires_grad_(True)
-                X_expanded = expand_trace_observations(
-                    X, fidelity_dims=fdims, num_trace_obs=num_tr
-                )
-                out = X_expanded.sum()
-                out.backward()
-                grad_exp = torch.full_like(X, 1 + num_tr)
-                grad_exp[..., fdims] = 1 + sum(
-                    (i + 1) / (num_tr + 1) for i in range(num_tr)
-                )
-                self.assertTrue(torch.allclose(X.grad, grad_exp))
+        for batch_shape, dtype in itertools.product(
+            ([], [2]), (torch.float, torch.double)
+        ):
+            q, d = 3, 4
+            X = torch.rand(*batch_shape, q, d, device=self.device, dtype=dtype)
+            # test nullop behavior
+            self.assertTrue(torch.equal(expand_trace_observations(X), X))
+            self.assertTrue(
+                torch.equal(expand_trace_observations(X, fidelity_dims=[1]), X)
+            )
+            # test default behavior
+            num_tr = 2
+            X_expanded = expand_trace_observations(X, num_trace_obs=num_tr)
+            self.assertEqual(
+                X_expanded.shape, torch.Size(batch_shape + [q * (1 + num_tr), d])
+            )
+            for i in range(num_tr):
+                X_sub = X_expanded[..., q * i : q * (i + 1), :]
+                self.assertTrue(torch.equal(X_sub[..., :-1], X[..., :-1]))
+                X_sub_expected = (1 - i / (num_tr + 1)) * X[..., :q, -1]
+                self.assertTrue(torch.equal(X_sub[..., -1], X_sub_expected))
+            # test custom fidelity dims
+            fdims = [0, 2]
+            num_tr = 3
+            X_expanded = expand_trace_observations(
+                X, fidelity_dims=fdims, num_trace_obs=num_tr
+            )
+            self.assertEqual(
+                X_expanded.shape, torch.Size(batch_shape + [q * (1 + num_tr), d])
+            )
+            for j, i in itertools.product([1, 3], range(num_tr)):
+                X_sub = X_expanded[..., q * i : q * (i + 1), j]
+                self.assertTrue(torch.equal(X_sub, X[..., j]))
+            for j, i in itertools.product(fdims, range(num_tr)):
+                X_sub = X_expanded[..., q * i : q * (i + 1), j]
+                X_sub_expected = (1 - i / (1 + num_tr)) * X[..., :q, j]
+                self.assertTrue(torch.equal(X_sub, X_sub_expected))
+            # test gradients
+            num_tr = 2
+            fdims = [1]
+            X.requires_grad_(True)
+            X_expanded = expand_trace_observations(
+                X, fidelity_dims=fdims, num_trace_obs=num_tr
+            )
+            out = X_expanded.sum()
+            out.backward()
+            grad_exp = torch.full_like(X, 1 + num_tr)
+            grad_exp[..., fdims] = 1 + sum(
+                (i + 1) / (num_tr + 1) for i in range(num_tr)
+            )
+            self.assertTrue(torch.allclose(X.grad, grad_exp))
