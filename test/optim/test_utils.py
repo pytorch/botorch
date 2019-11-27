@@ -25,7 +25,6 @@ from gpytorch.kernels.scale_kernel import ScaleKernel
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
-from gpytorch.mlls.variational_elbo import VariationalELBO
 from gpytorch.priors.smoothed_box_prior import SmoothedBoxPrior
 from gpytorch.priors.torch_priors import GammaPrior
 
@@ -169,16 +168,12 @@ class testGetExtraMllArgs(BotorchTestCase):
         train_X = torch.rand(3, 5)
         train_Y = torch.rand(3, 1)
         model = SingleTaskGP(train_X=train_X, train_Y=train_Y)
+
         # test ExactMarginalLogLikelihood
         exact_mll = ExactMarginalLogLikelihood(model.likelihood, model)
         exact_extra_args = _get_extra_mll_args(mll=exact_mll)
         self.assertEqual(len(exact_extra_args), 1)
         self.assertTrue(torch.equal(exact_extra_args[0], train_X))
-
-        # test VariationalELBO
-        elbo = VariationalELBO(model.likelihood, model, num_data=train_X.shape[0])
-        elbo_extra_args = _get_extra_mll_args(mll=elbo)
-        self.assertEqual(len(elbo_extra_args), 0)
 
         # test SumMarginalLogLikelihood
         model2 = ModelListGP(model)
@@ -190,8 +185,8 @@ class testGetExtraMllArgs(BotorchTestCase):
 
         # test unsupported MarginalLogLikelihood type
         unsupported_mll = MarginalLogLikelihood(model.likelihood, model)
-        with self.assertRaises(ValueError):
-            _get_extra_mll_args(mll=unsupported_mll)
+        unsupported_mll_extra_args = _get_extra_mll_args(mll=unsupported_mll)
+        self.assertEqual(unsupported_mll_extra_args, [])
 
 
 class testExpandBounds(BotorchTestCase):
