@@ -70,6 +70,25 @@ Kernels
 .. autoclass:: LinearTruncatedFidelityKernel
 
 
+Transforms
+-------------------------------------------
+
+Outcome Transforms
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.transforms.outcome
+    :members:
+
+Input Transforms
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.transforms.input
+    :members:
+
+Transform Utilities
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.transforms.utils
+    :members:
+
+
 Utilities
 -------------------------------------------
 

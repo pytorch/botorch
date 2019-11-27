@@ -82,7 +82,7 @@ class TestSingleTaskGP(BotorchTestCase):
             self.assertEqual(posterior_pred.mean.shape, expected_mean_shape)
             pvar = posterior_pred.variance
             pvar_exp = _get_pvar_expected(posterior, model, X, num_outputs)
-            self.assertTrue(torch.allclose(pvar, pvar_exp, rtol=1e-4, atol=1e-05))
+            self.assertTrue(torch.allclose(pvar, pvar_exp, rtol=1e-4, atol=1e-5))
 
             # test batch evaluation
             X = torch.rand(
@@ -101,7 +101,7 @@ class TestSingleTaskGP(BotorchTestCase):
             self.assertEqual(posterior_pred.mean.shape, expected_mean_shape)
             pvar = posterior_pred.variance
             pvar_exp = _get_pvar_expected(posterior, model, X, num_outputs)
-            self.assertTrue(torch.allclose(pvar, pvar_exp, rtol=1e-4, atol=1e-05))
+            self.assertTrue(torch.allclose(pvar, pvar_exp, rtol=1e-4, atol=1e-5))
 
     def test_condition_on_observations(self):
         for batch_shape, num_outputs, dtype in itertools.product(
