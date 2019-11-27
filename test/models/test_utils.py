@@ -22,11 +22,8 @@ from botorch.utils.testing import BotorchTestCase
 
 class TestMultiOutputToBatchModeTransform(BotorchTestCase):
     def test_multioutput_to_batch_mode_transform(self):
-        for double in (False, True):
-            tkwargs = {
-                "device": self.device,
-                "dtype": torch.double if double else torch.float,
-            }
+        for dtype in (torch.float, torch.double):
+            tkwargs = {"device": self.device, "dtype": dtype}
             n = 3
             num_outputs = 2
             train_X = torch.rand(n, 1, **tkwargs)
@@ -46,11 +43,8 @@ class TestMultiOutputToBatchModeTransform(BotorchTestCase):
 
 class TestAddOutputDim(BotorchTestCase):
     def test_add_output_dim(self):
-        for double in (False, True):
-            tkwargs = {
-                "device": self.device,
-                "dtype": torch.double if double else torch.float,
-            }
+        for dtype in (torch.float, torch.double):
+            tkwargs = {"device": self.device, "dtype": dtype}
             original_batch_shape = torch.Size([2])
             # check exception is raised when trailing batch dims do not line up
             X = torch.rand(2, 3, 2, 1, **tkwargs)

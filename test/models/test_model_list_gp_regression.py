@@ -4,7 +4,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import math
 import warnings
 
 import torch
@@ -14,7 +13,7 @@ from botorch.fit import fit_gpytorch_model
 from botorch.models import ModelListGP
 from botorch.models.gp_regression import FixedNoiseGP, SingleTaskGP
 from botorch.posteriors import GPyTorchPosterior
-from botorch.utils.testing import BotorchTestCase
+from botorch.utils.testing import BotorchTestCase, _get_random_data
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.kernels import MaternKernel, ScaleKernel
 from gpytorch.likelihoods import LikelihoodList
@@ -24,20 +23,13 @@ from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikeliho
 from gpytorch.priors import GammaPrior
 
 
-def _get_random_data(n, **tkwargs):
-    train_x1 = torch.linspace(0, 0.95, n + 1, **tkwargs).unsqueeze(
-        -1
-    ) + 0.05 * torch.rand(n + 1, 1, **tkwargs)
-    train_x2 = torch.linspace(0, 0.95, n, **tkwargs).unsqueeze(-1) + 0.05 * torch.rand(
-        n, 1, **tkwargs
-    )
-    train_y1 = torch.sin(train_x1 * (2 * math.pi)) + 0.2 * torch.randn_like(train_x1)
-    train_y2 = torch.cos(train_x2 * (2 * math.pi)) + 0.2 * torch.randn_like(train_x2)
-    return train_x1, train_x2, train_y1, train_y2
-
-
 def _get_model(n, fixed_noise=False, **tkwargs):
-    train_x1, train_x2, train_y1, train_y2 = _get_random_data(n=n, **tkwargs)
+    train_x1, train_y1 = _get_random_data(
+        batch_shape=torch.Size(), num_outputs=1, n=10, **tkwargs
+    )
+    train_x2, train_y2 = _get_random_data(
+        batch_shape=torch.Size(), num_outputs=1, n=11, **tkwargs
+    )
     if fixed_noise:
         train_y1_var = 0.1 + 0.1 * torch.rand_like(train_y1, **tkwargs)
         train_y2_var = 0.1 + 0.1 * torch.rand_like(train_y2, **tkwargs)
@@ -199,7 +191,12 @@ class TestModelListGP(BotorchTestCase):
 
     def test_ModelListGP_single(self):
         tkwargs = {"device": self.device, "dtype": torch.float}
-        train_x1, train_x2, train_y1, train_y2 = _get_random_data(n=10, **tkwargs)
+        train_x1, train_y1 = _get_random_data(
+            batch_shape=torch.Size(), num_outputs=1, n=10, **tkwargs
+        )
+        train_x2, train_y2 = _get_random_data(
+            batch_shape=torch.Size(), num_outputs=1, n=11, **tkwargs
+        )
         model1 = SingleTaskGP(train_X=train_x1, train_Y=train_y1)
         model = ModelListGP(model1)
         model.to(**tkwargs)
