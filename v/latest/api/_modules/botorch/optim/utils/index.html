@@ -35,19 +35,19 @@
 <span class="sd">"""</span>
 
 <span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">inspect</span> <span class="k">import</span> <span class="n">signature</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">signature</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">gpytorch.mlls.exact_marginal_log_likelihood</span> <span class="k">import</span> <span class="n">ExactMarginalLogLikelihood</span>
-<span class="kn">from</span> <span class="nn">gpytorch.mlls.marginal_log_likelihood</span> <span class="k">import</span> <span class="n">MarginalLogLikelihood</span>
-<span class="kn">from</span> <span class="nn">gpytorch.mlls.sum_marginal_log_likelihood</span> <span class="k">import</span> <span class="n">SumMarginalLogLikelihood</span>
-<span class="kn">from</span> <span class="nn">gpytorch.mlls.variational_elbo</span> <span class="k">import</span> <span class="n">VariationalELBO</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="k">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span> <span class="nn">gpytorch.mlls.exact_marginal_log_likelihood</span> <span class="kn">import</span> <span class="n">ExactMarginalLogLikelihood</span>
+<span class="kn">from</span> <span class="nn">gpytorch.mlls.marginal_log_likelihood</span> <span class="kn">import</span> <span class="n">MarginalLogLikelihood</span>
+<span class="kn">from</span> <span class="nn">gpytorch.mlls.sum_marginal_log_likelihood</span> <span class="kn">import</span> <span class="n">SumMarginalLogLikelihood</span>
+<span class="kn">from</span> <span class="nn">gpytorch.mlls.variational_elbo</span> <span class="kn">import</span> <span class="n">VariationalELBO</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
-<span class="kn">from</span> <span class="nn">..exceptions.errors</span> <span class="k">import</span> <span class="n">BotorchError</span>
-<span class="kn">from</span> <span class="nn">..exceptions.warnings</span> <span class="k">import</span> <span class="n">BotorchWarning</span>
-<span class="kn">from</span> <span class="nn">..models.gpytorch</span> <span class="k">import</span> <span class="n">GPyTorchModel</span>
+<span class="kn">from</span> <span class="nn">..exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchError</span>
+<span class="kn">from</span> <span class="nn">..exceptions.warnings</span> <span class="kn">import</span> <span class="n">BotorchWarning</span>
+<span class="kn">from</span> <span class="nn">..models.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchModel</span>
 
 
 <div class="viewcode-block" id="sample_all_priors"><a class="viewcode-back" href="../../../optim.html#botorch.optim.utils.sample_all_priors">[docs]</a><span class="k">def</span> <span class="nf">sample_all_priors</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">GPyTorchModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -65,7 +65,7 @@
             <span class="n">setting_closure</span><span class="p">(</span><span class="n">prior</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">closure</span><span class="p">()</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
         <span class="k">except</span> <span class="ne">NotImplementedError</span><span class="p">:</span>
             <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                <span class="n">f</span><span class="s2">"`rsample` not implemented for {type(prior)}. Skipping."</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">"`rsample` not implemented for {type(prior)}. Skipping."</span><span class="p">,</span>
                 <span class="n">BotorchWarning</span><span class="p">,</span>
             <span class="p">)</span></div>
 
@@ -74,7 +74,7 @@
     <span class="sa">r</span><span class="sd">"""Basic class for evaluating optimization convergence.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">maxiter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">15000</span><span class="p">,</span>
         <span class="n">ftol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.220446049250313e-09</span><span class="p">,</span>

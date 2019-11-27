@@ -35,18 +35,18 @@
 <span class="sd">models.</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="k">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
-<span class="kn">from</span> <span class="nn">.posterior</span> <span class="k">import</span> <span class="n">Posterior</span>
+<span class="kn">from</span> <span class="nn">.posterior</span> <span class="kn">import</span> <span class="n">Posterior</span>
 
 
 <div class="viewcode-block" id="DeterministicPosterior"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.deterministic.DeterministicPosterior">[docs]</a><span class="k">class</span> <span class="nc">DeterministicPosterior</span><span class="p">(</span><span class="n">Posterior</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""Deterministic posterior."""</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="n">values</span>
 
     <span class="nd">@property</span>

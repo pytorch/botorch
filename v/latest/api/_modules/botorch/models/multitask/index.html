@@ -34,23 +34,23 @@
 <span class="sd">Multi-Task GP models.</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">gpytorch.distributions.multivariate_normal</span> <span class="k">import</span> <span class="n">MultivariateNormal</span>
-<span class="kn">from</span> <span class="nn">gpytorch.kernels.index_kernel</span> <span class="k">import</span> <span class="n">IndexKernel</span>
-<span class="kn">from</span> <span class="nn">gpytorch.kernels.matern_kernel</span> <span class="k">import</span> <span class="n">MaternKernel</span>
-<span class="kn">from</span> <span class="nn">gpytorch.kernels.scale_kernel</span> <span class="k">import</span> <span class="n">ScaleKernel</span>
-<span class="kn">from</span> <span class="nn">gpytorch.likelihoods.gaussian_likelihood</span> <span class="k">import</span> <span class="p">(</span>
+<span class="kn">from</span> <span class="nn">gpytorch.distributions.multivariate_normal</span> <span class="kn">import</span> <span class="n">MultivariateNormal</span>
+<span class="kn">from</span> <span class="nn">gpytorch.kernels.index_kernel</span> <span class="kn">import</span> <span class="n">IndexKernel</span>
+<span class="kn">from</span> <span class="nn">gpytorch.kernels.matern_kernel</span> <span class="kn">import</span> <span class="n">MaternKernel</span>
+<span class="kn">from</span> <span class="nn">gpytorch.kernels.scale_kernel</span> <span class="kn">import</span> <span class="n">ScaleKernel</span>
+<span class="kn">from</span> <span class="nn">gpytorch.likelihoods.gaussian_likelihood</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">FixedNoiseGaussianLikelihood</span><span class="p">,</span>
     <span class="n">GaussianLikelihood</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">gpytorch.means.constant_mean</span> <span class="k">import</span> <span class="n">ConstantMean</span>
-<span class="kn">from</span> <span class="nn">gpytorch.models.exact_gp</span> <span class="k">import</span> <span class="n">ExactGP</span>
-<span class="kn">from</span> <span class="nn">gpytorch.priors.torch_priors</span> <span class="k">import</span> <span class="n">GammaPrior</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="k">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span> <span class="nn">gpytorch.means.constant_mean</span> <span class="kn">import</span> <span class="n">ConstantMean</span>
+<span class="kn">from</span> <span class="nn">gpytorch.models.exact_gp</span> <span class="kn">import</span> <span class="n">ExactGP</span>
+<span class="kn">from</span> <span class="nn">gpytorch.priors.torch_priors</span> <span class="kn">import</span> <span class="n">GammaPrior</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
-<span class="kn">from</span> <span class="nn">.gpytorch</span> <span class="k">import</span> <span class="n">MultiTaskGPyTorchModel</span>
+<span class="kn">from</span> <span class="nn">.gpytorch</span> <span class="kn">import</span> <span class="n">MultiTaskGPyTorchModel</span>
 
 
 <div class="viewcode-block" id="MultiTaskGP"><a class="viewcode-back" href="../../../models.html#botorch.models.multitask.MultiTaskGP">[docs]</a><span class="k">class</span> <span class="nc">MultiTaskGP</span><span class="p">(</span><span class="n">ExactGP</span><span class="p">,</span> <span class="n">MultiTaskGPyTorchModel</span><span class="p">):</span>
@@ -66,7 +66,7 @@
 <span class="sd">    noise, please use `FixedNoiseMultiTaskGP` instead.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -101,10 +101,10 @@
         <span class="c1"># TODO: Validate input normalization/scaling</span>
         <span class="k">if</span> <span class="n">train_X</span><span class="o">.</span><span class="n">ndimension</span><span class="p">()</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
             <span class="c1"># Currently, batch mode MTGPs are blocked upstream in GPyTorch</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">f</span><span class="s2">"Unsupported shape </span><span class="si">{train_X.shape}</span><span class="s2"> for train_X."</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unsupported shape </span><span class="si">{train_X.shape}</span><span class="s2"> for train_X."</span><span class="p">)</span>
         <span class="n">d</span> <span class="o">=</span> <span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="o">-</span><span class="n">d</span> <span class="o">&lt;=</span> <span class="n">task_feature</span> <span class="o">&lt;=</span> <span class="n">d</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">f</span><span class="s2">"Must have that -</span><span class="si">{d}</span><span class="s2"> &lt;= task_feature &lt;= </span><span class="si">{d}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Must have that -</span><span class="si">{d}</span><span class="s2"> &lt;= task_feature &lt;= </span><span class="si">{d}</span><span class="s2">"</span><span class="p">)</span>
         <span class="n">all_tasks</span> <span class="o">=</span> <span class="n">train_X</span><span class="p">[:,</span> <span class="n">task_feature</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">output_tasks</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">output_tasks</span> <span class="o">=</span> <span class="n">all_tasks</span>
@@ -186,7 +186,7 @@
 <span class="sd">    This model requires observation noise data (specified in `train_Yvar`).</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>

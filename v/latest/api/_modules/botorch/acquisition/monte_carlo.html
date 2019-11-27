@@ -45,29 +45,29 @@
 <span class="sd">"""</span>
 
 <span class="kn">import</span> <span class="nn">math</span>
-<span class="kn">from</span> <span class="nn">abc</span> <span class="k">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="k">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
-<span class="kn">from</span> <span class="nn">..exceptions.errors</span> <span class="k">import</span> <span class="n">UnsupportedError</span>
-<span class="kn">from</span> <span class="nn">..models.model</span> <span class="k">import</span> <span class="n">Model</span>
-<span class="kn">from</span> <span class="nn">..sampling.samplers</span> <span class="k">import</span> <span class="n">MCSampler</span><span class="p">,</span> <span class="n">SobolQMCNormalSampler</span>
-<span class="kn">from</span> <span class="nn">..utils.transforms</span> <span class="k">import</span> <span class="p">(</span>
+<span class="kn">from</span> <span class="nn">..exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span> <span class="nn">..models.model</span> <span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span> <span class="nn">..sampling.samplers</span> <span class="kn">import</span> <span class="n">MCSampler</span><span class="p">,</span> <span class="n">SobolQMCNormalSampler</span>
+<span class="kn">from</span> <span class="nn">..utils.transforms</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">concatenate_pending_points</span><span class="p">,</span>
     <span class="n">match_batch_shape</span><span class="p">,</span>
     <span class="n">t_batch_mode_transform</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">.acquisition</span> <span class="k">import</span> <span class="n">AcquisitionFunction</span>
-<span class="kn">from</span> <span class="nn">.objective</span> <span class="k">import</span> <span class="n">IdentityMCObjective</span><span class="p">,</span> <span class="n">MCAcquisitionObjective</span>
-<span class="kn">from</span> <span class="nn">.utils</span> <span class="k">import</span> <span class="n">prune_inferior_points</span>
+<span class="kn">from</span> <span class="nn">.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
+<span class="kn">from</span> <span class="nn">.objective</span> <span class="kn">import</span> <span class="n">IdentityMCObjective</span><span class="p">,</span> <span class="n">MCAcquisitionObjective</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">prune_inferior_points</span>
 
 
 <div class="viewcode-block" id="MCAcquisitionFunction"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.MCAcquisitionFunction">[docs]</a><span class="k">class</span> <span class="nc">MCAcquisitionFunction</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""Abstract base class for Monte-Carlo based batch acquisition functions."""</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">sampler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCSampler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -129,7 +129,7 @@
 <span class="sd">        &gt;&gt;&gt; qei = qEI(test_X)</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">best_f</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span>
@@ -202,7 +202,7 @@
 <span class="sd">        &gt;&gt;&gt; qnei = qNEI(test_X)</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">X_baseline</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -285,7 +285,7 @@
 <span class="sd">        &gt;&gt;&gt; qpi = qPI(test_X)</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">best_f</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span>
@@ -394,7 +394,7 @@
 <span class="sd">        &gt;&gt;&gt; qucb = qUCB(test_X)</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">beta</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>

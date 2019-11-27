@@ -35,16 +35,16 @@
 <span class="sd">"""</span>
 
 <span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">contextlib</span> <span class="k">import</span> <span class="n">contextmanager</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Generator</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">contextmanager</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Generator</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="k">import</span> <span class="n">Tensor</span>
-<span class="kn">from</span> <span class="nn">torch.quasirandom</span> <span class="k">import</span> <span class="n">SobolEngine</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span> <span class="nn">torch.quasirandom</span> <span class="kn">import</span> <span class="n">SobolEngine</span>
 
-<span class="kn">from</span> <span class="nn">..exceptions.warnings</span> <span class="k">import</span> <span class="n">SamplingWarning</span>
-<span class="kn">from</span> <span class="nn">..posteriors.posterior</span> <span class="k">import</span> <span class="n">Posterior</span>
-<span class="kn">from</span> <span class="nn">..sampling.qmc</span> <span class="k">import</span> <span class="n">NormalQMCEngine</span>
+<span class="kn">from</span> <span class="nn">..exceptions.warnings</span> <span class="kn">import</span> <span class="n">SamplingWarning</span>
+<span class="kn">from</span> <span class="nn">..posteriors.posterior</span> <span class="kn">import</span> <span class="n">Posterior</span>
+<span class="kn">from</span> <span class="nn">..sampling.qmc</span> <span class="kn">import</span> <span class="n">NormalQMCEngine</span>
 
 
 <div class="viewcode-block" id="construct_base_samples"><a class="viewcode-back" href="../../../utils.html#botorch.utils.sampling.construct_base_samples">[docs]</a><span class="k">def</span> <span class="nf">construct_base_samples</span><span class="p">(</span>
@@ -89,8 +89,8 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">qmc</span> <span class="ow">and</span> <span class="n">output_dim</span> <span class="o">&gt;</span> <span class="n">SobolEngine</span><span class="o">.</span><span class="n">MAXDIM</span><span class="p">:</span>
             <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                <span class="n">f</span><span class="s2">"Number of output elements (q*d=</span><span class="si">{output_dim}</span><span class="s2">) greater than "</span>
-                <span class="n">f</span><span class="s2">"maximum supported by qmc (</span><span class="si">{SobolEngine.MAXDIM}</span><span class="s2">). "</span>
+                <span class="sa">f</span><span class="s2">"Number of output elements (q*d=</span><span class="si">{output_dim}</span><span class="s2">) greater than "</span>
+                <span class="sa">f</span><span class="s2">"maximum supported by qmc (</span><span class="si">{SobolEngine.MAXDIM}</span><span class="s2">). "</span>
                 <span class="s2">"Using iid sampling instead."</span><span class="p">,</span>
                 <span class="n">SamplingWarning</span><span class="p">,</span>
             <span class="p">)</span>

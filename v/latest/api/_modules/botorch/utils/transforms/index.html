@@ -34,15 +34,15 @@
 <span class="sd">Some basic data transformation helpers.</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">contextlib</span> <span class="k">import</span> <span class="n">ExitStack</span><span class="p">,</span> <span class="n">contextmanager</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="k">import</span> <span class="n">wraps</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">ExitStack</span><span class="p">,</span> <span class="n">contextmanager</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">gpytorch</span> <span class="k">import</span> <span class="n">settings</span> <span class="k">as</span> <span class="n">gpt_settings</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="k">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span> <span class="nn">gpytorch</span> <span class="kn">import</span> <span class="n">settings</span> <span class="k">as</span> <span class="n">gpt_settings</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
-<span class="kn">from</span> <span class="nn">..</span> <span class="k">import</span> <span class="n">settings</span>
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">settings</span>
 
 
 <div class="viewcode-block" id="squeeze_last_dim"><a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.squeeze_last_dim">[docs]</a><span class="k">def</span> <span class="nf">squeeze_last_dim</span><span class="p">(</span><span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
@@ -161,13 +161,13 @@
         <span class="k">def</span> <span class="nf">decorated</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="n">f</span><span class="s2">"{type(cls).__name__} requires X to have at least 2 dimensions,"</span>
-                    <span class="n">f</span><span class="s2">" but received X with only {X.dim()} dimensions."</span>
+                    <span class="sa">f</span><span class="s2">"{type(cls).__name__} requires X to have at least 2 dimensions,"</span>
+                    <span class="sa">f</span><span class="s2">" but received X with only {X.dim()} dimensions."</span>
                 <span class="p">)</span>
             <span class="k">elif</span> <span class="n">expected_q</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="n">expected_q</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span>
-                    <span class="n">f</span><span class="s2">"Expected X to be `batch_shape x q=</span><span class="si">{expected_q}</span><span class="s2"> x d`, but"</span>
-                    <span class="n">f</span><span class="s2">" got X with shape </span><span class="si">{X.shape}</span><span class="s2">."</span>
+                    <span class="sa">f</span><span class="s2">"Expected X to be `batch_shape x q=</span><span class="si">{expected_q}</span><span class="s2"> x d`, but"</span>
+                    <span class="sa">f</span><span class="s2">" got X with shape </span><span class="si">{X.shape}</span><span class="s2">."</span>
                 <span class="p">)</span>
             <span class="n">X</span> <span class="o">=</span> <span class="n">X</span> <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="k">else</span> <span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">method</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span>

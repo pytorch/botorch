@@ -35,19 +35,19 @@
 <span class="sd">"""</span>
 
 <span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="k">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
-<span class="kn">from</span> <span class="nn">..acquisition.acquisition</span> <span class="k">import</span> <span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">OneShotAcquisitionFunction</span>
-<span class="kn">from</span> <span class="nn">..acquisition.knowledge_gradient</span> <span class="k">import</span> <span class="n">qKnowledgeGradient</span>
-<span class="kn">from</span> <span class="nn">..gen</span> <span class="k">import</span> <span class="n">gen_candidates_scipy</span>
-<span class="kn">from</span> <span class="nn">.initializers</span> <span class="k">import</span> <span class="p">(</span>
+<span class="kn">from</span> <span class="nn">..acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">OneShotAcquisitionFunction</span>
+<span class="kn">from</span> <span class="nn">..acquisition.knowledge_gradient</span> <span class="kn">import</span> <span class="n">qKnowledgeGradient</span>
+<span class="kn">from</span> <span class="nn">..gen</span> <span class="kn">import</span> <span class="n">gen_candidates_scipy</span>
+<span class="kn">from</span> <span class="nn">.initializers</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">gen_batch_initial_conditions</span><span class="p">,</span>
     <span class="n">gen_one_shot_kg_initial_conditions</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">.utils</span> <span class="k">import</span> <span class="n">ConvergenceCriterion</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">ConvergenceCriterion</span>
 
 
 <div class="viewcode-block" id="optimize_acqf"><a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize.optimize_acqf">[docs]</a><span class="k">def</span> <span class="nf">optimize_acqf</span><span class="p">(</span>

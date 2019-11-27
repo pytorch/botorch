@@ -50,22 +50,22 @@
 <span class="sd">    bayesian optimization. NIPS 2016.</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">copy</span> <span class="k">import</span> <span class="n">deepcopy</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="k">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
-<span class="kn">from</span> <span class="nn">..</span> <span class="k">import</span> <span class="n">settings</span>
-<span class="kn">from</span> <span class="nn">..exceptions.errors</span> <span class="k">import</span> <span class="n">UnsupportedError</span>
-<span class="kn">from</span> <span class="nn">..models.model</span> <span class="k">import</span> <span class="n">Model</span>
-<span class="kn">from</span> <span class="nn">..sampling.samplers</span> <span class="k">import</span> <span class="n">MCSampler</span><span class="p">,</span> <span class="n">SobolQMCNormalSampler</span>
-<span class="kn">from</span> <span class="nn">..utils.transforms</span> <span class="k">import</span> <span class="n">match_batch_shape</span><span class="p">,</span> <span class="n">t_batch_mode_transform</span>
-<span class="kn">from</span> <span class="nn">.acquisition</span> <span class="k">import</span> <span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">OneShotAcquisitionFunction</span>
-<span class="kn">from</span> <span class="nn">.analytic</span> <span class="k">import</span> <span class="n">PosteriorMean</span>
-<span class="kn">from</span> <span class="nn">.cost_aware</span> <span class="k">import</span> <span class="n">CostAwareUtility</span>
-<span class="kn">from</span> <span class="nn">.monte_carlo</span> <span class="k">import</span> <span class="n">MCAcquisitionFunction</span><span class="p">,</span> <span class="n">qSimpleRegret</span>
-<span class="kn">from</span> <span class="nn">.objective</span> <span class="k">import</span> <span class="n">AcquisitionObjective</span><span class="p">,</span> <span class="n">MCAcquisitionObjective</span><span class="p">,</span> <span class="n">ScalarizedObjective</span>
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span> <span class="nn">..exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span> <span class="nn">..models.model</span> <span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span> <span class="nn">..sampling.samplers</span> <span class="kn">import</span> <span class="n">MCSampler</span><span class="p">,</span> <span class="n">SobolQMCNormalSampler</span>
+<span class="kn">from</span> <span class="nn">..utils.transforms</span> <span class="kn">import</span> <span class="n">match_batch_shape</span><span class="p">,</span> <span class="n">t_batch_mode_transform</span>
+<span class="kn">from</span> <span class="nn">.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">OneShotAcquisitionFunction</span>
+<span class="kn">from</span> <span class="nn">.analytic</span> <span class="kn">import</span> <span class="n">PosteriorMean</span>
+<span class="kn">from</span> <span class="nn">.cost_aware</span> <span class="kn">import</span> <span class="n">CostAwareUtility</span>
+<span class="kn">from</span> <span class="nn">.monte_carlo</span> <span class="kn">import</span> <span class="n">MCAcquisitionFunction</span><span class="p">,</span> <span class="n">qSimpleRegret</span>
+<span class="kn">from</span> <span class="nn">.objective</span> <span class="kn">import</span> <span class="n">AcquisitionObjective</span><span class="p">,</span> <span class="n">MCAcquisitionObjective</span><span class="p">,</span> <span class="n">ScalarizedObjective</span>
 
 
 <div class="viewcode-block" id="qKnowledgeGradient"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient">[docs]</a><span class="k">class</span> <span class="nc">qKnowledgeGradient</span><span class="p">(</span><span class="n">MCAcquisitionFunction</span><span class="p">,</span> <span class="n">OneShotAcquisitionFunction</span><span class="p">):</span>
@@ -80,7 +80,7 @@
 <span class="sd">    of fantasies, all parts of `X` can be optimized in a "one-shot" fashion.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">num_fantasies</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">64</span><span class="p">,</span>
@@ -125,7 +125,7 @@
         <span class="k">elif</span> <span class="n">num_fantasies</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">sampler</span><span class="o">.</span><span class="n">sample_shape</span> <span class="o">!=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">num_fantasies</span><span class="p">]):</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="n">f</span><span class="s2">"The sampler shape must match num_fantasies=</span><span class="si">{num_fantasies}</span><span class="s2">."</span>
+                    <span class="sa">f</span><span class="s2">"The sampler shape must match num_fantasies=</span><span class="si">{num_fantasies}</span><span class="s2">."</span>
                 <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">num_fantasies</span> <span class="o">=</span> <span class="n">sampler</span><span class="o">.</span><span class="n">sample_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -227,7 +227,7 @@
 <span class="sd">    of these are set, this acquisition function reduces to `qKnowledgeGradient`.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
         <span class="n">num_fantasies</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">64</span><span class="p">,</span>
@@ -402,7 +402,7 @@
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="n">n_f</span> <span class="o">&gt;</span> <span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="n">f</span><span class="s2">"n_f (</span><span class="si">{n_f}</span><span class="s2">) must be less than the q-batch dimension of X ({X.size(-2)})"</span>
+            <span class="sa">f</span><span class="s2">"n_f (</span><span class="si">{n_f}</span><span class="s2">) must be less than the q-batch dimension of X ({X.size(-2)})"</span>
         <span class="p">)</span>
     <span class="n">split_sizes</span> <span class="o">=</span> <span class="p">[</span><span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">n_f</span><span class="p">,</span> <span class="n">n_f</span><span class="p">]</span>
     <span class="n">X_actual</span><span class="p">,</span> <span class="n">X_fantasies</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">split_sizes</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>

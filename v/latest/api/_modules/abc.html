@@ -29,7 +29,7 @@
 
 <span class="sd">"""Abstract Base Classes (ABCs) according to PEP 3119."""</span>
 
-<span class="kn">from</span> <span class="nn">_weakrefset</span> <span class="k">import</span> <span class="n">WeakSet</span>
+<span class="kn">from</span> <span class="nn">_weakrefset</span> <span class="kn">import</span> <span class="n">WeakSet</span>
 
 
 <span class="k">def</span> <span class="nf">abstractmethod</span><span class="p">(</span><span class="n">funcobj</span><span class="p">):</span>
@@ -71,7 +71,7 @@
 
     <span class="n">__isabstractmethod__</span> <span class="o">=</span> <span class="kc">True</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callable</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callable</span><span class="p">):</span>
         <span class="n">callable</span><span class="o">.</span><span class="n">__isabstractmethod__</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">callable</span><span class="p">)</span>
 
@@ -95,7 +95,7 @@
 
     <span class="n">__isabstractmethod__</span> <span class="o">=</span> <span class="kc">True</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callable</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callable</span><span class="p">):</span>
         <span class="n">callable</span><span class="o">.</span><span class="n">__isabstractmethod__</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">callable</span><span class="p">)</span>
 
@@ -155,7 +155,7 @@
     <span class="c1">#       external code.</span>
     <span class="n">_abc_invalidation_counter</span> <span class="o">=</span> <span class="mi">0</span>
 
-    <span class="k">def</span> <span class="nf">__new__</span><span class="p">(</span><span class="n">mcls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">namespace</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="n">mcls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">namespace</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="bp">cls</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="n">mcls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">namespace</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="c1"># Compute set of abstract method names</span>
         <span class="n">abstracts</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span>
@@ -203,7 +203,7 @@
                     <span class="n">value</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
                 <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="si">%s</span><span class="s2">: </span><span class="si">%r</span><span class="s2">"</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">),</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">__instancecheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">instance</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__instancecheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">instance</span><span class="p">):</span>
         <span class="sd">"""Override for isinstance(instance, cls)."""</span>
         <span class="c1"># Inline the cache checking</span>
         <span class="n">subclass</span> <span class="o">=</span> <span class="n">instance</span><span class="o">.</span><span class="vm">__class__</span>
@@ -219,7 +219,7 @@
             <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="fm">__subclasscheck__</span><span class="p">(</span><span class="n">subclass</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="fm">__subclasscheck__</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="p">{</span><span class="n">subclass</span><span class="p">,</span> <span class="n">subtype</span><span class="p">})</span>
 
-    <span class="k">def</span> <span class="nf">__subclasscheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__subclasscheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">):</span>
         <span class="sd">"""Override for issubclass(subclass, cls)."""</span>
         <span class="c1"># Check cache</span>
         <span class="k">if</span> <span class="n">subclass</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_abc_cache</span><span class="p">:</span>

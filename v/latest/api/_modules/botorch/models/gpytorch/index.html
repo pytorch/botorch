@@ -38,21 +38,21 @@
 <span class="sd">"""</span>
 
 <span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">abc</span> <span class="k">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractproperty</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractproperty</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">gpytorch.distributions</span> <span class="k">import</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">,</span> <span class="n">MultivariateNormal</span>
-<span class="kn">from</span> <span class="nn">gpytorch.lazy</span> <span class="k">import</span> <span class="n">lazify</span>
-<span class="kn">from</span> <span class="nn">gpytorch.likelihoods.gaussian_likelihood</span> <span class="k">import</span> <span class="n">FixedNoiseGaussianLikelihood</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="k">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span> <span class="nn">gpytorch.distributions</span> <span class="kn">import</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">,</span> <span class="n">MultivariateNormal</span>
+<span class="kn">from</span> <span class="nn">gpytorch.lazy</span> <span class="kn">import</span> <span class="n">lazify</span>
+<span class="kn">from</span> <span class="nn">gpytorch.likelihoods.gaussian_likelihood</span> <span class="kn">import</span> <span class="n">FixedNoiseGaussianLikelihood</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
-<span class="kn">from</span> <span class="nn">..exceptions.errors</span> <span class="k">import</span> <span class="n">BotorchTensorDimensionError</span>
-<span class="kn">from</span> <span class="nn">..exceptions.warnings</span> <span class="k">import</span> <span class="n">BotorchTensorDimensionWarning</span>
-<span class="kn">from</span> <span class="nn">..posteriors.gpytorch</span> <span class="k">import</span> <span class="n">GPyTorchPosterior</span>
-<span class="kn">from</span> <span class="nn">..utils.transforms</span> <span class="k">import</span> <span class="n">gpt_posterior_settings</span>
-<span class="kn">from</span> <span class="nn">.model</span> <span class="k">import</span> <span class="n">Model</span>
-<span class="kn">from</span> <span class="nn">.utils</span> <span class="k">import</span> <span class="n">_make_X_full</span><span class="p">,</span> <span class="n">add_output_dim</span><span class="p">,</span> <span class="n">multioutput_to_batch_mode_transform</span>
+<span class="kn">from</span> <span class="nn">..exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchTensorDimensionError</span>
+<span class="kn">from</span> <span class="nn">..exceptions.warnings</span> <span class="kn">import</span> <span class="n">BotorchTensorDimensionWarning</span>
+<span class="kn">from</span> <span class="nn">..posteriors.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchPosterior</span>
+<span class="kn">from</span> <span class="nn">..utils.transforms</span> <span class="kn">import</span> <span class="n">gpt_posterior_settings</span>
+<span class="kn">from</span> <span class="nn">.model</span> <span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">_make_X_full</span><span class="p">,</span> <span class="n">add_output_dim</span><span class="p">,</span> <span class="n">multioutput_to_batch_mode_transform</span>
 
 
 <div class="viewcode-block" id="GPyTorchModel"><a class="viewcode-back" href="../../../models.html#botorch.models.gpytorch.GPyTorchModel">[docs]</a><span class="k">class</span> <span class="nc">GPyTorchModel</span><span class="p">(</span><span class="n">Model</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
@@ -90,20 +90,20 @@
                 <span class="k">if</span> <span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">-</span> <span class="n">Y</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">):</span>
                     <span class="n">message</span> <span class="o">=</span> <span class="p">(</span>
                         <span class="s2">"An explicit output dimension is required for targets."</span>
-                        <span class="n">f</span><span class="s2">" Expected Y with dimension: {Y.dim()} (got {X.dim()})."</span>
+                        <span class="sa">f</span><span class="s2">" Expected Y with dimension: {Y.dim()} (got {X.dim()})."</span>
                     <span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">message</span> <span class="o">=</span> <span class="p">(</span>
                         <span class="s2">"Expected X and Y to have the same number of dimensions"</span>
-                        <span class="n">f</span><span class="s2">" (got X with dimension {X.dim()} and Y with dimension"</span>
-                        <span class="n">f</span><span class="s2">" {Y.dim()}."</span>
+                        <span class="sa">f</span><span class="s2">" (got X with dimension {X.dim()} and Y with dimension"</span>
+                        <span class="sa">f</span><span class="s2">" {Y.dim()}."</span>
                     <span class="p">)</span>
                 <span class="k">raise</span> <span class="n">BotorchTensorDimensionError</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
                 <span class="s2">"Non-strict enforcement of botorch tensor conventions. Ensure that "</span>
-                <span class="n">f</span><span class="s2">"target tensors Y{' and Yvar have' if Yvar is not None else ' has an'}"</span>
-                <span class="n">f</span><span class="s2">" explicit output dimension{'s' if Yvar is not None else ''}."</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">"target tensors Y{' and Yvar have' if Yvar is not None else ' has an'}"</span>
+                <span class="sa">f</span><span class="s2">" explicit output dimension{'s' if Yvar is not None else ''}."</span><span class="p">,</span>
                 <span class="n">BotorchTensorDimensionWarning</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="c1"># Yvar may not have the same batch dimensions, but the trailing dimensions</span>
@@ -111,8 +111,8 @@
         <span class="k">if</span> <span class="n">Yvar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="n">Yvar</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="p">:]</span> <span class="o">!=</span> <span class="n">Yvar</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">BotorchTensorDimensionError</span><span class="p">(</span>
                 <span class="s2">"An explicit output dimension is required for observation noise."</span>
-                <span class="n">f</span><span class="s2">" Expected Yvar with shape: </span><span class="si">{Y.shape[-Yvar.dim() :]}</span><span class="s2"> (got"</span>
-                <span class="n">f</span><span class="s2">" </span><span class="si">{Yvar.shape}</span><span class="s2">)."</span>
+                <span class="sa">f</span><span class="s2">" Expected Yvar with shape: </span><span class="si">{Y.shape[-Yvar.dim() :]}</span><span class="s2"> (got"</span>
+                <span class="sa">f</span><span class="s2">" </span><span class="si">{Yvar.shape}</span><span class="s2">)."</span>
             <span class="p">)</span>
 
 <div class="viewcode-block" id="GPyTorchModel.posterior"><a class="viewcode-back" href="../../../models.html#botorch.models.gpytorch.GPyTorchModel.posterior">[docs]</a>    <span class="k">def</span> <span class="nf">posterior</span><span class="p">(</span>

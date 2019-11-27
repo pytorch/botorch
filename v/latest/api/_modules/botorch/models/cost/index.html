@@ -34,12 +34,12 @@
 <span class="sd">Cost models to be used with multi-fidelity optimization.</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="k">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
-<span class="kn">from</span> <span class="nn">.deterministic</span> <span class="k">import</span> <span class="n">DeterministicModel</span>
+<span class="kn">from</span> <span class="nn">.deterministic</span> <span class="kn">import</span> <span class="n">DeterministicModel</span>
 
 
 <div class="viewcode-block" id="AffineFidelityCostModel"><a class="viewcode-back" href="../../../models.html#botorch.models.cost.AffineFidelityCostModel">[docs]</a><span class="k">class</span> <span class="nc">AffineFidelityCostModel</span><span class="p">(</span><span class="n">DeterministicModel</span><span class="p">):</span>
@@ -51,7 +51,7 @@
 <span class="sd">        cost = fixed_cost + sum_j weights[j] * X[fidelity_dims[j]]</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">fidelity_weights</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">fixed_cost</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span>

@@ -34,21 +34,21 @@
 <span class="sd">Posterior Module to be used with GPyTorch models.</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
 
 <span class="kn">import</span> <span class="nn">gpytorch</span>
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">gpytorch.distributions</span> <span class="k">import</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">,</span> <span class="n">MultivariateNormal</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="k">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span> <span class="nn">gpytorch.distributions</span> <span class="kn">import</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">,</span> <span class="n">MultivariateNormal</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
-<span class="kn">from</span> <span class="nn">..exceptions.errors</span> <span class="k">import</span> <span class="n">UnsupportedError</span>
-<span class="kn">from</span> <span class="nn">.posterior</span> <span class="k">import</span> <span class="n">Posterior</span>
+<span class="kn">from</span> <span class="nn">..exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span> <span class="nn">.posterior</span> <span class="kn">import</span> <span class="n">Posterior</span>
 
 
 <div class="viewcode-block" id="GPyTorchPosterior"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior">[docs]</a><span class="k">class</span> <span class="nc">GPyTorchPosterior</span><span class="p">(</span><span class="n">Posterior</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""A posterior based on GPyTorch's multi-variate Normal distributions."""</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mvn</span><span class="p">:</span> <span class="n">MultivariateNormal</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mvn</span><span class="p">:</span> <span class="n">MultivariateNormal</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""A posterior based on GPyTorch's multi-variate Normal distributions.</span>
 
 <span class="sd">        Args:</span>

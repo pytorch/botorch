@@ -30,17 +30,17 @@
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
-<span class="kn">from</span> <span class="nn">copy</span> <span class="k">import</span> <span class="n">deepcopy</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions</span> <span class="k">import</span> <span class="n">UnsupportedError</span>
-<span class="kn">from</span> <span class="nn">gpytorch.constraints</span> <span class="k">import</span> <span class="n">Interval</span><span class="p">,</span> <span class="n">Positive</span>
-<span class="kn">from</span> <span class="nn">gpytorch.kernels</span> <span class="k">import</span> <span class="n">Kernel</span>
-<span class="kn">from</span> <span class="nn">gpytorch.kernels.matern_kernel</span> <span class="k">import</span> <span class="n">MaternKernel</span>
-<span class="kn">from</span> <span class="nn">gpytorch.priors</span> <span class="k">import</span> <span class="n">Prior</span>
-<span class="kn">from</span> <span class="nn">gpytorch.priors.torch_priors</span> <span class="k">import</span> <span class="n">GammaPrior</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="k">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span> <span class="nn">gpytorch.constraints</span> <span class="kn">import</span> <span class="n">Interval</span><span class="p">,</span> <span class="n">Positive</span>
+<span class="kn">from</span> <span class="nn">gpytorch.kernels</span> <span class="kn">import</span> <span class="n">Kernel</span>
+<span class="kn">from</span> <span class="nn">gpytorch.kernels.matern_kernel</span> <span class="kn">import</span> <span class="n">MaternKernel</span>
+<span class="kn">from</span> <span class="nn">gpytorch.priors</span> <span class="kn">import</span> <span class="n">Prior</span>
+<span class="kn">from</span> <span class="nn">gpytorch.priors.torch_priors</span> <span class="kn">import</span> <span class="n">GammaPrior</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
 <div class="viewcode-block" id="LinearTruncatedFidelityKernel"><a class="viewcode-back" href="../../../../models.html#botorch.models.kernels.linear_truncated_fidelity.LinearTruncatedFidelityKernel">[docs]</a><span class="k">class</span> <span class="nc">LinearTruncatedFidelityKernel</span><span class="p">(</span><span class="n">Kernel</span><span class="p">):</span>
@@ -106,7 +106,7 @@
 <span class="sd">        &gt;&gt;&gt; covar = covar_module(x)  # Output: LazyVariable of size (2 x 10 x 10)</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>  <span class="c1"># noqa C901</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>  <span class="c1"># noqa C901</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">fidelity_dims</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
         <span class="n">dimension</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -246,7 +246,7 @@
 
         <span class="k">return</span> <span class="n">covar_unbiased</span> <span class="o">+</span> <span class="n">bias_factor</span> <span class="o">*</span> <span class="n">covar_biased</span>
 
-    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"LinearTruncatedFidelityKernel"</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"LinearTruncatedFidelityKernel"</span><span class="p">:</span>
         <span class="n">new_kernel</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="n">new_kernel</span><span class="o">.</span><span class="n">covar_module_unbiased</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_module_unbiased</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
         <span class="n">new_kernel</span><span class="o">.</span><span class="n">covar_module_biased</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_module_biased</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>

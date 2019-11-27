@@ -194,11 +194,11 @@ This turns out to reduce the variance of the acquisition value by a significant 
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">math</span>
 <span class="kn">import</span> <span class="nn">torch</span>
 
-<span class="kn">from</span> <span class="nn">botorch.test_functions</span> <span class="k">import</span> <span class="n">Branin</span>
-<span class="kn">from</span> <span class="nn">botorch.fit</span> <span class="k">import</span> <span class="n">fit_gpytorch_model</span>
-<span class="kn">from</span> <span class="nn">botorch.models</span> <span class="k">import</span> <span class="n">SingleTaskGP</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="k">import</span> <span class="n">standardize</span><span class="p">,</span> <span class="n">normalize</span>
-<span class="kn">from</span> <span class="nn">gpytorch.mlls</span> <span class="k">import</span> <span class="n">ExactMarginalLogLikelihood</span>
+<span class="kn">from</span> <span class="nn">botorch.test_functions</span> <span class="kn">import</span> <span class="n">Branin</span>
+<span class="kn">from</span> <span class="nn">botorch.fit</span> <span class="kn">import</span> <span class="n">fit_gpytorch_model</span>
+<span class="kn">from</span> <span class="nn">botorch.models</span> <span class="kn">import</span> <span class="n">SingleTaskGP</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">standardize</span><span class="p">,</span> <span class="n">normalize</span>
+<span class="kn">from</span> <span class="nn">gpytorch.mlls</span> <span class="kn">import</span> <span class="n">ExactMarginalLogLikelihood</span>
 
 <span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="mi">7</span><span class="p">)</span>
 
@@ -229,7 +229,7 @@ This turns out to reduce the variance of the acquisition value by a significant 
 <div class="prompt input_prompt">In [2]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.acquisition.max_value_entropy_search</span> <span class="k">import</span> <span class="n">qMaxValueEntropy</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.acquisition.max_value_entropy_search</span> <span class="kn">import</span> <span class="n">qMaxValueEntropy</span>
 
 <span class="n">candidate_set</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="n">bounds</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">device</span><span class="o">=</span><span class="n">bounds</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">bounds</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
 <span class="n">candidate_set</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">candidate_set</span>
@@ -251,7 +251,7 @@ This turns out to reduce the variance of the acquisition value by a significant 
 <div class="prompt input_prompt">In [3]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.optim</span> <span class="k">import</span> <span class="n">optimize_acqf</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.optim</span> <span class="kn">import</span> <span class="n">optimize_acqf</span>
 
 <span class="c1"># for q = 1</span>
 <span class="n">candidates</span><span class="p">,</span> <span class="n">acq_value</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
@@ -313,7 +313,7 @@ This turns out to reduce the variance of the acquisition value by a significant 
 <div class="prompt input_prompt">In [5]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.optim</span> <span class="k">import</span> <span class="n">optimize_acqf_cyclic</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.optim</span> <span class="kn">import</span> <span class="n">optimize_acqf_cyclic</span>
 
 <span class="c1"># for q = 2, cyclic optimization</span>
 <span class="n">candidates_q2_cyclic</span><span class="p">,</span> <span class="n">acq_value_q2_cyclic</span> <span class="o">=</span> <span class="n">optimize_acqf_cyclic</span><span class="p">(</span>

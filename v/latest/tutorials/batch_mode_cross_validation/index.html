@@ -130,7 +130,7 @@ $$y = \sin(2\pi x) + \epsilon, ~\epsilon \sim \mathcal N(0, 0.2).$$<p>Note: this
 <div class="prompt input_prompt">In [3]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.cross_validation</span> <span class="k">import</span> <span class="n">gen_loo_cv_folds</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.cross_validation</span> <span class="kn">import</span> <span class="n">gen_loo_cv_folds</span>
 
 <span class="n">cv_folds</span> <span class="o">=</span> <span class="n">gen_loo_cv_folds</span><span class="p">(</span><span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="o">=</span><span class="n">train_Yvar</span><span class="p">)</span>
 </pre></div>
@@ -206,9 +206,9 @@ $$y = \sin(2\pi x) + \epsilon, ~\epsilon \sim \mathcal N(0, 0.2).$$<p>Note: this
 <div class="prompt input_prompt">In [6]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.cross_validation</span> <span class="k">import</span> <span class="n">batch_cross_validation</span>
-<span class="kn">from</span> <span class="nn">botorch.models</span> <span class="k">import</span> <span class="n">FixedNoiseGP</span>
-<span class="kn">from</span> <span class="nn">gpytorch.mlls.exact_marginal_log_likelihood</span> <span class="k">import</span> <span class="n">ExactMarginalLogLikelihood</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.cross_validation</span> <span class="kn">import</span> <span class="n">batch_cross_validation</span>
+<span class="kn">from</span> <span class="nn">botorch.models</span> <span class="kn">import</span> <span class="n">FixedNoiseGP</span>
+<span class="kn">from</span> <span class="nn">gpytorch.mlls.exact_marginal_log_likelihood</span> <span class="kn">import</span> <span class="n">ExactMarginalLogLikelihood</span>
 
 <span class="c1"># instantiate and fit model</span>
 <span class="n">cv_results</span> <span class="o">=</span> <span class="n">batch_cross_validation</span><span class="p">(</span>
@@ -233,13 +233,13 @@ $$y = \sin(2\pi x) + \epsilon, ~\epsilon \sim \mathcal N(0, 0.2).$$<p>Note: this
 <div class="prompt input_prompt">In [7]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">matplotlib</span> <span class="k">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
 <span class="o">%</span><span class="k">matplotlib</span> inline
 
 <span class="n">posterior</span> <span class="o">=</span> <span class="n">cv_results</span><span class="o">.</span><span class="n">posterior</span>
 <span class="n">mean</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mean</span>
 <span class="n">cv_error</span> <span class="o">=</span> <span class="p">((</span><span class="n">cv_folds</span><span class="o">.</span><span class="n">test_Y</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span> <span class="o">-</span> <span class="n">mean</span><span class="o">.</span><span class="n">squeeze</span><span class="p">())</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s2">"Cross-validation error: {cv_error : 4.2}"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Cross-validation error: {cv_error : 4.2}"</span><span class="p">)</span>
 
 <span class="c1"># get lower and upper confidence bounds</span>
 <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mvn</span><span class="o">.</span><span class="n">confidence_region</span><span class="p">()</span>

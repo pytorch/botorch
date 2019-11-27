@@ -34,20 +34,20 @@
 <span class="sd">Candidate generation utilities.</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="k">import</span> <span class="n">minimize</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="k">import</span> <span class="n">Tensor</span>
-<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="k">import</span> <span class="n">Module</span>
-<span class="kn">from</span> <span class="nn">torch.optim</span> <span class="k">import</span> <span class="n">Optimizer</span>
+<span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">minimize</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
+<span class="kn">from</span> <span class="nn">torch.optim</span> <span class="kn">import</span> <span class="n">Optimizer</span>
 
-<span class="kn">from</span> <span class="nn">.optim.parameter_constraints</span> <span class="k">import</span> <span class="p">(</span>
+<span class="kn">from</span> <span class="nn">.optim.parameter_constraints</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">_arrayify</span><span class="p">,</span>
     <span class="n">make_scipy_bounds</span><span class="p">,</span>
     <span class="n">make_scipy_linear_constraints</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">.optim.utils</span> <span class="k">import</span> <span class="p">(</span>
+<span class="kn">from</span> <span class="nn">.optim.utils</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">ConvergenceCriterion</span><span class="p">,</span>
     <span class="n">_filter_kwargs</span><span class="p">,</span>
     <span class="n">columnwise_clamp</span><span class="p">,</span>

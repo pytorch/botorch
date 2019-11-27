@@ -187,8 +187,8 @@ is a task-dependent shift parameter and $i$ is the task index $i \in [1, t]$.</p
 <div class="prompt input_prompt">In [7]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.utils.sampling</span> <span class="k">import</span> <span class="n">draw_sobol_samples</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="k">import</span> <span class="n">normalize</span><span class="p">,</span> <span class="n">unnormalize</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.utils.sampling</span> <span class="kn">import</span> <span class="n">draw_sobol_samples</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">normalize</span><span class="p">,</span> <span class="n">unnormalize</span>
 
 <span class="n">noise_std</span> <span class="o">=</span> <span class="mf">0.05</span> 
 
@@ -226,7 +226,7 @@ is a task-dependent shift parameter and $i$ is the task index $i \in [1, t]$.</p
 <div class="prompt input_prompt">In [8]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">matplotlib</span> <span class="k">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
 <span class="o">%</span><span class="k">matplotlib</span> inline
 
 
@@ -239,12 +239,12 @@ is a task-dependent shift parameter and $i$ is the task index $i \in [1, t]$.</p
         <span class="n">data_by_task</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="s1">'train_y'</span><span class="p">]</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span>
         <span class="s1">'.'</span><span class="p">,</span>
         <span class="n">markersize</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
-        <span class="n">label</span><span class="o">=</span><span class="n">f</span><span class="s2">"Observed task </span><span class="si">{task}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">"Observed task </span><span class="si">{task}</span><span class="s2">"</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
         <span class="n">x</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span>
         <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">task_shift</span><span class="p">(</span><span class="n">task</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span>
-        <span class="n">label</span><span class="o">=</span><span class="n">f</span><span class="s2">"Base task </span><span class="si">{task}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">"Base task </span><span class="si">{task}</span><span class="s2">"</span><span class="p">,</span>
         <span class="n">color</span><span class="o">=</span><span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get_color</span><span class="p">(),</span> 
     <span class="p">)</span>
 <span class="c1"># plot true target function</span>
@@ -2479,9 +2479,9 @@ yQArIiIiIiKiTzLAioiIiIiI6JMMsCIiIiIiIvrkvym63OjLqvXqAAAAAElFTkSuQmCC
 <div class="prompt input_prompt">In [9]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">gpytorch.mlls</span> <span class="k">import</span> <span class="n">ExactMarginalLogLikelihood</span>
-<span class="kn">from</span> <span class="nn">botorch.models</span> <span class="k">import</span> <span class="n">FixedNoiseGP</span>
-<span class="kn">from</span> <span class="nn">botorch.fit</span> <span class="k">import</span> <span class="n">fit_gpytorch_model</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">gpytorch.mlls</span> <span class="kn">import</span> <span class="n">ExactMarginalLogLikelihood</span>
+<span class="kn">from</span> <span class="nn">botorch.models</span> <span class="kn">import</span> <span class="n">FixedNoiseGP</span>
+<span class="kn">from</span> <span class="nn">botorch.fit</span> <span class="kn">import</span> <span class="n">fit_gpytorch_model</span>
 
 
 <span class="k">def</span> <span class="nf">get_fitted_model</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">,</span> <span class="n">state_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -2520,7 +2520,7 @@ yQArIiIiIiKiTzLAioiIiIiI6JMMsCIiIiIiIvrkvym63OjLqvXqAAAAAElFTkSuQmCC
 <div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Fit base model</span>
 <span class="n">base_model_list</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">NUM_BASE_TASKS</span><span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s2">"Fitting base model </span><span class="si">{task}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Fitting base model </span><span class="si">{task}</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">get_fitted_model</span><span class="p">(</span>
         <span class="n">data_by_task</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="s1">'train_x'</span><span class="p">],</span> 
         <span class="n">data_by_task</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="s1">'train_y'</span><span class="p">],</span> 
@@ -2720,12 +2720,12 @@ $$w_i = \frac{1}{S}\sum_{s=1}^S\mathbb 1\big(i = \text{argmin}_{i'}l_{i', s}\big
 <div class="prompt input_prompt">In [15]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="k">import</span> <span class="n">GPyTorchModel</span>
-<span class="kn">from</span> <span class="nn">gpytorch.models</span> <span class="k">import</span> <span class="n">GP</span>
-<span class="kn">from</span> <span class="nn">gpytorch.distributions</span> <span class="k">import</span> <span class="n">MultivariateNormal</span>
-<span class="kn">from</span> <span class="nn">gpytorch.lazy</span> <span class="k">import</span> <span class="n">PsdSumLazyTensor</span>
-<span class="kn">from</span> <span class="nn">gpytorch.likelihoods</span> <span class="k">import</span> <span class="n">LikelihoodList</span>
-<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="k">import</span> <span class="n">ModuleList</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchModel</span>
+<span class="kn">from</span> <span class="nn">gpytorch.models</span> <span class="kn">import</span> <span class="n">GP</span>
+<span class="kn">from</span> <span class="nn">gpytorch.distributions</span> <span class="kn">import</span> <span class="n">MultivariateNormal</span>
+<span class="kn">from</span> <span class="nn">gpytorch.lazy</span> <span class="kn">import</span> <span class="n">PsdSumLazyTensor</span>
+<span class="kn">from</span> <span class="nn">gpytorch.likelihoods</span> <span class="kn">import</span> <span class="n">LikelihoodList</span>
+<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">ModuleList</span>
 
 
 <span class="k">class</span> <span class="nc">RGPE</span><span class="p">(</span><span class="n">GP</span><span class="p">,</span> <span class="n">GPyTorchModel</span><span class="p">):</span>
@@ -2733,7 +2733,7 @@ $$w_i = \frac{1}{S}\sum_{s=1}^S\mathbb 1\big(i = \text{argmin}_{i'}l_{i', s}\big
 <span class="sd">    Rank-weighted GP ensemble. Note: this class inherits from GPyTorchModel which provides an </span>
 <span class="sd">        interface for GPyTorch models in botorch.</span>
 <span class="sd">    """</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">models</span><span class="p">,</span> <span class="n">weights</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">models</span><span class="p">,</span> <span class="n">weights</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">models</span> <span class="o">=</span> <span class="n">ModuleList</span><span class="p">(</span><span class="n">models</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">models</span><span class="p">:</span>
@@ -2788,9 +2788,9 @@ $$w_i = \frac{1}{S}\sum_{s=1}^S\mathbb 1\big(i = \text{argmin}_{i'}l_{i', s}\big
 <div class="prompt input_prompt">In [27]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.acquisition.monte_carlo</span> <span class="k">import</span> <span class="n">qNoisyExpectedImprovement</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling.samplers</span> <span class="k">import</span> <span class="n">SobolQMCNormalSampler</span>
-<span class="kn">from</span> <span class="nn">botorch.optim.optimize</span> <span class="k">import</span> <span class="n">optimize_acqf</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.acquisition.monte_carlo</span> <span class="kn">import</span> <span class="n">qNoisyExpectedImprovement</span>
+<span class="kn">from</span> <span class="nn">botorch.sampling.samplers</span> <span class="kn">import</span> <span class="n">SobolQMCNormalSampler</span>
+<span class="kn">from</span> <span class="nn">botorch.optim.optimize</span> <span class="kn">import</span> <span class="n">optimize_acqf</span>
 
 <span class="c1"># suppress GPyTorch warnings about adding jitter</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
@@ -2811,7 +2811,7 @@ $$w_i = \frac{1}{S}\sum_{s=1}^S\mathbb 1\big(i = \text{argmin}_{i'}l_{i', s}\big
 
 <span class="c1"># Average over multiple trials</span>
 <span class="k">for</span> <span class="n">trial</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N_TRIALS</span><span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s2">"Trial {trial + 1} of </span><span class="si">{N_TRIALS}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Trial {trial + 1} of </span><span class="si">{N_TRIALS}</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">best_rgpe</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">best_random</span> <span class="o">=</span> <span class="p">[]</span> 
     <span class="n">best_vanilla_nei</span> <span class="o">=</span> <span class="p">[]</span>

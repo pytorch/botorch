@@ -34,32 +34,32 @@
 <span class="sd">Gaussian Process Regression models based on GPyTorch models.</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">gpytorch.constraints.constraints</span> <span class="k">import</span> <span class="n">GreaterThan</span>
-<span class="kn">from</span> <span class="nn">gpytorch.distributions.multivariate_normal</span> <span class="k">import</span> <span class="n">MultivariateNormal</span>
-<span class="kn">from</span> <span class="nn">gpytorch.kernels.matern_kernel</span> <span class="k">import</span> <span class="n">MaternKernel</span>
-<span class="kn">from</span> <span class="nn">gpytorch.kernels.scale_kernel</span> <span class="k">import</span> <span class="n">ScaleKernel</span>
-<span class="kn">from</span> <span class="nn">gpytorch.likelihoods.gaussian_likelihood</span> <span class="k">import</span> <span class="p">(</span>
+<span class="kn">from</span> <span class="nn">gpytorch.constraints.constraints</span> <span class="kn">import</span> <span class="n">GreaterThan</span>
+<span class="kn">from</span> <span class="nn">gpytorch.distributions.multivariate_normal</span> <span class="kn">import</span> <span class="n">MultivariateNormal</span>
+<span class="kn">from</span> <span class="nn">gpytorch.kernels.matern_kernel</span> <span class="kn">import</span> <span class="n">MaternKernel</span>
+<span class="kn">from</span> <span class="nn">gpytorch.kernels.scale_kernel</span> <span class="kn">import</span> <span class="n">ScaleKernel</span>
+<span class="kn">from</span> <span class="nn">gpytorch.likelihoods.gaussian_likelihood</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">FixedNoiseGaussianLikelihood</span><span class="p">,</span>
     <span class="n">GaussianLikelihood</span><span class="p">,</span>
     <span class="n">_GaussianLikelihoodBase</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">gpytorch.likelihoods.likelihood</span> <span class="k">import</span> <span class="n">Likelihood</span>
-<span class="kn">from</span> <span class="nn">gpytorch.likelihoods.noise_models</span> <span class="k">import</span> <span class="n">HeteroskedasticNoise</span>
-<span class="kn">from</span> <span class="nn">gpytorch.means.constant_mean</span> <span class="k">import</span> <span class="n">ConstantMean</span>
-<span class="kn">from</span> <span class="nn">gpytorch.mlls.noise_model_added_loss_term</span> <span class="k">import</span> <span class="n">NoiseModelAddedLossTerm</span>
-<span class="kn">from</span> <span class="nn">gpytorch.models.exact_gp</span> <span class="k">import</span> <span class="n">ExactGP</span>
-<span class="kn">from</span> <span class="nn">gpytorch.module</span> <span class="k">import</span> <span class="n">Module</span>
-<span class="kn">from</span> <span class="nn">gpytorch.priors.smoothed_box_prior</span> <span class="k">import</span> <span class="n">SmoothedBoxPrior</span>
-<span class="kn">from</span> <span class="nn">gpytorch.priors.torch_priors</span> <span class="k">import</span> <span class="n">GammaPrior</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="k">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span> <span class="nn">gpytorch.likelihoods.likelihood</span> <span class="kn">import</span> <span class="n">Likelihood</span>
+<span class="kn">from</span> <span class="nn">gpytorch.likelihoods.noise_models</span> <span class="kn">import</span> <span class="n">HeteroskedasticNoise</span>
+<span class="kn">from</span> <span class="nn">gpytorch.means.constant_mean</span> <span class="kn">import</span> <span class="n">ConstantMean</span>
+<span class="kn">from</span> <span class="nn">gpytorch.mlls.noise_model_added_loss_term</span> <span class="kn">import</span> <span class="n">NoiseModelAddedLossTerm</span>
+<span class="kn">from</span> <span class="nn">gpytorch.models.exact_gp</span> <span class="kn">import</span> <span class="n">ExactGP</span>
+<span class="kn">from</span> <span class="nn">gpytorch.module</span> <span class="kn">import</span> <span class="n">Module</span>
+<span class="kn">from</span> <span class="nn">gpytorch.priors.smoothed_box_prior</span> <span class="kn">import</span> <span class="n">SmoothedBoxPrior</span>
+<span class="kn">from</span> <span class="nn">gpytorch.priors.torch_priors</span> <span class="kn">import</span> <span class="n">GammaPrior</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
-<span class="kn">from</span> <span class="nn">..</span> <span class="k">import</span> <span class="n">settings</span>
-<span class="kn">from</span> <span class="nn">..sampling.samplers</span> <span class="k">import</span> <span class="n">MCSampler</span>
-<span class="kn">from</span> <span class="nn">.gpytorch</span> <span class="k">import</span> <span class="n">BatchedMultiOutputGPyTorchModel</span>
-<span class="kn">from</span> <span class="nn">.utils</span> <span class="k">import</span> <span class="n">validate_input_scaling</span>
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span> <span class="nn">..sampling.samplers</span> <span class="kn">import</span> <span class="n">MCSampler</span>
+<span class="kn">from</span> <span class="nn">.gpytorch</span> <span class="kn">import</span> <span class="n">BatchedMultiOutputGPyTorchModel</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">validate_input_scaling</span>
 
 
 <span class="n">MIN_INFERRED_NOISE_LEVEL</span> <span class="o">=</span> <span class="mf">1e-4</span>
@@ -82,7 +82,7 @@
 <span class="sd">    the MultiTaskGP.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
@@ -158,7 +158,7 @@
 <span class="sd">    This model works in batch mode (each batch having its own hyperparameters).</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""A single-task exact GP model using fixed noise levels.</span>
 
 <span class="sd">        Args:</span>
@@ -257,7 +257,7 @@
 <span class="sd">    observation noise levels.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""A single-task exact GP model using a heteroskedastic noise model.</span>
 
 <span class="sd">        Args:</span>

@@ -93,10 +93,10 @@
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">torch</span>
 
-<span class="kn">from</span> <span class="nn">botorch.fit</span> <span class="k">import</span> <span class="n">fit_gpytorch_model</span>
-<span class="kn">from</span> <span class="nn">botorch.models</span> <span class="k">import</span> <span class="n">SingleTaskGP</span>
-<span class="kn">from</span> <span class="nn">botorch.test_functions</span> <span class="k">import</span> <span class="n">neg_hartmann6</span>
-<span class="kn">from</span> <span class="nn">gpytorch.mlls</span> <span class="k">import</span> <span class="n">ExactMarginalLogLikelihood</span>
+<span class="kn">from</span> <span class="nn">botorch.fit</span> <span class="kn">import</span> <span class="n">fit_gpytorch_model</span>
+<span class="kn">from</span> <span class="nn">botorch.models</span> <span class="kn">import</span> <span class="n">SingleTaskGP</span>
+<span class="kn">from</span> <span class="nn">botorch.test_functions</span> <span class="kn">import</span> <span class="n">neg_hartmann6</span>
+<span class="kn">from</span> <span class="nn">gpytorch.mlls</span> <span class="kn">import</span> <span class="n">ExactMarginalLogLikelihood</span>
 </pre></div>
 </div>
 </div>
@@ -173,7 +173,7 @@
 <div class="prompt input_prompt">In [3]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="k">import</span> <span class="n">ExpectedImprovement</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">ExpectedImprovement</span>
 
 <span class="n">best_value</span> <span class="o">=</span> <span class="n">train_obj</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
 <span class="n">EI</span> <span class="o">=</span> <span class="n">ExpectedImprovement</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">best_f</span><span class="o">=</span><span class="n">best_value</span><span class="p">)</span>
@@ -194,7 +194,7 @@
 <div class="prompt input_prompt">In [4]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.optim</span> <span class="k">import</span> <span class="n">optimize_acqf</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.optim</span> <span class="kn">import</span> <span class="n">optimize_acqf</span>
 
 <span class="n">new_point_analytic</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
     <span class="n">acq_function</span><span class="o">=</span><span class="n">EI</span><span class="p">,</span>
@@ -242,8 +242,8 @@
 <div class="prompt input_prompt">In [6]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="k">import</span> <span class="n">qExpectedImprovement</span>
-<span class="kn">from</span> <span class="nn">botorch.sampling</span> <span class="k">import</span> <span class="n">SobolQMCNormalSampler</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">qExpectedImprovement</span>
+<span class="kn">from</span> <span class="nn">botorch.sampling</span> <span class="kn">import</span> <span class="n">SobolQMCNormalSampler</span>
 
 
 <span class="n">sampler</span> <span class="o">=</span> <span class="n">SobolQMCNormalSampler</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">resample</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>        
@@ -325,8 +325,8 @@
 <div class="prompt input_prompt">In [9]:</div>
 <div class="inner_cell">
 <div class="input_area">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.gen</span> <span class="k">import</span> <span class="n">get_best_candidates</span><span class="p">,</span> <span class="n">gen_candidates_torch</span>
-<span class="kn">from</span> <span class="nn">botorch.optim</span> <span class="k">import</span> <span class="n">gen_batch_initial_conditions</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.gen</span> <span class="kn">import</span> <span class="n">get_best_candidates</span><span class="p">,</span> <span class="n">gen_candidates_torch</span>
+<span class="kn">from</span> <span class="nn">botorch.optim</span> <span class="kn">import</span> <span class="n">gen_batch_initial_conditions</span>
 
 <span class="n">resampler</span> <span class="o">=</span> <span class="n">SobolQMCNormalSampler</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">resample</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>        
 <span class="n">MC_EI_resample</span> <span class="o">=</span> <span class="n">qExpectedImprovement</span><span class="p">(</span>
