@@ -26,6 +26,7 @@ from ..exceptions.warnings import BotorchTensorDimensionWarning
 from ..posteriors.gpytorch import GPyTorchPosterior
 from ..utils.transforms import gpt_posterior_settings
 from .model import Model
+from .transforms.outcome import OutcomeTransform
 from .utils import _make_X_full, add_output_dim, multioutput_to_batch_mode_transform
 
 
@@ -35,6 +36,8 @@ class GPyTorchModel(Model, ABC):
     The easiest way to use this is to subclass a model from a GPyTorch model
     class (e.g. an `ExactGP`) and this `GPyTorchModel`. See e.g. `SingleTaskGP`.
     """
+
+    outcome_transform: Optional[OutcomeTransform] = None
 
     @staticmethod
     def _validate_tensor_args(

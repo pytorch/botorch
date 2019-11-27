@@ -12,6 +12,7 @@ from botorch.utils.transforms import (
     gpt_posterior_settings,
     match_batch_shape,
     normalize,
+    normalize_indices,
     squeeze_last_dim,
     standardize,
     t_batch_mode_transform,
@@ -181,6 +182,23 @@ class TestMatchBatchShape(BotorchTestCase):
         Y = torch.rand(4, 3, 3, 2)
         with self.assertRaises(RuntimeError):
             match_batch_shape(X, Y)
+
+
+class TorchNormalizeIndices(BotorchTestCase):
+    def test_normalize_indices(self):
+        self.assertIsNone(normalize_indices(None, 3))
+        indices = [0, 2]
+        nlzd_indices = normalize_indices(indices, 3)
+        self.assertEqual(nlzd_indices, indices)
+        nlzd_indices = normalize_indices(indices, 4)
+        self.assertEqual(nlzd_indices, indices)
+        indices = [0, -1]
+        nlzd_indices = normalize_indices(indices, 3)
+        self.assertEqual(nlzd_indices, [0, 2])
+        with self.assertRaises(ValueError):
+            nlzd_indices = normalize_indices([3], 3)
+        with self.assertRaises(ValueError):
+            nlzd_indices = normalize_indices([-4], 3)
 
 
 class TestSqueezeLastDim(BotorchTestCase):
