@@ -16,7 +16,6 @@ import torch
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
-from gpytorch.mlls.variational_elbo import VariationalELBO
 from torch import Tensor
 
 from ..exceptions.errors import BotorchError
@@ -225,15 +224,13 @@ def _get_extra_mll_args(
 
     Returns:
         Extra arguments for the MarginalLogLikelihood.
+        Returns an empty list if the mll type is unknown.
     """
     if isinstance(mll, ExactMarginalLogLikelihood):
         return list(mll.model.train_inputs)
     elif isinstance(mll, SumMarginalLogLikelihood):
         return [list(x) for x in mll.model.train_inputs]
-    elif isinstance(mll, VariationalELBO):
-        return []
-    else:
-        raise ValueError("Do not know how to optimize MLL type.")
+    return []
 
 
 def _filter_kwargs(function: Callable, **kwargs: Any) -> Any:
