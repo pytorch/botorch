@@ -147,9 +147,15 @@
 </li>
 <li><a href="models.html#module-botorch.models.model_list_gp_regression">botorch.models.model_list_gp_regression (module)</a>
 </li>
+<li><a href="models.html#module-botorch.models.multitask">botorch.models.multitask (module)</a>
+</li>
+<li><a href="models.html#module-botorch.models.transforms.input">botorch.models.transforms.input (module)</a>
+</li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
-<li><a href="models.html#module-botorch.models.multitask">botorch.models.multitask (module)</a>
+<li><a href="models.html#module-botorch.models.transforms.outcome">botorch.models.transforms.outcome (module)</a>
+</li>
+<li><a href="models.html#module-botorch.models.transforms.utils">botorch.models.transforms.utils (module)</a>
 </li>
 <li><a href="models.html#module-botorch.models.utils">botorch.models.utils (module)</a>
 </li>
@@ -174,6 +180,8 @@
 <li><a href="posteriors.html#module-botorch.posteriors.gpytorch">botorch.posteriors.gpytorch (module)</a>
 </li>
 <li><a href="posteriors.html#module-botorch.posteriors.posterior">botorch.posteriors.posterior (module)</a>
+</li>
+<li><a href="posteriors.html#module-botorch.posteriors.transformed">botorch.posteriors.transformed (module)</a>
 </li>
 <li><a href="sampling.html#module-botorch.sampling">botorch.sampling (module)</a>
 </li>
@@ -211,6 +219,8 @@
 </li>
 <li><a href="exceptions.html#botorch.exceptions.warnings.BotorchWarning">BotorchWarning</a>
 </li>
+<li><a href="models.html#botorch.models.transforms.input.Normalize.bounds">bounds() (botorch.models.transforms.input.Normalize property)</a>
+</li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Branin">Branin (class in botorch.test_functions.synthetic)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Bukin">Bukin (class in botorch.test_functions.synthetic)</a>
@@ -221,6 +231,10 @@
 <table class="indextable genindextable" style="width: 100%"><tr>
 <td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="exceptions.html#botorch.exceptions.errors.CandidateGenerationError">CandidateGenerationError</a>
+</li>
+<li><a href="models.html#botorch.models.transforms.input.ChainedInputTransform">ChainedInputTransform (class in botorch.models.transforms.input)</a>
+</li>
+<li><a href="models.html#botorch.models.transforms.outcome.ChainedOutcomeTransform">ChainedOutcomeTransform (class in botorch.models.transforms.outcome)</a>
 </li>
 <li><a href="models.html#botorch.models.utils.check_min_max_scaling">check_min_max_scaling() (in module botorch.models.utils)</a>
 </li>
@@ -294,6 +308,8 @@
 </li>
 <li><a href="posteriors.html#botorch.posteriors.posterior.Posterior.device">(botorch.posteriors.posterior.Posterior property)</a>
 </li>
+<li><a href="posteriors.html#botorch.posteriors.transformed.TransformedPosterior.device">(botorch.posteriors.transformed.TransformedPosterior property)</a>
+</li>
 <li><a href="utils.html#botorch.utils.testing.MockPosterior.device">(botorch.utils.testing.MockPosterior property)</a>
 </li>
 </ul></li>
@@ -346,6 +362,8 @@
 <li><a href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior.dtype">(botorch.posteriors.gpytorch.GPyTorchPosterior property)</a>
 </li>
 <li><a href="posteriors.html#botorch.posteriors.posterior.Posterior.dtype">(botorch.posteriors.posterior.Posterior property)</a>
+</li>
+<li><a href="posteriors.html#botorch.posteriors.transformed.TransformedPosterior.dtype">(botorch.posteriors.transformed.TransformedPosterior property)</a>
 </li>
 <li><a href="utils.html#botorch.utils.testing.MockPosterior.dtype">(botorch.utils.testing.MockPosterior property)</a>
 </li>
@@ -417,6 +435,8 @@
 <li><a href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior.event_shape">(botorch.posteriors.gpytorch.GPyTorchPosterior property)</a>
 </li>
 <li><a href="posteriors.html#botorch.posteriors.posterior.Posterior.event_shape">(botorch.posteriors.posterior.Posterior property)</a>
+</li>
+<li><a href="posteriors.html#botorch.posteriors.transformed.TransformedPosterior.event_shape">(botorch.posteriors.transformed.TransformedPosterior property)</a>
 </li>
 <li><a href="utils.html#botorch.utils.testing.MockPosterior.event_shape">(botorch.utils.testing.MockPosterior property)</a>
 </li>
@@ -524,6 +544,20 @@
 </li>
 <li><a href="models.html#botorch.models.multitask.MultiTaskGP.forward">(botorch.models.multitask.MultiTaskGP method)</a>
 </li>
+<li><a href="models.html#botorch.models.transforms.input.ChainedInputTransform.forward">(botorch.models.transforms.input.ChainedInputTransform method)</a>
+</li>
+<li><a href="models.html#botorch.models.transforms.input.InputTransform.forward">(botorch.models.transforms.input.InputTransform method)</a>
+</li>
+<li><a href="models.html#botorch.models.transforms.input.Normalize.forward">(botorch.models.transforms.input.Normalize method)</a>
+</li>
+<li><a href="models.html#botorch.models.transforms.outcome.ChainedOutcomeTransform.forward">(botorch.models.transforms.outcome.ChainedOutcomeTransform method)</a>
+</li>
+<li><a href="models.html#botorch.models.transforms.outcome.Log.forward">(botorch.models.transforms.outcome.Log method)</a>
+</li>
+<li><a href="models.html#botorch.models.transforms.outcome.OutcomeTransform.forward">(botorch.models.transforms.outcome.OutcomeTransform method)</a>
+</li>
+<li><a href="models.html#botorch.models.transforms.outcome.Standardize.forward">(botorch.models.transforms.outcome.Standardize method)</a>
+</li>
 <li><a href="sampling.html#botorch.sampling.samplers.MCSampler.forward">(botorch.sampling.samplers.MCSampler method)</a>, <a href="sampling.html#botorch.sampling.samplers.MCSampler.forward">[1]</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.SyntheticTestFunction.forward">(botorch.test_functions.synthetic.SyntheticTestFunction method)</a>
@@ -607,6 +641,8 @@
 </li>
 <li><a href="exceptions.html#botorch.exceptions.warnings.InputDataWarning">InputDataWarning</a>
 </li>
+<li><a href="models.html#botorch.models.transforms.input.InputTransform">InputTransform (class in botorch.models.transforms.input)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.cost_aware.InverseCostWeightedUtility">InverseCostWeightedUtility (class in botorch.acquisition.cost_aware)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.utils.is_nonnegative">is_nonnegative() (in module botorch.acquisition.utils)</a>
@@ -627,13 +663,17 @@
 </li>
 <li><a href="optim.html#botorch.optim.parameter_constraints.lin_constraint_jac">lin_constraint_jac() (in module botorch.optim.parameter_constraints)</a>
 </li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="acquisition.html#botorch.acquisition.objective.LinearMCObjective">LinearMCObjective (class in botorch.acquisition.objective)</a>
 </li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="models.html#botorch.models.kernels.linear_truncated_fidelity.LinearTruncatedFidelityKernel">LinearTruncatedFidelityKernel (class in botorch.models.kernels.linear_truncated_fidelity)</a>
 </li>
 <li><a href="utils.html#botorch.utils.testing.MockModel.load_state_dict">load_state_dict() (botorch.utils.testing.MockModel method)</a>
+</li>
+<li><a href="models.html#botorch.models.transforms.outcome.Log">Log (class in botorch.models.transforms.outcome)</a>
+</li>
+<li><a href="models.html#botorch.models.transforms.utils.lognorm_to_norm">lognorm_to_norm() (in module botorch.models.transforms.utils)</a>
 </li>
 </ul></td>
 </tr></table>
@@ -659,6 +699,8 @@
 <li><a href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior.mean">(botorch.posteriors.gpytorch.GPyTorchPosterior property)</a>
 </li>
 <li><a href="posteriors.html#botorch.posteriors.posterior.Posterior.mean">(botorch.posteriors.posterior.Posterior property)</a>
+</li>
+<li><a href="posteriors.html#botorch.posteriors.transformed.TransformedPosterior.mean">(botorch.posteriors.transformed.TransformedPosterior property)</a>
 </li>
 <li><a href="utils.html#botorch.utils.testing.MockPosterior.mean">(botorch.utils.testing.MockPosterior property)</a>
 </li>
@@ -700,10 +742,20 @@
 <td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="acquisition.html#botorch.acquisition.analytic.NoisyExpectedImprovement">NoisyExpectedImprovement (class in botorch.acquisition.analytic)</a>
 </li>
-<li><a href="utils.html#botorch.utils.transforms.normalize">normalize() (in module botorch.utils.transforms)</a>
+<li><a href="models.html#botorch.models.transforms.utils.norm_to_lognorm">norm_to_lognorm() (in module botorch.models.transforms.utils)</a>
+</li>
+<li><a href="models.html#botorch.models.transforms.utils.norm_to_lognorm_mean">norm_to_lognorm_mean() (in module botorch.models.transforms.utils)</a>
+</li>
+<li><a href="models.html#botorch.models.transforms.utils.norm_to_lognorm_variance">norm_to_lognorm_variance() (in module botorch.models.transforms.utils)</a>
+</li>
+<li><a href="models.html#botorch.models.transforms.input.Normalize">Normalize (class in botorch.models.transforms.input)</a>
 </li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="utils.html#botorch.utils.transforms.normalize">normalize() (in module botorch.utils.transforms)</a>
+</li>
+<li><a href="utils.html#botorch.utils.transforms.normalize_indices">normalize_indices() (in module botorch.utils.transforms)</a>
+</li>
 <li><a href="sampling.html#botorch.sampling.qmc.NormalQMCEngine">NormalQMCEngine (class in botorch.sampling.qmc)</a>
 </li>
 <li><a href="models.html#botorch.models.gpytorch.ModelListGPyTorchModel.num_outputs">num_outputs() (botorch.models.gpytorch.ModelListGPyTorchModel property)</a>
@@ -727,10 +779,10 @@
 <li><a href="test_functions.html#botorch.test_functions.synthetic.SyntheticTestFunction.optimal_value">(botorch.test_functions.synthetic.SyntheticTestFunction property)</a>
 </li>
 </ul></li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="exceptions.html#botorch.exceptions.warnings.OptimizationWarning">OptimizationWarning</a>
 </li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="optim.html#botorch.optim.optimize.optimize_acqf">optimize_acqf() (in module botorch.optim.optimize)</a>
 </li>
 <li><a href="optim.html#botorch.optim.optimize.optimize_acqf_cyclic">optimize_acqf_cyclic() (in module botorch.optim.optimize)</a>
@@ -740,6 +792,10 @@
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Michalewicz.optimizers">(botorch.test_functions.synthetic.Michalewicz property)</a>
 </li>
 </ul></li>
+<li><a href="models.html#botorch.models.gpytorch.GPyTorchModel.outcome_transform">outcome_transform (botorch.models.gpytorch.GPyTorchModel attribute)</a>
+</li>
+<li><a href="models.html#botorch.models.transforms.outcome.OutcomeTransform">OutcomeTransform (class in botorch.models.transforms.outcome)</a>
+</li>
 </ul></td>
 </tr></table>
 <h2 id="P">P</h2>
@@ -814,13 +870,13 @@
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Rosenbrock">Rosenbrock (class in botorch.test_functions.synthetic)</a>
 </li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="posteriors.html#botorch.posteriors.deterministic.DeterministicPosterior.rsample">rsample() (botorch.posteriors.deterministic.DeterministicPosterior method)</a>
 <ul>
 <li><a href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior.rsample">(botorch.posteriors.gpytorch.GPyTorchPosterior method)</a>
 </li>
 <li><a href="posteriors.html#botorch.posteriors.posterior.Posterior.rsample">(botorch.posteriors.posterior.Posterior method)</a>
+</li>
+<li><a href="posteriors.html#botorch.posteriors.transformed.TransformedPosterior.rsample">(botorch.posteriors.transformed.TransformedPosterior method)</a>
 </li>
 <li><a href="utils.html#botorch.utils.testing.MockPosterior.rsample">(botorch.utils.testing.MockPosterior method)</a>
 </li>
@@ -877,6 +933,8 @@
 </li>
 <li><a href="utils.html#botorch.utils.transforms.squeeze_last_dim">squeeze_last_dim() (in module botorch.utils.transforms)</a>
 </li>
+<li><a href="models.html#botorch.models.transforms.outcome.Standardize">Standardize (class in botorch.models.transforms.outcome)</a>
+</li>
 <li><a href="utils.html#botorch.utils.transforms.standardize">standardize() (in module botorch.utils.transforms)</a>
 </li>
 <li><a href="utils.html#botorch.utils.testing.MockModel.state_dict">state_dict() (botorch.utils.testing.MockModel method)</a>
@@ -920,6 +978,8 @@
 </li>
 <li><a href="cross_validation.html#botorch.cross_validation.CVFolds.train_Yvar">train_Yvar() (botorch.cross_validation.CVFolds property)</a>
 </li>
+<li><a href="posteriors.html#botorch.posteriors.transformed.TransformedPosterior">TransformedPosterior (class in botorch.posteriors.transformed)</a>
+</li>
 </ul></td>
 </tr></table>
 <h2 id="U">U</h2>
@@ -927,10 +987,34 @@
 <td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="utils.html#botorch.utils.transforms.unnormalize">unnormalize() (in module botorch.utils.transforms)</a>
 </li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="exceptions.html#botorch.exceptions.errors.UnsupportedError">UnsupportedError</a>
 </li>
+<li><a href="models.html#botorch.models.transforms.input.ChainedInputTransform.untransform">untransform() (botorch.models.transforms.input.ChainedInputTransform method)</a>
+<ul>
+<li><a href="models.html#botorch.models.transforms.input.InputTransform.untransform">(botorch.models.transforms.input.InputTransform method)</a>
+</li>
+<li><a href="models.html#botorch.models.transforms.input.Normalize.untransform">(botorch.models.transforms.input.Normalize method)</a>
+</li>
+<li><a href="models.html#botorch.models.transforms.outcome.ChainedOutcomeTransform.untransform">(botorch.models.transforms.outcome.ChainedOutcomeTransform method)</a>
+</li>
+<li><a href="models.html#botorch.models.transforms.outcome.Log.untransform">(botorch.models.transforms.outcome.Log method)</a>
+</li>
+<li><a href="models.html#botorch.models.transforms.outcome.OutcomeTransform.untransform">(botorch.models.transforms.outcome.OutcomeTransform method)</a>
+</li>
+<li><a href="models.html#botorch.models.transforms.outcome.Standardize.untransform">(botorch.models.transforms.outcome.Standardize method)</a>
+</li>
+</ul></li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="models.html#botorch.models.transforms.outcome.ChainedOutcomeTransform.untransform_posterior">untransform_posterior() (botorch.models.transforms.outcome.ChainedOutcomeTransform method)</a>
+<ul>
+<li><a href="models.html#botorch.models.transforms.outcome.Log.untransform_posterior">(botorch.models.transforms.outcome.Log method)</a>
+</li>
+<li><a href="models.html#botorch.models.transforms.outcome.OutcomeTransform.untransform_posterior">(botorch.models.transforms.outcome.OutcomeTransform method)</a>
+</li>
+<li><a href="models.html#botorch.models.transforms.outcome.Standardize.untransform_posterior">(botorch.models.transforms.outcome.Standardize method)</a>
+</li>
+</ul></li>
 <li><a href="acquisition.html#botorch.acquisition.analytic.UpperConfidenceBound">UpperConfidenceBound (class in botorch.acquisition.analytic)</a>
 </li>
 </ul></td>
@@ -947,6 +1031,8 @@
 <li><a href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior.variance">(botorch.posteriors.gpytorch.GPyTorchPosterior property)</a>
 </li>
 <li><a href="posteriors.html#botorch.posteriors.posterior.Posterior.variance">(botorch.posteriors.posterior.Posterior property)</a>
+</li>
+<li><a href="posteriors.html#botorch.posteriors.transformed.TransformedPosterior.variance">(botorch.posteriors.transformed.TransformedPosterior property)</a>
 </li>
 <li><a href="utils.html#botorch.utils.testing.MockPosterior.variance">(botorch.utils.testing.MockPosterior property)</a>
 </li>

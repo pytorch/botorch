@@ -137,6 +137,10 @@ GPyTorch Model class such as an ExactGP.</p>
 <p>The easiest way to use this is to subclass a model from a GPyTorch model
 class (e.g. an <cite>ExactGP</cite>) and this <cite>GPyTorchModel</cite>. See e.g. <cite>SingleTaskGP</cite>.</p>
 <p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="attribute">
+<dt id="botorch.models.gpytorch.GPyTorchModel.outcome_transform">
+<code class="sig-name descname">outcome_transform</code><em class="property"> = None</em><a class="headerlink" href="#botorch.models.gpytorch.GPyTorchModel.outcome_transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 <dl class="method">
 <dt id="botorch.models.gpytorch.GPyTorchModel.posterior">
 <code class="sig-name descname">posterior</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">observation_noise=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gpytorch.html#GPyTorchModel.posterior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gpytorch.GPyTorchModel.posterior" title="Permalink to this definition">¶</a></dt>
@@ -1170,6 +1174,597 @@ numbers correspond to the indices of the dimensions.</p></li>
 </pre></div>
 </div>
 <p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+</dd></dl>
+</div>
+</div>
+<div class="section" id="transforms">
+<h2>Transforms<a class="headerlink" href="#transforms" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-botorch.models.transforms.outcome">
+<span id="outcome-transforms"></span><h3>Outcome Transforms<a class="headerlink" href="#module-botorch.models.transforms.outcome" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="botorch.models.transforms.outcome.OutcomeTransform">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.transforms.outcome.</code><code class="sig-name descname">OutcomeTransform</code><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#OutcomeTransform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.outcome.OutcomeTransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>Abstract base class for outcome transforms.</p>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="method">
+<dt id="botorch.models.transforms.outcome.OutcomeTransform.forward">
+<em class="property">abstract </em><code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param">Y</em>, <em class="sig-param">Yvar=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#OutcomeTransform.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.outcome.OutcomeTransform.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform the outcomes in a model’s training targets</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x m</cite>-dim tensor of training targets.</p></li>
+<li><p><strong>Yvar</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>batch_shape x n x m</cite>-dim tensor of observation noises
+associated with the training targets (if applicable).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>The transformed outcome observations.</p></li>
+<li><p>The transformed observation noise (if applicable).</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>A two-tuple with the transformed outcomes</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="method">
+<dt id="botorch.models.transforms.outcome.OutcomeTransform.untransform">
+<code class="sig-name descname">untransform</code><span class="sig-paren">(</span><em class="sig-param">Y</em>, <em class="sig-param">Yvar=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#OutcomeTransform.untransform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.outcome.OutcomeTransform.untransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Un-transform previously transformed outcomes</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x m</cite>-dim tensor of transfomred training targets.</p></li>
+<li><p><strong>Yvar</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>batch_shape x n x m</cite>-dim tensor of transformed observation
+noises associated with the training targets (if applicable).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>The un-transformed outcome observations.</p></li>
+<li><p>The un-transformed observation noise (if applicable).</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>A two-tuple with the un-transformed outcomes</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="method">
+<dt id="botorch.models.transforms.outcome.OutcomeTransform.untransform_posterior">
+<code class="sig-name descname">untransform_posterior</code><span class="sig-paren">(</span><em class="sig-param">posterior</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#OutcomeTransform.untransform_posterior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.outcome.OutcomeTransform.untransform_posterior" title="Permalink to this definition">¶</a></dt>
+<dd><p>Un-transform a posterior</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>posterior</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">Posterior</span></code></a>) – A posterior in the transformed space.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="posteriors.html#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">Posterior</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The un-transformed posterior.</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="class">
+<dt id="botorch.models.transforms.outcome.ChainedOutcomeTransform">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.transforms.outcome.</code><code class="sig-name descname">ChainedOutcomeTransform</code><span class="sig-paren">(</span><em class="sig-param">**transforms</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#ChainedOutcomeTransform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.outcome.ChainedOutcomeTransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.outcome.OutcomeTransform" title="botorch.models.transforms.outcome.OutcomeTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.transforms.outcome.OutcomeTransform</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.container.ModuleDict</span></code></p>
+<p>An outcome transform representing the chaining of individual transforms</p>
+<p>Chaining of outcome transforms.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>transforms</strong> (<a class="reference internal" href="#botorch.models.transforms.outcome.OutcomeTransform" title="botorch.models.transforms.outcome.OutcomeTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">OutcomeTransform</span></code></a>) – The transforms to chain. Internally, the names of the
+kwargs are used as the keys for accessing the individual
+transforms on the module.</p>
+</dd>
+</dl>
+<dl class="method">
+<dt id="botorch.models.transforms.outcome.ChainedOutcomeTransform.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param">Y</em>, <em class="sig-param">Yvar=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#ChainedOutcomeTransform.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.outcome.ChainedOutcomeTransform.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform the outcomes in a model’s training targets</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x m</cite>-dim tensor of training targets.</p></li>
+<li><p><strong>Yvar</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>batch_shape x n x m</cite>-dim tensor of observation noises
+associated with the training targets (if applicable).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>The transformed outcome observations.</p></li>
+<li><p>The transformed observation noise (if applicable).</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>A two-tuple with the transformed outcomes</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="method">
+<dt id="botorch.models.transforms.outcome.ChainedOutcomeTransform.untransform">
+<code class="sig-name descname">untransform</code><span class="sig-paren">(</span><em class="sig-param">Y</em>, <em class="sig-param">Yvar=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#ChainedOutcomeTransform.untransform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.outcome.ChainedOutcomeTransform.untransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Un-transform previously transformed outcomes</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x m</cite>-dim tensor of transfomred training targets.</p></li>
+<li><p><strong>Yvar</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>batch_shape x n x m</cite>-dim tensor of transformed observation
+noises associated with the training targets (if applicable).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>The un-transformed outcome observations.</p></li>
+<li><p>The un-transformed observation noise (if applicable).</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>A two-tuple with the un-transformed outcomes</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="method">
+<dt id="botorch.models.transforms.outcome.ChainedOutcomeTransform.untransform_posterior">
+<code class="sig-name descname">untransform_posterior</code><span class="sig-paren">(</span><em class="sig-param">posterior</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#ChainedOutcomeTransform.untransform_posterior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.outcome.ChainedOutcomeTransform.untransform_posterior" title="Permalink to this definition">¶</a></dt>
+<dd><p>Un-transform a posterior</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>posterior</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">Posterior</span></code></a>) – A posterior in the transformed space.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="posteriors.html#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">Posterior</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The un-transformed posterior.</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="class">
+<dt id="botorch.models.transforms.outcome.Standardize">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.transforms.outcome.</code><code class="sig-name descname">Standardize</code><span class="sig-paren">(</span><em class="sig-param">m</em>, <em class="sig-param">outputs=None</em>, <em class="sig-param">batch_shape=torch.Size([])</em>, <em class="sig-param">min_stdv=1e-08</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#Standardize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.outcome.Standardize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.outcome.OutcomeTransform" title="botorch.models.transforms.outcome.OutcomeTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.transforms.outcome.OutcomeTransform</span></code></a></p>
+<p>Standardize outcomes (zero mean, unit variance).</p>
+<p>This module is stateful: If in train mode, calling forward updates the
+module state (i.e. the mean/std normalizing constants). If in eval mode,
+calling forward simply applies the standardization using the current module
+state.</p>
+<p>Standardize outcomes (zero mean, unit variance).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>m</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The output dimension.</p></li>
+<li><p><strong>outputs</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]) – Which of the outputs to standardize. If omitted, all
+outputs will be standardized.</p></li>
+<li><p><strong>batch_shape</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code>) – The batch_shape of the training targets.</p></li>
+<li><p><strong>min_stddv</strong> – The minimum standard deviation for which to perform
+standardization (if lower, only de-mean the data).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="botorch.models.transforms.outcome.Standardize.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param">Y</em>, <em class="sig-param">Yvar=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#Standardize.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.outcome.Standardize.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Standardize outcomes.</p>
+<p>If the module is in train mode, this updates the module state (i.e. the
+mean/std normalizing constants). If the module is in eval mode, simply
+applies the normalization using the module state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x m</cite>-dim tensor of training targets.</p></li>
+<li><p><strong>Yvar</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>batch_shape x n x m</cite>-dim tensor of observation noises
+associated with the training targets (if applicable).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>The transformed outcome observations.</p></li>
+<li><p>The transformed observation noise (if applicable).</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>A two-tuple with the transformed outcomes</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="method">
+<dt id="botorch.models.transforms.outcome.Standardize.untransform">
+<code class="sig-name descname">untransform</code><span class="sig-paren">(</span><em class="sig-param">Y</em>, <em class="sig-param">Yvar=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#Standardize.untransform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.outcome.Standardize.untransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Un-standardize outcomes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x m</cite>-dim tensor of standardized targets.</p></li>
+<li><p><strong>Yvar</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>batch_shape x n x m</cite>-dim tensor of standardized observation
+noises associated with the targets (if applicable).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>The un-standardized outcome observations.</p></li>
+<li><p>The un-standardized observation noise (if applicable).</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>A two-tuple with the un-standardized outcomes</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="method">
+<dt id="botorch.models.transforms.outcome.Standardize.untransform_posterior">
+<code class="sig-name descname">untransform_posterior</code><span class="sig-paren">(</span><em class="sig-param">posterior</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#Standardize.untransform_posterior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.outcome.Standardize.untransform_posterior" title="Permalink to this definition">¶</a></dt>
+<dd><p>Un-standardize the posterior.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>posterior</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">Posterior</span></code></a>) – A posterior in the standardized space.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="posteriors.html#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">Posterior</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The un-standardized posterior. If the input posterior is a MVN,
+the transformed posterior is again an MVN.</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="class">
+<dt id="botorch.models.transforms.outcome.Log">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.transforms.outcome.</code><code class="sig-name descname">Log</code><span class="sig-paren">(</span><em class="sig-param">outputs=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#Log"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.outcome.Log" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.outcome.OutcomeTransform" title="botorch.models.transforms.outcome.OutcomeTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.transforms.outcome.OutcomeTransform</span></code></a></p>
+<p>Log-transform outcomes.</p>
+<p>Useful if the targets are modeled using a (multivariate) log-Normal
+distribution. This means that we can use a standard GP model on the
+log-transformed outcomes and un-transform the model posterior of that GP.</p>
+<p>Log-transform outcomes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>outputs</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]) – Which of the outputs to log-transform. If omitted, all
+outputs will be standardized.</p>
+</dd>
+</dl>
+<dl class="method">
+<dt id="botorch.models.transforms.outcome.Log.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param">Y</em>, <em class="sig-param">Yvar=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#Log.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.outcome.Log.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Log-transform outcomes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x m</cite>-dim tensor of training targets.</p></li>
+<li><p><strong>Yvar</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>batch_shape x n x m</cite>-dim tensor of observation noises
+associated with the training targets (if applicable).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>The transformed outcome observations.</p></li>
+<li><p>The transformed observation noise (if applicable).</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>A two-tuple with the transformed outcomes</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="method">
+<dt id="botorch.models.transforms.outcome.Log.untransform">
+<code class="sig-name descname">untransform</code><span class="sig-paren">(</span><em class="sig-param">Y</em>, <em class="sig-param">Yvar=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#Log.untransform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.outcome.Log.untransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Un-transform log-transformed outcomes</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x m</cite>-dim tensor of log-transfomred targets.</p></li>
+<li><p><strong>Yvar</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>batch_shape x n x m</cite>-dim tensor of log- transformed
+observation noises associated with the training targets
+(if applicable).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>The exponentiated outcome observations.</p></li>
+<li><p>The exponentiated observation noise (if applicable).</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>A two-tuple with the un-transformed outcomes</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="method">
+<dt id="botorch.models.transforms.outcome.Log.untransform_posterior">
+<code class="sig-name descname">untransform_posterior</code><span class="sig-paren">(</span><em class="sig-param">posterior</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#Log.untransform_posterior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.outcome.Log.untransform_posterior" title="Permalink to this definition">¶</a></dt>
+<dd><p>Un-transform the log-transformed posterior.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>posterior</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">Posterior</span></code></a>) – A posterior in the log-transformed space.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="posteriors.html#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">Posterior</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The un-transformed posterior.</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+</div>
+<div class="section" id="module-botorch.models.transforms.input">
+<span id="input-transforms"></span><h3>Input Transforms<a class="headerlink" href="#module-botorch.models.transforms.input" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="botorch.models.transforms.input.InputTransform">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.transforms.input.</code><code class="sig-name descname">InputTransform</code><a class="reference internal" href="_modules/botorch/models/transforms/input.html#InputTransform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.InputTransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>Abstract base class for input transforms.</p>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="method">
+<dt id="botorch.models.transforms.input.InputTransform.forward">
+<em class="property">abstract </em><code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param">X</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#InputTransform.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.InputTransform.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform the inputs to a model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x d</cite>-dim tensor of inputs.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>batch_shape x n x d</cite>-dim tensor of transformed inputs.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="method">
+<dt id="botorch.models.transforms.input.InputTransform.untransform">
+<code class="sig-name descname">untransform</code><span class="sig-paren">(</span><em class="sig-param">X</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#InputTransform.untransform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.InputTransform.untransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Un-transform the inputs to a model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x d</cite>-dim tensor of transformed inputs.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>batch_shape x n x d</cite>-dim tensor of un-transformed inputs.</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="class">
+<dt id="botorch.models.transforms.input.ChainedInputTransform">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.transforms.input.</code><code class="sig-name descname">ChainedInputTransform</code><span class="sig-paren">(</span><em class="sig-param">**transforms</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#ChainedInputTransform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.ChainedInputTransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.transforms.input.InputTransform</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.container.ModuleDict</span></code></p>
+<p>An input transform representing the chaining of individual transforms</p>
+<p>Chaining of input transforms.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>transforms</strong> (<a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">InputTransform</span></code></a>) – The transforms to chain. Internally, the names of the
+kwargs are used as the keys for accessing the individual
+transforms on the module.</p>
+</dd>
+</dl>
+<dl class="method">
+<dt id="botorch.models.transforms.input.ChainedInputTransform.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param">X</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#ChainedInputTransform.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.ChainedInputTransform.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform the inputs to a model.</p>
+<p>Individual transforms are applied in sequence.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x d</cite>-dim tensor of inputs.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>batch_shape x n x d</cite>-dim tensor of transformed inputs.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="method">
+<dt id="botorch.models.transforms.input.ChainedInputTransform.untransform">
+<code class="sig-name descname">untransform</code><span class="sig-paren">(</span><em class="sig-param">X</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#ChainedInputTransform.untransform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.ChainedInputTransform.untransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Un-transform the inputs to a model.</p>
+<p>Un-transforms of the individual transforms are applied in reverse sequence.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x d</cite>-dim tensor of transformed inputs.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>batch_shape x n x d</cite>-dim tensor of un-transformed inputs.</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="class">
+<dt id="botorch.models.transforms.input.Normalize">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.transforms.input.</code><code class="sig-name descname">Normalize</code><span class="sig-paren">(</span><em class="sig-param">d</em>, <em class="sig-param">bounds=None</em>, <em class="sig-param">batch_shape=torch.Size([])</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#Normalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.Normalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.transforms.input.InputTransform</span></code></a></p>
+<p>Normalize the inputs to the unit cube.</p>
+<p>If no explicit bounds are provided this module is stateful: If in train mode,
+calling <cite>forward</cite> updates the module state (i.e. the normalizing bounds). If
+in eval mode, calling <cite>forward</cite> simply applies the normalization using the
+current module state.</p>
+<p>Normalize the inputs to the unit cube.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>d</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The dimension of the input space.</p></li>
+<li><p><strong>bounds</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – If provided, use these bounds to normalize the inputs. If
+omitted, learn the bounds in train mode.</p></li>
+<li><p><strong>batch_shape</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code>) – The batch shape of the inputs (asssuming input tensors
+of shape <cite>batch_shape x n x d</cite>). If provided, perform individual
+normalization per batch, otherwise uses a single normalization.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="botorch.models.transforms.input.Normalize.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param">X</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#Normalize.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.Normalize.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Normalize the inputs.</p>
+<p>If no explicit bounds are provided, this is stateful: In train mode,
+calling <cite>forward</cite> updates the module state (i.e. the normalizing bounds).
+In eval mode, calling <cite>forward</cite> simply applies the normalization using
+the current module state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x d</cite>-dim tensor of inputs.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>batch_shape x n x d</cite>-dim tensor of inputs normalized to the
+module’s bounds.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="method">
+<dt id="botorch.models.transforms.input.Normalize.untransform">
+<code class="sig-name descname">untransform</code><span class="sig-paren">(</span><em class="sig-param">X</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#Normalize.untransform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.Normalize.untransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Un-normalize the inputs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x d</cite>-dim tensor of normalized inputs.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>batch_shape x n x d</cite>-dim tensor of un-normalized inputs.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="method">
+<dt id="botorch.models.transforms.input.Normalize.bounds">
+<em class="property">property </em><code class="sig-name descname">bounds</code><a class="headerlink" href="#botorch.models.transforms.input.Normalize.bounds" title="Permalink to this definition">¶</a></dt>
+<dd><p>The bounds used for normalizing the inputs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+</div>
+<div class="section" id="module-botorch.models.transforms.utils">
+<span id="transform-utilities"></span><h3>Transform Utilities<a class="headerlink" href="#module-botorch.models.transforms.utils" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="botorch.models.transforms.utils.lognorm_to_norm">
+<code class="sig-prename descclassname">botorch.models.transforms.utils.</code><code class="sig-name descname">lognorm_to_norm</code><span class="sig-paren">(</span><em class="sig-param">mu</em>, <em class="sig-param">Cov</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/utils.html#lognorm_to_norm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.utils.lognorm_to_norm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute mean and covariance of a MVN from those of the associated log-MVN</p>
+<p>If <cite>Y</cite> is log-normal with mean mu_ln and covariance Cov_ln, then
+<cite>X ~ N(mu_n, Cov_n)</cite> with</p>
+<blockquote>
+<div><p>Cov_n_{ij} = log(1 + Cov_ln_{ij} / (mu_ln_{i} * mu_n_{j}))
+mu_n_{i} = log(mu_ln_{i}) - 0.5 * log(1 + Cov_ln_{ii} / mu_ln_{i}**2)</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mu</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n</cite> mean vector of the log-Normal distribution.</p></li>
+<li><p><strong>Cov</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x n</cite> covariance matrix of the log-Normal
+distribution.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>The <cite>batch_shape x n</cite> mean vector of the Normal distribution</p></li>
+<li><p>The <cite>batch_shape x n x n</cite> covariance matrix of the Normal distribution</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>A two-tuple containing</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="function">
+<dt id="botorch.models.transforms.utils.norm_to_lognorm">
+<code class="sig-prename descclassname">botorch.models.transforms.utils.</code><code class="sig-name descname">norm_to_lognorm</code><span class="sig-paren">(</span><em class="sig-param">mu</em>, <em class="sig-param">Cov</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/utils.html#norm_to_lognorm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.utils.norm_to_lognorm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute mean and covariance of a log-MVN from its MVN sufficient statistics</p>
+<p>If <cite>X ~ N(mu, Cov)</cite> and <cite>Y = exp(X)</cite>, then <cite>Y</cite> is log-normal with</p>
+<blockquote>
+<div><p>mu_ln_{i} = exp(mu_{i} + 0.5 * Cov_{ii})
+Cov_ln_{ij} = exp(mu_{i} + mu_{j} + 0.5 * (Cov_{ii} + Cov_{jj})) *
+(exp(Cov_{ij}) - 1)</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mu</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n</cite> mean vector of the Normal distribution.</p></li>
+<li><p><strong>Cov</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x n</cite> covariance matrix of the Normal distribution.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>The <cite>batch_shape x n</cite> mean vector of the log-Normal distribution.</p></li>
+<li><dl class="simple">
+<dt>The <cite>batch_shape x n x n</cite> covariance matrix of the log-Normal</dt><dd><p>distribution.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>A two-tuple containing</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="function">
+<dt id="botorch.models.transforms.utils.norm_to_lognorm_mean">
+<code class="sig-prename descclassname">botorch.models.transforms.utils.</code><code class="sig-name descname">norm_to_lognorm_mean</code><span class="sig-paren">(</span><em class="sig-param">mu</em>, <em class="sig-param">var</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/utils.html#norm_to_lognorm_mean"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.utils.norm_to_lognorm_mean" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute mean of a log-MVN from its MVN marginals</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mu</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n</cite> mean vector of the Normal distribution.</p></li>
+<li><p><strong>var</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n</cite> variance vectorof the Normal distribution.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The <cite>batch_shape x n</cite> mean vector of the log-Normal distribution</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="function">
+<dt id="botorch.models.transforms.utils.norm_to_lognorm_variance">
+<code class="sig-prename descclassname">botorch.models.transforms.utils.</code><code class="sig-name descname">norm_to_lognorm_variance</code><span class="sig-paren">(</span><em class="sig-param">mu</em>, <em class="sig-param">var</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/utils.html#norm_to_lognorm_variance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.utils.norm_to_lognorm_variance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute variance of a log-MVN from its MVN marginals</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mu</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n</cite> mean vector of the Normal distribution.</p></li>
+<li><p><strong>var</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n</cite> variance vectorof the Normal distribution.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The <cite>batch_shape x n</cite> variance vector of the log-Normal distribution.</p>
+</dd>
+</dl>
 </dd></dl>
 </div>
 </div>

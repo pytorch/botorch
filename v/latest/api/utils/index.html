@@ -631,6 +631,27 @@ contained within <cite>bounds</cite>.</p>
 </div>
 </dd></dl>
 <dl class="function">
+<dt id="botorch.utils.transforms.normalize_indices">
+<code class="sig-prename descclassname">botorch.utils.transforms.</code><code class="sig-name descname">normalize_indices</code><span class="sig-paren">(</span><em class="sig-param">indices</em>, <em class="sig-param">d</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/transforms.html#normalize_indices"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.transforms.normalize_indices" title="Permalink to this definition">¶</a></dt>
+<dd><p>Normalize a list of indices to ensure that they are positive.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>indices</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]) – A list of indices (may contain negative indices for indexing
+“from the back”).</p></li>
+<li><p><strong>d</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The dimension of the tensor to index.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A normalized list of indices such that each index is between <cite>0</cite> and
+<cite>d-1</cite>, or None if indices is None.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="function">
 <dt id="botorch.utils.transforms.t_batch_mode_transform">
 <code class="sig-prename descclassname">botorch.utils.transforms.</code><code class="sig-name descname">t_batch_mode_transform</code><span class="sig-paren">(</span><em class="sig-param">expected_q=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/transforms.html#t_batch_mode_transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.transforms.t_batch_mode_transform" title="Permalink to this definition">¶</a></dt>
 <dd><p>Factory for decorators taking a t-batched <cite>X</cite> tensor.</p>
