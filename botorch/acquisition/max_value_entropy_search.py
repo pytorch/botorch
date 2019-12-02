@@ -66,6 +66,7 @@ class qMaxValueEntropy(MCAcquisitionFunction):
         num_mv_samples: int = 10,
         num_y_samples: int = 128,
         use_gumbel: bool = True,
+        maximize: bool = True,
         X_pending: Optional[Tensor] = None,
     ) -> None:
         r"""Single-outcome max-value entropy search acquisition function.
@@ -83,6 +84,7 @@ class qMaxValueEntropy(MCAcquisitionFunction):
             use_gumbel: If True, use Gumbel approximation to sample the max values.
             X_pending: A `m x d`-dim Tensor of `m` design points that have been
                 submitted for function evaluation but have not yet been evaluated.
+            maximize: If True, consider the problem a maximization problem.
         """
         sampler = SobolQMCNormalSampler(num_y_samples)
         super().__init__(model=model, sampler=sampler)
@@ -108,6 +110,8 @@ class qMaxValueEntropy(MCAcquisitionFunction):
         self.num_fantasies = num_fantasies
         self.use_gumbel = use_gumbel
         self.num_mv_samples = num_mv_samples
+        self.maximize = maximize
+        self.weight = 1.0 if maximize else -1.0
 
         # If we put the `self._sample_max_values()` to `set_X_pending()`,
         # it will throw errors when the initial `super().__init__()` is called,
@@ -166,11 +170,11 @@ class qMaxValueEntropy(MCAcquisitionFunction):
             # sample max values
             if self.use_gumbel:
                 self.posterior_max_values = _sample_max_value_Gumbel(
-                    self.model, candidate_set, self.num_mv_samples
+                    self.model, candidate_set, self.num_mv_samples, self.maximize
                 )
             else:
                 self.posterior_max_values = _sample_max_value_Thompson(
-                    self.model, candidate_set, self.num_mv_samples
+                    self.model, candidate_set, self.num_mv_samples, self.maximize
                 )
 
     @t_batch_mode_transform(expected_q=1)
@@ -186,7 +190,8 @@ class qMaxValueEntropy(MCAcquisitionFunction):
         """
         # Compute the posterior, posterior mean, variance and std
         posterior = self.model.posterior(X.unsqueeze(-3), observation_noise=False)
-        mean = posterior.mean.squeeze(-1).squeeze(-1)  # batch_shape x num_fantasies
+        mean = self.weight * posterior.mean.squeeze(-1).squeeze(-1)
+        # batch_shape x num_fantasies
         variance = posterior.variance.clamp_min(CLAMP_LB).view_as(mean)
         check_no_nans(mean)
         check_no_nans(variance)
@@ -228,14 +233,14 @@ class qMaxValueEntropy(MCAcquisitionFunction):
 
         # compute the std_m, variance_m with noisy observation
         posterior_m = self.model.posterior(X.unsqueeze(-3), observation_noise=True)
-        mean_m = posterior_m.mean.squeeze(-1)
+        mean_m = self.weight * posterior_m.mean.squeeze(-1)
         # batch_shape x num_fantasies x (1 + num_trace_observations)
         variance_m = posterior_m.mvn.covariance_matrix
         # batch_shape x num_fantasies x (1 + num_trace_observations)^2
         check_no_nans(variance_m)
 
         # compute mean and std for fM|ym, x, Dt ~ N(u, s^2)
-        samples_m = self.sampler(posterior_m).squeeze(-1)
+        samples_m = self.weight * self.sampler(posterior_m).squeeze(-1)
         # s_m x batch_shape x num_fantasies x (1 + num_trace_observations)
         L = torch.cholesky(variance_m)
         temp_term = torch.cholesky_solve(covar_mM.unsqueeze(-1), L).transpose(-2, -1)
@@ -279,7 +284,7 @@ class qMaxValueEntropy(MCAcquisitionFunction):
         # s_M x 1 x batch_shape x num_fantasies
 
         # Compute log(p(ym | x, Dt))
-        log_pdf_fm = posterior_m.mvn.log_prob(samples_m).unsqueeze(0)
+        log_pdf_fm = posterior_m.mvn.log_prob(self.weight * samples_m).unsqueeze(0)
         # 1 x s_m x batch_shape x num_fantasies
 
         # H0 = H(ym | x, Dt)
@@ -331,6 +336,7 @@ class qMultiFidelityMaxValueEntropy(qMaxValueEntropy):
         num_y_samples: int = 128,
         use_gumbel: bool = True,
         X_pending: Optional[Tensor] = None,
+        maximize: bool = True,
         cost_aware_utility: Optional[CostAwareUtility] = None,
         project: Callable[[Tensor], Tensor] = lambda X: X,
         expand: Callable[[Tensor], Tensor] = lambda X: X,
@@ -353,6 +359,7 @@ class qMultiFidelityMaxValueEntropy(qMaxValueEntropy):
             use_gumbel: If True, use Gumbel approximation to sample the max values.
             X_pending: A `m x d`-dim Tensor of `m` design points that have been
                 submitted for function evaluation but have not yet been evaluated.
+            maximize: If True, consider the problem a maximization problem.
             cost_aware_utility: A CostAwareUtility computing the cost-transformed
                 utility from a candidate set and samples of increases in utility.
             project: A callable mapping a `batch_shape x q x d` tensor of design
@@ -372,6 +379,7 @@ class qMultiFidelityMaxValueEntropy(qMaxValueEntropy):
             num_y_samples=num_y_samples,
             X_pending=X_pending,
             use_gumbel=use_gumbel,
+            maximize=maximize,
         )
 
         if cost_aware_utility is None:
@@ -382,8 +390,8 @@ class qMultiFidelityMaxValueEntropy(qMaxValueEntropy):
         self.cost_aware_utility = cost_aware_utility
         self.expand = expand
         self.project = project
-        # @TODO make sure fidelity_dims in project, expand & cost_aware_utility align
-        # seems it is very difficult in the current way of handling project/expand
+        # @TODO make sure fidelity_dims align in project, expand & cost_aware_utility
+        # It seems very difficult due to the current way of handling project/expand
 
         # resample max values after initializing self.project
         # so that the max value samples are at the highest fidelity
@@ -408,7 +416,7 @@ class qMultiFidelityMaxValueEntropy(qMaxValueEntropy):
         # Compute the posterior, posterior mean, variance without noise
         # `_m` and `_M` in the var names means the current and the max fidelity.
         posterior = self.model.posterior(X_all, observation_noise=False)
-        mean_M = posterior.mean[..., -1, 0]  # batch_shape x num_fantasies
+        mean_M = self.weight * posterior.mean[..., -1, 0]  # batch_shape x num_fantasies
         variance_M = posterior.variance[..., -1, 0].clamp_min(CLAMP_LB)
         # get the covariance between the low fidelities and max fidelity
         covar_mM = posterior.mvn.covariance_matrix[..., :-1, -1]
@@ -427,7 +435,7 @@ class qMultiFidelityMaxValueEntropy(qMaxValueEntropy):
 
 
 def _sample_max_value_Thompson(
-    model: Model, candidate_set: Tensor, num_samples: int
+    model: Model, candidate_set: Tensor, num_samples: int, maximize: bool = True
 ) -> Tensor:
     """Samples the max values by discrete Thompson sampling.
 
@@ -436,14 +444,16 @@ def _sample_max_value_Thompson(
     Args:
         model: A fitted single-outcome model.
         candidate_set: A `n x d` Tensor including `n` candidate points to
-            discretize the design space
-        num_samples: Number of max value samples
+            discretize the design space.
+        num_samples: Number of max value samples.
+        maximize: If True, consider the problem a maximization problem.
 
     Returns:
         A `num_samples x num_fantasies` Tensor of max value samples
     """
     posterior = model.posterior(candidate_set)
-    samples = posterior.rsample(torch.Size([num_samples])).squeeze(-1)
+    weight = 1.0 if maximize else -1.0
+    samples = weight * posterior.rsample(torch.Size([num_samples])).squeeze(-1)
     # samples is num_samples x (num_fantasies) x n
     max_values, _ = samples.max(dim=-1)
     if len(samples.shape) == 2:
@@ -453,7 +463,7 @@ def _sample_max_value_Thompson(
 
 
 def _sample_max_value_Gumbel(
-    model: Model, candidate_set: Tensor, num_samples: int
+    model: Model, candidate_set: Tensor, num_samples: int, maximize: bool = True
 ) -> Tensor:
     """Samples the max values by Gumbel approximation.
 
@@ -462,15 +472,17 @@ def _sample_max_value_Gumbel(
     Args:
         model: A fitted single-outcome model.
         candidate_set: A `n x d` Tensor including `n` candidate points to
-            discretize the design space
-        num_samples: Number of max value samples
+            discretize the design space.
+        num_samples: Number of max value samples.
+        maximize: If True, consider the problem a maximization problem.
 
     Returns:
         A `num_samples x num_fantasies` Tensor of max value samples
     """
     # define the approximate CDF for the max value under the independence assumption
     posterior = model.posterior(candidate_set)
-    mu = posterior.mean
+    weight = 1.0 if maximize else -1.0
+    mu = weight * posterior.mean
     sigma = posterior.variance.clamp_min(1e-8).sqrt()
     # mu, sigma is (num_fantasies) X n X 1
     if len(mu.shape) == 3 and mu.shape[-1] == 1:
