@@ -65,13 +65,11 @@ def _get_fixed_noise_model_single_output(**tkwargs):
 
 class TestMultiTaskGP(BotorchTestCase):
     def test_MultiTaskGP(self):
-        for double in (False, True):
-            tkwargs = {
-                "device": self.device,
-                "dtype": torch.double if double else torch.float,
-            }
+        for dtype in (torch.float, torch.double):
+            tkwargs = {"device": self.device, "dtype": dtype}
             model = _get_model(**tkwargs)
             self.assertIsInstance(model, MultiTaskGP)
+            self.assertEqual(model.num_outputs, 2)
             self.assertIsInstance(model.likelihood, GaussianLikelihood)
             self.assertIsInstance(model.mean_module, ConstantMean)
             self.assertIsInstance(model.covar_module, ScaleKernel)
@@ -140,13 +138,11 @@ class TestMultiTaskGP(BotorchTestCase):
                 model.posterior(test_x)
 
     def test_MultiTaskGP_single_output(self):
-        for double in (False, True):
-            tkwargs = {
-                "device": self.device,
-                "dtype": torch.double if double else torch.float,
-            }
+        for dtype in (torch.float, torch.double):
+            tkwargs = {"device": self.device, "dtype": dtype}
             model = _get_model_single_output(**tkwargs)
             self.assertIsInstance(model, MultiTaskGP)
+            self.assertEqual(model.num_outputs, 1)
             self.assertIsInstance(model.likelihood, GaussianLikelihood)
             self.assertIsInstance(model.mean_module, ConstantMean)
             self.assertIsInstance(model.covar_module, ScaleKernel)
@@ -180,13 +176,11 @@ class TestMultiTaskGP(BotorchTestCase):
 
 class TestFixedNoiseMultiTaskGP(BotorchTestCase):
     def test_FixedNoiseMultiTaskGP(self):
-        for double in (False, True):
-            tkwargs = {
-                "device": self.device,
-                "dtype": torch.double if double else torch.float,
-            }
+        for dtype in (torch.float, torch.double):
+            tkwargs = {"device": self.device, "dtype": dtype}
             model = _get_fixed_noise_model(**tkwargs)
             self.assertIsInstance(model, FixedNoiseMultiTaskGP)
+            self.assertEqual(model.num_outputs, 2)
             self.assertIsInstance(model.likelihood, FixedNoiseGaussianLikelihood)
             self.assertIsInstance(model.mean_module, ConstantMean)
             self.assertIsInstance(model.covar_module, ScaleKernel)
@@ -253,13 +247,11 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
                 FixedNoiseMultiTaskGP(train_X, train_Y, train_Yvar, 0, output_tasks=[2])
 
     def test_FixedNoiseMultiTaskGP_single_output(self):
-        for double in (False, True):
-            tkwargs = {
-                "device": self.device,
-                "dtype": torch.double if double else torch.float,
-            }
+        for dtype in (torch.float, torch.double):
+            tkwargs = {"device": self.device, "dtype": dtype}
             model = _get_fixed_noise_model_single_output(**tkwargs)
             self.assertIsInstance(model, FixedNoiseMultiTaskGP)
+            self.assertEqual(model.num_outputs, 1)
             self.assertIsInstance(model.likelihood, FixedNoiseGaussianLikelihood)
             self.assertIsInstance(model.mean_module, ConstantMean)
             self.assertIsInstance(model.covar_module, ScaleKernel)

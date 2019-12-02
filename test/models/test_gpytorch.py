@@ -40,6 +40,7 @@ class SimpleGPyTorchModel(GPyTorchModel, ExactGP):
         self.covar_module = ScaleKernel(RBFKernel())
         if outcome_transform is not None:
             self.outcome_transform = outcome_transform
+        self._num_outputs = 1
         self.to(train_X)
 
     def forward(self, x):
@@ -84,6 +85,7 @@ class TestGPyTorchModel(BotorchTestCase):
             train_Y = torch.sin(train_X)
             # basic test
             model = SimpleGPyTorchModel(train_X, train_Y, octf)
+            self.assertEqual(model.num_outputs, 1)
             test_X = torch.rand(2, 1, **tkwargs)
             posterior = model.posterior(test_X)
             self.assertIsInstance(posterior, GPyTorchPosterior)
@@ -175,6 +177,7 @@ class TestBatchedMultiOutputGPyTorchModel(BotorchTestCase):
             train_Y = torch.cat([torch.sin(train_X), torch.cos(train_X)], dim=-1)
             # basic test
             model = SimpleBatchedMultiOutputGPyTorchModel(train_X, train_Y)
+            self.assertEqual(model.num_outputs, 2)
             test_X = torch.rand(2, 1, **tkwargs)
             posterior = model.posterior(test_X)
             self.assertIsInstance(posterior, GPyTorchPosterior)
@@ -226,6 +229,7 @@ class TestModelListGPyTorchModel(BotorchTestCase):
             m1 = SimpleGPyTorchModel(train_X1, train_Y1)
             m2 = SimpleGPyTorchModel(train_X2, train_Y2)
             model = SimpleModelListGPyTorchModel(m1, m2)
+            self.assertEqual(model.num_outputs, 2)
             test_X = torch.rand(2, 1, **tkwargs)
             posterior = model.posterior(test_X)
             self.assertIsInstance(posterior, GPyTorchPosterior)

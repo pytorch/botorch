@@ -18,6 +18,7 @@ class TestCostModels(BotorchTestCase):
                 X = torch.rand(*batch_shape, 3, 4, device=self.device, dtype=dtype)
                 # test default parameters
                 model = AffineFidelityCostModel()
+                self.assertEqual(model.num_outputs, 1)
                 self.assertEqual(model.fidelity_dims, [-1])
                 self.assertEqual(model.fixed_cost, 0.01)
                 cost = model(X)

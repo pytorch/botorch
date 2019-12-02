@@ -86,6 +86,7 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
             if any(t not in all_tasks for t in output_tasks):
                 raise RuntimeError("All output tasks must be present in input data.")
         self._output_tasks = output_tasks
+        self._num_outputs = len(output_tasks)
 
         # TODO (T41270962): Support task-specific noise levels in likelihood
         likelihood = GaussianLikelihood(noise_prior=GammaPrior(1.1, 0.05))

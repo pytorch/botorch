@@ -12,7 +12,7 @@ GPyTorch Model class such as an ExactGP.
 """
 
 import warnings
-from abc import ABC, abstractproperty
+from abc import ABC
 from typing import Any, Iterator, List, Optional, Tuple, Union
 
 import torch
@@ -88,6 +88,11 @@ class GPyTorchModel(Model, ABC):
                 f" Expected Yvar with shape: {Y.shape[-Yvar.dim() :]} (got"
                 f" {Yvar.shape})."
             )
+
+    @property
+    def num_outputs(self) -> int:
+        r"""The number of outputs of the model."""
+        return self._num_outputs
 
     def posterior(
         self, X: Tensor, observation_noise: Union[bool, Tensor] = False, **kwargs: Any
@@ -360,11 +365,6 @@ class ModelListGPyTorchModel(GPyTorchModel, ABC):
     This is meant to be used with a gpytorch ModelList wrapper for independent
     evaluation of submodels.
     """
-
-    @abstractproperty
-    def num_outputs(self) -> int:
-        r"""The number of outputs of the model."""
-        pass  # pragma: no cover
 
     def posterior(
         self,
