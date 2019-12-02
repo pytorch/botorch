@@ -13,7 +13,7 @@ GPyTorch Model class such as an ExactGP.
 
 import warnings
 from abc import ABC, abstractproperty
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, Iterator, List, Optional, Tuple, Union
 
 import torch
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
@@ -26,7 +26,6 @@ from ..exceptions.warnings import BotorchTensorDimensionWarning
 from ..posteriors.gpytorch import GPyTorchPosterior
 from ..utils.transforms import gpt_posterior_settings
 from .model import Model
-from .transforms.outcome import OutcomeTransform
 from .utils import _make_X_full, add_output_dim, multioutput_to_batch_mode_transform
 
 
@@ -36,8 +35,6 @@ class GPyTorchModel(Model, ABC):
     The easiest way to use this is to subclass a model from a GPyTorch model
     class (e.g. an `ExactGP`) and this `GPyTorchModel`. See e.g. `SingleTaskGP`.
     """
-
-    outcome_transform: Optional[OutcomeTransform] = None
 
     @staticmethod
     def _validate_tensor_args(
@@ -50,17 +47,17 @@ class GPyTorchModel(Model, ABC):
         the same `batch_shape`.
 
         Args:
-            X: A `n x d` or `batch_shape x n x d`-dim Tensor, where `d` is the
-                dimension of the feature space, `n` is the number of points per
-                batch, and `batch_shape` is the batch shape.
-            Y: A `n x m` or `batch_shape x n x m`-dim Tensor, where `m` is the
-                number of model outputs, `n'` is the number of points per batch,
-                and `batch_shape'` is the batch shape of the observations.
-            Yvar: A `n x m` or `batch_shape x n x m` (batch mode) tensor of
-                observed measurement noise. Note: this will be None when using a
-                model that infers the noise level (e.g. a `SingleTaskGP`).
-            strict: A boolean indicating whether to check that `Y` and `Yvar` have
-                an explicit output dimension.
+            X: A `batch_shape x n x d`-dim Tensor, where `d` is the dimension of
+                the feature space, `n` is the number of points per batch, and
+                `batch_shape` is the batch shape (potentially empty).
+            Y: A `batch_shape' x n x m`-dim Tensor, where `m` is the number of
+                model outputs, `n'` is the number of points per batch, and
+                `batch_shape'` is the batch shape of the observations.
+            Yvar: A `batch_shape' x n x m` tensor of observed measurement noise.
+                Note: this will be None when using a model that infers the noise
+                level (e.g. a `SingleTaskGP`).
+            strict: A boolean indicating whether to check that `Y` and `Yvar`
+                have an explicit output dimension.
         """
         if strict:
             if X.dim() != Y.dim():
@@ -115,13 +112,17 @@ class GPyTorchModel(Model, ABC):
             mvn = self(X)
             if observation_noise is not False:
                 if torch.is_tensor(observation_noise):
+                    # TODO: Make sure observation noise is transformed correctly
                     self._validate_tensor_args(X=X, Y=observation_noise)
                     if observation_noise.size(-1) == 1:
                         observation_noise = observation_noise.squeeze(-1)
                     mvn = self.likelihood(mvn, X, noise=observation_noise)
                 else:
                     mvn = self.likelihood(mvn, X)
-            return GPyTorchPosterior(mvn=mvn)
+        posterior = GPyTorchPosterior(mvn=mvn)
+        if hasattr(self, "outcome_transform"):
+            posterior = self.outcome_transform.untransform_posterior(posterior)
+        return posterior
 
     def condition_on_observations(self, X: Tensor, Y: Tensor, **kwargs: Any) -> "Model":
         r"""Condition the model on new observations.
@@ -152,17 +153,22 @@ class GPyTorchModel(Model, ABC):
             >>> new_Y = torch.sin(new_X[:, 0]) + torch.cos(new_X[:, 1])
             >>> model = model.condition_on_observations(X=new_X, Y=new_Y)
         """
-        noise = kwargs.get("noise", None)
+        Yvar = kwargs.get("noise", None)
+        if hasattr(self, "outcome_transform"):
+            # pass the transformed data to get_fantasy_model below
+            # (unless we've already trasnformed if BatchedMultiOutputGPyTorchModel)
+            if not isinstance(self, BatchedMultiOutputGPyTorchModel):
+                Y, Yvar = self.outcome_transform(Y, Yvar)
         # validate using strict=False, since we cannot tell if Y has an explicit
         # output dimension
-        self._validate_tensor_args(X=X, Y=Y, Yvar=noise, strict=False)
-        if Y.shape[-1] == 1:
-            targets = Y.squeeze(-1)
-            if noise is not None:
-                kwargs.update({"noise": noise.squeeze(-1)})
-        else:
-            targets = Y
-        return self.get_fantasy_model(inputs=X, targets=targets, **kwargs)
+        self._validate_tensor_args(X=X, Y=Y, Yvar=Yvar, strict=False)
+        if Y.size(-1) == 1:
+            Y = Y.squeeze(-1)
+            if Yvar is not None:
+                kwargs.update({"noise": Yvar.squeeze(-1)})
+        # get_fantasy_model will properly copy any existing outcome transforms
+        # (since it deepcopies the original model)
+        return self.get_fantasy_model(inputs=X, targets=Y, **kwargs)
 
 
 class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
@@ -280,7 +286,11 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
                     for t in output_indices
                 ]
                 mvn = MultitaskMultivariateNormal.from_independent_mvns(mvns=mvns)
-        return GPyTorchPosterior(mvn=mvn)
+
+        posterior = GPyTorchPosterior(mvn=mvn)
+        if hasattr(self, "outcome_transform"):
+            posterior = self.outcome_transform.untransform_posterior(posterior)
+        return posterior
 
     def condition_on_observations(
         self, X: Tensor, Y: Tensor, **kwargs: Any
@@ -317,6 +327,9 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
             >>> model = model.condition_on_observations(X=new_X, Y=new_Y)
         """
         noise = kwargs.get("noise")
+        if hasattr(self, "outcome_transform"):
+            # we need to apply transforms before shifting batch indices around
+            Y, noise = self.outcome_transform(Y, noise)
         self._validate_tensor_args(X=X, Y=Y, Yvar=noise, strict=False)
         inputs = X
         if self._num_outputs > 1:
@@ -384,7 +397,9 @@ class ModelListGPyTorchModel(GPyTorchModel, ABC):
             `observation_noise` is specified.
         """
         self.eval()  # make sure model is in eval mode
+        mvn_gen: Iterator
         with gpt_posterior_settings():
+            # only compute what's necessary
             if output_indices is not None:
                 mvns = [self.forward_i(i, X) for i in output_indices]
                 if observation_noise is not False:
@@ -404,6 +419,7 @@ class ModelListGPyTorchModel(GPyTorchModel, ABC):
                         self.likelihood_i(i, mvn, X, **lkws)
                         for i, mvn, lkws in zip(output_indices, mvns, lh_kwargs)
                     ]
+                mvn_gen = zip(output_indices, mvns)
             else:
                 mvns = self(*[X for _ in range(self.num_outputs)])
                 if observation_noise is not False:
@@ -413,6 +429,17 @@ class ModelListGPyTorchModel(GPyTorchModel, ABC):
                         )
                     else:
                         mvns = self.likelihood(*[(mvn, X) for mvn in mvns])
+                mvn_gen = enumerate(mvns)
+        # apply output transforms of individual models if present
+        mvns = []
+        for i, mvn in mvn_gen:
+            try:
+                oct = self.models[i].outcome_transform
+                tf_mvn = oct.untransform_posterior(GPyTorchPosterior(mvn)).mvn
+            except AttributeError:
+                tf_mvn = mvn
+            mvns.append(tf_mvn)
+        # return result as a GPyTorchPosteriors
         if len(mvns) == 1:
             return GPyTorchPosterior(mvn=mvns[0])
         else:
@@ -423,9 +450,9 @@ class ModelListGPyTorchModel(GPyTorchModel, ABC):
     def condition_on_observations(
         self, X: Tensor, Y: Tensor, **kwargs: Any
     ) -> "ModelListGPyTorchModel":
+        class_name = self.__class__.__name__
         raise NotImplementedError(
-            "`condition_on_observations` not implemented in "
-            "`ModelListGPyTorchModel` base class"
+            f"`condition_on_observations` not implemented in {class_name}"
         )
 
 
@@ -468,6 +495,11 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
             output_indices = self._output_tasks
         if any(i not in self._output_tasks for i in output_indices):
             raise ValueError("Too many output indices")
+        cls_name = self.__class__.__name__
+        if hasattr(self, "outcome_transform"):
+            raise NotImplementedError(
+                f"Outcome transforms currently not supported by {cls_name}"
+            )
 
         # construct evaluation X
         X_full = _make_X_full(X=X, output_indices=output_indices, tf=self._task_feature)
@@ -477,8 +509,7 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
             mvn = self(X_full)
             if observation_noise is not False:
                 raise NotImplementedError(
-                    "Specifying observation noise is not yet supported for "
-                    "MultiTaskGPyTorchModel"
+                    f"Specifying observation noise is not yet supported by {cls_name}"
                 )
         # If single-output, return the posterior of a single-output model
         if len(output_indices) == 1:

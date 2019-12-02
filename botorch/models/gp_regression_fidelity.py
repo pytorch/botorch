@@ -26,6 +26,7 @@ from .gp_regression import SingleTaskGP
 from .kernels.downsampling import DownsamplingKernel
 from .kernels.exponential_decay import ExponentialDecayKernel
 from .kernels.linear_truncated_fidelity import LinearTruncatedFidelityKernel
+from .transforms.outcome import OutcomeTransform
 
 
 class SingleTaskMultiFidelityGP(SingleTaskGP):
@@ -68,6 +69,7 @@ class SingleTaskMultiFidelityGP(SingleTaskGP):
         linear_truncated: bool = True,
         nu: float = 2.5,
         likelihood: Optional[Likelihood] = None,
+        outcome_transform: Optional[OutcomeTransform] = None,
     ) -> None:
         if iteration_fidelity is None and data_fidelity is None:
             raise UnsupportedError(
@@ -126,5 +128,10 @@ class SingleTaskMultiFidelityGP(SingleTaskGP):
             batch_shape=self._aug_batch_shape,
             outputscale_prior=GammaPrior(2.0, 0.15),
         )
-        super().__init__(train_X=train_X, train_Y=train_Y, covar_module=covar_module)
+        super().__init__(
+            train_X=train_X,
+            train_Y=train_Y,
+            covar_module=covar_module,
+            outcome_transform=outcome_transform,
+        )
         self.to(train_X)

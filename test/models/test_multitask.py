@@ -134,6 +134,11 @@ class TestMultiTaskGP(BotorchTestCase):
             with self.assertRaises(RuntimeError):
                 MultiTaskGP(train_X, train_Y, 0, output_tasks=[2])
 
+            # test error if outcome_transform attribute is present
+            model.outcome_transform = None
+            with self.assertRaises(NotImplementedError):
+                model.posterior(test_x)
+
     def test_MultiTaskGP_single_output(self):
         for double in (False, True):
             tkwargs = {

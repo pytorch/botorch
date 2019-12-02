@@ -13,6 +13,7 @@ from botorch.exceptions.errors import UnsupportedError
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.models.gp_regression import FixedNoiseGP
 from botorch.models.gp_regression_fidelity import SingleTaskMultiFidelityGP
+from botorch.models.transforms import Standardize
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling import SobolQMCNormalSampler
 from botorch.utils.testing import BotorchTestCase, _get_random_data
@@ -21,13 +22,11 @@ from gpytorch.means import ConstantMean
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 
 
-def _get_random_data_with_fidelity(
-    batch_shape, num_outputs, n_fidelity, n=10, **tkwargs
-):
+def _get_random_data_with_fidelity(batch_shape, m, n_fidelity, n=10, **tkwargs):
     r"""Construct test data.
     For this test, by convention the trailing dimesions are the fidelity dimensions
     """
-    train_x, train_y = _get_random_data(batch_shape, num_outputs, n, **tkwargs)
+    train_x, train_y = _get_random_data(batch_shape, m, n, **tkwargs)
     s = torch.rand(n, n_fidelity, **tkwargs).repeat(batch_shape + torch.Size([1, 1]))
     train_x = torch.cat((train_x, s), dim=-1)
     train_y = train_y + (1 - s).pow(2).sum(dim=-1).unsqueeze(-1)
@@ -38,16 +37,14 @@ def _get_model_and_data(
     iteration_fidelity,
     data_fidelity,
     batch_shape,
-    num_outputs,
+    m,
     lin_truncated,
+    outcome_transform=None,
     **tkwargs,
 ):
     n_fidelity = (iteration_fidelity is not None) + (data_fidelity is not None)
     train_X, train_Y = _get_random_data_with_fidelity(
-        batch_shape=batch_shape,
-        num_outputs=num_outputs,
-        n_fidelity=n_fidelity,
-        **tkwargs,
+        batch_shape=batch_shape, m=m, n_fidelity=n_fidelity, **tkwargs
     )
     model_kwargs = {
         "train_X": train_X,
@@ -56,6 +53,8 @@ def _get_model_and_data(
         "data_fidelity": data_fidelity,
         "linear_truncated": lin_truncated,
     }
+    if outcome_transform is not None:
+        model_kwargs["outcome_transform"] = outcome_transform
     model = SingleTaskMultiFidelityGP(**model_kwargs)
     return model, model_kwargs
 
@@ -76,19 +75,22 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
     def test_gp(self):
         for (iteration_fidelity, data_fidelity) in self.FIDELITY_TEST_PAIRS:
             num_dim = 1 + (iteration_fidelity is not None) + (data_fidelity is not None)
-            for batch_shape, num_outputs, dtype, lin_trunc in itertools.product(
+            for batch_shape, m, dtype, lin_trunc, use_octf in itertools.product(
                 (torch.Size(), torch.Size([2])),
                 (1, 2),
                 (torch.float, torch.double),
                 (False, True),
+                (False, True),
             ):
                 tkwargs = {"device": self.device, "dtype": dtype}
+                octf = Standardize(m=m, batch_shape=batch_shape) if use_octf else None
                 model, _ = _get_model_and_data(
                     iteration_fidelity=iteration_fidelity,
                     data_fidelity=data_fidelity,
                     batch_shape=batch_shape,
-                    num_outputs=num_outputs,
+                    m=m,
                     lin_truncated=lin_trunc,
+                    outcome_transform=octf,
                     **tkwargs,
                 )
                 mll = ExactMarginalLogLikelihood(model.likelihood, model)
@@ -100,39 +102,54 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                 # test init
                 self.assertIsInstance(model.mean_module, ConstantMean)
                 self.assertIsInstance(model.covar_module, ScaleKernel)
+                if use_octf:
+                    self.assertIsInstance(model.outcome_transform, Standardize)
 
                 # test param sizes
                 params = dict(model.named_parameters())
                 for p in params:
                     self.assertEqual(
-                        params[p].numel(),
-                        num_outputs * torch.tensor(batch_shape).prod().item(),
+                        params[p].numel(), m * torch.tensor(batch_shape).prod().item()
                     )
 
                 # test posterior
                 # test non batch evaluation
-                X = torch.rand(batch_shape + torch.Size([3, num_dim]), **tkwargs)
+                X = torch.rand(*batch_shape, 3, num_dim, **tkwargs)
+                expected_shape = batch_shape + torch.Size([3, m])
                 posterior = model.posterior(X)
                 self.assertIsInstance(posterior, GPyTorchPosterior)
-                self.assertEqual(
-                    posterior.mean.shape, batch_shape + torch.Size([3, num_outputs])
-                )
+                self.assertEqual(posterior.mean.shape, expected_shape)
+                self.assertEqual(posterior.variance.shape, expected_shape)
+                if use_octf:
+                    # ensure un-transformation is applied
+                    tmp_tf = model.outcome_transform
+                    del model.outcome_transform
+                    pp_tf = model.posterior(X)
+                    model.outcome_transform = tmp_tf
+                    expected_var = tmp_tf.untransform_posterior(pp_tf).variance
+                    self.assertTrue(torch.allclose(posterior.variance, expected_var))
+
                 # test batch evaluation
-                X = torch.rand(
-                    torch.Size([2]) + batch_shape + torch.Size([3, num_dim]), **tkwargs
-                )
+                X = torch.rand(2, *batch_shape, 3, num_dim, **tkwargs)
+                expected_shape = torch.Size([2]) + batch_shape + torch.Size([3, m])
                 posterior = model.posterior(X)
                 self.assertIsInstance(posterior, GPyTorchPosterior)
-                self.assertEqual(
-                    posterior.mean.shape,
-                    torch.Size([2]) + batch_shape + torch.Size([3, num_outputs]),
-                )
+                self.assertEqual(posterior.mean.shape, expected_shape)
+                self.assertEqual(posterior.variance.shape, expected_shape)
+                if use_octf:
+                    # ensure un-transformation is applied
+                    tmp_tf = model.outcome_transform
+                    del model.outcome_transform
+                    pp_tf = model.posterior(X)
+                    model.outcome_transform = tmp_tf
+                    expected_var = tmp_tf.untransform_posterior(pp_tf).variance
+                    self.assertTrue(torch.allclose(posterior.variance, expected_var))
 
     def test_condition_on_observations(self):
         for (iteration_fidelity, data_fidelity) in self.FIDELITY_TEST_PAIRS:
             n_fidelity = (iteration_fidelity is not None) + (data_fidelity is not None)
             num_dim = 1 + n_fidelity
-            for batch_shape, num_outputs, dtype, lin_trunc in itertools.product(
+            for batch_shape, m, dtype, lin_trunc in itertools.product(
                 (torch.Size(), torch.Size([2])),
                 (1, 2),
                 (torch.float, torch.double),
@@ -143,7 +160,7 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                     iteration_fidelity=iteration_fidelity,
                     data_fidelity=data_fidelity,
                     batch_shape=batch_shape,
-                    num_outputs=num_outputs,
+                    m=m,
                     lin_truncated=lin_trunc,
                     **tkwargs,
                 )
@@ -153,11 +170,7 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                 fant_shape = torch.Size([2])
                 # fantasize at different input points
                 X_fant, Y_fant = _get_random_data_with_fidelity(
-                    fant_shape + batch_shape,
-                    num_outputs,
-                    n_fidelity=n_fidelity,
-                    n=3,
-                    **tkwargs,
+                    fant_shape + batch_shape, m, n_fidelity=n_fidelity, n=3, **tkwargs
                 )
                 c_kwargs = (
                     {"noise": torch.full_like(Y_fant, 0.01)}
@@ -191,12 +204,12 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                     posterior = cm.posterior(test_X)
                     self.assertEqual(
                         posterior.mean.shape,
-                        fant_shape + batch_shape + torch.Size([4, num_outputs]),
+                        fant_shape + batch_shape + torch.Size([4, m]),
                     )
                     posterior_same_inputs = cm_same_inputs.posterior(test_X)
                     self.assertEqual(
                         posterior_same_inputs.mean.shape,
-                        fant_shape + batch_shape + torch.Size([4, num_outputs]),
+                        fant_shape + batch_shape + torch.Size([4, m]),
                     )
 
                     # check that fantasies of batched model are correct
@@ -248,7 +261,7 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
         for (iteration_fidelity, data_fidelity) in self.FIDELITY_TEST_PAIRS:
             n_fidelity = (iteration_fidelity is not None) + (data_fidelity is not None)
             num_dim = 1 + n_fidelity
-            for batch_shape, num_outputs, dtype, lin_trunc in itertools.product(
+            for batch_shape, m, dtype, lin_trunc in itertools.product(
                 (torch.Size(), torch.Size([2])),
                 (1, 2),
                 (torch.float, torch.double),
@@ -259,7 +272,7 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                     iteration_fidelity=iteration_fidelity,
                     data_fidelity=data_fidelity,
                     batch_shape=batch_shape,
-                    num_outputs=num_outputs,
+                    m=m,
                     lin_truncated=lin_trunc,
                     **tkwargs,
                 )
