@@ -76,7 +76,7 @@ class TestInputTransforms(BotorchTestCase):
                 self.assertEqual(X_nlzd.max().item(), 1.0)
                 nlz.eval()
                 X_unnlzd = nlz.untransform(X_nlzd)
-                self.assertTrue(torch.allclose(X, X_unnlzd))
+                self.assertTrue(torch.allclose(X, X_unnlzd, atol=1e-4, rtol=1e-4))
                 expected_bounds = torch.cat(
                     [X.min(dim=-2, keepdim=True)[0], X.max(dim=-2, keepdim=True)[0]],
                     dim=-2,
