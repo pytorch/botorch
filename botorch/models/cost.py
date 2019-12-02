@@ -47,6 +47,7 @@ class AffineFidelityCostModel(DeterministicModel):
         self.fixed_cost = fixed_cost
         weights = torch.tensor([fidelity_weights[i] for i in self.fidelity_dims])
         self.register_buffer("weights", weights)
+        self._num_outputs = 1
 
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate the cost on a candidate set X.

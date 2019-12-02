@@ -37,6 +37,11 @@ class DeterministicModel(Model, ABC):
         """
         pass  # pragma: no cover
 
+    @property
+    def num_outputs(self) -> int:
+        r"""The number of outputs of the model."""
+        return self._num_outputs
+
     def posterior(
         self, X: Tensor, output_indices: Optional[List[int]] = None, **kwargs: Any
     ) -> DeterministicPosterior:
@@ -55,16 +60,18 @@ class DeterministicModel(Model, ABC):
 class GenericDeterministicModel(DeterministicModel):
     r"""A generic deterministic model constructed from a callable."""
 
-    def __init__(self, f: Callable[[Tensor], Tensor]) -> None:
+    def __init__(self, f: Callable[[Tensor], Tensor], num_outputs: int = 1) -> None:
         r"""A generic deterministic model constructed from a callable.
 
         Args:
             f: A callable mapping a `batch_shape x n x d`-dim input tensor `X`
                 to a `batch_shape x n x m`-dimensional output tensor (the
                 outcome dimension `m` must be explicit, even if `m=1`).
+            num_outputs: The number of outputs `m`.
         """
         super().__init__()
         self._f = f
+        self._num_outputs = num_outputs
 
     def forward(self, X: Tensor) -> Tensor:
         r"""Compute the (deterministic) model output at X.
@@ -104,6 +111,7 @@ class AffineDeterministicModel(DeterministicModel):
         super().__init__()
         self.register_buffer("a", a)
         self.register_buffer("b", b.expand(a.size(-1)))
+        self._num_outputs = a.size(-1)
 
     def forward(self, X: Tensor) -> Tensor:
         return self.b + torch.einsum("...d,dm", X, self.a)

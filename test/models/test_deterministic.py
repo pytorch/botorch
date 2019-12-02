@@ -25,6 +25,7 @@ class TestDeterministicModels(BotorchTestCase):
             return X.mean(dim=-1, keepdim=True)
 
         model = GenericDeterministicModel(f)
+        self.assertEqual(model.num_outputs, 1)
         X = torch.rand(3, 2)
         # basic test
         p = model.posterior(X)
@@ -34,7 +35,8 @@ class TestDeterministicModels(BotorchTestCase):
         with self.assertRaises(UnsupportedError):
             model.posterior(X, observation_noise=True)
         # check output indices
-        model = GenericDeterministicModel(lambda X: X)
+        model = GenericDeterministicModel(lambda X: X, num_outputs=2)
+        self.assertEqual(model.num_outputs, 2)
         p = model.posterior(X, output_indices=[0])
         self.assertTrue(torch.equal(p.mean, X[..., [0]]))
 
@@ -48,6 +50,7 @@ class TestDeterministicModels(BotorchTestCase):
         # test one-dim output
         a = torch.rand(3, 1)
         model = AffineDeterministicModel(a)
+        self.assertEqual(model.num_outputs, 1)
         for shape in ((4, 3), (1, 4, 3)):
             X = torch.rand(*shape)
             p = model.posterior(X)
@@ -56,6 +59,7 @@ class TestDeterministicModels(BotorchTestCase):
         # # test two-dim output
         a = torch.rand(3, 2)
         model = AffineDeterministicModel(a)
+        self.assertEqual(model.num_outputs, 2)
         for shape in ((4, 3), (1, 4, 3)):
             X = torch.rand(*shape)
             p = model.posterior(X)

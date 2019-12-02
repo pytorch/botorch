@@ -49,6 +49,12 @@ class Model(Module, ABC):
         """
         pass  # pragma: no cover
 
+    @property
+    def num_outputs(self) -> int:
+        r"""The number of outputs of the model."""
+        cls_name = self.__class__.__name__
+        raise NotImplementedError(f"{cls_name} does not define num_outputs property")
+
     def condition_on_observations(self, X: Tensor, Y: Tensor, **kwargs: Any) -> "Model":
         r"""Condition the model on new observations.
 
