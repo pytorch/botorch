@@ -17,6 +17,7 @@ from botorch.models.gpytorch import (
     GPyTorchModel,
     ModelListGPyTorchModel,
 )
+from botorch.models.transforms import Standardize
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.sampling.samplers import SobolQMCNormalSampler
 from botorch.utils.testing import BotorchTestCase
@@ -28,13 +29,17 @@ from gpytorch.models import ExactGP, IndependentModelList
 
 
 class SimpleGPyTorchModel(GPyTorchModel, ExactGP):
-    def __init__(self, train_X, train_Y):
+    def __init__(self, train_X, train_Y, outcome_transform=None):
+        if outcome_transform is not None:
+            train_Y, _ = outcome_transform(train_Y)
         self._validate_tensor_args(train_X, train_Y)
         train_Y = train_Y.squeeze(-1)
         likelihood = GaussianLikelihood()
         super().__init__(train_X, train_Y, likelihood)
         self.mean_module = ConstantMean()
         self.covar_module = ScaleKernel(RBFKernel())
+        if outcome_transform is not None:
+            self.outcome_transform = outcome_transform
         self.to(train_X)
 
     def forward(self, x):
@@ -70,16 +75,27 @@ class SimpleModelListGPyTorchModel(IndependentModelList, ModelListGPyTorchModel)
 
 class TestGPyTorchModel(BotorchTestCase):
     def test_gpytorch_model(self):
-        for dtype in (torch.float, torch.double):
+        for dtype, use_octf in itertools.product(
+            (torch.float, torch.double), (False, True)
+        ):
             tkwargs = {"device": self.device, "dtype": dtype}
+            octf = Standardize(m=1) if use_octf else None
             train_X = torch.rand(5, 1, **tkwargs)
             train_Y = torch.sin(train_X)
             # basic test
-            model = SimpleGPyTorchModel(train_X, train_Y)
+            model = SimpleGPyTorchModel(train_X, train_Y, octf)
             test_X = torch.rand(2, 1, **tkwargs)
             posterior = model.posterior(test_X)
             self.assertIsInstance(posterior, GPyTorchPosterior)
             self.assertEqual(posterior.mean.shape, torch.Size([2, 1]))
+            if use_octf:
+                # ensure un-transformation is applied
+                tmp_tf = model.outcome_transform
+                del model.outcome_transform
+                p_tf = model.posterior(test_X)
+                model.outcome_transform = tmp_tf
+                expected_var = tmp_tf.untransform_posterior(p_tf).variance
+                self.assertTrue(torch.allclose(posterior.variance, expected_var))
             # test observation noise
             posterior = model.posterior(test_X, observation_noise=True)
             self.assertIsInstance(posterior, GPyTorchPosterior)
@@ -94,7 +110,7 @@ class TestGPyTorchModel(BotorchTestCase):
                 model.posterior(test_X, observation_noise=torch.rand(2, **tkwargs))
             # test conditioning on observations
             cm = model.condition_on_observations(
-                torch.rand(2, 1, **tkwargs), torch.rand(2, **tkwargs)
+                torch.rand(2, 1, **tkwargs), torch.rand(2, 1, **tkwargs)
             )
             self.assertIsInstance(cm, SimpleGPyTorchModel)
             self.assertEqual(cm.train_targets.shape, torch.Size([7]))

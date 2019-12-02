@@ -36,6 +36,8 @@ class ModelListGP(IndependentModelList, ModelListGPyTorchModel):
 
         Args:
             *gp_models: An variable number of single-output BoTorch models.
+                If models have input/output transforms, these are honored
+                individually for each model.
 
         Example:
             >>> model1 = SingleTaskGP(train_X1, train_Y1)
