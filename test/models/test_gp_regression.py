@@ -15,6 +15,7 @@ from botorch.models.gp_regression import (
     HeteroskedasticSingleTaskGP,
     SingleTaskGP,
 )
+from botorch.models.transforms import Standardize
 from botorch.models.utils import add_output_dim
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling import SobolQMCNormalSampler
@@ -33,21 +34,27 @@ from gpytorch.priors import GammaPrior
 
 
 class TestSingleTaskGP(BotorchTestCase):
-    def _get_model_and_data(self, batch_shape, num_outputs, **tkwargs):
+    def _get_model_and_data(self, batch_shape, m, outcome_transform=None, **tkwargs):
         train_X, train_Y = _get_random_data(
-            batch_shape=batch_shape, num_outputs=num_outputs, **tkwargs
+            batch_shape=batch_shape, num_outputs=m, **tkwargs
         )
         model_kwargs = {"train_X": train_X, "train_Y": train_Y}
+        if outcome_transform is not None:
+            model_kwargs["outcome_transform"] = outcome_transform
         model = SingleTaskGP(**model_kwargs)
         return model, model_kwargs
 
     def test_gp(self):
-        for batch_shape, num_outputs, dtype in itertools.product(
-            (torch.Size(), torch.Size([2])), (1, 2), (torch.float, torch.double)
+        for batch_shape, m, dtype, use_octf in itertools.product(
+            (torch.Size(), torch.Size([2])),
+            (1, 2),
+            (torch.float, torch.double),
+            (False, True),
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
+            octf = Standardize(m=m, batch_shape=batch_shape) if use_octf else None
             model, _ = self._get_model_and_data(
-                batch_shape=batch_shape, num_outputs=num_outputs, **tkwargs
+                batch_shape=batch_shape, m=m, outcome_transform=octf, **tkwargs
             )
             mll = ExactMarginalLogLikelihood(model.likelihood, model).to(**tkwargs)
             with warnings.catch_warnings():
@@ -60,56 +67,78 @@ class TestSingleTaskGP(BotorchTestCase):
             matern_kernel = model.covar_module.base_kernel
             self.assertIsInstance(matern_kernel, MaternKernel)
             self.assertIsInstance(matern_kernel.lengthscale_prior, GammaPrior)
+            if use_octf:
+                self.assertIsInstance(model.outcome_transform, Standardize)
 
             # test param sizes
             params = dict(model.named_parameters())
             for p in params:
                 self.assertEqual(
-                    params[p].numel(),
-                    num_outputs * torch.tensor(batch_shape).prod().item(),
+                    params[p].numel(), m * torch.tensor(batch_shape).prod().item()
                 )
 
             # test posterior
             # test non batch evaluation
             X = torch.rand(batch_shape + torch.Size([3, 1]), **tkwargs)
-            expected_mean_shape = batch_shape + torch.Size([3, num_outputs])
+            expected_shape = batch_shape + torch.Size([3, m])
             posterior = model.posterior(X)
             self.assertIsInstance(posterior, GPyTorchPosterior)
-            self.assertEqual(posterior.mean.shape, expected_mean_shape)
+            self.assertEqual(posterior.mean.shape, expected_shape)
+            self.assertEqual(posterior.variance.shape, expected_shape)
+
             # test adding observation noise
             posterior_pred = model.posterior(X, observation_noise=True)
             self.assertIsInstance(posterior_pred, GPyTorchPosterior)
-            self.assertEqual(posterior_pred.mean.shape, expected_mean_shape)
-            pvar = posterior_pred.variance
-            pvar_exp = _get_pvar_expected(posterior, model, X, num_outputs)
-            self.assertTrue(torch.allclose(pvar, pvar_exp, rtol=1e-4, atol=1e-5))
+            self.assertEqual(posterior_pred.mean.shape, expected_shape)
+            self.assertEqual(posterior_pred.variance.shape, expected_shape)
+            if use_octf:
+                # ensure un-transformation is applied
+                tmp_tf = model.outcome_transform
+                del model.outcome_transform
+                pp_tf = model.posterior(X, observation_noise=True)
+                model.outcome_transform = tmp_tf
+                expected_var = tmp_tf.untransform_posterior(pp_tf).variance
+                self.assertTrue(torch.allclose(posterior_pred.variance, expected_var))
+            else:
+                pvar = posterior_pred.variance
+                pvar_exp = _get_pvar_expected(posterior, model, X, m)
+                self.assertTrue(torch.allclose(pvar, pvar_exp, rtol=1e-4, atol=1e-5))
 
             # test batch evaluation
-            X = torch.rand(
-                torch.Size([2]) + batch_shape + torch.Size([3, 1]), **tkwargs
-            )
-            expected_mean_shape = (
-                torch.Size([2]) + batch_shape + torch.Size([3, num_outputs])
-            )
+            X = torch.rand(2, *batch_shape, 3, 1, **tkwargs)
+            expected_shape = torch.Size([2]) + batch_shape + torch.Size([3, m])
 
             posterior = model.posterior(X)
             self.assertIsInstance(posterior, GPyTorchPosterior)
-            self.assertEqual(posterior.mean.shape, expected_mean_shape)
+            self.assertEqual(posterior.mean.shape, expected_shape)
             # test adding observation noise in batch mode
             posterior_pred = model.posterior(X, observation_noise=True)
             self.assertIsInstance(posterior_pred, GPyTorchPosterior)
-            self.assertEqual(posterior_pred.mean.shape, expected_mean_shape)
-            pvar = posterior_pred.variance
-            pvar_exp = _get_pvar_expected(posterior, model, X, num_outputs)
-            self.assertTrue(torch.allclose(pvar, pvar_exp, rtol=1e-4, atol=1e-5))
+            self.assertEqual(posterior_pred.mean.shape, expected_shape)
+            if use_octf:
+                # ensure un-transformation is applied
+                tmp_tf = model.outcome_transform
+                del model.outcome_transform
+                pp_tf = model.posterior(X, observation_noise=True)
+                model.outcome_transform = tmp_tf
+                expected_var = tmp_tf.untransform_posterior(pp_tf).variance
+                self.assertTrue(torch.allclose(posterior_pred.variance, expected_var))
+            else:
+                pvar = posterior_pred.variance
+                pvar_exp = _get_pvar_expected(posterior, model, X, m)
+                self.assertTrue(torch.allclose(pvar, pvar_exp, rtol=1e-4, atol=1e-5))
 
     def test_condition_on_observations(self):
-        for batch_shape, num_outputs, dtype in itertools.product(
-            (torch.Size(), torch.Size([2])), (1, 2), (torch.float, torch.double)
+        for batch_shape, m, dtype, use_octf in itertools.product(
+            (torch.Size(), torch.Size([2])),
+            (1, 2),
+            (torch.float, torch.double),
+            (False, True),
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
+            octf = Standardize(m=m, batch_shape=batch_shape) if use_octf else None
             model, model_kwargs = self._get_model_and_data(
-                batch_shape=batch_shape, num_outputs=num_outputs, **tkwargs
+                batch_shape=batch_shape, m=m, outcome_transform=octf, **tkwargs
             )
             # evaluate model
             model.posterior(torch.rand(torch.Size([4, 1]), **tkwargs))
@@ -117,7 +146,7 @@ class TestSingleTaskGP(BotorchTestCase):
             fant_shape = torch.Size([2])
             # fantasize at different input points
             X_fant, Y_fant = _get_random_data(
-                fant_shape + batch_shape, num_outputs, n=3, **tkwargs
+                fant_shape + batch_shape, m, n=3, **tkwargs
             )
             c_kwargs = (
                 {"noise": torch.full_like(Y_fant, 0.01)}
@@ -125,7 +154,7 @@ class TestSingleTaskGP(BotorchTestCase):
                 else {}
             )
             cm = model.condition_on_observations(X_fant, Y_fant, **c_kwargs)
-            # fantasize at different same input points
+            # fantasize at same input points (check proper broadcasting)
             c_kwargs_same_inputs = (
                 {"noise": torch.full_like(Y_fant[0], 0.01)}
                 if isinstance(model, FixedNoiseGP)
@@ -136,8 +165,7 @@ class TestSingleTaskGP(BotorchTestCase):
             )
 
             test_Xs = [
-                # test broadcasting single input across fantasy and
-                # model batches
+                # test broadcasting single input across fantasy and model batches
                 torch.rand(4, 1, **tkwargs),
                 # separate input for each model batch and broadcast across
                 # fantasy batches
@@ -148,13 +176,12 @@ class TestSingleTaskGP(BotorchTestCase):
             for test_X in test_Xs:
                 posterior = cm.posterior(test_X)
                 self.assertEqual(
-                    posterior.mean.shape,
-                    fant_shape + batch_shape + torch.Size([4, num_outputs]),
+                    posterior.mean.shape, fant_shape + batch_shape + torch.Size([4, m])
                 )
                 posterior_same_inputs = cm_same_inputs.posterior(test_X)
                 self.assertEqual(
                     posterior_same_inputs.mean.shape,
-                    fant_shape + batch_shape + torch.Size([4, num_outputs]),
+                    fant_shape + batch_shape + torch.Size([4, m]),
                 )
 
                 # check that fantasies of batched model are correct
@@ -171,6 +198,8 @@ class TestSingleTaskGP(BotorchTestCase):
                         model_kwargs_non_batch["train_Yvar"] = model_kwargs[
                             "train_Yvar"
                         ][0]
+                    if "outcome_transform" in model_kwargs:
+                        model_kwargs_non_batch["outcome_transform"] = Standardize(m=m)
                     model_non_batch = type(model)(**model_kwargs_non_batch)
                     model_non_batch.load_state_dict(state_dict_non_batch)
                     model_non_batch.eval()
@@ -201,12 +230,16 @@ class TestSingleTaskGP(BotorchTestCase):
                     )
 
     def test_fantasize(self):
-        for batch_shape, num_outputs, dtype in itertools.product(
-            (torch.Size(), torch.Size([2])), (1, 2), (torch.float, torch.double)
+        for batch_shape, m, dtype, use_octf in itertools.product(
+            (torch.Size(), torch.Size([2])),
+            (1, 2),
+            (torch.float, torch.double),
+            (False, True),
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
-            model, model_kwargs = self._get_model_and_data(
-                batch_shape=batch_shape, num_outputs=num_outputs, **tkwargs
+            octf = Standardize(m=m, batch_shape=batch_shape) if use_octf else None
+            model, _ = self._get_model_and_data(
+                batch_shape=batch_shape, m=m, outcome_transform=octf, **tkwargs
             )
             # fantasize
             X_f = torch.rand(torch.Size(batch_shape + torch.Size([4, 1])), **tkwargs)
@@ -218,25 +251,27 @@ class TestSingleTaskGP(BotorchTestCase):
 
 
 class TestFixedNoiseGP(TestSingleTaskGP):
-    def _get_model_and_data(self, batch_shape, num_outputs, **tkwargs):
+    def _get_model_and_data(self, batch_shape, m, outcome_transform=None, **tkwargs):
         train_X, train_Y = _get_random_data(
-            batch_shape=batch_shape, num_outputs=num_outputs, **tkwargs
+            batch_shape=batch_shape, num_outputs=m, **tkwargs
         )
         model_kwargs = {
             "train_X": train_X,
             "train_Y": train_Y,
             "train_Yvar": torch.full_like(train_Y, 0.01),
         }
+        if outcome_transform is not None:
+            model_kwargs["outcome_transform"] = outcome_transform
         model = FixedNoiseGP(**model_kwargs)
         return model, model_kwargs
 
     def test_fixed_noise_likelihood(self):
-        for batch_shape, num_outputs, dtype in itertools.product(
+        for batch_shape, m, dtype in itertools.product(
             (torch.Size(), torch.Size([2])), (1, 2), (torch.float, torch.double)
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
             model, model_kwargs = self._get_model_and_data(
-                batch_shape=batch_shape, num_outputs=num_outputs, **tkwargs
+                batch_shape=batch_shape, m=m, **tkwargs
             )
             self.assertIsInstance(model.likelihood, FixedNoiseGaussianLikelihood)
             self.assertTrue(
@@ -248,9 +283,9 @@ class TestFixedNoiseGP(TestSingleTaskGP):
 
 
 class TestHeteroskedasticSingleTaskGP(TestSingleTaskGP):
-    def _get_model_and_data(self, batch_shape, num_outputs, **tkwargs):
+    def _get_model_and_data(self, batch_shape, m, outcome_transform=None, **tkwargs):
         train_X, train_Y = _get_random_data(
-            batch_shape=batch_shape, num_outputs=num_outputs, **tkwargs
+            batch_shape=batch_shape, num_outputs=m, **tkwargs
         )
         train_Yvar = (0.1 + 0.1 * torch.rand_like(train_Y)) ** 2
         model_kwargs = {
@@ -258,17 +293,17 @@ class TestHeteroskedasticSingleTaskGP(TestSingleTaskGP):
             "train_Y": train_Y,
             "train_Yvar": train_Yvar,
         }
+        if outcome_transform is not None:
+            model_kwargs["outcome_transform"] = outcome_transform
         model = HeteroskedasticSingleTaskGP(**model_kwargs)
         return model, model_kwargs
 
     def test_heteroskedastic_likelihood(self):
-        for batch_shape, num_outputs, dtype in itertools.product(
+        for batch_shape, m, dtype in itertools.product(
             (torch.Size(), torch.Size([2])), (1, 2), (torch.float, torch.double)
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
-            model, _ = self._get_model_and_data(
-                batch_shape=batch_shape, num_outputs=num_outputs, **tkwargs
-            )
+            model, _ = self._get_model_and_data(batch_shape=batch_shape, m=m, **tkwargs)
             self.assertIsInstance(model.likelihood, _GaussianLikelihoodBase)
             self.assertFalse(isinstance(model.likelihood, GaussianLikelihood))
             self.assertIsInstance(model.likelihood.noise_covar, HeteroskedasticNoise)
@@ -288,14 +323,12 @@ class TestHeteroskedasticSingleTaskGP(TestSingleTaskGP):
             super().test_fantasize()
 
 
-def _get_pvar_expected(posterior, model, X, num_outputs):
+def _get_pvar_expected(posterior, model, X, m):
     lh_kwargs = {}
     if isinstance(model.likelihood, FixedNoiseGaussianLikelihood):
         lh_kwargs["noise"] = model.likelihood.noise.mean().expand(X.shape[:-1])
-    if num_outputs == 1:
+    if m == 1:
         return model.likelihood(posterior.mvn, X, **lh_kwargs).variance.unsqueeze(-1)
     X_, odi = add_output_dim(X=X, original_batch_shape=model._input_batch_shape)
     pvar_exp = model.likelihood(model(X_), X_, **lh_kwargs).variance
-    return torch.stack(
-        [pvar_exp.select(dim=odi, index=i) for i in range(num_outputs)], dim=-1
-    )
+    return torch.stack([pvar_exp.select(dim=odi, index=i) for i in range(m)], dim=-1)

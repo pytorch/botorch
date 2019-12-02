@@ -33,6 +33,7 @@ from torch import Tensor
 from .. import settings
 from ..sampling.samplers import MCSampler
 from .gpytorch import BatchedMultiOutputGPyTorchModel
+from .transforms.outcome import Log, OutcomeTransform
 from .utils import validate_input_scaling
 
 
@@ -50,10 +51,10 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
     When the training observations include multiple outputs, this model will use
     batching to model outputs independently.
 
-    Use this model when you have independent output(s) and all outputs use the same
-    training data. If outputs are independent and outputs have different training
-    data, use the ModelListGP. When modeling correlations between outputs, use
-    the MultiTaskGP.
+    Use this model when you have independent output(s) and all outputs use the
+    same training data. If outputs are independent and outputs have different
+    training data, use the ModelListGP. When modeling correlations between
+    outputs, use the MultiTaskGP.
     """
 
     def __init__(
@@ -62,24 +63,29 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         train_Y: Tensor,
         likelihood: Optional[Likelihood] = None,
         covar_module: Optional[Module] = None,
+        outcome_transform: Optional[OutcomeTransform] = None,
     ) -> None:
         r"""A single-task exact GP model.
 
         Args:
-            train_X: A `n x d` or `batch_shape x n x d` (batch mode) tensor of training
-                features.
-            train_Y: A `n x m` or `batch_shape x n x m` (batch mode) tensor of
-                training observations.
+            train_X: A `batch_shape x n x d` tensor of training features.
+            train_Y: A `batch_shape x n x m` tensor of training observations.
             likelihood: A likelihood. If omitted, use a standard
                 GaussianLikelihood with inferred noise level.
-            covar_module: The covariance (kernel) matrix. If omitted, use the
-                MaternKernel.
+            covar_module: The module computing the covariance (Kernel) matrix.
+                If omitted, use a `MaternKernel`.
+            outcome_transform: An outcome transform that is applied to the
+                training data during instantiation and to the posterior during
+                inference (that is, the `Posterior` obtained by calling
+                `.posterior` on the model will be on the original scale).
 
         Example:
             >>> train_X = torch.rand(20, 2)
             >>> train_Y = torch.sin(train_X).sum(dim=1, keepdim=True)
             >>> model = SingleTaskGP(train_X, train_Y)
         """
+        if outcome_transform is not None:
+            train_Y, _ = outcome_transform(train_Y)
         validate_input_scaling(train_X=train_X, train_Y=train_Y)
         self._validate_tensor_args(X=train_X, Y=train_Y)
         self._set_dimensions(train_X=train_X, train_Y=train_Y)
@@ -113,6 +119,8 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
             )
         else:
             self.covar_module = covar_module
+        if outcome_transform is not None:
+            self.outcome_transform = outcome_transform
         self.to(train_X)
 
     def forward(self, x: Tensor) -> MultivariateNormal:
@@ -132,16 +140,24 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
     This model works in batch mode (each batch having its own hyperparameters).
     """
 
-    def __init__(self, train_X: Tensor, train_Y: Tensor, train_Yvar: Tensor) -> None:
+    def __init__(
+        self,
+        train_X: Tensor,
+        train_Y: Tensor,
+        train_Yvar: Tensor,
+        outcome_transform: Optional[OutcomeTransform] = None,
+    ) -> None:
         r"""A single-task exact GP model using fixed noise levels.
 
         Args:
-            train_X: A `n x d` or `batch_shape x n x d` (batch mode) tensor of training
-                features.
-            train_Y: A `n x m` or `batch_shape x n x m` (batch mode) tensor of
-                training observations.
-            train_Yvar: A `batch_shape x n x m` or `batch_shape x n x m`
-                (batch mode) tensor of observed measurement noise.
+            train_X: A `batch_shape x n x d` tensor of training features.
+            train_Y: A `batch_shape x n x m` tensor of training observations.
+            train_Yvar: A `batch_shape x n x m` tensor of observed measurement
+                noise.
+            outcome_transform: An outcome transform that is applied to the
+                training data during instantiation and to the posterior during
+                inference (that is, the `Posterior` obtained by calling
+                `.posterior` on the model will be on the original scale).
 
         Example:
             >>> train_X = torch.rand(20, 2)
@@ -149,6 +165,8 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
             >>> train_Yvar = torch.full_like(train_Y, 0.2)
             >>> model = FixedNoiseGP(train_X, train_Y, train_Yvar)
         """
+        if outcome_transform is not None:
+            train_Y, train_Yvar = outcome_transform(train_Y, train_Yvar)
         validate_input_scaling(train_X=train_X, train_Y=train_Y, train_Yvar=train_Yvar)
         self._validate_tensor_args(X=train_X, Y=train_Y, Yvar=train_Yvar)
         self._set_dimensions(train_X=train_X, train_Y=train_Y)
@@ -172,6 +190,8 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
             batch_shape=self._aug_batch_shape,
             outputscale_prior=GammaPrior(2.0, 0.15),
         )
+        if outcome_transform is not None:
+            self.outcome_transform = outcome_transform
         self.to(train_X)
 
     def fantasize(
@@ -226,21 +246,31 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
 class HeteroskedasticSingleTaskGP(SingleTaskGP):
     r"""A single-task exact GP model using a heteroskeastic noise model.
 
-    This model internally wraps another GP (a SingleTaskGP) to model the observation
-    noise. This allows the likelihood to make out-of-sample predictions for the
-    observation noise levels.
+    This model internally wraps another GP (a SingleTaskGP) to model the
+    observation noise. This allows the likelihood to make out-of-sample
+    predictions for the observation noise levels.
     """
 
-    def __init__(self, train_X: Tensor, train_Y: Tensor, train_Yvar: Tensor) -> None:
+    def __init__(
+        self,
+        train_X: Tensor,
+        train_Y: Tensor,
+        train_Yvar: Tensor,
+        outcome_transform: Optional[OutcomeTransform] = None,
+    ) -> None:
         r"""A single-task exact GP model using a heteroskedastic noise model.
 
         Args:
-            train_X: A `n x d` or `batch_shape x n x d` (batch mode) tensor of training
-                features.
-            train_Y: A `n x m` or `batch_shape x n x m` (batch mode) tensor of
-                training observations.
-            train_Yvar: A `batch_shape x n x m` or `batch_shape x n x m`
-                (batch mode) tensor of observed measurement noise.
+            train_X: A `batch_shape x n x d` tensor of training features.
+            train_Y: A `batch_shape x n x m` tensor of training observations.
+            train_Yvar: A `batch_shape x n x m` tensor of observed measurement
+                noise.
+            outcome_transform: An outcome transform that is applied to the
+                training data during instantiation and to the posterior during
+                inference (that is, the `Posterior` obtained by calling
+                `.posterior` on the model will be on the original scale).
+                Note that the noise model internally log-transforms the
+                variances, which will happen after this transform is applied.
 
         Example:
             >>> train_X = torch.rand(20, 2)
@@ -249,6 +279,8 @@ class HeteroskedasticSingleTaskGP(SingleTaskGP):
             >>> train_Yvar = 0.1 + se * torch.rand_like(train_Y)
             >>> model = HeteroskedasticSingleTaskGP(train_X, train_Y, train_Yvar)
         """
+        if outcome_transform is not None:
+            train_Y, train_Yvar = outcome_transform(train_Y, train_Yvar)
         validate_input_scaling(train_X=train_X, train_Y=train_Y, train_Yvar=train_Yvar)
         self._validate_tensor_args(X=train_X, Y=train_Y, Yvar=train_Yvar)
         self._set_dimensions(train_X=train_X, train_Y=train_Y)
@@ -260,15 +292,19 @@ class HeteroskedasticSingleTaskGP(SingleTaskGP):
             ),
         )
         noise_model = SingleTaskGP(
-            train_X=train_X, train_Y=train_Yvar.log(), likelihood=noise_likelihood
+            train_X=train_X,
+            train_Y=train_Yvar,
+            likelihood=noise_likelihood,
+            outcome_transform=Log(),
         )
-
         likelihood = _GaussianLikelihoodBase(HeteroskedasticNoise(noise_model))
         super().__init__(train_X=train_X, train_Y=train_Y, likelihood=likelihood)
         self.register_added_loss_term("noise_added_loss")
         self.update_added_loss_term(
             "noise_added_loss", NoiseModelAddedLossTerm(noise_model)
         )
+        if outcome_transform is not None:
+            self.outcome_transform = outcome_transform
         self.to(train_X)
 
     def condition_on_observations(
