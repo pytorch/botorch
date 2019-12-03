@@ -89,13 +89,6 @@ class qMaxValueEntropy(MCAcquisitionFunction):
         sampler = SobolQMCNormalSampler(num_y_samples)
         super().__init__(model=model, sampler=sampler)
 
-        # The following check is specific to batched models
-        # @TODO: model-agnostic num_outputs check: #295
-        if self.model._num_outputs > 1:
-            raise NotImplementedError(
-                "Models with > 1 outcomes are not yet supported by qMaxValueEntropy!"
-            )
-
         # Batch GP models (e.g. fantasized models) are not currently supported
         if self.model.train_inputs[0].ndim > 2:
             raise NotImplementedError(

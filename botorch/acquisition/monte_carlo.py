@@ -65,6 +65,10 @@ class MCAcquisitionFunction(AcquisitionFunction, ABC):
             sampler = SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)
         self.add_module("sampler", sampler)
         if objective is None:
+            if model.num_outputs != 1:
+                raise UnsupportedError(
+                    "Must specify an objective when using a multi-output model."
+                )
             objective = IdentityMCObjective()
         elif not isinstance(objective, MCAcquisitionObjective):
             raise UnsupportedError(
