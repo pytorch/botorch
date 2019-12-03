@@ -38,10 +38,21 @@ NEI_NOISE = [
 ]
 
 
+class DummyAnalyticAcquisitionFunction(AnalyticAcquisitionFunction):
+    def forward(self, X):
+        pass
+
+
 class TestAnalyticAcquisitionFunction(BotorchTestCase):
     def test_abstract_raises(self):
         with self.assertRaises(TypeError):
             AnalyticAcquisitionFunction()
+        # raise if model is multi-output, but no objective is given
+        mean = torch.zeros(1, 2)
+        variance = torch.ones(1, 2)
+        mm = MockModel(MockPosterior(mean=mean, variance=variance))
+        with self.assertRaises(UnsupportedError):
+            DummyAnalyticAcquisitionFunction(model=mm)
 
 
 class TestExpectedImprovement(BotorchTestCase):
@@ -113,9 +124,8 @@ class TestExpectedImprovement(BotorchTestCase):
             mean2 = torch.rand(3, 1, 2, device=self.device, dtype=dtype)
             variance2 = torch.rand(3, 1, 2, device=self.device, dtype=dtype)
             mm2 = MockModel(MockPosterior(mean=mean2, variance=variance2))
-            module2 = ExpectedImprovement(model=mm2, best_f=0.0)
             with self.assertRaises(UnsupportedError):
-                module2(X)
+                ExpectedImprovement(model=mm2, best_f=0.0)
 
             # test objective (single-output)
             mean = torch.tensor([[[0.5]], [[0.25]]], device=self.device, dtype=dtype)
@@ -172,9 +182,8 @@ class TestPosteriorMean(BotorchTestCase):
             # check for proper error if multi-output model
             mean2 = torch.rand(1, 2, device=self.device, dtype=dtype)
             mm2 = MockModel(MockPosterior(mean=mean2))
-            module2 = PosteriorMean(model=mm2)
             with self.assertRaises(UnsupportedError):
-                module2(X)
+                PosteriorMean(model=mm2)
 
     def test_posterior_mean_batch(self):
         for dtype in (torch.float, torch.double):
@@ -189,9 +198,8 @@ class TestPosteriorMean(BotorchTestCase):
             # check for proper error if multi-output model
             mean2 = torch.rand(3, 1, 2, device=self.device, dtype=dtype)
             mm2 = MockModel(MockPosterior(mean=mean2))
-            module2 = PosteriorMean(model=mm2)
             with self.assertRaises(UnsupportedError):
-                module2(X)
+                PosteriorMean(model=mm2)
 
 
 class TestProbabilityOfImprovement(BotorchTestCase):
@@ -217,9 +225,8 @@ class TestProbabilityOfImprovement(BotorchTestCase):
             mean2 = torch.rand(1, 2, device=self.device, dtype=dtype)
             variance2 = torch.ones_like(mean2)
             mm2 = MockModel(MockPosterior(mean=mean2, variance=variance2))
-            module2 = ProbabilityOfImprovement(model=mm2, best_f=0.0)
             with self.assertRaises(UnsupportedError):
-                module2(X)
+                ProbabilityOfImprovement(model=mm2, best_f=0.0)
 
     def test_probability_of_improvement_batch(self):
         for dtype in (torch.float, torch.double):
@@ -237,9 +244,8 @@ class TestProbabilityOfImprovement(BotorchTestCase):
             mean2 = torch.rand(3, 1, 2, device=self.device, dtype=dtype)
             variance2 = torch.ones_like(mean2)
             mm2 = MockModel(MockPosterior(mean=mean2, variance=variance2))
-            module2 = ProbabilityOfImprovement(model=mm2, best_f=0.0)
             with self.assertRaises(UnsupportedError):
-                module2(X)
+                ProbabilityOfImprovement(model=mm2, best_f=0.0)
 
 
 class TestUpperConfidenceBound(BotorchTestCase):
@@ -265,9 +271,8 @@ class TestUpperConfidenceBound(BotorchTestCase):
             mean2 = torch.rand(1, 2, device=self.device, dtype=dtype)
             variance2 = torch.rand(1, 2, device=self.device, dtype=dtype)
             mm2 = MockModel(MockPosterior(mean=mean2, variance=variance2))
-            module2 = UpperConfidenceBound(model=mm2, beta=1.0)
             with self.assertRaises(UnsupportedError):
-                module2(X)
+                UpperConfidenceBound(model=mm2, beta=1.0)
 
     def test_upper_confidence_bound_batch(self):
         for dtype in (torch.float, torch.double):
@@ -287,9 +292,8 @@ class TestUpperConfidenceBound(BotorchTestCase):
             mean2 = torch.rand(3, 1, 2, device=self.device, dtype=dtype)
             variance2 = torch.rand(3, 1, 2, device=self.device, dtype=dtype)
             mm2 = MockModel(MockPosterior(mean=mean2, variance=variance2))
-            module2 = UpperConfidenceBound(model=mm2, beta=1.0)
             with self.assertRaises(UnsupportedError):
-                module2(X)
+                UpperConfidenceBound(model=mm2, beta=1.0)
 
 
 class TestConstrainedExpectedImprovement(BotorchTestCase):

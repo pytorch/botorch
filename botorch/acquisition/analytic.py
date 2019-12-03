@@ -41,37 +41,36 @@ class AnalyticAcquisitionFunction(AcquisitionFunction, ABC):
             objective: A ScalarizedObjective (optional).
         """
         super().__init__(model=model)
-        if objective is not None and not isinstance(objective, ScalarizedObjective):
+        if objective is None:
+            if model.num_outputs != 1:
+                raise UnsupportedError(
+                    "Must specify an objective when using a multi-output model."
+                )
+        elif not isinstance(objective, ScalarizedObjective):
             raise UnsupportedError(
                 "Only objectives of type ScalarizedObjective are supported for "
                 "analytic acquisition functions."
             )
         self.objective = objective
 
-    def _get_posterior(self, X: Tensor, check_single_output: bool = True) -> Posterior:
+    def _get_posterior(self, X: Tensor) -> Posterior:
         r"""Compute the posterior at the input candidate set X.
 
         Applies the objective if provided.
 
         Args:
-            X: The input candidate set
-            check_single_output: If True, Raise an error if the posterior is not
-                single-output.
+            X: The input candidate set.
 
         Returns:
-            The posterior at X.
+            The posterior at X. If a ScalarizedObjective is defined, this
+            posterior can be single-output even if the underlying model is a
+            multi-output model.
         """
         posterior = self.model.posterior(X)
         if self.objective is not None:
-            # Unlike MCAcquisitionObjectives (which transform samples), this
+            # Unlike MCAcquisitionObjective (which transform samples), this
             # transforms the posterior
             posterior = self.objective(posterior)
-        if check_single_output:
-            if posterior.event_shape[-1] != 1:
-                raise UnsupportedError(
-                    "Multi-Output posteriors are not supported for acquisition "
-                    f"functions of type {self.__class__.__name__}"
-                )
         return posterior
 
     def set_X_pending(self, X_pending: Optional[Tensor] = None) -> None:
@@ -349,7 +348,9 @@ class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
                 bounds on that output (resp. interpreted as -Inf / Inf if None)
             maximize: If True, consider the problem a maximization problem.
         """
-        super().__init__(model=model)
+        # use AcquisitionFunction constructor to avoid check for objective
+        super(AnalyticAcquisitionFunction, self).__init__(model=model)
+        self.objective = None
         self.maximize = maximize
         self.objective_index = objective_index
         self.constraints = constraints
@@ -369,7 +370,7 @@ class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
             A `(b)`-dim Tensor of Expected Improvement values at the given
             design points `X`.
         """
-        posterior = self._get_posterior(X=X, check_single_output=False)
+        posterior = self._get_posterior(X=X)
         means = posterior.mean.squeeze(dim=-2)  # (b) x m
         sigmas = posterior.variance.squeeze(dim=-2).sqrt().clamp_min(1e-9)  # (b) x m
 

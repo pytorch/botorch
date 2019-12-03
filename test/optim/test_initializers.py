@@ -189,11 +189,12 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
 
 class TestGenOneShotKGInitialConditions(BotorchTestCase):
     def test_gen_one_shot_kg_initial_conditions(self):
-        mm = MockModel(MockPosterior())
         num_fantasies = 8
         num_restarts = 4
         raw_samples = 16
         for dtype in (torch.float, torch.double):
+            mean = torch.zeros(1, 1, device=self.device, dtype=dtype)
+            mm = MockModel(MockPosterior(mean=mean))
             mock_kg = qKnowledgeGradient(model=mm, num_fantasies=num_fantasies)
             bounds = torch.tensor([[0, 0], [1, 1]], device=self.device, dtype=dtype)
             # test option error

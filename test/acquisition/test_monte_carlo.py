@@ -23,10 +23,22 @@ from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 
 
+class DummyMCAcquisitionFunction(MCAcquisitionFunction):
+    def forward(self, X):
+        pass
+
+
 class TestMCAcquisitionFunction(BotorchTestCase):
     def test_abstract_raises(self):
         with self.assertRaises(TypeError):
             MCAcquisitionFunction()
+        # raise if model is multi-output, but no objective is given
+        no = "botorch.utils.testing.MockModel.num_outputs"
+        with mock.patch(no, new_callable=mock.PropertyMock) as mock_num_outputs:
+            mock_num_outputs.return_value = 2
+            mm = MockModel(MockPosterior())
+            with self.assertRaises(UnsupportedError):
+                DummyMCAcquisitionFunction(model=mm)
 
 
 class TestQExpectedImprovement(BotorchTestCase):
@@ -341,17 +353,20 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
             self.assertFalse(torch.equal(acqf.sampler.base_samples, bs))
 
     def test_prune_baseline(self):
+        no = "botorch.utils.testing.MockModel.num_outputs"
         prune = "botorch.acquisition.monte_carlo.prune_inferior_points"
         for dtype in (torch.float, torch.double):
             X_baseline = torch.zeros(1, 1, device=self.device, dtype=dtype)
             X_pruned = torch.rand(1, 1, device=self.device, dtype=dtype)
-            mm = MockModel(mock.Mock())
-            with mock.patch(prune, return_value=X_pruned) as mock_prune:
-                acqf = qNoisyExpectedImprovement(
-                    model=mm, X_baseline=X_baseline, prune_baseline=True
-                )
-            mock_prune.assert_called_once()
-            self.assertTrue(torch.equal(acqf.X_baseline, X_pruned))
+            with mock.patch(no, new_callable=mock.PropertyMock) as mock_num_outputs:
+                mock_num_outputs.return_value = 1
+                mm = MockModel(mock.Mock())
+                with mock.patch(prune, return_value=X_pruned) as mock_prune:
+                    acqf = qNoisyExpectedImprovement(
+                        model=mm, X_baseline=X_baseline, prune_baseline=True
+                    )
+                mock_prune.assert_called_once()
+                self.assertTrue(torch.equal(acqf.X_baseline, X_pruned))
 
     # TODO: Test different objectives (incl. constraints)
 
