@@ -52,6 +52,7 @@
 <span class="kn">from</span> <span class="nn">.kernels.downsampling</span> <span class="kn">import</span> <span class="n">DownsamplingKernel</span>
 <span class="kn">from</span> <span class="nn">.kernels.exponential_decay</span> <span class="kn">import</span> <span class="n">ExponentialDecayKernel</span>
 <span class="kn">from</span> <span class="nn">.kernels.linear_truncated_fidelity</span> <span class="kn">import</span> <span class="n">LinearTruncatedFidelityKernel</span>
+<span class="kn">from</span> <span class="nn">.transforms.outcome</span> <span class="kn">import</span> <span class="n">OutcomeTransform</span>
 
 
 <div class="viewcode-block" id="SingleTaskMultiFidelityGP"><a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression_fidelity.SingleTaskMultiFidelityGP">[docs]</a><span class="k">class</span> <span class="nc">SingleTaskMultiFidelityGP</span><span class="p">(</span><span class="n">SingleTaskGP</span><span class="p">):</span>
@@ -94,6 +95,7 @@
         <span class="n">linear_truncated</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">nu</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.5</span><span class="p">,</span>
         <span class="n">likelihood</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Likelihood</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">iteration_fidelity</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">data_fidelity</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
@@ -152,7 +154,12 @@
             <span class="n">batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span><span class="p">,</span>
             <span class="n">outputscale_prior</span><span class="o">=</span><span class="n">GammaPrior</span><span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">),</span>
         <span class="p">)</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span> <span class="n">covar_module</span><span class="o">=</span><span class="n">covar_module</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span>
+            <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span>
+            <span class="n">covar_module</span><span class="o">=</span><span class="n">covar_module</span><span class="p">,</span>
+            <span class="n">outcome_transform</span><span class="o">=</span><span class="n">outcome_transform</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span></div>
 </pre></div>
 </div>

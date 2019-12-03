@@ -63,6 +63,11 @@
 <span class="sd">        """</span>
         <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">num_outputs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""The number of outputs of the model."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_outputs</span>
+
 <div class="viewcode-block" id="DeterministicModel.posterior"><a class="viewcode-back" href="../../../models.html#botorch.models.deterministic.DeterministicModel.posterior">[docs]</a>    <span class="k">def</span> <span class="nf">posterior</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">output_indices</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DeterministicPosterior</span><span class="p">:</span>
@@ -81,16 +86,18 @@
 <div class="viewcode-block" id="GenericDeterministicModel"><a class="viewcode-back" href="../../../models.html#botorch.models.deterministic.GenericDeterministicModel">[docs]</a><span class="k">class</span> <span class="nc">GenericDeterministicModel</span><span class="p">(</span><span class="n">DeterministicModel</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""A generic deterministic model constructed from a callable."""</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">num_outputs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""A generic deterministic model constructed from a callable.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            f: A callable mapping a `batch_shape x n x d`-dim input tensor `X`</span>
 <span class="sd">                to a `batch_shape x n x m`-dimensional output tensor (the</span>
 <span class="sd">                outcome dimension `m` must be explicit, even if `m=1`).</span>
+<span class="sd">            num_outputs: The number of outputs `m`.</span>
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_f</span> <span class="o">=</span> <span class="n">f</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_num_outputs</span> <span class="o">=</span> <span class="n">num_outputs</span>
 
 <div class="viewcode-block" id="GenericDeterministicModel.forward"><a class="viewcode-back" href="../../../models.html#botorch.models.deterministic.GenericDeterministicModel.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Compute the (deterministic) model output at X.</span>
@@ -130,6 +137,7 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"a"</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"b"</span><span class="p">,</span> <span class="n">b</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_num_outputs</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
 
 <div class="viewcode-block" id="AffineDeterministicModel.forward"><a class="viewcode-back" href="../../../models.html#botorch.models.deterministic.AffineDeterministicModel.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">"...d,dm"</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">)</span></div></div>

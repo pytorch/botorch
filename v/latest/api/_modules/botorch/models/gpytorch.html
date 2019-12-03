@@ -38,8 +38,8 @@
 <span class="sd">"""</span>
 
 <span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractproperty</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">gpytorch.distributions</span> <span class="kn">import</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">,</span> <span class="n">MultivariateNormal</span>
@@ -52,7 +52,6 @@
 <span class="kn">from</span> <span class="nn">..posteriors.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchPosterior</span>
 <span class="kn">from</span> <span class="nn">..utils.transforms</span> <span class="kn">import</span> <span class="n">gpt_posterior_settings</span>
 <span class="kn">from</span> <span class="nn">.model</span> <span class="kn">import</span> <span class="n">Model</span>
-<span class="kn">from</span> <span class="nn">.transforms.outcome</span> <span class="kn">import</span> <span class="n">OutcomeTransform</span>
 <span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">_make_X_full</span><span class="p">,</span> <span class="n">add_output_dim</span><span class="p">,</span> <span class="n">multioutput_to_batch_mode_transform</span>
 
 
@@ -62,8 +61,6 @@
 <span class="sd">    The easiest way to use this is to subclass a model from a GPyTorch model</span>
 <span class="sd">    class (e.g. an `ExactGP`) and this `GPyTorchModel`. See e.g. `SingleTaskGP`.</span>
 <span class="sd">    """</span>
-
-    <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">_validate_tensor_args</span><span class="p">(</span>
@@ -76,17 +73,17 @@
 <span class="sd">        the same `batch_shape`.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            X: A `n x d` or `batch_shape x n x d`-dim Tensor, where `d` is the</span>
-<span class="sd">                dimension of the feature space, `n` is the number of points per</span>
-<span class="sd">                batch, and `batch_shape` is the batch shape.</span>
-<span class="sd">            Y: A `n x m` or `batch_shape x n x m`-dim Tensor, where `m` is the</span>
-<span class="sd">                number of model outputs, `n'` is the number of points per batch,</span>
-<span class="sd">                and `batch_shape'` is the batch shape of the observations.</span>
-<span class="sd">            Yvar: A `n x m` or `batch_shape x n x m` (batch mode) tensor of</span>
-<span class="sd">                observed measurement noise. Note: this will be None when using a</span>
-<span class="sd">                model that infers the noise level (e.g. a `SingleTaskGP`).</span>
-<span class="sd">            strict: A boolean indicating whether to check that `Y` and `Yvar` have</span>
-<span class="sd">                an explicit output dimension.</span>
+<span class="sd">            X: A `batch_shape x n x d`-dim Tensor, where `d` is the dimension of</span>
+<span class="sd">                the feature space, `n` is the number of points per batch, and</span>
+<span class="sd">                `batch_shape` is the batch shape (potentially empty).</span>
+<span class="sd">            Y: A `batch_shape' x n x m`-dim Tensor, where `m` is the number of</span>
+<span class="sd">                model outputs, `n'` is the number of points per batch, and</span>
+<span class="sd">                `batch_shape'` is the batch shape of the observations.</span>
+<span class="sd">            Yvar: A `batch_shape' x n x m` tensor of observed measurement noise.</span>
+<span class="sd">                Note: this will be None when using a model that infers the noise</span>
+<span class="sd">                level (e.g. a `SingleTaskGP`).</span>
+<span class="sd">            strict: A boolean indicating whether to check that `Y` and `Yvar`</span>
+<span class="sd">                have an explicit output dimension.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="n">strict</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">!=</span> <span class="n">Y</span><span class="o">.</span><span class="n">dim</span><span class="p">():</span>
@@ -118,6 +115,11 @@
                 <span class="sa">f</span><span class="s2">" </span><span class="si">{Yvar.shape}</span><span class="s2">)."</span>
             <span class="p">)</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">num_outputs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""The number of outputs of the model."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_outputs</span>
+
 <div class="viewcode-block" id="GPyTorchModel.posterior"><a class="viewcode-back" href="../../../models.html#botorch.models.gpytorch.GPyTorchModel.posterior">[docs]</a>    <span class="k">def</span> <span class="nf">posterior</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">observation_noise</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GPyTorchPosterior</span><span class="p">:</span>
@@ -141,13 +143,17 @@
             <span class="n">mvn</span> <span class="o">=</span> <span class="bp">self</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">observation_noise</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">False</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">is_tensor</span><span class="p">(</span><span class="n">observation_noise</span><span class="p">):</span>
+                    <span class="c1"># TODO: Make sure observation noise is transformed correctly</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_validate_tensor_args</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">observation_noise</span><span class="p">)</span>
                     <span class="k">if</span> <span class="n">observation_noise</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
                         <span class="n">observation_noise</span> <span class="o">=</span> <span class="n">observation_noise</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
                     <span class="n">mvn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="p">(</span><span class="n">mvn</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">noise</span><span class="o">=</span><span class="n">observation_noise</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">mvn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="p">(</span><span class="n">mvn</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">GPyTorchPosterior</span><span class="p">(</span><span class="n">mvn</span><span class="o">=</span><span class="n">mvn</span><span class="p">)</span></div>
+        <span class="n">posterior</span> <span class="o">=</span> <span class="n">GPyTorchPosterior</span><span class="p">(</span><span class="n">mvn</span><span class="o">=</span><span class="n">mvn</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"outcome_transform"</span><span class="p">):</span>
+            <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outcome_transform</span><span class="o">.</span><span class="n">untransform_posterior</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">posterior</span></div>
 
 <div class="viewcode-block" id="GPyTorchModel.condition_on_observations"><a class="viewcode-back" href="../../../models.html#botorch.models.gpytorch.GPyTorchModel.condition_on_observations">[docs]</a>    <span class="k">def</span> <span class="nf">condition_on_observations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Model"</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Condition the model on new observations.</span>
@@ -178,17 +184,22 @@
 <span class="sd">            &gt;&gt;&gt; new_Y = torch.sin(new_X[:, 0]) + torch.cos(new_X[:, 1])</span>
 <span class="sd">            &gt;&gt;&gt; model = model.condition_on_observations(X=new_X, Y=new_Y)</span>
 <span class="sd">        """</span>
-        <span class="n">noise</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"noise"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">Yvar</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"noise"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"outcome_transform"</span><span class="p">):</span>
+            <span class="c1"># pass the transformed data to get_fantasy_model below</span>
+            <span class="c1"># (unless we've already trasnformed if BatchedMultiOutputGPyTorchModel)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">BatchedMultiOutputGPyTorchModel</span><span class="p">):</span>
+                <span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outcome_transform</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">)</span>
         <span class="c1"># validate using strict=False, since we cannot tell if Y has an explicit</span>
         <span class="c1"># output dimension</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_tensor_args</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span><span class="o">=</span><span class="n">noise</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">targets</span> <span class="o">=</span> <span class="n">Y</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">noise</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"noise"</span><span class="p">:</span> <span class="n">noise</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)})</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">targets</span> <span class="o">=</span> <span class="n">Y</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_fantasy_model</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="n">targets</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_tensor_args</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span><span class="o">=</span><span class="n">Yvar</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">Y</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">Y</span> <span class="o">=</span> <span class="n">Y</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">Yvar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"noise"</span><span class="p">:</span> <span class="n">Yvar</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)})</span>
+        <span class="c1"># get_fantasy_model will properly copy any existing outcome transforms</span>
+        <span class="c1"># (since it deepcopies the original model)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_fantasy_model</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div></div>
 
 
 <div class="viewcode-block" id="BatchedMultiOutputGPyTorchModel"><a class="viewcode-back" href="../../../models.html#botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel">[docs]</a><span class="k">class</span> <span class="nc">BatchedMultiOutputGPyTorchModel</span><span class="p">(</span><span class="n">GPyTorchModel</span><span class="p">):</span>
@@ -306,7 +317,11 @@
                     <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">output_indices</span>
                 <span class="p">]</span>
                 <span class="n">mvn</span> <span class="o">=</span> <span class="n">MultitaskMultivariateNormal</span><span class="o">.</span><span class="n">from_independent_mvns</span><span class="p">(</span><span class="n">mvns</span><span class="o">=</span><span class="n">mvns</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">GPyTorchPosterior</span><span class="p">(</span><span class="n">mvn</span><span class="o">=</span><span class="n">mvn</span><span class="p">)</span></div>
+
+        <span class="n">posterior</span> <span class="o">=</span> <span class="n">GPyTorchPosterior</span><span class="p">(</span><span class="n">mvn</span><span class="o">=</span><span class="n">mvn</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"outcome_transform"</span><span class="p">):</span>
+            <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outcome_transform</span><span class="o">.</span><span class="n">untransform_posterior</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">posterior</span></div>
 
 <div class="viewcode-block" id="BatchedMultiOutputGPyTorchModel.condition_on_observations"><a class="viewcode-back" href="../../../models.html#botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel.condition_on_observations">[docs]</a>    <span class="k">def</span> <span class="nf">condition_on_observations</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
@@ -343,6 +358,9 @@
 <span class="sd">            &gt;&gt;&gt; model = model.condition_on_observations(X=new_X, Y=new_Y)</span>
 <span class="sd">        """</span>
         <span class="n">noise</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"noise"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"outcome_transform"</span><span class="p">):</span>
+            <span class="c1"># we need to apply transforms before shifting batch indices around</span>
+            <span class="n">Y</span><span class="p">,</span> <span class="n">noise</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outcome_transform</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">noise</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_validate_tensor_args</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span><span class="o">=</span><span class="n">noise</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="n">inputs</span> <span class="o">=</span> <span class="n">X</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_outputs</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
@@ -373,11 +391,6 @@
 <span class="sd">    This is meant to be used with a gpytorch ModelList wrapper for independent</span>
 <span class="sd">    evaluation of submodels.</span>
 <span class="sd">    """</span>
-
-    <span class="nd">@abstractproperty</span>
-    <span class="k">def</span> <span class="nf">num_outputs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The number of outputs of the model."""</span>
-        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
 
 <div class="viewcode-block" id="ModelListGPyTorchModel.posterior"><a class="viewcode-back" href="../../../models.html#botorch.models.gpytorch.ModelListGPyTorchModel.posterior">[docs]</a>    <span class="k">def</span> <span class="nf">posterior</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -410,7 +423,9 @@
 <span class="sd">            `observation_noise` is specified.</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>  <span class="c1"># make sure model is in eval mode</span>
+        <span class="n">mvn_gen</span><span class="p">:</span> <span class="n">Iterator</span>
         <span class="k">with</span> <span class="n">gpt_posterior_settings</span><span class="p">():</span>
+            <span class="c1"># only compute what's necessary</span>
             <span class="k">if</span> <span class="n">output_indices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">mvns</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">forward_i</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">output_indices</span><span class="p">]</span>
                 <span class="k">if</span> <span class="n">observation_noise</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">False</span><span class="p">:</span>
@@ -430,6 +445,7 @@
                         <span class="bp">self</span><span class="o">.</span><span class="n">likelihood_i</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">mvn</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="o">**</span><span class="n">lkws</span><span class="p">)</span>
                         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">mvn</span><span class="p">,</span> <span class="n">lkws</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">output_indices</span><span class="p">,</span> <span class="n">mvns</span><span class="p">,</span> <span class="n">lh_kwargs</span><span class="p">)</span>
                     <span class="p">]</span>
+                <span class="n">mvn_gen</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="n">output_indices</span><span class="p">,</span> <span class="n">mvns</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">mvns</span> <span class="o">=</span> <span class="bp">self</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">X</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_outputs</span><span class="p">)])</span>
                 <span class="k">if</span> <span class="n">observation_noise</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">False</span><span class="p">:</span>
@@ -439,6 +455,17 @@
                         <span class="p">)</span>
                     <span class="k">else</span><span class="p">:</span>
                         <span class="n">mvns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="p">(</span><span class="o">*</span><span class="p">[(</span><span class="n">mvn</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span> <span class="k">for</span> <span class="n">mvn</span> <span class="ow">in</span> <span class="n">mvns</span><span class="p">])</span>
+                <span class="n">mvn_gen</span> <span class="o">=</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">mvns</span><span class="p">)</span>
+        <span class="c1"># apply output transforms of individual models if present</span>
+        <span class="n">mvns</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">mvn</span> <span class="ow">in</span> <span class="n">mvn_gen</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="nb">oct</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">outcome_transform</span>
+                <span class="n">tf_mvn</span> <span class="o">=</span> <span class="nb">oct</span><span class="o">.</span><span class="n">untransform_posterior</span><span class="p">(</span><span class="n">GPyTorchPosterior</span><span class="p">(</span><span class="n">mvn</span><span class="p">))</span><span class="o">.</span><span class="n">mvn</span>
+            <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                <span class="n">tf_mvn</span> <span class="o">=</span> <span class="n">mvn</span>
+            <span class="n">mvns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tf_mvn</span><span class="p">)</span>
+        <span class="c1"># return result as a GPyTorchPosteriors</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">mvns</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">GPyTorchPosterior</span><span class="p">(</span><span class="n">mvn</span><span class="o">=</span><span class="n">mvns</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
@@ -449,9 +476,9 @@
 <div class="viewcode-block" id="ModelListGPyTorchModel.condition_on_observations"><a class="viewcode-back" href="../../../models.html#botorch.models.gpytorch.ModelListGPyTorchModel.condition_on_observations">[docs]</a>    <span class="k">def</span> <span class="nf">condition_on_observations</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"ModelListGPyTorchModel"</span><span class="p">:</span>
+        <span class="n">class_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-            <span class="s2">"`condition_on_observations` not implemented in "</span>
-            <span class="s2">"`ModelListGPyTorchModel` base class"</span>
+            <span class="sa">f</span><span class="s2">"`condition_on_observations` not implemented in </span><span class="si">{class_name}</span><span class="s2">"</span>
         <span class="p">)</span></div></div>
 
 
@@ -494,6 +521,11 @@
             <span class="n">output_indices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_tasks</span>
         <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_tasks</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">output_indices</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Too many output indices"</span><span class="p">)</span>
+        <span class="n">cls_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"outcome_transform"</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Outcome transforms currently not supported by </span><span class="si">{cls_name}</span><span class="s2">"</span>
+            <span class="p">)</span>
 
         <span class="c1"># construct evaluation X</span>
         <span class="n">X_full</span> <span class="o">=</span> <span class="n">_make_X_full</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">output_indices</span><span class="o">=</span><span class="n">output_indices</span><span class="p">,</span> <span class="n">tf</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_task_feature</span><span class="p">)</span>
@@ -503,8 +535,7 @@
             <span class="n">mvn</span> <span class="o">=</span> <span class="bp">self</span><span class="p">(</span><span class="n">X_full</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">observation_noise</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">False</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-                    <span class="s2">"Specifying observation noise is not yet supported for "</span>
-                    <span class="s2">"MultiTaskGPyTorchModel"</span>
+                    <span class="sa">f</span><span class="s2">"Specifying observation noise is not yet supported by </span><span class="si">{cls_name}</span><span class="s2">"</span>
                 <span class="p">)</span>
         <span class="c1"># If single-output, return the posterior of a single-output model</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">output_indices</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>

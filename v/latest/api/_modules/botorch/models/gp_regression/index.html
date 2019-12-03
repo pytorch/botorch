@@ -59,6 +59,7 @@
 <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">settings</span>
 <span class="kn">from</span> <span class="nn">..sampling.samplers</span> <span class="kn">import</span> <span class="n">MCSampler</span>
 <span class="kn">from</span> <span class="nn">.gpytorch</span> <span class="kn">import</span> <span class="n">BatchedMultiOutputGPyTorchModel</span>
+<span class="kn">from</span> <span class="nn">.transforms.outcome</span> <span class="kn">import</span> <span class="n">Log</span><span class="p">,</span> <span class="n">OutcomeTransform</span>
 <span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">validate_input_scaling</span>
 
 
@@ -76,10 +77,10 @@
 <span class="sd">    When the training observations include multiple outputs, this model will use</span>
 <span class="sd">    batching to model outputs independently.</span>
 
-<span class="sd">    Use this model when you have independent output(s) and all outputs use the same</span>
-<span class="sd">    training data. If outputs are independent and outputs have different training</span>
-<span class="sd">    data, use the ModelListGP. When modeling correlations between outputs, use</span>
-<span class="sd">    the MultiTaskGP.</span>
+<span class="sd">    Use this model when you have independent output(s) and all outputs use the</span>
+<span class="sd">    same training data. If outputs are independent and outputs have different</span>
+<span class="sd">    training data, use the ModelListGP. When modeling correlations between</span>
+<span class="sd">    outputs, use the MultiTaskGP.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -88,24 +89,29 @@
         <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">likelihood</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Likelihood</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">covar_module</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Module</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""A single-task exact GP model.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            train_X: A `n x d` or `batch_shape x n x d` (batch mode) tensor of training</span>
-<span class="sd">                features.</span>
-<span class="sd">            train_Y: A `n x m` or `batch_shape x n x m` (batch mode) tensor of</span>
-<span class="sd">                training observations.</span>
+<span class="sd">            train_X: A `batch_shape x n x d` tensor of training features.</span>
+<span class="sd">            train_Y: A `batch_shape x n x m` tensor of training observations.</span>
 <span class="sd">            likelihood: A likelihood. If omitted, use a standard</span>
 <span class="sd">                GaussianLikelihood with inferred noise level.</span>
-<span class="sd">            covar_module: The covariance (kernel) matrix. If omitted, use the</span>
-<span class="sd">                MaternKernel.</span>
+<span class="sd">            covar_module: The module computing the covariance (Kernel) matrix.</span>
+<span class="sd">                If omitted, use a `MaternKernel`.</span>
+<span class="sd">            outcome_transform: An outcome transform that is applied to the</span>
+<span class="sd">                training data during instantiation and to the posterior during</span>
+<span class="sd">                inference (that is, the `Posterior` obtained by calling</span>
+<span class="sd">                `.posterior` on the model will be on the original scale).</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">            &gt;&gt;&gt; train_X = torch.rand(20, 2)</span>
 <span class="sd">            &gt;&gt;&gt; train_Y = torch.sin(train_X).sum(dim=1, keepdim=True)</span>
 <span class="sd">            &gt;&gt;&gt; model = SingleTaskGP(train_X, train_Y)</span>
 <span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">outcome_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">train_Y</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">outcome_transform</span><span class="p">(</span><span class="n">train_Y</span><span class="p">)</span>
         <span class="n">validate_input_scaling</span><span class="p">(</span><span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_validate_tensor_args</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_set_dimensions</span><span class="p">(</span><span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">)</span>
@@ -139,6 +145,8 @@
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span> <span class="o">=</span> <span class="n">covar_module</span>
+        <span class="k">if</span> <span class="n">outcome_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">outcome_transform</span> <span class="o">=</span> <span class="n">outcome_transform</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
 
 <div class="viewcode-block" id="SingleTaskGP.forward"><a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression.SingleTaskGP.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultivariateNormal</span><span class="p">:</span>
@@ -158,16 +166,24 @@
 <span class="sd">    This model works in batch mode (each batch having its own hyperparameters).</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""A single-task exact GP model using fixed noise levels.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            train_X: A `n x d` or `batch_shape x n x d` (batch mode) tensor of training</span>
-<span class="sd">                features.</span>
-<span class="sd">            train_Y: A `n x m` or `batch_shape x n x m` (batch mode) tensor of</span>
-<span class="sd">                training observations.</span>
-<span class="sd">            train_Yvar: A `batch_shape x n x m` or `batch_shape x n x m`</span>
-<span class="sd">                (batch mode) tensor of observed measurement noise.</span>
+<span class="sd">            train_X: A `batch_shape x n x d` tensor of training features.</span>
+<span class="sd">            train_Y: A `batch_shape x n x m` tensor of training observations.</span>
+<span class="sd">            train_Yvar: A `batch_shape x n x m` tensor of observed measurement</span>
+<span class="sd">                noise.</span>
+<span class="sd">            outcome_transform: An outcome transform that is applied to the</span>
+<span class="sd">                training data during instantiation and to the posterior during</span>
+<span class="sd">                inference (that is, the `Posterior` obtained by calling</span>
+<span class="sd">                `.posterior` on the model will be on the original scale).</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">            &gt;&gt;&gt; train_X = torch.rand(20, 2)</span>
@@ -175,6 +191,8 @@
 <span class="sd">            &gt;&gt;&gt; train_Yvar = torch.full_like(train_Y, 0.2)</span>
 <span class="sd">            &gt;&gt;&gt; model = FixedNoiseGP(train_X, train_Y, train_Yvar)</span>
 <span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">outcome_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span> <span class="o">=</span> <span class="n">outcome_transform</span><span class="p">(</span><span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">)</span>
         <span class="n">validate_input_scaling</span><span class="p">(</span><span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="o">=</span><span class="n">train_Yvar</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_validate_tensor_args</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span> <span class="n">Yvar</span><span class="o">=</span><span class="n">train_Yvar</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_set_dimensions</span><span class="p">(</span><span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">)</span>
@@ -198,6 +216,8 @@
             <span class="n">batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span><span class="p">,</span>
             <span class="n">outputscale_prior</span><span class="o">=</span><span class="n">GammaPrior</span><span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">),</span>
         <span class="p">)</span>
+        <span class="k">if</span> <span class="n">outcome_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">outcome_transform</span> <span class="o">=</span> <span class="n">outcome_transform</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
 
 <div class="viewcode-block" id="FixedNoiseGP.fantasize"><a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression.FixedNoiseGP.fantasize">[docs]</a>    <span class="k">def</span> <span class="nf">fantasize</span><span class="p">(</span>
@@ -252,21 +272,31 @@
 <div class="viewcode-block" id="HeteroskedasticSingleTaskGP"><a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression.HeteroskedasticSingleTaskGP">[docs]</a><span class="k">class</span> <span class="nc">HeteroskedasticSingleTaskGP</span><span class="p">(</span><span class="n">SingleTaskGP</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""A single-task exact GP model using a heteroskeastic noise model.</span>
 
-<span class="sd">    This model internally wraps another GP (a SingleTaskGP) to model the observation</span>
-<span class="sd">    noise. This allows the likelihood to make out-of-sample predictions for the</span>
-<span class="sd">    observation noise levels.</span>
+<span class="sd">    This model internally wraps another GP (a SingleTaskGP) to model the</span>
+<span class="sd">    observation noise. This allows the likelihood to make out-of-sample</span>
+<span class="sd">    predictions for the observation noise levels.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""A single-task exact GP model using a heteroskedastic noise model.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            train_X: A `n x d` or `batch_shape x n x d` (batch mode) tensor of training</span>
-<span class="sd">                features.</span>
-<span class="sd">            train_Y: A `n x m` or `batch_shape x n x m` (batch mode) tensor of</span>
-<span class="sd">                training observations.</span>
-<span class="sd">            train_Yvar: A `batch_shape x n x m` or `batch_shape x n x m`</span>
-<span class="sd">                (batch mode) tensor of observed measurement noise.</span>
+<span class="sd">            train_X: A `batch_shape x n x d` tensor of training features.</span>
+<span class="sd">            train_Y: A `batch_shape x n x m` tensor of training observations.</span>
+<span class="sd">            train_Yvar: A `batch_shape x n x m` tensor of observed measurement</span>
+<span class="sd">                noise.</span>
+<span class="sd">            outcome_transform: An outcome transform that is applied to the</span>
+<span class="sd">                training data during instantiation and to the posterior during</span>
+<span class="sd">                inference (that is, the `Posterior` obtained by calling</span>
+<span class="sd">                `.posterior` on the model will be on the original scale).</span>
+<span class="sd">                Note that the noise model internally log-transforms the</span>
+<span class="sd">                variances, which will happen after this transform is applied.</span>
 
 <span class="sd">        Example:</span>
 <span class="sd">            &gt;&gt;&gt; train_X = torch.rand(20, 2)</span>
@@ -275,6 +305,8 @@
 <span class="sd">            &gt;&gt;&gt; train_Yvar = 0.1 + se * torch.rand_like(train_Y)</span>
 <span class="sd">            &gt;&gt;&gt; model = HeteroskedasticSingleTaskGP(train_X, train_Y, train_Yvar)</span>
 <span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">outcome_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span> <span class="o">=</span> <span class="n">outcome_transform</span><span class="p">(</span><span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">)</span>
         <span class="n">validate_input_scaling</span><span class="p">(</span><span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="o">=</span><span class="n">train_Yvar</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_validate_tensor_args</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span> <span class="n">Yvar</span><span class="o">=</span><span class="n">train_Yvar</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_set_dimensions</span><span class="p">(</span><span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">)</span>
@@ -286,15 +318,19 @@
             <span class="p">),</span>
         <span class="p">)</span>
         <span class="n">noise_model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span>
-            <span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Yvar</span><span class="o">.</span><span class="n">log</span><span class="p">(),</span> <span class="n">likelihood</span><span class="o">=</span><span class="n">noise_likelihood</span>
+            <span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span>
+            <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Yvar</span><span class="p">,</span>
+            <span class="n">likelihood</span><span class="o">=</span><span class="n">noise_likelihood</span><span class="p">,</span>
+            <span class="n">outcome_transform</span><span class="o">=</span><span class="n">Log</span><span class="p">(),</span>
         <span class="p">)</span>
-
         <span class="n">likelihood</span> <span class="o">=</span> <span class="n">_GaussianLikelihoodBase</span><span class="p">(</span><span class="n">HeteroskedasticNoise</span><span class="p">(</span><span class="n">noise_model</span><span class="p">))</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span> <span class="n">likelihood</span><span class="o">=</span><span class="n">likelihood</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_added_loss_term</span><span class="p">(</span><span class="s2">"noise_added_loss"</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">update_added_loss_term</span><span class="p">(</span>
             <span class="s2">"noise_added_loss"</span><span class="p">,</span> <span class="n">NoiseModelAddedLossTerm</span><span class="p">(</span><span class="n">noise_model</span><span class="p">)</span>
         <span class="p">)</span>
+        <span class="k">if</span> <span class="n">outcome_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">outcome_transform</span> <span class="o">=</span> <span class="n">outcome_transform</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
 
 <div class="viewcode-block" id="HeteroskedasticSingleTaskGP.condition_on_observations"><a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression.HeteroskedasticSingleTaskGP.condition_on_observations">[docs]</a>    <span class="k">def</span> <span class="nf">condition_on_observations</span><span class="p">(</span>
