@@ -85,8 +85,8 @@ If you would like to try our bleeding edge features (and don't mind potentially
 running into the occasional bug here or there), you can install the latest
 master directly from GitHub (this will also require installing the current GPyTorch master):
 ```bash
-pip install git+https://github.com/cornellius-gp/gpytorch.git
-pip install git+https://github.com/pytorch/botorch.git
+pip install --upgrade git+https://github.com/cornellius-gp/gpytorch.git
+pip install --upgrade git+https://github.com/pytorch/botorch.git
 ```
 
 **Manual / Dev install**
