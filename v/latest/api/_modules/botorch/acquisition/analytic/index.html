@@ -67,37 +67,36 @@
 <span class="sd">            objective: A ScalarizedObjective (optional).</span>
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">objective</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="n">ScalarizedObjective</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">objective</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">num_outputs</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+                    <span class="s2">"Must specify an objective when using a multi-output model."</span>
+                <span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="n">ScalarizedObjective</span><span class="p">):</span>
             <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
                 <span class="s2">"Only objectives of type ScalarizedObjective are supported for "</span>
                 <span class="s2">"analytic acquisition functions."</span>
             <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">objective</span> <span class="o">=</span> <span class="n">objective</span>
 
-    <span class="k">def</span> <span class="nf">_get_posterior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">check_single_output</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Posterior</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">_get_posterior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Posterior</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Compute the posterior at the input candidate set X.</span>
 
 <span class="sd">        Applies the objective if provided.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            X: The input candidate set</span>
-<span class="sd">            check_single_output: If True, Raise an error if the posterior is not</span>
-<span class="sd">                single-output.</span>
+<span class="sd">            X: The input candidate set.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            The posterior at X.</span>
+<span class="sd">            The posterior at X. If a ScalarizedObjective is defined, this</span>
+<span class="sd">            posterior can be single-output even if the underlying model is a</span>
+<span class="sd">            multi-output model.</span>
 <span class="sd">        """</span>
         <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="c1"># Unlike MCAcquisitionObjectives (which transform samples), this</span>
+            <span class="c1"># Unlike MCAcquisitionObjective (which transform samples), this</span>
             <span class="c1"># transforms the posterior</span>
             <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">check_single_output</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">posterior</span><span class="o">.</span><span class="n">event_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
-                    <span class="s2">"Multi-Output posteriors are not supported for acquisition "</span>
-                    <span class="sa">f</span><span class="s2">"functions of type </span><span class="si">{self.__class__.__name__}</span><span class="s2">"</span>
-                <span class="p">)</span>
         <span class="k">return</span> <span class="n">posterior</span>
 
 <div class="viewcode-block" id="AnalyticAcquisitionFunction.set_X_pending"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.AnalyticAcquisitionFunction.set_X_pending">[docs]</a>    <span class="k">def</span> <span class="nf">set_X_pending</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -375,7 +374,9 @@
 <span class="sd">                bounds on that output (resp. interpreted as -Inf / Inf if None)</span>
 <span class="sd">            maximize: If True, consider the problem a maximization problem.</span>
 <span class="sd">        """</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
+        <span class="c1"># use AcquisitionFunction constructor to avoid check for objective</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">objective</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">maximize</span> <span class="o">=</span> <span class="n">maximize</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">objective_index</span> <span class="o">=</span> <span class="n">objective_index</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span> <span class="o">=</span> <span class="n">constraints</span>
@@ -395,7 +396,7 @@
 <span class="sd">            A `(b)`-dim Tensor of Expected Improvement values at the given</span>
 <span class="sd">            design points `X`.</span>
 <span class="sd">        """</span>
-        <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_posterior</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">check_single_output</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_posterior</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
         <span class="n">means</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mean</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># (b) x m</span>
         <span class="n">sigmas</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">variance</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sqrt</span><span class="p">()</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="mf">1e-9</span><span class="p">)</span>  <span class="c1"># (b) x m</span>
 
