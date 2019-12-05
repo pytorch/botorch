@@ -130,7 +130,6 @@ class TestMaxValueEntropySearch(BotorchTestCase):
             self.assertIsInstance(qMF_MVE.expand, Callable)
             self.assertIsInstance(qMF_MVE.project, Callable)
             self.assertIsNone(qMF_MVE.X_pending)
-            self.assertEqual(qMF_MVE.fidelity_dims, [-1])
             self.assertEqual(qMF_MVE.posterior_max_values.shape, torch.Size([10, 1]))
 
             # test evaluation

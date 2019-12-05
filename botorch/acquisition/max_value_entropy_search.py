@@ -378,7 +378,6 @@ class qMultiFidelityMaxValueEntropy(qMaxValueEntropy):
         if cost_aware_utility is None:
             cost_model = AffineFidelityCostModel(fidelity_weights={-1: 1.0})
             cost_aware_utility = InverseCostWeightedUtility(cost_model=cost_model)
-        self.fidelity_dims = cost_aware_utility.cost_model.fidelity_dims
 
         self.cost_aware_utility = cost_aware_utility
         self.expand = expand
