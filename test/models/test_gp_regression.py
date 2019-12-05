@@ -19,6 +19,7 @@ from botorch.models.transforms import Standardize
 from botorch.models.utils import add_output_dim
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling import SobolQMCNormalSampler
+from botorch.utils.sampling import manual_seed
 from botorch.utils.testing import BotorchTestCase, _get_random_data
 from gpytorch.kernels import MaternKernel, ScaleKernel
 from gpytorch.likelihoods import (
@@ -284,9 +285,10 @@ class TestFixedNoiseGP(TestSingleTaskGP):
 
 class TestHeteroskedasticSingleTaskGP(TestSingleTaskGP):
     def _get_model_and_data(self, batch_shape, m, outcome_transform=None, **tkwargs):
-        train_X, train_Y = _get_random_data(
-            batch_shape=batch_shape, num_outputs=m, **tkwargs
-        )
+        with manual_seed(0):
+            train_X, train_Y = _get_random_data(
+                batch_shape=batch_shape, num_outputs=m, **tkwargs
+            )
         train_Yvar = (0.1 + 0.1 * torch.rand_like(train_Y)) ** 2
         model_kwargs = {
             "train_X": train_X,
