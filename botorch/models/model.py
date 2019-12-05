@@ -55,6 +55,18 @@ class Model(Module, ABC):
         cls_name = self.__class__.__name__
         raise NotImplementedError(f"{cls_name} does not define num_outputs property")
 
+    def subset_output(self, idcs: List[int]) -> "Model":
+        r"""Subset the model along the output dimension.
+
+        Args:
+            idcs: The output indices to subset the model to.
+
+        Returns:
+            A `Model` object of the same type and with the same parameters as
+            the current model, subset to the specified output indices.
+        """
+        raise NotImplementedError
+
     def condition_on_observations(self, X: Tensor, Y: Tensor, **kwargs: Any) -> "Model":
         r"""Condition the model on new observations.
 

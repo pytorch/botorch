@@ -39,6 +39,11 @@ class TestDeterministicModels(BotorchTestCase):
         self.assertEqual(model.num_outputs, 2)
         p = model.posterior(X, output_indices=[0])
         self.assertTrue(torch.equal(p.mean, X[..., [0]]))
+        # test subset output
+        subset_model = model.subset_output([0])
+        self.assertIsInstance(subset_model, GenericDeterministicModel)
+        p_sub = subset_model.posterior(X)
+        self.assertTrue(torch.equal(p_sub.mean, X[..., [0]]))
 
     def test_AffineDeterministicModel(self):
         # test error on bad shape of a
@@ -65,3 +70,10 @@ class TestDeterministicModels(BotorchTestCase):
             p = model.posterior(X)
             mean_exp = model.b + (X.unsqueeze(-1) * a).sum(dim=-2)
             self.assertTrue(torch.equal(p.mean, mean_exp))
+        # test subset output
+        X = torch.rand(4, 3)
+        subset_model = model.subset_output([0])
+        self.assertIsInstance(subset_model, AffineDeterministicModel)
+        p = model.posterior(X)
+        p_sub = subset_model.posterior(X)
+        self.assertTrue(torch.equal(p_sub.mean, p.mean[..., [0]]))

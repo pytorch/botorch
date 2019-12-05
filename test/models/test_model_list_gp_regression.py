@@ -93,6 +93,15 @@ class TestModelListGP(BotorchTestCase):
                     mll, options={"maxiter": 1}, max_retries=1, sequential=False
                 )
 
+            # test subset outputs
+            subset_model = model.subset_output([1])
+            self.assertIsInstance(subset_model, ModelListGP)
+            self.assertEqual(len(subset_model.models), 1)
+            sd_subset = subset_model.models[0].state_dict()
+            sd = model.models[1].state_dict()
+            self.assertTrue(set(sd_subset.keys()) == set(sd.keys()))
+            self.assertTrue(all(torch.equal(v, sd[k]) for k, v in sd_subset.items()))
+
             # test posterior
             test_x = torch.tensor([[0.25], [0.75]], **tkwargs)
             posterior = model.posterior(test_x)

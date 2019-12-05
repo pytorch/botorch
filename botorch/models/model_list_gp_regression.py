@@ -8,7 +8,8 @@ r"""
 Model List GP Regression models.
 """
 
-from typing import Any
+from copy import deepcopy
+from typing import Any, List
 
 from gpytorch.models import IndependentModelList
 from torch import Tensor
@@ -89,3 +90,14 @@ class ModelListGP(IndependentModelList, ModelListGPyTorchModel):
         else:
             kwargs_ = kwargs
         return super().get_fantasy_model(inputs, targets, **kwargs_)
+
+    def subset_output(self, idcs: List[int]) -> "ModelListGP":
+        r"""Subset the model along the output dimension.
+
+        Args:
+            idcs: The output indices to subset the model to.
+
+        Returns:
+            The current model, subset to the specified output indices.
+        """
+        return self.__class__(*[deepcopy(self.models[i]) for i in idcs])
