@@ -404,7 +404,6 @@
         <span class="k">if</span> <span class="n">cost_aware_utility</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">cost_model</span> <span class="o">=</span> <span class="n">AffineFidelityCostModel</span><span class="p">(</span><span class="n">fidelity_weights</span><span class="o">=</span><span class="p">{</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">})</span>
             <span class="n">cost_aware_utility</span> <span class="o">=</span> <span class="n">InverseCostWeightedUtility</span><span class="p">(</span><span class="n">cost_model</span><span class="o">=</span><span class="n">cost_model</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">fidelity_dims</span> <span class="o">=</span> <span class="n">cost_aware_utility</span><span class="o">.</span><span class="n">cost_model</span><span class="o">.</span><span class="n">fidelity_dims</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">cost_aware_utility</span> <span class="o">=</span> <span class="n">cost_aware_utility</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">expand</span> <span class="o">=</span> <span class="n">expand</span>
