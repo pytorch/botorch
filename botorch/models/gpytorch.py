@@ -11,8 +11,10 @@ To implement your own, simply inherit from both the provided classes and a
 GPyTorch Model class such as an ExactGP.
 """
 
+import itertools
 import warnings
 from abc import ABC
+from copy import deepcopy
 from typing import Any, Iterator, List, Optional, Tuple, Union
 
 import torch
@@ -26,7 +28,12 @@ from ..exceptions.warnings import BotorchTensorDimensionWarning
 from ..posteriors.gpytorch import GPyTorchPosterior
 from ..utils.transforms import gpt_posterior_settings
 from .model import Model
-from .utils import _make_X_full, add_output_dim, multioutput_to_batch_mode_transform
+from .utils import (
+    _make_X_full,
+    add_output_dim,
+    mod_batch_shape,
+    multioutput_to_batch_mode_transform,
+)
 
 
 class GPyTorchModel(Model, ABC):
@@ -357,6 +364,50 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
         ]
         fantasy_model._aug_batch_shape = fantasy_model.train_targets.shape[:-1]
         return fantasy_model
+
+    def subset_output(self, idcs: List[int]) -> "BatchedMultiOutputGPyTorchModel":
+        r"""Subset the model along the output dimension.
+
+        Args:
+            idcs: The output indices to subset the model to.
+
+        Returns:
+            The current model, subset to the specified output indices.
+        """
+        try:
+            subset_batch_dict = self._subset_batch_dict
+        except AttributeError:
+            raise NotImplementedError(
+                "subset_output requires the model to define a `_subset_dict` attribute"
+            )
+
+        m = len(idcs)
+        tidxr = torch.tensor(idcs)
+        idxr = tidxr if m > 1 else idcs[0]
+        new_tail_bs = torch.Size([m]) if m > 1 else torch.Size()
+        new_model = deepcopy(self)
+
+        new_model._num_outputs = m
+        new_model._aug_batch_shape = new_model._aug_batch_shape[:-1] + new_tail_bs
+        new_model.train_inputs = tuple(
+            ti[..., idxr, :, :] for ti in new_model.train_inputs
+        )
+        new_model.train_targets = new_model.train_targets[..., idxr, :]
+
+        # adjust batch shapes of parameters/buffers if necessary
+        for full_name, p in itertools.chain(
+            new_model.named_parameters(), new_model.named_buffers()
+        ):
+            if full_name in subset_batch_dict:
+                idx = subset_batch_dict[full_name]
+                new_data = p.index_select(idx, tidxr)
+                if m == 1:
+                    new_data = new_data.squeeze(idx)
+                p.data = new_data
+            mod_name = full_name.split(".")[:-1]
+            mod_batch_shape(new_model, mod_name, m if m > 1 else 0)
+
+        return new_model
 
 
 class ModelListGPyTorchModel(GPyTorchModel, ABC):

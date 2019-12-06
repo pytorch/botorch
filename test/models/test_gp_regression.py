@@ -250,6 +250,27 @@ class TestSingleTaskGP(BotorchTestCase):
             fm = model.fantasize(X=X_f, sampler=sampler, observation_noise=False)
             self.assertIsInstance(fm, model.__class__)
 
+    def test_subset_model(self):
+        for batch_shape, dtype in itertools.product(
+            (torch.Size(), torch.Size([2])), (torch.float, torch.double)
+        ):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            model, model_kwargs = self._get_model_and_data(
+                batch_shape=batch_shape, m=2, **tkwargs
+            )
+            subset_model = model.subset_output([0])
+            X = torch.rand(torch.Size(batch_shape + torch.Size([3, 1])), **tkwargs)
+            p = model.posterior(X)
+            p_sub = subset_model.posterior(X)
+            self.assertTrue(
+                torch.allclose(p_sub.mean, p.mean[..., [0]], atol=1e-4, rtol=1e-4)
+            )
+            self.assertTrue(
+                torch.allclose(
+                    p_sub.variance, p.variance[..., [0]], atol=1e-4, rtol=1e-4
+                )
+            )
+
 
 class TestFixedNoiseGP(TestSingleTaskGP):
     def _get_model_and_data(self, batch_shape, m, outcome_transform=None, **tkwargs):
@@ -323,6 +344,10 @@ class TestHeteroskedasticSingleTaskGP(TestSingleTaskGP):
     def test_fantasize(self):
         with self.assertRaises(NotImplementedError):
             super().test_fantasize()
+
+    def test_subset_model(self):
+        with self.assertRaises(NotImplementedError):
+            super().test_subset_model()
 
 
 def _get_pvar_expected(posterior, model, X, m):

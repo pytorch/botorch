@@ -12,6 +12,7 @@ import warnings
 from typing import List, Optional, Tuple
 
 import torch
+from gpytorch.module import Module
 from gpytorch.utils.broadcasting import _mul_broadcast_shape
 from torch import Tensor
 
@@ -222,3 +223,25 @@ def validate_input_scaling(
             raise InputDataError("Input data contains negative variances.")
     check_min_max_scaling(X=train_X, raise_on_fail=raise_on_fail)
     check_standardization(Y=train_Y, raise_on_fail=raise_on_fail)
+
+
+def mod_batch_shape(module: Module, names: List[str], b: int) -> None:
+    r"""Recursive helper to modify gpytorch modules' batch shape attribute.
+
+    Modifies the module in-place.
+
+    Args:
+        module: The module to be modified.
+        names: The list of names to access the attribute. If the full name of
+            the module is `"module.sub_module.leaf_module"`, this will be
+            `["sub_module", "leaf_module"]`.
+        b: The new size of the last element of the module's `batch_shape`
+            attribute.
+    """
+    if len(names) == 0:
+        return
+    m = getattr(module, names[0])
+    if len(names) == 1 and hasattr(m, "batch_shape") and len(m.batch_shape) > 0:
+        m.batch_shape = m.batch_shape[:-1] + torch.Size([b] if b > 0 else [])
+    else:
+        mod_batch_shape(module=m, names=names[1:], b=b)

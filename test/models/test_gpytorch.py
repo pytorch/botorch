@@ -116,6 +116,9 @@ class TestGPyTorchModel(BotorchTestCase):
             )
             self.assertIsInstance(cm, SimpleGPyTorchModel)
             self.assertEqual(cm.train_targets.shape, torch.Size([7]))
+            # test subset_output
+            with self.assertRaises(NotImplementedError):
+                model.subset_output([0])
             # test fantasize
             sampler = SobolQMCNormalSampler(num_samples=2)
             cm = model.fantasize(torch.rand(2, 1, **tkwargs), sampler=sampler)
@@ -191,6 +194,9 @@ class TestBatchedMultiOutputGPyTorchModel(BotorchTestCase):
             )
             self.assertIsInstance(posterior, GPyTorchPosterior)
             self.assertEqual(posterior.mean.shape, torch.Size([2, 2]))
+            # test subset_output
+            with self.assertRaises(NotImplementedError):
+                model.subset_output([0])
             # test conditioning on observations
             cm = model.condition_on_observations(
                 torch.rand(2, 1, **tkwargs), torch.rand(2, 2, **tkwargs)

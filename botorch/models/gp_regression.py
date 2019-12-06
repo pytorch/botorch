@@ -8,7 +8,7 @@ r"""
 Gaussian Process Regression models based on GPyTorch models.
 """
 
-from typing import Any, Optional, Union
+from typing import Any, List, Optional, Union
 
 import torch
 from gpytorch.constraints.constraints import GreaterThan
@@ -117,8 +117,15 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
                 batch_shape=self._aug_batch_shape,
                 outputscale_prior=GammaPrior(2.0, 0.15),
             )
+            self._subset_batch_dict = {
+                "likelihood.noise_covar.raw_noise": -2,
+                "mean_module.constant": -2,
+                "covar_module.raw_outputscale": -1,
+                "covar_module.base_kernel.raw_lengthscale": -3,
+            }
         else:
             self.covar_module = covar_module
+        # TODO: Allow subsetting of other covar modules
         if outcome_transform is not None:
             self.outcome_transform = outcome_transform
         self.to(train_X)
@@ -192,6 +199,11 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         )
         if outcome_transform is not None:
             self.outcome_transform = outcome_transform
+        self._subset_batch_dict = {
+            "mean_module.constant": -2,
+            "covar_module.raw_outputscale": -1,
+            "covar_module.base_kernel.raw_lengthscale": -3,
+        }
         self.to(train_X)
 
     def fantasize(
@@ -241,6 +253,21 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         mean_x = self.mean_module(x)
         covar_x = self.covar_module(x)
         return MultivariateNormal(mean_x, covar_x)
+
+    def subset_output(self, idcs: List[int]) -> "BatchedMultiOutputGPyTorchModel":
+        r"""Subset the model along the output dimension.
+
+        Args:
+            idcs: The output indices to subset the model to.
+
+        Returns:
+            The current model, subset to the specified output indices.
+        """
+        new_model = super().subset_output(idcs=idcs)
+        full_noise = new_model.likelihood.noise_covar.noise
+        new_noise = full_noise[..., idcs if len(idcs) > 1 else idcs[0], :]
+        new_model.likelihood.noise_covar.noise = new_noise
+        return new_model
 
 
 class HeteroskedasticSingleTaskGP(SingleTaskGP):
@@ -310,4 +337,7 @@ class HeteroskedasticSingleTaskGP(SingleTaskGP):
     def condition_on_observations(
         self, X: Tensor, Y: Tensor, **kwargs: Any
     ) -> "HeteroskedasticSingleTaskGP":
+        raise NotImplementedError
+
+    def subset_output(self, idcs: List[int]) -> "HeteroskedasticSingleTaskGP":
         raise NotImplementedError

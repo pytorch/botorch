@@ -73,6 +73,21 @@ class GenericDeterministicModel(DeterministicModel):
         self._f = f
         self._num_outputs = num_outputs
 
+    def subset_output(self, idcs: List[int]) -> "GenericDeterministicModel":
+        r"""Subset the model along the output dimension.
+
+        Args:
+            idcs: The output indices to subset the model to.
+
+        Returns:
+            The current model, subset to the specified output indices.
+        """
+
+        def f_subset(X: Tensor) -> Tensor:
+            return self._f(X)[..., idcs]
+
+        return self.__class__(f=f_subset)
+
     def forward(self, X: Tensor) -> Tensor:
         r"""Compute the (deterministic) model output at X.
 
@@ -112,6 +127,19 @@ class AffineDeterministicModel(DeterministicModel):
         self.register_buffer("a", a)
         self.register_buffer("b", b.expand(a.size(-1)))
         self._num_outputs = a.size(-1)
+
+    def subset_output(self, idcs: List[int]) -> "AffineDeterministicModel":
+        r"""Subset the model along the output dimension.
+
+        Args:
+            idcs: The output indices to subset the model to.
+
+        Returns:
+            The current model, subset to the specified output indices.
+        """
+        a_sub = self.a.detach()[..., idcs].clone()
+        b_sub = self.b.detach()[..., idcs].clone()
+        return self.__class__(a=a_sub, b=b_sub)
 
     def forward(self, X: Tensor) -> Tensor:
         return self.b + torch.einsum("...d,dm", X, self.a)

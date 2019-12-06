@@ -24,3 +24,5 @@ class TestBaseModel(BotorchTestCase):
             model.condition_on_observations(None, None)
         with self.assertRaises(NotImplementedError):
             model.num_outputs
+        with self.assertRaises(NotImplementedError):
+            model.subset_output([0])
