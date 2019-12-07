@@ -81,6 +81,18 @@
         <span class="n">cls_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{cls_name}</span><span class="s2"> does not define num_outputs property"</span><span class="p">)</span>
 
+<div class="viewcode-block" id="Model.subset_output"><a class="viewcode-back" href="../../../models.html#botorch.models.model.Model.subset_output">[docs]</a>    <span class="k">def</span> <span class="nf">subset_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">"Model"</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Subset the model along the output dimension.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            idcs: The output indices to subset the model to.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `Model` object of the same type and with the same parameters as</span>
+<span class="sd">            the current model, subset to the specified output indices.</span>
+<span class="sd">        """</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
 <div class="viewcode-block" id="Model.condition_on_observations"><a class="viewcode-back" href="../../../models.html#botorch.models.model.Model.condition_on_observations">[docs]</a>    <span class="k">def</span> <span class="nf">condition_on_observations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Model"</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Condition the model on new observations.</span>
 

@@ -37,8 +37,10 @@
 <span class="sd">GPyTorch Model class such as an ExactGP.</span>
 <span class="sd">"""</span>
 
+<span class="kn">import</span> <span class="nn">itertools</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
@@ -52,7 +54,12 @@
 <span class="kn">from</span> <span class="nn">..posteriors.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchPosterior</span>
 <span class="kn">from</span> <span class="nn">..utils.transforms</span> <span class="kn">import</span> <span class="n">gpt_posterior_settings</span>
 <span class="kn">from</span> <span class="nn">.model</span> <span class="kn">import</span> <span class="n">Model</span>
-<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">_make_X_full</span><span class="p">,</span> <span class="n">add_output_dim</span><span class="p">,</span> <span class="n">multioutput_to_batch_mode_transform</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">_make_X_full</span><span class="p">,</span>
+    <span class="n">add_output_dim</span><span class="p">,</span>
+    <span class="n">mod_batch_shape</span><span class="p">,</span>
+    <span class="n">multioutput_to_batch_mode_transform</span><span class="p">,</span>
+<span class="p">)</span>
 
 
 <div class="viewcode-block" id="GPyTorchModel"><a class="viewcode-back" href="../../../models.html#botorch.models.gpytorch.GPyTorchModel">[docs]</a><span class="k">class</span> <span class="nc">GPyTorchModel</span><span class="p">(</span><span class="n">Model</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
@@ -382,7 +389,51 @@
             <span class="p">:</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_outputs</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
         <span class="p">]</span>
         <span class="n">fantasy_model</span><span class="o">.</span><span class="n">_aug_batch_shape</span> <span class="o">=</span> <span class="n">fantasy_model</span><span class="o">.</span><span class="n">train_targets</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">fantasy_model</span></div></div>
+        <span class="k">return</span> <span class="n">fantasy_model</span></div>
+
+<div class="viewcode-block" id="BatchedMultiOutputGPyTorchModel.subset_output"><a class="viewcode-back" href="../../../models.html#botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel.subset_output">[docs]</a>    <span class="k">def</span> <span class="nf">subset_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">"BatchedMultiOutputGPyTorchModel"</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Subset the model along the output dimension.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            idcs: The output indices to subset the model to.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The current model, subset to the specified output indices.</span>
+<span class="sd">        """</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">subset_batch_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subset_batch_dict</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="s2">"subset_output requires the model to define a `_subset_dict` attribute"</span>
+            <span class="p">)</span>
+
+        <span class="n">m</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">idcs</span><span class="p">)</span>
+        <span class="n">tidxr</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">idcs</span><span class="p">)</span>
+        <span class="n">idxr</span> <span class="o">=</span> <span class="n">tidxr</span> <span class="k">if</span> <span class="n">m</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">idcs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">new_tail_bs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">m</span><span class="p">])</span> <span class="k">if</span> <span class="n">m</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">()</span>
+        <span class="n">new_model</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="n">new_model</span><span class="o">.</span><span class="n">_num_outputs</span> <span class="o">=</span> <span class="n">m</span>
+        <span class="n">new_model</span><span class="o">.</span><span class="n">_aug_batch_shape</span> <span class="o">=</span> <span class="n">new_model</span><span class="o">.</span><span class="n">_aug_batch_shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">new_tail_bs</span>
+        <span class="n">new_model</span><span class="o">.</span><span class="n">train_inputs</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+            <span class="n">ti</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idxr</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="k">for</span> <span class="n">ti</span> <span class="ow">in</span> <span class="n">new_model</span><span class="o">.</span><span class="n">train_inputs</span>
+        <span class="p">)</span>
+        <span class="n">new_model</span><span class="o">.</span><span class="n">train_targets</span> <span class="o">=</span> <span class="n">new_model</span><span class="o">.</span><span class="n">train_targets</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idxr</span><span class="p">,</span> <span class="p">:]</span>
+
+        <span class="c1"># adjust batch shapes of parameters/buffers if necessary</span>
+        <span class="k">for</span> <span class="n">full_name</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="p">(</span>
+            <span class="n">new_model</span><span class="o">.</span><span class="n">named_parameters</span><span class="p">(),</span> <span class="n">new_model</span><span class="o">.</span><span class="n">named_buffers</span><span class="p">()</span>
+        <span class="p">):</span>
+            <span class="k">if</span> <span class="n">full_name</span> <span class="ow">in</span> <span class="n">subset_batch_dict</span><span class="p">:</span>
+                <span class="n">idx</span> <span class="o">=</span> <span class="n">subset_batch_dict</span><span class="p">[</span><span class="n">full_name</span><span class="p">]</span>
+                <span class="n">new_data</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">index_select</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">tidxr</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">m</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">new_data</span> <span class="o">=</span> <span class="n">new_data</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+                <span class="n">p</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">new_data</span>
+            <span class="n">mod_name</span> <span class="o">=</span> <span class="n">full_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">mod_batch_shape</span><span class="p">(</span><span class="n">new_model</span><span class="p">,</span> <span class="n">mod_name</span><span class="p">,</span> <span class="n">m</span> <span class="k">if</span> <span class="n">m</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">new_model</span></div></div>
 
 
 <div class="viewcode-block" id="ModelListGPyTorchModel"><a class="viewcode-back" href="../../../models.html#botorch.models.gpytorch.ModelListGPyTorchModel">[docs]</a><span class="k">class</span> <span class="nc">ModelListGPyTorchModel</span><span class="p">(</span><span class="n">GPyTorchModel</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>

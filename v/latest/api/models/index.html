@@ -74,6 +74,23 @@ over <cite>q</cite> points and <cite>m</cite> outputs each.</p>
 </dl>
 </dd></dl>
 <dl class="method">
+<dt id="botorch.models.model.Model.subset_output">
+<code class="sig-name descname">subset_output</code><span class="sig-paren">(</span><em class="sig-param">idcs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model.html#Model.subset_output"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.model.Model.subset_output" title="Permalink to this definition">¶</a></dt>
+<dd><p>Subset the model along the output dimension.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>idcs</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The output indices to subset the model to.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>Model</cite> object of the same type and with the same parameters as
+the current model, subset to the specified output indices.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="method">
 <dt id="botorch.models.model.Model.condition_on_observations">
 <code class="sig-name descname">condition_on_observations</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">Y</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model.html#Model.condition_on_observations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.model.Model.condition_on_observations" title="Permalink to this definition">¶</a></dt>
 <dd><p>Condition the model on new observations.</p>
@@ -302,6 +319,22 @@ observations passed in via kwargs).</p>
 </pre></div>
 </div>
 </dd></dl>
+<dl class="method">
+<dt id="botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel.subset_output">
+<code class="sig-name descname">subset_output</code><span class="sig-paren">(</span><em class="sig-param">idcs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gpytorch.html#BatchedMultiOutputGPyTorchModel.subset_output"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel.subset_output" title="Permalink to this definition">¶</a></dt>
+<dd><p>Subset the model along the output dimension.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>idcs</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The output indices to subset the model to.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel" title="botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">BatchedMultiOutputGPyTorchModel</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The current model, subset to the specified output indices.</p>
+</dd>
+</dl>
+</dd></dl>
 </dd></dl>
 <dl class="class">
 <dt id="botorch.models.gpytorch.ModelListGPyTorchModel">
@@ -491,6 +524,22 @@ outcome dimension <cite>m</cite> must be explicit, even if <cite>m=1</cite>).</p
 </dd>
 </dl>
 <dl class="method">
+<dt id="botorch.models.deterministic.GenericDeterministicModel.subset_output">
+<code class="sig-name descname">subset_output</code><span class="sig-paren">(</span><em class="sig-param">idcs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/deterministic.html#GenericDeterministicModel.subset_output"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.deterministic.GenericDeterministicModel.subset_output" title="Permalink to this definition">¶</a></dt>
+<dd><p>Subset the model along the output dimension.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>idcs</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The output indices to subset the model to.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#botorch.models.deterministic.GenericDeterministicModel" title="botorch.models.deterministic.GenericDeterministicModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenericDeterministicModel</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The current model, subset to the specified output indices.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="method">
 <dt id="botorch.models.deterministic.GenericDeterministicModel.forward">
 <code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param">X</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/deterministic.html#GenericDeterministicModel.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.deterministic.GenericDeterministicModel.forward" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute the (deterministic) model output at X.</p>
@@ -528,6 +577,22 @@ different offset values for for the <cite>m</cite> different outputs).</p></li>
 </ul>
 </dd>
 </dl>
+<dl class="method">
+<dt id="botorch.models.deterministic.AffineDeterministicModel.subset_output">
+<code class="sig-name descname">subset_output</code><span class="sig-paren">(</span><em class="sig-param">idcs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/deterministic.html#AffineDeterministicModel.subset_output"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.deterministic.AffineDeterministicModel.subset_output" title="Permalink to this definition">¶</a></dt>
+<dd><p>Subset the model along the output dimension.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>idcs</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The output indices to subset the model to.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#botorch.models.deterministic.AffineDeterministicModel" title="botorch.models.deterministic.AffineDeterministicModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">AffineDeterministicModel</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The current model, subset to the specified output indices.</p>
+</dd>
+</dl>
+</dd></dl>
 <dl class="method">
 <dt id="botorch.models.deterministic.AffineDeterministicModel.forward">
 <code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param">X</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/deterministic.html#AffineDeterministicModel.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.deterministic.AffineDeterministicModel.forward" title="Permalink to this definition">¶</a></dt>
@@ -743,6 +808,22 @@ registered hooks while the latter silently ignores them.</p>
 </dd>
 </dl>
 </dd></dl>
+<dl class="method">
+<dt id="botorch.models.gp_regression.FixedNoiseGP.subset_output">
+<code class="sig-name descname">subset_output</code><span class="sig-paren">(</span><em class="sig-param">idcs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#FixedNoiseGP.subset_output"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gp_regression.FixedNoiseGP.subset_output" title="Permalink to this definition">¶</a></dt>
+<dd><p>Subset the model along the output dimension.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>idcs</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The output indices to subset the model to.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel" title="botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">BatchedMultiOutputGPyTorchModel</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The current model, subset to the specified output indices.</p>
+</dd>
+</dl>
+</dd></dl>
 </dd></dl>
 <dl class="class">
 <dt id="botorch.models.gp_regression.HeteroskedasticSingleTaskGP">
@@ -818,6 +899,22 @@ observations passed in via kwargs).</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">condition_on_observations</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">new_X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">new_Y</span><span class="p">)</span>
 </pre></div>
 </div>
+</dd></dl>
+<dl class="method">
+<dt id="botorch.models.gp_regression.HeteroskedasticSingleTaskGP.subset_output">
+<code class="sig-name descname">subset_output</code><span class="sig-paren">(</span><em class="sig-param">idcs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#HeteroskedasticSingleTaskGP.subset_output"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gp_regression.HeteroskedasticSingleTaskGP.subset_output" title="Permalink to this definition">¶</a></dt>
+<dd><p>Subset the model along the output dimension.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>idcs</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The output indices to subset the model to.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#botorch.models.gp_regression.HeteroskedasticSingleTaskGP" title="botorch.models.gp_regression.HeteroskedasticSingleTaskGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">HeteroskedasticSingleTaskGP</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The current model, subset to the specified output indices.</p>
+</dd>
+</dl>
 </dd></dl>
 </dd></dl>
 </div>
@@ -949,6 +1046,22 @@ conditioned on the new observations <cite>(X, Y)</cite> (and possibly noise
 observations passed in via kwargs). Here the <cite>i</cite>-th model has
 <cite>n_i + n’</cite> training examples, where the <cite>n’</cite> training examples have
 been added and all test-time caches have been updated.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="method">
+<dt id="botorch.models.model_list_gp_regression.ModelListGP.subset_output">
+<code class="sig-name descname">subset_output</code><span class="sig-paren">(</span><em class="sig-param">idcs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model_list_gp_regression.html#ModelListGP.subset_output"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.model_list_gp_regression.ModelListGP.subset_output" title="Permalink to this definition">¶</a></dt>
+<dd><p>Subset the model along the output dimension.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>idcs</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The output indices to subset the model to.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#botorch.models.model_list_gp_regression.ModelListGP" title="botorch.models.model_list_gp_regression.ModelListGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">ModelListGP</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The current model, subset to the specified output indices.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2002,6 +2115,27 @@ No checks (other than the NaN check) are performed for observed variances
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="function">
+<dt id="botorch.models.utils.mod_batch_shape">
+<code class="sig-prename descclassname">botorch.models.utils.</code><code class="sig-name descname">mod_batch_shape</code><span class="sig-paren">(</span><em class="sig-param">module</em>, <em class="sig-param">names</em>, <em class="sig-param">b</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/utils.html#mod_batch_shape"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.utils.mod_batch_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>Recursive helper to modify gpytorch modules’ batch shape attribute.</p>
+<p>Modifies the module in-place.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>module</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>) – The module to be modified.</p></li>
+<li><p><strong>names</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – The list of names to access the attribute. If the full name of
+the module is <cite>“module.sub_module.leaf_module”</cite>, this will be
+<cite>[“sub_module”, “leaf_module”]</cite>.</p></li>
+<li><p><strong>b</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The new size of the last element of the module’s <cite>batch_shape</cite>
+attribute.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>

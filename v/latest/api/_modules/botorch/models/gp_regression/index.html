@@ -34,7 +34,7 @@
 <span class="sd">Gaussian Process Regression models based on GPyTorch models.</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">gpytorch.constraints.constraints</span> <span class="kn">import</span> <span class="n">GreaterThan</span>
@@ -143,8 +143,15 @@
                 <span class="n">batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span><span class="p">,</span>
                 <span class="n">outputscale_prior</span><span class="o">=</span><span class="n">GammaPrior</span><span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">),</span>
             <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_subset_batch_dict</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">"likelihood.noise_covar.raw_noise"</span><span class="p">:</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
+                <span class="s2">"mean_module.constant"</span><span class="p">:</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
+                <span class="s2">"covar_module.raw_outputscale"</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+                <span class="s2">"covar_module.base_kernel.raw_lengthscale"</span><span class="p">:</span> <span class="o">-</span><span class="mi">3</span><span class="p">,</span>
+            <span class="p">}</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span> <span class="o">=</span> <span class="n">covar_module</span>
+        <span class="c1"># TODO: Allow subsetting of other covar modules</span>
         <span class="k">if</span> <span class="n">outcome_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">outcome_transform</span> <span class="o">=</span> <span class="n">outcome_transform</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
@@ -218,6 +225,11 @@
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">outcome_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">outcome_transform</span> <span class="o">=</span> <span class="n">outcome_transform</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_subset_batch_dict</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"mean_module.constant"</span><span class="p">:</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
+            <span class="s2">"covar_module.raw_outputscale"</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+            <span class="s2">"covar_module.base_kernel.raw_lengthscale"</span><span class="p">:</span> <span class="o">-</span><span class="mi">3</span><span class="p">,</span>
+        <span class="p">}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
 
 <div class="viewcode-block" id="FixedNoiseGP.fantasize"><a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression.FixedNoiseGP.fantasize">[docs]</a>    <span class="k">def</span> <span class="nf">fantasize</span><span class="p">(</span>
@@ -266,7 +278,22 @@
 <div class="viewcode-block" id="FixedNoiseGP.forward"><a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression.FixedNoiseGP.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultivariateNormal</span><span class="p">:</span>
         <span class="n">mean_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="n">covar_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">mean_x</span><span class="p">,</span> <span class="n">covar_x</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">mean_x</span><span class="p">,</span> <span class="n">covar_x</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="FixedNoiseGP.subset_output"><a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression.FixedNoiseGP.subset_output">[docs]</a>    <span class="k">def</span> <span class="nf">subset_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">"BatchedMultiOutputGPyTorchModel"</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Subset the model along the output dimension.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            idcs: The output indices to subset the model to.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The current model, subset to the specified output indices.</span>
+<span class="sd">        """</span>
+        <span class="n">new_model</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">subset_output</span><span class="p">(</span><span class="n">idcs</span><span class="o">=</span><span class="n">idcs</span><span class="p">)</span>
+        <span class="n">full_noise</span> <span class="o">=</span> <span class="n">new_model</span><span class="o">.</span><span class="n">likelihood</span><span class="o">.</span><span class="n">noise_covar</span><span class="o">.</span><span class="n">noise</span>
+        <span class="n">new_noise</span> <span class="o">=</span> <span class="n">full_noise</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idcs</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">idcs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">idcs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">:]</span>
+        <span class="n">new_model</span><span class="o">.</span><span class="n">likelihood</span><span class="o">.</span><span class="n">noise_covar</span><span class="o">.</span><span class="n">noise</span> <span class="o">=</span> <span class="n">new_noise</span>
+        <span class="k">return</span> <span class="n">new_model</span></div></div>
 
 
 <div class="viewcode-block" id="HeteroskedasticSingleTaskGP"><a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression.HeteroskedasticSingleTaskGP">[docs]</a><span class="k">class</span> <span class="nc">HeteroskedasticSingleTaskGP</span><span class="p">(</span><span class="n">SingleTaskGP</span><span class="p">):</span>
@@ -336,6 +363,9 @@
 <div class="viewcode-block" id="HeteroskedasticSingleTaskGP.condition_on_observations"><a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression.HeteroskedasticSingleTaskGP.condition_on_observations">[docs]</a>    <span class="k">def</span> <span class="nf">condition_on_observations</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"HeteroskedasticSingleTaskGP"</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="HeteroskedasticSingleTaskGP.subset_output"><a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression.HeteroskedasticSingleTaskGP.subset_output">[docs]</a>    <span class="k">def</span> <span class="nf">subset_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">"HeteroskedasticSingleTaskGP"</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span></div></div>
 </pre></div>
 </div>

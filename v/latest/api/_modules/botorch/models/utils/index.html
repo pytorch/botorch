@@ -38,6 +38,7 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">gpytorch.module</span> <span class="kn">import</span> <span class="n">Module</span>
 <span class="kn">from</span> <span class="nn">gpytorch.utils.broadcasting</span> <span class="kn">import</span> <span class="n">_mul_broadcast_shape</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
@@ -248,6 +249,28 @@
             <span class="k">raise</span> <span class="n">InputDataError</span><span class="p">(</span><span class="s2">"Input data contains negative variances."</span><span class="p">)</span>
     <span class="n">check_min_max_scaling</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">raise_on_fail</span><span class="o">=</span><span class="n">raise_on_fail</span><span class="p">)</span>
     <span class="n">check_standardization</span><span class="p">(</span><span class="n">Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">,</span> <span class="n">raise_on_fail</span><span class="o">=</span><span class="n">raise_on_fail</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="mod_batch_shape"><a class="viewcode-back" href="../../../models.html#botorch.models.utils.mod_batch_shape">[docs]</a><span class="k">def</span> <span class="nf">mod_batch_shape</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">b</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""Recursive helper to modify gpytorch modules' batch shape attribute.</span>
+
+<span class="sd">    Modifies the module in-place.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        module: The module to be modified.</span>
+<span class="sd">        names: The list of names to access the attribute. If the full name of</span>
+<span class="sd">            the module is `"module.sub_module.leaf_module"`, this will be</span>
+<span class="sd">            `["sub_module", "leaf_module"]`.</span>
+<span class="sd">        b: The new size of the last element of the module's `batch_shape`</span>
+<span class="sd">            attribute.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">names</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">names</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">names</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="s2">"batch_shape"</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">batch_shape</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">b</span><span class="p">]</span> <span class="k">if</span> <span class="n">b</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="p">[])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">mod_batch_shape</span><span class="p">(</span><span class="n">module</span><span class="o">=</span><span class="n">m</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="n">names</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">b</span><span class="o">=</span><span class="n">b</span><span class="p">)</span></div>
 </pre></div>
 </div>
 </div>
