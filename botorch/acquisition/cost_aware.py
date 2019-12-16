@@ -92,6 +92,7 @@ class InverseCostWeightedUtility(CostAwareUtility):
         cost_model: Model,
         use_mean: bool = True,
         cost_objective: Optional[MCAcquisitionObjective] = None,
+        min_cost: float = 1e-2,
     ) -> None:
         r"""Cost-aware utility that weights increase in utiltiy by inverse cost.
 
@@ -106,7 +107,8 @@ class InverseCostWeightedUtility(CostAwareUtility):
                 posterior samples from the cost model. This can be used e.g. to
                 un-transform predictions/samples of a cost model fit on the
                 log-transformed cost (often done to ensure non-negativity).
-
+            min_cost: A value used to clamp the cost samples so that they are not
+                too close to zero, which may cause numerical issues.
         Returns:
             The inverse-cost-weighted utiltiy.
         """
@@ -116,6 +118,7 @@ class InverseCostWeightedUtility(CostAwareUtility):
         self.cost_model = cost_model
         self.cost_objective = cost_objective
         self._use_mean = use_mean
+        self._min_cost = min_cost
 
     def forward(
         self,
@@ -157,9 +160,9 @@ class InverseCostWeightedUtility(CostAwareUtility):
                     "Encountered negative cost values in InverseCostWeightedUtility",
                     CostAwareWarning,
                 )
-        # clamp and sum cost across elements of the q-batch - this will be of
-        # shape `num_fantasies x batch_shape` or `batch_shape`
-        cost = cost.clamp_min(0.0).sum(dim=-1)
+        # clamp (away from zero) and sum cost across elements of the q-batch -
+        # this will be of shape `num_fantasies x batch_shape` or `batch_shape`
+        cost = cost.clamp_min(self._min_cost).sum(dim=-1)
 
         # if we are doing inverse weighting on the sample level, clamp numerator.
         if not self._use_mean:

@@ -83,3 +83,13 @@ class TestCostAwareUtilities(BotorchTestCase):
                 self.assertTrue(
                     torch.equal(ratios, deltas / samples.squeeze(-1).sum(dim=-1))
                 )
+
+                # test min cost
+                mm = MockModel(MockPosterior(mean=mean))
+                icwu = InverseCostWeightedUtility(mm, min_cost=1.5)
+                ratios = icwu(X, deltas)
+                self.assertTrue(
+                    torch.equal(
+                        ratios, deltas / mean.clamp_min(1.5).squeeze(-1).sum(dim=-1)
+                    )
+                )
