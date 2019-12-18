@@ -1499,7 +1499,7 @@ current state at <cite>X</cite> for each t-batch.</p></li>
 </dd></dl>
 <dl class="class">
 <dt id="botorch.acquisition.cost_aware.InverseCostWeightedUtility">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.acquisition.cost_aware.</code><code class="sig-name descname">InverseCostWeightedUtility</code><span class="sig-paren">(</span><em class="sig-param">cost_model</em>, <em class="sig-param">use_mean=True</em>, <em class="sig-param">cost_objective=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/cost_aware.html#InverseCostWeightedUtility"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.cost_aware.InverseCostWeightedUtility" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">botorch.acquisition.cost_aware.</code><code class="sig-name descname">InverseCostWeightedUtility</code><span class="sig-paren">(</span><em class="sig-param">cost_model</em>, <em class="sig-param">use_mean=True</em>, <em class="sig-param">cost_objective=None</em>, <em class="sig-param">min_cost=0.01</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/cost_aware.html#InverseCostWeightedUtility"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.cost_aware.InverseCostWeightedUtility" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.cost_aware.CostAwareUtility" title="botorch.acquisition.cost_aware.CostAwareUtility"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.cost_aware.CostAwareUtility</span></code></a></p>
 <p>A cost-aware utility using inverse cost weighting based on a model.</p>
 <p>Computes the cost-aware utility by inverse-weighting samples
@@ -1524,6 +1524,8 @@ samples from the cost model.</p></li>
 posterior samples from the cost model. This can be used e.g. to
 un-transform predictions/samples of a cost model fit on the
 log-transformed cost (often done to ensure non-negativity).</p></li>
+<li><p><strong>min_cost</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – A value used to clamp the cost samples so that they are not
+too close to zero, which may cause numerical issues.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
