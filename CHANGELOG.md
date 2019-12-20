@@ -2,6 +2,58 @@
 
 The release log for BoTorch.
 
+## [0.2.0] - Dec 20, 2019
+
+Max-value entropy acqusition function, cost-aware / multifidelity optimization,
+subsetting models, outcome transforms.
+
+#### Compatibility
+* Require PyTorch >=1.3.1 (#313).
+* Require GPyTorch >=1.0 (#342).
+
+#### New Features
+* Add cost-aware KnowledgeGradient (`qMultiFidelityKnowledgeGradient`) for
+  multi-fidelity optimization (#292).
+* Add `qMaxValueEntropy` and `qMultiFidelityMaxValueEntropy` max-value entropy
+  search acquisition functions (#298).
+* Add `subset_output` functionality to (most) models (#324).
+* Add outcome transforms and input transforms (#321).
+* Add `outcome_transform` kwarg to model constructors for automatic outcome
+  transformation and un-transformation (#327).
+* Add cost-aware utilities for cost-sensitive acquisiiton functions (#289).
+* Add `DeterminsticModel` and `DetermisticPosterior` abstractions (#288).
+* Add `AffineFidelityCostModel` (f838eacb4258f570c3086d7cbd9aa3cf9ce67904).
+* Add `project_to_target_fidelity` and `expand_trace_observations` utilties for
+  use in multi-fidelity optimization (1ca12ac0736e39939fff650cae617680c1a16933).
+
+#### Performance Improvements
+* New `prune_baseline` option for pruning `X_baseline` in
+  `qNoisyExpectedImprovement` (#287).
+* Do not use approximate MLL computation for deterministic fitting (#314).
+* Avoid re-evaluating the acquisition function in `gen_candidates_torch` (#319).
+* Use CPU where possible in `gen_batch_initial_conditions` to avoid memory
+  issues on the GPU (#323).
+
+#### Bug fixes
+* Properly register `NoiseModelAddedLossTerm` in `HeteroskedasticSingleTaskGP`
+  (671c93a203b03ef03592ce322209fc5e71f23a74).
+* Fix batch mode for `MultiTaskGPyTorchModel` (#316).
+* Honor `propagate_grads` argument in `fantasize` of `FixedNoiseGP` (#303).
+* Properly handle `diag` arg in `LinearTruncatedFidelityKernel` (#320).
+
+#### Other changes
+* Consolidate and simplify multi-fidelity models (#308).
+* New license header style (#309).
+* Validate shape of `best_f` in `qExpectedImprovement` (#299).
+* Support specifying observation noise explicitly for all models (#256).
+* Add `num_outputs` property to the `Model` API (#330).
+* Validate output shape of models upon instantiating acquisition functions (#331).
+
+#### Tests
+* Silence warnings outside of explicit tests (#290).
+* Enforce full sphinx docs coverage in CI (#294).
+
+
 ## [0.1.4] - Oct 1, 2019
 
 Knowledge Gradient acquisition function (one-shot), various maintenance
