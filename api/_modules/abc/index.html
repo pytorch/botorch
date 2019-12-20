@@ -68,7 +68,7 @@
 
     <span class="n">__isabstractmethod__</span> <span class="o">=</span> <span class="kc">True</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callable</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callable</span><span class="p">):</span>
         <span class="n">callable</span><span class="o">.</span><span class="n">__isabstractmethod__</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">callable</span><span class="p">)</span>
 
@@ -91,7 +91,7 @@
 
     <span class="n">__isabstractmethod__</span> <span class="o">=</span> <span class="kc">True</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callable</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callable</span><span class="p">):</span>
         <span class="n">callable</span><span class="o">.</span><span class="n">__isabstractmethod__</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">callable</span><span class="p">)</span>
 
@@ -128,11 +128,11 @@
 
 
 <span class="k">try</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">_abc</span> <span class="k">import</span> <span class="p">(</span><span class="n">get_cache_token</span><span class="p">,</span> <span class="n">_abc_init</span><span class="p">,</span> <span class="n">_abc_register</span><span class="p">,</span>
+    <span class="kn">from</span> <span class="nn">_abc</span> <span class="kn">import</span> <span class="p">(</span><span class="n">get_cache_token</span><span class="p">,</span> <span class="n">_abc_init</span><span class="p">,</span> <span class="n">_abc_register</span><span class="p">,</span>
                       <span class="n">_abc_instancecheck</span><span class="p">,</span> <span class="n">_abc_subclasscheck</span><span class="p">,</span> <span class="n">_get_dump</span><span class="p">,</span>
                       <span class="n">_reset_registry</span><span class="p">,</span> <span class="n">_reset_caches</span><span class="p">)</span>
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">_py_abc</span> <span class="k">import</span> <span class="n">ABCMeta</span><span class="p">,</span> <span class="n">get_cache_token</span>
+    <span class="kn">from</span> <span class="nn">_py_abc</span> <span class="kn">import</span> <span class="n">ABCMeta</span><span class="p">,</span> <span class="n">get_cache_token</span>
     <span class="n">ABCMeta</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">=</span> <span class="s1">'abc'</span>
 <span class="k">else</span><span class="p">:</span>
     <span class="k">class</span> <span class="nc">ABCMeta</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
@@ -148,7 +148,7 @@
 <span class="sd">        implementations defined by the registering ABC be callable (not</span>
 <span class="sd">        even via super()).</span>
 <span class="sd">        """</span>
-        <span class="k">def</span> <span class="nf">__new__</span><span class="p">(</span><span class="n">mcls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">namespace</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="n">mcls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">namespace</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
             <span class="bp">cls</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="n">mcls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">namespace</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
             <span class="n">_abc_init</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
             <span class="k">return</span> <span class="bp">cls</span>
@@ -160,24 +160,24 @@
 <span class="sd">            """</span>
             <span class="k">return</span> <span class="n">_abc_register</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">)</span>
 
-        <span class="k">def</span> <span class="nf">__instancecheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">instance</span><span class="p">):</span>
+        <span class="k">def</span> <span class="fm">__instancecheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">instance</span><span class="p">):</span>
             <span class="sd">"""Override for isinstance(instance, cls)."""</span>
             <span class="k">return</span> <span class="n">_abc_instancecheck</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">instance</span><span class="p">)</span>
 
-        <span class="k">def</span> <span class="nf">__subclasscheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">):</span>
+        <span class="k">def</span> <span class="fm">__subclasscheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">):</span>
             <span class="sd">"""Override for issubclass(subclass, cls)."""</span>
             <span class="k">return</span> <span class="n">_abc_subclasscheck</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">_dump_registry</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
             <span class="sd">"""Debug helper to print the ABC registry."""</span>
-            <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s2">"Class: </span><span class="si">{cls.__module__}</span><span class="s2">.</span><span class="si">{cls.__qualname__}</span><span class="s2">"</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s2">"Inv. counter: {get_cache_token()}"</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Class: </span><span class="si">{cls.__module__}</span><span class="s2">.</span><span class="si">{cls.__qualname__}</span><span class="s2">"</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Inv. counter: {get_cache_token()}"</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
             <span class="p">(</span><span class="n">_abc_registry</span><span class="p">,</span> <span class="n">_abc_cache</span><span class="p">,</span> <span class="n">_abc_negative_cache</span><span class="p">,</span>
              <span class="n">_abc_negative_cache_version</span><span class="p">)</span> <span class="o">=</span> <span class="n">_get_dump</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s2">"_abc_registry: </span><span class="si">{_abc_registry!r}</span><span class="s2">"</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s2">"_abc_cache: </span><span class="si">{_abc_cache!r}</span><span class="s2">"</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s2">"_abc_negative_cache: </span><span class="si">{_abc_negative_cache!r}</span><span class="s2">"</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s2">"_abc_negative_cache_version: </span><span class="si">{_abc_negative_cache_version!r}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"_abc_registry: </span><span class="si">{_abc_registry!r}</span><span class="s2">"</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"_abc_cache: </span><span class="si">{_abc_cache!r}</span><span class="s2">"</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"_abc_negative_cache: </span><span class="si">{_abc_negative_cache!r}</span><span class="s2">"</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"_abc_negative_cache_version: </span><span class="si">{_abc_negative_cache_version!r}</span><span class="s2">"</span><span class="p">,</span>
                   <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">_abc_registry_clear</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
@@ -211,6 +211,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../fit.html">botorch.fit</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../gen.html">botorch.gen</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../sampling.html">botorch.sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cross_validation.html">botorch.cross_validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../settings.html">botorch.settings</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../test_functions.html">botorch.test_functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../exceptions.html">botorch.exceptions</a></li>
@@ -238,7 +239,18 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2019 Facebook Inc.</section></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2019 Facebook Inc.</section><script>
+            (function() {
+              var BAD_BASE = '/botorch/';
+              if (window.location.origin !== 'https://botorch.org') {
+                var pathname = window.location.pathname;
+                var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);
+                var newLocation = 'https://botorch.org/' + newPathname;
+                console.log('redirecting to ' + newLocation);
+                window.location.href = newLocation;
+              }
+            })();
+          </script></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
                 document.addEventListener('keyup', function(e) {
                   if (e.target !== document.body) {
                     return;

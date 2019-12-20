@@ -25,18 +25,24 @@
 <div class="body" role="main">
 <h1>Source code for botorch.utils.transforms</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/bin/env python3</span>
-
-<span class="c1"># Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved</span>
+<span class="c1"># Copyright (c) Facebook, Inc. and its affiliates.</span>
+<span class="c1">#</span>
+<span class="c1"># This source code is licensed under the MIT license found in the</span>
+<span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
 <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">Some basic data transformation helpers.</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">functools</span> <span class="k">import</span> <span class="n">wraps</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">ExitStack</span><span class="p">,</span> <span class="n">contextmanager</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="k">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span> <span class="nn">gpytorch</span> <span class="kn">import</span> <span class="n">settings</span> <span class="k">as</span> <span class="n">gpt_settings</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">settings</span>
 
 
 <div class="viewcode-block" id="squeeze_last_dim"><a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.squeeze_last_dim">[docs]</a><span class="k">def</span> <span class="nf">squeeze_last_dim</span><span class="p">(</span><span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
@@ -122,6 +128,30 @@
     <span class="k">return</span> <span class="n">X</span> <span class="o">*</span> <span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
 
 
+<div class="viewcode-block" id="normalize_indices"><a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.normalize_indices">[docs]</a><span class="k">def</span> <span class="nf">normalize_indices</span><span class="p">(</span><span class="n">indices</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span> <span class="n">d</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+    <span class="sa">r</span><span class="sd">"""Normalize a list of indices to ensure that they are positive.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        indices: A list of indices (may contain negative indices for indexing</span>
+<span class="sd">            "from the back").</span>
+<span class="sd">        d: The dimension of the tensor to index.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A normalized list of indices such that each index is between `0` and</span>
+<span class="sd">        `d-1`, or None if indices is None.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">indices</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">indices</span>
+    <span class="n">normalized_indices</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="n">d</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="n">d</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Index </span><span class="si">{i}</span><span class="s2"> out of bounds for tensor or length </span><span class="si">{d}</span><span class="s2">."</span><span class="p">)</span>
+        <span class="n">normalized_indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">normalized_indices</span></div>
+
+
 <div class="viewcode-block" id="t_batch_mode_transform"><a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.t_batch_mode_transform">[docs]</a><span class="k">def</span> <span class="nf">t_batch_mode_transform</span><span class="p">(</span>
     <span class="n">expected_q</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">Any</span><span class="p">]]:</span>
@@ -155,13 +185,13 @@
         <span class="k">def</span> <span class="nf">decorated</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="n">f</span><span class="s2">"{type(cls).__name__} requires X to have at least 2 dimensions,"</span>
-                    <span class="n">f</span><span class="s2">" but received X with only {X.dim()} dimensions."</span>
+                    <span class="sa">f</span><span class="s2">"{type(cls).__name__} requires X to have at least 2 dimensions,"</span>
+                    <span class="sa">f</span><span class="s2">" but received X with only {X.dim()} dimensions."</span>
                 <span class="p">)</span>
             <span class="k">elif</span> <span class="n">expected_q</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="n">expected_q</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span>
-                    <span class="n">f</span><span class="s2">"Expected X to be `batch_shape x q=</span><span class="si">{expected_q}</span><span class="s2"> x d`, but"</span>
-                    <span class="n">f</span><span class="s2">" got X with shape </span><span class="si">{X.shape}</span><span class="s2">."</span>
+                    <span class="sa">f</span><span class="s2">"Expected X to be `batch_shape x q=</span><span class="si">{expected_q}</span><span class="s2"> x d`, but"</span>
+                    <span class="sa">f</span><span class="s2">" got X with shape </span><span class="si">{X.shape}</span><span class="s2">."</span>
                 <span class="p">)</span>
             <span class="n">X</span> <span class="o">=</span> <span class="n">X</span> <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="k">else</span> <span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">method</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span>
@@ -227,6 +257,18 @@
 <div class="viewcode-block" id="convert_to_target_pre_hook"><a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.convert_to_target_pre_hook">[docs]</a><span class="k">def</span> <span class="nf">convert_to_target_pre_hook</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""Pre-hook for automatically calling `.to(X)` on module prior to `forward`"""</span>
     <span class="n">module</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="gpt_posterior_settings"><a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.gpt_posterior_settings">[docs]</a><span class="nd">@contextmanager</span>
+<span class="k">def</span> <span class="nf">gpt_posterior_settings</span><span class="p">():</span>
+    <span class="sa">r</span><span class="sd">"""Context manager for settings used for computing model posteriors."""</span>
+    <span class="k">with</span> <span class="n">ExitStack</span><span class="p">()</span> <span class="k">as</span> <span class="n">es</span><span class="p">:</span>
+        <span class="n">es</span><span class="o">.</span><span class="n">enter_context</span><span class="p">(</span><span class="n">gpt_settings</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="kc">False</span><span class="p">))</span>
+        <span class="n">es</span><span class="o">.</span><span class="n">enter_context</span><span class="p">(</span><span class="n">gpt_settings</span><span class="o">.</span><span class="n">fast_pred_var</span><span class="p">())</span>
+        <span class="n">es</span><span class="o">.</span><span class="n">enter_context</span><span class="p">(</span>
+            <span class="n">gpt_settings</span><span class="o">.</span><span class="n">detach_test_caches</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">propagate_grads</span><span class="o">.</span><span class="n">off</span><span class="p">())</span>
+        <span class="p">)</span>
+        <span class="k">yield</span></div>
 </pre></div>
 </div>
 </div>
@@ -244,6 +286,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../fit.html">botorch.fit</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../gen.html">botorch.gen</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../sampling.html">botorch.sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cross_validation.html">botorch.cross_validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../settings.html">botorch.settings</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../test_functions.html">botorch.test_functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">botorch.exceptions</a></li>
@@ -271,7 +314,18 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2019 Facebook Inc.</section></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2019 Facebook Inc.</section><script>
+            (function() {
+              var BAD_BASE = '/botorch/';
+              if (window.location.origin !== 'https://botorch.org') {
+                var pathname = window.location.pathname;
+                var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);
+                var newLocation = 'https://botorch.org/' + newPathname;
+                console.log('redirecting to ' + newLocation);
+                window.location.href = newLocation;
+              }
+            })();
+          </script></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
                 document.addEventListener('keyup', function(e) {
                   if (e.target !== document.body) {
                     return;

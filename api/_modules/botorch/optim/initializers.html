@@ -25,23 +25,25 @@
 <div class="body" role="main">
 <h1>Source code for botorch.optim.initializers</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/bin/env python3</span>
-
-<span class="c1"># Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved</span>
+<span class="c1"># Copyright (c) Facebook, Inc. and its affiliates.</span>
+<span class="c1">#</span>
+<span class="c1"># This source code is licensed under the MIT license found in the</span>
+<span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
 <span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="k">import</span> <span class="n">Tensor</span>
-<span class="kn">from</span> <span class="nn">torch.quasirandom</span> <span class="k">import</span> <span class="n">SobolEngine</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span> <span class="nn">torch.quasirandom</span> <span class="kn">import</span> <span class="n">SobolEngine</span>
 
-<span class="kn">from</span> <span class="nn">..</span> <span class="k">import</span> <span class="n">settings</span>
-<span class="kn">from</span> <span class="nn">..acquisition.acquisition</span> <span class="k">import</span> <span class="n">AcquisitionFunction</span>
-<span class="kn">from</span> <span class="nn">..acquisition.knowledge_gradient</span> <span class="k">import</span> <span class="n">_get_value_function</span><span class="p">,</span> <span class="n">qKnowledgeGradient</span>
-<span class="kn">from</span> <span class="nn">..acquisition.utils</span> <span class="k">import</span> <span class="n">is_nonnegative</span>
-<span class="kn">from</span> <span class="nn">..exceptions.warnings</span> <span class="k">import</span> <span class="n">BadInitialCandidatesWarning</span><span class="p">,</span> <span class="n">SamplingWarning</span>
-<span class="kn">from</span> <span class="nn">..utils.sampling</span> <span class="k">import</span> <span class="n">draw_sobol_samples</span><span class="p">,</span> <span class="n">manual_seed</span>
-<span class="kn">from</span> <span class="nn">..utils.transforms</span> <span class="k">import</span> <span class="n">standardize</span>
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span> <span class="nn">..acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
+<span class="kn">from</span> <span class="nn">..acquisition.knowledge_gradient</span> <span class="kn">import</span> <span class="n">_get_value_function</span><span class="p">,</span> <span class="n">qKnowledgeGradient</span>
+<span class="kn">from</span> <span class="nn">..acquisition.utils</span> <span class="kn">import</span> <span class="n">is_nonnegative</span>
+<span class="kn">from</span> <span class="nn">..exceptions.warnings</span> <span class="kn">import</span> <span class="n">BadInitialCandidatesWarning</span><span class="p">,</span> <span class="n">SamplingWarning</span>
+<span class="kn">from</span> <span class="nn">..utils.sampling</span> <span class="kn">import</span> <span class="n">draw_sobol_samples</span><span class="p">,</span> <span class="n">manual_seed</span>
+<span class="kn">from</span> <span class="nn">..utils.transforms</span> <span class="kn">import</span> <span class="n">standardize</span>
 
 
 <div class="viewcode-block" id="gen_batch_initial_conditions"><a class="viewcode-back" href="../../../optim.html#botorch.optim.initializers.gen_batch_initial_conditions">[docs]</a><span class="k">def</span> <span class="nf">gen_batch_initial_conditions</span><span class="p">(</span>
@@ -84,6 +86,8 @@
     <span class="n">batch_initial_arms</span><span class="p">:</span> <span class="n">Tensor</span>
     <span class="n">factor</span><span class="p">,</span> <span class="n">max_factor</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">5</span>
     <span class="n">init_kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">device</span> <span class="o">=</span> <span class="n">bounds</span><span class="o">.</span><span class="n">device</span>
+    <span class="n">bounds</span> <span class="o">=</span> <span class="n">bounds</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
     <span class="k">if</span> <span class="s2">"eta"</span> <span class="ow">in</span> <span class="n">options</span><span class="p">:</span>
         <span class="n">init_kwargs</span><span class="p">[</span><span class="s2">"eta"</span><span class="p">]</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"eta"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"nonnegative"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">is_nonnegative</span><span class="p">(</span><span class="n">acq_function</span><span class="p">):</span>
@@ -98,8 +102,8 @@
     <span class="n">dim</span> <span class="o">=</span> <span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">q</span>
     <span class="k">if</span> <span class="n">dim</span> <span class="o">&gt;</span> <span class="n">SobolEngine</span><span class="o">.</span><span class="n">MAXDIM</span> <span class="ow">and</span> <span class="n">settings</span><span class="o">.</span><span class="n">debug</span><span class="o">.</span><span class="n">on</span><span class="p">():</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-            <span class="n">f</span><span class="s2">"Sample dimension q*d=</span><span class="si">{dim}</span><span class="s2"> exceeding Sobol max dimension "</span>
-            <span class="n">f</span><span class="s2">"(</span><span class="si">{SobolEngine.MAXDIM}</span><span class="s2">). Using iid samples instead."</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">"Sample dimension q*d=</span><span class="si">{dim}</span><span class="s2"> exceeding Sobol max dimension "</span>
+            <span class="sa">f</span><span class="s2">"(</span><span class="si">{SobolEngine.MAXDIM}</span><span class="s2">). Using iid samples instead."</span><span class="p">,</span>
             <span class="n">SamplingWarning</span><span class="p">,</span>
         <span class="p">)</span>
 
@@ -110,9 +114,10 @@
                 <span class="n">X_rnd</span> <span class="o">=</span> <span class="n">draw_sobol_samples</span><span class="p">(</span><span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="n">q</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">with</span> <span class="n">manual_seed</span><span class="p">(</span><span class="n">seed</span><span class="p">):</span>
-                    <span class="n">X_rnd_nlzd</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span>
-                        <span class="n">n</span> <span class="o">*</span> <span class="n">dim</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">bounds</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">bounds</span><span class="o">.</span><span class="n">dtype</span>
-                    <span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+                    <span class="c1"># load on cpu</span>
+                    <span class="n">X_rnd_nlzd</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">n</span> <span class="o">*</span> <span class="n">dim</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">bounds</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span>
+                        <span class="n">n</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                    <span class="p">)</span>
                 <span class="n">X_rnd</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">X_rnd_nlzd</span>
             <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
                 <span class="k">if</span> <span class="n">batch_limit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -121,13 +126,15 @@
                 <span class="n">start_idx</span> <span class="o">=</span> <span class="mi">0</span>
                 <span class="k">while</span> <span class="n">start_idx</span> <span class="o">&lt;</span> <span class="n">X_rnd</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
                     <span class="n">end_idx</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">start_idx</span> <span class="o">+</span> <span class="n">batch_limit</span><span class="p">,</span> <span class="n">X_rnd</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-                    <span class="n">Y_rnd_curr</span> <span class="o">=</span> <span class="n">acq_function</span><span class="p">(</span><span class="n">X_rnd</span><span class="p">[</span><span class="n">start_idx</span><span class="p">:</span><span class="n">end_idx</span><span class="p">])</span>
+                    <span class="n">Y_rnd_curr</span> <span class="o">=</span> <span class="n">acq_function</span><span class="p">(</span>
+                        <span class="n">X_rnd</span><span class="p">[</span><span class="n">start_idx</span><span class="p">:</span><span class="n">end_idx</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+                    <span class="p">)</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
                     <span class="n">Y_rnd_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Y_rnd_curr</span><span class="p">)</span>
                     <span class="n">start_idx</span> <span class="o">+=</span> <span class="n">batch_limit</span>
-                <span class="n">Y_rnd</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">Y_rnd_list</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">X_rnd</span><span class="p">)</span>
+                <span class="n">Y_rnd</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">Y_rnd_list</span><span class="p">)</span>
             <span class="n">batch_initial_conditions</span> <span class="o">=</span> <span class="n">init_func</span><span class="p">(</span>
                 <span class="n">X</span><span class="o">=</span><span class="n">X_rnd</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">Y_rnd</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">num_restarts</span><span class="p">,</span> <span class="o">**</span><span class="n">init_kwargs</span>
-            <span class="p">)</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="nb">issubclass</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">BadInitialCandidatesWarning</span><span class="p">)</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">ws</span><span class="p">):</span>
                 <span class="k">return</span> <span class="n">batch_initial_conditions</span>
             <span class="k">if</span> <span class="n">factor</span> <span class="o">&lt;</span> <span class="n">max_factor</span><span class="p">:</span>
@@ -200,7 +207,7 @@
     <span class="n">frac_random</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"frac_random"</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">frac_random</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="n">f</span><span class="s2">"frac_random must take on values in (0,1). Value: </span><span class="si">{frac_random}</span><span class="s2">"</span>
+            <span class="sa">f</span><span class="s2">"frac_random must take on values in (0,1). Value: </span><span class="si">{frac_random}</span><span class="s2">"</span>
         <span class="p">)</span>
     <span class="n">q_aug</span> <span class="o">=</span> <span class="n">acq_function</span><span class="o">.</span><span class="n">get_augmented_q_batch_size</span><span class="p">(</span><span class="n">q</span><span class="o">=</span><span class="n">q</span><span class="p">)</span>
 
@@ -220,7 +227,7 @@
         <span class="n">objective</span><span class="o">=</span><span class="n">acq_function</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span>
         <span class="n">sampler</span><span class="o">=</span><span class="n">acq_function</span><span class="o">.</span><span class="n">inner_sampler</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="kn">from</span> <span class="nn">.optimize</span> <span class="k">import</span> <span class="n">optimize_acqf</span>
+    <span class="kn">from</span> <span class="nn">.optimize</span> <span class="kn">import</span> <span class="n">optimize_acqf</span>
 
     <span class="n">fantasy_cands</span><span class="p">,</span> <span class="n">fantasy_vals</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
         <span class="n">acq_function</span><span class="o">=</span><span class="n">value_function</span><span class="p">,</span>
@@ -274,8 +281,8 @@
     <span class="n">n_samples</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="n">n_samples</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-            <span class="n">f</span><span class="s2">"n (</span><span class="si">{n}</span><span class="s2">) cannot be larger than the number of "</span>
-            <span class="n">f</span><span class="s2">"provided samples (</span><span class="si">{n_samples}</span><span class="s2">)"</span>
+            <span class="sa">f</span><span class="s2">"n (</span><span class="si">{n}</span><span class="s2">) cannot be larger than the number of "</span>
+            <span class="sa">f</span><span class="s2">"provided samples (</span><span class="si">{n_samples}</span><span class="s2">)"</span>
         <span class="p">)</span>
     <span class="k">elif</span> <span class="n">n</span> <span class="o">==</span> <span class="n">n_samples</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">X</span>
@@ -390,6 +397,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../fit.html">botorch.fit</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../gen.html">botorch.gen</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../sampling.html">botorch.sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cross_validation.html">botorch.cross_validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../settings.html">botorch.settings</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../test_functions.html">botorch.test_functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">botorch.exceptions</a></li>
@@ -417,7 +425,18 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2019 Facebook Inc.</section></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2019 Facebook Inc.</section><script>
+            (function() {
+              var BAD_BASE = '/botorch/';
+              if (window.location.origin !== 'https://botorch.org') {
+                var pathname = window.location.pathname;
+                var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);
+                var newLocation = 'https://botorch.org/' + newPathname;
+                console.log('redirecting to ' + newLocation);
+                window.location.href = newLocation;
+              }
+            })();
+          </script></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
                 document.addEventListener('keyup', function(e) {
                   if (e.target !== document.body) {
                     return;

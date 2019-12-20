@@ -25,8 +25,10 @@
 <div class="body" role="main">
 <h1>Source code for botorch.test_functions.synthetic</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/bin/env python3</span>
-
-<span class="c1"># Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved</span>
+<span class="c1"># Copyright (c) Facebook, Inc. and its affiliates.</span>
+<span class="c1">#</span>
+<span class="c1"># This source code is licensed under the MIT license found in the</span>
+<span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
 <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">Synthetic functions for optimization benchmarks.</span>
@@ -34,15 +36,15 @@
 <span class="sd">"""</span>
 
 <span class="kn">import</span> <span class="nn">math</span>
-<span class="kn">from</span> <span class="nn">abc</span> <span class="k">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="k">import</span> <span class="n">Tensor</span>
-<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="k">import</span> <span class="n">Module</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
 
 
-<div class="viewcode-block" id="SyntheticTestFunction"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.SyntheticTestFunction">[docs]</a><span class="k">class</span> <span class="nc">SyntheticTestFunction</span><span class="p">(</span><span class="n">Module</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+<div class="viewcode-block" id="SyntheticTestFunction"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.SyntheticTestFunction">[docs]</a><span class="k">class</span> <span class="nc">SyntheticTestFunction</span><span class="p">(</span><span class="n">Module</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""Base class for synthetic test functions."""</span>
 
     <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span>
@@ -51,7 +53,7 @@
     <span class="n">_optimal_value</span><span class="p">:</span> <span class="nb">float</span>
     <span class="n">_check_grad_at_opt</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Base constructor for synthetic test functions.</span>
 
 <span class="sd">        Arguments:</span>
@@ -74,7 +76,7 @@
         <span class="sa">r</span><span class="sd">"""The global minimum (maximum if negate=True) of the function."""</span>
         <span class="k">return</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">_optimal_value</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_optimal_value</span>
 
-<div class="viewcode-block" id="SyntheticTestFunction.forward"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.SyntheticTestFunction.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">noise</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="SyntheticTestFunction.forward"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.SyntheticTestFunction.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">noise</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Evaluate the function on a set of points.</span>
 
 <span class="sd">        Args:</span>
@@ -90,13 +92,13 @@
             <span class="n">f</span> <span class="o">=</span> <span class="o">-</span><span class="n">f</span>
         <span class="k">return</span> <span class="n">f</span> <span class="k">if</span> <span class="n">batch</span> <span class="k">else</span> <span class="n">f</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SyntheticTestFunction.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.SyntheticTestFunction.evaluate_true">[docs]</a>    <span class="nd">@abstractmethod</span>
+<div class="viewcode-block" id="SyntheticTestFunction.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.SyntheticTestFunction.evaluate_true">[docs]</a>    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Evaluate the function (w/o observation noise) on a set of points."""</span>
         <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div></div>
 
 
-<div class="viewcode-block" id="Ackley"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.Ackley">[docs]</a><span class="k">class</span> <span class="nc">Ackley</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
+<div class="viewcode-block" id="Ackley"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.Ackley">[docs]</a><span class="k">class</span> <span class="nc">Ackley</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""Ackley test function.</span>
 
 <span class="sd">    d-dimensional function (usually evaluated on `[-32.768, 32.768]^d`):</span>
@@ -111,7 +113,7 @@
     <span class="n">_optimal_value</span> <span class="o">=</span> <span class="mf">0.0</span>
     <span class="n">_check_grad_at_opt</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dim</span> <span class="o">=</span> <span class="n">dim</span>
@@ -122,21 +124,21 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="mf">0.2</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">c</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span>
 
-<div class="viewcode-block" id="Ackley.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.Ackley.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="Ackley.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.Ackley.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">c</span>
         <span class="n">part1</span> <span class="o">=</span> <span class="o">-</span><span class="n">a</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">b</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">)</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">))</span>
         <span class="n">part2</span> <span class="o">=</span> <span class="o">-</span><span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">c</span> <span class="o">*</span> <span class="n">X</span><span class="p">),</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">part1</span> <span class="o">+</span> <span class="n">part2</span> <span class="o">+</span> <span class="n">a</span> <span class="o">+</span> <span class="n">math</span><span class="o">.</span><span class="n">e</span></div></div>
 
 
-<div class="viewcode-block" id="Beale"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.Beale">[docs]</a><span class="k">class</span> <span class="nc">Beale</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
+<div class="viewcode-block" id="Beale"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.Beale">[docs]</a><span class="k">class</span> <span class="nc">Beale</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
 
     <span class="n">dim</span> <span class="o">=</span> <span class="mi">2</span>
     <span class="n">_optimal_value</span> <span class="o">=</span> <span class="mf">0.0</span>
     <span class="n">_bounds</span> <span class="o">=</span> <span class="p">[(</span><span class="o">-</span><span class="mf">4.5</span><span class="p">,</span> <span class="mf">4.5</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">4.5</span><span class="p">,</span> <span class="mf">4.5</span><span class="p">)]</span>
     <span class="n">_optimizers</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)]</span>
 
-<div class="viewcode-block" id="Beale.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.Beale.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="Beale.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.Beale.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
         <span class="n">part1</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.5</span> <span class="o">-</span> <span class="n">x1</span> <span class="o">+</span> <span class="n">x1</span> <span class="o">*</span> <span class="n">x2</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
         <span class="n">part2</span> <span class="o">=</span> <span class="p">(</span><span class="mf">2.25</span> <span class="o">-</span> <span class="n">x1</span> <span class="o">+</span> <span class="n">x1</span> <span class="o">*</span> <span class="n">x2</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
@@ -144,7 +146,7 @@
         <span class="k">return</span> <span class="n">part1</span> <span class="o">+</span> <span class="n">part2</span> <span class="o">+</span> <span class="n">part3</span></div></div>
 
 
-<div class="viewcode-block" id="Branin"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.Branin">[docs]</a><span class="k">class</span> <span class="nc">Branin</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
+<div class="viewcode-block" id="Branin"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.Branin">[docs]</a><span class="k">class</span> <span class="nc">Branin</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""Branin test function.</span>
 
 <span class="sd">    Two-dimensional function (usually evaluated on `[-5, 10] x [0, 15]`):</span>
@@ -162,7 +164,7 @@
     <span class="n">_optimal_value</span> <span class="o">=</span> <span class="mf">0.397887</span>
     <span class="n">_optimizers</span> <span class="o">=</span> <span class="p">[(</span><span class="o">-</span><span class="n">math</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="mf">12.275</span><span class="p">),</span> <span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="mf">2.275</span><span class="p">),</span> <span class="p">(</span><span class="mf">9.42478</span><span class="p">,</span> <span class="mf">2.475</span><span class="p">)]</span>
 
-<div class="viewcode-block" id="Branin.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.Branin.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="Branin.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.Branin.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">t1</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
             <span class="o">-</span> <span class="mf">5.1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span>
@@ -173,7 +175,7 @@
         <span class="k">return</span> <span class="n">t1</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">t2</span> <span class="o">+</span> <span class="mi">10</span></div></div>
 
 
-<div class="viewcode-block" id="Bukin"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.Bukin">[docs]</a><span class="k">class</span> <span class="nc">Bukin</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
+<div class="viewcode-block" id="Bukin"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.Bukin">[docs]</a><span class="k">class</span> <span class="nc">Bukin</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
 
     <span class="n">dim</span> <span class="o">=</span> <span class="mi">2</span>
     <span class="n">_bounds</span> <span class="o">=</span> <span class="p">[(</span><span class="o">-</span><span class="mf">15.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">5.0</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">)]</span>
@@ -181,13 +183,13 @@
     <span class="n">_optimizers</span> <span class="o">=</span> <span class="p">[(</span><span class="o">-</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)]</span>
     <span class="n">_check_grad_at_opt</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 
-<div class="viewcode-block" id="Bukin.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.Bukin.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="Bukin.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.Bukin.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">part1</span> <span class="o">=</span> <span class="mf">100.0</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mf">0.01</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
         <span class="n">part2</span> <span class="o">=</span> <span class="mf">0.01</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mf">10.0</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">part1</span> <span class="o">+</span> <span class="n">part2</span></div></div>
 
 
-<div class="viewcode-block" id="Cosine8"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.Cosine8">[docs]</a><span class="k">class</span> <span class="nc">Cosine8</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
+<div class="viewcode-block" id="Cosine8"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.Cosine8">[docs]</a><span class="k">class</span> <span class="nc">Cosine8</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""Cosine Mixture test function.</span>
 
 <span class="sd">    8-dimensional function (usually evaluated on `[-1, 1]^8`):</span>
@@ -203,11 +205,11 @@
     <span class="n">_optimal_value</span> <span class="o">=</span> <span class="mf">0.8</span>
     <span class="n">_optimizers</span> <span class="o">=</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="mf">0.0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">))]</span>
 
-<div class="viewcode-block" id="Cosine8.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.Cosine8.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="Cosine8.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.Cosine8.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mf">0.1</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="mi">5</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">X</span><span class="p">)</span> <span class="o">-</span> <span class="n">X</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="DropWave"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.DropWave">[docs]</a><span class="k">class</span> <span class="nc">DropWave</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
+<div class="viewcode-block" id="DropWave"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.DropWave">[docs]</a><span class="k">class</span> <span class="nc">DropWave</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
 
     <span class="n">dim</span> <span class="o">=</span> <span class="mi">2</span>
     <span class="n">_bounds</span> <span class="o">=</span> <span class="p">[(</span><span class="o">-</span><span class="mf">5.12</span><span class="p">,</span> <span class="mf">5.12</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">5.12</span><span class="p">,</span> <span class="mf">5.12</span><span class="p">)]</span>
@@ -215,18 +217,18 @@
     <span class="n">_optimizers</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)]</span>
     <span class="n">_check_grad_at_opt</span> <span class="o">=</span> <span class="kc">False</span>
 
-<div class="viewcode-block" id="DropWave.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.DropWave.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="DropWave.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.DropWave.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">norm</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">part1</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="mf">12.0</span> <span class="o">*</span> <span class="n">norm</span><span class="p">)</span>
         <span class="n">part2</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">norm</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="mf">2.0</span>
         <span class="k">return</span> <span class="o">-</span><span class="n">part1</span> <span class="o">/</span> <span class="n">part2</span></div></div>
 
 
-<div class="viewcode-block" id="DixonPrice"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.DixonPrice">[docs]</a><span class="k">class</span> <span class="nc">DixonPrice</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
+<div class="viewcode-block" id="DixonPrice"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.DixonPrice">[docs]</a><span class="k">class</span> <span class="nc">DixonPrice</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
 
     <span class="n">_optimal_value</span> <span class="o">=</span> <span class="mf">0.0</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dim</span> <span class="o">=</span> <span class="n">dim</span>
@@ -239,7 +241,7 @@
         <span class="p">]</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">noise_std</span><span class="o">=</span><span class="n">noise_std</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="n">negate</span><span class="p">)</span>
 
-<div class="viewcode-block" id="DixonPrice.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.DixonPrice.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="DixonPrice.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.DixonPrice.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dim</span>
         <span class="n">part1</span> <span class="o">=</span> <span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
         <span class="n">i</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">d</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
@@ -247,7 +249,7 @@
         <span class="k">return</span> <span class="n">part1</span> <span class="o">+</span> <span class="n">part2</span></div></div>
 
 
-<div class="viewcode-block" id="EggHolder"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.EggHolder">[docs]</a><span class="k">class</span> <span class="nc">EggHolder</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
+<div class="viewcode-block" id="EggHolder"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.EggHolder">[docs]</a><span class="k">class</span> <span class="nc">EggHolder</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""Eggholder test function.</span>
 
 <span class="sd">    Two-dimensional function (usually evaluated on `[-512, 512]^2`):</span>
@@ -263,18 +265,18 @@
     <span class="n">_optimizers</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">512.0</span><span class="p">,</span> <span class="mf">404.2319</span><span class="p">)]</span>
     <span class="n">_check_grad_at_opt</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 
-<div class="viewcode-block" id="EggHolder.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.EggHolder.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="EggHolder.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.EggHolder.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
         <span class="n">part1</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="n">x2</span> <span class="o">+</span> <span class="mf">47.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x2</span> <span class="o">+</span> <span class="n">x1</span> <span class="o">/</span> <span class="mf">2.0</span> <span class="o">+</span> <span class="mf">47.0</span><span class="p">)))</span>
         <span class="n">part2</span> <span class="o">=</span> <span class="o">-</span><span class="n">x1</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x1</span> <span class="o">-</span> <span class="p">(</span><span class="n">x2</span> <span class="o">+</span> <span class="mf">47.0</span><span class="p">))))</span>
         <span class="k">return</span> <span class="n">part1</span> <span class="o">+</span> <span class="n">part2</span></div></div>
 
 
-<div class="viewcode-block" id="Griewank"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.Griewank">[docs]</a><span class="k">class</span> <span class="nc">Griewank</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
+<div class="viewcode-block" id="Griewank"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.Griewank">[docs]</a><span class="k">class</span> <span class="nc">Griewank</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
 
     <span class="n">_optimal_value</span> <span class="o">=</span> <span class="mf">0.0</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dim</span> <span class="o">=</span> <span class="n">dim</span>
@@ -282,7 +284,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_optimizers</span> <span class="o">=</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="mf">0.0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">))]</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">noise_std</span><span class="o">=</span><span class="n">noise_std</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="n">negate</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Griewank.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.Griewank.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="Griewank.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.Griewank.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">part1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">X</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="mf">4000.0</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">d</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
         <span class="n">part2</span> <span class="o">=</span> <span class="o">-</span><span class="n">torch</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span>
@@ -291,7 +293,7 @@
         <span class="k">return</span> <span class="n">part1</span> <span class="o">+</span> <span class="n">part2</span> <span class="o">+</span> <span class="mf">1.0</span></div></div>
 
 
-<div class="viewcode-block" id="Hartmann"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.Hartmann">[docs]</a><span class="k">class</span> <span class="nc">Hartmann</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
+<div class="viewcode-block" id="Hartmann"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.Hartmann">[docs]</a><span class="k">class</span> <span class="nc">Hartmann</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""Hartmann synthetic test function.</span>
 
 <span class="sd">    Most commonly used is the six-dimensional version (typically evaluated on</span>
@@ -306,11 +308,11 @@
 <span class="sd">    with `H(z) = -3.32237`.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">dim</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">f</span><span class="s2">"Hartmann with dim </span><span class="si">{dim}</span><span class="s2"> not defined"</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Hartmann with dim </span><span class="si">{dim}</span><span class="s2"> not defined"</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dim</span> <span class="o">=</span> <span class="n">dim</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_bounds</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">)]</span>
         <span class="c1"># optimizers and optimal values for dim=4 not implemented</span>
@@ -372,7 +374,7 @@
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">optimizers</span>
 
-<div class="viewcode-block" id="Hartmann.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.Hartmann.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="Hartmann.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.Hartmann.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
         <span class="n">inner_sum</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">A</span> <span class="o">*</span> <span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.0001</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
         <span class="n">H</span> <span class="o">=</span> <span class="o">-</span><span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ALPHA</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">inner_sum</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
@@ -381,7 +383,7 @@
         <span class="k">return</span> <span class="n">H</span></div></div>
 
 
-<div class="viewcode-block" id="HolderTable"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.HolderTable">[docs]</a><span class="k">class</span> <span class="nc">HolderTable</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
+<div class="viewcode-block" id="HolderTable"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.HolderTable">[docs]</a><span class="k">class</span> <span class="nc">HolderTable</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""Holder Table synthetic test function.</span>
 
 <span class="sd">    Two-dimensional function (typically evaluated on `[0, 10] x [0, 10]`):</span>
@@ -406,12 +408,12 @@
         <span class="p">(</span><span class="mf">8.05502</span><span class="p">,</span> <span class="o">-</span><span class="mf">9.66459</span><span class="p">),</span>
     <span class="p">]</span>
 
-<div class="viewcode-block" id="HolderTable.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.HolderTable.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="HolderTable.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.HolderTable.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">term</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">torch</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
         <span class="k">return</span> <span class="o">-</span><span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">term</span><span class="p">))</span></div></div>
 
 
-<div class="viewcode-block" id="Levy"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.Levy">[docs]</a><span class="k">class</span> <span class="nc">Levy</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
+<div class="viewcode-block" id="Levy"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.Levy">[docs]</a><span class="k">class</span> <span class="nc">Levy</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""Levy synthetic test function.</span>
 
 <span class="sd">    d-dimensional function (usually evaluated on `[-10, 10]^d`):</span>
@@ -428,7 +430,7 @@
 
     <span class="n">_optimal_value</span> <span class="o">=</span> <span class="mf">0.0</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dim</span> <span class="o">=</span> <span class="n">dim</span>
@@ -436,7 +438,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_optimizers</span> <span class="o">=</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="mf">1.0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">))]</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">noise_std</span><span class="o">=</span><span class="n">noise_std</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="n">negate</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Levy.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.Levy.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="Levy.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.Levy.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">w</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">+</span> <span class="p">(</span><span class="n">X</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">/</span> <span class="mf">4.0</span>
         <span class="n">part1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">w</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span>
         <span class="n">part2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
@@ -450,7 +452,7 @@
         <span class="k">return</span> <span class="n">part1</span> <span class="o">+</span> <span class="n">part2</span> <span class="o">+</span> <span class="n">part3</span></div></div>
 
 
-<div class="viewcode-block" id="Michalewicz"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.Michalewicz">[docs]</a><span class="k">class</span> <span class="nc">Michalewicz</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
+<div class="viewcode-block" id="Michalewicz"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.Michalewicz">[docs]</a><span class="k">class</span> <span class="nc">Michalewicz</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""Michalewicz synthetic test function.</span>
 
 <span class="sd">    d-dim function (usually evaluated on hypercube [0, pi]^d):</span>
@@ -458,7 +460,7 @@
 <span class="sd">        M(x) = sum_{i=1}^d sin(x_i) (sin(i x_i^2 / pi)^20)</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dim</span> <span class="o">=</span> <span class="n">dim</span>
@@ -478,7 +480,7 @@
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">optimizers</span>
 
-<div class="viewcode-block" id="Michalewicz.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.Michalewicz.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="Michalewicz.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.Michalewicz.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
         <span class="n">m</span> <span class="o">=</span> <span class="mi">10</span>
         <span class="k">return</span> <span class="o">-</span><span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
@@ -486,11 +488,11 @@
         <span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="Powell"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.Powell">[docs]</a><span class="k">class</span> <span class="nc">Powell</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
+<div class="viewcode-block" id="Powell"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.Powell">[docs]</a><span class="k">class</span> <span class="nc">Powell</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
 
     <span class="n">_optimal_value</span> <span class="o">=</span> <span class="mf">0.0</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dim</span> <span class="o">=</span> <span class="n">dim</span>
@@ -498,7 +500,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_optimizers</span> <span class="o">=</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="mf">0.0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">))]</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">noise_std</span><span class="o">=</span><span class="n">noise_std</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="n">negate</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Powell.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.Powell.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="Powell.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.Powell.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span> <span class="o">//</span> <span class="mi">4</span><span class="p">):</span>
             <span class="n">i_</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span>
@@ -510,11 +512,11 @@
         <span class="k">return</span> <span class="n">result</span></div></div>
 
 
-<div class="viewcode-block" id="Rastrigin"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.Rastrigin">[docs]</a><span class="k">class</span> <span class="nc">Rastrigin</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
+<div class="viewcode-block" id="Rastrigin"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.Rastrigin">[docs]</a><span class="k">class</span> <span class="nc">Rastrigin</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
 
     <span class="n">_optimal_value</span> <span class="o">=</span> <span class="mf">0.0</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dim</span> <span class="o">=</span> <span class="n">dim</span>
@@ -522,13 +524,13 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_optimizers</span> <span class="o">=</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="mf">0.0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">))]</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">noise_std</span><span class="o">=</span><span class="n">noise_std</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="n">negate</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Rastrigin.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.Rastrigin.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="Rastrigin.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.Rastrigin.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">return</span> <span class="mf">10.0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">dim</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
             <span class="n">X</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">-</span> <span class="mf">10.0</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">X</span><span class="p">),</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span>
         <span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="Rosenbrock"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.Rosenbrock">[docs]</a><span class="k">class</span> <span class="nc">Rosenbrock</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
+<div class="viewcode-block" id="Rosenbrock"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.Rosenbrock">[docs]</a><span class="k">class</span> <span class="nc">Rosenbrock</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""Rosenbrock synthetic test function.</span>
 
 <span class="sd">    d-dimensional function (usually evaluated on `[-5, 10]^d`):</span>
@@ -541,7 +543,7 @@
 
     <span class="n">_optimal_value</span> <span class="o">=</span> <span class="mf">0.0</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dim</span> <span class="o">=</span> <span class="n">dim</span>
@@ -549,14 +551,14 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_optimizers</span> <span class="o">=</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="mf">1.0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">))]</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">noise_std</span><span class="o">=</span><span class="n">noise_std</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="n">negate</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Rosenbrock.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.Rosenbrock.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="Rosenbrock.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.Rosenbrock.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
             <span class="mf">100.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span>
             <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
         <span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="Shekel"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.Shekel">[docs]</a><span class="k">class</span> <span class="nc">Shekel</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
+<div class="viewcode-block" id="Shekel"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.Shekel">[docs]</a><span class="k">class</span> <span class="nc">Shekel</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""Shekel synthtetic test function.</span>
 
 <span class="sd">    4-dimensional function (usually evaluated on `[0, 10]^4`):</span>
@@ -571,7 +573,7 @@
     <span class="n">_bounds</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">)]</span>
     <span class="n">_optimizers</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">4.000747</span><span class="p">,</span> <span class="mf">3.99951</span><span class="p">,</span> <span class="mf">4.00075</span><span class="p">,</span> <span class="mf">3.99951</span><span class="p">)]</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">m</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">m</span> <span class="o">=</span> <span class="n">m</span>
@@ -593,7 +595,7 @@
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"C"</span><span class="p">,</span> <span class="n">C_t</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">))</span>
 
-<div class="viewcode-block" id="Shekel.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.Shekel.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="Shekel.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.Shekel.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
         <span class="n">beta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta</span> <span class="o">/</span> <span class="mf">10.0</span>
         <span class="n">result</span> <span class="o">=</span> <span class="o">-</span><span class="nb">sum</span><span class="p">(</span>
@@ -603,14 +605,14 @@
         <span class="k">return</span> <span class="n">result</span></div></div>
 
 
-<div class="viewcode-block" id="SixHumpCamel"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.SixHumpCamel">[docs]</a><span class="k">class</span> <span class="nc">SixHumpCamel</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
+<div class="viewcode-block" id="SixHumpCamel"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.SixHumpCamel">[docs]</a><span class="k">class</span> <span class="nc">SixHumpCamel</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
 
     <span class="n">dim</span> <span class="o">=</span> <span class="mi">2</span>
     <span class="n">_bounds</span> <span class="o">=</span> <span class="p">[(</span><span class="o">-</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">)]</span>
     <span class="n">_optimal_value</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0316</span>
     <span class="n">_optimizers</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">0.0898</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.7126</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.0898</span><span class="p">,</span> <span class="mf">0.7126</span><span class="p">)]</span>
 
-<div class="viewcode-block" id="SixHumpCamel.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.SixHumpCamel.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="SixHumpCamel.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.SixHumpCamel.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="p">(</span><span class="mi">4</span> <span class="o">-</span> <span class="mf">2.1</span> <span class="o">*</span> <span class="n">x1</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">x1</span> <span class="o">**</span> <span class="mi">4</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="n">x1</span> <span class="o">**</span> <span class="mi">2</span>
@@ -619,7 +621,7 @@
         <span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="StyblinskiTang"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.StyblinskiTang">[docs]</a><span class="k">class</span> <span class="nc">StyblinskiTang</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
+<div class="viewcode-block" id="StyblinskiTang"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.StyblinskiTang">[docs]</a><span class="k">class</span> <span class="nc">StyblinskiTang</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""Styblinski-Tang synthtetic test function.</span>
 
 <span class="sd">    d-dimensional function (usually evaluated on the hypercube `[-5, 5]^d`):</span>
@@ -629,7 +631,7 @@
 <span class="sd">    H has a single global mininimum `H(z) = -39.166166 * d` at `z = [-2.903534]^d`</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dim</span> <span class="o">=</span> <span class="n">dim</span>
@@ -638,18 +640,18 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_optimizers</span> <span class="o">=</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="o">-</span><span class="mf">2.903534</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">))]</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">noise_std</span><span class="o">=</span><span class="n">noise_std</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="n">negate</span><span class="p">)</span>
 
-<div class="viewcode-block" id="StyblinskiTang.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.StyblinskiTang.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="StyblinskiTang.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.StyblinskiTang.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">return</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">X</span> <span class="o">**</span> <span class="mi">4</span> <span class="o">-</span> <span class="mi">16</span> <span class="o">*</span> <span class="n">X</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">5</span> <span class="o">*</span> <span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="ThreeHumpCamel"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.ThreeHumpCamel">[docs]</a><span class="k">class</span> <span class="nc">ThreeHumpCamel</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
+<div class="viewcode-block" id="ThreeHumpCamel"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.ThreeHumpCamel">[docs]</a><span class="k">class</span> <span class="nc">ThreeHumpCamel</span><span class="p">(</span><span class="n">SyntheticTestFunction</span><span class="p">):</span>
 
     <span class="n">dim</span> <span class="o">=</span> <span class="mi">2</span>
     <span class="n">_bounds</span> <span class="o">=</span> <span class="p">[(</span><span class="o">-</span><span class="mf">5.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">5.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">)]</span>
     <span class="n">_optimal_value</span> <span class="o">=</span> <span class="mf">0.0</span>
     <span class="n">_optimizers</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)]</span>
 
-<div class="viewcode-block" id="ThreeHumpCamel.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.ThreeHumpCamel.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="ThreeHumpCamel.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.synthetic.ThreeHumpCamel.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
         <span class="k">return</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">x1</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">-</span> <span class="mf">1.05</span> <span class="o">*</span> <span class="n">x1</span> <span class="o">**</span> <span class="mi">4</span> <span class="o">+</span> <span class="n">x1</span> <span class="o">**</span> <span class="mi">6</span> <span class="o">/</span> <span class="mf">6.0</span> <span class="o">+</span> <span class="n">x1</span> <span class="o">*</span> <span class="n">x2</span> <span class="o">+</span> <span class="n">x2</span> <span class="o">**</span> <span class="mi">2</span></div></div>
 </pre></div>
@@ -669,6 +671,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../fit.html">botorch.fit</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../gen.html">botorch.gen</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../sampling.html">botorch.sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cross_validation.html">botorch.cross_validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../settings.html">botorch.settings</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../test_functions.html">botorch.test_functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">botorch.exceptions</a></li>
@@ -696,7 +699,18 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2019 Facebook Inc.</section></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2019 Facebook Inc.</section><script>
+            (function() {
+              var BAD_BASE = '/botorch/';
+              if (window.location.origin !== 'https://botorch.org') {
+                var pathname = window.location.pathname;
+                var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);
+                var newLocation = 'https://botorch.org/' + newPathname;
+                console.log('redirecting to ' + newLocation);
+                window.location.href = newLocation;
+              }
+            })();
+          </script></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
                 document.addEventListener('keyup', function(e) {
                   if (e.target !== document.body) {
                     return;
