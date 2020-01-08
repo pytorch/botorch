@@ -194,6 +194,31 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
     _input_batch_shape: torch.Size
     _aug_batch_shape: torch.Size
 
+    @staticmethod
+    def get_batch_dimensions(
+        train_X: Tensor, train_Y: Tensor
+    ) -> Tuple[torch.Size, torch.Size]:
+        r"""Get the raw batch shape and output-augmented batch shape of the inputs.
+
+        Args:
+            train_X: A `n x d` or `batch_shape x n x d` (batch mode) tensor of training
+                features.
+            train_Y: A `n x m` or `batch_shape x n x m` (batch mode) tensor of
+                training observations.
+
+        Returns:
+            2-element tuple containing
+
+            - The `input_batch_shape`
+            - The output-augmented batch shape: `input_batch_shape x (m)`
+        """
+        input_batch_shape = train_X.shape[:-2]
+        aug_batch_shape = input_batch_shape
+        num_outputs = train_Y.shape[-1]
+        if num_outputs > 1:
+            aug_batch_shape += torch.Size([num_outputs])
+        return input_batch_shape, aug_batch_shape
+
     def _set_dimensions(self, train_X: Tensor, train_Y: Tensor) -> None:
         r"""Store the number of outputs and the batch shape.
 
@@ -204,10 +229,9 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
                 training observations.
         """
         self._num_outputs = train_Y.shape[-1]
-        self._input_batch_shape = train_X.shape[:-2]
-        self._aug_batch_shape = self._input_batch_shape
-        if self._num_outputs > 1:
-            self._aug_batch_shape += torch.Size([self._num_outputs])
+        self._input_batch_shape, self._aug_batch_shape = self.get_batch_dimensions(
+            train_X=train_X, train_Y=train_Y
+        )
 
     def _transform_tensor_args(
         self, X: Tensor, Y: Tensor, Yvar: Optional[Tensor] = None
