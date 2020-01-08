@@ -221,6 +221,27 @@ class TestBatchedMultiOutputGPyTorchModel(BotorchTestCase):
             self.assertIsInstance(cm, SimpleBatchedMultiOutputGPyTorchModel)
             self.assertEqual(cm.train_targets.shape, torch.Size([2, 2, 7]))
 
+            # test get_batch_dimensions
+            get_batch_dims = SimpleBatchedMultiOutputGPyTorchModel.get_batch_dimensions
+            for input_batch_dim in (0, 3):
+                for num_outputs in (1, 2):
+                    input_batch_shape, aug_batch_shape = get_batch_dims(
+                        train_X=train_X.unsqueeze(0).expand(3, 5, 1)
+                        if input_batch_dim == 3
+                        else train_X,
+                        train_Y=train_Y[:, 0:1] if num_outputs == 1 else train_Y,
+                    )
+                    expected_input_batch_shape = (
+                        torch.Size([3]) if input_batch_dim == 3 else torch.Size([])
+                    )
+                    self.assertEqual(input_batch_shape, expected_input_batch_shape)
+                    self.assertEqual(
+                        aug_batch_shape,
+                        expected_input_batch_shape + torch.Size([])
+                        if num_outputs == 1
+                        else expected_input_batch_shape + torch.Size([2]),
+                    )
+
 
 class TestModelListGPyTorchModel(BotorchTestCase):
     def test_model_list_gpytorch_model(self):
