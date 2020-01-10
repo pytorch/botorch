@@ -220,6 +220,31 @@
     <span class="n">_input_batch_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span>
     <span class="n">_aug_batch_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span>
 
+<div class="viewcode-block" id="BatchedMultiOutputGPyTorchModel.get_batch_dimensions"><a class="viewcode-back" href="../../../models.html#botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel.get_batch_dimensions">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_batch_dimensions</span><span class="p">(</span>
+        <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">]:</span>
+        <span class="sa">r</span><span class="sd">"""Get the raw batch shape and output-augmented batch shape of the inputs.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            train_X: A `n x d` or `batch_shape x n x d` (batch mode) tensor of training</span>
+<span class="sd">                features.</span>
+<span class="sd">            train_Y: A `n x m` or `batch_shape x n x m` (batch mode) tensor of</span>
+<span class="sd">                training observations.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            2-element tuple containing</span>
+
+<span class="sd">            - The `input_batch_shape`</span>
+<span class="sd">            - The output-augmented batch shape: `input_batch_shape x (m)`</span>
+<span class="sd">        """</span>
+        <span class="n">input_batch_shape</span> <span class="o">=</span> <span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">aug_batch_shape</span> <span class="o">=</span> <span class="n">input_batch_shape</span>
+        <span class="n">num_outputs</span> <span class="o">=</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">num_outputs</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">aug_batch_shape</span> <span class="o">+=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">num_outputs</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">input_batch_shape</span><span class="p">,</span> <span class="n">aug_batch_shape</span></div>
+
     <span class="k">def</span> <span class="nf">_set_dimensions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Store the number of outputs and the batch shape.</span>
 
@@ -230,10 +255,9 @@
 <span class="sd">                training observations.</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_num_outputs</span> <span class="o">=</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_input_batch_shape</span> <span class="o">=</span> <span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_batch_shape</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_outputs</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span> <span class="o">+=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_num_outputs</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_input_batch_shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_batch_dimensions</span><span class="p">(</span>
+            <span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span>
+        <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_transform_tensor_args</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
