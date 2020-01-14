@@ -103,14 +103,20 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
                 )
         else:
             num_fantasies = sampler.sample_shape[0]
-        super().__init__(model=model, sampler=sampler, X_pending=X_pending)
+        super(MCAcquisitionFunction, self).__init__(model=model)
         # if not explicitly specified, we use the posterior mean for linear objs
         if isinstance(objective, MCAcquisitionObjective) and inner_sampler is None:
             inner_sampler = SobolQMCNormalSampler(
                 num_samples=128, resample=False, collapse_batch_dims=True
             )
-        self.inner_sampler = inner_sampler
+        if objective is None and model.num_outputs != 1:
+            raise UnsupportedError(
+                "Must specify an objective when using a multi-output model."
+            )
+        self.sampler = sampler
         self.objective = objective
+        self.set_X_pending(X_pending)
+        self.inner_sampler = inner_sampler
         self.num_fantasies = num_fantasies
         self.current_value = current_value
 
