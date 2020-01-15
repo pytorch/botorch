@@ -8,6 +8,7 @@ from typing import Callable
 from unittest import mock
 
 import torch
+from botorch.acquisition.cost_aware import InverseCostWeightedUtility
 from botorch.acquisition.max_value_entropy_search import (
     _sample_max_value_Gumbel,
     _sample_max_value_Thompson,
@@ -124,6 +125,7 @@ class TestMaxValueEntropySearch(BotorchTestCase):
             self.assertEqual(qMF_MVE.num_fantasies, 16)
             self.assertEqual(qMF_MVE.num_mv_samples, 10)
             self.assertIsInstance(qMF_MVE.sampler, SobolQMCNormalSampler)
+            self.assertIsInstance(qMF_MVE.cost_sampler, SobolQMCNormalSampler)
             self.assertEqual(qMF_MVE.sampler.sample_shape, torch.Size([128]))
             self.assertIsInstance(qMF_MVE.fantasies_sampler, SobolQMCNormalSampler)
             self.assertEqual(qMF_MVE.fantasies_sampler.sample_shape, torch.Size([16]))
@@ -131,6 +133,9 @@ class TestMaxValueEntropySearch(BotorchTestCase):
             self.assertIsInstance(qMF_MVE.project, Callable)
             self.assertIsNone(qMF_MVE.X_pending)
             self.assertEqual(qMF_MVE.posterior_max_values.shape, torch.Size([10, 1]))
+            self.assertIsInstance(
+                qMF_MVE.cost_aware_utility, InverseCostWeightedUtility
+            )
 
             # test evaluation
             X = torch.rand(1, 2, device=self.device, dtype=dtype)
