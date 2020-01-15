@@ -21,6 +21,7 @@ References
     arXiv:1901.08275v1, 2019
 """
 
+from copy import deepcopy
 from math import log
 from typing import Callable, Optional
 
@@ -297,7 +298,6 @@ class qMaxValueEntropy(MCAcquisitionFunction):
         H1_hat = H1_bar - beta * (H0_bar - H0)
         ig = H0 - H1_hat  # batch_shape x num_fantasies
         ig = ig.permute(-1, *range(ig.dim() - 1))  # num_fantasies x batch_shape
-
         return ig
 
 
@@ -382,12 +382,28 @@ class qMultiFidelityMaxValueEntropy(qMaxValueEntropy):
         self.cost_aware_utility = cost_aware_utility
         self.expand = expand
         self.project = project
+        self._cost_sampler = None
+
         # @TODO make sure fidelity_dims align in project, expand & cost_aware_utility
         # It seems very difficult due to the current way of handling project/expand
 
         # resample max values after initializing self.project
         # so that the max value samples are at the highest fidelity
         self._sample_max_values()
+
+    @property
+    def cost_sampler(self):
+        if self._cost_sampler is None:
+            # Note: Using the deepcopy here is essential. Removing this poses a
+            # problem if the base model and the cost model have a different number
+            # of outputs or test points (this would be caused by expand), as this
+            # would trigger re-sampling the base samples in the fantasy sampler.
+            # By cloning the sampler here, the right thing will happen if the
+            # the sizes are compatible, if they are not this will result in
+            # samples being drawn using different base samples, but it will at
+            # least avoid changing state of the fantasy sampler.
+            self._cost_sampler = deepcopy(self.fantasies_sampler)
+        return self._cost_sampler
 
     @t_batch_mode_transform(expected_q=1)
     def forward(self, X: Tensor) -> Tensor:
@@ -422,8 +438,8 @@ class qMultiFidelityMaxValueEntropy(qMaxValueEntropy):
         ig = self._compute_information_gain(
             X=X_expand, mean_M=mean_M, variance_M=variance_M, covar_mM=covar_mM
         )
-
-        return self.cost_aware_utility(X, ig).mean(dim=0)  # average over the fantasies
+        ig = self.cost_aware_utility(X=X, deltas=ig, sampler=self.cost_sampler)
+        return ig.mean(dim=0)  # average over the fantasies
 
 
 def _sample_max_value_Thompson(
