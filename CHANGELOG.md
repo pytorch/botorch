@@ -2,9 +2,24 @@
 
 The release log for BoTorch.
 
+## [0.2.1] - Jan 15, 2020
+
+Minor bug fix release.
+
+#### New Features
+* Add a static method for getting batch shapes for batched MO models (#346).
+
+#### Bug fixes
+* Revamp qKG constructor to avoid issue with missing objective (#351).
+* Make sure MVES can support sampled costs like KG (#352).
+
+#### Other changes
+* Allow custom module-to-array handling in fit_gpytorch_scipy (#341).
+
+
 ## [0.2.0] - Dec 20, 2019
 
-Max-value entropy acqusition function, cost-aware / multifidelity optimization,
+Max-value entropy acquisition function, cost-aware / multi-fidelity optimization,
 subsetting models, outcome transforms.
 
 #### Compatibility
