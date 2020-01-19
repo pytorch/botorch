@@ -71,12 +71,12 @@ this is a <cite>(num_restarts)</cite>-dim tensor of joint acquisition values
 values conditional on having observed canidates <cite>0,1,…,i-1</cite>.</p></li>
 </ul>
 </p></li>
-<li><p><strong>Example</strong> – <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># generate `q=2` candidates jointly using 20 random restarts</span>
+<li><p><strong>Example</strong> – <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># generate `q=2` candidates jointly using 20 random restarts</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># and 512 raw samples</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">candidates</span><span class="p">,</span> <span class="n">acq_value</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span><span class="n">qEI</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">512</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; generate `q=3` candidates sequentially using 15 random restarts
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; generate `q=3` candidates sequentially using 15 random restarts
 &gt;&gt;&gt; # and 256 raw samples
 &gt;&gt;&gt; qEI = qExpectedImprovement(model, best_f=0.2)
 &gt;&gt;&gt; bounds = torch.tensor([[0.], [1.]])
@@ -131,7 +131,7 @@ values, where the <cite>i`th value is the acquistion value conditional on
 having observed all candidates except candidate `i</cite>.</p></li>
 </ul>
 </p></li>
-<li><p><strong>Example</strong> – <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># generate `q=3` candidates cyclically using 15 random restarts</span>
+<li><p><strong>Example</strong> – <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># generate `q=3` candidates cyclically using 15 random restarts</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># 256 raw samples, and 4 cycles</span>
 <span class="go">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">qEI</span> <span class="o">=</span> <span class="n">qExpectedImprovement</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">best_f</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
@@ -214,7 +214,7 @@ iteration. If track_iterations is False, will be empty.</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">gp</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">gp</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">mll</span> <span class="o">=</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">(</span><span class="n">gp</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">gp</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">mll</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fit_gpytorch_torch</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>
@@ -224,7 +224,7 @@ iteration. If track_iterations is False, will be empty.</p>
 </dd></dl>
 <dl class="function">
 <dt id="botorch.optim.fit.fit_gpytorch_scipy">
-<code class="sig-prename descclassname">botorch.optim.fit.</code><code class="sig-name descname">fit_gpytorch_scipy</code><span class="sig-paren">(</span><em class="sig-param">mll</em>, <em class="sig-param">bounds=None</em>, <em class="sig-param">method='L-BFGS-B'</em>, <em class="sig-param">options=None</em>, <em class="sig-param">track_iterations=True</em>, <em class="sig-param">approx_mll=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/fit.html#fit_gpytorch_scipy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.fit.fit_gpytorch_scipy" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.optim.fit.</code><code class="sig-name descname">fit_gpytorch_scipy</code><span class="sig-paren">(</span><em class="sig-param">mll</em>, <em class="sig-param">bounds=None</em>, <em class="sig-param">method='L-BFGS-B'</em>, <em class="sig-param">options=None</em>, <em class="sig-param">track_iterations=True</em>, <em class="sig-param">approx_mll=False</em>, <em class="sig-param">scipy_objective=&lt;function _scipy_objective_and_grad&gt;</em>, <em class="sig-param">module_to_array_func=&lt;function module_to_array&gt;</em>, <em class="sig-param">module_from_array_func=&lt;function set_params_with_array&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/fit.html#fit_gpytorch_scipy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.fit.fit_gpytorch_scipy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fit a gpytorch model by maximizing MLL with a scipy optimizer.</p>
 <p>The model and likelihood in mll must already be in train mode.
 This method requires that the model has <cite>train_inputs</cite> and <cite>train_targets</cite>.</p>
@@ -258,7 +258,7 @@ iteration. If track_iterations is False, will be empty.</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">gp</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">gp</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">mll</span> <span class="o">=</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">(</span><span class="n">gp</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">gp</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">mll</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fit_gpytorch_scipy</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>
@@ -298,7 +298,7 @@ functions).</p></li>
 </dd>
 </dl>
 <p class="rubric">Example</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">qEI</span> <span class="o">=</span> <span class="n">qExpectedImprovement</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">best_f</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">qEI</span> <span class="o">=</span> <span class="n">qExpectedImprovement</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">best_f</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">bounds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[</span><span class="mf">0.</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.</span><span class="p">]])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">Xinit</span> <span class="o">=</span> <span class="n">gen_batch_initial_conditions</span><span class="p">(</span>
 <span class="gp">&gt;&gt;&gt; </span>    <span class="n">qEI</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">num_restarts</span><span class="o">=</span><span class="mi">25</span><span class="p">,</span> <span class="n">raw_samples</span><span class="o">=</span><span class="mi">500</span>
@@ -353,7 +353,7 @@ of points (candidate points plus fantasy points).</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">qKG</span> <span class="o">=</span> <span class="n">qKnowledgeGradient</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">num_fantasies</span><span class="o">=</span><span class="mi">64</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">qKG</span> <span class="o">=</span> <span class="n">qKnowledgeGradient</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">num_fantasies</span><span class="o">=</span><span class="mi">64</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">bounds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">]])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">Xinit</span> <span class="o">=</span> <span class="n">gen_one_shot_kg_initial_conditions</span><span class="p">(</span>
 <span class="gp">&gt;&gt;&gt; </span>    <span class="n">qKG</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">num_restarts</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">raw_samples</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span>
@@ -391,7 +391,7 @@ is the value of the batch acquisition function to be maximized.</p></li>
 </dd>
 </dl>
 <p class="rubric">Example</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># To get `n=10` starting points of q-batch size `q=3`</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># To get `n=10` starting points of q-batch size `q=3`</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># for model with `d=6`:</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">qUCB</span> <span class="o">=</span> <span class="n">qUpperConfidenceBound</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">Xrnd</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
@@ -430,7 +430,7 @@ which to ignore samples. All input samples for which
 </dd>
 </dl>
 <p class="rubric">Example</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># To get `n=10` starting points of q-batch size `q=3`</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># To get `n=10` starting points of q-batch size `q=3`</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># for model with `d=6`:</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">qEI</span> <span class="o">=</span> <span class="n">qExpectedImprovement</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">best_f</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">Xrnd</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
@@ -498,7 +498,7 @@ one constraint is finite, and None otherwise.</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">mll</span> <span class="o">=</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">mll</span> <span class="o">=</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">parameter_array</span><span class="p">,</span> <span class="n">property_dict</span><span class="p">,</span> <span class="n">bounds_out</span> <span class="o">=</span> <span class="n">module_to_array</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -524,7 +524,7 @@ returned by module_to_array.</p></li>
 </dd>
 </dl>
 <p class="rubric">Example</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">mll</span> <span class="o">=</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">mll</span> <span class="o">=</span> <span class="n">ExactMarginalLogLikelihood</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">parameter_array</span><span class="p">,</span> <span class="n">property_dict</span><span class="p">,</span> <span class="n">bounds_out</span> <span class="o">=</span> <span class="n">module_to_array</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">parameter_array</span> <span class="o">+=</span> <span class="mf">0.1</span>  <span class="c1"># perturb parameters (for example only)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">mll</span> <span class="o">=</span> <span class="n">set_params_with_array</span><span class="p">(</span><span class="n">mll</span><span class="p">,</span> <span class="n">parameter_array</span><span class="p">,</span>  <span class="n">property_dict</span><span class="p">)</span>
@@ -558,7 +558,7 @@ None, and None otherwise.</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">scipy_bounds</span> <span class="o">=</span> <span class="n">make_scipy_bounds</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -600,7 +600,7 @@ indices are a 2-d Tensor.</p>
 <p class="rubric">Example</p>
 <p>The following will enforce that <cite>x[1] + 0.5 x[3] &gt;= -0.1</cite> for each <cite>x</cite>
 in both elements of the q-batch, and each of the 3 t-batches:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">constraints</span> <span class="o">=</span> <span class="n">make_scipy_linear_constraints</span><span class="p">(</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">constraints</span> <span class="o">=</span> <span class="n">make_scipy_linear_constraints</span><span class="p">(</span>
 <span class="gp">&gt;&gt;&gt; </span>    <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">]),</span>
 <span class="gp">&gt;&gt;&gt; </span>    <span class="p">[(</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]),</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]),</span> <span class="o">-</span><span class="mf">0.1</span><span class="p">)],</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="p">)</span>
@@ -609,7 +609,7 @@ in both elements of the q-batch, and each of the 3 t-batches:</p>
 <p>The following will enforce that <cite>x[0, 1] + 0.5 x[1, 3] &gt;= -0.1</cite> where
 x[0, :] is the first element of the q-batch and x[1, :] is the second
 element of the q-batch, for each of the 3 t-batches:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">constraints</span> <span class="o">=</span> <span class="n">make_scipy_linear_constraints</span><span class="p">(</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">constraints</span> <span class="o">=</span> <span class="n">make_scipy_linear_constraints</span><span class="p">(</span>
 <span class="gp">&gt;&gt;&gt; </span>    <span class="n">torch</span><span class="o">.</span><span class="n">size</span><span class="p">([</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">])</span>
 <span class="gp">&gt;&gt;&gt; </span>    <span class="p">[(</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]),</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]),</span> <span class="o">-</span><span class="mf">0.1</span><span class="p">)],</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="p">)</span>
@@ -812,7 +812,7 @@ range <cite>[0, p - 1]</cite>.</p></li>
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2019 Facebook Inc.</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2020 Facebook Inc.</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {

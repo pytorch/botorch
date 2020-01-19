@@ -47,6 +47,7 @@
 <span class="sd">    arXiv:1901.08275v1, 2019</span>
 <span class="sd">"""</span>
 
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">log</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span>
 
@@ -323,7 +324,6 @@
         <span class="n">H1_hat</span> <span class="o">=</span> <span class="n">H1_bar</span> <span class="o">-</span> <span class="n">beta</span> <span class="o">*</span> <span class="p">(</span><span class="n">H0_bar</span> <span class="o">-</span> <span class="n">H0</span><span class="p">)</span>
         <span class="n">ig</span> <span class="o">=</span> <span class="n">H0</span> <span class="o">-</span> <span class="n">H1_hat</span>  <span class="c1"># batch_shape x num_fantasies</span>
         <span class="n">ig</span> <span class="o">=</span> <span class="n">ig</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="nb">range</span><span class="p">(</span><span class="n">ig</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>  <span class="c1"># num_fantasies x batch_shape</span>
-
         <span class="k">return</span> <span class="n">ig</span></div>
 
 
@@ -408,12 +408,28 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">cost_aware_utility</span> <span class="o">=</span> <span class="n">cost_aware_utility</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">expand</span> <span class="o">=</span> <span class="n">expand</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">project</span> <span class="o">=</span> <span class="n">project</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cost_sampler</span> <span class="o">=</span> <span class="kc">None</span>
+
         <span class="c1"># @TODO make sure fidelity_dims align in project, expand &amp; cost_aware_utility</span>
         <span class="c1"># It seems very difficult due to the current way of handling project/expand</span>
 
         <span class="c1"># resample max values after initializing self.project</span>
         <span class="c1"># so that the max value samples are at the highest fidelity</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_sample_max_values</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">cost_sampler</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cost_sampler</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Note: Using the deepcopy here is essential. Removing this poses a</span>
+            <span class="c1"># problem if the base model and the cost model have a different number</span>
+            <span class="c1"># of outputs or test points (this would be caused by expand), as this</span>
+            <span class="c1"># would trigger re-sampling the base samples in the fantasy sampler.</span>
+            <span class="c1"># By cloning the sampler here, the right thing will happen if the</span>
+            <span class="c1"># the sizes are compatible, if they are not this will result in</span>
+            <span class="c1"># samples being drawn using different base samples, but it will at</span>
+            <span class="c1"># least avoid changing state of the fantasy sampler.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cost_sampler</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fantasies_sampler</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cost_sampler</span>
 
 <div class="viewcode-block" id="qMultiFidelityMaxValueEntropy.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.max_value_entropy_search.qMultiFidelityMaxValueEntropy.forward">[docs]</a>    <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
@@ -448,8 +464,8 @@
         <span class="n">ig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_information_gain</span><span class="p">(</span>
             <span class="n">X</span><span class="o">=</span><span class="n">X_expand</span><span class="p">,</span> <span class="n">mean_M</span><span class="o">=</span><span class="n">mean_M</span><span class="p">,</span> <span class="n">variance_M</span><span class="o">=</span><span class="n">variance_M</span><span class="p">,</span> <span class="n">covar_mM</span><span class="o">=</span><span class="n">covar_mM</span>
         <span class="p">)</span>
-
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cost_aware_utility</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">ig</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># average over the fantasies</span></div></div>
+        <span class="n">ig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cost_aware_utility</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">deltas</span><span class="o">=</span><span class="n">ig</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cost_sampler</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ig</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># average over the fantasies</span></div></div>
 
 
 <span class="k">def</span> <span class="nf">_sample_max_value_Thompson</span><span class="p">(</span>
@@ -582,7 +598,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2019 Facebook Inc.</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2020 Facebook Inc.</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {
