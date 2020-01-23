@@ -155,11 +155,12 @@ class qExpectedImprovement(MCAcquisitionFunction):
             design points `X`.
         """
         posterior = self.model.posterior(X)
-        samples = self.sampler(posterior)
+        samples, sample_weights = self.sampler(posterior)
         obj = self.objective(samples)
-        obj = (obj - self.best_f).clamp_min(0)
-        q_ei = obj.max(dim=-1)[0].mean(dim=0)
-        return q_ei
+        obj = (obj - self.best_f).clamp_min(0).max(dim=-1)[0]
+        if sample_weights is not None:
+            obj = obj * sample_weights
+        return obj.mean(dim=0)
 
 
 class qNoisyExpectedImprovement(MCAcquisitionFunction):

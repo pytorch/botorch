@@ -8,8 +8,9 @@ r"""
 Sampler modules to be used with MC-evaluated acquisition functions.
 """
 
+import math
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional, Tuple
 
 import torch
 from torch import Tensor
@@ -42,21 +43,25 @@ class MCSampler(Module, ABC):
         >>> samples = sampler(posterior)
     """
 
-    def forward(self, posterior: Posterior) -> Tensor:
+    _sample_weights: Optional[Tensor] = None
+
+    def forward(self, posterior: Posterior) -> Tuple[Tensor, Optional[Tensor]]:
         r"""Draws MC samples from the posterior.
 
         Args:
             posterior: The Posterior to sample from.
 
         Returns:
-            The samples drawn from the posterior.
+            A two-tuple with the following elements:
+            - The samples drawn from the posterior.
+            - The sample weights. If `None`, use unweighted sampling.
         """
         base_sample_shape = self._get_base_sample_shape(posterior=posterior)
         self._construct_base_samples(posterior=posterior, shape=base_sample_shape)
         samples = posterior.rsample(
             sample_shape=self.sample_shape, base_samples=self.base_samples
         )
-        return samples
+        return samples, self.sample_weights
 
     def _get_base_sample_shape(self, posterior: Posterior) -> torch.Size:
         r"""Get the shape of the base samples.
@@ -77,8 +82,13 @@ class MCSampler(Module, ABC):
 
     @property
     def sample_shape(self) -> torch.Size:
-        r"""The shape of a single sample"""
+        r"""The shape of a single sample."""
         return self._sample_shape
+
+    @property
+    def sample_weights(self) -> Optional[Tensor]:
+        r"""The weight of the samples. None if samples are unweighted."""
+        return self._sample_weights
 
     @abstractmethod
     def _construct_base_samples(self, posterior: Posterior, shape: torch.Size) -> None:
@@ -101,7 +111,7 @@ class MCSampler(Module, ABC):
 
 
 class IIDNormalSampler(MCSampler):
-    r"""Sampler for MC base samples using iid N(0,1) samples.
+    r"""Sampler for MC base samples using iid N(0, sigma^2 I) samples.
 
     Example:
         >>> sampler = IIDNormalSampler(1000, seed=1234)
@@ -115,6 +125,7 @@ class IIDNormalSampler(MCSampler):
         resample: bool = False,
         seed: Optional[int] = None,
         collapse_batch_dims: bool = True,
+        sigma: float = 1.0,
     ) -> None:
         r"""Sampler for MC base samples using iid `N(0,1)` samples.
 
@@ -127,9 +138,13 @@ class IIDNormalSampler(MCSampler):
             collapse_batch_dims: If True, collapse the t-batch dimensions to
                 size 1. This is useful for preventing sampling variance across
                 t-batches.
+            sigma: The stadard deviation of the samples. If not 1.0, sample
+                weights are returned by `forward` that allow implementing
+                importance sampling.
         """
         super().__init__()
         self._sample_shape = torch.Size([num_samples])
+        self.sigma = sigma
         self.collapse_batch_dims = collapse_batch_dims
         self.resample = resample
         self.seed = seed if seed is not None else torch.randint(0, 1000000, (1,)).item()
@@ -161,6 +176,10 @@ class IIDNormalSampler(MCSampler):
                     shape, device=posterior.device, dtype=posterior.dtype
                 )
             self.seed += 1
+            if self.sigma != 1.0:
+                base_samples = self.sigma * base_samples
+                log_diff_pdf = _compute_log_diff(sigma=self.sigma, samples=base_samples)
+                self._sample_weights = torch.exp(log_diff_pdf)
             self.register_buffer("base_samples", base_samples)
         elif self.collapse_batch_dims and shape != self.base_samples.shape:
             self.base_samples = self.base_samples.view(shape)
@@ -185,6 +204,7 @@ class SobolQMCNormalSampler(MCSampler):
         resample: bool = False,
         seed: Optional[int] = None,
         collapse_batch_dims: bool = True,
+        sigma: float = 1.0,
     ) -> None:
         r"""Sampler for quasi-MC base samples using Sobol sequences.
 
@@ -197,9 +217,13 @@ class SobolQMCNormalSampler(MCSampler):
             collapse_batch_dims: If True, collapse the t-batch dimensions to
                 size 1. This is useful for preventing sampling variance across
                 t-batches.
+            sigma: The stadard deviation of the samples. If not 1.0, sample
+                weights are returned by `forward` that allow implementing
+                importance sampling.
         """
         super().__init__()
         self._sample_shape = torch.Size([num_samples])
+        self.sigma = sigma
         self.collapse_batch_dims = collapse_batch_dims
         self.resample = resample
         self.seed = seed if seed is not None else torch.randint(0, 1000000, (1,)).item()
@@ -241,6 +265,10 @@ class SobolQMCNormalSampler(MCSampler):
             )
             self.seed += 1
             base_samples = base_samples.view(shape)
+            if self.sigma != 1.0:
+                base_samples = self.sigma * base_samples
+                log_diff_pdf = _compute_log_diff(sigma=self.sigma, samples=base_samples)
+                self._sample_weights = torch.exp(log_diff_pdf)
             self.register_buffer("base_samples", base_samples)
         elif self.collapse_batch_dims and shape != posterior.event_shape:
             self.base_samples = self.base_samples.view(shape)
@@ -248,3 +276,22 @@ class SobolQMCNormalSampler(MCSampler):
             self.to(device=posterior.device)  # pragma: nocover
         if self.base_samples.dtype != posterior.dtype:
             self.to(dtype=posterior.dtype)
+
+
+def _compute_log_diff(sigma: float, samples: Tensor) -> Tensor:
+    r"""Compute the log-probability difference of an MVN and its scaled variant.
+
+    Returns `N(0, I).log_prob(x) - N(0, sigma^2 I).log_prob(x)`
+
+    Args:
+        sigma: The standard deviation fo the scaled MVN.
+        x: The location (usually these are samples samples).
+
+    Returns:
+        The difference in the log probability, i.e.,
+        `N(0, I).log_prob(x) - N(0, sigma^2 I).log_prob(x)`
+    """
+    x = samples.view(*samples.shape[:-2], -1)  # effective dim is n*m
+    t1 = x.size(-1) * math.log(sigma)
+    t2 = 0.5 * (1 - 1 / sigma ** 2) * x.pow(2).sum(dim=-1)
+    return t1 - t2
