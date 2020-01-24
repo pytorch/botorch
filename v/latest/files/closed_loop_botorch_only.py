@@ -1,9 +1,44 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# ## Closed-loop batch, constrained BO in BoTorch with qEI and qNEI
+# 
+# In this tutorial, we illustrate how to implement a simple Bayesian Optimization (BO) closed loop in BoTorch.
+# 
+# In general, we recommend for a relatively simple setup (like this one) to use Ax, since this will simplify your setup (including the amount of code you need to write) considerably. See the [Using BoTorch with Ax](./custom_botorch_model_in_ax) tutorial.
+# 
+# However, you may want to do things that are not easily supported in Ax at this time (like running high-dimensional BO using a VAE+GP model that you jointly train on high-dimensional input data). If you find yourself in such a situation, you will need to write your own optimization loop, as we do in this tutorial.
+# 
+# 
+# We use the batch Expected Improvement (qEI) and batch Noisy Expected Improvement (qNEI) acquisition functions to optimize a constrained version of the synthetic Hartmann6 test function. The standard problem is
+# 
+# $$f(x) = -\sum_{i=1}^4 \alpha_i \exp \left( -\sum_{j=1}^6 A_{ij} (x_j - P_{ij})^2  \right)$$
+# 
+# over $x \in [0,1]^6$ (parameter values can be found in `botorch/test_functions/hartmann6.py`).
+# 
+# In real BO applications, the design $x$ can influence multiple metrics in unknown ways, and the decision-maker often wants to optimize one metric without sacrificing another. To illustrate this, we add a synthetic constraint fo the form $\|x\|_1 - 3 \le 0$. Both the objective and the constraint are observed with noise. 
+# 
+# Since botorch assumes a maximization problem, we will attempt to maximize $-f(x)$ to achieve $\max_{x} -f(x) = 3.32237$.
+
+# In[1]:
+
+
 import torch
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 dtype = torch.double
 
-from botorch.test_functions.hartmann6 import neg_hartmann6
+
+# ### Problem setup
+# 
+# First, we define the constraint used in the example in `outcome_constraint`. The second function `weighted_obj` is a "feasibility-weighted objective," which returns zero when not feasible. 
+
+# In[2]:
+
+
+from botorch.test_functions import Hartmann
+
+neg_hartmann6 = Hartmann(negate=True)
 
 def outcome_constraint(X):
     """L1 constraint; feasible if less than or equal to zero."""
@@ -12,6 +47,16 @@ def outcome_constraint(X):
 def weighted_obj(X):
     """Feasibility weighted objective; zero if not feasible."""
     return neg_hartmann6(X) * (outcome_constraint(X) <= 0).type_as(X)
+
+
+# #### Model initialization
+# 
+# We use a `MultiOutputGP` to model the objective (output 0) and the constraint (output 1). We assume known homoskedastic observation noise on both the objective and constraint with standard error $\sigma = 0.5$. 
+# 
+# Each component is a `FixedNoiseGP`. The models are initialized with 10 points drawn randomly from $[0,1]^6$.
+
+# In[3]:
+
 
 from botorch.models import FixedNoiseGP, ModelListGP
 from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
@@ -43,6 +88,13 @@ def initialize_model(train_x, train_obj, train_con, state_dict=None):
         model.load_state_dict(state_dict)
     return mll, model
 
+
+# #### Define a construct to extract the objective and constraint from the GP
+# The methods below take the outputs of the GP and return the objective and the constraint. In general, these can be any `Callable`, but here we simply need to index the correct output.
+
+# In[4]:
+
+
 from botorch.acquisition.objective import ConstrainedMCObjective
 
 def obj_callable(Z):
@@ -56,6 +108,13 @@ constrained_obj = ConstrainedMCObjective(
     objective=obj_callable,
     constraints=[constraint_callable],
 )
+
+
+# #### Define a helper function that performs the essential BO step
+# The helper function below takes an acquisition function as an argument, optimizes it, and returns the batch $\{x_1, x_2, \ldots x_q\}$ along with the observed function values. For this example, we'll use a small batch of $q=3$. The function `optimize_acqf` optimizes the $q$ points jointly. A simple initialization heuristic is used to select the 10 restart initial locations from a set of 50 random points. 
+
+# In[5]:
+
 
 from botorch.optim import optimize_acqf
 
@@ -71,11 +130,8 @@ def optimize_acqf_and_get_observation(acq_func):
         bounds=bounds,
         q=BATCH_SIZE,
         num_restarts=10,
-        raw_samples=500,  # used for intialization heuristic
-        options={
-            "batch_limit": 5,
-            "max_iter": 200,
-        }
+        raw_samples=512,  # used for intialization heuristic
+        options={"batch_limit": 5, "maxiter": 200},
     )
     # observe new values 
     new_x = candidates.detach()
@@ -95,6 +151,21 @@ def update_random_observations(best_random):
     best_random.append(max(best_random[-1], next_random_best))       
     return best_random
 
+
+# ### Perform Bayesian Optimization loop with qNEI
+# The Bayesian optimization "loop" for a batch size of $q$ simply iterates the following steps:
+# 1. given a surrogate model, choose a batch of points $\{x_1, x_2, \ldots x_q\}$
+# 2. observe $f(x)$ for each $x$ in the batch 
+# 3. update the surrogate model. 
+# 
+# 
+# Just for illustration purposes, we run three trials each of which do `N_BATCH=20` rounds of optimization. The acquisition function is approximated using `MC_SAMPLES=500` samples.
+# 
+# *Note*: Running this may take a little while.
+
+# In[6]:
+
+
 from botorch import fit_gpytorch_model
 from botorch.acquisition.monte_carlo import qExpectedImprovement, qNoisyExpectedImprovement
 from botorch.sampling.samplers import SobolQMCNormalSampler
@@ -107,7 +178,7 @@ warnings.filterwarnings('ignore', category=RuntimeWarning)
 
 N_TRIALS = 3
 N_BATCH = 20
-MC_SAMPLES = 500
+MC_SAMPLES = 256
 
 verbose = False
 
@@ -208,14 +279,22 @@ for trial in range(1, N_TRIALS + 1):
     best_observed_all_nei.append(best_observed_nei)
     best_random_all.append(best_random)
 
-import numpy as np
-from botorch.test_functions.hartmann6 import GLOBAL_MAXIMUM
 
+# #### Plot the results
+# The plot below shows the best objective value observed at each step of the optimization for each of the algorithms. The confidence intervals represent the variance at that step in the optimization across the trial runs. The variance across optimization runs is quite high, so in order to get a better estimate of the average performance one would have to run a much larger number of trials `N_TRIALS` (we avoid this here to limit the runtime of this tutorial). 
+
+# In[7]:
+
+
+import numpy as np
 from matplotlib import pyplot as plt
-%matplotlib inline
+get_ipython().run_line_magic('matplotlib', 'inline')
 
 def ci(y):
     return 1.96 * y.std(axis=0) / np.sqrt(N_TRIALS)
+
+GLOBAL_MAXIMUM = neg_hartmann6.optimal_value
+
 
 iters = np.arange(N_BATCH + 1) * BATCH_SIZE
 y_ei = np.asarray(best_observed_all_ei)
@@ -226,9 +305,8 @@ fig, ax = plt.subplots(1, 1, figsize=(8, 6))
 ax.errorbar(iters, y_rnd.mean(axis=0), yerr=ci(y_rnd), label="random", linewidth=1.5)
 ax.errorbar(iters, y_ei.mean(axis=0), yerr=ci(y_ei), label="qEI", linewidth=1.5)
 ax.errorbar(iters, y_nei.mean(axis=0), yerr=ci(y_nei), label="qNEI", linewidth=1.5)
-plt.plot([0, N_BATCH * BATCH_SIZE], [GLOBAL_MAXIMUM] * 2, 'k', label="true best bjective", linewidth=2)
+plt.plot([0, N_BATCH * BATCH_SIZE], [GLOBAL_MAXIMUM] * 2, 'k', label="true best objective", linewidth=2)
 ax.set_ylim(bottom=0.5)
 ax.set(xlabel='number of observations (beyond initial points)', ylabel='best objective value')
 ax.legend(loc="lower right")
-
 
