@@ -6,23 +6,15 @@
 
 from .initializers import initialize_q_batch, initialize_q_batch_nonneg
 from .numpy_converter import module_to_array, set_params_with_array
-from .optimize import (
-    gen_batch_initial_conditions,
-    joint_optimize,
-    optimize_acqf,
-    optimize_acqf_cyclic,
-    sequential_optimize,
-)
+from .optimize import gen_batch_initial_conditions, optimize_acqf, optimize_acqf_cyclic
 
 
 __all__ = [
     "gen_batch_initial_conditions",
     "initialize_q_batch",
     "initialize_q_batch_nonneg",
-    "joint_optimize",
     "optimize_acqf",
     "optimize_acqf_cyclic",
     "module_to_array",
-    "sequential_optimize",
     "set_params_with_array",
 ]

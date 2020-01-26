@@ -8,7 +8,6 @@ r"""
 Methods for optimizing acquisition functions.
 """
 
-import warnings
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import torch
@@ -302,78 +301,3 @@ def optimize_acqf_cyclic(
             converged = convergence_criterion.evaluate(fvals=acq_vals)
         acq_function.set_X_pending(base_X_pending)
     return candidates, acq_vals
-
-
-def sequential_optimize(
-    acq_function: AcquisitionFunction,
-    bounds: Tensor,
-    q: int,
-    num_restarts: int,
-    raw_samples: int,
-    options: Optional[Dict[str, Union[bool, float, int]]] = None,
-    inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
-    equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
-    fixed_features: Optional[Dict[int, float]] = None,
-    post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
-) -> Tuple[Tensor, Tensor]:
-    r"""DEPRECATED - Use optimize_acqf with sequential=True instead."""
-    warnings.warn(
-        "sequential_optimize is deprecated. Please use optimize_acfq "
-        "with sequential=True instead.",
-        DeprecationWarning,
-    )
-    candidates, acq_values = optimize_acqf(
-        acq_function=acq_function,
-        bounds=bounds,
-        q=q,
-        num_restarts=num_restarts,
-        raw_samples=raw_samples,
-        options=options,
-        inequality_constraints=inequality_constraints,
-        equality_constraints=equality_constraints,
-        fixed_features=fixed_features,
-        post_processing_func=post_processing_func,
-        batch_initial_conditions=None,
-        return_best_only=True,
-        sequential=True,
-    )
-    return candidates, acq_values
-
-
-def joint_optimize(
-    acq_function: AcquisitionFunction,
-    bounds: Tensor,
-    q: int,
-    num_restarts: int,
-    raw_samples: int,
-    options: Optional[Dict[str, Union[bool, float, int]]] = None,
-    inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
-    equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
-    fixed_features: Optional[Dict[int, float]] = None,
-    post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
-    batch_initial_conditions: Optional[Tensor] = None,
-    return_best_only: bool = True,
-) -> Tuple[Tensor, Tensor]:
-    r"""DEPRECATED - Use optimize_acqf instead."""
-    warnings.warn(
-        "joint_optimize is deprecated. Please use optimize_acfq instead.",
-        DeprecationWarning,
-    )
-
-    batch_candidates, batch_acq_values = optimize_acqf(
-        acq_function=acq_function,
-        bounds=bounds,
-        q=q,
-        num_restarts=num_restarts,
-        raw_samples=raw_samples,
-        options=options,
-        inequality_constraints=inequality_constraints,
-        equality_constraints=equality_constraints,
-        fixed_features=fixed_features,
-        post_processing_func=post_processing_func,
-        batch_initial_conditions=batch_initial_conditions,
-        return_best_only=return_best_only,
-        sequential=False,
-    )
-
-    return batch_candidates, batch_acq_values

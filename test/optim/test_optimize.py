@@ -5,17 +5,11 @@
 # LICENSE file in the root directory of this source tree.
 
 import itertools
-import warnings
 from unittest import mock
 
 import torch
 from botorch.acquisition.acquisition import OneShotAcquisitionFunction
-from botorch.optim.optimize import (
-    joint_optimize,
-    optimize_acqf,
-    optimize_acqf_cyclic,
-    sequential_optimize,
-)
+from botorch.optim.optimize import optimize_acqf, optimize_acqf_cyclic
 from botorch.utils.testing import BotorchTestCase, MockAcquisitionFunction
 from torch import Tensor
 
@@ -41,56 +35,6 @@ def rounding_func(X: Tensor) -> Tensor:
     batch_shape, d = X.shape[:-1], X.shape[-1]
     X_round = torch.stack([x.round() for x in X.view(-1, d)])
     return X_round.view(*batch_shape, d)
-
-
-class TestDeprecatedOptimize(BotorchTestCase):
-
-    shared_kwargs = {
-        "acq_function": MockAcquisitionFunction(),
-        "bounds": torch.zeros(2, 2),
-        "q": 3,
-        "num_restarts": 2,
-        "raw_samples": 10,
-        "options": {},
-        "inequality_constraints": None,
-        "equality_constraints": None,
-        "fixed_features": None,
-        "post_processing_func": None,
-    }
-
-    @mock.patch("botorch.optim.optimize.optimize_acqf", return_value=(None, None))
-    def test_joint_optimize(self, mock_optimize_acqf):
-        kwargs = {
-            **self.shared_kwargs,
-            "return_best_only": True,
-            "batch_initial_conditions": None,
-        }
-        with warnings.catch_warnings(record=True) as ws:
-            candidates, acq_values = joint_optimize(**kwargs)
-            self.assertTrue(any(issubclass(w.category, DeprecationWarning) for w in ws))
-            self.assertTrue(
-                any("joint_optimize is deprecated" in str(w.message) for w in ws)
-            )
-            mock_optimize_acqf.assert_called_once_with(**kwargs, sequential=False)
-            self.assertIsNone(candidates)
-            self.assertIsNone(acq_values)
-
-    @mock.patch("botorch.optim.optimize.optimize_acqf", return_value=(None, None))
-    def test_sequential_optimize(self, mock_optimize_acqf):
-        with warnings.catch_warnings(record=True) as ws:
-            candidates, acq_values = sequential_optimize(**self.shared_kwargs)
-            self.assertTrue(any(issubclass(w.category, DeprecationWarning) for w in ws))
-            self.assertTrue(
-                any("sequential_optimize is deprecated" in str(w.message) for w in ws)
-            )
-            mock_optimize_acqf.assert_called_once_with(
-                **self.shared_kwargs,
-                return_best_only=True,
-                sequential=True,
-                batch_initial_conditions=None,
-            )
-            self.assertIsNone(candidates)
-            self.assertIsNone(acq_values)
 
 
 class TestOptimizeAcqf(BotorchTestCase):
