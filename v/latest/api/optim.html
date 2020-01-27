@@ -12,7 +12,7 @@
             {"zIndex":100}
           )
         });
-        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/latest/versions"><h3>latest</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
 <script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/underscore.js"></script>
@@ -146,26 +146,6 @@ having observed all candidates except candidate `i</cite>.</p></li>
 </dd>
 <dt class="field-even">Return type</dt>
 <dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="function">
-<dt id="botorch.optim.optimize.sequential_optimize">
-<code class="sig-prename descclassname">botorch.optim.optimize.</code><code class="sig-name descname">sequential_optimize</code><span class="sig-paren">(</span><em class="sig-param">acq_function</em>, <em class="sig-param">bounds</em>, <em class="sig-param">q</em>, <em class="sig-param">num_restarts</em>, <em class="sig-param">raw_samples</em>, <em class="sig-param">options=None</em>, <em class="sig-param">inequality_constraints=None</em>, <em class="sig-param">equality_constraints=None</em>, <em class="sig-param">fixed_features=None</em>, <em class="sig-param">post_processing_func=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/optimize.html#sequential_optimize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.optimize.sequential_optimize" title="Permalink to this definition">¶</a></dt>
-<dd><p>DEPRECATED - Use optimize_acqf with sequential=True instead.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="function">
-<dt id="botorch.optim.optimize.joint_optimize">
-<code class="sig-prename descclassname">botorch.optim.optimize.</code><code class="sig-name descname">joint_optimize</code><span class="sig-paren">(</span><em class="sig-param">acq_function</em>, <em class="sig-param">bounds</em>, <em class="sig-param">q</em>, <em class="sig-param">num_restarts</em>, <em class="sig-param">raw_samples</em>, <em class="sig-param">options=None</em>, <em class="sig-param">inequality_constraints=None</em>, <em class="sig-param">equality_constraints=None</em>, <em class="sig-param">fixed_features=None</em>, <em class="sig-param">post_processing_func=None</em>, <em class="sig-param">batch_initial_conditions=None</em>, <em class="sig-param">return_best_only=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/optimize.html#joint_optimize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.optimize.joint_optimize" title="Permalink to this definition">¶</a></dt>
-<dd><p>DEPRECATED - Use optimize_acqf instead.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</p>
 </dd>
 </dl>
 </dd></dl>
