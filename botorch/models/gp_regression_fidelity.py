@@ -141,4 +141,34 @@ class SingleTaskMultiFidelityGP(SingleTaskGP):
             covar_module=covar_module,
             outcome_transform=outcome_transform,
         )
+        if linear_truncated:
+            subset_batch_dict = {
+                "covar_module.base_kernel.raw_power": -2,
+                "covar_module.base_kernel.covar_module_unbiased.raw_lengthscale": -3,
+                "covar_module.base_kernel.covar_module_biased.raw_lengthscale": -3,
+            }
+        else:
+            subset_batch_dict = {
+                "covar_module.base_kernel.kernels.0.raw_lengthscale": -3,
+                "covar_module.base_kernel.kernels.1.raw_power": -2,
+                "covar_module.base_kernel.kernels.1.raw_offset": -2,
+            }
+            if iteration_fidelity is not None:
+                subset_batch_dict = {
+                    "covar_module.base_kernel.kernels.1.raw_lengthscale": -3,
+                    **subset_batch_dict,
+                }
+                if data_fidelity is not None:
+                    subset_batch_dict = {
+                        "covar_module.base_kernel.kernels.2.raw_power": -2,
+                        "covar_module.base_kernel.kernels.2.raw_offset": -2,
+                        **subset_batch_dict,
+                    }
+        self._subset_batch_dict = {
+            "likelihood.noise_covar.raw_noise": -2,
+            "mean_module.constant": -2,
+            "covar_module.raw_outputscale": -1,
+            **subset_batch_dict,
+        }
+
         self.to(train_X)

@@ -285,3 +285,37 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                 self.assertIsInstance(fm, model.__class__)
                 fm = model.fantasize(X=X_f, sampler=sampler, observation_noise=False)
                 self.assertIsInstance(fm, model.__class__)
+
+    def test_subset_model(self):
+        for (iteration_fidelity, data_fidelity) in self.FIDELITY_TEST_PAIRS:
+            num_dim = 1 + (iteration_fidelity is not None) + (data_fidelity is not None)
+            for batch_shape, dtype, lin_trunc in itertools.product(
+                (torch.Size(), torch.Size([2])),
+                (torch.float, torch.double),
+                (False, True),
+            ):
+                print(batch_shape, dtype, lin_trunc, iteration_fidelity, data_fidelity)
+                tkwargs = {"device": self.device, "dtype": dtype}
+                model, _ = _get_model_and_data(
+                    iteration_fidelity=iteration_fidelity,
+                    data_fidelity=data_fidelity,
+                    batch_shape=batch_shape,
+                    m=2,
+                    lin_truncated=lin_trunc,
+                    outcome_transform=None,  # TODO: Subset w/ outcome transform
+                    **tkwargs,
+                )
+                subset_model = model.subset_output([0])
+                X = torch.rand(
+                    torch.Size(batch_shape + torch.Size([3, num_dim])), **tkwargs
+                )
+                p = model.posterior(X)
+                p_sub = subset_model.posterior(X)
+                self.assertTrue(
+                    torch.allclose(p_sub.mean, p.mean[..., [0]], atol=1e-4, rtol=1e-4)
+                )
+                self.assertTrue(
+                    torch.allclose(
+                        p_sub.variance, p.variance[..., [0]], atol=1e-4, rtol=1e-4
+                    )
+                )
