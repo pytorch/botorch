@@ -15,6 +15,7 @@ from torch.nn import Module
 
 from ..exceptions import UnsupportedError
 from .gp_regression import FixedNoiseGP, HeteroskedasticSingleTaskGP
+from .gp_regression_fidelity import SingleTaskMultiFidelityGP
 from .gpytorch import BatchedMultiOutputGPyTorchModel
 from .model_list_gp_regression import ModelListGP
 
@@ -112,6 +113,13 @@ def model_list_to_batched(model_list: ModelListGP) -> BatchedMultiOutputGPyTorch
         kwargs["train_Yvar"] = torch.stack(
             [m.likelihood.noise_covar.noise.clone() for m in models], dim=-1
         )
+    if isinstance(models[0], SingleTaskMultiFidelityGP):
+        init_args = models[0]._init_args
+        if not all(
+            v == m._init_args[k] for m in models[1:] for k, v in init_args.items()
+        ):
+            raise UnsupportedError("All models must have the same fidelity parameters.")
+        kwargs.update(init_args)
 
     # construct the batched GP model
     batch_gp = models[0].__class__(**kwargs)
@@ -137,8 +145,12 @@ def model_list_to_batched(model_list: ModelListGP) -> BatchedMultiOutputGPyTorch
         s: p.clone() for s, p in models[0].state_dict().items() if s in scalars
     }
     tensor_state_dict = {
-        t: torch.stack(
-            [m.state_dict()[t].clone() for m in models], dim=input_batch_dims
+        t: (
+            torch.stack(
+                [m.state_dict()[t].clone() for m in models], dim=input_batch_dims
+            )
+            if "active_dims" not in t
+            else models[0].state_dict()[t].clone()
         )
         for t in tensors
     }
@@ -181,7 +193,14 @@ def batched_to_model_list(batch_model: BatchedMultiOutputGPyTorchModel) -> Model
 
     for i in range(batch_model._num_outputs):
         scalar_sd = {s: batch_sd[s].clone() for s in scalars}
-        tensor_sd = {t: batch_sd[t].select(input_bdims, i).clone() for t in tensors}
+        tensor_sd = {
+            t: (
+                batch_sd[t].select(input_bdims, i).clone()
+                if "active_dims" not in t
+                else batch_sd[t].clone()
+            )
+            for t in tensors
+        }
         sd = {**scalar_sd, **tensor_sd}
         kwargs = {
             "train_X": batch_model.train_inputs[0].select(input_bdims, i).clone(),
@@ -194,6 +213,8 @@ def batched_to_model_list(batch_model: BatchedMultiOutputGPyTorchModel) -> Model
             kwargs["train_Yvar"] = (
                 noise_covar.noise.select(input_bdims, i).clone().unsqueeze(-1)
             )
+        if isinstance(batch_model, SingleTaskMultiFidelityGP):
+            kwargs.update(batch_model._init_args)
         model = batch_model.__class__(**kwargs)
         model.load_state_dict(sd)
         models.append(model)

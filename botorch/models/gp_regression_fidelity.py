@@ -71,6 +71,13 @@ class SingleTaskMultiFidelityGP(SingleTaskGP):
         likelihood: Optional[Likelihood] = None,
         outcome_transform: Optional[OutcomeTransform] = None,
     ) -> None:
+        self._init_args = {
+            "iteration_fidelity": iteration_fidelity,
+            "data_fidelity": data_fidelity,
+            "linear_truncated": linear_truncated,
+            "nu": nu,
+            "outcome_transform": outcome_transform,
+        }
         if iteration_fidelity is None and data_fidelity is None:
             raise UnsupportedError(
                 "SingleTaskMultiFidelityGP requires at least one fidelity parameter."

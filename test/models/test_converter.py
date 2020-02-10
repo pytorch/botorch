@@ -12,6 +12,7 @@ from botorch.models import (
     HeteroskedasticSingleTaskGP,
     ModelListGP,
     SingleTaskGP,
+    SingleTaskMultiFidelityGP,
 )
 from botorch.models.converter import batched_to_model_list, model_list_to_batched
 from botorch.utils.testing import BotorchTestCase
@@ -35,6 +36,13 @@ class TestConverters(BotorchTestCase):
             batch_gp = FixedNoiseGP(train_X, train_Y, torch.rand_like(train_Y))
             list_gp = batched_to_model_list(batch_gp)
             self.assertIsInstance(list_gp, ModelListGP)
+            # test SingleTaskMultiFidelityGP
+            for lin_trunc in (False, True):
+                batch_gp = SingleTaskMultiFidelityGP(
+                    train_X, train_Y, iteration_fidelity=1, linear_truncated=lin_trunc
+                )
+                list_gp = batched_to_model_list(batch_gp)
+                self.assertIsInstance(list_gp, ModelListGP)
             # test HeteroskedasticSingleTaskGP
             batch_gp = HeteroskedasticSingleTaskGP(
                 train_X, train_Y, torch.rand_like(train_Y)
@@ -104,6 +112,15 @@ class TestConverters(BotorchTestCase):
             gp2_ = FixedNoiseGP(train_X, train_Y2, torch.rand_like(train_Y2))
             list_gp = ModelListGP(gp1_, gp2_)
             batch_gp = model_list_to_batched(list_gp)
+            # test SingleTaskMultiFidelityGP
+            gp1_ = SingleTaskMultiFidelityGP(train_X, train_Y1, iteration_fidelity=1)
+            gp2_ = SingleTaskMultiFidelityGP(train_X, train_Y2, iteration_fidelity=1)
+            list_gp = ModelListGP(gp1_, gp2_)
+            batch_gp = model_list_to_batched(list_gp)
+            gp2_ = SingleTaskMultiFidelityGP(train_X, train_Y2, iteration_fidelity=2)
+            list_gp = ModelListGP(gp1_, gp2_)
+            with self.assertRaises(UnsupportedError):
+                model_list_to_batched(list_gp)
 
     def test_roundtrip(self):
         for dtype in (torch.float, torch.double):
@@ -127,3 +144,16 @@ class TestConverters(BotorchTestCase):
             sd_recov = batch_gp_recov.state_dict()
             self.assertTrue(set(sd_orig) == set(sd_recov))
             self.assertTrue(all(torch.equal(sd_orig[k], sd_recov[k]) for k in sd_orig))
+            # SingleTaskMultiFidelityGP
+            for lin_trunc in (False, True):
+                batch_gp = SingleTaskMultiFidelityGP(
+                    train_X, train_Y, iteration_fidelity=1, linear_truncated=lin_trunc
+                )
+                list_gp = batched_to_model_list(batch_gp)
+                batch_gp_recov = model_list_to_batched(list_gp)
+                sd_orig = batch_gp.state_dict()
+                sd_recov = batch_gp_recov.state_dict()
+                self.assertTrue(set(sd_orig) == set(sd_recov))
+                self.assertTrue(
+                    all(torch.equal(sd_orig[k], sd_recov[k]) for k in sd_orig)
+                )
