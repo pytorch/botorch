@@ -111,8 +111,8 @@ class DownsamplingKernel(Kernel):
         last_dim_is_batch: Optional[bool] = False,
         **params,
     ) -> Tensor:
-        offset = self.offset.view(*self.batch_shape, 1, 1)
-        exponent = 1 + self.power.view(*self.batch_shape, 1, 1)
+        offset = self.offset.unsqueeze(-1)  # unsqueeze enables batch evaluation
+        exponent = 1 + self.power.unsqueeze(-1)  # unsqueeze enables batch evaluation
         if last_dim_is_batch:
             x1 = x1.transpose(-1, -2).unsqueeze(-1)
             x2 = x2.transpose(-1, -2).unsqueeze(-1)
