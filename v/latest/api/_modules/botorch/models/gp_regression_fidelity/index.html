@@ -97,6 +97,13 @@
         <span class="n">likelihood</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Likelihood</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_init_args</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"iteration_fidelity"</span><span class="p">:</span> <span class="n">iteration_fidelity</span><span class="p">,</span>
+            <span class="s2">"data_fidelity"</span><span class="p">:</span> <span class="n">data_fidelity</span><span class="p">,</span>
+            <span class="s2">"linear_truncated"</span><span class="p">:</span> <span class="n">linear_truncated</span><span class="p">,</span>
+            <span class="s2">"nu"</span><span class="p">:</span> <span class="n">nu</span><span class="p">,</span>
+            <span class="s2">"outcome_transform"</span><span class="p">:</span> <span class="n">outcome_transform</span><span class="p">,</span>
+        <span class="p">}</span>
         <span class="k">if</span> <span class="n">iteration_fidelity</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">data_fidelity</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
                 <span class="s2">"SingleTaskMultiFidelityGP requires at least one fidelity parameter."</span>
