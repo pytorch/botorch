@@ -167,6 +167,36 @@
             <span class="n">covar_module</span><span class="o">=</span><span class="n">covar_module</span><span class="p">,</span>
             <span class="n">outcome_transform</span><span class="o">=</span><span class="n">outcome_transform</span><span class="p">,</span>
         <span class="p">)</span>
+        <span class="k">if</span> <span class="n">linear_truncated</span><span class="p">:</span>
+            <span class="n">subset_batch_dict</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">"covar_module.base_kernel.raw_power"</span><span class="p">:</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
+                <span class="s2">"covar_module.base_kernel.covar_module_unbiased.raw_lengthscale"</span><span class="p">:</span> <span class="o">-</span><span class="mi">3</span><span class="p">,</span>
+                <span class="s2">"covar_module.base_kernel.covar_module_biased.raw_lengthscale"</span><span class="p">:</span> <span class="o">-</span><span class="mi">3</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">subset_batch_dict</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">"covar_module.base_kernel.kernels.0.raw_lengthscale"</span><span class="p">:</span> <span class="o">-</span><span class="mi">3</span><span class="p">,</span>
+                <span class="s2">"covar_module.base_kernel.kernels.1.raw_power"</span><span class="p">:</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
+                <span class="s2">"covar_module.base_kernel.kernels.1.raw_offset"</span><span class="p">:</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
+            <span class="p">}</span>
+            <span class="k">if</span> <span class="n">iteration_fidelity</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">subset_batch_dict</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">"covar_module.base_kernel.kernels.1.raw_lengthscale"</span><span class="p">:</span> <span class="o">-</span><span class="mi">3</span><span class="p">,</span>
+                    <span class="o">**</span><span class="n">subset_batch_dict</span><span class="p">,</span>
+                <span class="p">}</span>
+                <span class="k">if</span> <span class="n">data_fidelity</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">subset_batch_dict</span> <span class="o">=</span> <span class="p">{</span>
+                        <span class="s2">"covar_module.base_kernel.kernels.2.raw_power"</span><span class="p">:</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
+                        <span class="s2">"covar_module.base_kernel.kernels.2.raw_offset"</span><span class="p">:</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
+                        <span class="o">**</span><span class="n">subset_batch_dict</span><span class="p">,</span>
+                    <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_subset_batch_dict</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"likelihood.noise_covar.raw_noise"</span><span class="p">:</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
+            <span class="s2">"mean_module.constant"</span><span class="p">:</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
+            <span class="s2">"covar_module.raw_outputscale"</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">subset_batch_dict</span><span class="p">,</span>
+        <span class="p">}</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span></div>
 </pre></div>
 </div>
