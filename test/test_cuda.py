@@ -13,6 +13,7 @@ to the GPU running out of memory.
 """
 
 import unittest
+from pathlib import Path
 from typing import Union
 
 import torch
@@ -22,7 +23,8 @@ from botorch.utils.testing import BotorchTestCase
 @unittest.skipIf(not torch.cuda.is_available(), "CUDA not available")
 class TestBotorchCUDA(unittest.TestCase):
     def test_cuda(self):
-        tests = unittest.TestLoader().discover(".")
+        test_dir = Path(__file__).parent.resolve()
+        tests = unittest.TestLoader().discover(test_dir)
         run_cuda_tests(tests)
 
 
