@@ -13,9 +13,10 @@ from typing import Optional
 import gpytorch
 import torch
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
+from gpytorch.lazy import BlockDiagLazyTensor, LazyTensor, SumLazyTensor
 from torch import Tensor
 
-from ..exceptions.errors import UnsupportedError
+from ..exceptions.errors import BotorchTensorDimensionError
 from .posterior import Posterior
 
 
@@ -110,10 +111,9 @@ def scalarize_posterior(
     r"""Affine transformation of a multi-output posterior.
 
     Args:
-        posterior: The posterior to be transformed. Must be single-point (`q=1`).
+        posterior: The posterior over `m` outcomes to be scalarized.
             Supports `t`-batching.
-        weights: An single-dimensional tensor of weights. Number of elements
-            must be the numbe of outputs of the posterior.
+        weights: A tensor of weights of size `m`.
         offset: The offset of the affine transformation.
 
     Returns:
@@ -129,15 +129,54 @@ def scalarize_posterior(
         >>> weights = torch.tensor([0.5, 0.25])
         >>> new_posterior = scalarize_posterior(posterior, weights=weights)
     """
+    if weights.ndim > 1:
+        raise BotorchTensorDimensionError("`weights` must be one-dimensional")
     mean = posterior.mean
-    if mean.shape[-1] != len(weights):
+    q, m = mean.shape[-2:]
+    batch_shape = mean.shape[:-2]
+    if m != weights.size(0):
         raise RuntimeError("Output shape not equal to that of weights")
-    if mean.shape[-2] != 1:
-        raise UnsupportedError("scalarize_posterior currently not supported for q>1")
-    # no need to use lazy here since q=1
-    cov = posterior.mvn.covariance_matrix
-    batch_shape = cov.shape[:-2]
-    new_cov = ((cov @ weights) @ weights).view(*batch_shape, 1, 1)
-    new_mean = offset + (mean @ weights).view(*batch_shape, 1)
+    mvn = posterior.mvn
+    cov = mvn.lazy_covariance_matrix if mvn.islazy else mvn.covariance_matrix
+
+    if m == 1:  # just scaling, no scalarization necessary
+        new_mean = offset + (weights[0] * mean).view(*batch_shape, q)
+        new_cov = weights[0] ** 2 * cov
+        new_mvn = MultivariateNormal(new_mean, new_cov)
+        return GPyTorchPosterior(new_mvn)
+
+    new_mean = offset + (mean @ weights).view(*batch_shape, q)
+
+    if q == 1:
+        new_cov = ((cov @ weights) @ weights).view(*batch_shape, q, q)
+    else:
+        # we need to handle potentially different representations of the multi-task mvn
+        if mvn._interleaved:
+            w_cov = weights.repeat(q).unsqueeze(0)
+            sum_shape = batch_shape + torch.Size([q, m, q, m])
+            sum_dims = (-1, -2)
+        else:
+            # special-case the independent setting
+            if isinstance(cov, BlockDiagLazyTensor):
+                new_cov = SumLazyTensor(
+                    *[
+                        cov.base_lazy_tensor[..., i, :, :] * weights[i].pow(2)
+                        for i in range(cov.base_lazy_tensor.size(-3))
+                    ]
+                )
+                new_mvn = MultivariateNormal(new_mean, new_cov)
+                return GPyTorchPosterior(new_mvn)
+
+            w_cov = torch.repeat_interleave(weights, q).unsqueeze(0)
+            sum_shape = batch_shape + torch.Size([m, q, m, q])
+            sum_dims = (-2, -3)
+
+        cov_scaled = w_cov * cov * w_cov.transpose(-1, -2)
+        # TODO: Do not instantiate full covariance for lazy tensors (ideally we simplify
+        # this in GPyTorch: https://github.com/cornellius-gp/gpytorch/issues/1055)
+        if isinstance(cov_scaled, LazyTensor):
+            cov_scaled = cov_scaled.evaluate()
+        new_cov = cov_scaled.view(sum_shape).sum(dim=sum_dims[0]).sum(dim=sum_dims[1])
+
     new_mvn = MultivariateNormal(new_mean, new_cov)
     return GPyTorchPosterior(new_mvn)
