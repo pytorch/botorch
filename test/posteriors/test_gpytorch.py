@@ -8,21 +8,38 @@ import itertools
 import warnings
 
 import torch
-from botorch.exceptions.errors import UnsupportedError
+from botorch.exceptions import BotorchTensorDimensionError
 from botorch.posteriors.gpytorch import GPyTorchPosterior, scalarize_posterior
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
+from gpytorch.lazy import AddedDiagLazyTensor, DiagLazyTensor
 from gpytorch.lazy.non_lazy_tensor import lazify
 
 
-def _get_test_posterior(batch_shape, q=1, m=1, **tkwargs):
-    mean = torch.rand(*batch_shape, q, m, **tkwargs)
-    a = torch.rand(*batch_shape, q * m, q * m, **tkwargs)
-    covar = a @ a.transpose(-1, -2)
-    diag = torch.diagonal(covar, dim1=-2, dim2=-1)
-    diag += torch.rand(*batch_shape, q * m, **tkwargs)  # in-place
-    mvn = MultitaskMultivariateNormal(mean, covar)
-    return GPyTorchPosterior(mvn)
+def _get_test_posterior(
+    batch_shape, q=1, m=1, interleaved=True, lazy=False, independent=False, **tkwargs
+):
+    if independent:
+        mvns = []
+        for _ in range(m):
+            mean = torch.rand(*batch_shape, q, **tkwargs)
+            a = torch.rand(*batch_shape, q, q, **tkwargs)
+            covar = a @ a.transpose(-1, -2)
+            flat_diag = torch.rand(*batch_shape, q, **tkwargs)
+            covar = covar + torch.diag_embed(flat_diag)
+            mvns.append(MultivariateNormal(mean, covar))
+        mtmvn = MultitaskMultivariateNormal.from_independent_mvns(mvns)
+    else:
+        mean = torch.rand(*batch_shape, q, m, **tkwargs)
+        a = torch.rand(*batch_shape, q * m, q * m, **tkwargs)
+        covar = a @ a.transpose(-1, -2)
+        flat_diag = torch.rand(*batch_shape, q * m, **tkwargs)
+        if lazy:
+            covar = AddedDiagLazyTensor(covar, DiagLazyTensor(flat_diag))
+        else:
+            covar = covar + torch.diag_embed(flat_diag)
+        mtmvn = MultitaskMultivariateNormal(mean, covar, interleaved=interleaved)
+    return GPyTorchPosterior(mtmvn)
 
 
 class TestGPyTorchPosterior(BotorchTestCase):
@@ -250,27 +267,86 @@ class TestGPyTorchPosterior(BotorchTestCase):
             self.assertEqual(b_samples.shape, torch.Size([4, 2, 3, 2]))
 
     def test_scalarize_posterior(self):
-        for batch_shape, m, dtype in itertools.product(
-            ([], [3]), (1, 2), (torch.float, torch.double)
+        for batch_shape, m, lazy, dtype in itertools.product(
+            ([], [3]), (1, 2), (False, True), (torch.float, torch.double)
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
             offset = torch.rand(1).item()
             weights = torch.randn(m, **tkwargs)
-            posterior = _get_test_posterior(batch_shape, m=m, **tkwargs)
+            # test q=1
+            posterior = _get_test_posterior(batch_shape, m=m, lazy=lazy, **tkwargs)
             mean, covar = posterior.mvn.mean, posterior.mvn.covariance_matrix
             new_posterior = scalarize_posterior(posterior, weights, offset)
             exp_size = torch.Size(batch_shape + [1, 1])
             self.assertEqual(new_posterior.mean.shape, exp_size)
-            new_mean_exp = offset + mean @ weights
-            self.assertTrue(torch.allclose(new_posterior.mean[..., -1], new_mean_exp))
+            new_mean_exp = offset + (mean @ weights).unsqueeze(-1)
+            self.assertTrue(torch.allclose(new_posterior.mean, new_mean_exp))
             self.assertEqual(new_posterior.variance.shape, exp_size)
             new_covar_exp = ((covar @ weights) @ weights).unsqueeze(-1)
             self.assertTrue(
                 torch.allclose(new_posterior.variance[..., -1], new_covar_exp)
             )
+            # test q=2, interleaved
+            q = 2
+            posterior = _get_test_posterior(
+                batch_shape, q=q, m=m, lazy=lazy, interleaved=True, **tkwargs
+            )
+            mean, covar = posterior.mvn.mean, posterior.mvn.covariance_matrix
+            new_posterior = scalarize_posterior(posterior, weights, offset)
+            exp_size = torch.Size(batch_shape + [q, 1])
+            self.assertEqual(new_posterior.mean.shape, exp_size)
+            new_mean_exp = offset + (mean @ weights).unsqueeze(-1)
+            self.assertTrue(torch.allclose(new_posterior.mean, new_mean_exp))
+            self.assertEqual(new_posterior.variance.shape, exp_size)
+            new_covar = new_posterior.mvn.covariance_matrix
+            if m == 1:
+                self.assertTrue(torch.allclose(new_covar, weights ** 2 * covar))
+            else:
+                w = weights.unsqueeze(0)
+                covar00_exp = (w * covar[..., :m, :m] * w.t()).sum(-1).sum(-1)
+                self.assertTrue(torch.allclose(new_covar[..., 0, 0], covar00_exp))
+                covarnn_exp = (w * covar[..., -m:, -m:] * w.t()).sum(-1).sum(-1)
+                self.assertTrue(torch.allclose(new_covar[..., -1, -1], covarnn_exp))
+            # test q=2, non-interleaved
+            # test independent special case as well
+            for independent in (False, True) if m > 1 else (False,):
+                posterior = _get_test_posterior(
+                    batch_shape,
+                    q=q,
+                    m=m,
+                    lazy=lazy,
+                    interleaved=False,
+                    independent=independent,
+                    **tkwargs
+                )
+                mean, covar = posterior.mvn.mean, posterior.mvn.covariance_matrix
+                new_posterior = scalarize_posterior(posterior, weights, offset)
+                exp_size = torch.Size(batch_shape + [q, 1])
+                self.assertEqual(new_posterior.mean.shape, exp_size)
+                new_mean_exp = offset + (mean @ weights).unsqueeze(-1)
+                self.assertTrue(torch.allclose(new_posterior.mean, new_mean_exp))
+                self.assertEqual(new_posterior.variance.shape, exp_size)
+                new_covar = new_posterior.mvn.covariance_matrix
+                if m == 1:
+                    self.assertTrue(torch.allclose(new_covar, weights ** 2 * covar))
+                else:
+                    # construct the indices manually
+                    cs = list(itertools.combinations_with_replacement(range(m), 2))
+                    idx_nlzd = torch.tensor(
+                        list(set(cs + [tuple(i[::-1]) for i in cs])),
+                        dtype=torch.long,
+                        device=self.device,
+                    )
+                    w = weights[idx_nlzd[:, 0]] * weights[idx_nlzd[:, 1]]
+                    idx = q * idx_nlzd
+                    covar00_exp = (covar[..., idx[:, 0], idx[:, 1]] * w).sum(-1)
+                    self.assertTrue(torch.allclose(new_covar[..., 0, 0], covar00_exp))
+                    idx_ = q - 1 + idx
+                    covarnn_exp = (covar[..., idx_[:, 0], idx_[:, 1]] * w).sum(-1)
+                    self.assertTrue(torch.allclose(new_covar[..., -1, -1], covarnn_exp))
+
             # test errors
             with self.assertRaises(RuntimeError):
                 scalarize_posterior(posterior, weights[:-1], offset)
-            posterior2 = _get_test_posterior(batch_shape, q=2, m=m, **tkwargs)
-            with self.assertRaises(UnsupportedError):
-                scalarize_posterior(posterior2, weights, offset)
+            with self.assertRaises(BotorchTensorDimensionError):
+                scalarize_posterior(posterior, weights.unsqueeze(0), offset)
