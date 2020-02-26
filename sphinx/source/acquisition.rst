@@ -53,6 +53,11 @@ Entropy-Based Acquisition Functions
 .. automodule:: botorch.acquisition.max_value_entropy_search
     :members:
 
+Active Learning Acquisition Functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.acquisition.active_learning
+    :members:
+
 
 Objectives and Cost-Aware Utilities
 -------------------------------------------
