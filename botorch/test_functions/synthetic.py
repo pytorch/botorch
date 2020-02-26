@@ -9,6 +9,8 @@ Synthetic functions for optimization benchmarks.
 Reference: https://www.sfu.ca/~ssurjano/optimization.html
 """
 
+from __future__ import annotations
+
 import math
 from abc import ABC, abstractmethod
 from typing import List, Optional, Tuple

@@ -8,6 +8,8 @@ r"""
 Utilities for model fitting.
 """
 
+from __future__ import annotations
+
 import logging
 import warnings
 from copy import deepcopy
@@ -84,7 +86,8 @@ def fit_gpytorch_model(
             model_ = model_list_to_batched(mll_.model)
             mll.model.load_state_dict(model_.state_dict())
             return mll.eval()
-        except (NotImplementedError, UnsupportedError, RuntimeError, AttributeError):
+        # NotImplentedError is omitted since it derives from RuntimeError
+        except (UnsupportedError, RuntimeError, AttributeError):
             warnings.warn(FAILED_CONVERSION_MSG, BotorchWarning)
             return fit_gpytorch_model(
                 mll=mll, optimizer=optimizer, sequential=False, max_retries=max_retries

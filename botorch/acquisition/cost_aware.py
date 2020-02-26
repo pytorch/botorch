@@ -9,6 +9,8 @@ Cost functions for cost-aware acquisition functions, e.g. multi-fidelity KG.
 To be used in a context where there is an objective/cost tradeoff.
 """
 
+from __future__ import annotations
+
 import warnings
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Optional

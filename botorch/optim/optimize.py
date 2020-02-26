@@ -8,6 +8,8 @@ r"""
 Methods for optimizing acquisition functions.
 """
 
+from __future__ import annotations
+
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import torch

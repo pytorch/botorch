@@ -8,6 +8,8 @@ r"""
 Abstract base module for all BoTorch models.
 """
 
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from typing import Any, List, Optional
 
@@ -55,7 +57,7 @@ class Model(Module, ABC):
         cls_name = self.__class__.__name__
         raise NotImplementedError(f"{cls_name} does not define num_outputs property")
 
-    def subset_output(self, idcs: List[int]) -> "Model":
+    def subset_output(self, idcs: List[int]) -> Model:
         r"""Subset the model along the output dimension.
 
         Args:
@@ -67,7 +69,7 @@ class Model(Module, ABC):
         """
         raise NotImplementedError
 
-    def condition_on_observations(self, X: Tensor, Y: Tensor, **kwargs: Any) -> "Model":
+    def condition_on_observations(self, X: Tensor, Y: Tensor, **kwargs: Any) -> Model:
         r"""Condition the model on new observations.
 
         Args:
@@ -96,7 +98,7 @@ class Model(Module, ABC):
         sampler: MCSampler,
         observation_noise: bool = True,
         **kwargs: Any,
-    ) -> "Model":
+    ) -> Model:
         r"""Construct a fantasy model.
 
         Constructs a fantasy model in the following fashion:

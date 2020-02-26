@@ -8,6 +8,8 @@ r"""
 Utilities for acquisition functions.
 """
 
+from __future__ import annotations
+
 import math
 from typing import Callable, Dict, List, Optional
 
@@ -34,7 +36,7 @@ def get_acquisition_function(
     qmc: bool = True,
     seed: Optional[int] = None,
     **kwargs,
-) -> "monte_carlo.MCAcquisitionFunction":
+) -> monte_carlo.MCAcquisitionFunction:
     r"""Convenience function for initializing botorch acquisition functions.
 
     Args:

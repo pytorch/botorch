@@ -8,6 +8,8 @@ r"""
 BoTorch settings.
 """
 
+from __future__ import annotations
+
 import typing  # noqa F401
 import warnings
 

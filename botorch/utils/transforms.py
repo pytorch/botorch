@@ -8,6 +8,8 @@ r"""
 Some basic data transformation helpers.
 """
 
+from __future__ import annotations
+
 from contextlib import ExitStack, contextmanager
 from functools import wraps
 from typing import Any, Callable, List, Optional

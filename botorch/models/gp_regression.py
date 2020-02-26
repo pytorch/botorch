@@ -8,6 +8,8 @@ r"""
 Gaussian Process Regression models based on GPyTorch models.
 """
 
+from __future__ import annotations
+
 from typing import Any, List, Optional, Union
 
 import torch
@@ -212,7 +214,7 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         sampler: MCSampler,
         observation_noise: Union[bool, Tensor] = True,
         **kwargs: Any,
-    ) -> "FixedNoiseGP":
+    ) -> FixedNoiseGP:
         r"""Construct a fantasy model.
 
         Constructs a fantasy model in the following fashion:
@@ -254,7 +256,7 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         covar_x = self.covar_module(x)
         return MultivariateNormal(mean_x, covar_x)
 
-    def subset_output(self, idcs: List[int]) -> "BatchedMultiOutputGPyTorchModel":
+    def subset_output(self, idcs: List[int]) -> BatchedMultiOutputGPyTorchModel:
         r"""Subset the model along the output dimension.
 
         Args:
@@ -336,8 +338,8 @@ class HeteroskedasticSingleTaskGP(SingleTaskGP):
 
     def condition_on_observations(
         self, X: Tensor, Y: Tensor, **kwargs: Any
-    ) -> "HeteroskedasticSingleTaskGP":
+    ) -> HeteroskedasticSingleTaskGP:
         raise NotImplementedError
 
-    def subset_output(self, idcs: List[int]) -> "HeteroskedasticSingleTaskGP":
+    def subset_output(self, idcs: List[int]) -> HeteroskedasticSingleTaskGP:
         raise NotImplementedError

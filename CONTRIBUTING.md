@@ -34,7 +34,7 @@ Travis will fail on your PR if it does not adhere to the black formatting style.
 
 #### Type Hints
 
-BoTorch is fully typed using python 3.6+
+BoTorch is fully typed using python 3.7+
 [type hints](https://www.python.org/dev/peps/pep-0484/).
 We expect any contributions to also use proper type annotations. While we
 currently do not enforce full consistency of these in our continuous integration

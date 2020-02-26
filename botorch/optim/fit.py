@@ -8,6 +8,8 @@ r"""
 Tools for model fitting.
 """
 
+from __future__ import annotations
+
 import time
 import warnings
 from typing import Any, Callable, Dict, List, NamedTuple, Optional, Set, Tuple, Union

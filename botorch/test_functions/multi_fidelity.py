@@ -8,6 +8,8 @@ r"""
 Synthetic functions for multi-fidelity optimization benchmarks.
 """
 
+from __future__ import annotations
+
 import math
 from typing import Optional
 
