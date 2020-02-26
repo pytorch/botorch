@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from .acquisition import AcquisitionFunction, OneShotAcquisitionFunction
+from .active_learning import qNegIntegratedPosteriorVariance
 from .analytic import (
     AnalyticAcquisitionFunction,
     ConstrainedExpectedImprovement,
@@ -55,6 +56,7 @@ __all__ = [
     "qMaxValueEntropy",
     "qMultiFidelityMaxValueEntropy",
     "qNoisyExpectedImprovement",
+    "qNegIntegratedPosteriorVariance",
     "qProbabilityOfImprovement",
     "qSimpleRegret",
     "qUpperConfidenceBound",
