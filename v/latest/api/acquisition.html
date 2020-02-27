@@ -1166,6 +1166,74 @@ with <cite>1</cite> <cite>d</cite>-dim design point each.</p>
 </dd></dl>
 </dd></dl>
 </div>
+<div class="section" id="module-botorch.acquisition.active_learning">
+<span id="active-learning-acquisition-functions"></span><h3>Active Learning Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.active_learning" title="Permalink to this headline">¶</a></h3>
+<p>Active learning acquisition functions.</p>
+<dl class="citation">
+<dt class="label" id="seo2014activedata"><span class="brackets"><a class="fn-backref" href="#id8">Seo2014activedata</a></span></dt>
+<dd><p>S. Seo, M. Wallat, T. Graepel, and K. Obermayer. Gaussian process regression:
+Active data selection and test point rejection. IJCNN 2000.</p>
+</dd>
+<dt class="label" id="chen2014seqexpdesign"><span class="brackets"><a class="fn-backref" href="#id9">Chen2014seqexpdesign</a></span></dt>
+<dd><p>X. Chen and Q. Zhou. Sequential experimental designs for stochastic kriging.
+Winter Simulation Conference 2014.</p>
+</dd>
+<dt class="label" id="binois2017repexp"><span class="brackets"><a class="fn-backref" href="#id10">Binois2017repexp</a></span></dt>
+<dd><p>M. Binois, J. Huang, R. B. Gramacy, and M. Ludkovski. Replication or
+exploration? Sequential design for stochastic simulation experiments.
+ArXiv 2017.</p>
+</dd>
+</dl>
+<dl class="class">
+<dt id="botorch.acquisition.active_learning.qNegIntegratedPosteriorVariance">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.acquisition.active_learning.</code><code class="sig-name descname">qNegIntegratedPosteriorVariance</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">mc_points</em>, <em class="sig-param">sampler=None</em>, <em class="sig-param">objective=None</em>, <em class="sig-param">X_pending=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/active_learning.html#qNegIntegratedPosteriorVariance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.active_learning.qNegIntegratedPosteriorVariance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.analytic.AnalyticAcquisitionFunction" title="botorch.acquisition.analytic.AnalyticAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.analytic.AnalyticAcquisitionFunction</span></code></a></p>
+<p>Batch Integrated Negative Posterior Variance for Active Learning.</p>
+<p>This acquisition function quantifies the (negative) integrated posterior variance
+(excluding observation noise, computed using MC integration) of the model.
+In that, it is a proxy for global model uncertainty, and thus purely focused on
+“exploration”, rather the “exploitation” of many of the classic Bayesian
+Optimization acquisition functions.</p>
+<p>See <a class="reference internal" href="#seo2014activedata" id="id8"><span>[Seo2014activedata]</span></a>, <a class="reference internal" href="#chen2014seqexpdesign" id="id9"><span>[Chen2014seqexpdesign]</span></a>, and <a class="reference internal" href="#binois2017repexp" id="id10"><span>[Binois2017repexp]</span></a>.</p>
+<p>q-Integrated Negative Posterior Variance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a>) – A fitted model.</p></li>
+<li><p><strong>mc_points</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x N x d</cite> tensor of points to use for
+MC-integrating the posterior variance. Usually, these are qMC
+samples on the whole design space, but biased sampling directly
+allows weighted integration of the posterior variance.</p></li>
+<li><p><strong>sampler</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="sampling.html#botorch.sampling.samplers.MCSampler" title="botorch.sampling.samplers.MCSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">MCSampler</span></code></a>]) – The sampler used for drawing fantasy samples. In the basic setting
+of a standard GP (default) this is a dummy, since the variance of the
+model after conditioning does not actually depend on the sampled values.</p></li>
+<li><p><strong>objective</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="#botorch.acquisition.objective.ScalarizedObjective" title="botorch.acquisition.objective.ScalarizedObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScalarizedObjective</span></code></a>]) – A ScalarizedObjective. Required for multi-output models.</p></li>
+<li><p><strong>X_pending</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>n’ x d</cite>-dim Tensor of <cite>n’</cite> design points that have
+points that have been submitted for function evaluation but
+have not yet been evaluated.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="botorch.acquisition.active_learning.qNegIntegratedPosteriorVariance.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param">X</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/active_learning.html#qNegIntegratedPosteriorVariance.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.active_learning.qNegIntegratedPosteriorVariance.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the acquisition function on the candidate set X.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>(b) x q x d</cite>-dim Tensor of <cite>(b)</cite> t-batches with <cite>q</cite> <cite>d</cite>-dim
+design points each.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>(b)</cite>-dim Tensor of acquisition function values at the given
+design points <cite>X</cite>.</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+</div>
 </div>
 <div class="section" id="objectives-and-cost-aware-utilities">
 <h2>Objectives and Cost-Aware Utilities<a class="headerlink" href="#objectives-and-cost-aware-utilities" title="Permalink to this headline">¶</a></h2>
