@@ -21,6 +21,30 @@ from ..posteriors.posterior import Posterior
 from ..sampling.qmc import NormalQMCEngine
 
 
+@contextmanager
+def manual_seed(seed: Optional[int] = None) -> Generator[None, None, None]:
+    r"""Contextmanager for manual setting the torch.random seed.
+
+    Args:
+        seed: The seed to set the random number generator to.
+
+    Returns:
+        Generator
+
+    Example:
+        >>> with manual_seed(1234):
+        >>>     X = torch.rand(3)
+    """
+    old_state = torch.random.get_rng_state()
+    try:
+        if seed is not None:
+            torch.random.manual_seed(seed)
+        yield
+    finally:
+        if seed is not None:
+            torch.random.set_rng_state(old_state)
+
+
 def construct_base_samples(
     batch_shape: torch.Size,
     output_shape: torch.Size,
@@ -161,10 +185,10 @@ def draw_sobol_normal_samples(
     of f(X) over X where each element of X is drawn N(0, 1).
 
     Args:
-        d: The dimension of the normal distribution
-        n: The number of samples to return
-        device: The torch device
-        dtype:  The torch dtype
+        d: The dimension of the normal distribution.
+        n: The number of samples to return.
+        device: The torch device.
+        dtype:  The torch dtype.
         seed: The seed used for initializing Owen scrambling. If None (default),
             use a random seed.
 
@@ -180,25 +204,82 @@ def draw_sobol_normal_samples(
     return samples.to(device=device)
 
 
-@contextmanager
-def manual_seed(seed: Optional[int] = None) -> Generator[None, None, None]:
-    r"""Contextmanager for manual setting the torch.random seed.
+def sample_hypersphere(
+    d: int,
+    n: int = 1,
+    qmc: bool = False,
+    seed: Optional[int] = None,
+    device: Optional[torch.device] = None,
+    dtype: Optional[torch.dtype] = None,
+) -> Tensor:
+    r"""Sample uniformly from a unit d-sphere.
 
     Args:
-        seed: The seed to set the random number generator to.
+        d: The dimension of the hypersphere.
+        n: The number of samples to return.
+        qmc: If True, use QMC Sobol sampling (instead of i.i.d. uniform).
+        seed: If provided, use as a seed for the RNG.
+        device: The torch device.
+        dtype:  The torch dtype.
 
     Returns:
-        Generator
+        An  `n x d` tensor of uniform samples from from the d-hypersphere.
 
     Example:
-        >>> with manual_seed(1234):
-        >>>     X = torch.rand(3)
+        >>> sample_hypersphere(d=5, n=10)
     """
-    old_state = torch.random.get_rng_state()
-    try:
-        if seed is not None:
-            torch.random.manual_seed(seed)
-        yield
-    finally:
-        if seed is not None:
-            torch.random.set_rng_state(old_state)
+    dtype = torch.float if dtype is None else dtype
+    if d == 1:
+        rnd = torch.randint(0, 2, (n, 1), device=device, dtype=dtype)
+        return 2 * rnd - 1
+    if qmc:
+        rnd = draw_sobol_normal_samples(d=d, n=n, device=device, dtype=dtype, seed=seed)
+    else:
+        with manual_seed(seed=seed):
+            rnd = torch.randn(n, d, dtype=dtype)
+    samples = rnd / torch.norm(rnd, dim=-1, keepdim=True)
+    if device is not None:
+        samples = samples.to(device)
+    return samples
+
+
+def sample_simplex(
+    d: int,
+    n: int = 1,
+    qmc: bool = False,
+    seed: Optional[int] = None,
+    device: Optional[torch.device] = None,
+    dtype: Optional[torch.dtype] = None,
+) -> Tensor:
+    r"""Sample uniformly from a d-simplex.
+
+    Args:
+        d: The dimension of the simplex.
+        n: The number of samples to return.
+        qmc: If True, use QMC Sobol sampling (instead of i.i.d. uniform).
+        seed: If provided, use as a seed for the RNG.
+        device: The torch device.
+        dtype:  The torch dtype.
+
+    Returns:
+        An `n x d` tensor of uniform samples from from the d-simplex.
+
+    Example:
+        >>> sample_simplex(d=3, n=10)
+    """
+    dtype = torch.float if dtype is None else dtype
+    if d == 1:
+        return torch.ones(n, 1, device=device, dtype=dtype)
+    if qmc:
+        sobol_engine = SobolEngine(d - 1, scramble=True, seed=seed)
+        rnd = sobol_engine.draw(n, dtype=dtype)
+    else:
+        with manual_seed(seed=seed):
+            rnd = torch.rand(n, d - 1, dtype=dtype)
+    srnd, _ = torch.sort(rnd, dim=-1)
+    zeros = torch.zeros(n, 1, dtype=dtype)
+    ones = torch.ones(n, 1, dtype=dtype)
+    srnd = torch.cat([zeros, srnd, ones], dim=-1)
+    if device is not None:
+        srnd = srnd.to(device)
+    return srnd[..., 1:] - srnd[..., :-1]

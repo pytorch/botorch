@@ -15,10 +15,22 @@ from botorch.utils.sampling import (
     construct_base_samples,
     construct_base_samples_from_posterior,
     manual_seed,
+    sample_hypersphere,
+    sample_simplex,
 )
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from torch.quasirandom import SobolEngine
+
+
+class TestManualSeed(BotorchTestCase):
+    def test_manual_seed(self):
+        initial_state = torch.random.get_rng_state()
+        with manual_seed():
+            self.assertTrue(torch.all(torch.random.get_rng_state() == initial_state))
+        with manual_seed(1234):
+            self.assertFalse(torch.all(torch.random.get_rng_state() == initial_state))
+        self.assertTrue(torch.all(torch.random.get_rng_state() == initial_state))
 
 
 class TestConstructBaseSamples(BotorchTestCase):
@@ -144,11 +156,29 @@ class TestConstructBaseSamples(BotorchTestCase):
                 self.assertEqual(samples.dtype, dtype)
 
 
-class TestManualSeed(BotorchTestCase):
-    def test_manual_seed(self):
-        initial_state = torch.random.get_rng_state()
-        with manual_seed():
-            self.assertTrue(torch.all(torch.random.get_rng_state() == initial_state))
-        with manual_seed(1234):
-            self.assertFalse(torch.all(torch.random.get_rng_state() == initial_state))
-        self.assertTrue(torch.all(torch.random.get_rng_state() == initial_state))
+class TestSampleUtils(BotorchTestCase):
+    def test_sample_simplex(self):
+        for d, n, qmc, seed, dtype in itertools.product(
+            (1, 2, 3), (2, 5), (False, True), (None, 1234), (torch.float, torch.double)
+        ):
+            samples = sample_simplex(
+                d=d, n=n, qmc=qmc, seed=seed, device=self.device, dtype=dtype
+            )
+            self.assertEqual(samples.shape, torch.Size([n, d]))
+            self.assertTrue(torch.all(samples >= 0))
+            self.assertTrue(torch.all(samples <= 1))
+            self.assertTrue(torch.max((samples.sum(dim=-1) - 1).abs()) < 1e-5)
+            self.assertEqual(samples.device, self.device)
+            self.assertEqual(samples.dtype, dtype)
+
+    def test_sample_hypersphere(self):
+        for d, n, qmc, seed, dtype in itertools.product(
+            (1, 2, 3), (2, 5), (False, True), (None, 1234), (torch.float, torch.double)
+        ):
+            samples = sample_hypersphere(
+                d=d, n=n, qmc=qmc, seed=seed, device=self.device, dtype=dtype
+            )
+            self.assertEqual(samples.shape, torch.Size([n, d]))
+            self.assertTrue(torch.max((samples.pow(2).sum(dim=-1) - 1).abs()) < 1e-5)
+            self.assertEqual(samples.device, self.device)
+            self.assertEqual(samples.dtype, dtype)
