@@ -8,6 +8,8 @@ r"""
 Utilities for MC and qMC sampling.
 """
 
+from __future__ import annotations
+
 import warnings
 from contextlib import contextmanager
 from typing import Generator, Optional

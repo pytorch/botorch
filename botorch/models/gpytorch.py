@@ -11,6 +11,8 @@ To implement your own, simply inherit from both the provided classes and a
 GPyTorch Model class such as an ExactGP.
 """
 
+from __future__ import annotations
+
 import itertools
 import warnings
 from abc import ABC
@@ -136,7 +138,7 @@ class GPyTorchModel(Model, ABC):
             posterior = self.outcome_transform.untransform_posterior(posterior)
         return posterior
 
-    def condition_on_observations(self, X: Tensor, Y: Tensor, **kwargs: Any) -> "Model":
+    def condition_on_observations(self, X: Tensor, Y: Tensor, **kwargs: Any) -> Model:
         r"""Condition the model on new observations.
 
         Args:
@@ -330,7 +332,7 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
 
     def condition_on_observations(
         self, X: Tensor, Y: Tensor, **kwargs: Any
-    ) -> "BatchedMultiOutputGPyTorchModel":
+    ) -> BatchedMultiOutputGPyTorchModel:
         r"""Condition the model on new observations.
 
         Args:
@@ -389,7 +391,7 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
         fantasy_model._aug_batch_shape = fantasy_model.train_targets.shape[:-1]
         return fantasy_model
 
-    def subset_output(self, idcs: List[int]) -> "BatchedMultiOutputGPyTorchModel":
+    def subset_output(self, idcs: List[int]) -> BatchedMultiOutputGPyTorchModel:
         r"""Subset the model along the output dimension.
 
         Args:
@@ -524,7 +526,7 @@ class ModelListGPyTorchModel(GPyTorchModel, ABC):
 
     def condition_on_observations(
         self, X: Tensor, Y: Tensor, **kwargs: Any
-    ) -> "ModelListGPyTorchModel":
+    ) -> ModelListGPyTorchModel:
         class_name = self.__class__.__name__
         raise NotImplementedError(
             f"`condition_on_observations` not implemented in {class_name}"

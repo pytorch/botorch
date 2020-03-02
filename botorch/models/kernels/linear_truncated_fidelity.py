@@ -4,6 +4,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+from __future__ import annotations
+
 from copy import deepcopy
 from typing import Any, List, Optional
 
@@ -220,7 +222,7 @@ class LinearTruncatedFidelityKernel(Kernel):
 
         return covar_unbiased + bias_factor * covar_biased
 
-    def __getitem__(self, index) -> "LinearTruncatedFidelityKernel":
+    def __getitem__(self, index) -> LinearTruncatedFidelityKernel:
         new_kernel = deepcopy(self)
         new_kernel.covar_module_unbiased = self.covar_module_unbiased[index]
         new_kernel.covar_module_biased = self.covar_module_biased[index]

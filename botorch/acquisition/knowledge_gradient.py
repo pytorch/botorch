@@ -24,6 +24,8 @@ Batch Knowledge Gradient (KG) via one-shot optimization as introduced in
     bayesian optimization. NIPS 2016.
 """
 
+from __future__ import annotations
+
 from copy import deepcopy
 from typing import Callable, Optional, Tuple, Union
 

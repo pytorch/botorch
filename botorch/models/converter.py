@@ -8,6 +8,8 @@ r"""
 Utilities for converting between different models.
 """
 
+from __future__ import annotations
+
 from copy import deepcopy
 
 import torch

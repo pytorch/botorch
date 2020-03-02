@@ -9,6 +9,8 @@ Analytic Acquisition Functions that evaluate the posterior without performing
 Monte-Carlo sampling.
 """
 
+from __future__ import annotations
+
 from abc import ABC
 from copy import deepcopy
 from typing import Dict, Optional, Tuple, Union

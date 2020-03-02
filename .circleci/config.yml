@@ -94,9 +94,9 @@ commands:
 
 jobs:
 
-  lint_test_py36_pip:
+  lint_test_py38_pip:
     docker:
-      - image: circleci/python:3.6.9
+      - image: circleci/python:3.8.1
     steps:
       - checkout
       - pip_install:
@@ -124,7 +124,7 @@ jobs:
 
   auto_deploy_site:
     docker:
-      - image: circleci/python:3.6.9-node
+      - image: circleci/python:3.8.1-node
     steps:
       - checkout
       - pip_install:
@@ -150,7 +150,7 @@ workflows:
 
   lint_and_test:
     jobs:
-      - lint_test_py36_pip:
+      - lint_test_py38_pip:
           filters: *exclude_ghpages_fbconfig
       - lint_test_py37_conda:
           filters: *exclude_ghpages_fbconfig
