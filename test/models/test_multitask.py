@@ -31,7 +31,7 @@ def _get_random_mt_data(**tkwargs):
     full_train_i = torch.cat([train_i_task1, train_i_task2])
     full_train_y = torch.cat([train_y1, train_y2])
     train_X = torch.stack([full_train_x, full_train_i.type_as(full_train_x)], dim=-1)
-    train_Y = full_train_y
+    train_Y = full_train_y.unsqueeze(-1)  # add output dim
     return train_X, train_Y
 
 
@@ -121,7 +121,7 @@ class TestMultiTaskGP(BotorchTestCase):
 
             # test that unsupported batch shape MTGPs throw correct error
             with self.assertRaises(ValueError):
-                MultiTaskGP(torch.rand(2, 2, 2), torch.rand(2, 1), 0)
+                MultiTaskGP(torch.rand(2, 2, 2), torch.rand(2, 2, 1), 0)
 
             # test that bad feature index throws correct error
             train_X, train_Y = _get_random_mt_data(**tkwargs)
@@ -233,7 +233,7 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
             # test that unsupported batch shape MTGPs throw correct error
             with self.assertRaises(ValueError):
                 FixedNoiseMultiTaskGP(
-                    torch.rand(2, 2, 2), torch.rand(2, 1), torch.rand(2, 1), 0
+                    torch.rand(2, 2, 2), torch.rand(2, 2, 1), torch.rand(2, 2, 1), 0
                 )
 
             # test that bad feature index throws correct error

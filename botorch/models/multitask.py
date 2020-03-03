@@ -27,6 +27,7 @@ from gpytorch.priors.torch_priors import GammaPrior
 from torch import Tensor
 
 from .gpytorch import MultiTaskGPyTorchModel
+from .utils import validate_input_scaling
 
 
 class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
@@ -74,10 +75,13 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
             >>> train_Y = torch.cat(f1(X1), f2(X2))
             >>> model = MultiTaskGP(train_X, train_Y, task_feature=-1)
         """
-        # TODO: Validate input normalization/scaling
-        if train_X.ndimension() != 2:
+        self._validate_tensor_args(X=train_X, Y=train_Y)
+        validate_input_scaling(train_X=train_X, train_Y=train_Y)
+        if train_X.ndim != 2:
             # Currently, batch mode MTGPs are blocked upstream in GPyTorch
             raise ValueError(f"Unsupported shape {train_X.shape} for train_X.")
+        # squeeze output dim
+        train_Y = train_Y.squeeze(-1)
         d = train_X.shape[-1] - 1
         if not (-d <= task_feature <= d):
             raise ValueError(f"Must have that -{d} <= task_feature <= {d}")
@@ -199,6 +203,7 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
             >>> train_Yvar = 0.1 + 0.1 * torch.rand_like(train_Y)
             >>> model = FixedNoiseMultiTaskGP(train_X, train_Y, train_Yvar, -1)
         """
+        self._validate_tensor_args(X=train_X, Y=train_Y, Yvar=train_Yvar)
         # We'll instatiate a MultiTaskGP and simply override the likelihood
         super().__init__(
             train_X=train_X,
@@ -207,5 +212,5 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
             output_tasks=output_tasks,
             rank=rank,
         )
-        self.likelihood = FixedNoiseGaussianLikelihood(noise=train_Yvar)
+        self.likelihood = FixedNoiseGaussianLikelihood(noise=train_Yvar.squeeze(-1))
         self.to(train_X)
