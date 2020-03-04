@@ -20,7 +20,7 @@ it easy to drive the car.
 Ax provides a
 [`BotorchModel`](https://ax.dev/api/models.html#ax.models.torch.botorch.BotorchModel)
 that is a sensible default for modeling and optimization which can be customized
-by specifying and passing in bespoke model constructors, acquisition functions,
+by specifying and passing in Botorch model constructors, acquisition functions,
 and optimization strategies.
 This model bridge utilizes a number of built-in transformations, such as
 normalizing input spaces and outputs to ensure reasonable fitting of GPs.
