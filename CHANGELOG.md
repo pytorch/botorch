@@ -2,6 +2,37 @@
 
 The release log for BoTorch.
 
+## [0.2.2] - Mar 6, 2020
+
+Require PyTorch 1.4, Python 3.7 and new features for active learning,
+multi-fidelity optimization, and a number of bug fixes.
+
+#### Compatibility
+* Require PyTorch >=1.4 (#379).
+* Require Python >=3.7 (#378).
+
+#### New Features
+* Add `qNegIntegratedPosteriorVariance` for Bayesian active learning (#377).
+* Add `FixedNoiseMultiFidelityGP`, analogous to `SingleTaskMultiFidelityGP` (#386).
+* Support `scalarize_posterior` for m>1 and q>1 posteriors (#374).
+* Support `subset_output` method on multi-fidelity models (#372).
+* Add utilities for sampling from simplex and hypersphere (#369).
+
+#### Bug fixes
+* Fix `TestLoader` local test discovery (#376).
+* Fix batch-list conversion of `SingleTaskMultiFidelityGP` (#370).
+* Validate tensor args before checking input scaling for more
+  informative error messaages (#368).
+* Fix flaky `qNoisyExpectedImprovement` test (#362).
+* Fix test function in closed-loop tutorial (#360).
+* Fix num_output attribute in BoTorch/Ax tutorial (#355).
+
+#### Other changes
+* Require output dimension in `MultiTaskGP` (#383).
+* Update code of conduct (#380).
+* Remove deprecated `joint_optimize` and `sequential_optimize` (#363).
+
+
 ## [0.2.1] - Jan 15, 2020
 
 Minor bug fix release.
