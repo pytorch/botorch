@@ -12,12 +12,16 @@ from botorch import fit_gpytorch_model
 from botorch.exceptions.errors import UnsupportedError
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.models.gp_regression import FixedNoiseGP
-from botorch.models.gp_regression_fidelity import SingleTaskMultiFidelityGP
+from botorch.models.gp_regression_fidelity import (
+    FixedNoiseMultiFidelityGP,
+    SingleTaskMultiFidelityGP,
+)
 from botorch.models.transforms import Standardize
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling import SobolQMCNormalSampler
 from botorch.utils.testing import BotorchTestCase, _get_random_data
 from gpytorch.kernels.scale_kernel import ScaleKernel
+from gpytorch.likelihoods import FixedNoiseGaussianLikelihood
 from gpytorch.means import ConstantMean
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 
@@ -33,35 +37,35 @@ def _get_random_data_with_fidelity(batch_shape, m, n_fidelity, n=10, **tkwargs):
     return train_x, train_y
 
 
-def _get_model_and_data(
-    iteration_fidelity,
-    data_fidelity,
-    batch_shape,
-    m,
-    lin_truncated,
-    outcome_transform=None,
-    **tkwargs,
-):
-    n_fidelity = (iteration_fidelity is not None) + (data_fidelity is not None)
-    train_X, train_Y = _get_random_data_with_fidelity(
-        batch_shape=batch_shape, m=m, n_fidelity=n_fidelity, **tkwargs
-    )
-    model_kwargs = {
-        "train_X": train_X,
-        "train_Y": train_Y,
-        "iteration_fidelity": iteration_fidelity,
-        "data_fidelity": data_fidelity,
-        "linear_truncated": lin_truncated,
-    }
-    if outcome_transform is not None:
-        model_kwargs["outcome_transform"] = outcome_transform
-    model = SingleTaskMultiFidelityGP(**model_kwargs)
-    return model, model_kwargs
-
-
 class TestSingleTaskMultiFidelityGP(BotorchTestCase):
 
     FIDELITY_TEST_PAIRS = ((None, 1), (1, None), (None, -1), (-1, None), (1, 2))
+
+    def _get_model_and_data(
+        self,
+        iteration_fidelity,
+        data_fidelity,
+        batch_shape,
+        m,
+        lin_truncated,
+        outcome_transform=None,
+        **tkwargs,
+    ):
+        n_fidelity = (iteration_fidelity is not None) + (data_fidelity is not None)
+        train_X, train_Y = _get_random_data_with_fidelity(
+            batch_shape=batch_shape, m=m, n_fidelity=n_fidelity, **tkwargs
+        )
+        model_kwargs = {
+            "train_X": train_X,
+            "train_Y": train_Y,
+            "iteration_fidelity": iteration_fidelity,
+            "data_fidelity": data_fidelity,
+            "linear_truncated": lin_truncated,
+        }
+        if outcome_transform is not None:
+            model_kwargs["outcome_transform"] = outcome_transform
+        model = SingleTaskMultiFidelityGP(**model_kwargs)
+        return model, model_kwargs
 
     def test_init_error(self):
         train_X = torch.rand(2, 2, device=self.device)
@@ -84,7 +88,7 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
             ):
                 tkwargs = {"device": self.device, "dtype": dtype}
                 octf = Standardize(m=m, batch_shape=batch_shape) if use_octf else None
-                model, _ = _get_model_and_data(
+                model, _ = self._get_model_and_data(
                     iteration_fidelity=iteration_fidelity,
                     data_fidelity=data_fidelity,
                     batch_shape=batch_shape,
@@ -156,7 +160,7 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                 (False, True),
             ):
                 tkwargs = {"device": self.device, "dtype": dtype}
-                model, model_kwargs = _get_model_and_data(
+                model, model_kwargs = self._get_model_and_data(
                     iteration_fidelity=iteration_fidelity,
                     data_fidelity=data_fidelity,
                     batch_shape=batch_shape,
@@ -218,13 +222,18 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                             key: (val[0] if val.numel() > 1 else val)
                             for key, val in model.state_dict().items()
                         }
-                        model_kwargs_non_batch = {
-                            "train_X": model_kwargs["train_X"][0],
-                            "train_Y": model_kwargs["train_Y"][0],
-                            "iteration_fidelity": model_kwargs["iteration_fidelity"],
-                            "data_fidelity": model_kwargs["data_fidelity"],
-                            "linear_truncated": model_kwargs["linear_truncated"],
-                        }
+
+                        model_kwargs_non_batch = {}
+                        for k, v in model_kwargs.items():
+                            if k in (
+                                "iteration_fidelity",
+                                "data_fidelity",
+                                "linear_truncated",
+                            ):
+                                model_kwargs_non_batch[k] = v
+                            else:
+                                model_kwargs_non_batch[k] = v[0]
+
                         model_non_batch = type(model)(**model_kwargs_non_batch)
                         model_non_batch.load_state_dict(state_dict_non_batch)
                         model_non_batch.eval()
@@ -268,7 +277,7 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                 (False, True),
             ):
                 tkwargs = {"device": self.device, "dtype": dtype}
-                model, model_kwargs = _get_model_and_data(
+                model, model_kwargs = self._get_model_and_data(
                     iteration_fidelity=iteration_fidelity,
                     data_fidelity=data_fidelity,
                     batch_shape=batch_shape,
@@ -294,9 +303,8 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                 (torch.float, torch.double),
                 (False, True),
             ):
-                print(batch_shape, dtype, lin_trunc, iteration_fidelity, data_fidelity)
                 tkwargs = {"device": self.device, "dtype": dtype}
-                model, _ = _get_model_and_data(
+                model, _ = self._get_model_and_data(
                     iteration_fidelity=iteration_fidelity,
                     data_fidelity=data_fidelity,
                     batch_shape=batch_shape,
@@ -317,5 +325,70 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                 self.assertTrue(
                     torch.allclose(
                         p_sub.variance, p.variance[..., [0]], atol=1e-4, rtol=1e-4
+                    )
+                )
+
+
+class TestFixedNoiseMultiFidelityGP(TestSingleTaskMultiFidelityGP):
+    def _get_model_and_data(
+        self,
+        iteration_fidelity,
+        data_fidelity,
+        batch_shape,
+        m,
+        lin_truncated,
+        outcome_transform=None,
+        **tkwargs,
+    ):
+        n_fidelity = (iteration_fidelity is not None) + (data_fidelity is not None)
+        train_X, train_Y = _get_random_data_with_fidelity(
+            batch_shape=batch_shape, m=m, n_fidelity=n_fidelity, **tkwargs
+        )
+        train_Yvar = torch.full_like(train_Y, 0.01)
+        model_kwargs = {
+            "train_X": train_X,
+            "train_Y": train_Y,
+            "train_Yvar": train_Yvar,
+            "iteration_fidelity": iteration_fidelity,
+            "data_fidelity": data_fidelity,
+            "linear_truncated": lin_truncated,
+        }
+        if outcome_transform is not None:
+            model_kwargs["outcome_transform"] = outcome_transform
+        model = FixedNoiseMultiFidelityGP(**model_kwargs)
+        return model, model_kwargs
+
+    def test_init_error(self):
+        train_X = torch.rand(2, 2, device=self.device)
+        train_Y = torch.rand(2, 1)
+        train_Yvar = torch.full_like(train_Y, 0.01)
+        for lin_truncated in (True, False):
+            with self.assertRaises(UnsupportedError):
+                FixedNoiseMultiFidelityGP(
+                    train_X, train_Y, train_Yvar, linear_truncated=lin_truncated
+                )
+
+    def test_fixed_noise_likelihood(self):
+        for (iteration_fidelity, data_fidelity) in self.FIDELITY_TEST_PAIRS:
+            for batch_shape, m, dtype, lin_trunc in itertools.product(
+                (torch.Size(), torch.Size([2])),
+                (1, 2),
+                (torch.float, torch.double),
+                (False, True),
+            ):
+                tkwargs = {"device": self.device, "dtype": dtype}
+                model, model_kwargs = self._get_model_and_data(
+                    iteration_fidelity=iteration_fidelity,
+                    data_fidelity=data_fidelity,
+                    batch_shape=batch_shape,
+                    m=m,
+                    lin_truncated=lin_trunc,
+                    **tkwargs,
+                )
+                self.assertIsInstance(model.likelihood, FixedNoiseGaussianLikelihood)
+                self.assertTrue(
+                    torch.equal(
+                        model.likelihood.noise.contiguous().view(-1),
+                        model_kwargs["train_Yvar"].contiguous().view(-1),
                     )
                 )
