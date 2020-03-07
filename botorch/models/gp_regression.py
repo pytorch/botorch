@@ -154,6 +154,7 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         train_X: Tensor,
         train_Y: Tensor,
         train_Yvar: Tensor,
+        covar_module: Optional[Module] = None,
         outcome_transform: Optional[OutcomeTransform] = None,
     ) -> None:
         r"""A single-task exact GP model using fixed noise levels.
@@ -189,23 +190,28 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
             self, train_inputs=train_X, train_targets=train_Y, likelihood=likelihood
         )
         self.mean_module = ConstantMean(batch_shape=self._aug_batch_shape)
-        self.covar_module = ScaleKernel(
-            base_kernel=MaternKernel(
-                nu=2.5,
-                ard_num_dims=train_X.shape[-1],
+        if covar_module is None:
+            self.covar_module = ScaleKernel(
+                base_kernel=MaternKernel(
+                    nu=2.5,
+                    ard_num_dims=train_X.shape[-1],
+                    batch_shape=self._aug_batch_shape,
+                    lengthscale_prior=GammaPrior(3.0, 6.0),
+                ),
                 batch_shape=self._aug_batch_shape,
-                lengthscale_prior=GammaPrior(3.0, 6.0),
-            ),
-            batch_shape=self._aug_batch_shape,
-            outputscale_prior=GammaPrior(2.0, 0.15),
-        )
+                outputscale_prior=GammaPrior(2.0, 0.15),
+            )
+            self._subset_batch_dict = {
+                "mean_module.constant": -2,
+                "covar_module.raw_outputscale": -1,
+                "covar_module.base_kernel.raw_lengthscale": -3,
+            }
+        else:
+            self.covar_module = covar_module
+        # TODO: Allow subsetting of other covar modules
         if outcome_transform is not None:
             self.outcome_transform = outcome_transform
-        self._subset_batch_dict = {
-            "mean_module.constant": -2,
-            "covar_module.raw_outputscale": -1,
-            "covar_module.base_kernel.raw_lengthscale": -3,
-        }
+
         self.to(train_X)
 
     def fantasize(
