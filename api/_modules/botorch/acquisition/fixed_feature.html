@@ -35,6 +35,8 @@
 <span class="sd">This is useful e.g. for performing contextual optimization.</span>
 <span class="sd">"""</span>
 
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
@@ -124,8 +126,8 @@
         <span class="n">d_prime</span><span class="p">,</span> <span class="n">d_f</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">d_prime</span> <span class="o">+</span> <span class="n">d_f</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"Feature dimension d' (</span><span class="si">{d_prime}</span><span class="s2">) of input must be "</span>
-                <span class="sa">f</span><span class="s2">"d - d_f ({self.d - d_f})."</span>
+                <span class="sa">f</span><span class="s2">"Feature dimension d' (</span><span class="si">{</span><span class="n">d_prime</span><span class="si">}</span><span class="s2">) of input must be "</span>
+                <span class="sa">f</span><span class="s2">"d - d_f (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">d</span> <span class="o">-</span> <span class="n">d_f</span><span class="si">}</span><span class="s2">)."</span>
             <span class="p">)</span>
         <span class="c1"># concatenate values to the end</span>
         <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">d_f</span><span class="p">)</span>
@@ -173,7 +175,7 @@
 </form>
 </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
 </div>
 </div>
 <div class="clearer"></div>

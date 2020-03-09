@@ -50,6 +50,8 @@
 <span class="sd">    bayesian optimization. NIPS 2016.</span>
 <span class="sd">"""</span>
 
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
@@ -125,7 +127,7 @@
         <span class="k">elif</span> <span class="n">num_fantasies</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">sampler</span><span class="o">.</span><span class="n">sample_shape</span> <span class="o">!=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">num_fantasies</span><span class="p">]):</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"The sampler shape must match num_fantasies=</span><span class="si">{num_fantasies}</span><span class="s2">."</span>
+                    <span class="sa">f</span><span class="s2">"The sampler shape must match num_fantasies=</span><span class="si">{</span><span class="n">num_fantasies</span><span class="si">}</span><span class="s2">."</span>
                 <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">num_fantasies</span> <span class="o">=</span> <span class="n">sampler</span><span class="o">.</span><span class="n">sample_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -408,7 +410,7 @@
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="n">n_f</span> <span class="o">&gt;</span> <span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"n_f (</span><span class="si">{n_f}</span><span class="s2">) must be less than the q-batch dimension of X ({X.size(-2)})"</span>
+            <span class="sa">f</span><span class="s2">"n_f (</span><span class="si">{</span><span class="n">n_f</span><span class="si">}</span><span class="s2">) must be less than the q-batch dimension of X (</span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span>
         <span class="p">)</span>
     <span class="n">split_sizes</span> <span class="o">=</span> <span class="p">[</span><span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">n_f</span><span class="p">,</span> <span class="n">n_f</span><span class="p">]</span>
     <span class="n">X_actual</span><span class="p">,</span> <span class="n">X_fantasies</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">split_sizes</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
@@ -460,7 +462,7 @@
 </form>
 </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
 </div>
 </div>
 <div class="clearer"></div>

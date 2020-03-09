@@ -239,7 +239,7 @@ $$y = \sin(2\pi x) + \epsilon, ~\epsilon \sim \mathcal N(0, 0.2).$$<p>Note: this
 <span class="n">posterior</span> <span class="o">=</span> <span class="n">cv_results</span><span class="o">.</span><span class="n">posterior</span>
 <span class="n">mean</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mean</span>
 <span class="n">cv_error</span> <span class="o">=</span> <span class="p">((</span><span class="n">cv_folds</span><span class="o">.</span><span class="n">test_Y</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span> <span class="o">-</span> <span class="n">mean</span><span class="o">.</span><span class="n">squeeze</span><span class="p">())</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Cross-validation error: {cv_error : 4.2}"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Cross-validation error: </span><span class="si">{</span><span class="n">cv_error</span> <span class="si">:</span><span class="s2"> 4.2</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
 <span class="c1"># get lower and upper confidence bounds</span>
 <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mvn</span><span class="o">.</span><span class="n">confidence_region</span><span class="p">()</span>

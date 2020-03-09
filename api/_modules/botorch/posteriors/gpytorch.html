@@ -34,14 +34,17 @@
 <span class="sd">Posterior Module to be used with GPyTorch models.</span>
 <span class="sd">"""</span>
 
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
 
 <span class="kn">import</span> <span class="nn">gpytorch</span>
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">gpytorch.distributions</span> <span class="kn">import</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">,</span> <span class="n">MultivariateNormal</span>
+<span class="kn">from</span> <span class="nn">gpytorch.lazy</span> <span class="kn">import</span> <span class="n">BlockDiagLazyTensor</span><span class="p">,</span> <span class="n">LazyTensor</span><span class="p">,</span> <span class="n">SumLazyTensor</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
-<span class="kn">from</span> <span class="nn">..exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span> <span class="nn">..exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchTensorDimensionError</span>
 <span class="kn">from</span> <span class="nn">.posterior</span> <span class="kn">import</span> <span class="n">Posterior</span>
 
 
@@ -136,10 +139,9 @@
     <span class="sa">r</span><span class="sd">"""Affine transformation of a multi-output posterior.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        posterior: The posterior to be transformed. Must be single-point (`q=1`).</span>
+<span class="sd">        posterior: The posterior over `m` outcomes to be scalarized.</span>
 <span class="sd">            Supports `t`-batching.</span>
-<span class="sd">        weights: An single-dimensional tensor of weights. Number of elements</span>
-<span class="sd">            must be the numbe of outputs of the posterior.</span>
+<span class="sd">        weights: A tensor of weights of size `m`.</span>
 <span class="sd">        offset: The offset of the affine transformation.</span>
 
 <span class="sd">    Returns:</span>
@@ -155,16 +157,55 @@
 <span class="sd">        &gt;&gt;&gt; weights = torch.tensor([0.5, 0.25])</span>
 <span class="sd">        &gt;&gt;&gt; new_posterior = scalarize_posterior(posterior, weights=weights)</span>
 <span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">weights</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">BotorchTensorDimensionError</span><span class="p">(</span><span class="s2">"`weights` must be one-dimensional"</span><span class="p">)</span>
     <span class="n">mean</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mean</span>
-    <span class="k">if</span> <span class="n">mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">weights</span><span class="p">):</span>
+    <span class="n">q</span><span class="p">,</span> <span class="n">m</span> <span class="o">=</span> <span class="n">mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>
+    <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">m</span> <span class="o">!=</span> <span class="n">weights</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"Output shape not equal to that of weights"</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span><span class="s2">"scalarize_posterior currently not supported for q&gt;1"</span><span class="p">)</span>
-    <span class="c1"># no need to use lazy here since q=1</span>
-    <span class="n">cov</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mvn</span><span class="o">.</span><span class="n">covariance_matrix</span>
-    <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">cov</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
-    <span class="n">new_cov</span> <span class="o">=</span> <span class="p">((</span><span class="n">cov</span> <span class="o">@</span> <span class="n">weights</span><span class="p">)</span> <span class="o">@</span> <span class="n">weights</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-    <span class="n">new_mean</span> <span class="o">=</span> <span class="n">offset</span> <span class="o">+</span> <span class="p">(</span><span class="n">mean</span> <span class="o">@</span> <span class="n">weights</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">mvn</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mvn</span>
+    <span class="n">cov</span> <span class="o">=</span> <span class="n">mvn</span><span class="o">.</span><span class="n">lazy_covariance_matrix</span> <span class="k">if</span> <span class="n">mvn</span><span class="o">.</span><span class="n">islazy</span> <span class="k">else</span> <span class="n">mvn</span><span class="o">.</span><span class="n">covariance_matrix</span>
+
+    <span class="k">if</span> <span class="n">m</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>  <span class="c1"># just scaling, no scalarization necessary</span>
+        <span class="n">new_mean</span> <span class="o">=</span> <span class="n">offset</span> <span class="o">+</span> <span class="p">(</span><span class="n">weights</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">mean</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span>
+        <span class="n">new_cov</span> <span class="o">=</span> <span class="n">weights</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">cov</span>
+        <span class="n">new_mvn</span> <span class="o">=</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">new_mean</span><span class="p">,</span> <span class="n">new_cov</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">GPyTorchPosterior</span><span class="p">(</span><span class="n">new_mvn</span><span class="p">)</span>
+
+    <span class="n">new_mean</span> <span class="o">=</span> <span class="n">offset</span> <span class="o">+</span> <span class="p">(</span><span class="n">mean</span> <span class="o">@</span> <span class="n">weights</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">q</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">new_cov</span> <span class="o">=</span> <span class="p">((</span><span class="n">cov</span> <span class="o">@</span> <span class="n">weights</span><span class="p">)</span> <span class="o">@</span> <span class="n">weights</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># we need to handle potentially different representations of the multi-task mvn</span>
+        <span class="k">if</span> <span class="n">mvn</span><span class="o">.</span><span class="n">_interleaved</span><span class="p">:</span>
+            <span class="n">w_cov</span> <span class="o">=</span> <span class="n">weights</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">q</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">sum_shape</span> <span class="o">=</span> <span class="n">batch_shape</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">q</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">m</span><span class="p">])</span>
+            <span class="n">sum_dims</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># special-case the independent setting</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cov</span><span class="p">,</span> <span class="n">BlockDiagLazyTensor</span><span class="p">):</span>
+                <span class="n">new_cov</span> <span class="o">=</span> <span class="n">SumLazyTensor</span><span class="p">(</span>
+                    <span class="o">*</span><span class="p">[</span>
+                        <span class="n">cov</span><span class="o">.</span><span class="n">base_lazy_tensor</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">*</span> <span class="n">weights</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+                        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">cov</span><span class="o">.</span><span class="n">base_lazy_tensor</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">))</span>
+                    <span class="p">]</span>
+                <span class="p">)</span>
+                <span class="n">new_mvn</span> <span class="o">=</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">new_mean</span><span class="p">,</span> <span class="n">new_cov</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">GPyTorchPosterior</span><span class="p">(</span><span class="n">new_mvn</span><span class="p">)</span>
+
+            <span class="n">w_cov</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">repeat_interleave</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">sum_shape</span> <span class="o">=</span> <span class="n">batch_shape</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">m</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">q</span><span class="p">])</span>
+            <span class="n">sum_dims</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">3</span><span class="p">)</span>
+
+        <span class="n">cov_scaled</span> <span class="o">=</span> <span class="n">w_cov</span> <span class="o">*</span> <span class="n">cov</span> <span class="o">*</span> <span class="n">w_cov</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+        <span class="c1"># TODO: Do not instantiate full covariance for lazy tensors (ideally we simplify</span>
+        <span class="c1"># this in GPyTorch: https://github.com/cornellius-gp/gpytorch/issues/1055)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cov_scaled</span><span class="p">,</span> <span class="n">LazyTensor</span><span class="p">):</span>
+            <span class="n">cov_scaled</span> <span class="o">=</span> <span class="n">cov_scaled</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span>
+        <span class="n">new_cov</span> <span class="o">=</span> <span class="n">cov_scaled</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">sum_shape</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">sum_dims</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">sum_dims</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
     <span class="n">new_mvn</span> <span class="o">=</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">new_mean</span><span class="p">,</span> <span class="n">new_cov</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">GPyTorchPosterior</span><span class="p">(</span><span class="n">new_mvn</span><span class="p">)</span></div>
 </pre></div>
@@ -208,7 +249,7 @@
 </form>
 </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
 </div>
 </div>
 <div class="clearer"></div>

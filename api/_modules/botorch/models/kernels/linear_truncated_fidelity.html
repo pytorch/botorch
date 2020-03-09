@@ -30,6 +30,8 @@
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
 
@@ -246,7 +248,7 @@
 
         <span class="k">return</span> <span class="n">covar_unbiased</span> <span class="o">+</span> <span class="n">bias_factor</span> <span class="o">*</span> <span class="n">covar_biased</span>
 
-    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"LinearTruncatedFidelityKernel"</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearTruncatedFidelityKernel</span><span class="p">:</span>
         <span class="n">new_kernel</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="n">new_kernel</span><span class="o">.</span><span class="n">covar_module_unbiased</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_module_unbiased</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
         <span class="n">new_kernel</span><span class="o">.</span><span class="n">covar_module_biased</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_module_biased</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
@@ -292,7 +294,7 @@
 </form>
 </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
 </div>
 </div>
 <div class="clearer"></div>

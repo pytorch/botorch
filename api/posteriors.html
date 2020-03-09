@@ -233,10 +233,9 @@ This is used for deterministic optimization.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>posterior</strong> (<a class="reference internal" href="#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">GPyTorchPosterior</span></code></a>) – The posterior to be transformed. Must be single-point (<cite>q=1</cite>).
+<li><p><strong>posterior</strong> (<a class="reference internal" href="#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">GPyTorchPosterior</span></code></a>) – The posterior over <cite>m</cite> outcomes to be scalarized.
 Supports <cite>t</cite>-batching.</p></li>
-<li><p><strong>weights</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – An single-dimensional tensor of weights. Number of elements
-must be the numbe of outputs of the posterior.</p></li>
+<li><p><strong>weights</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A tensor of weights of size <cite>m</cite>.</p></li>
 <li><p><strong>offset</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – The offset of the affine transformation.</p></li>
 </ul>
 </dd>
@@ -492,7 +491,7 @@ This is used for deterministic optimization.</p></li>
 </form>
 </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
 </div>
 </div>
 <div class="clearer"></div>
