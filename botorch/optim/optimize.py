@@ -22,7 +22,7 @@ from .initializers import (
     gen_batch_initial_conditions,
     gen_one_shot_kg_initial_conditions,
 )
-from .utils import ConvergenceCriterion
+from .stopping import ExpMAStoppingCriterion
 
 
 def optimize_acqf(
@@ -230,8 +230,7 @@ def optimize_acqf_cyclic(
         batch_initial_conditions: A tensor to specify the initial conditions.
             If no initial conditions are provided, the default initialization will
             be used.
-        cyclic_options: Options for convergence criterion for outer cyclic
-            optimization.
+        cyclic_options: Options for stopping criterion for outer cyclic optimization.
         Returns:
             A two-element tuple containing
 
@@ -269,11 +268,11 @@ def optimize_acqf_cyclic(
     )
     if q > 1:
         cyclic_options = cyclic_options or {}
-        convergence_criterion = ConvergenceCriterion(**cyclic_options)
-        converged = convergence_criterion.evaluate(fvals=acq_vals)
+        stopping_criterion = ExpMAStoppingCriterion(**cyclic_options)
+        stop = stopping_criterion.evaluate(fvals=acq_vals)
         base_X_pending = acq_function.X_pending
         idxr = torch.ones(q, dtype=torch.bool, device=bounds.device)
-        while not converged:
+        while not stop:
             for i in range(q):
                 # optimize only candidate i
                 idxr[i] = 0
@@ -300,6 +299,6 @@ def optimize_acqf_cyclic(
                 candidates[i] = candidate_i
                 acq_vals[i] = acq_val_i
                 idxr[i] = 1
-            converged = convergence_criterion.evaluate(fvals=acq_vals)
+            stop = stopping_criterion.evaluate(fvals=acq_vals)
         acq_function.set_X_pending(base_X_pending)
     return candidates, acq_vals

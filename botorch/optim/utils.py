@@ -49,60 +49,6 @@ def sample_all_priors(model: GPyTorchModel) -> None:
             )
 
 
-class ConvergenceCriterion:
-    r"""Basic class for evaluating optimization convergence.
-    """
-
-    def __init__(
-        self,
-        maxiter: int = 15000,
-        ftol: float = 2.220446049250313e-09,
-        minimize: bool = True,
-    ) -> None:
-        r"""Constructor for ConvergenceCriterion.
-
-        Args:
-            maxiter: maximum number of iterations.
-            ftol: Function value relative tolerance for termination.
-            minimize: boolean indicating the optimization direction.
-        """
-        # by default, use the scipy defaults
-        self.maxiter = maxiter
-        self.ftol = ftol
-        self.minimize = minimize
-        self.prev_fvals = None
-        self.iter = 0
-
-    def evaluate(self, fvals: Tensor) -> bool:
-        r"""Evaluate convergence criterion.
-
-        Args:
-            fvals: tensor containing function values for the current iteration.
-                If `fvals` contains more than one element, then the relative
-                tolerance criterion is evaluated element-wise and True is returned
-                if all elements have converged.
-
-        TODO: add support for utilizing gradient information
-
-        Returns:
-            bool: convergence indicator
-        """
-        self.iter += 1
-        if self.iter == self.maxiter:
-            return True
-        elif self.prev_fvals is not None:
-            fmax = torch.stack(
-                [self.prev_fvals.abs(), fvals.abs(), torch.ones_like(fvals)], dim=0
-            ).max(dim=0)[0]
-            f_delta = (self.prev_fvals - fvals).div(fmax)
-            if not self.minimize:
-                f_delta *= -1
-            if torch.all(f_delta <= self.ftol):
-                return True
-        self.prev_fvals = fvals
-        return False
-
-
 def columnwise_clamp(
     X: Tensor,
     lower: Optional[Union[float, Tensor]] = None,
