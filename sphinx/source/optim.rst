@@ -26,6 +26,11 @@ Initialization Helpers
 .. automodule:: botorch.optim.initializers
     :members:
 
+Stopping Criteria
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.optim.stopping
+    :members:
+
 
 Utilities
 -------------------------------------------

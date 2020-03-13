@@ -25,12 +25,8 @@ from torch.optim.optimizer import Optimizer
 
 from ..exceptions.warnings import OptimizationWarning
 from .numpy_converter import TorchAttr, module_to_array, set_params_with_array
-from .utils import (
-    ConvergenceCriterion,
-    _filter_kwargs,
-    _get_extra_mll_args,
-    _scipy_objective_and_grad,
-)
+from .stopping import ExpMAStoppingCriterion
+from .utils import _filter_kwargs, _get_extra_mll_args, _scipy_objective_and_grad
 
 
 ParameterBounds = Dict[str, Tuple[Optional[float], Optional[float]]]
@@ -130,12 +126,12 @@ def fit_gpytorch_torch(
     }
     loss_trajectory: List[float] = []
     i = 0
-    converged = False
-    convergence_criterion = ConvergenceCriterion(
-        **_filter_kwargs(ConvergenceCriterion, **optim_options)
+    stop = False
+    stopping_criterion = ExpMAStoppingCriterion(
+        **_filter_kwargs(ExpMAStoppingCriterion, **optim_options)
     )
     train_inputs, train_targets = mll.model.train_inputs, mll.model.train_targets
-    while not converged:
+    while not stop:
         optimizer.zero_grad()
         with gpt_settings.fast_computations(log_prob=approx_mll):
             output = mll.model(*train_inputs)
@@ -159,7 +155,7 @@ def fit_gpytorch_torch(
                 if pname in bounds_:
                     param.data = param.data.clamp(*bounds_[pname])
         i += 1
-        converged = convergence_criterion.evaluate(fvals=loss.detach())
+        stop = stopping_criterion.evaluate(fvals=loss.detach())
     info_dict = {
         "fopt": loss_trajectory[-1],
         "wall_time": time.time() - t1,

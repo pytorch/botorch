@@ -4,6 +4,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+from __future__ import annotations
+
 import warnings
 from copy import deepcopy
 
@@ -12,7 +14,6 @@ from botorch import settings
 from botorch.exceptions import BotorchError
 from botorch.models import ModelListGP, SingleTaskGP
 from botorch.optim.utils import (
-    ConvergenceCriterion,
     _expand_bounds,
     _get_extra_mll_args,
     columnwise_clamp,
@@ -27,45 +28,6 @@ from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
 from gpytorch.priors.smoothed_box_prior import SmoothedBoxPrior
 from gpytorch.priors.torch_priors import GammaPrior
-
-
-class TestConvergenceCriterion(BotorchTestCase):
-    def test_convergence_criterion(self, cuda=False):
-        for dtype in (torch.float, torch.double):
-            tkwargs = {"device": self.device, "dtype": dtype}
-
-            # test max iter
-            max_iter_convergence_criterion = ConvergenceCriterion(maxiter=2)
-
-            self.assertFalse(
-                max_iter_convergence_criterion.evaluate(fvals=torch.ones(1, **tkwargs))
-            )
-            self.assertTrue(
-                max_iter_convergence_criterion.evaluate(fvals=torch.zeros(1, **tkwargs))
-            )
-            # test ftol
-            for minimize in (True, False):
-                ftol_convergence_criterion = ConvergenceCriterion(
-                    ftol=1.0, minimize=minimize
-                )
-                exp = 0 if minimize else 1
-                self.assertFalse(
-                    ftol_convergence_criterion.evaluate(
-                        fvals=(-1) ** exp * torch.tensor([2.0, 2.0], **tkwargs)
-                    )
-                )
-                # case 1: one element has converged and one has not
-                self.assertFalse(
-                    ftol_convergence_criterion.evaluate(
-                        fvals=(-1) ** exp * torch.tensor([0.0, -0.5], **tkwargs)
-                    )
-                )
-                # both converged
-                self.assertTrue(
-                    ftol_convergence_criterion.evaluate(
-                        fvals=(-1) ** exp * torch.tensor([0.0, -0.5], **tkwargs)
-                    )
-                )
 
 
 class TestColumnWiseClamp(BotorchTestCase):
