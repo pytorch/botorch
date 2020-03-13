@@ -752,7 +752,7 @@ registered hooks while the latter silently ignores them.</p>
 </dd></dl>
 <dl class="class">
 <dt id="botorch.models.gp_regression.FixedNoiseGP">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.models.gp_regression.</code><code class="sig-name descname">FixedNoiseGP</code><span class="sig-paren">(</span><em class="sig-param">train_X</em>, <em class="sig-param">train_Y</em>, <em class="sig-param">train_Yvar</em>, <em class="sig-param">outcome_transform=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#FixedNoiseGP"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gp_regression.FixedNoiseGP" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.gp_regression.</code><code class="sig-name descname">FixedNoiseGP</code><span class="sig-paren">(</span><em class="sig-param">train_X</em>, <em class="sig-param">train_Y</em>, <em class="sig-param">train_Yvar</em>, <em class="sig-param">covar_module=None</em>, <em class="sig-param">outcome_transform=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#FixedNoiseGP"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gp_regression.FixedNoiseGP" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel" title="botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">gpytorch.models.exact_gp.ExactGP</span></code></p>
 <p>A single-task exact GP model using fixed noise levels.</p>
 <p>A single-task exact GP that uses fixed observation noise levels. This model
@@ -948,7 +948,7 @@ observations passed in via kwargs).</p>
 <span id="multi-fidelity-gp-regression-models"></span><h3>Multi-Fidelity GP Regression Models<a class="headerlink" href="#module-botorch.models.gp_regression_fidelity" title="Permalink to this headline">¶</a></h3>
 <p>Gaussian Process Regression models based on GPyTorch models.</p>
 <dl class="citation">
-<dt class="label" id="wu2019mf"><span class="brackets"><a class="fn-backref" href="#id1">Wu2019mf</a></span></dt>
+<dt class="label" id="wu2019mf"><span class="brackets">Wu2019mf</span><span class="fn-backref">(<a href="#id1">1</a>,<a href="#id2">2</a>)</span></dt>
 <dd><p>J. Wu, S. Toscano-Palmerin, P. I. Frazier, and A. G. Wilson. Practical
 multi-fidelity bayesian optimization for hyperparameter tuning. ArXiv 2019.</p>
 </dd>
@@ -979,13 +979,17 @@ of the default kernel.</p></li>
 5/2. Only used when <cite>linear_truncated=True</cite>.</p></li>
 <li><p><strong>likelihood</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Likelihood</span></code>]) – A likelihood. If omitted, use a standard GaussianLikelihood
 with inferred noise level.</p></li>
+<li><p><strong>outcome_transform</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="#botorch.models.transforms.outcome.OutcomeTransform" title="botorch.models.transforms.outcome.OutcomeTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">OutcomeTransform</span></code></a>]) – An outcome transform that is applied to the
+training data during instantiation and to the posterior during
+inference (that is, the <cite>Posterior</cite> obtained by calling
+<cite>.posterior</cite> on the model will be on the original scale).</p></li>
 </ul>
 </dd>
 </dl>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">train_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">train_Y</span> <span class="o">=</span> <span class="n">train_X</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskMultiFidelityGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskMultiFidelityGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">data_fidelity</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>A single-task exact GP model.</p>
@@ -1009,6 +1013,73 @@ inference (that is, the <cite>Posterior</cite> obtained by calling
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">train_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">train_Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+<dl class="class">
+<dt id="botorch.models.gp_regression_fidelity.FixedNoiseMultiFidelityGP">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.gp_regression_fidelity.</code><code class="sig-name descname">FixedNoiseMultiFidelityGP</code><span class="sig-paren">(</span><em class="sig-param">train_X</em>, <em class="sig-param">train_Y</em>, <em class="sig-param">train_Yvar</em>, <em class="sig-param">iteration_fidelity=None</em>, <em class="sig-param">data_fidelity=None</em>, <em class="sig-param">linear_truncated=True</em>, <em class="sig-param">nu=2.5</em>, <em class="sig-param">outcome_transform=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression_fidelity.html#FixedNoiseMultiFidelityGP"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gp_regression_fidelity.FixedNoiseMultiFidelityGP" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.gp_regression.FixedNoiseGP" title="botorch.models.gp_regression.FixedNoiseGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.gp_regression.FixedNoiseGP</span></code></a></p>
+<p>A single task multi-fidelity GP model using fixed noise levels.</p>
+<p>A FixedNoiseGP model analogue to SingleTaskMultiFidelityGP, using a
+DownsamplingKernel for the data fidelity parameter (if present) and
+an ExponentialDecayKernel for the iteration fidelity parameter (if present).</p>
+<p>This kernel is described in <a class="reference internal" href="#wu2019mf" id="id2"><span>[Wu2019mf]</span></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>train_X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x (d + s)</cite> tensor of training features,
+where <cite>s</cite> is the dimension of the fidelity parameters (either one
+or two).</p></li>
+<li><p><strong>train_Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x m</cite> tensor of training observations.</p></li>
+<li><p><strong>train_Yvar</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x m</cite> tensor of observed measurement noise.</p></li>
+<li><p><strong>iteration_fidelity</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The column index for the training iteration fidelity
+parameter (optional).</p></li>
+<li><p><strong>data_fidelity</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The column index for the downsampling fidelity parameter
+(optional).</p></li>
+<li><p><strong>linear_truncated</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, use a <cite>LinearTruncatedFidelityKernel</cite> instead
+of the default kernel.</p></li>
+<li><p><strong>nu</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – The smoothness parameter for the Matern kernel: either 1/2, 3/2, or
+5/2. Only used when <cite>linear_truncated=True</cite>.</p></li>
+<li><p><strong>outcome_transform</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="#botorch.models.transforms.outcome.OutcomeTransform" title="botorch.models.transforms.outcome.OutcomeTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">OutcomeTransform</span></code></a>]) – An outcome transform that is applied to the
+training data during instantiation and to the posterior during
+inference (that is, the <cite>Posterior</cite> obtained by calling
+<cite>.posterior</cite> on the model will be on the original scale).</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">train_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">train_Y</span> <span class="o">=</span> <span class="n">train_X</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">train_Yvar</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">train_Y</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.01</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">FixedNoiseMultiFidelityGP</span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">train_X</span><span class="p">,</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">train_Y</span><span class="p">,</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">train_Yvar</span><span class="p">,</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">data_fidelity</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">)</span>
+</pre></div>
+</div>
+<p>A single-task exact GP model using fixed noise levels.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>train_X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x d</cite> tensor of training features.</p></li>
+<li><p><strong>train_Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x m</cite> tensor of training observations.</p></li>
+<li><p><strong>train_Yvar</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x m</cite> tensor of observed measurement
+noise.</p></li>
+<li><p><strong>outcome_transform</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="#botorch.models.transforms.outcome.OutcomeTransform" title="botorch.models.transforms.outcome.OutcomeTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">OutcomeTransform</span></code></a>]) – An outcome transform that is applied to the
+training data during instantiation and to the posterior during
+inference (that is, the <cite>Posterior</cite> obtained by calling
+<cite>.posterior</cite> on the model will be on the original scale).</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">train_X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">train_Y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">train_Yvar</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">train_Y</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">FixedNoiseGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">)</span>
 </pre></div>
 </div>
 </dd></dl>

@@ -43,7 +43,7 @@
 <li><p><strong>num_restarts</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of starting points for multistart acquisition
 function optimization.</p></li>
 <li><p><strong>raw_samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of samples for initialization.</p></li>
-<li><p><strong>options</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]]) – Options for candidate generation.</p></li>
+<li><p><strong>options</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]]) – Options for candidate generation.</p></li>
 <li><p><strong>constraints</strong> (<em>equality</em>) – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs</cite></p></li>
@@ -106,7 +106,7 @@ values conditional on having observed canidates <cite>0,1,…,i-1</cite>.</p></l
 <li><p><strong>num_restarts</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of starting points for multistart acquisition
 function optimization.</p></li>
 <li><p><strong>raw_samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of samples for initialization</p></li>
-<li><p><strong>options</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]]) – Options for candidate generation.</p></li>
+<li><p><strong>options</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]]) – Options for candidate generation.</p></li>
 <li><p><strong>constraints</strong> (<em>equality</em>) – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs</cite></p></li>
@@ -121,7 +121,7 @@ transformations).</p></li>
 <li><p><strong>batch_initial_conditions</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A tensor to specify the initial conditions.
 If no initial conditions are provided, the default initialization will
 be used.</p></li>
-<li><p><strong>cyclic_options</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]]) – Options for convergence criterion for outer cyclic
+<li><p><strong>cyclic_options</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]]) – Options for convergence criterion for outer cyclic
 optimization.</p></li>
 <li><p><strong>Returns</strong> – <p>A two-element tuple containing</p>
 <ul>
@@ -263,7 +263,7 @@ iteration. If track_iterations is False, will be empty.</p>
 function optimization.</p></li>
 <li><p><strong>raw_samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of raw samples to consider in the initialization
 heuristic.</p></li>
-<li><p><strong>options</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]]) – Options for initial condition generation. For valid options see
+<li><p><strong>options</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]]) – Options for initial condition generation. For valid options see
 <cite>initialize_q_batch</cite> and <cite>initialize_q_batch_nonneg</cite>. If <cite>options</cite>
 contains a <cite>nonnegative=True</cite> entry, then <cite>acq_function</cite> is
 assumed to be non-negative (useful when using custom acquisition
@@ -313,7 +313,7 @@ task features.</p></li>
 function optimization.</p></li>
 <li><p><strong>raw_samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of raw samples to consider in the initialization
 heuristic.</p></li>
-<li><p><strong>options</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]]) – Options for initial condition generation. These contain all
+<li><p><strong>options</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]]) – Options for initial condition generation. These contain all
 settings for the standard heuristic initialization from
 <cite>gen_batch_initial_conditions</cite>. In addition, they contain
 <cite>frac_random</cite> (the fraction of fully random fantasy points),
@@ -432,19 +432,19 @@ for optimizing module parameters.</p>
 <em class="property">class </em><code class="sig-prename descclassname">botorch.optim.numpy_converter.</code><code class="sig-name descname">TorchAttr</code><span class="sig-paren">(</span><em class="sig-param">shape</em>, <em class="sig-param">dtype</em>, <em class="sig-param">device</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/numpy_converter.html#TorchAttr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.numpy_converter.TorchAttr" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></p>
 <p>Create new instance of TorchAttr(shape, dtype, device)</p>
-<dl class="method">
+<dl class="attribute">
 <dt id="botorch.optim.numpy_converter.TorchAttr.shape">
-<em class="property">property </em><code class="sig-name descname">shape</code><a class="headerlink" href="#botorch.optim.numpy_converter.TorchAttr.shape" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">shape</code><a class="headerlink" href="#botorch.optim.numpy_converter.TorchAttr.shape" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 0</p>
 </dd></dl>
-<dl class="method">
+<dl class="attribute">
 <dt id="botorch.optim.numpy_converter.TorchAttr.dtype">
-<em class="property">property </em><code class="sig-name descname">dtype</code><a class="headerlink" href="#botorch.optim.numpy_converter.TorchAttr.dtype" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">dtype</code><a class="headerlink" href="#botorch.optim.numpy_converter.TorchAttr.dtype" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 1</p>
 </dd></dl>
-<dl class="method">
+<dl class="attribute">
 <dt id="botorch.optim.numpy_converter.TorchAttr.device">
-<em class="property">property </em><code class="sig-name descname">device</code><a class="headerlink" href="#botorch.optim.numpy_converter.TorchAttr.device" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">device</code><a class="headerlink" href="#botorch.optim.numpy_converter.TorchAttr.device" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 2</p>
 </dd></dl>
 </dd></dl>

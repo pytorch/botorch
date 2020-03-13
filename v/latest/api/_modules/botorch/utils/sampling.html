@@ -34,6 +34,8 @@
 <span class="sd">Utilities for MC and qMC sampling.</span>
 <span class="sd">"""</span>
 
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">contextmanager</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Generator</span><span class="p">,</span> <span class="n">Optional</span>
@@ -113,8 +115,8 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">qmc</span> <span class="ow">and</span> <span class="n">output_dim</span> <span class="o">&gt;</span> <span class="n">SobolEngine</span><span class="o">.</span><span class="n">MAXDIM</span><span class="p">:</span>
             <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"Number of output elements (q*d=</span><span class="si">{output_dim}</span><span class="s2">) greater than "</span>
-                <span class="sa">f</span><span class="s2">"maximum supported by qmc (</span><span class="si">{SobolEngine.MAXDIM}</span><span class="s2">). "</span>
+                <span class="sa">f</span><span class="s2">"Number of output elements (q*d=</span><span class="si">{</span><span class="n">output_dim</span><span class="si">}</span><span class="s2">) greater than "</span>
+                <span class="sa">f</span><span class="s2">"maximum supported by qmc (</span><span class="si">{</span><span class="n">SobolEngine</span><span class="o">.</span><span class="n">MAXDIM</span><span class="si">}</span><span class="s2">). "</span>
                 <span class="s2">"Using iid sampling instead."</span><span class="p">,</span>
                 <span class="n">SamplingWarning</span><span class="p">,</span>
             <span class="p">)</span>

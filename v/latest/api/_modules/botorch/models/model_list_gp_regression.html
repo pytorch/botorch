@@ -34,6 +34,8 @@
 <span class="sd">Model List GP Regression models.</span>
 <span class="sd">"""</span>
 
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span>
 
@@ -75,7 +77,7 @@
 
 <div class="viewcode-block" id="ModelListGP.condition_on_observations"><a class="viewcode-back" href="../../../models.html#botorch.models.model_list_gp_regression.ModelListGP.condition_on_observations">[docs]</a>    <span class="k">def</span> <span class="nf">condition_on_observations</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"ModelListGP"</span><span class="p">:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModelListGP</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Condition the model on new observations.</span>
 
 <span class="sd">        Args:</span>
@@ -105,8 +107,8 @@
         <span class="k">if</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_outputs</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">BotorchTensorDimensionError</span><span class="p">(</span>
                 <span class="s2">"Incorrect number of outputs for observations. Received "</span>
-                <span class="sa">f</span><span class="s2">"</span><span class="si">{Y.shape[-1]}</span><span class="s2"> observation outputs, but model has "</span>
-                <span class="sa">f</span><span class="s2">"</span><span class="si">{self.num_outputs}</span><span class="s2"> outputs."</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> observation outputs, but model has "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">num_outputs</span><span class="si">}</span><span class="s2"> outputs."</span>
             <span class="p">)</span>
         <span class="n">targets</span> <span class="o">=</span> <span class="p">[</span><span class="n">Y</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])]</span>
         <span class="k">if</span> <span class="s2">"noise"</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
@@ -117,7 +119,7 @@
             <span class="n">kwargs_</span> <span class="o">=</span> <span class="n">kwargs</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_fantasy_model</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">targets</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs_</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="ModelListGP.subset_output"><a class="viewcode-back" href="../../../models.html#botorch.models.model_list_gp_regression.ModelListGP.subset_output">[docs]</a>    <span class="k">def</span> <span class="nf">subset_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">"ModelListGP"</span><span class="p">:</span>
+<div class="viewcode-block" id="ModelListGP.subset_output"><a class="viewcode-back" href="../../../models.html#botorch.models.model_list_gp_regression.ModelListGP.subset_output">[docs]</a>    <span class="k">def</span> <span class="nf">subset_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">ModelListGP</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Subset the model along the output dimension.</span>
 
 <span class="sd">        Args:</span>

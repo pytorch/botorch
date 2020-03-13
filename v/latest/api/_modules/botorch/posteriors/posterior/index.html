@@ -34,6 +34,8 @@
 <span class="sd">Abstract base module for all botorch posteriors.</span>
 <span class="sd">"""</span>
 
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
 <span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span><span class="p">,</span> <span class="n">abstractproperty</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
 
@@ -63,14 +65,14 @@
     <span class="k">def</span> <span class="nf">mean</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""The mean of the posterior as a `(b) x n x m`-dim Tensor."""</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"Property `mean` not implemented for </span><span class="si">{self.__class__.__name__}</span><span class="s2">"</span>
+            <span class="sa">f</span><span class="s2">"Property `mean` not implemented for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">variance</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""The variance of the posterior as a `(b) x n x m`-dim Tensor."""</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"Property `variance` not implemented for </span><span class="si">{self.__class__.__name__}</span><span class="s2">"</span>
+            <span class="sa">f</span><span class="s2">"Property `variance` not implemented for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
 
 <div class="viewcode-block" id="Posterior.rsample"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.posterior.Posterior.rsample">[docs]</a>    <span class="nd">@abstractmethod</span>
