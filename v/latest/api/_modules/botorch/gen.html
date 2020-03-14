@@ -49,12 +49,8 @@
     <span class="n">make_scipy_bounds</span><span class="p">,</span>
     <span class="n">make_scipy_linear_constraints</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">.optim.utils</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">ConvergenceCriterion</span><span class="p">,</span>
-    <span class="n">_filter_kwargs</span><span class="p">,</span>
-    <span class="n">columnwise_clamp</span><span class="p">,</span>
-    <span class="n">fix_features</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">.optim.stopping</span> <span class="kn">import</span> <span class="n">ExpMAStoppingCriterion</span>
+<span class="kn">from</span> <span class="nn">.optim.utils</span> <span class="kn">import</span> <span class="n">_filter_kwargs</span><span class="p">,</span> <span class="n">columnwise_clamp</span><span class="p">,</span> <span class="n">fix_features</span>
 
 
 <div class="viewcode-block" id="gen_candidates_scipy"><a class="viewcode-back" href="../../gen.html#botorch.gen.gen_candidates_scipy">[docs]</a><span class="k">def</span> <span class="nf">gen_candidates_scipy</span><span class="p">(</span>
@@ -225,11 +221,11 @@
     <span class="n">param_trajectory</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"candidates"</span><span class="p">:</span> <span class="p">[]}</span>
     <span class="n">loss_trajectory</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">converged</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="n">convergence_criterion</span> <span class="o">=</span> <span class="n">ConvergenceCriterion</span><span class="p">(</span>
-        <span class="o">**</span><span class="n">_filter_kwargs</span><span class="p">(</span><span class="n">ConvergenceCriterion</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span>
+    <span class="n">stop</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">stopping_criterion</span> <span class="o">=</span> <span class="n">ExpMAStoppingCriterion</span><span class="p">(</span>
+        <span class="o">**</span><span class="n">_filter_kwargs</span><span class="p">(</span><span class="n">ExpMAStoppingCriterion</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span>
     <span class="p">)</span>
-    <span class="k">while</span> <span class="ow">not</span> <span class="n">converged</span><span class="p">:</span>
+    <span class="k">while</span> <span class="ow">not</span> <span class="n">stop</span><span class="p">:</span>
         <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="n">loss</span> <span class="o">=</span> <span class="o">-</span><span class="n">acquisition_function</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
@@ -247,7 +243,7 @@
             <span class="n">clamped_candidates</span><span class="p">,</span> <span class="n">lower_bounds</span><span class="p">,</span> <span class="n">upper_bounds</span>
         <span class="p">)</span>
         <span class="n">candidates</span> <span class="o">=</span> <span class="n">fix_features</span><span class="p">(</span><span class="n">clamped_candidates</span><span class="p">,</span> <span class="n">fixed_features</span><span class="p">)</span>
-        <span class="n">converged</span> <span class="o">=</span> <span class="n">convergence_criterion</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">fvals</span><span class="o">=</span><span class="n">loss</span><span class="o">.</span><span class="n">detach</span><span class="p">())</span>
+        <span class="n">stop</span> <span class="o">=</span> <span class="n">stopping_criterion</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">fvals</span><span class="o">=</span><span class="n">loss</span><span class="o">.</span><span class="n">detach</span><span class="p">())</span>
     <span class="n">clamped_candidates</span> <span class="o">=</span> <span class="n">columnwise_clamp</span><span class="p">(</span>
         <span class="n">X</span><span class="o">=</span><span class="n">candidates</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="n">lower_bounds</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="n">upper_bounds</span><span class="p">,</span> <span class="n">raise_on_violation</span><span class="o">=</span><span class="kc">True</span>
     <span class="p">)</span>

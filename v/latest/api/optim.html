@@ -121,8 +121,7 @@ transformations).</p></li>
 <li><p><strong>batch_initial_conditions</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A tensor to specify the initial conditions.
 If no initial conditions are provided, the default initialization will
 be used.</p></li>
-<li><p><strong>cyclic_options</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]]) – Options for convergence criterion for outer cyclic
-optimization.</p></li>
+<li><p><strong>cyclic_options</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]]) – Options for stopping criterion for outer cyclic optimization.</p></li>
 <li><p><strong>Returns</strong> – <p>A two-element tuple containing</p>
 <ul>
 <li><p>a <cite>q x d</cite>-dim tensor of generated candidates.</p></li>
@@ -419,6 +418,88 @@ which to ignore samples. All input samples for which
 </div>
 </dd></dl>
 </div>
+<div class="section" id="module-botorch.optim.stopping">
+<span id="stopping-criteria"></span><h3>Stopping Criteria<a class="headerlink" href="#module-botorch.optim.stopping" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="botorch.optim.stopping.StoppingCriterion">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.optim.stopping.</code><code class="sig-name descname">StoppingCriterion</code><a class="reference internal" href="_modules/botorch/optim/stopping.html#StoppingCriterion"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.stopping.StoppingCriterion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>Base class for evaluating optimization convergence.</p>
+<p>Stopping criteria are implemented as a objects rather than a function, so that they
+can keep track of past function values between optimization steps.</p>
+<dl class="method">
+<dt id="botorch.optim.stopping.StoppingCriterion.evaluate">
+<em class="property">abstract </em><code class="sig-name descname">evaluate</code><span class="sig-paren">(</span><em class="sig-param">fvals</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/stopping.html#StoppingCriterion.evaluate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.stopping.StoppingCriterion.evaluate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the stopping criterion.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>fvals</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – tensor containing function values for the current iteration. If
+<cite>fvals</cite> contains more than one element, then the stopping criterion is
+evaluated element-wise and True is returned if the stopping criterion is
+true for all elements.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Stopping indicator (if True, stop the optimziation).</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="class">
+<dt id="botorch.optim.stopping.ExpMAStoppingCriterion">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.optim.stopping.</code><code class="sig-name descname">ExpMAStoppingCriterion</code><span class="sig-paren">(</span><em class="sig-param">maxiter=10000</em>, <em class="sig-param">minimize=True</em>, <em class="sig-param">n_window=10</em>, <em class="sig-param">eta=1.0</em>, <em class="sig-param">rel_tol=1e-05</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/stopping.html#ExpMAStoppingCriterion"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.stopping.ExpMAStoppingCriterion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.optim.stopping.StoppingCriterion" title="botorch.optim.stopping.StoppingCriterion"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.optim.stopping.StoppingCriterion</span></code></a></p>
+<p>Exponential moving average stopping criterion.</p>
+<p>Computes an exponentially weighted moving average over window length <cite>n_window</cite>
+and checks whether the relative decrease in this moving average between steps
+is less than a provided tolerance level. That is, in iteration <cite>i</cite>, it computes</p>
+<blockquote>
+<div><p>v[i,j] := fvals[i - n_window + j] * w[j]</p>
+</div></blockquote>
+<p>for all <cite>j = 0, …, n_window</cite>, where <cite>w[j] = exp(-eta * (1 - j / n_window))</cite>.
+Letting <cite>ma[i] := sum_j(v[i,j])</cite>, the criterion evaluates to <cite>True</cite> whenever</p>
+<blockquote>
+<div><p>(ma[i-1] - ma[i]) / abs(ma[i-1]) &lt; rel_tol (if minimize=True)
+(ma[i] - ma[i-1]) / abs(ma[i-1]) &lt; rel_tol (if minimize=False)</p>
+</div></blockquote>
+<p>Exponential moving average stopping criterion.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>maxiter</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Maximum number of iterations.</p></li>
+<li><p><strong>minimize</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, assume minimization.</p></li>
+<li><p><strong>n_window</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The size of the exponential moving average window.</p></li>
+<li><p><strong>eta</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – The exponential decay factor in the weights.</p></li>
+<li><p><strong>rel_tol</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Relative tolerance for termination.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="botorch.optim.stopping.ExpMAStoppingCriterion.evaluate">
+<code class="sig-name descname">evaluate</code><span class="sig-paren">(</span><em class="sig-param">fvals</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/stopping.html#ExpMAStoppingCriterion.evaluate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.stopping.ExpMAStoppingCriterion.evaluate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the stopping criterion.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>fvals</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – tensor containing function values for the current iteration. If
+<cite>fvals</cite> contains more than one element, then the stopping criterion is
+evaluated element-wise and True is returned if the stopping criterion is
+true for all elements.</p>
+</dd>
+</dl>
+<p>TODO: add support for utilizing gradient information</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Stopping indicator (if True, stop the optimziation).</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+</div>
 </div>
 <div class="section" id="utilities">
 <h2>Utilities<a class="headerlink" href="#utilities" title="Permalink to this headline">¶</a></h2>
@@ -654,44 +735,6 @@ element of the q-batch, for each of the 3 t-batches:</p>
 <dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
-</dd></dl>
-<dl class="class">
-<dt id="botorch.optim.utils.ConvergenceCriterion">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.optim.utils.</code><code class="sig-name descname">ConvergenceCriterion</code><span class="sig-paren">(</span><em class="sig-param">maxiter=15000</em>, <em class="sig-param">ftol=2.220446049250313e-09</em>, <em class="sig-param">minimize=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/utils.html#ConvergenceCriterion"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.utils.ConvergenceCriterion" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Basic class for evaluating optimization convergence.</p>
-<p>Constructor for ConvergenceCriterion.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>maxiter</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – maximum number of iterations.</p></li>
-<li><p><strong>ftol</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Function value relative tolerance for termination.</p></li>
-<li><p><strong>minimize</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – boolean indicating the optimization direction.</p></li>
-</ul>
-</dd>
-</dl>
-<dl class="method">
-<dt id="botorch.optim.utils.ConvergenceCriterion.evaluate">
-<code class="sig-name descname">evaluate</code><span class="sig-paren">(</span><em class="sig-param">fvals</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/utils.html#ConvergenceCriterion.evaluate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.utils.ConvergenceCriterion.evaluate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Evaluate convergence criterion.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>fvals</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – tensor containing function values for the current iteration.
-If <cite>fvals</cite> contains more than one element, then the relative
-tolerance criterion is evaluated element-wise and True is returned
-if all elements have converged.</p>
-</dd>
-</dl>
-<p>TODO: add support for utilizing gradient information</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>convergence indicator</p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
 </dd></dl>
 <dl class="function">
 <dt id="botorch.optim.utils.columnwise_clamp">
