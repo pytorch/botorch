@@ -23,9 +23,10 @@ from torch import Tensor
 from typing import Optional
 
 from botorch.acquisition import MCAcquisitionObjective
+from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.monte_carlo import MCAcquisitionFunction
 from botorch.models.model import Model
-from botorch.sampling.samplers import MCSampler
+from botorch.sampling.samplers import MCSampler, SobolQMCNormalSampler
 from botorch.utils import t_batch_mode_transform
 
 
@@ -36,9 +37,13 @@ class qScalarizedUpperConfidenceBound(MCAcquisitionFunction):
         beta: Tensor,
         weights: Tensor,
         sampler: Optional[MCSampler] = None,
-        objective: Optional[MCAcquisitionObjective] = None,
     ) -> None:
-        super().__init__(model=model, sampler=sampler, objective=objective)
+        # we use the AcquisitionFunction constructor, since that of 
+        # MCAcquisitionFunction performs some validity checks that we don't want here
+        super(MCAcquisitionFunction, self).__init__(model=model)
+        if sampler is None:
+            sampler = SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)
+        self.sampler = sampler
         self.register_buffer("beta", torch.as_tensor(beta))
         self.register_buffer("weights", torch.as_tensor(weights))
 
@@ -80,11 +85,14 @@ import torch
 
 from botorch.fit import fit_gpytorch_model
 from botorch.models import SingleTaskGP
+from botorch.utils import standardize
 from gpytorch.mlls import ExactMarginalLogLikelihood
+
 
 # generate synthetic data
 X = torch.rand(20, 2)
 Y = torch.stack([torch.sin(X[:, 0]), torch.cos(X[:, 1])], -1)
+Y = standardize(Y)  # standardize to zero mean unit variance
 
 # construct and fit the multi-output model
 gp = SingleTaskGP(X, Y)
@@ -112,6 +120,8 @@ qSUCB(torch.rand(2, 3, 2))
 # ### A scalarized version of analytic UCB (`q=1` only)
 # 
 # We can also write an *analytic* version of UCB for a multi-output model, assuming a multivariate normal posterior and `q=1`. The new class `ScalarizedUpperConfidenceBound` subclasses `AnalyticAcquisitionFunction` instead of `MCAcquisitionFunction`. In contrast to the MC version, instead of using the weights on the MC samples, we directly scalarize the mean vector $\mu$ and covariance matrix $\Sigma$ and apply standard UCB on the univariate normal distribution, which has mean $w^T \mu$ and variance $w^T \Sigma w$. In addition to the `@t_batch_transform` decorator, here we are also using `expected_q=1` to ensure the input `X` has a `q=1`.
+# 
+# *Note:* BoTorch also provides a `ScalarizedObjective` abstraction that can be used with any existing analytic acqusition functions and automatically performs the scalarization we implement manually below. See the end of this tutorial for a usage example.
 
 # In[5]:
 
@@ -127,7 +137,9 @@ class ScalarizedUpperConfidenceBound(AnalyticAcquisitionFunction):
         weights: Tensor,
         maximize: bool = True,
     ) -> None:
-        super().__init__(model=model)
+        # we use the AcquisitionFunction constructor, since that of 
+        # AnalyticAcquisitionFunction performs some validity checks that we don't want here
+        super(AnalyticAcquisitionFunction, self).__init__(model)
         self.maximize = maximize
         self.register_buffer("beta", torch.as_tensor(beta))
         self.register_buffer("weights", torch.as_tensor(weights))
@@ -215,3 +227,17 @@ SUCB(torch.rand(3, 1, 2))
 # ```
 
 # By following the example shown in the [custom botorch model in ax](./custom_botorch_model_in_ax) tutorial, a `BotorchModel` can be instantiated with `get_scalarized_UCB` and then run in Ax.
+
+# ### Using `ScalarizedObjective`
+# 
+# Using the `ScalarizedObjective` abstraction, the funcitonality of `ScalarizedUpperConfidenceBound` implemented above can be easily achieved in just a few lines of code:
+
+# In[9]:
+
+
+from botorch.acquisition.objective import ScalarizedObjective
+from botorch.acquisition.analytic import UpperConfidenceBound
+
+obj = ScalarizedObjective(weights=torch.tensor([0.1, 0.5]))
+SUCB = UpperConfidenceBound(gp, beta=0.1, objective=obj)
+

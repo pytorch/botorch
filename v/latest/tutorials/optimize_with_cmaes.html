@@ -128,9 +128,9 @@
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Optimizing-the-acquisition-function-using-CMA-ES">Optimizing the acquisition function using CMA-ES<a class="anchor-link" href="#Optimizing-the-acquisition-function-using-CMA-ES">¶</a></h3><p><strong>Note:</strong> Relative to sequential evaluations, parallel evaluations of ther acqusition function are extremely fast in botorch (due to automatic parallelization across batch dimensions). In order to exploit this, we use the "ask/tell" interface to <code>cma</code> - this way we can batch-evaluate the whole CMA-ES population in parallel.</p>
+<h3 id="Optimizing-the-acquisition-function-using-CMA-ES">Optimizing the acquisition function using CMA-ES<a class="anchor-link" href="#Optimizing-the-acquisition-function-using-CMA-ES">¶</a></h3><p><strong>Note:</strong> Relative to sequential evaluations, parallel evaluations of the acqusition function are extremely fast in botorch (due to automatic parallelization across batch dimensions). In order to exploit this, we use the "ask/tell" interface to <code>cma</code> - this way we can batch-evaluate the whole CMA-ES population in parallel.</p>
 <p>In this examle we use an initial standard deviation $\sigma_0 = 0.2$ and a population size $\lambda = 50$. 
-We also constrain the input <code>X</code> to the unit cube <code>[0, 1]^d</code>.
+We also constrain the input <code>X</code> to the unit cube $[0, 1]^d$.
 See <code>cma</code>'s <a href="http://cma.gforge.inria.fr/apidocs-pycma/cma.evolution_strategy.CMAEvolutionStrategy.html">API Reference</a> for more information on these options.</p>
 <p>With this, we can optimize this acquistition function as follows:</p>
 </div>
