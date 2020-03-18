@@ -59,6 +59,13 @@ commands:
           name: "Validate sphinx coverage"
           command: python scripts/validate_sphinx.py -p "$(pwd)"
 
+  run_tutorials:
+    description: "Run tutorials"
+    steps:
+      - run:
+          name: "Run tutorials"
+          command: python scripts/run_tutorials.py -p "$(pwd)"
+
   configure_docusaurus_bot:
     description: "Configure Docusaurus GitHub bot"
     steps:
@@ -122,6 +129,15 @@ jobs:
       - sphinx_coverage
       - upload_coverage
 
+  run_tutorials_py38_pip:
+    docker:
+      - image: circleci/python:3.8.1
+    steps:
+      - checkout
+      - pip_install:
+          args: "-n -d -t"
+      - run_tutorials
+
   auto_deploy_site:
     docker:
       - image: circleci/python:3.8.1-node
@@ -153,6 +169,8 @@ workflows:
       - lint_test_py38_pip:
           filters: *exclude_ghpages_fbconfig
       - lint_test_py37_conda:
+          filters: *exclude_ghpages_fbconfig
+      - run_tutorials_py38_pip:
           filters: *exclude_ghpages_fbconfig
 
   auto_deploy_site:

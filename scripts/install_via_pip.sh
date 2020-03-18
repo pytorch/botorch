@@ -6,11 +6,13 @@
 
 PYTORCH_NIGHLTY=false
 DEPLOY=false
+TUTORIAL_DEPS=false
 
-while getopts 'nd' flag; do
+while getopts 'ndt' flag; do
   case "${flag}" in
     n) PYTORCH_NIGHLTY=true ;;
     d) DEPLOY=true ;;
+    t) TUTORIAL_DEPS=true ;;
     *) echo "usage: $0 [-n] [-d]" >&2
        exit 1 ;;
     esac
@@ -37,6 +39,11 @@ sudo pip install --progress-bar off git+https://github.com/cornellius-gp/gpytorc
 
 # install botorch + dev deps
 sudo pip install -e .[dev]
+
+if [[ $TUTORIAL_DEPS == true ]]; then
+  sudo pip install --progress-bar off cma matplotlib ipykernel
+  sudo pip install --progress-bar off git+https://github.com/facebook/Ax.git
+fi
 
 if [[ $DEPLOY == true ]]; then
   sudo pip install --progress-bar off beautifulsoup4 ipython nbconvert
