@@ -17,7 +17,7 @@ from torch import Tensor
 
 from ..acquisition.acquisition import AcquisitionFunction, OneShotAcquisitionFunction
 from ..acquisition.knowledge_gradient import qKnowledgeGradient
-from ..gen import gen_candidates_scipy
+from ..generation.gen import gen_candidates_scipy
 from .initializers import (
     gen_batch_initial_conditions,
     gen_one_shot_kg_initial_conditions,

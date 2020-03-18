@@ -12,6 +12,7 @@ from botorch import settings
 from botorch.exceptions.warnings import SamplingWarning
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.utils.sampling import (
+    batched_multinomial,
     construct_base_samples,
     construct_base_samples_from_posterior,
     manual_seed,
@@ -182,3 +183,28 @@ class TestSampleUtils(BotorchTestCase):
             self.assertTrue(torch.max((samples.pow(2).sum(dim=-1) - 1).abs()) < 1e-5)
             self.assertEqual(samples.device, self.device)
             self.assertEqual(samples.dtype, dtype)
+
+    def test_batched_multinomial(self):
+        num_categories = 5
+        num_samples = 4
+        Trulse = (True, False)
+        for batch_shape, dtype, replacement, use_gen, use_out in itertools.product(
+            ([], [3], [2, 3]), (torch.float, torch.double), Trulse, Trulse, Trulse
+        ):
+            weights = torch.rand(*batch_shape, num_categories, dtype=dtype)
+            out = None
+            if use_out:
+                out = torch.empty(*batch_shape, num_samples, dtype=torch.long)
+            samples = batched_multinomial(
+                weights,
+                num_samples,
+                replacement=replacement,
+                generator=torch.Generator() if use_gen else None,
+                out=out,
+            )
+            self.assertEqual(samples.shape, torch.Size([*batch_shape, num_samples]))
+            if use_out:
+                self.assertTrue(torch.equal(samples, out))
+            if not replacement:
+                for s in samples.view(-1, num_samples):
+                    self.assertTrue(torch.unique(s).size(0), num_samples)

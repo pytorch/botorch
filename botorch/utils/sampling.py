@@ -15,7 +15,7 @@ from contextlib import contextmanager
 from typing import Generator, Optional
 
 import torch
-from torch import Tensor
+from torch import LongTensor, Tensor
 from torch.quasirandom import SobolEngine
 
 from ..exceptions.warnings import SamplingWarning
@@ -285,3 +285,47 @@ def sample_simplex(
     if device is not None:
         srnd = srnd.to(device)
     return srnd[..., 1:] - srnd[..., :-1]
+
+
+def batched_multinomial(
+    weights: Tensor,
+    num_samples: int,
+    replacement: bool = False,
+    generator: Optional[torch.Generator] = None,
+    out: Optional[Tensor] = None,
+) -> LongTensor:
+    r"""Sample from multinomial with an arbitrary number of batch dimensions.
+
+    Args:
+        weights: A `batch_shape x num_categories` tensor of weights. For each batch
+            index `i, j, ...`, this functions samples from a multinomial with `input`
+            `weights[i, j, ..., :]`. Note that the weights need not sum to one, but must
+            be non-negative, finite and have a non-zero sum.
+        num_samples: The number of samples to draw for each batch index. Must be smaller
+            than `num_categories` if `replacement=False`.
+        replacement: If True, samples are drawn with replacement.
+        generator: A a pseudorandom number generator for sampling.
+        out: The output tensor (optional). If provided, must be of size
+            `batch_shape x num_samples`.
+
+    Returns:
+        A `batch_shape x num_samples` tensor of samples.
+
+    This is a thin wrapper around `torch.multinomial` that allows weight (`input`)
+    tensors with an arbitrary number of batch dimensions (`torch.multinomial` only
+    allows a single batch dimension). The calling signature is the same as for
+    `torch.multinomial`.
+
+    Example:
+        >>> weights = torch.rand(2, 3, 10)
+        >>> samples = batched_multinomial(weights, 4)  # shape is 2 x 3 x 4
+    """
+    batch_shape, n_categories = weights.shape[:-1], weights.size(-1)
+    flat_samples = torch.multinomial(
+        input=weights.view(-1, n_categories),
+        num_samples=num_samples,
+        replacement=replacement,
+        generator=generator,
+        out=None if out is None else out.view(-1, num_samples),
+    )
+    return flat_samples.view(*batch_shape, num_samples)

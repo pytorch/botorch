@@ -2,7 +2,6 @@
     :class: hidden-section
 
 
-botorch.gen
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Generation utilities [DEPRECATED - use botorch.generation.gen]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.gen
-    :members:

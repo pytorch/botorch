@@ -15,7 +15,11 @@ from . import (
 )
 from .cross_validation import batch_cross_validation
 from .fit import fit_gpytorch_model
-from .gen import gen_candidates_scipy, gen_candidates_torch, get_best_candidates
+from .generation.gen import (
+    gen_candidates_scipy,
+    gen_candidates_torch,
+    get_best_candidates,
+)
 from .utils import manual_seed
 
 
