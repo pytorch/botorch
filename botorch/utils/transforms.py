@@ -196,10 +196,10 @@ def concatenate_pending_points(
     """
 
     @wraps(method)
-    def decorated(cls: Any, X: Tensor) -> Any:
+    def decorated(cls: Any, X: Tensor, **kwargs: Any) -> Any:
         if cls.X_pending is not None:
             X = torch.cat([X, match_batch_shape(cls.X_pending, X)], dim=-2)
-        return method(cls, X)
+        return method(cls, X, **kwargs)
 
     return decorated
 

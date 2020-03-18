@@ -13,16 +13,17 @@ BoTorch API Reference
 
    acquisition
    models
+   generation
    posteriors
    optim
    fit
-   gen
    sampling
    cross_validation
    settings
    test_functions
    exceptions
    utils
+   gen
 
 
 Indices and Tables

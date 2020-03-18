@@ -6,8 +6,8 @@
 
 r"""
 Batch acquisition functions using the reparameterization trick in combination
-with (quasi) Monte-Carlo sampling. See [Rezende2014reparam]_ and
-[Wilson2017reparam]_
+with (quasi) Monte-Carlo sampling. See [Rezende2014reparam]_, [Wilson2017reparam]_ and
+[Balandat2019botorch]_.
 
 .. [Rezende2014reparam]
     D. J. Rezende, S. Mohamed, and D. Wierstra. Stochastic backpropagation and

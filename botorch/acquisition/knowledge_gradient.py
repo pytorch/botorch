@@ -6,8 +6,8 @@
 
 r"""
 Batch Knowledge Gradient (KG) via one-shot optimization as introduced in
-[Balandat2019botorch]_. For broader discussion of KG see also
-[Frazier2008knowledge]_, [Wu2016parallelkg]_.
+[Balandat2019botorch]_. For broader discussion of KG see also [Frazier2008knowledge]_
+and [Wu2016parallelkg]_.
 
 .. [Balandat2019botorch]
     M. Balandat, B. Karrer, D. R. Jiang, S. Daulton, B. Letham, A. G. Wilson,

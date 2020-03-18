@@ -6,10 +6,10 @@
 
 import torch
 from botorch.acquisition import qExpectedImprovement
-from botorch.gen import gen_candidates_scipy, get_best_candidates
+from botorch.generation.gen import gen_candidates_scipy, get_best_candidates
 from gpytorch import settings as gpt_settings
 
-from ..test_gen import TestBaseCandidateGeneration
+from ..generation.test_gen import TestBaseCandidateGeneration
 
 
 EPS = 1e-8
