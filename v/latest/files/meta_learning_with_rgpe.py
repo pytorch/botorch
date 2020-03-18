@@ -1,9 +1,40 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# ## Meta-Learning with the Rank-Weighted GP Ensemble (RGPE)
+# 
+# BoTorch is designed in to be model-agnostic and only requries that a model conform to a minimal interface. This tutorial walks through an example of implementing the rank-weighted Gaussian process ensemble (RGPE) [Feurer, Letham, Bakshy ICML 2018 AutoML Workshop] and using the RGPE in BoTorch to do meta-learning across related optimization tasks.
+# 
+# * Original paper: https://arxiv.org/pdf/1802.02219.pdf
+
+# In[1]:
+
+
 import torch
 import math
 
 torch.manual_seed(29)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 dtype = torch.double
+
+
+# ### Toy Problem
+# * We consider optimizing the following 1-D synthetic function
+# $$f(x, s_i) = \frac{1}{10}\bigg(x-1\bigg)\bigg(\sin(x+s_i)+\frac{1}{10}\bigg)$$
+# where
+# $$s_i = \frac{(i+9)\pi}{8}$$
+# is a task-dependent shift parameter and $i$ is the task index $i \in [1, t]$.
+# 
+# * In this tutorial, we will consider the scenario where we have collected data from 5 prior tasks (referred to as base tasks), which with a different task dependent shift parameter $s_i$.
+# 
+# * The goal now is use meta-learning to improve sample efficiency when optimizing a 6th task.
+
+# #### Toy Problem Setup
+# 
+# First let's define a function for compute the shift parameter $s_i$ and set the shift amount for the target task.
+
+# In[2]:
+
 
 NUM_BASE_TASKS = 5
 
@@ -16,6 +47,12 @@ def task_shift(task):
 
 TARGET_SHIFT = 0.0
 
+
+# Then, let's define our function $f(x, s_i)$ and set bounds on $x$.
+
+# In[3]:
+
+
 BOUNDS = torch.tensor([[-10.0], [10.0]], dtype=dtype, device=device)
 
 def f(X, shift=TARGET_SHIFT):
@@ -24,6 +61,14 @@ def f(X, shift=TARGET_SHIFT):
     """
     f_X = X * torch.sin(X + math.pi + shift) + X/10.0
     return f_X
+
+
+# #### Sample training data for prior base tasks
+
+# We sample data from a Sobol sequence to help ensure numerical stability when using a small amount of 1-D data. Sobol sequences help prevent us from sampling a bunch of training points that are close together.
+
+# In[4]:
+
 
 from botorch.utils.sampling import draw_sobol_samples
 from botorch.utils.transforms import normalize, unnormalize
@@ -48,8 +93,14 @@ for task in range(NUM_BASE_TASKS):
         'train_yvar': train_yvar,
     }         
 
+
+# #### Let's plot the base tasks and the target task function along with the observed points
+
+# In[5]:
+
+
 from matplotlib import pyplot as plt
-%matplotlib inline
+get_ipython().run_line_magic('matplotlib', 'inline')
 
 
 fig, ax = plt.subplots(1, 1, figsize=(12, 8))
@@ -80,6 +131,14 @@ ax.plot(
 ax.legend(loc="lower right", fontsize=10)
 plt.tight_layout()
 
+
+# ### Fit base task models
+
+# First, let's define a helper function to fit a FixedNoiseGP with an fixed observed noise level.
+
+# In[6]:
+
+
 from gpytorch.mlls import ExactMarginalLogLikelihood
 from botorch.models import FixedNoiseGP
 from botorch.fit import fit_gpytorch_model
@@ -102,6 +161,12 @@ def get_fitted_model(train_X, train_Y, train_Yvar, state_dict=None):
         model.load_state_dict(state_dict)
     return model
 
+
+# #### Now let's fit a FixedNoiseGP for each base task
+
+# In[7]:
+
+
 # Fit base model
 base_model_list = []
 for task in range(NUM_BASE_TASKS):
@@ -113,11 +178,37 @@ for task in range(NUM_BASE_TASKS):
     )
     base_model_list.append(model)  
 
+
+# ### Implement the RGPE
+# 
+# The main idea of the RGPE is to estimate the target function as weighted sum of the target model and the base models:
+# $$\bar f(\mathbf x | \mathcal D) =
+# \sum_{i=1}^{t} w_if^i(\mathbf x |\mathcal D_i)$$
+# Importantly, the ensemble model is also a GP:
+# $$\bar f(\mathbf x | \mathcal D) \sim \mathcal N\bigg(\sum_{i=1}^{t} w_i\mu_i(\mathbf x), \sum_{i=1}^{t}w_i^2\sigma_i^2\bigg)$$
+# 
+# The weights $w_i$ for model $i$ are based on the the ranking loss between a draw from the model's posterior and the targets. Specifically, the ranking loss for model $i$ is:
+# $$\mathcal L(f^i, \mathcal D_t) = \sum_{j=1}^{n_t}\sum_{k=1}^{n_t}\mathbb 1\bigg[\bigg(f^i\big(\mathbf x^t_j\big) < f^i\big(\mathbf x_k^t\big)\bigg)\oplus \big(y_j^t < y_k^t\big)\bigg]$$
+# where $\oplus$ is exclusive-or.
+# 
+# The loss for the target model is computing using leave-one-out cross-validation (LOOCV) and is given by:
+# $$\mathcal L(f^t, \mathcal D_t) = \sum_{j=1}^{n_t}\sum_{k=1}^{n_t}\mathbb 1\bigg[\bigg(f^t_{-j}\big(\mathbf x^t_j\big) < f^t_{-j}\big(\mathbf x_k^t\big)\bigg)\oplus \big(y_j^t < y_k^t\big)\bigg]$$
+# where $f^t_{-j}$ model fitted to all data from the target task except training example $j$.
+# 
+# The weights are then computed as:
+# $$w_i = \frac{1}{S}\sum_{s=1}^S\mathbb 1\big(i = \text{argmin}_{i'}l_{i', s}\big)$$
+
+# In[8]:
+
+
 def roll_col(X, shift):  
     """
     Rotate columns to right by shift.
     """
     return torch.cat((X[..., -shift:], X[..., :-shift]), dim=-1)
+
+
+# In[9]:
 
 
 def compute_ranking_loss(f_samps, target_y):
@@ -147,6 +238,13 @@ def compute_ranking_loss(f_samps, target_y):
         for i in range(1,target_y.shape[0]):
             rank_loss += ((roll_col(f_samps, i) < f_samps) ^ (roll_col(y_stack, i) < y_stack)).sum(dim=-1) 
     return rank_loss
+
+
+# Define a function to:
+# 1. Create a batch mode-gp LOOCV GP using the hyperparameters from `target_model`
+# 2. Draw a joint sample across all points from the target task (in-sample and out-of-sample)
+
+# In[10]:
 
 
 def get_target_model_loocv_sample_preds(train_x, train_y, train_yvar, target_model, num_samples):
@@ -179,6 +277,10 @@ def get_target_model_loocv_sample_preds(train_x, train_y, train_yvar, target_mod
         sampler = SobolQMCNormalSampler(num_samples=num_samples)
         return sampler(posterior).squeeze(-1)
     
+
+
+# In[11]:
+
 
 def compute_rank_weights(train_x,train_y, base_models, target_model, num_samples):
     """
@@ -217,6 +319,10 @@ def compute_rank_weights(train_x,train_y, base_models, target_model, num_samples
     rank_weights = best_models.bincount(minlength=len(ranking_losses)).type_as(train_x)/num_samples
     return rank_weights
 
+
+# In[12]:
+
+
 from botorch.models.gpytorch import GPyTorchModel
 from gpytorch.models import GP
 from gpytorch.distributions import MultivariateNormal
@@ -230,6 +336,9 @@ class RGPE(GP, GPyTorchModel):
     Rank-weighted GP ensemble. Note: this class inherits from GPyTorchModel which provides an 
         interface for GPyTorch models in botorch.
     """
+    
+    _num_outputs = 1  # metadata for botorch
+    
     def __init__(self, models, weights):
         super().__init__()
         self.models = ModuleList(models)
@@ -240,7 +349,7 @@ class RGPE(GP, GPyTorchModel):
                 )
         self.likelihood = LikelihoodList(*[m.likelihood for m in models])
         self.weights = weights
-        self.to(dtype=weights.dtype, device=weights.device)
+        self.to(weights)
         
     def forward(self, x):
         weighted_means = []
@@ -269,6 +378,12 @@ class RGPE(GP, GPyTorchModel):
         covar_x = PsdSumLazyTensor(*weighted_covars)
         return MultivariateNormal(mean_x, covar_x)
 
+
+# ### Optimize target function using RGPE + qNEI
+
+# In[13]:
+
+
 from botorch.acquisition.monte_carlo import qNoisyExpectedImprovement
 from botorch.sampling.samplers import SobolQMCNormalSampler
 from botorch.optim.optimize import optimize_acqf
@@ -284,7 +399,7 @@ best_vanilla_nei_all = []
 N_BATCH = 10
 NUM_POSTERIOR_SAMPLES = 256
 RANDOM_INITIALIZATION_SIZE = 3
-N_TRIALS = 20
+N_TRIALS = 10
 MC_SAMPLES = 512
 N_RESTART_CANDIDATES = 512
 N_RESTARTS = 10
@@ -400,6 +515,12 @@ for trial in range(N_TRIALS):
     best_random_all.append(best_random)
     best_vanilla_nei_all.append(best_vanilla_nei)
 
+
+# #### Plot best observed value vs iteration
+
+# In[14]:
+
+
 import numpy as np
 
 best_rgpe_all = np.array(best_rgpe_all)
@@ -445,5 +566,4 @@ ax.set_ylabel('Best Observed Value', fontsize=12)
 ax.set_title('Best Observed Value by Iteration', fontsize=12)
 ax.legend(loc="lower right", fontsize=10)
 plt.tight_layout()
-
 
