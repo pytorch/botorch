@@ -367,6 +367,42 @@ and dtype specified by the input.</p>
 </pre></div>
 </div>
 </dd></dl>
+<dl class="function">
+<dt id="botorch.utils.sampling.batched_multinomial">
+<code class="sig-prename descclassname">botorch.utils.sampling.</code><code class="sig-name descname">batched_multinomial</code><span class="sig-paren">(</span><em class="sig-param">weights</em>, <em class="sig-param">num_samples</em>, <em class="sig-param">replacement=False</em>, <em class="sig-param">generator=None</em>, <em class="sig-param">out=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#batched_multinomial"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.sampling.batched_multinomial" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sample from multinomial with an arbitrary number of batch dimensions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>weights</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x num_categories</cite> tensor of weights. For each batch
+index <cite>i, j, …</cite>, this functions samples from a multinomial with <cite>input</cite>
+<cite>weights[i, j, …, :]</cite>. Note that the weights need not sum to one, but must
+be non-negative, finite and have a non-zero sum.</p></li>
+<li><p><strong>num_samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of samples to draw for each batch index. Must be smaller
+than <cite>num_categories</cite> if <cite>replacement=False</cite>.</p></li>
+<li><p><strong>replacement</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, samples are drawn with replacement.</p></li>
+<li><p><strong>generator</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Generator</span></code>]) – A a pseudorandom number generator for sampling.</p></li>
+<li><p><strong>out</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – The output tensor (optional). If provided, must be of size
+<cite>batch_shape x num_samples</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">LongTensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>batch_shape x num_samples</cite> tensor of samples.</p>
+</dd>
+</dl>
+<p>This is a thin wrapper around <cite>torch.multinomial</cite> that allows weight (<cite>input</cite>)
+tensors with an arbitrary number of batch dimensions (<cite>torch.multinomial</cite> only
+allows a single batch dimension). The calling signature is the same as for
+<cite>torch.multinomial</cite>.</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">weights</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">batched_multinomial</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>  <span class="c1"># shape is 2 x 3 x 4</span>
+</pre></div>
+</div>
+</dd></dl>
 </div>
 <div class="section" id="module-botorch.utils.testing">
 <span id="testing"></span><h2>Testing<a class="headerlink" href="#module-botorch.utils.testing" title="Permalink to this headline">¶</a></h2>
@@ -819,22 +855,24 @@ the batch dimensions of <cite>Y</cite> (if compatible). For instance, if <cite>X
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="acquisition.html">botorch.acquisition</a></li>
 <li class="toctree-l1"><a class="reference internal" href="models.html">botorch.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generation.html">botorch.generation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="posteriors.html">botorch.posteriors</a></li>
 <li class="toctree-l1"><a class="reference internal" href="optim.html">botorch.optim</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fit.html">botorch.fit</a></li>
-<li class="toctree-l1"><a class="reference internal" href="gen.html">botorch.gen</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sampling.html">botorch.sampling</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cross_validation.html">botorch.cross_validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="settings.html">botorch.settings</a></li>
 <li class="toctree-l1"><a class="reference internal" href="test_functions.html">botorch.test_functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="exceptions.html">botorch.exceptions</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">botorch.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gen.html">Generation utilities [DEPRECATED - use botorch.generation.gen]</a></li>
 </ul>
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
 <li><a href="index.html">Documentation overview</a><ul>
 <li>Previous: <a href="exceptions.html" title="previous chapter">botorch.exceptions</a></li>
+<li>Next: <a href="gen.html" title="next chapter">Generation utilities [DEPRECATED - use botorch.generation.gen]</a></li>
 </ul></li>
 </ul>
 </div>

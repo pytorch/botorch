@@ -23,7 +23,7 @@
 <div class="documentwrapper">
 <div class="bodywrapper">
 <div class="body" role="main">
-<h1>Source code for botorch.gen</h1><div class="highlight"><pre>
+<h1>Source code for botorch.generation.gen</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/bin/env python3</span>
 <span class="c1"># Copyright (c) Facebook, Inc. and its affiliates.</span>
 <span class="c1">#</span>
@@ -44,16 +44,16 @@
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
 <span class="kn">from</span> <span class="nn">torch.optim</span> <span class="kn">import</span> <span class="n">Optimizer</span>
 
-<span class="kn">from</span> <span class="nn">.optim.parameter_constraints</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span> <span class="nn">..optim.parameter_constraints</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">_arrayify</span><span class="p">,</span>
     <span class="n">make_scipy_bounds</span><span class="p">,</span>
     <span class="n">make_scipy_linear_constraints</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">.optim.stopping</span> <span class="kn">import</span> <span class="n">ExpMAStoppingCriterion</span>
-<span class="kn">from</span> <span class="nn">.optim.utils</span> <span class="kn">import</span> <span class="n">_filter_kwargs</span><span class="p">,</span> <span class="n">columnwise_clamp</span><span class="p">,</span> <span class="n">fix_features</span>
+<span class="kn">from</span> <span class="nn">..optim.stopping</span> <span class="kn">import</span> <span class="n">ExpMAStoppingCriterion</span>
+<span class="kn">from</span> <span class="nn">..optim.utils</span> <span class="kn">import</span> <span class="n">_filter_kwargs</span><span class="p">,</span> <span class="n">columnwise_clamp</span><span class="p">,</span> <span class="n">fix_features</span>
 
 
-<div class="viewcode-block" id="gen_candidates_scipy"><a class="viewcode-back" href="../../gen.html#botorch.gen.gen_candidates_scipy">[docs]</a><span class="k">def</span> <span class="nf">gen_candidates_scipy</span><span class="p">(</span>
+<div class="viewcode-block" id="gen_candidates_scipy"><a class="viewcode-back" href="../../../generation.html#botorch.generation.gen.gen_candidates_scipy">[docs]</a><span class="k">def</span> <span class="nf">gen_candidates_scipy</span><span class="p">(</span>
     <span class="n">initial_conditions</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">acquisition_function</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
     <span class="n">lower_bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -160,7 +160,7 @@
     <span class="k">return</span> <span class="n">clamped_candidates</span><span class="p">,</span> <span class="n">batch_acquisition</span></div>
 
 
-<div class="viewcode-block" id="gen_candidates_torch"><a class="viewcode-back" href="../../gen.html#botorch.gen.gen_candidates_torch">[docs]</a><span class="k">def</span> <span class="nf">gen_candidates_torch</span><span class="p">(</span>
+<div class="viewcode-block" id="gen_candidates_torch"><a class="viewcode-back" href="../../../generation.html#botorch.generation.gen.gen_candidates_torch">[docs]</a><span class="k">def</span> <span class="nf">gen_candidates_torch</span><span class="p">(</span>
     <span class="n">initial_conditions</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">acquisition_function</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">lower_bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -252,7 +252,7 @@
     <span class="k">return</span> <span class="n">candidates</span><span class="p">,</span> <span class="n">batch_acquisition</span></div>
 
 
-<div class="viewcode-block" id="get_best_candidates"><a class="viewcode-back" href="../../gen.html#botorch.gen.get_best_candidates">[docs]</a><span class="k">def</span> <span class="nf">get_best_candidates</span><span class="p">(</span><span class="n">batch_candidates</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">batch_values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="get_best_candidates"><a class="viewcode-back" href="../../../generation.html#botorch.generation.gen.get_best_candidates">[docs]</a><span class="k">def</span> <span class="nf">get_best_candidates</span><span class="p">(</span><span class="n">batch_candidates</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">batch_values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
     <span class="sa">r</span><span class="sd">"""Extract best (q-batch) candidate from batch of candidates</span>
 
 <span class="sd">    Args:</span>
@@ -287,28 +287,29 @@
 </div>
 <div aria-label="main navigation" class="sphinxsidebar" role="navigation">
 <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../../index.html">BoTorch</a></h1>
+<h1 class="logo"><a href="../../../index.html">BoTorch</a></h1>
 <h3>Navigation</h3>
 <p class="caption"><span class="caption-text">API Reference</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../acquisition.html">botorch.acquisition</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../models.html">botorch.models</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../posteriors.html">botorch.posteriors</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../optim.html">botorch.optim</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../fit.html">botorch.fit</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../gen.html">botorch.gen</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../sampling.html">botorch.sampling</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../cross_validation.html">botorch.cross_validation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../settings.html">botorch.settings</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../test_functions.html">botorch.test_functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../exceptions.html">botorch.exceptions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../utils.html">botorch.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../acquisition.html">botorch.acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../models.html">botorch.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generation.html">botorch.generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../posteriors.html">botorch.posteriors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../optim.html">botorch.optim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fit.html">botorch.fit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sampling.html">botorch.sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cross_validation.html">botorch.cross_validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../settings.html">botorch.settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">botorch.exceptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils.html">botorch.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../gen.html">Generation utilities [DEPRECATED - use botorch.generation.gen]</a></li>
 </ul>
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
-<li><a href="../../index.html">Documentation overview</a><ul>
-<li><a href="../index.html">Module code</a><ul>
+<li><a href="../../../index.html">Documentation overview</a><ul>
+<li><a href="../../index.html">Module code</a><ul>
 </ul></li>
 </ul></li>
 </ul>
@@ -316,7 +317,7 @@
 <div id="searchbox" role="search" style="display: none">
 <h3 id="searchlabel">Quick search</h3>
 <div class="searchformwrapper">
-<form action="../../search.html" class="search" method="get">
+<form action="../../../search.html" class="search" method="get">
 <input aria-labelledby="searchlabel" name="q" type="text"/>
 <input type="submit" value="Go"/>
 </form>

@@ -222,10 +222,10 @@
 <span class="sd">    """</span>
 
     <span class="nd">@wraps</span><span class="p">(</span><span class="n">method</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">decorated</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">decorated</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">X_pending</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">X</span><span class="p">,</span> <span class="n">match_batch_shape</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">X_pending</span><span class="p">,</span> <span class="n">X</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">method</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">method</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">decorated</span></div>
 
@@ -283,16 +283,17 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../acquisition.html">botorch.acquisition</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../models.html">botorch.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generation.html">botorch.generation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../posteriors.html">botorch.posteriors</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../optim.html">botorch.optim</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fit.html">botorch.fit</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../gen.html">botorch.gen</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../sampling.html">botorch.sampling</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../cross_validation.html">botorch.cross_validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../settings.html">botorch.settings</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../test_functions.html">botorch.test_functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">botorch.exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../utils.html">botorch.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../gen.html">Generation utilities [DEPRECATED - use botorch.generation.gen]</a></li>
 </ul>
 <div class="relations">
 <h3>Related Topics</h3>

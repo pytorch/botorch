@@ -497,8 +497,8 @@ the given design points <cite>X</cite>.</p>
 <div class="section" id="module-botorch.acquisition.monte_carlo">
 <span id="monte-carlo-acquisition-functions"></span><h3>Monte-Carlo Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.monte_carlo" title="Permalink to this headline">¶</a></h3>
 <p>Batch acquisition functions using the reparameterization trick in combination
-with (quasi) Monte-Carlo sampling. See <a class="reference internal" href="#rezende2014reparam" id="id1"><span>[Rezende2014reparam]</span></a> and
-<a class="reference internal" href="#wilson2017reparam" id="id2"><span>[Wilson2017reparam]</span></a></p>
+with (quasi) Monte-Carlo sampling. See <a class="reference internal" href="#rezende2014reparam" id="id1"><span>[Rezende2014reparam]</span></a>, <a class="reference internal" href="#wilson2017reparam" id="id2"><span>[Wilson2017reparam]</span></a> and
+<a class="reference internal" href="#balandat2019botorch" id="id3"><span>[Balandat2019botorch]</span></a>.</p>
 <dl class="citation">
 <dt class="label" id="rezende2014reparam"><span class="brackets"><a class="fn-backref" href="#id1">Rezende2014reparam</a></span></dt>
 <dd><p>D. J. Rezende, S. Mohamed, and D. Wierstra. Stochastic backpropagation and
@@ -790,20 +790,20 @@ design points <cite>X</cite>.</p>
 <div class="section" id="module-botorch.acquisition.knowledge_gradient">
 <span id="the-one-shot-knowledge-gradient"></span><h3>The One-Shot Knowledge Gradient<a class="headerlink" href="#module-botorch.acquisition.knowledge_gradient" title="Permalink to this headline">¶</a></h3>
 <p>Batch Knowledge Gradient (KG) via one-shot optimization as introduced in
-<a class="reference internal" href="#balandat2019botorch" id="id3"><span>[Balandat2019botorch]</span></a>. For broader discussion of KG see also
-<a class="reference internal" href="#frazier2008knowledge" id="id4"><span>[Frazier2008knowledge]</span></a>, <a class="reference internal" href="#wu2016parallelkg" id="id5"><span>[Wu2016parallelkg]</span></a>.</p>
+<a class="reference internal" href="#balandat2019botorch" id="id4"><span>[Balandat2019botorch]</span></a>. For broader discussion of KG see also <a class="reference internal" href="#frazier2008knowledge" id="id5"><span>[Frazier2008knowledge]</span></a>
+and <a class="reference internal" href="#wu2016parallelkg" id="id6"><span>[Wu2016parallelkg]</span></a>.</p>
 <dl class="citation">
-<dt class="label" id="balandat2019botorch"><span class="brackets"><a class="fn-backref" href="#id3">Balandat2019botorch</a></span></dt>
+<dt class="label" id="balandat2019botorch"><span class="brackets">Balandat2019botorch</span><span class="fn-backref">(<a href="#id3">1</a>,<a href="#id4">2</a>)</span></dt>
 <dd><p>M. Balandat, B. Karrer, D. R. Jiang, S. Daulton, B. Letham, A. G. Wilson,
 and E. Bakshy. BoTorch: Programmable Bayesian Optimziation in PyTorch.
 ArXiv 2019.</p>
 </dd>
-<dt class="label" id="frazier2008knowledge"><span class="brackets"><a class="fn-backref" href="#id4">Frazier2008knowledge</a></span></dt>
+<dt class="label" id="frazier2008knowledge"><span class="brackets"><a class="fn-backref" href="#id5">Frazier2008knowledge</a></span></dt>
 <dd><p>P. Frazier, W. Powell, and S. Dayanik. A Knowledge-Gradient policy for
 sequential information collection. SIAM Journal on Control and Optimization,
 2008.</p>
 </dd>
-<dt class="label" id="wu2016parallelkg"><span class="brackets"><a class="fn-backref" href="#id5">Wu2016parallelkg</a></span></dt>
+<dt class="label" id="wu2016parallelkg"><span class="brackets"><a class="fn-backref" href="#id6">Wu2016parallelkg</a></span></dt>
 <dd><p>J. Wu and P. Frazier. The parallel knowledge gradient method for batch
 bayesian optimization. NIPS 2016.</p>
 </dd>
@@ -1007,12 +1007,12 @@ maximized at fixed <cite>X_actual[b]</cite>.</p>
 multi-fidelity MES with noisy observation and trace observations.</p>
 <p>References</p>
 <dl class="citation">
-<dt class="label" id="wang2018mves"><span class="brackets"><a class="fn-backref" href="#id6">Wang2018mves</a></span></dt>
+<dt class="label" id="wang2018mves"><span class="brackets"><a class="fn-backref" href="#id7">Wang2018mves</a></span></dt>
 <dd><p>Wang, Z., Jegelka, S.,
 Max-value Entropy Search for Efficient Bayesian Optimization.
 arXiv:1703.01968v3, 2018</p>
 </dd>
-<dt class="label" id="takeno2019mfmves"><span class="brackets"><a class="fn-backref" href="#id7">Takeno2019mfmves</a></span></dt>
+<dt class="label" id="takeno2019mfmves"><span class="brackets"><a class="fn-backref" href="#id8">Takeno2019mfmves</a></span></dt>
 <dd><p>Takeno, S., et al.,
 Multi-fidelity Bayesian Optimization with Max-value Entropy Search.
 arXiv:1901.08275v1, 2019</p>
@@ -1024,7 +1024,7 @@ arXiv:1901.08275v1, 2019</p>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.monte_carlo.MCAcquisitionFunction" title="botorch.acquisition.monte_carlo.MCAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.monte_carlo.MCAcquisitionFunction</span></code></a></p>
 <p>The acquisition function for Max-value Entropy Search.</p>
 <p>This acquisition function computes the mutual information of
-max values and a candidate point X. See <a class="reference internal" href="#wang2018mves" id="id6"><span>[Wang2018mves]</span></a> for
+max values and a candidate point X. See <a class="reference internal" href="#wang2018mves" id="id7"><span>[Wang2018mves]</span></a> for
 a detailed discussion.</p>
 <p>The model must be single-outcome.
 q &gt; 1 is supported through cyclic optimization and fantasies.</p>
@@ -1097,7 +1097,7 @@ with <cite>1</cite> <cite>d</cite>-dim design points each.</p>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.max_value_entropy_search.qMaxValueEntropy" title="botorch.acquisition.max_value_entropy_search.qMaxValueEntropy"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.max_value_entropy_search.qMaxValueEntropy</span></code></a></p>
 <p>Multi-fidelity max-value entropy.</p>
 <p>The acquisition function for multi-fidelity max-value entropy search
-with support for trace observations. See <a class="reference internal" href="#takeno2019mfmves" id="id7"><span>[Takeno2019mfmves]</span></a> for a
+with support for trace observations. See <a class="reference internal" href="#takeno2019mfmves" id="id8"><span>[Takeno2019mfmves]</span></a> for a
 detailed discussion of the basic ideas on multi-fidelity MES
 (note that this implementation is somewhat different).</p>
 <p>The model must be single-outcome.
@@ -1170,15 +1170,15 @@ with <cite>1</cite> <cite>d</cite>-dim design point each.</p>
 <span id="active-learning-acquisition-functions"></span><h3>Active Learning Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.active_learning" title="Permalink to this headline">¶</a></h3>
 <p>Active learning acquisition functions.</p>
 <dl class="citation">
-<dt class="label" id="seo2014activedata"><span class="brackets"><a class="fn-backref" href="#id8">Seo2014activedata</a></span></dt>
+<dt class="label" id="seo2014activedata"><span class="brackets"><a class="fn-backref" href="#id9">Seo2014activedata</a></span></dt>
 <dd><p>S. Seo, M. Wallat, T. Graepel, and K. Obermayer. Gaussian process regression:
 Active data selection and test point rejection. IJCNN 2000.</p>
 </dd>
-<dt class="label" id="chen2014seqexpdesign"><span class="brackets"><a class="fn-backref" href="#id9">Chen2014seqexpdesign</a></span></dt>
+<dt class="label" id="chen2014seqexpdesign"><span class="brackets"><a class="fn-backref" href="#id10">Chen2014seqexpdesign</a></span></dt>
 <dd><p>X. Chen and Q. Zhou. Sequential experimental designs for stochastic kriging.
 Winter Simulation Conference 2014.</p>
 </dd>
-<dt class="label" id="binois2017repexp"><span class="brackets"><a class="fn-backref" href="#id10">Binois2017repexp</a></span></dt>
+<dt class="label" id="binois2017repexp"><span class="brackets"><a class="fn-backref" href="#id11">Binois2017repexp</a></span></dt>
 <dd><p>M. Binois, J. Huang, R. B. Gramacy, and M. Ludkovski. Replication or
 exploration? Sequential design for stochastic simulation experiments.
 ArXiv 2017.</p>
@@ -1194,7 +1194,7 @@ ArXiv 2017.</p>
 In that, it is a proxy for global model uncertainty, and thus purely focused on
 “exploration”, rather the “exploitation” of many of the classic Bayesian
 Optimization acquisition functions.</p>
-<p>See <a class="reference internal" href="#seo2014activedata" id="id8"><span>[Seo2014activedata]</span></a>, <a class="reference internal" href="#chen2014seqexpdesign" id="id9"><span>[Chen2014seqexpdesign]</span></a>, and <a class="reference internal" href="#binois2017repexp" id="id10"><span>[Binois2017repexp]</span></a>.</p>
+<p>See <a class="reference internal" href="#seo2014activedata" id="id9"><span>[Seo2014activedata]</span></a>, <a class="reference internal" href="#chen2014seqexpdesign" id="id10"><span>[Chen2014seqexpdesign]</span></a>, and <a class="reference internal" href="#binois2017repexp" id="id11"><span>[Binois2017repexp]</span></a>.</p>
 <p>q-Integrated Negative Posterior Variance.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1896,16 +1896,17 @@ assumes that the last column of X contains the fidelity parameters.</p></li>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">botorch.acquisition</a></li>
 <li class="toctree-l1"><a class="reference internal" href="models.html">botorch.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generation.html">botorch.generation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="posteriors.html">botorch.posteriors</a></li>
 <li class="toctree-l1"><a class="reference internal" href="optim.html">botorch.optim</a></li>
 <li class="toctree-l1"><a class="reference internal" href="fit.html">botorch.fit</a></li>
-<li class="toctree-l1"><a class="reference internal" href="gen.html">botorch.gen</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sampling.html">botorch.sampling</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cross_validation.html">botorch.cross_validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="settings.html">botorch.settings</a></li>
 <li class="toctree-l1"><a class="reference internal" href="test_functions.html">botorch.test_functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="exceptions.html">botorch.exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="utils.html">botorch.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gen.html">Generation utilities [DEPRECATED - use botorch.generation.gen]</a></li>
 </ul>
 <div class="relations">
 <h3>Related Topics</h3>
