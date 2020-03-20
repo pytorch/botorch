@@ -107,6 +107,7 @@ class ExpMAStoppingCriterion(StoppingCriterion):
             return False
 
         weights = self.weights
+        weights = weights.to(fvals)
         if self._prev_fvals.ndim > 1:
             weights = weights.unsqueeze(-1)
 
