@@ -11,15 +11,31 @@ import torch
 from botorch.acquisition import qExpectedImprovement
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.fit import fit_gpytorch_model
-from botorch.generation.gen import gen_candidates_scipy, gen_candidates_torch
+from botorch.generation.gen import (
+    gen_candidates_scipy,
+    gen_candidates_torch,
+    get_best_candidates,
+)
 from botorch.models import SingleTaskGP
 from botorch.utils.testing import BotorchTestCase
+from gpytorch import settings as gpt_settings
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
-
-from ..test_fit import NOISE
 
 
 EPS = 1e-8
+
+NOISE = [
+    [0.127],
+    [-0.113],
+    [-0.345],
+    [-0.034],
+    [-0.069],
+    [-0.272],
+    [0.013],
+    [0.056],
+    [0.087],
+    [-0.081],
+]
 
 
 class TestBaseCandidateGeneration(BotorchTestCase):
@@ -108,3 +124,25 @@ class TestGenCandidates(TestBaseCandidateGeneration):
         self.test_gen_candidates_with_fixed_features(
             gen_candidates=gen_candidates_torch
         )
+
+
+class TestRandomRestartOptimization(TestBaseCandidateGeneration):
+    def test_random_restart_optimization(self):
+        for double in (True, False):
+            self._setUp(double=double)
+            with gpt_settings.debug(False):
+                best_f = self.model(self.train_x).mean.max().item()
+            qEI = qExpectedImprovement(self.model, best_f=best_f)
+            bounds = torch.tensor([[0.0], [1.0]]).type_as(self.train_x)
+            batch_ics = torch.rand(2, 1).type_as(self.train_x)
+            batch_candidates, batch_acq_values = gen_candidates_scipy(
+                initial_conditions=batch_ics,
+                acquisition_function=qEI,
+                lower_bounds=bounds[0],
+                upper_bounds=bounds[1],
+                options={"maxiter": 3},
+            )
+            candidates = get_best_candidates(
+                batch_candidates=batch_candidates, batch_values=batch_acq_values
+            )
+            self.assertTrue(-EPS <= candidates <= 1 + EPS)

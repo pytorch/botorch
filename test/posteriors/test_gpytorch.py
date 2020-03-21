@@ -10,36 +10,9 @@ import warnings
 import torch
 from botorch.exceptions import BotorchTensorDimensionError
 from botorch.posteriors.gpytorch import GPyTorchPosterior, scalarize_posterior
-from botorch.utils.testing import BotorchTestCase
+from botorch.utils.testing import BotorchTestCase, _get_test_posterior
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
-from gpytorch.lazy import AddedDiagLazyTensor, DiagLazyTensor
 from gpytorch.lazy.non_lazy_tensor import lazify
-
-
-def _get_test_posterior(
-    batch_shape, q=1, m=1, interleaved=True, lazy=False, independent=False, **tkwargs
-):
-    if independent:
-        mvns = []
-        for _ in range(m):
-            mean = torch.rand(*batch_shape, q, **tkwargs)
-            a = torch.rand(*batch_shape, q, q, **tkwargs)
-            covar = a @ a.transpose(-1, -2)
-            flat_diag = torch.rand(*batch_shape, q, **tkwargs)
-            covar = covar + torch.diag_embed(flat_diag)
-            mvns.append(MultivariateNormal(mean, covar))
-        mtmvn = MultitaskMultivariateNormal.from_independent_mvns(mvns)
-    else:
-        mean = torch.rand(*batch_shape, q, m, **tkwargs)
-        a = torch.rand(*batch_shape, q * m, q * m, **tkwargs)
-        covar = a @ a.transpose(-1, -2)
-        flat_diag = torch.rand(*batch_shape, q * m, **tkwargs)
-        if lazy:
-            covar = AddedDiagLazyTensor(covar, DiagLazyTensor(flat_diag))
-        else:
-            covar = covar + torch.diag_embed(flat_diag)
-        mtmvn = MultitaskMultivariateNormal(mean, covar, interleaved=interleaved)
-    return GPyTorchPosterior(mtmvn)
 
 
 class TestGPyTorchPosterior(BotorchTestCase):

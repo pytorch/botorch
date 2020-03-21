@@ -39,7 +39,7 @@ class TestStoppingCriterion(BotorchTestCase):
                 self.assertIsNone(sc._prev_fvals)
                 weights_exp = torch.tensor([0.1416, 0.1976, 0.2758, 0.3849])
                 self.assertTrue(torch.allclose(sc.weights, weights_exp, atol=1e-4))
-                f_vals = 1 + torch.linspace(1, 0, 25) ** 2
+                f_vals = 1 + torch.linspace(1, 0, 25, **tkwargs) ** 2
                 if not minimize:
                     f_vals = -f_vals
                 for i, fval in enumerate(f_vals):
@@ -50,7 +50,7 @@ class TestStoppingCriterion(BotorchTestCase):
                 sc = ExpMAStoppingCriterion(
                     minimize=minimize, n_window=n_window, rel_tol=0.0375
                 )
-                df = torch.linspace(0, 0.1, 25)
+                df = torch.linspace(0, 0.1, 25, **tkwargs)
                 if not minimize:
                     df = -df
                 f_vals = torch.stack([f_vals, f_vals + df], dim=-1)

@@ -16,10 +16,21 @@ from botorch.optim import optimize_acqf
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 
-from .test_fit import NOISE
-
 
 EPS = 1e-8
+
+NOISE = [
+    [0.127],
+    [-0.113],
+    [-0.345],
+    [-0.034],
+    [-0.069],
+    [-0.272],
+    [0.013],
+    [0.056],
+    [0.087],
+    [-0.081],
+]
 
 
 class TestEndToEnd(BotorchTestCase):

@@ -13,6 +13,7 @@ to the GPU running out of memory.
 """
 
 import unittest
+from itertools import chain
 from pathlib import Path
 from typing import Union
 
@@ -25,14 +26,34 @@ class TestBotorchCUDA(unittest.TestCase):
     def test_cuda(self):
         test_dir = Path(__file__).parent.resolve()
         tests = unittest.TestLoader().discover(test_dir)
-        run_cuda_tests(tests)
+        self.assertTrue(run_cuda_tests(tests))
 
 
-def run_cuda_tests(tests: Union[unittest.TestCase, unittest.TestSuite]) -> None:
+def run_cuda_tests(tests: Union[unittest.TestCase, unittest.TestSuite]) -> bool:
     """Function for running all tests on cuda (except TestBotorchCUDA itself)"""
     if isinstance(tests, BotorchTestCase):
         tests.device = torch.device("cuda")
-        tests.run()
+        test_result = tests.run()
+        passed = test_result.wasSuccessful()
+        if not passed:
+            # print test name
+            print(f"test: {tests}")
+            for error in chain(test_result.errors, test_result.failures):
+                # print traceback
+                print(f"error: {error[1]}")
+        return passed
     elif isinstance(tests, unittest.TestSuite):
-        for tests_ in tests:
-            run_cuda_tests(tests_)
+        return all(run_cuda_tests(tests_) for tests_ in tests)
+    elif (
+        isinstance(tests, unittest.TestCase)
+        and tests.id() == "test_cuda.TestBotorchCUDA.test_cuda"
+    ):
+        # ignore TestBotorchCUDA
+        return True
+    elif isinstance(tests, unittest.loader._FailedTest):
+        # test failed to load, often import error
+        print(f"test: {tests}")
+        print(f"exception: {tests._exception}")
+        return False
+    else:
+        raise ValueError(f"Unexpected type for test: {tests}")

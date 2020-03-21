@@ -18,7 +18,7 @@ class TestDeterministicPosterior(BotorchTestCase):
         ):
             values = torch.randn(*shape, device=self.device, dtype=dtype)
             p = DeterministicPosterior(values)
-            self.assertEqual(p.device, self.device)
+            self.assertEqual(p.device.type, self.device.type)
             self.assertEqual(p.dtype, dtype)
             self.assertEqual(p.event_shape, values.shape)
             self.assertTrue(torch.equal(p.mean, values))

@@ -408,10 +408,10 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
             )
 
         m = len(idcs)
-        tidxr = torch.tensor(idcs)
+        new_model = deepcopy(self)
+        tidxr = torch.tensor(idcs, device=new_model.train_targets.device)
         idxr = tidxr if m > 1 else idcs[0]
         new_tail_bs = torch.Size([m]) if m > 1 else torch.Size()
-        new_model = deepcopy(self)
 
         new_model._num_outputs = m
         new_model._aug_batch_shape = new_model._aug_batch_shape[:-1] + new_tail_bs
