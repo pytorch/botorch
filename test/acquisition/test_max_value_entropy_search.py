@@ -26,21 +26,24 @@ from torch import Tensor
 class MESMockModel(MockModel):
     r"""Mock object that implements dummy methods and feeds through specified outputs"""
 
-    def __init__(self):
+    def __init__(self, num_outputs=1):
         super().__init__(None)
+        self._num_outputs = num_outputs
 
     def posterior(self, X: Tensor, observation_noise: bool = False) -> MockPosterior:
         m_shape = X.shape[:-1]
         r_shape = list(X.shape[:-2]) + [1, 1]
         mvn = MultivariateNormal(
-            mean=torch.zeros(m_shape, dtype=X.dtype),
-            covariance_matrix=torch.eye(m_shape[-1], dtype=X.dtype).repeat(r_shape),
+            mean=torch.zeros(m_shape, dtype=X.dtype, device=X.device),
+            covariance_matrix=torch.eye(
+                m_shape[-1], dtype=X.dtype, device=X.device
+            ).repeat(r_shape),
         )
         return GPyTorchPosterior(mvn)
 
     @property
     def num_outputs(self) -> int:
-        return 1
+        return self._num_outputs
 
 
 class TestMaxValueEntropySearch(BotorchTestCase):
@@ -60,14 +63,10 @@ class TestMaxValueEntropySearch(BotorchTestCase):
                 qMaxValueEntropy(mm, candidate_set, num_mv_samples=10)
 
             # test error when number of outputs > 1
-            no = (
-                "test.acquisition.test_max_value_entropy_search"
-                ".MESMockModel.num_outputs"
-            )
-            with mock.patch(no, new_callable=mock.PropertyMock) as mock_num_outputs:
-                mock_num_outputs.return_value = 2
-                with self.assertRaises(UnsupportedError):
-                    qMaxValueEntropy(mm, candidate_set, num_mv_samples=10)
+            mm._num_outputs = 2
+            with self.assertRaises(UnsupportedError):
+                qMaxValueEntropy(mm, candidate_set, num_mv_samples=10)
+            mm._num_outputs = 1
 
             # test with X_pending is None
             train_inputs = torch.rand(10, 2, device=self.device, dtype=dtype)

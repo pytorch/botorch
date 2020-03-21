@@ -13,6 +13,9 @@ from typing import List, Optional, Tuple
 from unittest import TestCase
 
 import torch
+from botorch.posteriors.gpytorch import GPyTorchPosterior
+from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
+from gpytorch.lazy import AddedDiagLazyTensor, DiagLazyTensor
 from torch import Tensor
 
 from .. import settings
@@ -204,3 +207,49 @@ def _get_random_data(
     train_y = torch.sin(train_x * (2 * math.pi))
     train_y = train_y + 0.2 * torch.randn(n, num_outputs, **tkwargs).repeat(rep_shape)
     return train_x, train_y
+
+
+def _get_test_posterior(
+    batch_shape: torch.Size,
+    q: int = 1,
+    m: int = 1,
+    interleaved: bool = True,
+    lazy: bool = False,
+    independent: bool = False,
+    **tkwargs
+) -> GPyTorchPosterior:
+    r"""Generate a Posterior for testing purposes.
+
+    Args:
+        batch_shape: The batch shape of the data.
+        q: The number of candidates
+        m: The number of outputs.
+        interleaved: A boolean indicating the format of the
+            MultitaskMultivariateNormal
+        lazy: A boolean indicating if the posterior should be lazy
+        indepedent: A boolean indicating whether the outputs are independent
+        tkwargs: `device` and `dtype` tensor constructor kwargs.
+
+
+    """
+    if independent:
+        mvns = []
+        for _ in range(m):
+            mean = torch.rand(*batch_shape, q, **tkwargs)
+            a = torch.rand(*batch_shape, q, q, **tkwargs)
+            covar = a @ a.transpose(-1, -2)
+            flat_diag = torch.rand(*batch_shape, q, **tkwargs)
+            covar = covar + torch.diag_embed(flat_diag)
+            mvns.append(MultivariateNormal(mean, covar))
+        mtmvn = MultitaskMultivariateNormal.from_independent_mvns(mvns)
+    else:
+        mean = torch.rand(*batch_shape, q, m, **tkwargs)
+        a = torch.rand(*batch_shape, q * m, q * m, **tkwargs)
+        covar = a @ a.transpose(-1, -2)
+        flat_diag = torch.rand(*batch_shape, q * m, **tkwargs)
+        if lazy:
+            covar = AddedDiagLazyTensor(covar, DiagLazyTensor(flat_diag))
+        else:
+            covar = covar + torch.diag_embed(flat_diag)
+        mtmvn = MultitaskMultivariateNormal(mean, covar, interleaved=interleaved)
+    return GPyTorchPosterior(mtmvn)

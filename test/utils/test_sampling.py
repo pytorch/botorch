@@ -169,7 +169,7 @@ class TestSampleUtils(BotorchTestCase):
             self.assertTrue(torch.all(samples >= 0))
             self.assertTrue(torch.all(samples <= 1))
             self.assertTrue(torch.max((samples.sum(dim=-1) - 1).abs()) < 1e-5)
-            self.assertEqual(samples.device, self.device)
+            self.assertEqual(samples.device.type, self.device.type)
             self.assertEqual(samples.dtype, dtype)
 
     def test_sample_hypersphere(self):
@@ -181,7 +181,7 @@ class TestSampleUtils(BotorchTestCase):
             )
             self.assertEqual(samples.shape, torch.Size([n, d]))
             self.assertTrue(torch.max((samples.pow(2).sum(dim=-1) - 1).abs()) < 1e-5)
-            self.assertEqual(samples.device, self.device)
+            self.assertEqual(samples.device.type, self.device.type)
             self.assertEqual(samples.dtype, dtype)
 
     def test_batched_multinomial(self):

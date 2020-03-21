@@ -150,7 +150,9 @@ class qMaxValueEntropy(MCAcquisitionFunction):
         with torch.no_grad():
             # Append X_pending to candidate set
             if self.X_pending is None:
-                X_pending = torch.tensor([], dtype=self.candidate_set.dtype)
+                X_pending = torch.tensor(
+                    [], dtype=self.candidate_set.dtype, device=self.candidate_set.device
+                )
             else:
                 X_pending = self.X_pending
             X_pending = match_batch_shape(X_pending, self.candidate_set)

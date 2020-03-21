@@ -16,10 +16,8 @@ from botorch.acquisition.objective import (
     ScalarizedObjective,
 )
 from botorch.utils import apply_constraints
-from botorch.utils.testing import BotorchTestCase
+from botorch.utils.testing import BotorchTestCase, _get_test_posterior
 from torch import Tensor
-
-from ..posteriors.test_gpytorch import _get_test_posterior
 
 
 def generic_obj(samples: Tensor) -> Tensor:
