@@ -39,6 +39,9 @@
 <span class="kn">from</span> <span class="nn">unittest</span> <span class="kn">import</span> <span class="n">TestCase</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">botorch.posteriors.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchPosterior</span>
+<span class="kn">from</span> <span class="nn">gpytorch.distributions</span> <span class="kn">import</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">,</span> <span class="n">MultivariateNormal</span>
+<span class="kn">from</span> <span class="nn">gpytorch.lazy</span> <span class="kn">import</span> <span class="n">AddedDiagLazyTensor</span><span class="p">,</span> <span class="n">DiagLazyTensor</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">settings</span>
@@ -230,6 +233,52 @@
     <span class="n">train_y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">train_x</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span><span class="p">))</span>
     <span class="n">train_y</span> <span class="o">=</span> <span class="n">train_y</span> <span class="o">+</span> <span class="mf">0.2</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">num_outputs</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">rep_shape</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">train_x</span><span class="p">,</span> <span class="n">train_y</span>
+
+
+<span class="k">def</span> <span class="nf">_get_test_posterior</span><span class="p">(</span>
+    <span class="n">batch_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
+    <span class="n">q</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">m</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">interleaved</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">lazy</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">independent</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">tkwargs</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GPyTorchPosterior</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""Generate a Posterior for testing purposes.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        batch_shape: The batch shape of the data.</span>
+<span class="sd">        q: The number of candidates</span>
+<span class="sd">        m: The number of outputs.</span>
+<span class="sd">        interleaved: A boolean indicating the format of the</span>
+<span class="sd">            MultitaskMultivariateNormal</span>
+<span class="sd">        lazy: A boolean indicating if the posterior should be lazy</span>
+<span class="sd">        indepedent: A boolean indicating whether the outputs are independent</span>
+<span class="sd">        tkwargs: `device` and `dtype` tensor constructor kwargs.</span>
+
+
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">independent</span><span class="p">:</span>
+        <span class="n">mvns</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+            <span class="n">mean</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+            <span class="n">covar</span> <span class="o">=</span> <span class="n">a</span> <span class="o">@</span> <span class="n">a</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+            <span class="n">flat_diag</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+            <span class="n">covar</span> <span class="o">=</span> <span class="n">covar</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">diag_embed</span><span class="p">(</span><span class="n">flat_diag</span><span class="p">)</span>
+            <span class="n">mvns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">covar</span><span class="p">))</span>
+        <span class="n">mtmvn</span> <span class="o">=</span> <span class="n">MultitaskMultivariateNormal</span><span class="o">.</span><span class="n">from_independent_mvns</span><span class="p">(</span><span class="n">mvns</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">mean</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span> <span class="n">q</span> <span class="o">*</span> <span class="n">m</span><span class="p">,</span> <span class="n">q</span> <span class="o">*</span> <span class="n">m</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+        <span class="n">covar</span> <span class="o">=</span> <span class="n">a</span> <span class="o">@</span> <span class="n">a</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">flat_diag</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span> <span class="n">q</span> <span class="o">*</span> <span class="n">m</span><span class="p">,</span> <span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">lazy</span><span class="p">:</span>
+            <span class="n">covar</span> <span class="o">=</span> <span class="n">AddedDiagLazyTensor</span><span class="p">(</span><span class="n">covar</span><span class="p">,</span> <span class="n">DiagLazyTensor</span><span class="p">(</span><span class="n">flat_diag</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">covar</span> <span class="o">=</span> <span class="n">covar</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">diag_embed</span><span class="p">(</span><span class="n">flat_diag</span><span class="p">)</span>
+        <span class="n">mtmvn</span> <span class="o">=</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">covar</span><span class="p">,</span> <span class="n">interleaved</span><span class="o">=</span><span class="n">interleaved</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">GPyTorchPosterior</span><span class="p">(</span><span class="n">mtmvn</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
