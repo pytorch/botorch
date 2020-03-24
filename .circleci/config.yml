@@ -104,6 +104,7 @@ jobs:
   lint_test_py38_pip:
     docker:
       - image: circleci/python:3.8.1
+    resource_class: large
     steps:
       - checkout
       - pip_install:
@@ -118,6 +119,7 @@ jobs:
   lint_test_py37_conda:
     docker:
       - image: continuumio/miniconda3
+    resource_class: large
     steps:
       - checkout
       - conda_install:
@@ -132,6 +134,7 @@ jobs:
   run_tutorials_py38_pip:
     docker:
       - image: circleci/python:3.8.1
+    resource_class: large
     steps:
       - checkout
       - pip_install:
