@@ -194,16 +194,18 @@ class LinearTruncatedFidelityKernel(Kernel):
         covar_unbiased = self.covar_module_unbiased(x1_, x2_, diag=diag)
         covar_biased = self.covar_module_biased(x1_, x2_, diag=diag)
 
-        x11_ = x1[..., self.fidelity_dims[0]].unsqueeze(-1)
-        x21t_ = x2[..., self.fidelity_dims[0]].unsqueeze(-1)
+        # clamp to avoid numerical issues
+        x11_ = x1[..., self.fidelity_dims[0]].clamp(0, 1).unsqueeze(-1)
+        x21t_ = x2[..., self.fidelity_dims[0]].clamp(0, 1).unsqueeze(-1)
         if not diag:
             x21t_ = x21t_.transpose(-1, -2)
         cross_term_1 = (1 - x11_) * (1 - x21t_)
         bias_factor = cross_term_1 * (1 + x11_ * x21t_).pow(power)
 
         if len(self.fidelity_dims) > 1:
-            x12_ = x1[..., self.fidelity_dims[1]].unsqueeze(-1)
-            x22t_ = x2[..., self.fidelity_dims[1]].unsqueeze(-1)
+            # clamp to avoid numerical issues
+            x12_ = x1[..., self.fidelity_dims[1]].clamp(0, 1).unsqueeze(-1)
+            x22t_ = x2[..., self.fidelity_dims[1]].clamp(0, 1).unsqueeze(-1)
             x1b_ = torch.cat([x11_, x12_], dim=-1)
             if diag:
                 x2bt_ = torch.cat([x21t_, x22t_], dim=-1)
