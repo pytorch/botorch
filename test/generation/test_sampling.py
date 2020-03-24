@@ -17,9 +17,9 @@ from botorch.acquisition.objective import (
     ScalarizedObjective,
 )
 from botorch.generation.sampling import (
+    BoltzmannSampling,
     MaxPosteriorSampling,
     SamplingStrategy,
-    TemperedAcquisitionSampling,
 )
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 
@@ -121,23 +121,23 @@ class TestMaxPosteriorSampling(BotorchTestCase):
                             )
 
 
-class TestTemperedAcquisitonSampling(BotorchTestCase):
+class TestBoltzmannSampling(BotorchTestCase):
     def test_init(self):
         NO = "botorch.utils.testing.MockModel.num_outputs"
         with mock.patch(NO, new_callable=mock.PropertyMock) as mock_num_outputs:
             mock_num_outputs.return_value = 1
             mm = MockModel(None)
             acqf = PosteriorMean(mm)
-            TAS = TemperedAcquisitionSampling(acqf)
-            self.assertEqual(TAS.acq_func, acqf)
-            self.assertEqual(TAS.eta, 1.0)
-            self.assertTrue(TAS.replacement)
-            TAS = TemperedAcquisitionSampling(acqf, eta=0.5, replacement=False)
-            self.assertEqual(TAS.acq_func, acqf)
-            self.assertEqual(TAS.eta, 0.5)
-            self.assertFalse(TAS.replacement)
+            BS = BoltzmannSampling(acqf)
+            self.assertEqual(BS.acq_func, acqf)
+            self.assertEqual(BS.eta, 1.0)
+            self.assertTrue(BS.replacement)
+            BS = BoltzmannSampling(acqf, eta=0.5, replacement=False)
+            self.assertEqual(BS.acq_func, acqf)
+            self.assertEqual(BS.eta, 0.5)
+            self.assertFalse(BS.replacement)
 
-    def test_tempered_acquisition_sampling(self):
+    def test_boltzmann_sampling(self):
         dtypes = (torch.float, torch.double)
         batch_shapes = (torch.Size(), torch.Size([3]))
 
@@ -149,8 +149,8 @@ class TestTemperedAcquisitonSampling(BotorchTestCase):
             X = torch.rand(*batch_shape, N, d, **tkwargs)
             acqval = torch.randn(N, *batch_shape, **tkwargs)
             acqf = mock.Mock(return_value=acqval)
-            TAS = TemperedAcquisitionSampling(acqf, replacement=repl, eta=2.0)
-            samples = TAS(X, num_samples=num_samples)
+            BS = BoltzmannSampling(acqf, replacement=repl, eta=2.0)
+            samples = BS(X, num_samples=num_samples)
             self.assertEqual(samples.shape, batch_shape + torch.Size([num_samples, d]))
             self.assertEqual(samples.dtype, dtype)
             if not repl:
@@ -165,6 +165,6 @@ class TestTemperedAcquisitonSampling(BotorchTestCase):
             max_idx = torch.randint(N, (1,))
             acqval[max_idx] = 10.0
             acqf = mock.Mock(return_value=acqval)
-            TAS = TemperedAcquisitionSampling(acqf, eta=10.0)
-            samples = TAS(X, num_samples=1)
+            BS = BoltzmannSampling(acqf, eta=10.0)
+            samples = BS(X, num_samples=1)
             self.assertTrue(torch.equal(samples, X[max_idx, :]))

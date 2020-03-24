@@ -6,13 +6,13 @@
 
 
 from .gen import gen_candidates_scipy, gen_candidates_torch, get_best_candidates
-from .sampling import MaxPosteriorSampling, TemperedAcquisitionSampling
+from .sampling import BoltzmannSampling, MaxPosteriorSampling
 
 
 __all__ = [
     "gen_candidates_scipy",
     "gen_candidates_torch",
     "get_best_candidates",
+    "BoltzmannSampling",
     "MaxPosteriorSampling",
-    "TemperedAcquisitionSampling",
 ]
