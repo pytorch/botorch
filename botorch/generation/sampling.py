@@ -156,7 +156,7 @@ class MaxPosteriorSampling(SamplingStrategy):
         return torch.gather(Xe, -2, idcs)
 
 
-class TemperedAcquisitionSampling(SamplingStrategy):
+class BoltzmannSampling(SamplingStrategy):
     r"""Sample from a set of points according to a tempered acquisition value.
 
     Given an acquisition function `acq_func`, this sampling strategies draws
@@ -172,15 +172,15 @@ class TemperedAcquisitionSampling(SamplingStrategy):
 
     Example:
         >>> UCB = UpperConfidenceBound(model, beta=0.1)
-        >>> TUCB = TemperedAcquisitionSampling(UCB, eta=0.5)
+        >>> BMUCB = BoltzmannSampling(UCB, eta=0.5)
         >>> X = torch.rand(2, 100, 3)
-        >>> sampled_X = TUCB(X, n=5)
+        >>> sampled_X = BMUCB(X, n=5)
     """
 
     def __init__(
         self, acq_func: AcquisitionFunction, eta: float = 1.0, replacement: bool = True
     ) -> None:
-        r"""Tempered Acquisition Value Sampling.
+        r"""Boltzmann Acquisition Value Sampling.
 
         Args:
             acq_func: The acquisition function; to be evaluated in batch at the
