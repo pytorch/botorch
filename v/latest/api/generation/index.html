@@ -259,8 +259,8 @@ dimension) according to the maximum posterior value under the objective.</p></li
 </dd></dl>
 </dd></dl>
 <dl class="class">
-<dt id="botorch.generation.sampling.TemperedAcquisitionSampling">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.generation.sampling.</code><code class="sig-name descname">TemperedAcquisitionSampling</code><span class="sig-paren">(</span><em class="sig-param">acq_func</em>, <em class="sig-param">eta=1.0</em>, <em class="sig-param">replacement=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/sampling.html#TemperedAcquisitionSampling"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.generation.sampling.TemperedAcquisitionSampling" title="Permalink to this definition">¶</a></dt>
+<dt id="botorch.generation.sampling.BoltzmannSampling">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.generation.sampling.</code><code class="sig-name descname">BoltzmannSampling</code><span class="sig-paren">(</span><em class="sig-param">acq_func</em>, <em class="sig-param">eta=1.0</em>, <em class="sig-param">replacement=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/sampling.html#BoltzmannSampling"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.generation.sampling.BoltzmannSampling" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.generation.sampling.SamplingStrategy" title="botorch.generation.sampling.SamplingStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.generation.sampling.SamplingStrategy</span></code></a></p>
 <p>Sample from a set of points according to a tempered acquisition value.</p>
 <p>Given an acquisition function <cite>acq_func</cite>, this sampling strategies draws
@@ -275,12 +275,12 @@ temperature parameter <cite>eta -&gt; 0</cite>, this approaches uniform sampling
 function <cite>acq_func</cite>.</p>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">UCB</span> <span class="o">=</span> <span class="n">UpperConfidenceBound</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">TUCB</span> <span class="o">=</span> <span class="n">TemperedAcquisitionSampling</span><span class="p">(</span><span class="n">UCB</span><span class="p">,</span> <span class="n">eta</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">BMUCB</span> <span class="o">=</span> <span class="n">BoltzmannSampling</span><span class="p">(</span><span class="n">UCB</span><span class="p">,</span> <span class="n">eta</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">sampled_X</span> <span class="o">=</span> <span class="n">TUCB</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sampled_X</span> <span class="o">=</span> <span class="n">BMUCB</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Tempered Acquisition Value Sampling.</p>
+<p>Boltzmann Acquisition Value Sampling.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -293,8 +293,8 @@ acquisition functions). Can be analytic or Monte-Carlo.</p></li>
 </dd>
 </dl>
 <dl class="method">
-<dt id="botorch.generation.sampling.TemperedAcquisitionSampling.forward">
-<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">num_samples=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/sampling.html#TemperedAcquisitionSampling.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.generation.sampling.TemperedAcquisitionSampling.forward" title="Permalink to this definition">¶</a></dt>
+<dt id="botorch.generation.sampling.BoltzmannSampling.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">num_samples=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/sampling.html#BoltzmannSampling.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.generation.sampling.BoltzmannSampling.forward" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sample from a tempered value of the acquisition function value.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>

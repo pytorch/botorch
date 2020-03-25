@@ -182,7 +182,7 @@
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">Xe</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="n">idcs</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="TemperedAcquisitionSampling"><a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.TemperedAcquisitionSampling">[docs]</a><span class="k">class</span> <span class="nc">TemperedAcquisitionSampling</span><span class="p">(</span><span class="n">SamplingStrategy</span><span class="p">):</span>
+<div class="viewcode-block" id="BoltzmannSampling"><a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.BoltzmannSampling">[docs]</a><span class="k">class</span> <span class="nc">BoltzmannSampling</span><span class="p">(</span><span class="n">SamplingStrategy</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""Sample from a set of points according to a tempered acquisition value.</span>
 
 <span class="sd">    Given an acquisition function `acq_func`, this sampling strategies draws</span>
@@ -198,15 +198,15 @@
 
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; UCB = UpperConfidenceBound(model, beta=0.1)</span>
-<span class="sd">        &gt;&gt;&gt; TUCB = TemperedAcquisitionSampling(UCB, eta=0.5)</span>
+<span class="sd">        &gt;&gt;&gt; BMUCB = BoltzmannSampling(UCB, eta=0.5)</span>
 <span class="sd">        &gt;&gt;&gt; X = torch.rand(2, 100, 3)</span>
-<span class="sd">        &gt;&gt;&gt; sampled_X = TUCB(X, n=5)</span>
+<span class="sd">        &gt;&gt;&gt; sampled_X = BMUCB(X, n=5)</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">acq_func</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">eta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">replacement</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Tempered Acquisition Value Sampling.</span>
+        <span class="sa">r</span><span class="sd">"""Boltzmann Acquisition Value Sampling.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            acq_func: The acquisition function; to be evaluated in batch at the</span>
@@ -220,7 +220,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">eta</span> <span class="o">=</span> <span class="n">eta</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">replacement</span> <span class="o">=</span> <span class="n">replacement</span>
 
-<div class="viewcode-block" id="TemperedAcquisitionSampling.forward"><a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.TemperedAcquisitionSampling.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="BoltzmannSampling.forward"><a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.BoltzmannSampling.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Sample from a tempered value of the acquisition function value.</span>
 
 <span class="sd">        Args:</span>
