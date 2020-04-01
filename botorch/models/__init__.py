@@ -10,6 +10,7 @@ from .gp_regression import FixedNoiseGP, HeteroskedasticSingleTaskGP, SingleTask
 from .gp_regression_fidelity import SingleTaskMultiFidelityGP
 from .model_list_gp_regression import ModelListGP
 from .multitask import FixedNoiseMultiTaskGP, MultiTaskGP
+from .pairwise_gp import PairwiseGP, PairwiseLaplaceMarginalLogLikelihood
 
 
 __all__ = [
@@ -21,6 +22,8 @@ __all__ = [
     "HeteroskedasticSingleTaskGP",
     "ModelListGP",
     "MultiTaskGP",
+    "PairwiseGP",
+    "PairwiseLaplaceMarginalLogLikelihood",
     "SingleTaskGP",
     "SingleTaskMultiFidelityGP",
 ]
