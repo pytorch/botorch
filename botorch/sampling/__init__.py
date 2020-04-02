@@ -6,6 +6,11 @@
 
 from torch.quasirandom import SobolEngine
 
+from .pairwise_samplers import (
+    PairwiseIIDNormalSampler,
+    PairwiseMCSampler,
+    PairwiseSobolQMCNormalSampler,
+)
 from .qmc import MultivariateNormalQMCEngine, NormalQMCEngine
 from .samplers import IIDNormalSampler, MCSampler, SobolQMCNormalSampler
 
@@ -17,4 +22,7 @@ __all__ = [
     "NormalQMCEngine",
     "SobolEngine",
     "SobolQMCNormalSampler",
+    "PairwiseIIDNormalSampler",
+    "PairwiseMCSampler",
+    "PairwiseSobolQMCNormalSampler",
 ]

@@ -54,6 +54,11 @@ Multitask GP Models
 .. automodule:: botorch.models.multitask
     :members:
 
+Pairwise GP Models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.pairwise_gp
+    :members:
+
 
 Model Components
 -------------------------------------------
