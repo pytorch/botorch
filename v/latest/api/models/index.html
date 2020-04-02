@@ -1269,6 +1269,179 @@ full rank (i.e. number of tasks) kernel.</p></li>
 </div>
 </dd></dl>
 </div>
+<div class="section" id="module-botorch.models.pairwise_gp">
+<span id="pairwise-gp-models"></span><h3>Pairwise GP Models<a class="headerlink" href="#module-botorch.models.pairwise_gp" title="Permalink to this headline">¶</a></h3>
+<p>Preference Learning with Gaussian Process</p>
+<dl class="citation">
+<dt class="label" id="chu2005preference"><span class="brackets">Chu2005preference</span><span class="fn-backref">(<a href="#id3">1</a>,<a href="#id5">2</a>)</span></dt>
+<dd><p>Wei Chu, and Zoubin Ghahramani. Preference learning with Gaussian processes.
+Proceedings of the 22nd international conference on Machine learning. 2005.</p>
+</dd>
+<dt class="label" id="brochu2010tutorial"><span class="brackets"><a class="fn-backref" href="#id4">Brochu2010tutorial</a></span></dt>
+<dd><p>Eric Brochu, Vlad M. Cora, and Nando De Freitas.
+A tutorial on Bayesian optimization of expensive cost functions,
+with application to active user modeling and hierarchical reinforcement learning.
+arXiv preprint arXiv:1012.2599 (2010).</p>
+</dd>
+</dl>
+<dl class="class">
+<dt id="botorch.models.pairwise_gp.PairwiseGP">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.pairwise_gp.</code><code class="sig-name descname">PairwiseGP</code><span class="sig-paren">(</span><em class="sig-param">datapoints</em>, <em class="sig-param">comparisons</em>, <em class="sig-param">covar_module=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/pairwise_gp.html#PairwiseGP"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseGP" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.model.Model</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">gpytorch.models.gp.GP</span></code></p>
+<p>Probit GP for preference learning with Laplace approximation</p>
+<p>Implementation is based on <a class="reference internal" href="#chu2005preference" id="id3"><span>[Chu2005preference]</span></a>.
+Also see <a class="reference internal" href="#brochu2010tutorial" id="id4"><span>[Brochu2010tutorial]</span></a> for additional reference.</p>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="method">
+<dt id="botorch.models.pairwise_gp.PairwiseGP.std_noise">
+<em class="property">property </em><code class="sig-name descname">std_noise</code><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseGP.std_noise" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="method">
+<dt id="botorch.models.pairwise_gp.PairwiseGP.num_outputs">
+<em class="property">property </em><code class="sig-name descname">num_outputs</code><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseGP.num_outputs" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of outputs of the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="method">
+<dt id="botorch.models.pairwise_gp.PairwiseGP.set_train_data">
+<code class="sig-name descname">set_train_data</code><span class="sig-paren">(</span><em class="sig-param">datapoints</em>, <em class="sig-param">comparisons</em>, <em class="sig-param">update_model=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/pairwise_gp.html#PairwiseGP.set_train_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseGP.set_train_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set datapoints and comparisons and update model properties if needed</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>datapoints</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x d</cite> dimension tensor X</p></li>
+<li><p><strong>comparisons</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A tensor of size <cite>batch_shape x m x 2</cite>. (i, j) means
+f_i is preferred over f_j</p></li>
+<li><p><strong>update_model</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – True if we want to refit the model (see _update) after
+re-setting the data</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="method">
+<dt id="botorch.models.pairwise_gp.PairwiseGP.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param">datapoints</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/pairwise_gp.html#PairwiseGP.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseGP.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate a posterior or prior prediction.</p>
+<p>During training mode, forward implemented solely for gradient-based
+hyperparam opt. Essentially what it does is to re-calculate the utility
+f using its analytical form at f_map so that we are able to obtain
+gradients of the hyperparameters.
+We only take in one parameter datapoints without the comparisons for the
+compatibility with other gpytorch/botorch APIs. It assumes <cite>datapoints</cite> is
+the same as <cite>self.datapoints</cite>. That’s what “Must train on training data” means.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>datapoints</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x d</cite> Tensor,
+should be the same as self.datapoints</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ol class="arabic simple">
+<li><p>Posterior centered at MAP points for training data (training mode)</p></li>
+<li><p>Prior predictions (prior mode)</p></li>
+<li><p>Predictive posterior (eval mode)</p></li>
+</ol>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>A MultivariateNormal object, being one of the followings</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="method">
+<dt id="botorch.models.pairwise_gp.PairwiseGP.posterior">
+<code class="sig-name descname">posterior</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">output_indices=None</em>, <em class="sig-param">observation_noise=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/pairwise_gp.html#PairwiseGP.posterior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseGP.posterior" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the posterior over model outputs at the provided points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x q x d</cite>-dim Tensor, where <cite>d</cite> is the dimension
+of the feature space and <cite>q</cite> is the number of points considered jointly.</p></li>
+<li><p><strong>output_indices</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]) – As defined in parent Model class, not used for this model.</p></li>
+<li><p><strong>observation_noise</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, add observation noise to the posterior.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="posteriors.html#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">Posterior</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>A <cite>Posterior</cite> object, representing joint</dt><dd><p>distributions over <cite>q</cite> points. Includes observation noise if specified.</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="method">
+<dt id="botorch.models.pairwise_gp.PairwiseGP.condition_on_observations">
+<code class="sig-name descname">condition_on_observations</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">Y</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/pairwise_gp.html#PairwiseGP.condition_on_observations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseGP.condition_on_observations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Condition the model on new observations.</p>
+<p>Note that unlike other BoTorch models, PairwiseGP requires Y to be
+pairwise comparisons</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x d</cite> dimension tensor X</p></li>
+<li><p><strong>Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A tensor of size <cite>batch_shape x m x 2</cite>. (i, j) means
+f_i is preferred over f_j</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A (deepcopied) <cite>Model</cite> object of the same type, representing the
+original model conditioned on the new observations <cite>(X, Y)</cite> (and
+possibly noise observations passed in via kwargs).</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="class">
+<dt id="botorch.models.pairwise_gp.PairwiseLaplaceMarginalLogLikelihood">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.pairwise_gp.</code><code class="sig-name descname">PairwiseLaplaceMarginalLogLikelihood</code><span class="sig-paren">(</span><em class="sig-param">model</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/pairwise_gp.html#PairwiseLaplaceMarginalLogLikelihood"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseLaplaceMarginalLogLikelihood" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">gpytorch.mlls.marginal_log_likelihood.MarginalLogLikelihood</span></code></p>
+<p>Laplace-approximated marginal log likelihood/evidence for PairwiseGP</p>
+<p>See (12) from <a class="reference internal" href="#chu2005preference" id="id5"><span>[Chu2005preference]</span></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>model</strong> (<a class="reference internal" href="#botorch.models.pairwise_gp.PairwiseGP" title="botorch.models.pairwise_gp.PairwiseGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">PairwiseGP</span></code></a>) – A model using laplace approximation (currently only supports
+<cite>PairwiseGP</cite>)</p>
+</dd>
+</dl>
+<dl class="method">
+<dt id="botorch.models.pairwise_gp.PairwiseLaplaceMarginalLogLikelihood.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param">post</em>, <em class="sig-param">comp</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/pairwise_gp.html#PairwiseLaplaceMarginalLogLikelihood.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseLaplaceMarginalLogLikelihood.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate approximated log evidence, i.e., log(P(D|theta))</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>post</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">Posterior</span></code></a>) – training posterior distribution from self.model</p></li>
+<li><p><strong>comp</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – Comparisons pairs, see PairwiseGP.__init__ for more details</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The approximated evidence, i.e., the marginal log likelihood</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+</div>
 </div>
 <div class="section" id="model-components">
 <h2>Model Components<a class="headerlink" href="#model-components" title="Permalink to this headline">¶</a></h2>

@@ -202,6 +202,80 @@ t-batches.</p></li>
 </dl>
 </dd></dl>
 </div>
+<div class="section" id="module-botorch.sampling.pairwise_samplers">
+<span id="pairwise-monte-carlo-samplers"></span><h2>Pairwise Monte-Carlo Samplers<a class="headerlink" href="#module-botorch.sampling.pairwise_samplers" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="botorch.sampling.pairwise_samplers.PairwiseMCSampler">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.sampling.pairwise_samplers.</code><code class="sig-name descname">PairwiseMCSampler</code><span class="sig-paren">(</span><em class="sig-param">max_num_comparisons=None</em>, <em class="sig-param">seed=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pairwise_samplers.html#PairwiseMCSampler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.sampling.pairwise_samplers.PairwiseMCSampler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.sampling.samplers.MCSampler" title="botorch.sampling.samplers.MCSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.sampling.samplers.MCSampler</span></code></a></p>
+<p>Abstract class for Pairwise MC Sampler.</p>
+<p>This sampler will sample pairwise comparisons. It is to be used together
+with PairwiseGP and BoTorch acquisition functions (e.g., qKnowledgeGradient)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>max_num_comparisons</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – Max number of comparisons drawn within samples.
+If None, use all possible pairwise comparisons</p></li>
+<li><p><strong>seed</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The seed for np.random.seed. If omitted, use a random seed.
+May be overwritten by sibling classes or subclasses.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="botorch.sampling.pairwise_samplers.PairwiseMCSampler.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param">posterior</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pairwise_samplers.html#PairwiseMCSampler.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.sampling.pairwise_samplers.PairwiseMCSampler.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draws MC samples from the posterior and make comparisons</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>posterior</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">Posterior</span></code></a>) – The Posterior to sample from.
+The returned samples are expected to have output dimension of 1.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Posterior sample pairwise comparisons.</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="class">
+<dt id="botorch.sampling.pairwise_samplers.PairwiseIIDNormalSampler">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.sampling.pairwise_samplers.</code><code class="sig-name descname">PairwiseIIDNormalSampler</code><span class="sig-paren">(</span><em class="sig-param">num_samples</em>, <em class="sig-param">resample=False</em>, <em class="sig-param">seed=None</em>, <em class="sig-param">collapse_batch_dims=True</em>, <em class="sig-param">max_num_comparisons=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pairwise_samplers.html#PairwiseIIDNormalSampler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.sampling.pairwise_samplers.PairwiseIIDNormalSampler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.sampling.pairwise_samplers.PairwiseMCSampler" title="botorch.sampling.pairwise_samplers.PairwiseMCSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.sampling.pairwise_samplers.PairwiseMCSampler</span></code></a>, <a class="reference internal" href="#botorch.sampling.samplers.IIDNormalSampler" title="botorch.sampling.samplers.IIDNormalSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.sampling.samplers.IIDNormalSampler</span></code></a></p>
+<p>Abstract class for Pairwise MC Sampler.</p>
+<p>This sampler will sample pairwise comparisons. It is to be used together
+with PairwiseGP and BoTorch acquisition functions (e.g., qKnowledgeGradient)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>max_num_comparisons</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – Max number of comparisons drawn within samples.
+If None, use all possible pairwise comparisons</p></li>
+<li><p><strong>seed</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The seed for np.random.seed. If omitted, use a random seed.
+May be overwritten by sibling classes or subclasses.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+<dl class="class">
+<dt id="botorch.sampling.pairwise_samplers.PairwiseSobolQMCNormalSampler">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.sampling.pairwise_samplers.</code><code class="sig-name descname">PairwiseSobolQMCNormalSampler</code><span class="sig-paren">(</span><em class="sig-param">num_samples</em>, <em class="sig-param">resample=False</em>, <em class="sig-param">seed=None</em>, <em class="sig-param">collapse_batch_dims=True</em>, <em class="sig-param">max_num_comparisons=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pairwise_samplers.html#PairwiseSobolQMCNormalSampler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.sampling.pairwise_samplers.PairwiseSobolQMCNormalSampler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.sampling.pairwise_samplers.PairwiseMCSampler" title="botorch.sampling.pairwise_samplers.PairwiseMCSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.sampling.pairwise_samplers.PairwiseMCSampler</span></code></a>, <a class="reference internal" href="#botorch.sampling.samplers.SobolQMCNormalSampler" title="botorch.sampling.samplers.SobolQMCNormalSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.sampling.samplers.SobolQMCNormalSampler</span></code></a></p>
+<p>Abstract class for Pairwise MC Sampler.</p>
+<p>This sampler will sample pairwise comparisons. It is to be used together
+with PairwiseGP and BoTorch acquisition functions (e.g., qKnowledgeGradient)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>max_num_comparisons</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – Max number of comparisons drawn within samples.
+If None, use all possible pairwise comparisons</p></li>
+<li><p><strong>seed</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The seed for np.random.seed. If omitted, use a random seed.
+May be overwritten by sibling classes or subclasses.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+</div>
 <div class="section" id="module-botorch.sampling.qmc">
 <span id="qmc-base-functionality"></span><h2>QMC Base Functionality<a class="headerlink" href="#module-botorch.sampling.qmc" title="Permalink to this headline">¶</a></h2>
 <p>Quasi Monte-Carlo sampling from Normal distributions.</p>
