@@ -58,8 +58,8 @@ class MCAcquisitionFunction(AcquisitionFunction, ABC):
                 `SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)`.
             objective: The MCAcquisitionObjective under which the samples are
                 evaluated. Defaults to `IdentityMCObjective()`.
-            X_pending:  A `m x d`-dim Tensor of `m` design points that have
-                points that have been submitted for function evaluation
+            X_pending: A `batch_shape, m x d`-dim Tensor of `m` design points
+                that have points that have been submitted for function evaluation
                 but have not yet been evaluated.
         """
         super().__init__(model=model)
@@ -82,10 +82,11 @@ class MCAcquisitionFunction(AcquisitionFunction, ABC):
 
     @abstractmethod
     def forward(self, X: Tensor) -> Tensor:
-        r"""Takes in a `(b) x q x d` X Tensor of `(b)` t-batches with `q` `d`-dim
-        design points each, and returns a one-dimensional Tensor with
-        `(b)` elements.  Should utilize the result of set_X_pending as needed
-        to account for pending function evaluations.
+        r"""Takes in a `batch_shape x q x d` X Tensor of t-batches with `q` `d`-dim
+        design points each, and returns a Tensor with shape `batch_shape'`, where
+        `batch_shape'` is the broadcasted batch shape of model and input `X`. Should
+        utilize the result of `set_X_pending` as needed to account for pending function
+        evaluations.
         """
         pass  # pragma: no cover
 
@@ -121,26 +122,23 @@ class qExpectedImprovement(MCAcquisitionFunction):
 
         Args:
             model: A fitted model.
-            best_f: The best objective value observed so far (assumed noiseless).
+            best_f: The best objective value observed so far (assumed noiseless). Can be
+                a `batch_shape`-shaped tensor, which in case of a batched model
+                specifies potentially different values for each element of the batch.
             sampler: The sampler used to draw base samples. Defaults to
                 `SobolQMCNormalSampler(num_samples=500, collapse_batch_dims=True)`
-            objective: The MCAcquisitionObjective under which the samples are
-                evaluated. Defaults to `IdentityMCObjective()`.
-            X_pending:  A `m x d`-dim Tensor of `m` design points that have
-                points that have been submitted for function evaluation
-                but have not yet been evaluated.  Concatenated into X upon
-                forward call.  Copied and set to have no gradient.
+            objective: The MCAcquisitionObjective under which the samples are evalauted.
+                Defaults to `IdentityMCObjective()`.
+            X_pending:  A `m x d`-dim Tensor of `m` design points that have been
+                submitted for function evaluation but have not yet been evaluated.
+                Concatenated into X upon forward call. Copied and set to have no
+                gradient.
         """
         super().__init__(
             model=model, sampler=sampler, objective=objective, X_pending=X_pending
         )
         if not torch.is_tensor(best_f):
             best_f = torch.tensor(float(best_f))
-        elif not (best_f.ndim < 2 and best_f.numel() == 1):
-            raise ValueError(
-                "best_f must be either a scalar or a single-elment "
-                "one-dimensional tensor."
-            )
         self.register_buffer("best_f", best_f)
 
     @concatenate_pending_points
@@ -149,12 +147,13 @@ class qExpectedImprovement(MCAcquisitionFunction):
         r"""Evaluate qExpectedImprovement on the candidate set `X`.
 
         Args:
-            X: A `(b) x q x d`-dim Tensor of `(b)` t-batches with `q` `d`-dim
-                design points each.
+            X: A `batch_shape x q x d`-dim Tensor of t-batches with `q` `d`-dim design
+                points each.
 
         Returns:
-            A `(b)`-dim Tensor of Expected Improvement values at the given
-            design points `X`.
+            A `batch_shape'`-dim Tensor of Expected Improvement values at the given
+            design points `X`, where `batch_shape'` is the broadcasted batch shape of
+            model and input `X`.
         """
         posterior = self.model.posterior(X)
         samples = self.sampler(posterior)
@@ -195,17 +194,17 @@ class qNoisyExpectedImprovement(MCAcquisitionFunction):
 
         Args:
             model: A fitted model.
-            X_baseline: A `r x d`-dim Tensor of `r` design points that have
-                already been observed. These points are considered as the
-                potential best design point.
+            X_baseline: A `batch_shape x r x d`-dim Tensor of `r` design points
+                that have already been observed. These points are considered as
+                the potential best design point.
             sampler: The sampler used to draw base samples. Defaults to
                 `SobolQMCNormalSampler(num_samples=500, collapse_batch_dims=True)`.
             objective: The MCAcquisitionObjective under which the samples are
                 evaluated. Defaults to `IdentityMCObjective()`.
-            X_pending:  A `m x d`-dim Tensor of `m` design points that have
-                points that have been submitted for function evaluation
-                but have not yet been evaluated.  Concatenated into X upon
-                forward call.  Copied and set to have no gradient.
+            X_pending: A `batch_shape x m x d`-dim Tensor of `m` design points
+                that have points that have been submitted for function evaluation
+                but have not yet been evaluated. Concatenated into `X` upon
+                forward call. Copied and set to have no gradient.
             prune_baseline: If True, remove points in `X_baseline` that are
                 highly unlikely to be the best point. This can significantly
                 improve performance and is generally recommended. In order to
@@ -228,12 +227,13 @@ class qNoisyExpectedImprovement(MCAcquisitionFunction):
         r"""Evaluate qNoisyExpectedImprovement on the candidate set `X`.
 
         Args:
-            X: A `(b) x q x d`-dim Tensor of `(b)` t-batches with `q` `d`-dim
-                design points each.
+            X: A `batch_shape x q x d`-dim Tensor of t-batches with `q` `d`-dim design
+                points each.
 
         Returns:
-            A `(b)`-dim Tensor of Noisy Expected Improvement values at the given
-            design points `X`.
+            A `batch_shape'`-dim Tensor of Noisy Expected Improvement values at the
+            given design points `X`, where `batch_shape'` is the broadcasted batch shape
+            of model and input `X`.
         """
         q = X.shape[-2]
         X_full = torch.cat([X, match_batch_shape(self.X_baseline, X)], dim=-2)
@@ -278,7 +278,9 @@ class qProbabilityOfImprovement(MCAcquisitionFunction):
 
         Args:
             model: A fitted model.
-            best_f: The best objective value observed so far (assumed noiseless).
+            best_f: The best objective value observed so far (assumed noiseless). Can
+                be a `batch_shape`-shaped tensor, which in case of a batched model
+                specifies potentially different values for each element of the batch.
             sampler: The sampler used to draw base samples. Defaults to
                 `SobolQMCNormalSampler(num_samples=500, collapse_batch_dims=True)`
             objective: The MCAcquisitionObjective under which the samples are
@@ -308,12 +310,13 @@ class qProbabilityOfImprovement(MCAcquisitionFunction):
         r"""Evaluate qProbabilityOfImprovement on the candidate set `X`.
 
         Args:
-            X: A `(b) x q x d`-dim Tensor of `(b)` t-batches with `q` `d`-dim
-                design points each.
+            X: A `batch_shape x q x d`-dim Tensor of t-batches with `q` `d`-dim design
+                points each.
 
         Returns:
-            A `(b)`-dim Tensor of Probability of Improvement values at the given
-            design points `X`.
+            A `batch_shape'`-dim Tensor of Probability of Improvement values at the
+            given design points `X`, where `batch_shape'` is the broadcasted batch shape
+            of model and input `X`.
         """
         posterior = self.model.posterior(X)
         samples = self.sampler(posterior)
@@ -326,8 +329,7 @@ class qProbabilityOfImprovement(MCAcquisitionFunction):
 class qSimpleRegret(MCAcquisitionFunction):
     r"""MC-based batch Simple Regret.
 
-    Samples from the joint posterior over the q-batch and computes the simple
-    regret.
+    Samples from the joint posterior over the q-batch and computes the simple regret.
 
     `qSR(X) = E(max Y), Y ~ f(X), X = (x_1,...,x_q)`
 
@@ -344,12 +346,13 @@ class qSimpleRegret(MCAcquisitionFunction):
         r"""Evaluate qSimpleRegret on the candidate set `X`.
 
         Args:
-            X: A `(b) x q x d`-dim Tensor of `(b)` t-batches with `q` `d`-dim
-                design points each.
+            X: A `batch_shape x q x d`-dim Tensor of t-batches with `q` `d`-dim design
+                points each.
 
         Returns:
-            A `(b)`-dim Tensor of Simple Regret values at the given design
-            points `X`.
+            A `batch_shape'`-dim Tensor of Simple Regret values at the given design
+            points `X`, where `batch_shape'` is the broadcasted batch shape of model
+            and input `X`.
         """
         posterior = self.model.posterior(X)
         samples = self.sampler(posterior)
@@ -391,10 +394,10 @@ class qUpperConfidenceBound(MCAcquisitionFunction):
                 `SobolQMCNormalSampler(num_samples=500, collapse_batch_dims=True)`
             objective: The MCAcquisitionObjective under which the samples are
                 evaluated. Defaults to `IdentityMCObjective()`.
-            X_pending:  A `m x d`-dim Tensor of `m` design points that have
-                points that have been submitted for function evaluation
-                but have not yet been evaluated.  Concatenated into X upon
-                forward call.  Copied and set to have no gradient.
+            X_pending: A `batch_shape x m x d`-dim Tensor of `m` design points that have
+                points that have been submitted for function evaluation but have not yet
+                been evaluated. Concatenated into X upon forward call. Copied and set to
+                have no gradient.
         """
         super().__init__(
             model=model, sampler=sampler, objective=objective, X_pending=X_pending
@@ -407,12 +410,13 @@ class qUpperConfidenceBound(MCAcquisitionFunction):
         r"""Evaluate qUpperConfidenceBound on the candidate set `X`.
 
         Args:
-            X: A `(b) x q x d`-dim Tensor of `(b)` t-batches with `q` `d`-dim
-                design points each.
+            X: A `batch_sahpe x q x d`-dim Tensor of t-batches with `q` `d`-dim design
+                points each.
 
         Returns:
-            A `(b)`-dim Tensor of Upper Confidence Bound values at the given
-            design points `X`.
+            A `batch_shape'`-dim Tensor of Upper Confidence Bound values at the given
+            design points `X`, where `batch_shape'` is the broadcasted batch shape of
+            model and input `X`.
         """
         posterior = self.model.posterior(X)
         samples = self.sampler(posterior)
