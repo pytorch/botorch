@@ -18,6 +18,7 @@ from torch import Tensor
 from ..acquisition.acquisition import AcquisitionFunction, OneShotAcquisitionFunction
 from ..acquisition.knowledge_gradient import qKnowledgeGradient
 from ..generation.gen import gen_candidates_scipy
+from ..logging import logger
 from .initializers import (
     gen_batch_initial_conditions,
     gen_one_shot_kg_initial_conditions,
@@ -105,7 +106,7 @@ def optimize_acqf(
         candidate_list, acq_value_list = [], []
         candidates = torch.tensor([])
         base_X_pending = acq_function.X_pending
-        for _ in range(q):
+        for i in range(q):
             candidate, acq_value = optimize_acqf(
                 acq_function=acq_function,
                 bounds=bounds,
@@ -129,6 +130,7 @@ def optimize_acqf(
                 if base_X_pending is not None
                 else candidates
             )
+            logger.info(f"Generated sequential candidate {i+1} of {q}")
         # Reset acq_func to previous X_pending state
         acq_function.set_X_pending(base_X_pending)
         return candidates, torch.stack(acq_value_list)
@@ -154,8 +156,8 @@ def optimize_acqf(
     batch_limit: int = options.get("batch_limit", num_restarts)
     batch_candidates_list: List[Tensor] = []
     batch_acq_values_list: List[Tensor] = []
-    start_idx = 0
-    while start_idx < num_restarts:
+    start_idcs = list(range(0, num_restarts, batch_limit))
+    for start_idx in start_idcs:
         end_idx = min(start_idx + batch_limit, num_restarts)
         # optimize using random restart optimization
         batch_candidates_curr, batch_acq_values_curr = gen_candidates_scipy(
@@ -174,7 +176,7 @@ def optimize_acqf(
         )
         batch_candidates_list.append(batch_candidates_curr)
         batch_acq_values_list.append(batch_acq_values_curr)
-        start_idx += batch_limit
+        logger.info(f"Generated candidate batch {start_idx+1} of {len(start_idcs)}.")
     batch_candidates = torch.cat(batch_candidates_list)
     batch_acq_values = torch.cat(batch_acq_values_list)
 
