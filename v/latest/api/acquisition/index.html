@@ -169,8 +169,8 @@ been submitted for evaluation but have not yet been evaluated.</p>
 <cite>SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)</cite>.</p></li>
 <li><p><strong>objective</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="#botorch.acquisition.objective.MCAcquisitionObjective" title="botorch.acquisition.objective.MCAcquisitionObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">MCAcquisitionObjective</span></code></a>]) – The MCAcquisitionObjective under which the samples are
 evaluated. Defaults to <cite>IdentityMCObjective()</cite>.</p></li>
-<li><p><strong>X_pending</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>m x d</cite>-dim Tensor of <cite>m</cite> design points that have
-points that have been submitted for function evaluation
+<li><p><strong>X_pending</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>batch_shape, m x d</cite>-dim Tensor of <cite>m</cite> design points
+that have points that have been submitted for function evaluation
 but have not yet been evaluated.</p></li>
 </ul>
 </dd>
@@ -178,10 +178,11 @@ but have not yet been evaluated.</p></li>
 <dl class="method">
 <dt id="botorch.acquisition.monte_carlo.MCAcquisitionFunction.forward">
 <em class="property">abstract </em><code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param">X</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/monte_carlo.html#MCAcquisitionFunction.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.monte_carlo.MCAcquisitionFunction.forward" title="Permalink to this definition">¶</a></dt>
-<dd><p>Takes in a <cite>(b) x q x d</cite> X Tensor of <cite>(b)</cite> t-batches with <cite>q</cite> <cite>d</cite>-dim
-design points each, and returns a one-dimensional Tensor with
-<cite>(b)</cite> elements.  Should utilize the result of set_X_pending as needed
-to account for pending function evaluations.</p>
+<dd><p>Takes in a <cite>batch_shape x q x d</cite> X Tensor of t-batches with <cite>q</cite> <cite>d</cite>-dim
+design points each, and returns a Tensor with shape <cite>batch_shape’</cite>, where
+<cite>batch_shape’</cite> is the broadcasted batch shape of model and input <cite>X</cite>. Should
+utilize the result of <cite>set_X_pending</cite> as needed to account for pending function
+evaluations.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
@@ -533,15 +534,17 @@ The reparameterization trick for acquisition functions. ArXiv 2017.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a>) – A fitted model.</p></li>
-<li><p><strong>best_f</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – The best objective value observed so far (assumed noiseless).</p></li>
+<li><p><strong>best_f</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – The best objective value observed so far (assumed noiseless). Can be
+a <cite>batch_shape</cite>-shaped tensor, which in case of a batched model
+specifies potentially different values for each element of the batch.</p></li>
 <li><p><strong>sampler</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="sampling.html#botorch.sampling.samplers.MCSampler" title="botorch.sampling.samplers.MCSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">MCSampler</span></code></a>]) – The sampler used to draw base samples. Defaults to
 <cite>SobolQMCNormalSampler(num_samples=500, collapse_batch_dims=True)</cite></p></li>
-<li><p><strong>objective</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="#botorch.acquisition.objective.MCAcquisitionObjective" title="botorch.acquisition.objective.MCAcquisitionObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">MCAcquisitionObjective</span></code></a>]) – The MCAcquisitionObjective under which the samples are
-evaluated. Defaults to <cite>IdentityMCObjective()</cite>.</p></li>
-<li><p><strong>X_pending</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>m x d</cite>-dim Tensor of <cite>m</cite> design points that have
-points that have been submitted for function evaluation
-but have not yet been evaluated.  Concatenated into X upon
-forward call.  Copied and set to have no gradient.</p></li>
+<li><p><strong>objective</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="#botorch.acquisition.objective.MCAcquisitionObjective" title="botorch.acquisition.objective.MCAcquisitionObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">MCAcquisitionObjective</span></code></a>]) – The MCAcquisitionObjective under which the samples are evalauted.
+Defaults to <cite>IdentityMCObjective()</cite>.</p></li>
+<li><p><strong>X_pending</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>m x d</cite>-dim Tensor of <cite>m</cite> design points that have been
+submitted for function evaluation but have not yet been evaluated.
+Concatenated into X upon forward call. Copied and set to have no
+gradient.</p></li>
 </ul>
 </dd>
 </dl>
@@ -551,15 +554,16 @@ forward call.  Copied and set to have no gradient.</p></li>
 <dd><p>Evaluate qExpectedImprovement on the candidate set <cite>X</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>(b) x q x d</cite>-dim Tensor of <cite>(b)</cite> t-batches with <cite>q</cite> <cite>d</cite>-dim
-design points each.</p>
+<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x q x d</cite>-dim Tensor of t-batches with <cite>q</cite> <cite>d</cite>-dim design
+points each.</p>
 </dd>
 <dt class="field-even">Return type</dt>
 <dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
 </dd>
 <dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>(b)</cite>-dim Tensor of Expected Improvement values at the given
-design points <cite>X</cite>.</p>
+<dd class="field-odd"><p>A <cite>batch_shape’</cite>-dim Tensor of Expected Improvement values at the given
+design points <cite>X</cite>, where <cite>batch_shape’</cite> is the broadcasted batch shape of
+model and input <cite>X</cite>.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -587,17 +591,17 @@ over previously observed points is computed for each sample and averaged.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a>) – A fitted model.</p></li>
-<li><p><strong>X_baseline</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>r x d</cite>-dim Tensor of <cite>r</cite> design points that have
-already been observed. These points are considered as the
-potential best design point.</p></li>
+<li><p><strong>X_baseline</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x r x d</cite>-dim Tensor of <cite>r</cite> design points
+that have already been observed. These points are considered as
+the potential best design point.</p></li>
 <li><p><strong>sampler</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="sampling.html#botorch.sampling.samplers.MCSampler" title="botorch.sampling.samplers.MCSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">MCSampler</span></code></a>]) – The sampler used to draw base samples. Defaults to
 <cite>SobolQMCNormalSampler(num_samples=500, collapse_batch_dims=True)</cite>.</p></li>
 <li><p><strong>objective</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="#botorch.acquisition.objective.MCAcquisitionObjective" title="botorch.acquisition.objective.MCAcquisitionObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">MCAcquisitionObjective</span></code></a>]) – The MCAcquisitionObjective under which the samples are
 evaluated. Defaults to <cite>IdentityMCObjective()</cite>.</p></li>
-<li><p><strong>X_pending</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>m x d</cite>-dim Tensor of <cite>m</cite> design points that have
-points that have been submitted for function evaluation
-but have not yet been evaluated.  Concatenated into X upon
-forward call.  Copied and set to have no gradient.</p></li>
+<li><p><strong>X_pending</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>batch_shape x m x d</cite>-dim Tensor of <cite>m</cite> design points
+that have points that have been submitted for function evaluation
+but have not yet been evaluated. Concatenated into <cite>X</cite> upon
+forward call. Copied and set to have no gradient.</p></li>
 <li><p><strong>prune_baseline</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, remove points in <cite>X_baseline</cite> that are
 highly unlikely to be the best point. This can significantly
 improve performance and is generally recommended. In order to
@@ -613,15 +617,16 @@ before instantiating the acquisition function.</p></li>
 <dd><p>Evaluate qNoisyExpectedImprovement on the candidate set <cite>X</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>(b) x q x d</cite>-dim Tensor of <cite>(b)</cite> t-batches with <cite>q</cite> <cite>d</cite>-dim
-design points each.</p>
+<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x q x d</cite>-dim Tensor of t-batches with <cite>q</cite> <cite>d</cite>-dim design
+points each.</p>
 </dd>
 <dt class="field-even">Return type</dt>
 <dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
 </dd>
 <dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>(b)</cite>-dim Tensor of Noisy Expected Improvement values at the given
-design points <cite>X</cite>.</p>
+<dd class="field-odd"><p>A <cite>batch_shape’</cite>-dim Tensor of Noisy Expected Improvement values at the
+given design points <cite>X</cite>, where <cite>batch_shape’</cite> is the broadcasted batch shape
+of model and input <cite>X</cite>.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -650,7 +655,9 @@ replaced with a sigmoid function with temperature parameter <cite>tau</cite>.</p
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a>) – A fitted model.</p></li>
-<li><p><strong>best_f</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – The best objective value observed so far (assumed noiseless).</p></li>
+<li><p><strong>best_f</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – The best objective value observed so far (assumed noiseless). Can
+be a <cite>batch_shape</cite>-shaped tensor, which in case of a batched model
+specifies potentially different values for each element of the batch.</p></li>
 <li><p><strong>sampler</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="sampling.html#botorch.sampling.samplers.MCSampler" title="botorch.sampling.samplers.MCSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">MCSampler</span></code></a>]) – The sampler used to draw base samples. Defaults to
 <cite>SobolQMCNormalSampler(num_samples=500, collapse_batch_dims=True)</cite></p></li>
 <li><p><strong>objective</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="#botorch.acquisition.objective.MCAcquisitionObjective" title="botorch.acquisition.objective.MCAcquisitionObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">MCAcquisitionObjective</span></code></a>]) – The MCAcquisitionObjective under which the samples are
@@ -672,15 +679,16 @@ estimates with higher variance.</p></li>
 <dd><p>Evaluate qProbabilityOfImprovement on the candidate set <cite>X</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>(b) x q x d</cite>-dim Tensor of <cite>(b)</cite> t-batches with <cite>q</cite> <cite>d</cite>-dim
-design points each.</p>
+<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x q x d</cite>-dim Tensor of t-batches with <cite>q</cite> <cite>d</cite>-dim design
+points each.</p>
 </dd>
 <dt class="field-even">Return type</dt>
 <dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
 </dd>
 <dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>(b)</cite>-dim Tensor of Probability of Improvement values at the given
-design points <cite>X</cite>.</p>
+<dd class="field-odd"><p>A <cite>batch_shape’</cite>-dim Tensor of Probability of Improvement values at the
+given design points <cite>X</cite>, where <cite>batch_shape’</cite> is the broadcasted batch shape
+of model and input <cite>X</cite>.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -690,8 +698,7 @@ design points <cite>X</cite>.</p>
 <em class="property">class </em><code class="sig-prename descclassname">botorch.acquisition.monte_carlo.</code><code class="sig-name descname">qSimpleRegret</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">sampler=None</em>, <em class="sig-param">objective=None</em>, <em class="sig-param">X_pending=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/monte_carlo.html#qSimpleRegret"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.monte_carlo.qSimpleRegret" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.monte_carlo.MCAcquisitionFunction" title="botorch.acquisition.monte_carlo.MCAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.monte_carlo.MCAcquisitionFunction</span></code></a></p>
 <p>MC-based batch Simple Regret.</p>
-<p>Samples from the joint posterior over the q-batch and computes the simple
-regret.</p>
+<p>Samples from the joint posterior over the q-batch and computes the simple regret.</p>
 <p><cite>qSR(X) = E(max Y), Y ~ f(X), X = (x_1,…,x_q)</cite></p>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
@@ -709,8 +716,8 @@ regret.</p>
 <cite>SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)</cite>.</p></li>
 <li><p><strong>objective</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="#botorch.acquisition.objective.MCAcquisitionObjective" title="botorch.acquisition.objective.MCAcquisitionObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">MCAcquisitionObjective</span></code></a>]) – The MCAcquisitionObjective under which the samples are
 evaluated. Defaults to <cite>IdentityMCObjective()</cite>.</p></li>
-<li><p><strong>X_pending</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>m x d</cite>-dim Tensor of <cite>m</cite> design points that have
-points that have been submitted for function evaluation
+<li><p><strong>X_pending</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>batch_shape, m x d</cite>-dim Tensor of <cite>m</cite> design points
+that have points that have been submitted for function evaluation
 but have not yet been evaluated.</p></li>
 </ul>
 </dd>
@@ -721,15 +728,16 @@ but have not yet been evaluated.</p></li>
 <dd><p>Evaluate qSimpleRegret on the candidate set <cite>X</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>(b) x q x d</cite>-dim Tensor of <cite>(b)</cite> t-batches with <cite>q</cite> <cite>d</cite>-dim
-design points each.</p>
+<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x q x d</cite>-dim Tensor of t-batches with <cite>q</cite> <cite>d</cite>-dim design
+points each.</p>
 </dd>
 <dt class="field-even">Return type</dt>
 <dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
 </dd>
 <dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>(b)</cite>-dim Tensor of Simple Regret values at the given design
-points <cite>X</cite>.</p>
+<dd class="field-odd"><p>A <cite>batch_shape’</cite>-dim Tensor of Simple Regret values at the given design
+points <cite>X</cite>, where <cite>batch_shape’</cite> is the broadcasted batch shape of model
+and input <cite>X</cite>.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -760,10 +768,10 @@ and <cite>f(X)</cite> has distribution <cite>N(mu, Sigma)</cite>.</p>
 <cite>SobolQMCNormalSampler(num_samples=500, collapse_batch_dims=True)</cite></p></li>
 <li><p><strong>objective</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="#botorch.acquisition.objective.MCAcquisitionObjective" title="botorch.acquisition.objective.MCAcquisitionObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">MCAcquisitionObjective</span></code></a>]) – The MCAcquisitionObjective under which the samples are
 evaluated. Defaults to <cite>IdentityMCObjective()</cite>.</p></li>
-<li><p><strong>X_pending</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>m x d</cite>-dim Tensor of <cite>m</cite> design points that have
-points that have been submitted for function evaluation
-but have not yet been evaluated.  Concatenated into X upon
-forward call.  Copied and set to have no gradient.</p></li>
+<li><p><strong>X_pending</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>batch_shape x m x d</cite>-dim Tensor of <cite>m</cite> design points that have
+points that have been submitted for function evaluation but have not yet
+been evaluated. Concatenated into X upon forward call. Copied and set to
+have no gradient.</p></li>
 </ul>
 </dd>
 </dl>
@@ -773,15 +781,16 @@ forward call.  Copied and set to have no gradient.</p></li>
 <dd><p>Evaluate qUpperConfidenceBound on the candidate set <cite>X</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>(b) x q x d</cite>-dim Tensor of <cite>(b)</cite> t-batches with <cite>q</cite> <cite>d</cite>-dim
-design points each.</p>
+<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_sahpe x q x d</cite>-dim Tensor of t-batches with <cite>q</cite> <cite>d</cite>-dim design
+points each.</p>
 </dd>
 <dt class="field-even">Return type</dt>
 <dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
 </dd>
 <dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>(b)</cite>-dim Tensor of Upper Confidence Bound values at the given
-design points <cite>X</cite>.</p>
+<dd class="field-odd"><p>A <cite>batch_shape’</cite>-dim Tensor of Upper Confidence Bound values at the given
+design points <cite>X</cite>, where <cite>batch_shape’</cite> is the broadcasted batch shape of
+model and input <cite>X</cite>.</p>
 </dd>
 </dl>
 </dd></dl>
