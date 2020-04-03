@@ -20,6 +20,7 @@ BoTorch API Reference
    sampling
    cross_validation
    settings
+   logging
    test_functions
    exceptions
    utils

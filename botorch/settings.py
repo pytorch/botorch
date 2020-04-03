@@ -14,6 +14,7 @@ import typing  # noqa F401
 import warnings
 
 from .exceptions import BotorchWarning
+from .logging import LOG_LEVEL_DEFAULT, logger
 
 
 class _Flag:
@@ -93,3 +94,29 @@ class validate_input_scaling(_Flag):
     """
 
     _state: bool = True
+
+
+class log_level:
+    r"""Flag for printing verbose logging statements.
+
+    Applies the given level to logging.getLogger('botorch') calls. For
+    instance, when set to logging.INFO, all logger calls of level INFO or
+    above will be printed to STDERR
+    """
+
+    level: int = LOG_LEVEL_DEFAULT
+
+    @classmethod
+    def _set_level(cls, level: int) -> None:
+        cls.level = level
+        logger.setLevel(level)
+
+    def __init__(self, level: int = LOG_LEVEL_DEFAULT) -> None:
+        self.prev = self.__class__.level
+        self.level = level
+
+    def __enter__(self) -> None:
+        self.__class__._set_level(self.level)
+
+    def __exit__(self, *args) -> None:
+        self.__class__._set_level(self.prev)
