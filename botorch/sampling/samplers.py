@@ -29,7 +29,6 @@ class MCSampler(Module, ABC):
     Subclasses must implement the `_construct_base_samples` method.
 
     Attributes:
-        sample_shape: The shape of each sample.
         resample: If `True`, re-draw samples in each `forward` evaluation -
             this results in stochastic acquisition functions (and thus should
             not be used with deterministic optimization algorithms).
