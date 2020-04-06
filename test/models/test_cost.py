@@ -22,7 +22,7 @@ class TestCostModels(BotorchTestCase):
                 self.assertEqual(model.fidelity_dims, [-1])
                 self.assertEqual(model.fixed_cost, 0.01)
                 cost = model(X)
-                cost_exp = 0.01 + X[..., [-1]]
+                cost_exp = 0.01 + X[..., -1:]
                 self.assertTrue(torch.allclose(cost, cost_exp))
                 # test custom parameters
                 fw = {2: 2.0, 0: 1.0}
@@ -31,5 +31,5 @@ class TestCostModels(BotorchTestCase):
                 self.assertEqual(model.fidelity_dims, [0, 2])
                 self.assertEqual(model.fixed_cost, fc)
                 cost = model(X)
-                cost_exp = fc + sum(v * X[..., [i]] for i, v in fw.items())
+                cost_exp = fc + sum(v * X[..., i : i + 1] for i, v in fw.items())
                 self.assertTrue(torch.allclose(cost, cost_exp))
