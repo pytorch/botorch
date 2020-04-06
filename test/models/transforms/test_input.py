@@ -53,9 +53,9 @@ class TestInputTransforms(BotorchTestCase):
             self.assertFalse(nlz.learn_bounds)
             self.assertTrue(nlz.training)
             self.assertEqual(nlz._d, 2)
-            self.assertTrue(torch.equal(nlz.mins, bounds[..., [0], :]))
+            self.assertTrue(torch.equal(nlz.mins, bounds[..., 0:1, :]))
             self.assertTrue(
-                torch.equal(nlz.mins, bounds[..., [1], :] - bounds[..., [0], :])
+                torch.equal(nlz.mins, bounds[..., 1:2, :] - bounds[..., 0:1, :])
             )
             # test .to
             other_dtype = torch.float if dtype == torch.double else torch.double

@@ -137,6 +137,6 @@ class AugmentedRosenbrock(SyntheticTestFunction):
     def evaluate_true(self, X: Tensor) -> Tensor:
         X_curr = X[..., :-3]
         X_next = X[..., 1:-2]
-        t1 = 100 * (X_next - X_curr ** 2 + 0.1 * (1 - X[..., [-2]])) ** 2
-        t2 = (X_curr - 1 + 0.1 * (1 - X[..., [-1]]) ** 2) ** 2
+        t1 = 100 * (X_next - X_curr ** 2 + 0.1 * (1 - X[..., -2:-1])) ** 2
+        t2 = (X_curr - 1 + 0.1 * (1 - X[..., -1:]) ** 2) ** 2
         return -(t1 + t2).sum(dim=-1)

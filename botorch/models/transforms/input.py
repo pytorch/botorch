@@ -120,8 +120,8 @@ class Normalize(InputTransform):
                 raise BotorchTensorDimensionError(
                     "Incompatible dimensions of provided bounds"
                 )
-            mins = bounds[..., [0], :]
-            ranges = bounds[..., [1], :] - mins
+            mins = bounds[..., 0:1, :]
+            ranges = bounds[..., 1:2, :] - mins
             self.learn_bounds = False
         else:
             mins = torch.zeros(*batch_shape, 1, d)

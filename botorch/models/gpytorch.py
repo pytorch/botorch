@@ -426,7 +426,7 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
         ):
             if full_name in subset_batch_dict:
                 idx = subset_batch_dict[full_name]
-                new_data = p.index_select(idx, tidxr)
+                new_data = p.index_select(dim=idx, index=tidxr)
                 if m == 1:
                     new_data = new_data.squeeze(idx)
                 p.data = new_data

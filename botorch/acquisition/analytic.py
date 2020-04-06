@@ -372,13 +372,15 @@ class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
             A `(b)`-dim Tensor of Expected Improvement values at the given
             design points `X`.
         """
+        self.best_f = self.best_f.to(X)
         posterior = self._get_posterior(X=X)
         means = posterior.mean.squeeze(dim=-2)  # (b) x m
         sigmas = posterior.variance.squeeze(dim=-2).sqrt().clamp_min(1e-9)  # (b) x m
 
         # (b) x 1
-        mean_obj = means[..., [self.objective_index]]
-        sigma_obj = sigmas[..., [self.objective_index]]
+        oi = self.objective_index
+        mean_obj = means[..., oi : oi + 1]
+        sigma_obj = sigmas[..., oi : oi + 1]
         u = (mean_obj - self.best_f.expand_as(mean_obj)) / sigma_obj
         if not self.maximize:
             u = -u
@@ -403,37 +405,36 @@ class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
                 `i` is the output index, and `lower` and `upper` are lower and upper
                 bounds on that output (resp. interpreted as -Inf / Inf if None)
         """
-        constraint_lower, self.constraint_lower_inds = [], []
-        constraint_upper, self.constraint_upper_inds = [], []
-        constraint_both, self.constraint_both_inds = [], []
-        constraint_indices = list(constraints.keys())
-        if len(constraint_indices) == 0:
+        con_lower, con_lower_inds = [], []
+        con_upper, con_upper_inds = [], []
+        con_both, con_both_inds = [], []
+        con_indices = list(constraints.keys())
+        if len(con_indices) == 0:
             raise ValueError("There must be at least one constraint.")
-        if self.objective_index in constraint_indices:
+        if self.objective_index in con_indices:
             raise ValueError(
                 "Output corresponding to objective should not be a constraint."
             )
-        for k in constraint_indices:
+        for k in con_indices:
             if constraints[k][0] is not None and constraints[k][1] is not None:
                 if constraints[k][1] <= constraints[k][0]:
                     raise ValueError("Upper bound is less than the lower bound.")
-                self.constraint_both_inds.append(k)
-                constraint_both.append([constraints[k][0], constraints[k][1]])
+                con_both_inds.append(k)
+                con_both.append([constraints[k][0], constraints[k][1]])
             elif constraints[k][0] is not None:
-                self.constraint_lower_inds.append(k)
-                constraint_lower.append(constraints[k][0])
+                con_lower_inds.append(k)
+                con_lower.append(constraints[k][0])
             elif constraints[k][1] is not None:
-                self.constraint_upper_inds.append(k)
-                constraint_upper.append(constraints[k][1])
-        self.register_buffer(
-            "constraint_both", torch.tensor(constraint_both, dtype=torch.float)
-        )
-        self.register_buffer(
-            "constraint_lower", torch.tensor(constraint_lower, dtype=torch.float)
-        )
-        self.register_buffer(
-            "constraint_upper", torch.tensor(constraint_upper, dtype=torch.float)
-        )
+                con_upper_inds.append(k)
+                con_upper.append(constraints[k][1])
+        # tensor-based indexing is much faster than list-based advanced indexing
+        self.register_buffer("con_lower_inds", torch.tensor(con_lower_inds))
+        self.register_buffer("con_upper_inds", torch.tensor(con_upper_inds))
+        self.register_buffer("con_both_inds", torch.tensor(con_both_inds))
+        # tensor indexing
+        self.register_buffer("con_both", torch.tensor(con_both, dtype=torch.float))
+        self.register_buffer("con_lower", torch.tensor(con_lower, dtype=torch.float))
+        self.register_buffer("con_upper", torch.tensor(con_upper, dtype=torch.float))
 
     def _compute_prob_feas(self, X: Tensor, means: Tensor, sigmas: Tensor) -> Tensor:
         r"""Compute feasibility probability for each batch of X.
@@ -455,18 +456,21 @@ class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
         output_shape = X.shape[:-2] + torch.Size([1])
         prob_feas = torch.ones(output_shape, device=X.device, dtype=X.dtype)
 
-        if len(self.constraint_lower_inds) > 0:
-            normal_lower = _construct_dist(means, sigmas, self.constraint_lower_inds)
-            prob_l = 1 - normal_lower.cdf(self.constraint_lower)
+        if len(self.con_lower_inds) > 0:
+            self.con_lower_inds = self.con_lower_inds.to(device=X.device)
+            normal_lower = _construct_dist(means, sigmas, self.con_lower_inds)
+            prob_l = 1 - normal_lower.cdf(self.con_lower)
             prob_feas = prob_feas.mul(torch.prod(prob_l, dim=-1, keepdim=True))
-        if len(self.constraint_upper_inds) > 0:
-            normal_upper = _construct_dist(means, sigmas, self.constraint_upper_inds)
-            prob_u = normal_upper.cdf(self.constraint_upper)
+        if len(self.con_upper_inds) > 0:
+            self.con_upper_inds = self.con_upper_inds.to(device=X.device)
+            normal_upper = _construct_dist(means, sigmas, self.con_upper_inds)
+            prob_u = normal_upper.cdf(self.con_upper)
             prob_feas = prob_feas.mul(torch.prod(prob_u, dim=-1, keepdim=True))
-        if len(self.constraint_both_inds) > 0:
-            normal_both = _construct_dist(means, sigmas, self.constraint_both_inds)
-            prob_u = normal_both.cdf(self.constraint_both[:, 1])
-            prob_l = normal_both.cdf(self.constraint_both[:, 0])
+        if len(self.con_both_inds) > 0:
+            self.con_both_inds = self.con_both_inds.to(device=X.device)
+            normal_both = _construct_dist(means, sigmas, self.con_both_inds)
+            prob_u = normal_both.cdf(self.con_both[:, 1])
+            prob_l = normal_both.cdf(self.con_both[:, 0])
             prob_feas = prob_feas.mul(torch.prod(prob_u - prob_l, dim=-1, keepdim=True))
         return prob_feas
 
@@ -546,8 +550,8 @@ class NoisyExpectedImprovement(ExpectedImprovement):
 
 
 def _construct_dist(means: Tensor, sigmas: Tensor, inds: Tensor) -> Normal:
-    mean = means[..., inds]
-    sigma = sigmas[..., inds]
+    mean = means.index_select(dim=-1, index=inds)
+    sigma = sigmas.index_select(dim=-1, index=inds)
     return Normal(loc=mean, scale=sigma)
 
 

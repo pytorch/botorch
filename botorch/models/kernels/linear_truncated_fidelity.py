@@ -188,15 +188,26 @@ class LinearTruncatedFidelityKernel(Kernel):
             )
 
         power = self.power.view(*self.batch_shape, 1, 1)
-        active_dimsM = [i for i in range(x1.size(-1)) if i not in self.fidelity_dims]
-        x1_ = x1[..., active_dimsM]
-        x2_ = x2[..., active_dimsM]
+        active_dimsM = torch.tensor(
+            [i for i in range(x1.size(-1)) if i not in self.fidelity_dims],
+            device=x1.device,
+        )
+        if len(active_dimsM) == 0:
+            raise RuntimeError(
+                "Input to LinearTruncatedFidelityKernel must have at least one "
+                " non-fidelity dimension"
+            )
+        x1_ = x1.index_select(dim=-1, index=active_dimsM)
+        x2_ = x2.index_select(dim=-1, index=active_dimsM)
         covar_unbiased = self.covar_module_unbiased(x1_, x2_, diag=diag)
         covar_biased = self.covar_module_biased(x1_, x2_, diag=diag)
 
         # clamp to avoid numerical issues
-        x11_ = x1[..., self.fidelity_dims[0]].clamp(0, 1).unsqueeze(-1)
-        x21t_ = x2[..., self.fidelity_dims[0]].clamp(0, 1).unsqueeze(-1)
+        fd_idxr0 = torch.full(
+            (1,), self.fidelity_dims[0], dtype=torch.long, device=x1.device
+        )
+        x11_ = x1.index_select(dim=-1, index=fd_idxr0).clamp(0, 1)
+        x21t_ = x2.index_select(dim=-1, index=fd_idxr0).clamp(0, 1)
         if not diag:
             x21t_ = x21t_.transpose(-1, -2)
         cross_term_1 = (1 - x11_) * (1 - x21t_)
@@ -204,8 +215,11 @@ class LinearTruncatedFidelityKernel(Kernel):
 
         if len(self.fidelity_dims) > 1:
             # clamp to avoid numerical issues
-            x12_ = x1[..., self.fidelity_dims[1]].clamp(0, 1).unsqueeze(-1)
-            x22t_ = x2[..., self.fidelity_dims[1]].clamp(0, 1).unsqueeze(-1)
+            fd_idxr1 = torch.full(
+                (1,), self.fidelity_dims[1], dtype=torch.long, device=x1.device
+            )
+            x12_ = x1.index_select(dim=-1, index=fd_idxr1).clamp(0, 1)
+            x22t_ = x2.index_select(dim=-1, index=fd_idxr1).clamp(0, 1)
             x1b_ = torch.cat([x11_, x12_], dim=-1)
             if diag:
                 x2bt_ = torch.cat([x21t_, x22t_], dim=-1)
