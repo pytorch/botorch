@@ -7,12 +7,6 @@ botorch.sampling
 .. automodule:: botorch.sampling
 
 
-Monte-Carlo Sampler API
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. currentmodule:: botorch.sampling.samplers
-.. autoclass:: MCSampler
-    :members:
-
 Monte-Carlo Samplers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.sampling.samplers
