@@ -452,7 +452,7 @@
         <span class="p">):</span>
             <span class="k">if</span> <span class="n">full_name</span> <span class="ow">in</span> <span class="n">subset_batch_dict</span><span class="p">:</span>
                 <span class="n">idx</span> <span class="o">=</span> <span class="n">subset_batch_dict</span><span class="p">[</span><span class="n">full_name</span><span class="p">]</span>
-                <span class="n">new_data</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">index_select</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">tidxr</span><span class="p">)</span>
+                <span class="n">new_data</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">index_select</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">idx</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">tidxr</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">m</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
                     <span class="n">new_data</span> <span class="o">=</span> <span class="n">new_data</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
                 <span class="n">p</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">new_data</span>

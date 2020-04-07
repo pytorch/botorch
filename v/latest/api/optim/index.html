@@ -30,9 +30,9 @@
 <div class="section" id="module-botorch.optim.optimize">
 <span id="acquisition-function-optimization"></span><h3>Acquisition Function Optimization<a class="headerlink" href="#module-botorch.optim.optimize" title="Permalink to this headline">¶</a></h3>
 <p>Methods for optimizing acquisition functions.</p>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.optim.optimize.optimize_acqf">
-<code class="sig-prename descclassname">botorch.optim.optimize.</code><code class="sig-name descname">optimize_acqf</code><span class="sig-paren">(</span><em class="sig-param">acq_function</em>, <em class="sig-param">bounds</em>, <em class="sig-param">q</em>, <em class="sig-param">num_restarts</em>, <em class="sig-param">raw_samples</em>, <em class="sig-param">options=None</em>, <em class="sig-param">inequality_constraints=None</em>, <em class="sig-param">equality_constraints=None</em>, <em class="sig-param">fixed_features=None</em>, <em class="sig-param">post_processing_func=None</em>, <em class="sig-param">batch_initial_conditions=None</em>, <em class="sig-param">return_best_only=True</em>, <em class="sig-param">sequential=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/optimize.html#optimize_acqf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.optimize.optimize_acqf" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.optim.optimize.</code><code class="sig-name descname">optimize_acqf</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">acq_function</span></em>, <em class="sig-param"><span class="n">bounds</span></em>, <em class="sig-param"><span class="n">q</span></em>, <em class="sig-param"><span class="n">num_restarts</span></em>, <em class="sig-param"><span class="n">raw_samples</span></em>, <em class="sig-param"><span class="n">options</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">inequality_constraints</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">equality_constraints</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">fixed_features</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">post_processing_func</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">batch_initial_conditions</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">return_best_only</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">sequential</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/optimize.html#optimize_acqf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.optimize.optimize_acqf" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a set of candidates via multi-start optimization.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -93,9 +93,9 @@ values conditional on having observed canidates <cite>0,1,…,i-1</cite>.</p></l
 </dd>
 </dl>
 </dd></dl>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.optim.optimize.optimize_acqf_cyclic">
-<code class="sig-prename descclassname">botorch.optim.optimize.</code><code class="sig-name descname">optimize_acqf_cyclic</code><span class="sig-paren">(</span><em class="sig-param">acq_function</em>, <em class="sig-param">bounds</em>, <em class="sig-param">q</em>, <em class="sig-param">num_restarts</em>, <em class="sig-param">raw_samples</em>, <em class="sig-param">options=None</em>, <em class="sig-param">inequality_constraints=None</em>, <em class="sig-param">equality_constraints=None</em>, <em class="sig-param">fixed_features=None</em>, <em class="sig-param">post_processing_func=None</em>, <em class="sig-param">batch_initial_conditions=None</em>, <em class="sig-param">cyclic_options=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/optimize.html#optimize_acqf_cyclic"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.optimize.optimize_acqf_cyclic" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.optim.optimize.</code><code class="sig-name descname">optimize_acqf_cyclic</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">acq_function</span></em>, <em class="sig-param"><span class="n">bounds</span></em>, <em class="sig-param"><span class="n">q</span></em>, <em class="sig-param"><span class="n">num_restarts</span></em>, <em class="sig-param"><span class="n">raw_samples</span></em>, <em class="sig-param"><span class="n">options</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">inequality_constraints</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">equality_constraints</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">fixed_features</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">post_processing_func</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">batch_initial_conditions</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">cyclic_options</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/optimize.html#optimize_acqf_cyclic"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.optimize.optimize_acqf_cyclic" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a set of <cite>q</cite> candidates via cyclic optimization.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -152,7 +152,7 @@ having observed all candidates except candidate `i</cite>.</p></li>
 <div class="section" id="module-botorch.optim.fit">
 <span id="model-fitting-optimization"></span><h3>Model Fitting Optimization<a class="headerlink" href="#module-botorch.optim.fit" title="Permalink to this headline">¶</a></h3>
 <p>Tools for model fitting.</p>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.optim.fit.fit_gpytorch_torch">
 <code class="sig-prename descclassname">botorch.optim.fit.</code><code class="sig-name descname">fit_gpytorch_torch</code><span class="sig-paren">(</span><em class="sig-param">mll</em>, <em class="sig-param">bounds=None</em>, <em class="sig-param">optimizer_cls=&lt;class 'torch.optim.adam.Adam'&gt;</em>, <em class="sig-param">options=None</em>, <em class="sig-param">track_iterations=True</em>, <em class="sig-param">approx_mll=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/fit.html#fit_gpytorch_torch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.fit.fit_gpytorch_torch" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fit a gpytorch model by maximizing MLL with a torch optimizer.</p>
@@ -201,7 +201,7 @@ iteration. If track_iterations is False, will be empty.</p>
 </pre></div>
 </div>
 </dd></dl>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.optim.fit.fit_gpytorch_scipy">
 <code class="sig-prename descclassname">botorch.optim.fit.</code><code class="sig-name descname">fit_gpytorch_scipy</code><span class="sig-paren">(</span><em class="sig-param">mll</em>, <em class="sig-param">bounds=None</em>, <em class="sig-param">method='L-BFGS-B'</em>, <em class="sig-param">options=None</em>, <em class="sig-param">track_iterations=True</em>, <em class="sig-param">approx_mll=False</em>, <em class="sig-param">scipy_objective=&lt;function _scipy_objective_and_grad&gt;</em>, <em class="sig-param">module_to_array_func=&lt;function module_to_array&gt;</em>, <em class="sig-param">module_from_array_func=&lt;function set_params_with_array&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/fit.html#fit_gpytorch_scipy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.fit.fit_gpytorch_scipy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fit a gpytorch model by maximizing MLL with a scipy optimizer.</p>
@@ -248,9 +248,9 @@ iteration. If track_iterations is False, will be empty.</p>
 </div>
 <div class="section" id="module-botorch.optim.initializers">
 <span id="initialization-helpers"></span><h3>Initialization Helpers<a class="headerlink" href="#module-botorch.optim.initializers" title="Permalink to this headline">¶</a></h3>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.optim.initializers.gen_batch_initial_conditions">
-<code class="sig-prename descclassname">botorch.optim.initializers.</code><code class="sig-name descname">gen_batch_initial_conditions</code><span class="sig-paren">(</span><em class="sig-param">acq_function</em>, <em class="sig-param">bounds</em>, <em class="sig-param">q</em>, <em class="sig-param">num_restarts</em>, <em class="sig-param">raw_samples</em>, <em class="sig-param">options=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/initializers.html#gen_batch_initial_conditions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.initializers.gen_batch_initial_conditions" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.optim.initializers.</code><code class="sig-name descname">gen_batch_initial_conditions</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">acq_function</span></em>, <em class="sig-param"><span class="n">bounds</span></em>, <em class="sig-param"><span class="n">q</span></em>, <em class="sig-param"><span class="n">num_restarts</span></em>, <em class="sig-param"><span class="n">raw_samples</span></em>, <em class="sig-param"><span class="n">options</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/initializers.html#gen_batch_initial_conditions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.initializers.gen_batch_initial_conditions" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a batch of initial conditions for random-restart optimziation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -285,9 +285,9 @@ functions).</p></li>
 </pre></div>
 </div>
 </dd></dl>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.optim.initializers.gen_one_shot_kg_initial_conditions">
-<code class="sig-prename descclassname">botorch.optim.initializers.</code><code class="sig-name descname">gen_one_shot_kg_initial_conditions</code><span class="sig-paren">(</span><em class="sig-param">acq_function</em>, <em class="sig-param">bounds</em>, <em class="sig-param">q</em>, <em class="sig-param">num_restarts</em>, <em class="sig-param">raw_samples</em>, <em class="sig-param">options=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/initializers.html#gen_one_shot_kg_initial_conditions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.initializers.gen_one_shot_kg_initial_conditions" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.optim.initializers.</code><code class="sig-name descname">gen_one_shot_kg_initial_conditions</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">acq_function</span></em>, <em class="sig-param"><span class="n">bounds</span></em>, <em class="sig-param"><span class="n">q</span></em>, <em class="sig-param"><span class="n">num_restarts</span></em>, <em class="sig-param"><span class="n">raw_samples</span></em>, <em class="sig-param"><span class="n">options</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/initializers.html#gen_one_shot_kg_initial_conditions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.initializers.gen_one_shot_kg_initial_conditions" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a batch of smart initializations for qKnowledgeGradient.</p>
 <p>This function generates initial conditions for optimizing one-shot KG using
 the maximizer of the posterior objective. Intutively, the maximizer of the
@@ -341,9 +341,9 @@ of points (candidate points plus fantasy points).</p>
 </pre></div>
 </div>
 </dd></dl>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.optim.initializers.initialize_q_batch">
-<code class="sig-prename descclassname">botorch.optim.initializers.</code><code class="sig-name descname">initialize_q_batch</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">Y</em>, <em class="sig-param">n</em>, <em class="sig-param">eta=1.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/initializers.html#initialize_q_batch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.initializers.initialize_q_batch" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.optim.initializers.</code><code class="sig-name descname">initialize_q_batch</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="n">Y</span></em>, <em class="sig-param"><span class="n">n</span></em>, <em class="sig-param"><span class="n">eta</span><span class="o">=</span><span class="default_value">1.0</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/initializers.html#initialize_q_batch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.initializers.initialize_q_batch" title="Permalink to this definition">¶</a></dt>
 <dd><p>Heuristic for selecting initial conditions for candidate generation.</p>
 <p>This heuristic selects points from <cite>X</cite> (without replacement) with probability
 proportional to <cite>exp(eta * Z)</cite>, where <cite>Z = (Y - mean(Y)) / std(Y)</cite> and <cite>eta</cite>
@@ -378,9 +378,9 @@ is the value of the batch acquisition function to be maximized.</p></li>
 </pre></div>
 </div>
 </dd></dl>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.optim.initializers.initialize_q_batch_nonneg">
-<code class="sig-prename descclassname">botorch.optim.initializers.</code><code class="sig-name descname">initialize_q_batch_nonneg</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">Y</em>, <em class="sig-param">n</em>, <em class="sig-param">eta=1.0</em>, <em class="sig-param">alpha=0.0001</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/initializers.html#initialize_q_batch_nonneg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.initializers.initialize_q_batch_nonneg" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.optim.initializers.</code><code class="sig-name descname">initialize_q_batch_nonneg</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="n">Y</span></em>, <em class="sig-param"><span class="n">n</span></em>, <em class="sig-param"><span class="n">eta</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">alpha</span><span class="o">=</span><span class="default_value">0.0001</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/initializers.html#initialize_q_batch_nonneg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.initializers.initialize_q_batch_nonneg" title="Permalink to this definition">¶</a></dt>
 <dd><p>Heuristic for selecting initial conditions for non-neg. acquisition functions.</p>
 <p>This function is similar to <cite>initialize_q_batch</cite>, but designed specifically
 for acquisition functions that are non-negative and possibly zero over
@@ -420,16 +420,16 @@ which to ignore samples. All input samples for which
 </div>
 <div class="section" id="module-botorch.optim.stopping">
 <span id="stopping-criteria"></span><h3>Stopping Criteria<a class="headerlink" href="#module-botorch.optim.stopping" title="Permalink to this headline">¶</a></h3>
-<dl class="class">
+<dl class="py class">
 <dt id="botorch.optim.stopping.StoppingCriterion">
 <em class="property">class </em><code class="sig-prename descclassname">botorch.optim.stopping.</code><code class="sig-name descname">StoppingCriterion</code><a class="reference internal" href="_modules/botorch/optim/stopping.html#StoppingCriterion"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.stopping.StoppingCriterion" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
 <p>Base class for evaluating optimization convergence.</p>
 <p>Stopping criteria are implemented as a objects rather than a function, so that they
 can keep track of past function values between optimization steps.</p>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.optim.stopping.StoppingCriterion.evaluate">
-<em class="property">abstract </em><code class="sig-name descname">evaluate</code><span class="sig-paren">(</span><em class="sig-param">fvals</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/stopping.html#StoppingCriterion.evaluate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.stopping.StoppingCriterion.evaluate" title="Permalink to this definition">¶</a></dt>
+<em class="property">abstract </em><code class="sig-name descname">evaluate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fvals</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/stopping.html#StoppingCriterion.evaluate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.stopping.StoppingCriterion.evaluate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the stopping criterion.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -447,9 +447,9 @@ true for all elements.</p>
 </dl>
 </dd></dl>
 </dd></dl>
-<dl class="class">
+<dl class="py class">
 <dt id="botorch.optim.stopping.ExpMAStoppingCriterion">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.optim.stopping.</code><code class="sig-name descname">ExpMAStoppingCriterion</code><span class="sig-paren">(</span><em class="sig-param">maxiter=10000</em>, <em class="sig-param">minimize=True</em>, <em class="sig-param">n_window=10</em>, <em class="sig-param">eta=1.0</em>, <em class="sig-param">rel_tol=1e-05</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/stopping.html#ExpMAStoppingCriterion"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.stopping.ExpMAStoppingCriterion" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">botorch.optim.stopping.</code><code class="sig-name descname">ExpMAStoppingCriterion</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">maxiter</span><span class="o">=</span><span class="default_value">10000</span></em>, <em class="sig-param"><span class="n">minimize</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">n_window</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="n">eta</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">rel_tol</span><span class="o">=</span><span class="default_value">1e-05</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/stopping.html#ExpMAStoppingCriterion"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.stopping.ExpMAStoppingCriterion" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.optim.stopping.StoppingCriterion" title="botorch.optim.stopping.StoppingCriterion"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.optim.stopping.StoppingCriterion</span></code></a></p>
 <p>Exponential moving average stopping criterion.</p>
 <p>Computes an exponentially weighted moving average over window length <cite>n_window</cite>
@@ -476,9 +476,9 @@ Letting <cite>ma[i] := sum_j(v[i,j])</cite>, the criterion evaluates to <cite>Tr
 </ul>
 </dd>
 </dl>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.optim.stopping.ExpMAStoppingCriterion.evaluate">
-<code class="sig-name descname">evaluate</code><span class="sig-paren">(</span><em class="sig-param">fvals</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/stopping.html#ExpMAStoppingCriterion.evaluate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.stopping.ExpMAStoppingCriterion.evaluate" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">evaluate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fvals</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/stopping.html#ExpMAStoppingCriterion.evaluate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.stopping.ExpMAStoppingCriterion.evaluate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the stopping criterion.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -508,30 +508,30 @@ true for all elements.</p>
 <p>A converter that simplifies using numpy-based optimizers with generic torch
 <cite>nn.Module</cite> classes. This enables using a <cite>scipy.optim.minimize</cite> optimizer
 for optimizing module parameters.</p>
-<dl class="class">
+<dl class="py class">
 <dt id="botorch.optim.numpy_converter.TorchAttr">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.optim.numpy_converter.</code><code class="sig-name descname">TorchAttr</code><span class="sig-paren">(</span><em class="sig-param">shape</em>, <em class="sig-param">dtype</em>, <em class="sig-param">device</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/numpy_converter.html#TorchAttr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.numpy_converter.TorchAttr" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">botorch.optim.numpy_converter.</code><code class="sig-name descname">TorchAttr</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">shape</span></em>, <em class="sig-param"><span class="n">dtype</span></em>, <em class="sig-param"><span class="n">device</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/numpy_converter.html#TorchAttr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.numpy_converter.TorchAttr" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></p>
 <p>Create new instance of TorchAttr(shape, dtype, device)</p>
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="botorch.optim.numpy_converter.TorchAttr.shape">
 <code class="sig-name descname">shape</code><a class="headerlink" href="#botorch.optim.numpy_converter.TorchAttr.shape" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 0</p>
 </dd></dl>
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="botorch.optim.numpy_converter.TorchAttr.dtype">
 <code class="sig-name descname">dtype</code><a class="headerlink" href="#botorch.optim.numpy_converter.TorchAttr.dtype" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 1</p>
 </dd></dl>
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="botorch.optim.numpy_converter.TorchAttr.device">
 <code class="sig-name descname">device</code><a class="headerlink" href="#botorch.optim.numpy_converter.TorchAttr.device" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 2</p>
 </dd></dl>
 </dd></dl>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.optim.numpy_converter.module_to_array">
-<code class="sig-prename descclassname">botorch.optim.numpy_converter.</code><code class="sig-name descname">module_to_array</code><span class="sig-paren">(</span><em class="sig-param">module</em>, <em class="sig-param">bounds=None</em>, <em class="sig-param">exclude=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/numpy_converter.html#module_to_array"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.numpy_converter.module_to_array" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.optim.numpy_converter.</code><code class="sig-name descname">module_to_array</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">module</span></em>, <em class="sig-param"><span class="n">bounds</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">exclude</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/numpy_converter.html#module_to_array"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.numpy_converter.module_to_array" title="Permalink to this definition">¶</a></dt>
 <dd><p>Extract named parameters from a module into a numpy array.</p>
 <p>Only extracts parameters with requires_grad, since it is meant for optimizing.</p>
 <dl class="field-list simple">
@@ -564,9 +564,9 @@ one constraint is finite, and None otherwise.</p>
 </pre></div>
 </div>
 </dd></dl>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.optim.numpy_converter.set_params_with_array">
-<code class="sig-prename descclassname">botorch.optim.numpy_converter.</code><code class="sig-name descname">set_params_with_array</code><span class="sig-paren">(</span><em class="sig-param">module</em>, <em class="sig-param">x</em>, <em class="sig-param">property_dict</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/numpy_converter.html#set_params_with_array"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.numpy_converter.set_params_with_array" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.optim.numpy_converter.</code><code class="sig-name descname">set_params_with_array</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">module</span></em>, <em class="sig-param"><span class="n">x</span></em>, <em class="sig-param"><span class="n">property_dict</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/numpy_converter.html#set_params_with_array"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.numpy_converter.set_params_with_array" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set module parameters with values from numpy array.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -596,9 +596,9 @@ returned by module_to_array.</p></li>
 <div class="section" id="module-botorch.optim.parameter_constraints">
 <span id="parameter-constraint-utilities"></span><h3>Parameter Constraint Utilities<a class="headerlink" href="#module-botorch.optim.parameter_constraints" title="Permalink to this headline">¶</a></h3>
 <p>Utility functions for constrained optimization.</p>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.optim.parameter_constraints.make_scipy_bounds">
-<code class="sig-prename descclassname">botorch.optim.parameter_constraints.</code><code class="sig-name descname">make_scipy_bounds</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">lower_bounds=None</em>, <em class="sig-param">upper_bounds=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/parameter_constraints.html#make_scipy_bounds"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.parameter_constraints.make_scipy_bounds" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.optim.parameter_constraints.</code><code class="sig-name descname">make_scipy_bounds</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="n">lower_bounds</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">upper_bounds</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/parameter_constraints.html#make_scipy_bounds"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.parameter_constraints.make_scipy_bounds" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates a scipy Bounds object for optimziation</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -624,9 +624,9 @@ None, and None otherwise.</p>
 </pre></div>
 </div>
 </dd></dl>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.optim.parameter_constraints.make_scipy_linear_constraints">
-<code class="sig-prename descclassname">botorch.optim.parameter_constraints.</code><code class="sig-name descname">make_scipy_linear_constraints</code><span class="sig-paren">(</span><em class="sig-param">shapeX</em>, <em class="sig-param">inequality_constraints=None</em>, <em class="sig-param">equality_constraints=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/parameter_constraints.html#make_scipy_linear_constraints"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.parameter_constraints.make_scipy_linear_constraints" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.optim.parameter_constraints.</code><code class="sig-name descname">make_scipy_linear_constraints</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">shapeX</span></em>, <em class="sig-param"><span class="n">inequality_constraints</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">equality_constraints</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/parameter_constraints.html#make_scipy_linear_constraints"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.parameter_constraints.make_scipy_linear_constraints" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate scipy constraints from torch representation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -677,9 +677,9 @@ element of the q-batch, for each of the 3 t-batches:</p>
 </pre></div>
 </div>
 </dd></dl>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.optim.parameter_constraints.eval_lin_constraint">
-<code class="sig-prename descclassname">botorch.optim.parameter_constraints.</code><code class="sig-name descname">eval_lin_constraint</code><span class="sig-paren">(</span><em class="sig-param">x</em>, <em class="sig-param">flat_idxr</em>, <em class="sig-param">coeffs</em>, <em class="sig-param">rhs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/parameter_constraints.html#eval_lin_constraint"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.parameter_constraints.eval_lin_constraint" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.optim.parameter_constraints.</code><code class="sig-name descname">eval_lin_constraint</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em>, <em class="sig-param"><span class="n">flat_idxr</span></em>, <em class="sig-param"><span class="n">coeffs</span></em>, <em class="sig-param"><span class="n">rhs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/parameter_constraints.html#eval_lin_constraint"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.parameter_constraints.eval_lin_constraint" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate a single linear constraint.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -698,9 +698,9 @@ element of the q-batch, for each of the 3 t-batches:</p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.optim.parameter_constraints.lin_constraint_jac">
-<code class="sig-prename descclassname">botorch.optim.parameter_constraints.</code><code class="sig-name descname">lin_constraint_jac</code><span class="sig-paren">(</span><em class="sig-param">x</em>, <em class="sig-param">flat_idxr</em>, <em class="sig-param">coeffs</em>, <em class="sig-param">n</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/parameter_constraints.html#lin_constraint_jac"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.parameter_constraints.lin_constraint_jac" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.optim.parameter_constraints.</code><code class="sig-name descname">lin_constraint_jac</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em>, <em class="sig-param"><span class="n">flat_idxr</span></em>, <em class="sig-param"><span class="n">coeffs</span></em>, <em class="sig-param"><span class="n">n</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/parameter_constraints.html#lin_constraint_jac"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.parameter_constraints.lin_constraint_jac" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the Jacobian associated with a linear constraint.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -723,9 +723,9 @@ element of the q-batch, for each of the 3 t-batches:</p>
 <div class="section" id="module-botorch.optim.utils">
 <span id="general-optimization-utilities"></span><h3>General Optimization Utilities<a class="headerlink" href="#module-botorch.optim.utils" title="Permalink to this headline">¶</a></h3>
 <p>Utilities for optimization.</p>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.optim.utils.sample_all_priors">
-<code class="sig-prename descclassname">botorch.optim.utils.</code><code class="sig-name descname">sample_all_priors</code><span class="sig-paren">(</span><em class="sig-param">model</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/utils.html#sample_all_priors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.utils.sample_all_priors" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.optim.utils.</code><code class="sig-name descname">sample_all_priors</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/utils.html#sample_all_priors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.utils.sample_all_priors" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sample from hyperparameter priors (in-place).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -736,9 +736,9 @@ element of the q-batch, for each of the 3 t-batches:</p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.optim.utils.columnwise_clamp">
-<code class="sig-prename descclassname">botorch.optim.utils.</code><code class="sig-name descname">columnwise_clamp</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">lower=None</em>, <em class="sig-param">upper=None</em>, <em class="sig-param">raise_on_violation=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/utils.html#columnwise_clamp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.utils.columnwise_clamp" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.optim.utils.</code><code class="sig-name descname">columnwise_clamp</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="n">lower</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">upper</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">raise_on_violation</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/utils.html#columnwise_clamp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.utils.columnwise_clamp" title="Permalink to this definition">¶</a></dt>
 <dd><p>Clamp values of a Tensor in column-wise fashion (with support for t-batches).</p>
 <p>This function is useful in conjunction with optimizers from the torch.optim
 package, which don’t natively handle constraints. If you apply this after
@@ -765,9 +765,9 @@ satisfy imposed bounds only up to numerical accuracy.</p></li>
 </dd>
 </dl>
 </dd></dl>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.optim.utils.fix_features">
-<code class="sig-prename descclassname">botorch.optim.utils.</code><code class="sig-name descname">fix_features</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">fixed_features=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/utils.html#fix_features"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.utils.fix_features" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.optim.utils.</code><code class="sig-name descname">fix_features</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="n">fixed_features</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/utils.html#fix_features"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.utils.fix_features" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fix feature values in a Tensor.</p>
 <p>The fixed features will have zero gradient in downstream calculations.</p>
 <dl class="field-list simple">
