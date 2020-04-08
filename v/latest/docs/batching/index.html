@@ -68,7 +68,7 @@
                 };
               }
             });
-        </script></nav></div><div class="container mainContainer"><div class="wrapper"><div class="post"><header class="postHeader"><a class="edit-page-link button" href="https://github.com/pytorch/botorch/edit/master/docs/batching.md" target="_blank" rel="noreferrer noopener">Edit</a><h1 class="postHeaderTitle">Batching</h1></header><article><div><span><p>BoTorch makes frequent use of &quot;batching&quot;, both in the sense of batch acquisition
+        </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><a class="edit-page-link button" href="https://github.com/pytorch/botorch/edit/master/docs/batching.md" target="_blank" rel="noreferrer noopener">Edit</a><h1 id="__docusaurus" class="postHeaderTitle">Batching</h1></header><article><div><span><p>BoTorch makes frequent use of &quot;batching&quot;, both in the sense of batch acquisition
 functions for multiple candidates as well as in the sense of parallel or batch
 computation (neither of these should be confused with mini-batch training).
 Here we explain some of the common patterns you will see in BoTorch for
@@ -178,7 +178,7 @@ necessary over $\textit{batch_shape}$)</p></li>
 <p>The <a href="../api/models.html#batchedmultioutputgpytorchmodel"><code>BatchedMultiOutputGPyTorchModel</code></a>
 class implements a fast multi-output model (assuming conditional independence of
 the outputs given the input) by batching over the outputs.</p>
-<h5><a class="anchor" aria-hidden="true" id="training-inputs-targets"></a><a href="#training-inputs-targets" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Training Inputs/Targets</h5>
+<h5><a class="anchor" aria-hidden="true" id="training-inputstargets"></a><a href="#training-inputstargets" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Training Inputs/Targets</h5>
 <p>Given training inputs with shape $\textit{batch_shape} \times n \times d$
 and training outputs with shape $\textit{batch_shape} \times n \times o$,
 the <code>BatchedMultiOutputGPyTorchModel</code> permutes the training outputs to make the
