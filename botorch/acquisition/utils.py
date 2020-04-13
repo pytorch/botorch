@@ -11,12 +11,16 @@ Utilities for acquisition functions.
 from __future__ import annotations
 
 import math
+import warnings
 from typing import Callable, Dict, List, Optional
 
 import torch
 from torch import Tensor
+from torch.quasirandom import SobolEngine
 
+from .. import settings
 from ..exceptions.errors import UnsupportedError
+from ..exceptions.warnings import SamplingWarning
 from ..models.model import Model
 from ..sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
 from ..utils.transforms import squeeze_last_dim
@@ -213,10 +217,19 @@ def prune_inferior_points(
     max_points = math.ceil(max_frac * X.size(-2))
     if max_points < 1 or max_points > X.size(-2):
         raise ValueError(f"max_frac must take values in (0, 1], is {max_frac}")
-    sampler = SobolQMCNormalSampler(num_samples=num_samples)
     with torch.no_grad():
         posterior = model.posterior(X=X)
-        samples = sampler(posterior)
+    if posterior.event_shape.numel() > SobolEngine.MAXDIM:
+        if settings.debug.on():
+            warnings.warn(
+                f"Sample dimension q*m={posterior.event_shape.numel()} exceeding Sobol "
+                f"max dimension ({SobolEngine.MAXDIM}). Using iid samples instead.",
+                SamplingWarning,
+            )
+        sampler = IIDNormalSampler(num_samples=num_samples)
+    else:
+        sampler = SobolQMCNormalSampler(num_samples=num_samples)
+    samples = sampler(posterior)
     if objective is None:
         objective = IdentityMCObjective()
     obj_vals = objective(samples)

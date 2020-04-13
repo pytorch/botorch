@@ -5,9 +5,12 @@
 # LICENSE file in the root directory of this source tree.
 
 import itertools
+import warnings
+from contextlib import ExitStack
 from unittest import mock
 
 import torch
+from botorch import settings
 from botorch.acquisition import monte_carlo
 from botorch.acquisition.objective import GenericMCObjective, MCAcquisitionObjective
 from botorch.acquisition.utils import (
@@ -17,7 +20,8 @@ from botorch.acquisition.utils import (
     project_to_target_fidelity,
     prune_inferior_points,
 )
-from botorch.exceptions import UnsupportedError
+from botorch.exceptions.errors import UnsupportedError
+from botorch.exceptions.warnings import SamplingWarning
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 from torch import Tensor
@@ -351,6 +355,22 @@ class TestPruneInferiorPoints(BotorchTestCase):
                 mm = MockModel(MockPosterior(samples=samples))
                 X_pruned = prune_inferior_points(model=mm, X=X)
             self.assertTrue(torch.equal(X_pruned, X[:2]))
+            # test high-dim sampling
+            with ExitStack() as es:
+                mock_event_shape = es.enter_context(
+                    mock.patch(
+                        "botorch.utils.testing.MockPosterior.event_shape",
+                        new_callable=mock.PropertyMock,
+                    )
+                )
+                mock_event_shape.return_value = torch.Size([1, 1, 1112])
+                es.enter_context(
+                    mock.patch.object(MockPosterior, "rsample", return_value=samples)
+                )
+                mm = MockModel(MockPosterior(samples=samples))
+                with warnings.catch_warnings(record=True) as ws, settings.debug(True):
+                    prune_inferior_points(model=mm, X=X)
+                    self.assertTrue(issubclass(ws[-1].category, SamplingWarning))
 
 
 class TestFidelityUtils(BotorchTestCase):
