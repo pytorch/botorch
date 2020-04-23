@@ -32,7 +32,7 @@ Reference: <a class="reference external" href="https://www.sfu.ca/~ssurjano/opti
 <dl class="py class">
 <dt id="botorch.test_functions.synthetic.SyntheticTestFunction">
 <em class="property">class </em><code class="sig-prename descclassname">botorch.test_functions.synthetic.</code><code class="sig-name descname">SyntheticTestFunction</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">noise_std</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">negate</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#SyntheticTestFunction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.test_functions.synthetic.SyntheticTestFunction" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.base.BaseTestProblem</span></code></p>
 <p>Base class for synthetic test functions.</p>
 <p>Base constructor for synthetic test functions.</p>
 <dl class="field-list simple">
@@ -44,8 +44,8 @@ Reference: <a class="reference external" href="https://www.sfu.ca/~ssurjano/opti
 </dd>
 </dl>
 <dl class="py attribute">
-<dt id="botorch.test_functions.synthetic.SyntheticTestFunction.dim">
-<code class="sig-name descname">dim</code><em class="property">: int</em><em class="property"> = None</em><a class="headerlink" href="#botorch.test_functions.synthetic.SyntheticTestFunction.dim" title="Permalink to this definition">¶</a></dt>
+<dt id="botorch.test_functions.synthetic.SyntheticTestFunction.num_objectives">
+<code class="sig-name descname">num_objectives</code><em class="property">: int</em><em class="property"> = 1</em><a class="headerlink" href="#botorch.test_functions.synthetic.SyntheticTestFunction.num_objectives" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py method">
 <dt id="botorch.test_functions.synthetic.SyntheticTestFunction.optimal_value">
@@ -54,32 +54,6 @@ Reference: <a class="reference external" href="https://www.sfu.ca/~ssurjano/opti
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py method">
-<dt id="botorch.test_functions.synthetic.SyntheticTestFunction.forward">
-<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="n">noise</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#SyntheticTestFunction.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.test_functions.synthetic.SyntheticTestFunction.forward" title="Permalink to this definition">¶</a></dt>
-<dd><p>Evaluate the function on a set of points.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – The point(s) at which to evaluate the function.</p></li>
-<li><p><strong>noise</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If <cite>True</cite>, add observation noise as specified by <cite>noise_std</cite>.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py method">
-<dt id="botorch.test_functions.synthetic.SyntheticTestFunction.evaluate_true">
-<em class="property">abstract </em><code class="sig-name descname">evaluate_true</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#SyntheticTestFunction.evaluate_true"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.test_functions.synthetic.SyntheticTestFunction.evaluate_true" title="Permalink to this definition">¶</a></dt>
-<dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
 </dd>
 </dl>
 </dd></dl>
@@ -133,7 +107,7 @@ Reference: <a class="reference external" href="https://www.sfu.ca/~ssurjano/opti
 </dl>
 <dl class="py attribute">
 <dt id="botorch.test_functions.synthetic.Beale.dim">
-<code class="sig-name descname">dim</code><em class="property">: int</em><em class="property"> = 2</em><a class="headerlink" href="#botorch.test_functions.synthetic.Beale.dim" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">dim</code><em class="property"> = 2</em><a class="headerlink" href="#botorch.test_functions.synthetic.Beale.dim" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py method">
 <dt id="botorch.test_functions.synthetic.Beale.evaluate_true">
@@ -170,7 +144,7 @@ B has 3 minimizers for its global minimum at <cite>z_1 = (-pi, 12.275)</cite>,
 </dl>
 <dl class="py attribute">
 <dt id="botorch.test_functions.synthetic.Branin.dim">
-<code class="sig-name descname">dim</code><em class="property">: int</em><em class="property"> = 2</em><a class="headerlink" href="#botorch.test_functions.synthetic.Branin.dim" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">dim</code><em class="property"> = 2</em><a class="headerlink" href="#botorch.test_functions.synthetic.Branin.dim" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py method">
 <dt id="botorch.test_functions.synthetic.Branin.evaluate_true">
@@ -233,7 +207,7 @@ B has 3 minimizers for its global minimum at <cite>z_1 = (-pi, 12.275)</cite>,
 </dl>
 <dl class="py attribute">
 <dt id="botorch.test_functions.synthetic.Cosine8.dim">
-<code class="sig-name descname">dim</code><em class="property">: int</em><em class="property"> = 8</em><a class="headerlink" href="#botorch.test_functions.synthetic.Cosine8.dim" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">dim</code><em class="property"> = 8</em><a class="headerlink" href="#botorch.test_functions.synthetic.Cosine8.dim" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py method">
 <dt id="botorch.test_functions.synthetic.Cosine8.evaluate_true">
@@ -261,7 +235,7 @@ B has 3 minimizers for its global minimum at <cite>z_1 = (-pi, 12.275)</cite>,
 </dl>
 <dl class="py attribute">
 <dt id="botorch.test_functions.synthetic.DropWave.dim">
-<code class="sig-name descname">dim</code><em class="property">: int</em><em class="property"> = 2</em><a class="headerlink" href="#botorch.test_functions.synthetic.DropWave.dim" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">dim</code><em class="property"> = 2</em><a class="headerlink" href="#botorch.test_functions.synthetic.DropWave.dim" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py method">
 <dt id="botorch.test_functions.synthetic.DropWave.evaluate_true">
@@ -287,10 +261,6 @@ B has 3 minimizers for its global minimum at <cite>z_1 = (-pi, 12.275)</cite>,
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt id="botorch.test_functions.synthetic.DixonPrice.dim">
-<code class="sig-name descname">dim</code><em class="property"> = None</em><a class="headerlink" href="#botorch.test_functions.synthetic.DixonPrice.dim" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 <dl class="py method">
 <dt id="botorch.test_functions.synthetic.DixonPrice.evaluate_true">
 <code class="sig-name descname">evaluate_true</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#DixonPrice.evaluate_true"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.test_functions.synthetic.DixonPrice.evaluate_true" title="Permalink to this definition">¶</a></dt>
@@ -349,10 +319,6 @@ B has 3 minimizers for its global minimum at <cite>z_1 = (-pi, 12.275)</cite>,
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt id="botorch.test_functions.synthetic.Griewank.dim">
-<code class="sig-name descname">dim</code><em class="property"> = None</em><a class="headerlink" href="#botorch.test_functions.synthetic.Griewank.dim" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 <dl class="py method">
 <dt id="botorch.test_functions.synthetic.Griewank.evaluate_true">
 <code class="sig-name descname">evaluate_true</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#Griewank.evaluate_true"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.test_functions.synthetic.Griewank.evaluate_true" title="Permalink to this definition">¶</a></dt>
@@ -388,10 +354,6 @@ B has 3 minimizers for its global minimum at <cite>z_1 = (-pi, 12.275)</cite>,
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt id="botorch.test_functions.synthetic.Hartmann.dim">
-<code class="sig-name descname">dim</code><em class="property"> = None</em><a class="headerlink" href="#botorch.test_functions.synthetic.Hartmann.dim" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 <dl class="py method">
 <dt id="botorch.test_functions.synthetic.Hartmann.optimal_value">
 <em class="property">property </em><code class="sig-name descname">optimal_value</code><a class="headerlink" href="#botorch.test_functions.synthetic.Hartmann.optimal_value" title="Permalink to this definition">¶</a></dt>
@@ -449,7 +411,7 @@ z_4 = ( 8.05502, -9.66459)</p>
 </dl>
 <dl class="py attribute">
 <dt id="botorch.test_functions.synthetic.HolderTable.dim">
-<code class="sig-name descname">dim</code><em class="property">: int</em><em class="property"> = 2</em><a class="headerlink" href="#botorch.test_functions.synthetic.HolderTable.dim" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">dim</code><em class="property"> = 2</em><a class="headerlink" href="#botorch.test_functions.synthetic.HolderTable.dim" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py method">
 <dt id="botorch.test_functions.synthetic.HolderTable.evaluate_true">
@@ -487,10 +449,6 @@ z_4 = ( 8.05502, -9.66459)</p>
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt id="botorch.test_functions.synthetic.Levy.dim">
-<code class="sig-name descname">dim</code><em class="property"> = None</em><a class="headerlink" href="#botorch.test_functions.synthetic.Levy.dim" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 <dl class="py method">
 <dt id="botorch.test_functions.synthetic.Levy.evaluate_true">
 <code class="sig-name descname">evaluate_true</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#Levy.evaluate_true"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.test_functions.synthetic.Levy.evaluate_true" title="Permalink to this definition">¶</a></dt>
@@ -520,10 +478,6 @@ z_4 = ( 8.05502, -9.66459)</p>
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt id="botorch.test_functions.synthetic.Michalewicz.dim">
-<code class="sig-name descname">dim</code><em class="property"> = None</em><a class="headerlink" href="#botorch.test_functions.synthetic.Michalewicz.dim" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 <dl class="py method">
 <dt id="botorch.test_functions.synthetic.Michalewicz.optimizers">
 <em class="property">property </em><code class="sig-name descname">optimizers</code><a class="headerlink" href="#botorch.test_functions.synthetic.Michalewicz.optimizers" title="Permalink to this definition">¶</a></dt>
@@ -557,10 +511,6 @@ z_4 = ( 8.05502, -9.66459)</p>
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt id="botorch.test_functions.synthetic.Powell.dim">
-<code class="sig-name descname">dim</code><em class="property"> = None</em><a class="headerlink" href="#botorch.test_functions.synthetic.Powell.dim" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 <dl class="py method">
 <dt id="botorch.test_functions.synthetic.Powell.evaluate_true">
 <code class="sig-name descname">evaluate_true</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#Powell.evaluate_true"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.test_functions.synthetic.Powell.evaluate_true" title="Permalink to this definition">¶</a></dt>
@@ -585,10 +535,6 @@ z_4 = ( 8.05502, -9.66459)</p>
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt id="botorch.test_functions.synthetic.Rastrigin.dim">
-<code class="sig-name descname">dim</code><em class="property"> = None</em><a class="headerlink" href="#botorch.test_functions.synthetic.Rastrigin.dim" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 <dl class="py method">
 <dt id="botorch.test_functions.synthetic.Rastrigin.evaluate_true">
 <code class="sig-name descname">evaluate_true</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#Rastrigin.evaluate_true"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.test_functions.synthetic.Rastrigin.evaluate_true" title="Permalink to this definition">¶</a></dt>
@@ -620,10 +566,6 @@ z_4 = ( 8.05502, -9.66459)</p>
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt id="botorch.test_functions.synthetic.Rosenbrock.dim">
-<code class="sig-name descname">dim</code><em class="property"> = None</em><a class="headerlink" href="#botorch.test_functions.synthetic.Rosenbrock.dim" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 <dl class="py method">
 <dt id="botorch.test_functions.synthetic.Rosenbrock.evaluate_true">
 <code class="sig-name descname">evaluate_true</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#Rosenbrock.evaluate_true"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.test_functions.synthetic.Rosenbrock.evaluate_true" title="Permalink to this definition">¶</a></dt>
@@ -657,7 +599,7 @@ z_4 = ( 8.05502, -9.66459)</p>
 </dl>
 <dl class="py attribute">
 <dt id="botorch.test_functions.synthetic.Shekel.dim">
-<code class="sig-name descname">dim</code><em class="property">: int</em><em class="property"> = 4</em><a class="headerlink" href="#botorch.test_functions.synthetic.Shekel.dim" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">dim</code><em class="property"> = 4</em><a class="headerlink" href="#botorch.test_functions.synthetic.Shekel.dim" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py method">
 <dt id="botorch.test_functions.synthetic.Shekel.evaluate_true">
@@ -685,7 +627,7 @@ z_4 = ( 8.05502, -9.66459)</p>
 </dl>
 <dl class="py attribute">
 <dt id="botorch.test_functions.synthetic.SixHumpCamel.dim">
-<code class="sig-name descname">dim</code><em class="property">: int</em><em class="property"> = 2</em><a class="headerlink" href="#botorch.test_functions.synthetic.SixHumpCamel.dim" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">dim</code><em class="property"> = 2</em><a class="headerlink" href="#botorch.test_functions.synthetic.SixHumpCamel.dim" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py method">
 <dt id="botorch.test_functions.synthetic.SixHumpCamel.evaluate_true">
@@ -717,10 +659,6 @@ z_4 = ( 8.05502, -9.66459)</p>
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt id="botorch.test_functions.synthetic.StyblinskiTang.dim">
-<code class="sig-name descname">dim</code><em class="property"> = None</em><a class="headerlink" href="#botorch.test_functions.synthetic.StyblinskiTang.dim" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 <dl class="py method">
 <dt id="botorch.test_functions.synthetic.StyblinskiTang.evaluate_true">
 <code class="sig-name descname">evaluate_true</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#StyblinskiTang.evaluate_true"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.test_functions.synthetic.StyblinskiTang.evaluate_true" title="Permalink to this definition">¶</a></dt>
@@ -747,7 +685,7 @@ z_4 = ( 8.05502, -9.66459)</p>
 </dl>
 <dl class="py attribute">
 <dt id="botorch.test_functions.synthetic.ThreeHumpCamel.dim">
-<code class="sig-name descname">dim</code><em class="property">: int</em><em class="property"> = 2</em><a class="headerlink" href="#botorch.test_functions.synthetic.ThreeHumpCamel.dim" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">dim</code><em class="property"> = 2</em><a class="headerlink" href="#botorch.test_functions.synthetic.ThreeHumpCamel.dim" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py method">
 <dt id="botorch.test_functions.synthetic.ThreeHumpCamel.evaluate_true">
@@ -792,7 +730,7 @@ and <cite>B_min = 0.397887</cite></p>
 </dl>
 <dl class="py attribute">
 <dt id="botorch.test_functions.multi_fidelity.AugmentedBranin.dim">
-<code class="sig-name descname">dim</code><em class="property">: int</em><em class="property"> = 3</em><a class="headerlink" href="#botorch.test_functions.multi_fidelity.AugmentedBranin.dim" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">dim</code><em class="property"> = 3</em><a class="headerlink" href="#botorch.test_functions.multi_fidelity.AugmentedBranin.dim" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py method">
 <dt id="botorch.test_functions.multi_fidelity.AugmentedBranin.evaluate_true">
@@ -832,7 +770,7 @@ dimension is the fidelity parameter.</p>
 </dl>
 <dl class="py attribute">
 <dt id="botorch.test_functions.multi_fidelity.AugmentedHartmann.dim">
-<code class="sig-name descname">dim</code><em class="property">: int</em><em class="property"> = 7</em><a class="headerlink" href="#botorch.test_functions.multi_fidelity.AugmentedHartmann.dim" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">dim</code><em class="property"> = 7</em><a class="headerlink" href="#botorch.test_functions.multi_fidelity.AugmentedHartmann.dim" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py method">
 <dt id="botorch.test_functions.multi_fidelity.AugmentedHartmann.evaluate_true">
@@ -869,10 +807,6 @@ where the last two dimensions are the fidelity parameters:</p>
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt id="botorch.test_functions.multi_fidelity.AugmentedRosenbrock.dim">
-<code class="sig-name descname">dim</code><em class="property"> = None</em><a class="headerlink" href="#botorch.test_functions.multi_fidelity.AugmentedRosenbrock.dim" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 <dl class="py method">
 <dt id="botorch.test_functions.multi_fidelity.AugmentedRosenbrock.evaluate_true">
 <code class="sig-name descname">evaluate_true</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_fidelity.html#AugmentedRosenbrock.evaluate_true"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.test_functions.multi_fidelity.AugmentedRosenbrock.evaluate_true" title="Permalink to this definition">¶</a></dt>

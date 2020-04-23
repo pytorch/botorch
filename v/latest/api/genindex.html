@@ -82,6 +82,8 @@
 <td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="exceptions.html#botorch.exceptions.warnings.BadInitialCandidatesWarning">BadInitialCandidatesWarning</a>
 </li>
+<li><a href="utils.html#botorch.utils.testing.BaseTestProblemBaseTestCase">BaseTestProblemBaseTestCase (class in botorch.utils.testing)</a>
+</li>
 <li><a href="cross_validation.html#botorch.cross_validation.batch_cross_validation">batch_cross_validation() (in module botorch.cross_validation)</a>
 </li>
 <li><a href="utils.html#botorch.utils.sampling.batched_multinomial">batched_multinomial() (in module botorch.utils.sampling)</a>
@@ -677,8 +679,6 @@
 <ul>
 <li><a href="test_functions.html#botorch.test_functions.multi_fidelity.AugmentedHartmann.dim">(botorch.test_functions.multi_fidelity.AugmentedHartmann attribute)</a>
 </li>
-<li><a href="test_functions.html#botorch.test_functions.multi_fidelity.AugmentedRosenbrock.dim">(botorch.test_functions.multi_fidelity.AugmentedRosenbrock attribute)</a>
-</li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Beale.dim">(botorch.test_functions.synthetic.Beale attribute)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Branin.dim">(botorch.test_functions.synthetic.Branin attribute)</a>
@@ -687,35 +687,15 @@
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Cosine8.dim">(botorch.test_functions.synthetic.Cosine8 attribute)</a>
 </li>
-<li><a href="test_functions.html#botorch.test_functions.synthetic.DixonPrice.dim">(botorch.test_functions.synthetic.DixonPrice attribute)</a>
-</li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.DropWave.dim">(botorch.test_functions.synthetic.DropWave attribute)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.EggHolder.dim">(botorch.test_functions.synthetic.EggHolder attribute)</a>
 </li>
-<li><a href="test_functions.html#botorch.test_functions.synthetic.Griewank.dim">(botorch.test_functions.synthetic.Griewank attribute)</a>
-</li>
-<li><a href="test_functions.html#botorch.test_functions.synthetic.Hartmann.dim">(botorch.test_functions.synthetic.Hartmann attribute)</a>
-</li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.HolderTable.dim">(botorch.test_functions.synthetic.HolderTable attribute)</a>
-</li>
-<li><a href="test_functions.html#botorch.test_functions.synthetic.Levy.dim">(botorch.test_functions.synthetic.Levy attribute)</a>
-</li>
-<li><a href="test_functions.html#botorch.test_functions.synthetic.Michalewicz.dim">(botorch.test_functions.synthetic.Michalewicz attribute)</a>
-</li>
-<li><a href="test_functions.html#botorch.test_functions.synthetic.Powell.dim">(botorch.test_functions.synthetic.Powell attribute)</a>
-</li>
-<li><a href="test_functions.html#botorch.test_functions.synthetic.Rastrigin.dim">(botorch.test_functions.synthetic.Rastrigin attribute)</a>
-</li>
-<li><a href="test_functions.html#botorch.test_functions.synthetic.Rosenbrock.dim">(botorch.test_functions.synthetic.Rosenbrock attribute)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Shekel.dim">(botorch.test_functions.synthetic.Shekel attribute)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.SixHumpCamel.dim">(botorch.test_functions.synthetic.SixHumpCamel attribute)</a>
-</li>
-<li><a href="test_functions.html#botorch.test_functions.synthetic.StyblinskiTang.dim">(botorch.test_functions.synthetic.StyblinskiTang attribute)</a>
-</li>
-<li><a href="test_functions.html#botorch.test_functions.synthetic.SyntheticTestFunction.dim">(botorch.test_functions.synthetic.SyntheticTestFunction attribute)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.ThreeHumpCamel.dim">(botorch.test_functions.synthetic.ThreeHumpCamel attribute)</a>
 </li>
@@ -807,8 +787,6 @@
 <li><a href="test_functions.html#botorch.test_functions.synthetic.SixHumpCamel.evaluate_true">(botorch.test_functions.synthetic.SixHumpCamel method)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.StyblinskiTang.evaluate_true">(botorch.test_functions.synthetic.StyblinskiTang method)</a>
-</li>
-<li><a href="test_functions.html#botorch.test_functions.synthetic.SyntheticTestFunction.evaluate_true">(botorch.test_functions.synthetic.SyntheticTestFunction method)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.ThreeHumpCamel.evaluate_true">(botorch.test_functions.synthetic.ThreeHumpCamel method)</a>
 </li>
@@ -963,13 +941,14 @@
 </li>
 <li><a href="sampling.html#botorch.sampling.samplers.MCSampler.forward">(botorch.sampling.samplers.MCSampler method)</a>
 </li>
-<li><a href="test_functions.html#botorch.test_functions.synthetic.SyntheticTestFunction.forward">(botorch.test_functions.synthetic.SyntheticTestFunction method)</a>
-</li>
 </ul></li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
-<li><a href="utils.html#botorch.utils.testing.SyntheticTestFunctionBaseTestCase.functions">functions (botorch.utils.testing.SyntheticTestFunctionBaseTestCase attribute)</a>
+<li><a href="utils.html#botorch.utils.testing.BaseTestProblemBaseTestCase.functions">functions (botorch.utils.testing.BaseTestProblemBaseTestCase attribute)</a>
+<ul>
+<li><a href="utils.html#botorch.utils.testing.SyntheticTestFunctionBaseTestCase.functions">(botorch.utils.testing.SyntheticTestFunctionBaseTestCase attribute)</a>
 </li>
+</ul></li>
 </ul></td>
 </tr></table>
 <h2 id="G">G</h2>
@@ -1301,11 +1280,13 @@
 </li>
 <li><a href="utils.html#botorch.utils.transforms.normalize">normalize() (in module botorch.utils.transforms)</a>
 </li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="utils.html#botorch.utils.transforms.normalize_indices">normalize_indices() (in module botorch.utils.transforms)</a>
 </li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="sampling.html#botorch.sampling.qmc.NormalQMCEngine">NormalQMCEngine (class in botorch.sampling.qmc)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.synthetic.SyntheticTestFunction.num_objectives">num_objectives (botorch.test_functions.synthetic.SyntheticTestFunction attribute)</a>
 </li>
 <li><a href="models.html#botorch.models.deterministic.DeterministicModel.num_outputs">num_outputs() (botorch.models.deterministic.DeterministicModel property)</a>
 <ul>
@@ -1544,7 +1525,7 @@
 <td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="utils.html#botorch.utils.transforms.t_batch_mode_transform">t_batch_mode_transform() (in module botorch.utils.transforms)</a>
 </li>
-<li><a href="utils.html#botorch.utils.testing.SyntheticTestFunctionBaseTestCase.test_forward">test_forward() (botorch.utils.testing.SyntheticTestFunctionBaseTestCase method)</a>
+<li><a href="utils.html#botorch.utils.testing.BaseTestProblemBaseTestCase.test_forward">test_forward() (botorch.utils.testing.BaseTestProblemBaseTestCase method)</a>
 </li>
 <li><a href="utils.html#botorch.utils.testing.SyntheticTestFunctionBaseTestCase.test_optimal_value">test_optimal_value() (botorch.utils.testing.SyntheticTestFunctionBaseTestCase method)</a>
 </li>
