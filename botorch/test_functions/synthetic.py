@@ -12,22 +12,20 @@ Reference: https://www.sfu.ca/~ssurjano/optimization.html
 from __future__ import annotations
 
 import math
-from abc import ABC, abstractmethod
 from typing import List, Optional, Tuple
 
 import torch
 from torch import Tensor
-from torch.nn import Module
+
+from .base import BaseTestProblem
 
 
-class SyntheticTestFunction(Module, ABC):
+class SyntheticTestFunction(BaseTestProblem):
     r"""Base class for synthetic test functions."""
 
-    dim: int
-    _bounds: List[Tuple[float, float]]
     _optimizers: List[Tuple[float, ...]]
     _optimal_value: float
-    _check_grad_at_opt: bool = True
+    num_objectives: int = 1
 
     def __init__(self, noise_std: Optional[float] = None, negate: bool = False) -> None:
         r"""Base constructor for synthetic test functions.
@@ -36,12 +34,7 @@ class SyntheticTestFunction(Module, ABC):
             noise_std: Standard deviation of the observation noise.
             negate: If True, negate the function.
         """
-        super().__init__()
-        self.noise_std = noise_std
-        self.negate = negate
-        self.register_buffer(
-            "bounds", torch.tensor(self._bounds, dtype=torch.float).transpose(-1, -2)
-        )
+        super().__init__(noise_std=noise_std, negate=negate)
         if self._optimizers is not None:
             self.register_buffer(
                 "optimizers", torch.tensor(self._optimizers, dtype=torch.float)
@@ -51,27 +44,6 @@ class SyntheticTestFunction(Module, ABC):
     def optimal_value(self) -> float:
         r"""The global minimum (maximum if negate=True) of the function."""
         return -self._optimal_value if self.negate else self._optimal_value
-
-    def forward(self, X: Tensor, noise: bool = True) -> Tensor:
-        r"""Evaluate the function on a set of points.
-
-        Args:
-            X: The point(s) at which to evaluate the function.
-            noise: If `True`, add observation noise as specified by `noise_std`.
-        """
-        batch = X.ndimension() > 1
-        X = X if batch else X.unsqueeze(0)
-        f = self.evaluate_true(X=X)
-        if noise and self.noise_std is not None:
-            f += self.noise_std * torch.randn_like(f)
-        if self.negate:
-            f = -f
-        return f if batch else f.squeeze(0)
-
-    @abstractmethod
-    def evaluate_true(self, X: Tensor) -> Tensor:
-        r"""Evaluate the function (w/o observation noise) on a set of points."""
-        pass  # pragma: no cover
 
 
 class Ackley(SyntheticTestFunction):

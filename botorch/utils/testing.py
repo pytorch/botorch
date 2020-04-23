@@ -21,7 +21,7 @@ from torch import Tensor
 from .. import settings
 from ..models.model import Model
 from ..posteriors import Posterior
-from ..test_functions.synthetic import SyntheticTestFunction
+from ..test_functions.base import BaseTestProblem
 
 
 EMPTY_SIZE = torch.Size()
@@ -43,9 +43,9 @@ class BotorchTestCase(TestCase):
         warnings.simplefilter("always", append=True)
 
 
-class SyntheticTestFunctionBaseTestCase:
+class BaseTestProblemBaseTestCase:
 
-    functions: List[SyntheticTestFunction]
+    functions: List[BaseTestProblem]
 
     def test_forward(self):
         for dtype in (torch.float, torch.double):
@@ -53,13 +53,18 @@ class SyntheticTestFunctionBaseTestCase:
                 for f in self.functions:
                     f.to(device=self.device, dtype=dtype)
                     X = torch.rand(*batch_shape, f.dim, device=self.device, dtype=dtype)
-                    X = f.bounds[0, :] + X * (f.bounds[1, :] - f.bounds[0, :])
+                    X = f.bounds[0] + X * (f.bounds[1] - f.bounds[0])
                     res = f(X)
                     f(X, noise=False)
                     self.assertEqual(res.dtype, dtype)
                     self.assertEqual(res.device.type, self.device.type)
-                    self.assertEqual(res.shape, batch_shape)
+                    tail_shape = torch.Size(
+                        [f.num_objectives] if f.num_objectives > 1 else []
+                    )
+                    self.assertEqual(res.shape, batch_shape + tail_shape)
 
+
+class SyntheticTestFunctionBaseTestCase(BaseTestProblemBaseTestCase):
     def test_optimal_value(self):
         for dtype in (torch.float, torch.double):
             for f in self.functions:
