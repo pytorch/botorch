@@ -10,7 +10,7 @@ Methods for optimizing acquisition functions.
 
 from __future__ import annotations
 
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import torch
 from torch import Tensor
@@ -40,6 +40,7 @@ def optimize_acqf(
     batch_initial_conditions: Optional[Tensor] = None,
     return_best_only: bool = True,
     sequential: bool = False,
+    **kwargs: Any,
 ) -> Tuple[Tensor, Tensor]:
     r"""Generate a set of candidates via multi-start optimization.
 
@@ -68,29 +69,30 @@ def optimize_acqf(
             random restart initializations of the optimization.
         sequential: If False, uses joint optimization, otherwise uses sequential
             optimization.
+        kwargs: Additonal keyword arguments.
 
-        Returns:
-            A two-element tuple containing
+    Returns:
+        A two-element tuple containing
 
-           - a `(num_restarts) x q x d`-dim tensor of generated candidates.
-           - a tensor of associated acquisiton values. If `sequential=False`,
-             this is a `(num_restarts)`-dim tensor of joint acquisition values
-             (with explicit restart dimension if `return_best_only=False`). If
-             `sequential=True`, this is a `q`-dim tensor of expected acquisition
-             values conditional on having observed canidates `0,1,...,i-1`.
+        - a `(num_restarts) x q x d`-dim tensor of generated candidates.
+        - a tensor of associated acquisiton values. If `sequential=False`,
+            this is a `(num_restarts)`-dim tensor of joint acquisition values
+            (with explicit restart dimension if `return_best_only=False`). If
+            `sequential=True`, this is a `q`-dim tensor of expected acquisition
+            values conditional on having observed canidates `0,1,...,i-1`.
 
-        Example:
-            >>> # generate `q=2` candidates jointly using 20 random restarts
-            >>> # and 512 raw samples
-            >>> candidates, acq_value = optimize_acqf(qEI, bounds, 2, 20, 512)
+    Example:
+        >>> # generate `q=2` candidates jointly using 20 random restarts
+        >>> # and 512 raw samples
+        >>> candidates, acq_value = optimize_acqf(qEI, bounds, 2, 20, 512)
 
-            >>> generate `q=3` candidates sequentially using 15 random restarts
-            >>> # and 256 raw samples
-            >>> qEI = qExpectedImprovement(model, best_f=0.2)
-            >>> bounds = torch.tensor([[0.], [1.]])
-            >>> candidates, acq_value_list = optimize_acqf(
-            >>>     qEI, bounds, 3, 15, 256, sequential=True
-            >>> )
+        >>> generate `q=3` candidates sequentially using 15 random restarts
+        >>> # and 256 raw samples
+        >>> qEI = qExpectedImprovement(model, best_f=0.2)
+        >>> bounds = torch.tensor([[0.], [1.]])
+        >>> candidates, acq_value_list = optimize_acqf(
+        >>>     qEI, bounds, 3, 15, 256, sequential=True
+        >>> )
 
     """
     if sequential:
@@ -189,7 +191,8 @@ def optimize_acqf(
         batch_acq_values = batch_acq_values[best]
 
     if isinstance(acq_function, OneShotAcquisitionFunction):
-        batch_candidates = acq_function.extract_candidates(X_full=batch_candidates)
+        if not kwargs.get("return_full_tree", False):
+            batch_candidates = acq_function.extract_candidates(X_full=batch_candidates)
 
     return batch_candidates, batch_acq_values
 

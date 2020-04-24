@@ -53,6 +53,11 @@ Entropy-Based Acquisition Functions
 .. automodule:: botorch.acquisition.max_value_entropy_search
     :members:
 
+Multi-Step Look-Ahead Acquisition
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.acquisition.multi_step_lookahead
+    :members:
+
 Active Learning Acquisition Functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.acquisition.active_learning
