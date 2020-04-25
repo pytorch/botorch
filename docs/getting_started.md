@@ -14,7 +14,7 @@ Before jumping the gun, we recommend you start with the high-level
 #### Installation Requirements:
 
 - Python >= 3.7
-- PyTorch >= 1.4
+- PyTorch >= 1.5
 - gpytorch >= 1.0.0
 - scipy
 
