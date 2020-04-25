@@ -9,6 +9,10 @@
     {
       "id": "closed_loop_botorch_only",
       "title": "q-Noisy Constrained EI"
+    },
+    {
+      "id": "preference_bo",
+      "title": "Bayesian optimization with pairwise comparison data"
     }
   ],
   "Bite-Sized Tutorials": [
