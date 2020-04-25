@@ -4,5 +4,5 @@ channels:
   - gpytorch
 dependencies:
   - pytorch>=1.5
-  - gpytorch>=1.0.0
+  - gpytorch>=1.1.1
   - scipy
