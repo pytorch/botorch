@@ -247,7 +247,7 @@ class TestPairwiseGP(BotorchTestCase):
                         "datapoints": model_kwargs["datapoints"][0],
                         "comparisons": model_kwargs["comparisons"][0],
                     }
-                    model_non_batch = type(model)(**model_kwargs_non_batch)
+                    model_non_batch = model.__class__(**model_kwargs_non_batch)
                     model_non_batch.load_state_dict(state_dict_non_batch)
                     model_non_batch.eval()
                     model_non_batch.posterior(
