@@ -2,6 +2,39 @@
 
 The release log for BoTorch.
 
+
+## [0.2.3] - Apr 27, 2020
+
+Pairwise GP for Preference Learning, Sampling Strategies.
+
+#### Compatibility
+* Require PyTorch >=1.5 (#423).
+* Require GPyTorch >=1.1.1 (#425).
+
+#### New Features
+* Add `PairwiseGP` for preference learning with pair-wise comparison data (#388).
+* Add `SamplingStrategy` abstraction for sampling-based generation strategies, including
+  `MaxPosteriorSampling` (i.e. Thompson Sampling) and `BoltzmannSampling` (#218, #407).
+
+#### Deprecations
+* The existing `botorch.gen` module is moved to `botorch.generation.gen` and imports
+  from `botorch.gen` will raise a warning (an error in the next release) (#218).
+
+#### Bug fixes
+* Fix & update a number of tutorials (#394, #398, #393, #399, #403).
+* Fix CUDA tests (#404).
+* Fix sobol maxdim limitation in `prune_baseline` (#419).
+
+#### Other changes
+* Better stopping criteria for stochastic optimization (#392).
+* Improve numerical stability of `LinearTruncatedFidelityKernel` (#409).
+* Allow batched `best_f` in `qExpectedImprovement` and `qProbabilityOfImprovement`
+  (#411).
+* Introduce new logger framework (#412).
+* Faster indexing in some situations (#414).
+* More generic `BaseTestProblem` (9e604fe2188ac85294c143d249872415c4d95823).
+
+
 ## [0.2.2] - Mar 6, 2020
 
 Require PyTorch 1.4, Python 3.7 and new features for active learning,
