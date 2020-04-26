@@ -12,7 +12,7 @@ import os
 
 import nbformat
 from bs4 import BeautifulSoup
-from nbconvert import HTMLExporter, ScriptExporter
+from nbconvert import HTMLExporter, PythonExporter
 
 
 TEMPLATE = """const CWD = process.cwd();
@@ -92,8 +92,10 @@ def gen_tutorials(repo_dir: str) -> None:
         )
         with open(ipynb_out_path, "w") as ipynb_outfile:
             ipynb_outfile.write(nb_str)
-        exporter = ScriptExporter()
+        exporter = PythonExporter()
         script, meta = exporter.from_notebook_node(nb)
+        # make sure to use python3 shebang
+        script = script.replace("#!/usr/bin/env python", "#!/usr/bin/env python3")
         py_out_path = os.path.join(
             repo_dir, "website", "static", "files", "{}.py".format(tid)
         )
