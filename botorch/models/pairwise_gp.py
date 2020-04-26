@@ -149,7 +149,7 @@ class PairwiseGP(Model, GP):
 
         self.to(self.datapoints)
 
-    def __deepcopy__(self, memo):
+    def __deepcopy__(self, memo) -> PairwiseGP:
         attrs = (
             "datapoints",
             "comparisons",
@@ -260,27 +260,28 @@ class PairwiseGP(Model, GP):
         pred_covar = self._calc_covar(X, X)
         return pred_mean, pred_covar
 
-    def _add_jitter(self, X) -> Tensor:
-        X = X.clone()
+    def _add_jitter(self, X: Tensor) -> Tensor:
         jitter_prev = 0
+        Eye = torch.eye(X.size(-1)).expand(X.shape)
         for i in range(3):
             jitter_new = self._jitter * (10 ** i)
-            X = X + torch.eye(X.size(-1)).expand(X.shape) * (jitter_new - jitter_prev)
+            X = X + (jitter_new - jitter_prev) * Eye
             jitter_prev = jitter_new
             # This may be VERY slow given upstream pytorch issue:
             # https://github.com/pytorch/pytorch/issues/34272
             try:
                 _ = torch.cholesky(X)
                 warnings.warn(
-                    f"X is not a p.d. matrix; "
-                    f"Added jitter of {jitter_new} to the diagonal",
+                    "X is not a p.d. matrix; "
+                    f"Added jitter of {jitter_new:.2e} to the diagonal",
                     RuntimeWarning,
                 )
                 return X
             except RuntimeError:
                 continue
         warnings.warn(
-            f"Failed to turn X into p.d. after trying to add adding {jitter_new} jitter"
+            f"Failed to render X p.d. after adding {jitter_new:.2e} jitter",
+            RuntimeWarning,
         )
         return X
 
@@ -524,15 +525,17 @@ class PairwiseGP(Model, GP):
                         ci_v[i],
                         True,
                     )
-                    x[i] = optimize.fsolve(
-                        x0=x0[i],
-                        func=self._grad_posterior_f,
-                        fprime=self._hess_posterior_f,
-                        xtol=xtol,
-                        maxfev=maxfev,
-                        args=fsolve_args,
-                        **kwargs,
-                    )
+                    with warnings.catch_warnings():
+                        warnings.filterwarnings("ignore", category=RuntimeWarning)
+                        x[i] = optimize.fsolve(
+                            x0=x0[i],
+                            func=self._grad_posterior_f,
+                            fprime=self._hess_posterior_f,
+                            xtol=xtol,
+                            maxfev=maxfev,
+                            args=fsolve_args,
+                            **kwargs,
+                        )
                 x = x.reshape(*init_x0_size)
             else:
                 fsolve_args = (
@@ -544,15 +547,17 @@ class PairwiseGP(Model, GP):
                     self.covar_inv,
                     True,
                 )
-                x = optimize.fsolve(
-                    x0=x0,
-                    func=self._grad_posterior_f,
-                    fprime=self._hess_posterior_f,
-                    xtol=xtol,
-                    maxfev=maxfev,
-                    args=fsolve_args,
-                    **kwargs,
-                )
+                with warnings.catch_warnings():
+                    warnings.filterwarnings("ignore", category=RuntimeWarning)
+                    x = optimize.fsolve(
+                        x0=x0,
+                        func=self._grad_posterior_f,
+                        fprime=self._hess_posterior_f,
+                        xtol=xtol,
+                        maxfev=maxfev,
+                        args=fsolve_args,
+                        **kwargs,
+                    )
 
             self._x0 = x.copy()  # save for warm-starting
             f = torch.tensor(x, **self.tkwargs)
