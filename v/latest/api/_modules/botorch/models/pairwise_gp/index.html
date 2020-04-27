@@ -175,7 +175,7 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">__deepcopy__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">memo</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__deepcopy__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">memo</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PairwiseGP</span><span class="p">:</span>
         <span class="n">attrs</span> <span class="o">=</span> <span class="p">(</span>
             <span class="s2">"datapoints"</span><span class="p">,</span>
             <span class="s2">"comparisons"</span><span class="p">,</span>
@@ -286,27 +286,28 @@
         <span class="n">pred_covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calc_covar</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">pred_mean</span><span class="p">,</span> <span class="n">pred_covar</span>
 
-    <span class="k">def</span> <span class="nf">_add_jitter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">_add_jitter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">jitter_prev</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">Eye</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
             <span class="n">jitter_new</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jitter</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="n">i</span><span class="p">)</span>
-            <span class="n">X</span> <span class="o">=</span> <span class="n">X</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">jitter_new</span> <span class="o">-</span> <span class="n">jitter_prev</span><span class="p">)</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">X</span> <span class="o">+</span> <span class="p">(</span><span class="n">jitter_new</span> <span class="o">-</span> <span class="n">jitter_prev</span><span class="p">)</span> <span class="o">*</span> <span class="n">Eye</span>
             <span class="n">jitter_prev</span> <span class="o">=</span> <span class="n">jitter_new</span>
             <span class="c1"># This may be VERY slow given upstream pytorch issue:</span>
             <span class="c1"># https://github.com/pytorch/pytorch/issues/34272</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">_</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cholesky</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
                 <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"X is not a p.d. matrix; "</span>
-                    <span class="sa">f</span><span class="s2">"Added jitter of </span><span class="si">{</span><span class="n">jitter_new</span><span class="si">}</span><span class="s2"> to the diagonal"</span><span class="p">,</span>
+                    <span class="s2">"X is not a p.d. matrix; "</span>
+                    <span class="sa">f</span><span class="s2">"Added jitter of </span><span class="si">{</span><span class="n">jitter_new</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2"> to the diagonal"</span><span class="p">,</span>
                     <span class="ne">RuntimeWarning</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="k">return</span> <span class="n">X</span>
             <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>
                 <span class="k">continue</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"Failed to turn X into p.d. after trying to add adding </span><span class="si">{</span><span class="n">jitter_new</span><span class="si">}</span><span class="s2"> jitter"</span>
+            <span class="sa">f</span><span class="s2">"Failed to render X p.d. after adding </span><span class="si">{</span><span class="n">jitter_new</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2"> jitter"</span><span class="p">,</span>
+            <span class="ne">RuntimeWarning</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">X</span>
 
@@ -550,15 +551,17 @@
                         <span class="n">ci_v</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
                         <span class="kc">True</span><span class="p">,</span>
                     <span class="p">)</span>
-                    <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">optimize</span><span class="o">.</span><span class="n">fsolve</span><span class="p">(</span>
-                        <span class="n">x0</span><span class="o">=</span><span class="n">x0</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
-                        <span class="n">func</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_grad_posterior_f</span><span class="p">,</span>
-                        <span class="n">fprime</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_hess_posterior_f</span><span class="p">,</span>
-                        <span class="n">xtol</span><span class="o">=</span><span class="n">xtol</span><span class="p">,</span>
-                        <span class="n">maxfev</span><span class="o">=</span><span class="n">maxfev</span><span class="p">,</span>
-                        <span class="n">args</span><span class="o">=</span><span class="n">fsolve_args</span><span class="p">,</span>
-                        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
-                    <span class="p">)</span>
+                    <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+                        <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">RuntimeWarning</span><span class="p">)</span>
+                        <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">optimize</span><span class="o">.</span><span class="n">fsolve</span><span class="p">(</span>
+                            <span class="n">x0</span><span class="o">=</span><span class="n">x0</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                            <span class="n">func</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_grad_posterior_f</span><span class="p">,</span>
+                            <span class="n">fprime</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_hess_posterior_f</span><span class="p">,</span>
+                            <span class="n">xtol</span><span class="o">=</span><span class="n">xtol</span><span class="p">,</span>
+                            <span class="n">maxfev</span><span class="o">=</span><span class="n">maxfev</span><span class="p">,</span>
+                            <span class="n">args</span><span class="o">=</span><span class="n">fsolve_args</span><span class="p">,</span>
+                            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+                        <span class="p">)</span>
                 <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">*</span><span class="n">init_x0_size</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">fsolve_args</span> <span class="o">=</span> <span class="p">(</span>
@@ -570,15 +573,17 @@
                     <span class="bp">self</span><span class="o">.</span><span class="n">covar_inv</span><span class="p">,</span>
                     <span class="kc">True</span><span class="p">,</span>
                 <span class="p">)</span>
-                <span class="n">x</span> <span class="o">=</span> <span class="n">optimize</span><span class="o">.</span><span class="n">fsolve</span><span class="p">(</span>
-                    <span class="n">x0</span><span class="o">=</span><span class="n">x0</span><span class="p">,</span>
-                    <span class="n">func</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_grad_posterior_f</span><span class="p">,</span>
-                    <span class="n">fprime</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_hess_posterior_f</span><span class="p">,</span>
-                    <span class="n">xtol</span><span class="o">=</span><span class="n">xtol</span><span class="p">,</span>
-                    <span class="n">maxfev</span><span class="o">=</span><span class="n">maxfev</span><span class="p">,</span>
-                    <span class="n">args</span><span class="o">=</span><span class="n">fsolve_args</span><span class="p">,</span>
-                    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
-                <span class="p">)</span>
+                <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+                    <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">RuntimeWarning</span><span class="p">)</span>
+                    <span class="n">x</span> <span class="o">=</span> <span class="n">optimize</span><span class="o">.</span><span class="n">fsolve</span><span class="p">(</span>
+                        <span class="n">x0</span><span class="o">=</span><span class="n">x0</span><span class="p">,</span>
+                        <span class="n">func</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_grad_posterior_f</span><span class="p">,</span>
+                        <span class="n">fprime</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_hess_posterior_f</span><span class="p">,</span>
+                        <span class="n">xtol</span><span class="o">=</span><span class="n">xtol</span><span class="p">,</span>
+                        <span class="n">maxfev</span><span class="o">=</span><span class="n">maxfev</span><span class="p">,</span>
+                        <span class="n">args</span><span class="o">=</span><span class="n">fsolve_args</span><span class="p">,</span>
+                        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+                    <span class="p">)</span>
 
             <span class="bp">self</span><span class="o">.</span><span class="n">_x0</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>  <span class="c1"># save for warm-starting</span>
             <span class="n">f</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">tkwargs</span><span class="p">)</span>

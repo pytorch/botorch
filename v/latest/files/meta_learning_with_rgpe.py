@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # coding: utf-8
 
 # ## Meta-Learning with the Rank-Weighted GP Ensemble (RGPE)

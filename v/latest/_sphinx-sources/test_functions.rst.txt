@@ -6,6 +6,11 @@ botorch.test_functions
 .. automodule:: botorch.test_functions
 
 
+Abstract Test Function API
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.test_functions.base
+    :members:
+
 Synthetic Test Functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.test_functions.synthetic

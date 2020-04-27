@@ -23,7 +23,7 @@
 <div class="documentwrapper">
 <div class="bodywrapper">
 <div class="body" role="main">
-<h1>Source code for botorch.posteriors.posterior</h1><div class="highlight"><pre>
+<h1>Source code for botorch.test_functions.base</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/bin/env python3</span>
 <span class="c1"># Copyright (c) Facebook, Inc. and its affiliates.</span>
 <span class="c1">#</span>
@@ -31,93 +31,60 @@
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
 <span class="sa">r</span><span class="sd">"""</span>
-<span class="sd">Abstract base module for all botorch posteriors.</span>
+<span class="sd">Base class for test functions for optimization benchmarks.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span><span class="p">,</span> <span class="n">abstractproperty</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
 
 
-<div class="viewcode-block" id="Posterior"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.posterior.Posterior">[docs]</a><span class="k">class</span> <span class="nc">Posterior</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Abstract base class for botorch posteriors."""</span>
+<div class="viewcode-block" id="BaseTestProblem"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.base.BaseTestProblem">[docs]</a><span class="k">class</span> <span class="nc">BaseTestProblem</span><span class="p">(</span><span class="n">Module</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""Base class for test functions."""</span>
 
-    <span class="nd">@abstractproperty</span>
-    <span class="k">def</span> <span class="nf">device</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The torch device of the posterior."""</span>
-        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
+    <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">_bounds</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span>
+    <span class="n">_check_grad_at_opt</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
 
-    <span class="nd">@abstractproperty</span>
-    <span class="k">def</span> <span class="nf">dtype</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The torch dtype of the posterior."""</span>
-        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Base constructor for test functions.</span>
 
-    <span class="nd">@abstractproperty</span>
-    <span class="k">def</span> <span class="nf">event_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The event shape (i.e. the shape of a single sample)."""</span>
-        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">mean</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The mean of the posterior as a `(b) x n x m`-dim Tensor."""</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"Property `mean` not implemented for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span>
+<span class="sd">        Arguments:</span>
+<span class="sd">            noise_std: Standard deviation of the observation noise.</span>
+<span class="sd">            negate: If True, negate the function.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">noise_std</span> <span class="o">=</span> <span class="n">noise_std</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">negate</span> <span class="o">=</span> <span class="n">negate</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span>
+            <span class="s2">"bounds"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_bounds</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
         <span class="p">)</span>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">variance</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The variance of the posterior as a `(b) x n x m`-dim Tensor."""</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"Property `variance` not implemented for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span>
-        <span class="p">)</span>
-
-<div class="viewcode-block" id="Posterior.rsample"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.posterior.Posterior.rsample">[docs]</a>    <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">rsample</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">sample_shape</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">base_samples</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Sample from the posterior (with gradients).</span>
+<div class="viewcode-block" id="BaseTestProblem.forward"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.base.BaseTestProblem.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">noise</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Evaluate the function on a set of points.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            sample_shape: A `torch.Size` object specifying the sample shape. To</span>
-<span class="sd">                draw `n` samples, set to `torch.Size([n])`. To draw `b` batches</span>
-<span class="sd">                of `n` samples each, set to `torch.Size([b, n])`.</span>
-<span class="sd">            base_samples: An (optional) Tensor of `N(0, I)` base samples of</span>
-<span class="sd">                appropriate dimension, typically obtained from a `Sampler`.</span>
-<span class="sd">                This is used for deterministic optimization.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            A `sample_shape x event`-dim Tensor of samples from the posterior.</span>
+<span class="sd">            X: The point(s) at which to evaluate the function.</span>
+<span class="sd">            noise: If `True`, add observation noise as specified by `noise_std`.</span>
 <span class="sd">        """</span>
-        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
+        <span class="n">batch</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">ndimension</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">X</span> <span class="k">if</span> <span class="n">batch</span> <span class="k">else</span> <span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_true</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">noise</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">noise_std</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">f</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">noise_std</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn_like</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span><span class="p">:</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="o">-</span><span class="n">f</span>
+        <span class="k">return</span> <span class="n">f</span> <span class="k">if</span> <span class="n">batch</span> <span class="k">else</span> <span class="n">f</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Posterior.sample"><a class="viewcode-back" href="../../../posteriors.html#botorch.posteriors.posterior.Posterior.sample">[docs]</a>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">sample_shape</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">base_samples</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Sample from the posterior (without gradients).</span>
-
-<span class="sd">        This is a simple wrapper calling `rsample` using `with torch.no_grad()`.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            sample_shape: A `torch.Size` object specifying the sample shape. To</span>
-<span class="sd">                draw `n` samples, set to `torch.Size([n])`. To draw `b` batches</span>
-<span class="sd">                of `n` samples each, set to `torch.Size([b, n])`.</span>
-<span class="sd">            base_samples: An (optional) Tensor of `N(0, I)` base samples of</span>
-<span class="sd">                appropriate dimension, typically obtained from a `Sampler` object.</span>
-<span class="sd">                This is used for deterministic optimization.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            A `sample_shape x event_shape`-dim Tensor of samples from the posterior.</span>
-<span class="sd">        """</span>
-        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rsample</span><span class="p">(</span><span class="n">sample_shape</span><span class="o">=</span><span class="n">sample_shape</span><span class="p">,</span> <span class="n">base_samples</span><span class="o">=</span><span class="n">base_samples</span><span class="p">)</span></div></div>
+<div class="viewcode-block" id="BaseTestProblem.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.base.BaseTestProblem.evaluate_true">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Evaluate the function (w/o observation noise) on a set of points."""</span>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div></div>
 </pre></div>
 </div>
 </div>

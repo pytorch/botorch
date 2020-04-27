@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # coding: utf-8
 
 # ## Closed-loop batch, constrained BO in BoTorch with qEI and qNEI
