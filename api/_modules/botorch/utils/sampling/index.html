@@ -41,7 +41,7 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Generator</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">LongTensor</span><span class="p">,</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.quasirandom</span> <span class="kn">import</span> <span class="n">SobolEngine</span>
 
 <span class="kn">from</span> <span class="nn">..exceptions.warnings</span> <span class="kn">import</span> <span class="n">SamplingWarning</span>
@@ -311,6 +311,50 @@
     <span class="k">if</span> <span class="n">device</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">srnd</span> <span class="o">=</span> <span class="n">srnd</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">srnd</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="n">srnd</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="batched_multinomial"><a class="viewcode-back" href="../../../utils.html#botorch.utils.sampling.batched_multinomial">[docs]</a><span class="k">def</span> <span class="nf">batched_multinomial</span><span class="p">(</span>
+    <span class="n">weights</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">replacement</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">generator</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Generator</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">out</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LongTensor</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""Sample from multinomial with an arbitrary number of batch dimensions.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        weights: A `batch_shape x num_categories` tensor of weights. For each batch</span>
+<span class="sd">            index `i, j, ...`, this functions samples from a multinomial with `input`</span>
+<span class="sd">            `weights[i, j, ..., :]`. Note that the weights need not sum to one, but must</span>
+<span class="sd">            be non-negative, finite and have a non-zero sum.</span>
+<span class="sd">        num_samples: The number of samples to draw for each batch index. Must be smaller</span>
+<span class="sd">            than `num_categories` if `replacement=False`.</span>
+<span class="sd">        replacement: If True, samples are drawn with replacement.</span>
+<span class="sd">        generator: A a pseudorandom number generator for sampling.</span>
+<span class="sd">        out: The output tensor (optional). If provided, must be of size</span>
+<span class="sd">            `batch_shape x num_samples`.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A `batch_shape x num_samples` tensor of samples.</span>
+
+<span class="sd">    This is a thin wrapper around `torch.multinomial` that allows weight (`input`)</span>
+<span class="sd">    tensors with an arbitrary number of batch dimensions (`torch.multinomial` only</span>
+<span class="sd">    allows a single batch dimension). The calling signature is the same as for</span>
+<span class="sd">    `torch.multinomial`.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; weights = torch.rand(2, 3, 10)</span>
+<span class="sd">        &gt;&gt;&gt; samples = batched_multinomial(weights, 4)  # shape is 2 x 3 x 4</span>
+<span class="sd">    """</span>
+    <span class="n">batch_shape</span><span class="p">,</span> <span class="n">n_categories</span> <span class="o">=</span> <span class="n">weights</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">weights</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">flat_samples</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">multinomial</span><span class="p">(</span>
+        <span class="nb">input</span><span class="o">=</span><span class="n">weights</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_categories</span><span class="p">),</span>
+        <span class="n">num_samples</span><span class="o">=</span><span class="n">num_samples</span><span class="p">,</span>
+        <span class="n">replacement</span><span class="o">=</span><span class="n">replacement</span><span class="p">,</span>
+        <span class="n">generator</span><span class="o">=</span><span class="n">generator</span><span class="p">,</span>
+        <span class="n">out</span><span class="o">=</span><span class="kc">None</span> <span class="k">if</span> <span class="n">out</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">out</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">flat_samples</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">)</span></div>
 </pre></div>
 </div>
 </div>
@@ -323,16 +367,18 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../acquisition.html">botorch.acquisition</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../models.html">botorch.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generation.html">botorch.generation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../posteriors.html">botorch.posteriors</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../optim.html">botorch.optim</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fit.html">botorch.fit</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../gen.html">botorch.gen</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../sampling.html">botorch.sampling</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../cross_validation.html">botorch.cross_validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../settings.html">botorch.settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../logging.html">botorch.logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../test_functions.html">botorch.test_functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">botorch.exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../utils.html">botorch.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../gen.html">Generation utilities [DEPRECATED - use botorch.generation.gen]</a></li>
 </ul>
 <div class="relations">
 <h3>Related Topics</h3>

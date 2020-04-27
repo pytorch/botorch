@@ -32,8 +32,8 @@
 
 <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">Batch acquisition functions using the reparameterization trick in combination</span>
-<span class="sd">with (quasi) Monte-Carlo sampling. See [Rezende2014reparam]_ and</span>
-<span class="sd">[Wilson2017reparam]_</span>
+<span class="sd">with (quasi) Monte-Carlo sampling. See [Rezende2014reparam]_, [Wilson2017reparam]_ and</span>
+<span class="sd">[Balandat2019botorch]_.</span>
 
 <span class="sd">.. [Rezende2014reparam]</span>
 <span class="sd">    D. J. Rezende, S. Mohamed, and D. Wierstra. Stochastic backpropagation and</span>
@@ -84,8 +84,8 @@
 <span class="sd">                `SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)`.</span>
 <span class="sd">            objective: The MCAcquisitionObjective under which the samples are</span>
 <span class="sd">                evaluated. Defaults to `IdentityMCObjective()`.</span>
-<span class="sd">            X_pending:  A `m x d`-dim Tensor of `m` design points that have</span>
-<span class="sd">                points that have been submitted for function evaluation</span>
+<span class="sd">            X_pending: A `batch_shape, m x d`-dim Tensor of `m` design points</span>
+<span class="sd">                that have points that have been submitted for function evaluation</span>
 <span class="sd">                but have not yet been evaluated.</span>
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
@@ -108,10 +108,11 @@
 
 <div class="viewcode-block" id="MCAcquisitionFunction.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.MCAcquisitionFunction.forward">[docs]</a>    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Takes in a `(b) x q x d` X Tensor of `(b)` t-batches with `q` `d`-dim</span>
-<span class="sd">        design points each, and returns a one-dimensional Tensor with</span>
-<span class="sd">        `(b)` elements.  Should utilize the result of set_X_pending as needed</span>
-<span class="sd">        to account for pending function evaluations.</span>
+        <span class="sa">r</span><span class="sd">"""Takes in a `batch_shape x q x d` X Tensor of t-batches with `q` `d`-dim</span>
+<span class="sd">        design points each, and returns a Tensor with shape `batch_shape'`, where</span>
+<span class="sd">        `batch_shape'` is the broadcasted batch shape of model and input `X`. Should</span>
+<span class="sd">        utilize the result of `set_X_pending` as needed to account for pending function</span>
+<span class="sd">        evaluations.</span>
 <span class="sd">        """</span>
         <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div></div>
 
@@ -147,26 +148,23 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted model.</span>
-<span class="sd">            best_f: The best objective value observed so far (assumed noiseless).</span>
+<span class="sd">            best_f: The best objective value observed so far (assumed noiseless). Can be</span>
+<span class="sd">                a `batch_shape`-shaped tensor, which in case of a batched model</span>
+<span class="sd">                specifies potentially different values for each element of the batch.</span>
 <span class="sd">            sampler: The sampler used to draw base samples. Defaults to</span>
 <span class="sd">                `SobolQMCNormalSampler(num_samples=500, collapse_batch_dims=True)`</span>
-<span class="sd">            objective: The MCAcquisitionObjective under which the samples are</span>
-<span class="sd">                evaluated. Defaults to `IdentityMCObjective()`.</span>
-<span class="sd">            X_pending:  A `m x d`-dim Tensor of `m` design points that have</span>
-<span class="sd">                points that have been submitted for function evaluation</span>
-<span class="sd">                but have not yet been evaluated.  Concatenated into X upon</span>
-<span class="sd">                forward call.  Copied and set to have no gradient.</span>
+<span class="sd">            objective: The MCAcquisitionObjective under which the samples are evalauted.</span>
+<span class="sd">                Defaults to `IdentityMCObjective()`.</span>
+<span class="sd">            X_pending:  A `m x d`-dim Tensor of `m` design points that have been</span>
+<span class="sd">                submitted for function evaluation but have not yet been evaluated.</span>
+<span class="sd">                Concatenated into X upon forward call. Copied and set to have no</span>
+<span class="sd">                gradient.</span>
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span> <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">is_tensor</span><span class="p">(</span><span class="n">best_f</span><span class="p">):</span>
             <span class="n">best_f</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">best_f</span><span class="p">))</span>
-        <span class="k">elif</span> <span class="ow">not</span> <span class="p">(</span><span class="n">best_f</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">best_f</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">"best_f must be either a scalar or a single-elment "</span>
-                <span class="s2">"one-dimensional tensor."</span>
-            <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"best_f"</span><span class="p">,</span> <span class="n">best_f</span><span class="p">)</span>
 
 <div class="viewcode-block" id="qExpectedImprovement.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.qExpectedImprovement.forward">[docs]</a>    <span class="nd">@concatenate_pending_points</span>
@@ -175,12 +173,13 @@
         <span class="sa">r</span><span class="sd">"""Evaluate qExpectedImprovement on the candidate set `X`.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            X: A `(b) x q x d`-dim Tensor of `(b)` t-batches with `q` `d`-dim</span>
-<span class="sd">                design points each.</span>
+<span class="sd">            X: A `batch_shape x q x d`-dim Tensor of t-batches with `q` `d`-dim design</span>
+<span class="sd">                points each.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            A `(b)`-dim Tensor of Expected Improvement values at the given</span>
-<span class="sd">            design points `X`.</span>
+<span class="sd">            A `batch_shape'`-dim Tensor of Expected Improvement values at the given</span>
+<span class="sd">            design points `X`, where `batch_shape'` is the broadcasted batch shape of</span>
+<span class="sd">            model and input `X`.</span>
 <span class="sd">        """</span>
         <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
@@ -221,17 +220,17 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted model.</span>
-<span class="sd">            X_baseline: A `r x d`-dim Tensor of `r` design points that have</span>
-<span class="sd">                already been observed. These points are considered as the</span>
-<span class="sd">                potential best design point.</span>
+<span class="sd">            X_baseline: A `batch_shape x r x d`-dim Tensor of `r` design points</span>
+<span class="sd">                that have already been observed. These points are considered as</span>
+<span class="sd">                the potential best design point.</span>
 <span class="sd">            sampler: The sampler used to draw base samples. Defaults to</span>
 <span class="sd">                `SobolQMCNormalSampler(num_samples=500, collapse_batch_dims=True)`.</span>
 <span class="sd">            objective: The MCAcquisitionObjective under which the samples are</span>
 <span class="sd">                evaluated. Defaults to `IdentityMCObjective()`.</span>
-<span class="sd">            X_pending:  A `m x d`-dim Tensor of `m` design points that have</span>
-<span class="sd">                points that have been submitted for function evaluation</span>
-<span class="sd">                but have not yet been evaluated.  Concatenated into X upon</span>
-<span class="sd">                forward call.  Copied and set to have no gradient.</span>
+<span class="sd">            X_pending: A `batch_shape x m x d`-dim Tensor of `m` design points</span>
+<span class="sd">                that have points that have been submitted for function evaluation</span>
+<span class="sd">                but have not yet been evaluated. Concatenated into `X` upon</span>
+<span class="sd">                forward call. Copied and set to have no gradient.</span>
 <span class="sd">            prune_baseline: If True, remove points in `X_baseline` that are</span>
 <span class="sd">                highly unlikely to be the best point. This can significantly</span>
 <span class="sd">                improve performance and is generally recommended. In order to</span>
@@ -254,12 +253,13 @@
         <span class="sa">r</span><span class="sd">"""Evaluate qNoisyExpectedImprovement on the candidate set `X`.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            X: A `(b) x q x d`-dim Tensor of `(b)` t-batches with `q` `d`-dim</span>
-<span class="sd">                design points each.</span>
+<span class="sd">            X: A `batch_shape x q x d`-dim Tensor of t-batches with `q` `d`-dim design</span>
+<span class="sd">                points each.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            A `(b)`-dim Tensor of Noisy Expected Improvement values at the given</span>
-<span class="sd">            design points `X`.</span>
+<span class="sd">            A `batch_shape'`-dim Tensor of Noisy Expected Improvement values at the</span>
+<span class="sd">            given design points `X`, where `batch_shape'` is the broadcasted batch shape</span>
+<span class="sd">            of model and input `X`.</span>
 <span class="sd">        """</span>
         <span class="n">q</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
         <span class="n">X_full</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">X</span><span class="p">,</span> <span class="n">match_batch_shape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X_baseline</span><span class="p">,</span> <span class="n">X</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
@@ -304,7 +304,9 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            model: A fitted model.</span>
-<span class="sd">            best_f: The best objective value observed so far (assumed noiseless).</span>
+<span class="sd">            best_f: The best objective value observed so far (assumed noiseless). Can</span>
+<span class="sd">                be a `batch_shape`-shaped tensor, which in case of a batched model</span>
+<span class="sd">                specifies potentially different values for each element of the batch.</span>
 <span class="sd">            sampler: The sampler used to draw base samples. Defaults to</span>
 <span class="sd">                `SobolQMCNormalSampler(num_samples=500, collapse_batch_dims=True)`</span>
 <span class="sd">            objective: The MCAcquisitionObjective under which the samples are</span>
@@ -334,12 +336,13 @@
         <span class="sa">r</span><span class="sd">"""Evaluate qProbabilityOfImprovement on the candidate set `X`.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            X: A `(b) x q x d`-dim Tensor of `(b)` t-batches with `q` `d`-dim</span>
-<span class="sd">                design points each.</span>
+<span class="sd">            X: A `batch_shape x q x d`-dim Tensor of t-batches with `q` `d`-dim design</span>
+<span class="sd">                points each.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            A `(b)`-dim Tensor of Probability of Improvement values at the given</span>
-<span class="sd">            design points `X`.</span>
+<span class="sd">            A `batch_shape'`-dim Tensor of Probability of Improvement values at the</span>
+<span class="sd">            given design points `X`, where `batch_shape'` is the broadcasted batch shape</span>
+<span class="sd">            of model and input `X`.</span>
 <span class="sd">        """</span>
         <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
@@ -352,8 +355,7 @@
 <div class="viewcode-block" id="qSimpleRegret"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.monte_carlo.qSimpleRegret">[docs]</a><span class="k">class</span> <span class="nc">qSimpleRegret</span><span class="p">(</span><span class="n">MCAcquisitionFunction</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""MC-based batch Simple Regret.</span>
 
-<span class="sd">    Samples from the joint posterior over the q-batch and computes the simple</span>
-<span class="sd">    regret.</span>
+<span class="sd">    Samples from the joint posterior over the q-batch and computes the simple regret.</span>
 
 <span class="sd">    `qSR(X) = E(max Y), Y ~ f(X), X = (x_1,...,x_q)`</span>
 
@@ -370,12 +372,13 @@
         <span class="sa">r</span><span class="sd">"""Evaluate qSimpleRegret on the candidate set `X`.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            X: A `(b) x q x d`-dim Tensor of `(b)` t-batches with `q` `d`-dim</span>
-<span class="sd">                design points each.</span>
+<span class="sd">            X: A `batch_shape x q x d`-dim Tensor of t-batches with `q` `d`-dim design</span>
+<span class="sd">                points each.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            A `(b)`-dim Tensor of Simple Regret values at the given design</span>
-<span class="sd">            points `X`.</span>
+<span class="sd">            A `batch_shape'`-dim Tensor of Simple Regret values at the given design</span>
+<span class="sd">            points `X`, where `batch_shape'` is the broadcasted batch shape of model</span>
+<span class="sd">            and input `X`.</span>
 <span class="sd">        """</span>
         <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
@@ -417,10 +420,10 @@
 <span class="sd">                `SobolQMCNormalSampler(num_samples=500, collapse_batch_dims=True)`</span>
 <span class="sd">            objective: The MCAcquisitionObjective under which the samples are</span>
 <span class="sd">                evaluated. Defaults to `IdentityMCObjective()`.</span>
-<span class="sd">            X_pending:  A `m x d`-dim Tensor of `m` design points that have</span>
-<span class="sd">                points that have been submitted for function evaluation</span>
-<span class="sd">                but have not yet been evaluated.  Concatenated into X upon</span>
-<span class="sd">                forward call.  Copied and set to have no gradient.</span>
+<span class="sd">            X_pending: A `batch_shape x m x d`-dim Tensor of `m` design points that have</span>
+<span class="sd">                points that have been submitted for function evaluation but have not yet</span>
+<span class="sd">                been evaluated. Concatenated into X upon forward call. Copied and set to</span>
+<span class="sd">                have no gradient.</span>
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span> <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span>
@@ -433,12 +436,13 @@
         <span class="sa">r</span><span class="sd">"""Evaluate qUpperConfidenceBound on the candidate set `X`.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            X: A `(b) x q x d`-dim Tensor of `(b)` t-batches with `q` `d`-dim</span>
-<span class="sd">                design points each.</span>
+<span class="sd">            X: A `batch_sahpe x q x d`-dim Tensor of t-batches with `q` `d`-dim design</span>
+<span class="sd">                points each.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            A `(b)`-dim Tensor of Upper Confidence Bound values at the given</span>
-<span class="sd">            design points `X`.</span>
+<span class="sd">            A `batch_shape'`-dim Tensor of Upper Confidence Bound values at the given</span>
+<span class="sd">            design points `X`, where `batch_shape'` is the broadcasted batch shape of</span>
+<span class="sd">            model and input `X`.</span>
 <span class="sd">        """</span>
         <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
@@ -458,16 +462,18 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../acquisition.html">botorch.acquisition</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../models.html">botorch.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generation.html">botorch.generation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../posteriors.html">botorch.posteriors</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../optim.html">botorch.optim</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fit.html">botorch.fit</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../gen.html">botorch.gen</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../sampling.html">botorch.sampling</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../cross_validation.html">botorch.cross_validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../settings.html">botorch.settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../logging.html">botorch.logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../test_functions.html">botorch.test_functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">botorch.exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../utils.html">botorch.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../gen.html">Generation utilities [DEPRECATED - use botorch.generation.gen]</a></li>
 </ul>
 <div class="relations">
 <h3>Related Topics</h3>

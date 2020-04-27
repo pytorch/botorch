@@ -43,12 +43,13 @@
 
 <span class="kn">from</span> <span class="nn">..acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">OneShotAcquisitionFunction</span>
 <span class="kn">from</span> <span class="nn">..acquisition.knowledge_gradient</span> <span class="kn">import</span> <span class="n">qKnowledgeGradient</span>
-<span class="kn">from</span> <span class="nn">..gen</span> <span class="kn">import</span> <span class="n">gen_candidates_scipy</span>
+<span class="kn">from</span> <span class="nn">..generation.gen</span> <span class="kn">import</span> <span class="n">gen_candidates_scipy</span>
+<span class="kn">from</span> <span class="nn">..logging</span> <span class="kn">import</span> <span class="n">logger</span>
 <span class="kn">from</span> <span class="nn">.initializers</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">gen_batch_initial_conditions</span><span class="p">,</span>
     <span class="n">gen_one_shot_kg_initial_conditions</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">ConvergenceCriterion</span>
+<span class="kn">from</span> <span class="nn">.stopping</span> <span class="kn">import</span> <span class="n">ExpMAStoppingCriterion</span>
 
 
 <div class="viewcode-block" id="optimize_acqf"><a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize.optimize_acqf">[docs]</a><span class="k">def</span> <span class="nf">optimize_acqf</span><span class="p">(</span>
@@ -131,7 +132,7 @@
         <span class="n">candidate_list</span><span class="p">,</span> <span class="n">acq_value_list</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
         <span class="n">candidates</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([])</span>
         <span class="n">base_X_pending</span> <span class="o">=</span> <span class="n">acq_function</span><span class="o">.</span><span class="n">X_pending</span>
-        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">q</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">q</span><span class="p">):</span>
             <span class="n">candidate</span><span class="p">,</span> <span class="n">acq_value</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
                 <span class="n">acq_function</span><span class="o">=</span><span class="n">acq_function</span><span class="p">,</span>
                 <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
@@ -155,6 +156,7 @@
                 <span class="k">if</span> <span class="n">base_X_pending</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
                 <span class="k">else</span> <span class="n">candidates</span>
             <span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Generated sequential candidate </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="n">q</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="c1"># Reset acq_func to previous X_pending state</span>
         <span class="n">acq_function</span><span class="o">.</span><span class="n">set_X_pending</span><span class="p">(</span><span class="n">base_X_pending</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">candidates</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">acq_value_list</span><span class="p">)</span>
@@ -180,8 +182,8 @@
     <span class="n">batch_limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"batch_limit"</span><span class="p">,</span> <span class="n">num_restarts</span><span class="p">)</span>
     <span class="n">batch_candidates_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">batch_acq_values_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">start_idx</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="k">while</span> <span class="n">start_idx</span> <span class="o">&lt;</span> <span class="n">num_restarts</span><span class="p">:</span>
+    <span class="n">start_idcs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_restarts</span><span class="p">,</span> <span class="n">batch_limit</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">start_idx</span> <span class="ow">in</span> <span class="n">start_idcs</span><span class="p">:</span>
         <span class="n">end_idx</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">start_idx</span> <span class="o">+</span> <span class="n">batch_limit</span><span class="p">,</span> <span class="n">num_restarts</span><span class="p">)</span>
         <span class="c1"># optimize using random restart optimization</span>
         <span class="n">batch_candidates_curr</span><span class="p">,</span> <span class="n">batch_acq_values_curr</span> <span class="o">=</span> <span class="n">gen_candidates_scipy</span><span class="p">(</span>
@@ -200,7 +202,7 @@
         <span class="p">)</span>
         <span class="n">batch_candidates_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">batch_candidates_curr</span><span class="p">)</span>
         <span class="n">batch_acq_values_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">batch_acq_values_curr</span><span class="p">)</span>
-        <span class="n">start_idx</span> <span class="o">+=</span> <span class="n">batch_limit</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Generated candidate batch </span><span class="si">{</span><span class="n">start_idx</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">start_idcs</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
     <span class="n">batch_candidates</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">batch_candidates_list</span><span class="p">)</span>
     <span class="n">batch_acq_values</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">batch_acq_values_list</span><span class="p">)</span>
 
@@ -256,8 +258,7 @@
 <span class="sd">        batch_initial_conditions: A tensor to specify the initial conditions.</span>
 <span class="sd">            If no initial conditions are provided, the default initialization will</span>
 <span class="sd">            be used.</span>
-<span class="sd">        cyclic_options: Options for convergence criterion for outer cyclic</span>
-<span class="sd">            optimization.</span>
+<span class="sd">        cyclic_options: Options for stopping criterion for outer cyclic optimization.</span>
 <span class="sd">        Returns:</span>
 <span class="sd">            A two-element tuple containing</span>
 
@@ -295,11 +296,11 @@
     <span class="p">)</span>
     <span class="k">if</span> <span class="n">q</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
         <span class="n">cyclic_options</span> <span class="o">=</span> <span class="n">cyclic_options</span> <span class="ow">or</span> <span class="p">{}</span>
-        <span class="n">convergence_criterion</span> <span class="o">=</span> <span class="n">ConvergenceCriterion</span><span class="p">(</span><span class="o">**</span><span class="n">cyclic_options</span><span class="p">)</span>
-        <span class="n">converged</span> <span class="o">=</span> <span class="n">convergence_criterion</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">fvals</span><span class="o">=</span><span class="n">acq_vals</span><span class="p">)</span>
+        <span class="n">stopping_criterion</span> <span class="o">=</span> <span class="n">ExpMAStoppingCriterion</span><span class="p">(</span><span class="o">**</span><span class="n">cyclic_options</span><span class="p">)</span>
+        <span class="n">stop</span> <span class="o">=</span> <span class="n">stopping_criterion</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">fvals</span><span class="o">=</span><span class="n">acq_vals</span><span class="p">)</span>
         <span class="n">base_X_pending</span> <span class="o">=</span> <span class="n">acq_function</span><span class="o">.</span><span class="n">X_pending</span>
         <span class="n">idxr</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">bounds</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
-        <span class="k">while</span> <span class="ow">not</span> <span class="n">converged</span><span class="p">:</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="n">stop</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">q</span><span class="p">):</span>
                 <span class="c1"># optimize only candidate i</span>
                 <span class="n">idxr</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
@@ -326,7 +327,7 @@
                 <span class="n">candidates</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">candidate_i</span>
                 <span class="n">acq_vals</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">acq_val_i</span>
                 <span class="n">idxr</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
-            <span class="n">converged</span> <span class="o">=</span> <span class="n">convergence_criterion</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">fvals</span><span class="o">=</span><span class="n">acq_vals</span><span class="p">)</span>
+            <span class="n">stop</span> <span class="o">=</span> <span class="n">stopping_criterion</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">fvals</span><span class="o">=</span><span class="n">acq_vals</span><span class="p">)</span>
         <span class="n">acq_function</span><span class="o">.</span><span class="n">set_X_pending</span><span class="p">(</span><span class="n">base_X_pending</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">candidates</span><span class="p">,</span> <span class="n">acq_vals</span></div>
 </pre></div>
@@ -341,16 +342,18 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../acquisition.html">botorch.acquisition</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../models.html">botorch.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generation.html">botorch.generation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../posteriors.html">botorch.posteriors</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../optim.html">botorch.optim</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fit.html">botorch.fit</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../gen.html">botorch.gen</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../sampling.html">botorch.sampling</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../cross_validation.html">botorch.cross_validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../settings.html">botorch.settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../logging.html">botorch.logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../test_functions.html">botorch.test_functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">botorch.exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../utils.html">botorch.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../gen.html">Generation utilities [DEPRECATED - use botorch.generation.gen]</a></li>
 </ul>
 <div class="relations">
 <h3>Related Topics</h3>

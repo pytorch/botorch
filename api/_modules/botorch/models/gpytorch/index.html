@@ -24,7 +24,7 @@
 <div class="bodywrapper">
 <div class="body" role="main">
 <h1>Source code for botorch.models.gpytorch</h1><div class="highlight"><pre>
-<span></span><span class="ch">#! /usr/bin/env python3</span>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
 <span class="c1"># Copyright (c) Facebook, Inc. and its affiliates.</span>
 <span class="c1">#</span>
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
@@ -434,10 +434,10 @@
             <span class="p">)</span>
 
         <span class="n">m</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">idcs</span><span class="p">)</span>
-        <span class="n">tidxr</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">idcs</span><span class="p">)</span>
+        <span class="n">new_model</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">tidxr</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">idcs</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">new_model</span><span class="o">.</span><span class="n">train_targets</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
         <span class="n">idxr</span> <span class="o">=</span> <span class="n">tidxr</span> <span class="k">if</span> <span class="n">m</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">idcs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">new_tail_bs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">m</span><span class="p">])</span> <span class="k">if</span> <span class="n">m</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">()</span>
-        <span class="n">new_model</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
         <span class="n">new_model</span><span class="o">.</span><span class="n">_num_outputs</span> <span class="o">=</span> <span class="n">m</span>
         <span class="n">new_model</span><span class="o">.</span><span class="n">_aug_batch_shape</span> <span class="o">=</span> <span class="n">new_model</span><span class="o">.</span><span class="n">_aug_batch_shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">new_tail_bs</span>
@@ -452,7 +452,7 @@
         <span class="p">):</span>
             <span class="k">if</span> <span class="n">full_name</span> <span class="ow">in</span> <span class="n">subset_batch_dict</span><span class="p">:</span>
                 <span class="n">idx</span> <span class="o">=</span> <span class="n">subset_batch_dict</span><span class="p">[</span><span class="n">full_name</span><span class="p">]</span>
-                <span class="n">new_data</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">index_select</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">tidxr</span><span class="p">)</span>
+                <span class="n">new_data</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">index_select</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">idx</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">tidxr</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">m</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
                     <span class="n">new_data</span> <span class="o">=</span> <span class="n">new_data</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
                 <span class="n">p</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">new_data</span>
@@ -636,16 +636,18 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../acquisition.html">botorch.acquisition</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../models.html">botorch.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generation.html">botorch.generation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../posteriors.html">botorch.posteriors</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../optim.html">botorch.optim</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../fit.html">botorch.fit</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../gen.html">botorch.gen</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../sampling.html">botorch.sampling</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../cross_validation.html">botorch.cross_validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../settings.html">botorch.settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../logging.html">botorch.logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../test_functions.html">botorch.test_functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">botorch.exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../utils.html">botorch.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../gen.html">Generation utilities [DEPRECATED - use botorch.generation.gen]</a></li>
 </ul>
 <div class="relations">
 <h3>Related Topics</h3>
