@@ -445,7 +445,7 @@ class PairwiseGP(Model, GP):
             utility: A Tensor of shape `batch_size x n`
         """
         _, _, z_logcdf, _ = self._calc_z(utility, self.D, self.std_noise)
-        loss1 = -torch.sum(z_logcdf, dim=-1)
+        loss1 = -(torch.sum(z_logcdf, dim=-1))
         inv_prod = torch.cholesky_solve(utility.unsqueeze(-1), self.covar_chol)
         loss2 = 0.5 * (utility.unsqueeze(-2) @ inv_prod).squeeze(-1).squeeze(-1)
         loss = loss1 + loss2

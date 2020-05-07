@@ -53,7 +53,7 @@ class TestQNegIntegratedPosteriorVariance(BotorchTestCase):
                     )
                     X = torch.empty(1, 1, device=self.device, dtype=dtype)  # dummy
                     val = qNIPV(X)
-                    self.assertTrue(torch.allclose(val, -variance.mean(), atol=1e-4))
+                    self.assertTrue(torch.allclose(val, -(variance.mean()), atol=1e-4))
             # batched model
             mean = torch.zeros(2, 4, 1, device=self.device, dtype=dtype)
             variance = torch.rand(2, 4, 1, device=self.device, dtype=dtype)

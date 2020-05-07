@@ -143,7 +143,7 @@ def get_infeasible_cost(
     """
     posterior = model.posterior(X)
     lb = objective(posterior.mean - 6 * posterior.variance.clamp_min(0).sqrt()).min()
-    M = -lb.clamp_max(0.0)
+    M = -(lb.clamp_max(0.0))
     return M.item()
 
 

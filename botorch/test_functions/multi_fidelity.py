@@ -101,7 +101,7 @@ class AugmentedHartmann(SyntheticTestFunction):
         )
         alpha1 = self.ALPHA[0] - 0.1 * (1 - X[..., 6])
         H = (
-            -torch.sum(self.ALPHA[1:] * torch.exp(-inner_sum)[..., 1:], dim=1)
+            -(torch.sum(self.ALPHA[1:] * torch.exp(-inner_sum)[..., 1:], dim=1))
             - alpha1 * torch.exp(-inner_sum)[..., 0]
         )
         return H
@@ -139,4 +139,4 @@ class AugmentedRosenbrock(SyntheticTestFunction):
         X_next = X[..., 1:-2]
         t1 = 100 * (X_next - X_curr ** 2 + 0.1 * (1 - X[..., -2:-1])) ** 2
         t2 = (X_curr - 1 + 0.1 * (1 - X[..., -1:]) ** 2) ** 2
-        return -(t1 + t2).sum(dim=-1)
+        return -((t1 + t2).sum(dim=-1))
