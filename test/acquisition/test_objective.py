@@ -29,7 +29,9 @@ def infeasible_con(samples: Tensor) -> Tensor:
 
 
 def feasible_con(samples: Tensor) -> Tensor:
-    return -torch.ones(samples.shape[0:-1], device=samples.device, dtype=samples.dtype)
+    return -(
+        torch.ones(samples.shape[0:-1], device=samples.device, dtype=samples.dtype)
+    )
 
 
 class TestScalarizedObjective(BotorchTestCase):

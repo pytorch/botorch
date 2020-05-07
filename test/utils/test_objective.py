@@ -20,7 +20,9 @@ def zeros_f(samples: Tensor) -> Tensor:
 
 
 def minus_one_f(samples: Tensor) -> Tensor:
-    return -torch.ones(samples.shape[0:-1], device=samples.device, dtype=samples.dtype)
+    return -(
+        torch.ones(samples.shape[0:-1], device=samples.device, dtype=samples.dtype)
+    )
 
 
 class TestApplyConstraints(BotorchTestCase):

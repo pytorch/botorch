@@ -75,7 +75,7 @@ class Ackley(SyntheticTestFunction):
     def evaluate_true(self, X: Tensor) -> Tensor:
         a, b, c = self.a, self.b, self.c
         part1 = -a * torch.exp(-b / math.sqrt(self.dim) * torch.norm(X, dim=-1))
-        part2 = -torch.exp(torch.mean(torch.cos(c * X), dim=-1))
+        part2 = -(torch.exp(torch.mean(torch.cos(c * X), dim=-1)))
         return part1 + part2 + a + math.e
 
 
@@ -235,8 +235,8 @@ class Griewank(SyntheticTestFunction):
     def evaluate_true(self, X: Tensor) -> Tensor:
         part1 = torch.sum(X ** 2 / 4000.0, dim=1)
         d = X.shape[1]
-        part2 = -torch.prod(
-            torch.cos(X / torch.sqrt(X.new(range(1, d + 1))).view(1, -1))
+        part2 = -(
+            torch.prod(torch.cos(X / torch.sqrt(X.new(range(1, d + 1))).view(1, -1)))
         )
         return part1 + part2 + 1.0
 
@@ -325,7 +325,7 @@ class Hartmann(SyntheticTestFunction):
     def evaluate_true(self, X: Tensor) -> Tensor:
         self.to(device=X.device, dtype=X.dtype)
         inner_sum = torch.sum(self.A * (X.unsqueeze(1) - 0.0001 * self.P) ** 2, dim=2)
-        H = -torch.sum(self.ALPHA * torch.exp(-inner_sum), dim=1)
+        H = -(torch.sum(self.ALPHA * torch.exp(-inner_sum), dim=1))
         if self.dim == 4:
             H = (1.1 + H) / 0.839
         return H
@@ -358,7 +358,9 @@ class HolderTable(SyntheticTestFunction):
 
     def evaluate_true(self, X: Tensor) -> Tensor:
         term = torch.abs(1 - torch.norm(X, dim=1) / math.pi)
-        return -torch.abs(torch.sin(X[..., 0]) * torch.cos(X[..., 1]) * torch.exp(term))
+        return -(
+            torch.abs(torch.sin(X[..., 0]) * torch.cos(X[..., 1]) * torch.exp(term))
+        )
 
 
 class Levy(SyntheticTestFunction):
@@ -431,8 +433,10 @@ class Michalewicz(SyntheticTestFunction):
     def evaluate_true(self, X: Tensor) -> Tensor:
         self.to(device=X.device, dtype=X.dtype)
         m = 10
-        return -torch.sum(
-            torch.sin(X) * torch.sin(self.i * X ** 2 / math.pi) ** (2 * m), dim=-1
+        return -(
+            torch.sum(
+                torch.sin(X) * torch.sin(self.i * X ** 2 / math.pi) ** (2 * m), dim=-1
+            )
         )
 
 

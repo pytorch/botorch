@@ -227,7 +227,7 @@ def match_batch_shape(X: Tensor, Y: Tensor) -> Tensor:
         torch.Size([2, 6, 5, 3])
 
     """
-    return X.expand(X.shape[: -Y.dim()] + Y.shape[:-2] + X.shape[-2:])
+    return X.expand(X.shape[: -(Y.dim())] + Y.shape[:-2] + X.shape[-2:])
 
 
 def convert_to_target_pre_hook(module, *args):

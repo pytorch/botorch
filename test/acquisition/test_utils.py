@@ -327,7 +327,7 @@ class TestPruneInferiorPoints(BotorchTestCase):
             X_pruned = prune_inferior_points(model=mm, X=X)
             self.assertTrue(torch.equal(X_pruned, X[[-1]]))
             # test custom objective
-            neg_id_obj = GenericMCObjective(lambda X: -X.squeeze(-1))
+            neg_id_obj = GenericMCObjective(lambda X: -(X.squeeze(-1)))
             X_pruned = prune_inferior_points(model=mm, X=X, objective=neg_id_obj)
             self.assertTrue(torch.equal(X_pruned, X[[0]]))
             # test non-repeated samples (requires mocking out MockPosterior's rsample)

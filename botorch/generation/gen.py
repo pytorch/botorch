@@ -203,7 +203,7 @@ def gen_candidates_torch(
         i += 1
         loss = -acquisition_function(candidates).sum()
         if verbose:
-            print("Iter: {} - Value: {:.3f}".format(i, -loss.item()))
+            print("Iter: {} - Value: {:.3f}".format(i, -(loss.item())))
         loss_trajectory.append(loss.item())
         param_trajectory["candidates"].append(candidates.clone())
 

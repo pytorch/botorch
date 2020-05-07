@@ -91,7 +91,7 @@ class GPyTorchModel(Model, ABC):
             )
         # Yvar may not have the same batch dimensions, but the trailing dimensions
         # of Yvar should be the same as the trailing dimensions of Y.
-        if Yvar is not None and Y.shape[-Yvar.dim() :] != Yvar.shape:
+        if Yvar is not None and Y.shape[-(Yvar.dim()) :] != Yvar.shape:
             raise BotorchTensorDimensionError(
                 "An explicit output dimension is required for observation noise."
                 f" Expected Yvar with shape: {Y.shape[-Yvar.dim() :]} (got"
