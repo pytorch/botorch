@@ -31,3 +31,8 @@ Transformations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.utils.transforms
 		:members:
+
+Feasible Volume
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.utils.feasible_volume
+		:members:

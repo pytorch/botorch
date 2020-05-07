@@ -13,14 +13,14 @@ from typing import List, Optional, Tuple
 from unittest import TestCase
 
 import torch
-from botorch.posteriors.gpytorch import GPyTorchPosterior
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.lazy import AddedDiagLazyTensor, DiagLazyTensor
 from torch import Tensor
 
 from .. import settings
 from ..models.model import Model
-from ..posteriors import Posterior
+from ..posteriors.gpytorch import GPyTorchPosterior
+from ..posteriors.posterior import Posterior
 from ..test_functions.base import BaseTestProblem
 
 

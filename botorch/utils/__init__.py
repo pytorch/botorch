@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from .constraints import get_outcome_constraint_transforms
+from .feasible_volume import estimate_feasible_volume
 from .objective import apply_constraints, get_objective_weights_transform
 from .sampling import (
     batched_multinomial,
@@ -30,4 +31,5 @@ __all__ = [
     "squeeze_last_dim",
     "standardize",
     "t_batch_mode_transform",
+    "estimate_feasible_volume",
 ]
