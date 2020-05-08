@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections import OrderedDict
 from typing import List, Optional, Tuple
 
 import torch
@@ -87,7 +88,7 @@ class ChainedOutcomeTransform(OutcomeTransform, ModuleDict):
                 kwargs are used as the keys for accessing the individual
                 transforms on the module.
         """
-        super().__init__(transforms)
+        super().__init__(OrderedDict(transforms))
 
     def forward(
         self, Y: Tensor, Yvar: Optional[Tensor] = None
