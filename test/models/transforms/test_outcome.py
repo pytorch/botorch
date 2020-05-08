@@ -328,11 +328,11 @@ class TestOutcomeTransforms(BotorchTestCase):
             # test init
             tf1 = Log()
             tf2 = Standardize(m=m, batch_shape=batch_shape)
-            tf = ChainedOutcomeTransform(log=tf1, standardize=tf2)
+            tf = ChainedOutcomeTransform(b=tf1, a=tf2)
             self.assertTrue(tf.training)
-            self.assertEqual(sorted(tf.keys()), ["log", "standardize"])
-            self.assertEqual(tf["log"], tf1)
-            self.assertEqual(tf["standardize"], tf2)
+            self.assertEqual(list(tf.keys()), ["b", "a"])
+            self.assertEqual(tf["b"], tf1)
+            self.assertEqual(tf["a"], tf2)
 
             # make copies for validation below
             tf1_, tf2_ = deepcopy(tf1), deepcopy(tf2)
