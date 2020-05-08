@@ -852,6 +852,110 @@ the batch dimensions of <cite>Y</cite> (if compatible). For instance, if <cite>X
 <dd><p>Context manager for settings used for computing model posteriors.</p>
 </dd></dl>
 </div>
+<div class="section" id="module-botorch.utils.feasible_volume">
+<span id="feasible-volume"></span><h2>Feasible Volume<a class="headerlink" href="#module-botorch.utils.feasible_volume" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt id="botorch.utils.feasible_volume.get_feasible_samples">
+<code class="sig-prename descclassname">botorch.utils.feasible_volume.</code><code class="sig-name descname">get_feasible_samples</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">samples</span></em>, <em class="sig-param"><span class="n">inequality_constraints</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/feasible_volume.html#get_feasible_samples"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.feasible_volume.get_feasible_samples" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks which of the samples satisfy all of the inequality constraints.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>sample size x d</cite> size tensor of feature samples,
+where d is a feature dimension.</p></li>
+<li><p><strong>constraints</strong> (<em>inequality</em>) – A list of tuples (indices, coefficients, rhs),
+with each tuple encoding an inequality constraint of the form
+<cite>sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><p>2-element tuple containing</p>
+<ul class="simple">
+<li><p>Samples satisfying the linear constraints.</p></li>
+<li><p>Estimated proportion of samples satisfying the linear constraints.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt id="botorch.utils.feasible_volume.get_outcome_feasibility_probability">
+<code class="sig-prename descclassname">botorch.utils.feasible_volume.</code><code class="sig-name descname">get_outcome_feasibility_probability</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="n">outcome_constraints</span></em>, <em class="sig-param"><span class="n">threshold</span><span class="o">=</span><span class="default_value">0.1</span></em>, <em class="sig-param"><span class="n">nsample_outcome</span><span class="o">=</span><span class="default_value">1000</span></em>, <em class="sig-param"><span class="n">seed</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/feasible_volume.html#get_outcome_feasibility_probability"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.feasible_volume.get_outcome_feasibility_probability" title="Permalink to this definition">¶</a></dt>
+<dd><p>Monte Carlo estimate of the feasible volume with respect to the outcome constraints.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a>) – The model used for sampling the posterior.</p></li>
+<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A tensor of dimension <cite>batch-shape x 1 x d</cite>, where d is feature dimension.</p></li>
+<li><p><strong>outcome_constraints</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]]) – A list of callables, each mapping a Tensor of dimension
+<cite>sample_shape x batch-shape x q x m</cite> to a Tensor of dimension
+<cite>sample_shape x batch-shape x q</cite>, where negative values imply feasibility.</p></li>
+<li><p><strong>threshold</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – A lower limit for the probability of posterior samples feasibility.</p></li>
+<li><p><strong>nsample_outcome</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of samples from the model posterior.</p></li>
+<li><p><strong>seed</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The seed for the posterior sampler. If omitted, use a random seed.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Estimated proportion of features for which posterior samples satisfy
+given outcome constraints with probability above or equal to
+the given threshold.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt id="botorch.utils.feasible_volume.estimate_feasible_volume">
+<code class="sig-prename descclassname">botorch.utils.feasible_volume.</code><code class="sig-name descname">estimate_feasible_volume</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">bounds</span></em>, <em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">outcome_constraints</span></em>, <em class="sig-param"><span class="n">inequality_constraints</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">nsample_feature</span><span class="o">=</span><span class="default_value">1000</span></em>, <em class="sig-param"><span class="n">nsample_outcome</span><span class="o">=</span><span class="default_value">1000</span></em>, <em class="sig-param"><span class="n">threshold</span><span class="o">=</span><span class="default_value">0.1</span></em>, <em class="sig-param"><span class="n">verbose</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">seed</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">device</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dtype</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/feasible_volume.html#estimate_feasible_volume"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.feasible_volume.estimate_feasible_volume" title="Permalink to this definition">¶</a></dt>
+<dd><p>Monte Carlo estimate of the feasible volume with respect
+to feature constraints and outcome constraints.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>bounds</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>2 x d</cite> tensor of lower and upper bounds
+for each column of <cite>X</cite>.</p></li>
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a>) – The model used for sampling the outcomes.</p></li>
+<li><p><strong>outcome_constraints</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]]) – A list of callables, each mapping a Tensor of dimension
+<cite>sample_shape x batch-shape x q x m</cite> to a Tensor of dimension
+<cite>sample_shape x batch-shape x q</cite>, where negative values imply
+feasibility.</p></li>
+<li><p><strong>constraints</strong> (<em>inequality</em>) – A list of tuples (indices, coefficients, rhs),
+with each tuple encoding an inequality constraint of the form
+<cite>sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs</cite>.</p></li>
+<li><p><strong>nsample_feature</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of feature samples satisfying the bounds.</p></li>
+<li><p><strong>nsample_outcome</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of outcome samples from the model posterior.</p></li>
+<li><p><strong>threshold</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – A lower limit for the probability of outcome feasibility</p></li>
+<li><p><strong>seed</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The seed for both feature and outcome samplers. If omitted,
+use a random seed.</p></li>
+<li><p><strong>verbose</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – An indicator for whether to log the results.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><dl class="simple">
+<dt>Estimated proportion of volume in feature space that is</dt><dd><p>feasible wrt the bounds and the inequality constraints (linear).</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Estimated proportion of feasible features for which</dt><dd><p>posterior samples (outcome) satisfies the outcome constraints
+with probability above the given threshold.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>2-element tuple containing</p>
+</dd>
+</dl>
+</dd></dl>
+</div>
 </div>
 </div>
 </div>

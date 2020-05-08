@@ -169,7 +169,7 @@
 <span class="sd">    """</span>
     <span class="n">posterior</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
     <span class="n">lb</span> <span class="o">=</span> <span class="n">objective</span><span class="p">(</span><span class="n">posterior</span><span class="o">.</span><span class="n">mean</span> <span class="o">-</span> <span class="mi">6</span> <span class="o">*</span> <span class="n">posterior</span><span class="o">.</span><span class="n">variance</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">sqrt</span><span class="p">())</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
-    <span class="n">M</span> <span class="o">=</span> <span class="o">-</span><span class="n">lb</span><span class="o">.</span><span class="n">clamp_max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">M</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="n">lb</span><span class="o">.</span><span class="n">clamp_max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">M</span><span class="o">.</span><span class="n">item</span><span class="p">()</span></div>
 
 
