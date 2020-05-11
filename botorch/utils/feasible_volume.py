@@ -47,7 +47,8 @@ def get_feasible_samples(
     feasible = torch.ones(nsamples, device=samples.device, dtype=torch.bool)
 
     for (indices, coefficients, rhs) in inequality_constraints:
-        feasible &= samples.index_select(1, indices) @ coefficients >= rhs
+        lhs = samples.index_select(1, indices) @ coefficients.to(dtype=samples.dtype)
+        feasible &= lhs >= rhs
 
     feasible_samples = samples[feasible]
 
@@ -82,6 +83,9 @@ def get_outcome_feasibility_probability(
         given outcome constraints with probability above or equal to
         the given threshold.
     """
+    if outcome_constraints is None:
+        return 1.0
+
     from botorch.sampling import SobolQMCNormalSampler
 
     seed = seed if seed is not None else torch.randint(0, 1000000, (1,)).item()

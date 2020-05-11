@@ -67,7 +67,19 @@ class TestFeasibleVolumeEstimates(BotorchTestCase):
                     outcome_constraints=outcome_constraints,
                     nsample_feature=2,
                     nsample_outcome=1,
+                    dtype=dtype,
                 )
 
                 self.assertEqual(p_linear, 1.0)
                 self.assertEqual(p_outcome, 1.0 - samples[0, 0].item())
+
+                p_linear, p_outcome = estimate_feasible_volume(
+                    bounds=bounds,
+                    model=mm,
+                    outcome_constraints=None,
+                    nsample_feature=2,
+                    nsample_outcome=1,
+                    dtype=dtype,
+                )
+                self.assertEqual(p_linear, 1.0)
+                self.assertEqual(p_outcome, 1.0)
