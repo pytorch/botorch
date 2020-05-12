@@ -77,7 +77,7 @@ class AnalyticAcquisitionFunction(AcquisitionFunction, ABC):
 
     def set_X_pending(self, X_pending: Optional[Tensor] = None) -> None:
         raise UnsupportedError(
-            f"Analytic acquisition functions do not account for X_pending yet."
+            "Analytic acquisition functions do not account for X_pending yet."
         )
 
 
