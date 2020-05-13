@@ -549,6 +549,13 @@
 </li>
 </ul></li>
 <li>
+    botorch.utils.feasible_volume
+
+      <ul>
+<li><a href="utils.html#module-botorch.utils.feasible_volume">module</a>
+</li>
+</ul></li>
+<li>
     botorch.utils.objective
 
       <ul>
@@ -668,13 +675,12 @@
 </li>
 <li><a href="posteriors.html#botorch.posteriors.deterministic.DeterministicPosterior">DeterministicPosterior (class in botorch.posteriors.deterministic)</a>
 </li>
-<li><a href="optim.html#botorch.optim.numpy_converter.TorchAttr.device">device (botorch.optim.numpy_converter.TorchAttr attribute)</a>
-<ul>
-<li><a href="utils.html#botorch.utils.testing.BotorchTestCase.device">(botorch.utils.testing.BotorchTestCase attribute)</a>
+<li><a href="utils.html#botorch.utils.testing.BotorchTestCase.device">device (botorch.utils.testing.BotorchTestCase attribute)</a>
 </li>
-</ul></li>
-<li><a href="posteriors.html#botorch.posteriors.deterministic.DeterministicPosterior.device">device() (botorch.posteriors.deterministic.DeterministicPosterior property)</a>
+<li><a href="optim.html#botorch.optim.numpy_converter.TorchAttr.device">device() (botorch.optim.numpy_converter.TorchAttr property)</a>
 <ul>
+<li><a href="posteriors.html#botorch.posteriors.deterministic.DeterministicPosterior.device">(botorch.posteriors.deterministic.DeterministicPosterior property)</a>
+</li>
 <li><a href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior.device">(botorch.posteriors.gpytorch.GPyTorchPosterior property)</a>
 </li>
 <li><a href="posteriors.html#botorch.posteriors.posterior.Posterior.device">(botorch.posteriors.posterior.Posterior property)</a>
@@ -728,10 +734,10 @@
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.DropWave">DropWave (class in botorch.test_functions.synthetic)</a>
 </li>
-<li><a href="optim.html#botorch.optim.numpy_converter.TorchAttr.dtype">dtype (botorch.optim.numpy_converter.TorchAttr attribute)</a>
-</li>
-<li><a href="posteriors.html#botorch.posteriors.deterministic.DeterministicPosterior.dtype">dtype() (botorch.posteriors.deterministic.DeterministicPosterior property)</a>
+<li><a href="optim.html#botorch.optim.numpy_converter.TorchAttr.dtype">dtype() (botorch.optim.numpy_converter.TorchAttr property)</a>
 <ul>
+<li><a href="posteriors.html#botorch.posteriors.deterministic.DeterministicPosterior.dtype">(botorch.posteriors.deterministic.DeterministicPosterior property)</a>
+</li>
 <li><a href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior.dtype">(botorch.posteriors.gpytorch.GPyTorchPosterior property)</a>
 </li>
 <li><a href="posteriors.html#botorch.posteriors.posterior.Posterior.dtype">(botorch.posteriors.posterior.Posterior property)</a>
@@ -747,6 +753,8 @@
 <table class="indextable genindextable" style="width: 100%"><tr>
 <td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.EggHolder">EggHolder (class in botorch.test_functions.synthetic)</a>
+</li>
+<li><a href="utils.html#botorch.utils.feasible_volume.estimate_feasible_volume">estimate_feasible_volume() (in module botorch.utils.feasible_volume)</a>
 </li>
 <li><a href="optim.html#botorch.optim.parameter_constraints.eval_lin_constraint">eval_lin_constraint() (in module botorch.optim.parameter_constraints)</a>
 </li>
@@ -998,11 +1006,15 @@
 </li>
 <li><a href="generation.html#botorch.generation.gen.get_best_candidates">get_best_candidates() (in module botorch.generation.gen)</a>
 </li>
+<li><a href="utils.html#botorch.utils.feasible_volume.get_feasible_samples">get_feasible_samples() (in module botorch.utils.feasible_volume)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.utils.get_infeasible_cost">get_infeasible_cost() (in module botorch.acquisition.utils)</a>
 </li>
 <li><a href="utils.html#botorch.utils.objective.get_objective_weights_transform">get_objective_weights_transform() (in module botorch.utils.objective)</a>
 </li>
 <li><a href="utils.html#botorch.utils.constraints.get_outcome_constraint_transforms">get_outcome_constraint_transforms() (in module botorch.utils.constraints)</a>
+</li>
+<li><a href="utils.html#botorch.utils.feasible_volume.get_outcome_feasibility_probability">get_outcome_feasibility_probability() (in module botorch.utils.feasible_volume)</a>
 </li>
 <li><a href="utils.html#botorch.utils.transforms.gpt_posterior_settings">gpt_posterior_settings() (in module botorch.utils.transforms)</a>
 </li>
@@ -1117,9 +1129,9 @@
 </li>
 <li><a href="models.html#botorch.models.utils.mod_batch_shape">mod_batch_shape() (in module botorch.models.utils)</a>
 </li>
-<li><a href="cross_validation.html#botorch.cross_validation.CVResults.model">model (botorch.cross_validation.CVResults attribute)</a>
-</li>
 <li><a href="models.html#botorch.models.model.Model">Model (class in botorch.models.model)</a>
+</li>
+<li><a href="cross_validation.html#botorch.cross_validation.CVResults.model">model() (botorch.cross_validation.CVResults property)</a>
 </li>
 <li><a href="models.html#botorch.models.converter.model_list_to_batched">model_list_to_batched() (in module botorch.models.converter)</a>
 </li>
@@ -1259,6 +1271,8 @@
 </li>
 <li><a href="utils.html#module-botorch.utils.constraints">botorch.utils.constraints</a>
 </li>
+<li><a href="utils.html#module-botorch.utils.feasible_volume">botorch.utils.feasible_volume</a>
+</li>
 <li><a href="utils.html#module-botorch.utils.objective">botorch.utils.objective</a>
 </li>
 <li><a href="utils.html#module-botorch.utils.sampling">botorch.utils.sampling</a>
@@ -1321,9 +1335,9 @@
 <h2 id="O">O</h2>
 <table class="indextable genindextable" style="width: 100%"><tr>
 <td style="width: 33%; vertical-align: top;"><ul>
-<li><a href="cross_validation.html#botorch.cross_validation.CVResults.observed_Y">observed_Y (botorch.cross_validation.CVResults attribute)</a>
+<li><a href="cross_validation.html#botorch.cross_validation.CVResults.observed_Y">observed_Y() (botorch.cross_validation.CVResults property)</a>
 </li>
-<li><a href="cross_validation.html#botorch.cross_validation.CVResults.observed_Yvar">observed_Yvar (botorch.cross_validation.CVResults attribute)</a>
+<li><a href="cross_validation.html#botorch.cross_validation.CVResults.observed_Yvar">observed_Yvar() (botorch.cross_validation.CVResults property)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.acquisition.OneShotAcquisitionFunction">OneShotAcquisitionFunction (class in botorch.acquisition.acquisition)</a>
 </li>
@@ -1362,12 +1376,12 @@
 </li>
 <li><a href="sampling.html#botorch.sampling.pairwise_samplers.PairwiseSobolQMCNormalSampler">PairwiseSobolQMCNormalSampler (class in botorch.sampling.pairwise_samplers)</a>
 </li>
-<li><a href="cross_validation.html#botorch.cross_validation.CVResults.posterior">posterior (botorch.cross_validation.CVResults attribute)</a>
-</li>
 <li><a href="posteriors.html#botorch.posteriors.posterior.Posterior">Posterior (class in botorch.posteriors.posterior)</a>
 </li>
-<li><a href="models.html#botorch.models.deterministic.DeterministicModel.posterior">posterior() (botorch.models.deterministic.DeterministicModel method)</a>
+<li><a href="cross_validation.html#botorch.cross_validation.CVResults.posterior">posterior() (botorch.cross_validation.CVResults property)</a>
 <ul>
+<li><a href="models.html#botorch.models.deterministic.DeterministicModel.posterior">(botorch.models.deterministic.DeterministicModel method)</a>
+</li>
 <li><a href="models.html#botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel.posterior">(botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel method)</a>
 </li>
 <li><a href="models.html#botorch.models.gpytorch.GPyTorchModel.posterior">(botorch.models.gpytorch.GPyTorchModel method)</a>
@@ -1484,7 +1498,7 @@
 </ul></li>
 <li><a href="utils.html#botorch.utils.testing.BotorchTestCase.setUp">setUp() (botorch.utils.testing.BotorchTestCase method)</a>
 </li>
-<li><a href="optim.html#botorch.optim.numpy_converter.TorchAttr.shape">shape (botorch.optim.numpy_converter.TorchAttr attribute)</a>
+<li><a href="optim.html#botorch.optim.numpy_converter.TorchAttr.shape">shape() (botorch.optim.numpy_converter.TorchAttr property)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Shekel">Shekel (class in botorch.test_functions.synthetic)</a>
 </li>
@@ -1548,23 +1562,23 @@
 </li>
 <li><a href="utils.html#botorch.utils.testing.SyntheticTestFunctionBaseTestCase.test_optimizer">test_optimizer() (botorch.utils.testing.SyntheticTestFunctionBaseTestCase method)</a>
 </li>
-<li><a href="cross_validation.html#botorch.cross_validation.CVFolds.test_X">test_X (botorch.cross_validation.CVFolds attribute)</a>
+<li><a href="cross_validation.html#botorch.cross_validation.CVFolds.test_X">test_X() (botorch.cross_validation.CVFolds property)</a>
 </li>
-<li><a href="cross_validation.html#botorch.cross_validation.CVFolds.test_Y">test_Y (botorch.cross_validation.CVFolds attribute)</a>
+<li><a href="cross_validation.html#botorch.cross_validation.CVFolds.test_Y">test_Y() (botorch.cross_validation.CVFolds property)</a>
 </li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
-<li><a href="cross_validation.html#botorch.cross_validation.CVFolds.test_Yvar">test_Yvar (botorch.cross_validation.CVFolds attribute)</a>
+<li><a href="cross_validation.html#botorch.cross_validation.CVFolds.test_Yvar">test_Yvar() (botorch.cross_validation.CVFolds property)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.ThreeHumpCamel">ThreeHumpCamel (class in botorch.test_functions.synthetic)</a>
 </li>
 <li><a href="optim.html#botorch.optim.numpy_converter.TorchAttr">TorchAttr (class in botorch.optim.numpy_converter)</a>
 </li>
-<li><a href="cross_validation.html#botorch.cross_validation.CVFolds.train_X">train_X (botorch.cross_validation.CVFolds attribute)</a>
+<li><a href="cross_validation.html#botorch.cross_validation.CVFolds.train_X">train_X() (botorch.cross_validation.CVFolds property)</a>
 </li>
-<li><a href="cross_validation.html#botorch.cross_validation.CVFolds.train_Y">train_Y (botorch.cross_validation.CVFolds attribute)</a>
+<li><a href="cross_validation.html#botorch.cross_validation.CVFolds.train_Y">train_Y() (botorch.cross_validation.CVFolds property)</a>
 </li>
-<li><a href="cross_validation.html#botorch.cross_validation.CVFolds.train_Yvar">train_Yvar (botorch.cross_validation.CVFolds attribute)</a>
+<li><a href="cross_validation.html#botorch.cross_validation.CVFolds.train_Yvar">train_Yvar() (botorch.cross_validation.CVFolds property)</a>
 </li>
 <li><a href="posteriors.html#botorch.posteriors.transformed.TransformedPosterior">TransformedPosterior (class in botorch.posteriors.transformed)</a>
 </li>
@@ -1671,7 +1685,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2020 Facebook Inc.</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2020 Facebook Inc.</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {
