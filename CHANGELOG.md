@@ -3,6 +3,21 @@
 The release log for BoTorch.
 
 
+## [0.2.4] - May 12, 2020
+
+Bugfix Release
+
+#### Bug fixes
+* There was a mysterious issue with the 0.2.3 wheel on pypi, where part of the
+  `botorch/optim/utils.py` file was not included, which resulted in an `ImportError` for
+  many central components of the code. Interestingly, the source dist (built with the
+  same command) did not have this issue.
+* Preserve order in ChainedOutcomeTransform (#440).
+
+#### New Features
+* Utilities for estimating the feasible volume under outcome constraints (#437).
+
+
 ## [0.2.3] - Apr 27, 2020
 
 Pairwise GP for Preference Learning, Sampling Strategies.
