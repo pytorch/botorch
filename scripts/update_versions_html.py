@@ -44,8 +44,8 @@ def updateVersionHTML(base_path, base_url=BASE_URL):
 
         # nav
         nav_links = soup.find("nav").findAll("a")
-        for l in nav_links:
-            l.attrs["href"] = prepend_url(l, base_url, v)
+        for nl in nav_links:
+            nl.attrs["href"] = prepend_url(nl, base_url, v)
 
         # version link
         t = soup.find("h2", {"class": "headerTitleWithLogo"}).find_next("a")
@@ -55,8 +55,8 @@ def updateVersionHTML(base_path, base_url=BASE_URL):
 
         # footer
         nav_links = soup.find("footer").findAll("a")
-        for l in nav_links:
-            l.attrs["href"] = prepend_url(l, base_url, v)
+        for nl in nav_links:
+            nl.attrs["href"] = prepend_url(nl, base_url, v)
 
         # output files
         with open(base_path + "/new-site/v/{}/versions.html".format(v), "w") as outfile:
