@@ -39,11 +39,10 @@
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span>
 
+<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchTensorDimensionError</span>
+<span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchModel</span><span class="p">,</span> <span class="n">ModelListGPyTorchModel</span>
 <span class="kn">from</span> <span class="nn">gpytorch.models</span> <span class="kn">import</span> <span class="n">IndependentModelList</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
-
-<span class="kn">from</span> <span class="nn">..exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchTensorDimensionError</span>
-<span class="kn">from</span> <span class="nn">.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchModel</span><span class="p">,</span> <span class="n">ModelListGPyTorchModel</span>
 
 
 <div class="viewcode-block" id="ModelListGP"><a class="viewcode-back" href="../../../models.html#botorch.models.model_list_gp_regression.ModelListGP">[docs]</a><span class="k">class</span> <span class="nc">ModelListGP</span><span class="p">(</span><span class="n">IndependentModelList</span><span class="p">,</span> <span class="n">ModelListGPyTorchModel</span><span class="p">):</span>

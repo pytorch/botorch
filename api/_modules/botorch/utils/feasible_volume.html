@@ -36,10 +36,9 @@
 
 <span class="kn">import</span> <span class="nn">botorch.models.model</span> <span class="k">as</span> <span class="nn">model</span>
 <span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">botorch.logging</span> <span class="kn">import</span> <span class="n">_get_logger</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.sampling</span> <span class="kn">import</span> <span class="n">manual_seed</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
-
-<span class="kn">from</span> <span class="nn">..logging</span> <span class="kn">import</span> <span class="n">_get_logger</span>
-<span class="kn">from</span> <span class="nn">.sampling</span> <span class="kn">import</span> <span class="n">manual_seed</span>
 
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">_get_logger</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"Feasibility"</span><span class="p">)</span>
