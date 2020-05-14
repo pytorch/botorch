@@ -20,20 +20,19 @@ from abc import ABC, abstractmethod
 from typing import Any, Optional
 
 import torch
-from torch import Tensor
-from torch.nn import Module
-
-from ..acquisition.acquisition import AcquisitionFunction
-from ..acquisition.objective import (
+from botorch.acquisition.acquisition import AcquisitionFunction
+from botorch.acquisition.objective import (
     AcquisitionObjective,
     IdentityMCObjective,
     ScalarizedObjective,
 )
-from ..models.model import Model
-from ..sampling.samplers import IIDNormalSampler
-from ..utils.sampling import batched_multinomial
-from ..utils.transforms import standardize
-from .utils import _flip_sub_unique
+from botorch.generation.utils import _flip_sub_unique
+from botorch.models.model import Model
+from botorch.sampling.samplers import IIDNormalSampler
+from botorch.utils.sampling import batched_multinomial
+from botorch.utils.transforms import standardize
+from torch import Tensor
+from torch.nn import Module
 
 
 class SamplingStrategy(Module, ABC):

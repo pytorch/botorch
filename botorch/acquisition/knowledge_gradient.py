@@ -30,18 +30,24 @@ from copy import deepcopy
 from typing import Callable, Optional, Tuple, Union
 
 import torch
+from botorch import settings
+from botorch.acquisition.acquisition import (
+    AcquisitionFunction,
+    OneShotAcquisitionFunction,
+)
+from botorch.acquisition.analytic import PosteriorMean
+from botorch.acquisition.cost_aware import CostAwareUtility
+from botorch.acquisition.monte_carlo import MCAcquisitionFunction, qSimpleRegret
+from botorch.acquisition.objective import (
+    AcquisitionObjective,
+    MCAcquisitionObjective,
+    ScalarizedObjective,
+)
+from botorch.exceptions.errors import UnsupportedError
+from botorch.models.model import Model
+from botorch.sampling.samplers import MCSampler, SobolQMCNormalSampler
+from botorch.utils.transforms import match_batch_shape, t_batch_mode_transform
 from torch import Tensor
-
-from .. import settings
-from ..exceptions.errors import UnsupportedError
-from ..models.model import Model
-from ..sampling.samplers import MCSampler, SobolQMCNormalSampler
-from ..utils.transforms import match_batch_shape, t_batch_mode_transform
-from .acquisition import AcquisitionFunction, OneShotAcquisitionFunction
-from .analytic import PosteriorMean
-from .cost_aware import CostAwareUtility
-from .monte_carlo import MCAcquisitionFunction, qSimpleRegret
-from .objective import AcquisitionObjective, MCAcquisitionObjective, ScalarizedObjective
 
 
 class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):

@@ -13,18 +13,17 @@ from __future__ import annotations
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 import torch
-from scipy.optimize import minimize
-from torch import Tensor
-from torch.nn import Module
-from torch.optim import Optimizer
-
-from ..optim.parameter_constraints import (
+from botorch.optim.parameter_constraints import (
     _arrayify,
     make_scipy_bounds,
     make_scipy_linear_constraints,
 )
-from ..optim.stopping import ExpMAStoppingCriterion
-from ..optim.utils import _filter_kwargs, columnwise_clamp, fix_features
+from botorch.optim.stopping import ExpMAStoppingCriterion
+from botorch.optim.utils import _filter_kwargs, columnwise_clamp, fix_features
+from scipy.optimize import minimize
+from torch import Tensor
+from torch.nn import Module
+from torch.optim import Optimizer
 
 
 def gen_candidates_scipy(

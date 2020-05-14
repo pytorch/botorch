@@ -10,10 +10,9 @@ from typing import Callable, List, Optional, Tuple
 
 import botorch.models.model as model
 import torch
+from botorch.logging import _get_logger
+from botorch.utils.sampling import manual_seed
 from torch import Tensor
-
-from ..logging import _get_logger
-from .sampling import manual_seed
 
 
 logger = _get_logger(name="Feasibility")

@@ -25,19 +25,18 @@ from abc import ABC, abstractmethod
 from typing import Optional, Union
 
 import torch
-from torch import Tensor
-
-from ..exceptions.errors import UnsupportedError
-from ..models.model import Model
-from ..sampling.samplers import MCSampler, SobolQMCNormalSampler
-from ..utils.transforms import (
+from botorch.acquisition.acquisition import AcquisitionFunction
+from botorch.acquisition.objective import IdentityMCObjective, MCAcquisitionObjective
+from botorch.acquisition.utils import prune_inferior_points
+from botorch.exceptions.errors import UnsupportedError
+from botorch.models.model import Model
+from botorch.sampling.samplers import MCSampler, SobolQMCNormalSampler
+from botorch.utils.transforms import (
     concatenate_pending_points,
     match_batch_shape,
     t_batch_mode_transform,
 )
-from .acquisition import AcquisitionFunction
-from .objective import IdentityMCObjective, MCAcquisitionObjective
-from .utils import prune_inferior_points
+from torch import Tensor
 
 
 class MCAcquisitionFunction(AcquisitionFunction, ABC):

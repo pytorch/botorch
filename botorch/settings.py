@@ -13,8 +13,8 @@ from __future__ import annotations
 import typing  # noqa F401
 import warnings
 
-from .exceptions import BotorchWarning
-from .logging import LOG_LEVEL_DEFAULT, logger
+from botorch.exceptions import BotorchWarning
+from botorch.logging import LOG_LEVEL_DEFAULT, logger
 
 
 class _Flag:

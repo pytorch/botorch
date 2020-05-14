@@ -28,16 +28,15 @@ from math import log
 from typing import Callable, Optional
 
 import torch
+from botorch.acquisition.cost_aware import CostAwareUtility, InverseCostWeightedUtility
+from botorch.acquisition.monte_carlo import MCAcquisitionFunction
+from botorch.models.cost import AffineFidelityCostModel
+from botorch.models.model import Model
+from botorch.models.utils import check_no_nans
+from botorch.sampling.samplers import SobolQMCNormalSampler
+from botorch.utils.transforms import match_batch_shape, t_batch_mode_transform
 from scipy.optimize import brentq
 from torch import Tensor
-
-from ..models.cost import AffineFidelityCostModel
-from ..models.model import Model
-from ..models.utils import check_no_nans
-from ..sampling.samplers import SobolQMCNormalSampler
-from ..utils.transforms import match_batch_shape, t_batch_mode_transform
-from .cost_aware import CostAwareUtility, InverseCostWeightedUtility
-from .monte_carlo import MCAcquisitionFunction
 
 
 CLAMP_LB = 1.0e-8

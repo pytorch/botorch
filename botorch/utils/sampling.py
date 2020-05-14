@@ -15,12 +15,11 @@ from contextlib import contextmanager
 from typing import Generator, Optional
 
 import torch
+from botorch.exceptions.warnings import SamplingWarning
+from botorch.posteriors.posterior import Posterior
+from botorch.sampling.qmc import NormalQMCEngine
 from torch import LongTensor, Tensor
 from torch.quasirandom import SobolEngine
-
-from ..exceptions.warnings import SamplingWarning
-from ..posteriors.posterior import Posterior
-from ..sampling.qmc import NormalQMCEngine
 
 
 @contextmanager

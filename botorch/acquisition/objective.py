@@ -14,11 +14,10 @@ from abc import ABC, abstractmethod
 from typing import Callable, List
 
 import torch
+from botorch.posteriors.gpytorch import GPyTorchPosterior, scalarize_posterior
 from botorch.utils import apply_constraints
 from torch import Tensor
 from torch.nn import Module
-
-from ..posteriors.gpytorch import GPyTorchPosterior, scalarize_posterior
 
 
 class AcquisitionObjective(Module, ABC):

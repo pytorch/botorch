@@ -14,12 +14,11 @@ import warnings
 from typing import List, Optional, Tuple
 
 import torch
+from botorch import settings
+from botorch.exceptions import InputDataError, InputDataWarning
 from gpytorch.module import Module
 from gpytorch.utils.broadcasting import _mul_broadcast_shape
 from torch import Tensor
-
-from .. import settings
-from ..exceptions import InputDataError, InputDataWarning
 
 
 def _make_X_full(X: Tensor, output_indices: List[int], tf: int) -> Tensor:

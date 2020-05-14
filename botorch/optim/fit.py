@@ -15,6 +15,18 @@ import warnings
 from typing import Any, Callable, Dict, List, NamedTuple, Optional, Set, Tuple, Union
 
 import numpy as np
+from botorch.exceptions.warnings import OptimizationWarning
+from botorch.optim.numpy_converter import (
+    TorchAttr,
+    module_to_array,
+    set_params_with_array,
+)
+from botorch.optim.stopping import ExpMAStoppingCriterion
+from botorch.optim.utils import (
+    _filter_kwargs,
+    _get_extra_mll_args,
+    _scipy_objective_and_grad,
+)
 from gpytorch import settings as gpt_settings
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from scipy.optimize import Bounds, minimize
@@ -22,11 +34,6 @@ from torch import Tensor
 from torch.nn import Module
 from torch.optim.adam import Adam
 from torch.optim.optimizer import Optimizer
-
-from ..exceptions.warnings import OptimizationWarning
-from .numpy_converter import TorchAttr, module_to_array, set_params_with_array
-from .stopping import ExpMAStoppingCriterion
-from .utils import _filter_kwargs, _get_extra_mll_args, _scipy_objective_and_grad
 
 
 ParameterBounds = Dict[str, Tuple[Optional[float], Optional[float]]]

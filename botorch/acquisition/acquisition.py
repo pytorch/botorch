@@ -14,11 +14,10 @@ import warnings
 from abc import ABC, abstractmethod
 from typing import Optional
 
+from botorch.exceptions import BotorchWarning
+from botorch.models.model import Model
 from torch import Tensor
 from torch.nn import Module
-
-from ..exceptions import BotorchWarning
-from ..models.model import Model
 
 
 class AcquisitionFunction(Module, ABC):

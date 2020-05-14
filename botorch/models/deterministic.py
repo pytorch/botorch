@@ -16,11 +16,10 @@ from abc import ABC, abstractmethod
 from typing import Any, Callable, List, Optional, Union
 
 import torch
+from botorch.exceptions.errors import UnsupportedError
+from botorch.models.model import Model
+from botorch.posteriors.deterministic import DeterministicPosterior
 from torch import Tensor
-
-from ..exceptions.errors import UnsupportedError
-from ..posteriors.deterministic import DeterministicPosterior
-from .model import Model
 
 
 class DeterministicModel(Model, ABC):

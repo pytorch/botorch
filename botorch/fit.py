@@ -15,15 +15,14 @@ import warnings
 from copy import deepcopy
 from typing import Any, Callable
 
+from botorch.exceptions.errors import UnsupportedError
+from botorch.exceptions.warnings import BotorchWarning, OptimizationWarning
+from botorch.models.converter import batched_to_model_list, model_list_to_batched
+from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
+from botorch.optim.fit import fit_gpytorch_scipy
+from botorch.optim.utils import sample_all_priors
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
-
-from .exceptions.errors import UnsupportedError
-from .exceptions.warnings import BotorchWarning, OptimizationWarning
-from .models.converter import batched_to_model_list, model_list_to_batched
-from .models.gpytorch import BatchedMultiOutputGPyTorchModel
-from .optim.fit import fit_gpytorch_scipy
-from .optim.utils import sample_all_priors
 
 
 FAILED_CONVERSION_MSG = (

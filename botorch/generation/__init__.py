@@ -5,8 +5,12 @@
 # LICENSE file in the root directory of this source tree.
 
 
-from .gen import gen_candidates_scipy, gen_candidates_torch, get_best_candidates
-from .sampling import BoltzmannSampling, MaxPosteriorSampling
+from botorch.generation.gen import (
+    gen_candidates_scipy,
+    gen_candidates_torch,
+    get_best_candidates,
+)
+from botorch.generation.sampling import BoltzmannSampling, MaxPosteriorSampling
 
 
 __all__ = [

@@ -13,17 +13,19 @@ from __future__ import annotations
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import torch
-from torch import Tensor
-
-from ..acquisition.acquisition import AcquisitionFunction, OneShotAcquisitionFunction
-from ..acquisition.knowledge_gradient import qKnowledgeGradient
-from ..generation.gen import gen_candidates_scipy
-from ..logging import logger
-from .initializers import (
+from botorch.acquisition.acquisition import (
+    AcquisitionFunction,
+    OneShotAcquisitionFunction,
+)
+from botorch.acquisition.knowledge_gradient import qKnowledgeGradient
+from botorch.generation.gen import gen_candidates_scipy
+from botorch.logging import logger
+from botorch.optim.initializers import (
     gen_batch_initial_conditions,
     gen_one_shot_kg_initial_conditions,
 )
-from .stopping import ExpMAStoppingCriterion
+from botorch.optim.stopping import ExpMAStoppingCriterion
+from torch import Tensor
 
 
 def optimize_acqf(

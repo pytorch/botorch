@@ -20,22 +20,21 @@ from copy import deepcopy
 from typing import Any, Iterator, List, Optional, Tuple, Union
 
 import torch
-from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
-from gpytorch.lazy import lazify
-from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
-from torch import Tensor
-
-from ..exceptions.errors import BotorchTensorDimensionError
-from ..exceptions.warnings import BotorchTensorDimensionWarning
-from ..posteriors.gpytorch import GPyTorchPosterior
-from ..utils.transforms import gpt_posterior_settings
-from .model import Model
-from .utils import (
+from botorch.exceptions.errors import BotorchTensorDimensionError
+from botorch.exceptions.warnings import BotorchTensorDimensionWarning
+from botorch.models.model import Model
+from botorch.models.utils import (
     _make_X_full,
     add_output_dim,
     mod_batch_shape,
     multioutput_to_batch_mode_transform,
 )
+from botorch.posteriors.gpytorch import GPyTorchPosterior
+from botorch.utils.transforms import gpt_posterior_settings
+from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
+from gpytorch.lazy import lazify
+from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
+from torch import Tensor
 
 
 class GPyTorchModel(Model, ABC):

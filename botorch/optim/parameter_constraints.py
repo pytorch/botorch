@@ -15,10 +15,9 @@ from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
+from botorch.exceptions.errors import UnsupportedError
 from scipy.optimize import Bounds
 from torch import Tensor
-
-from ..exceptions.errors import UnsupportedError
 
 
 ScipyConstraintDict = Dict[

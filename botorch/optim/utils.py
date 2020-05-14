@@ -17,16 +17,15 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
+from botorch.exceptions.errors import BotorchError
+from botorch.exceptions.warnings import BotorchWarning
+from botorch.models.gpytorch import GPyTorchModel
+from botorch.optim.numpy_converter import TorchAttr, set_params_with_array
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
 from gpytorch.utils.errors import NanError
 from torch import Tensor
-
-from ..exceptions.errors import BotorchError
-from ..exceptions.warnings import BotorchWarning
-from ..models.gpytorch import GPyTorchModel
-from .numpy_converter import TorchAttr, set_params_with_array
 
 
 def sample_all_priors(model: GPyTorchModel) -> None:

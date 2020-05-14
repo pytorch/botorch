@@ -27,6 +27,9 @@ from typing import Any, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
+from botorch.models.model import Model
+from botorch.posteriors.gpytorch import GPyTorchPosterior
+from botorch.posteriors.posterior import Posterior
 from gpytorch import settings
 from gpytorch.constraints import GreaterThan, Positive
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
@@ -43,10 +46,6 @@ from gpytorch.priors.torch_priors import GammaPrior
 from gpytorch.utils.cholesky import psd_safe_cholesky
 from scipy import optimize
 from torch import Tensor, float32, float64
-
-from ..posteriors.gpytorch import GPyTorchPosterior
-from ..posteriors.posterior import Posterior
-from .model import Model
 
 
 class PairwiseGP(Model, GP):
