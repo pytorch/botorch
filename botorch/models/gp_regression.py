@@ -13,6 +13,11 @@ from __future__ import annotations
 from typing import Any, List, Optional, Union
 
 import torch
+from botorch import settings
+from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
+from botorch.models.transforms.outcome import Log, OutcomeTransform
+from botorch.models.utils import validate_input_scaling
+from botorch.sampling.samplers import MCSampler
 from gpytorch.constraints.constraints import GreaterThan
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels.matern_kernel import MaternKernel
@@ -31,12 +36,6 @@ from gpytorch.module import Module
 from gpytorch.priors.smoothed_box_prior import SmoothedBoxPrior
 from gpytorch.priors.torch_priors import GammaPrior
 from torch import Tensor
-
-from .. import settings
-from ..sampling.samplers import MCSampler
-from .gpytorch import BatchedMultiOutputGPyTorchModel
-from .transforms.outcome import Log, OutcomeTransform
-from .utils import validate_input_scaling
 
 
 MIN_INFERRED_NOISE_LEVEL = 1e-4

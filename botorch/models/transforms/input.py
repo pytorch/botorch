@@ -10,10 +10,9 @@ from abc import ABC, abstractmethod
 from typing import Optional
 
 import torch
+from botorch.exceptions.errors import BotorchTensorDimensionError
 from torch import Tensor
 from torch.nn import Module, ModuleDict
-
-from ...exceptions.errors import BotorchTensorDimensionError
 
 
 class InputTransform(Module, ABC):

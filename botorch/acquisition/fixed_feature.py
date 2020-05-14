@@ -14,10 +14,9 @@ from __future__ import annotations
 from typing import List, Union
 
 import torch
+from botorch.acquisition.acquisition import AcquisitionFunction
 from torch import Tensor
 from torch.nn import Module
-
-from .acquisition import AcquisitionFunction
 
 
 class FixedFeatureAcquisitionFunction(AcquisitionFunction):

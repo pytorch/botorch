@@ -14,9 +14,8 @@ from __future__ import annotations
 from typing import Optional
 
 import torch
+from botorch.posteriors.posterior import Posterior
 from torch import Tensor
-
-from .posterior import Posterior
 
 
 class DeterministicPosterior(Posterior):

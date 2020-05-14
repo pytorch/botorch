@@ -11,13 +11,15 @@ from collections import OrderedDict
 from typing import List, Optional, Tuple
 
 import torch
+from botorch.models.transforms.utils import (
+    norm_to_lognorm_mean,
+    norm_to_lognorm_variance,
+)
 from botorch.posteriors import GPyTorchPosterior, Posterior, TransformedPosterior
+from botorch.utils.transforms import normalize_indices
 from gpytorch.lazy import CholLazyTensor, DiagLazyTensor
 from torch import Tensor
 from torch.nn import Module, ModuleDict
-
-from ...utils.transforms import normalize_indices
-from .utils import norm_to_lognorm_mean, norm_to_lognorm_variance
 
 
 class OutcomeTransform(Module, ABC):

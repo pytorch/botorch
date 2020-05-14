@@ -4,10 +4,10 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from .deterministic import DeterministicPosterior
-from .gpytorch import GPyTorchPosterior
-from .posterior import Posterior
-from .transformed import TransformedPosterior
+from botorch.posteriors.deterministic import DeterministicPosterior
+from botorch.posteriors.gpytorch import GPyTorchPosterior
+from botorch.posteriors.posterior import Posterior
+from botorch.posteriors.transformed import TransformedPosterior
 
 
 __all__ = [

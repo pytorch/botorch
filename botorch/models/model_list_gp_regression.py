@@ -13,11 +13,10 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any, List
 
+from botorch.exceptions.errors import BotorchTensorDimensionError
+from botorch.models.gpytorch import GPyTorchModel, ModelListGPyTorchModel
 from gpytorch.models import IndependentModelList
 from torch import Tensor
-
-from ..exceptions.errors import BotorchTensorDimensionError
-from .gpytorch import GPyTorchModel, ModelListGPyTorchModel
 
 
 class ModelListGP(IndependentModelList, ModelListGPyTorchModel):

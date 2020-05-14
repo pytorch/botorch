@@ -14,13 +14,12 @@ from abc import ABC, abstractmethod
 from typing import Optional
 
 import torch
+from botorch.exceptions import UnsupportedError
+from botorch.posteriors import Posterior
+from botorch.utils.sampling import draw_sobol_normal_samples, manual_seed
 from torch import Tensor
 from torch.nn import Module
 from torch.quasirandom import SobolEngine
-
-from ..exceptions import UnsupportedError
-from ..posteriors import Posterior
-from ..utils.sampling import draw_sobol_normal_samples, manual_seed
 
 
 class MCSampler(Module, ABC):

@@ -17,19 +17,20 @@ from __future__ import annotations
 from typing import Dict, Optional, Tuple
 
 import torch
+from botorch.exceptions.errors import UnsupportedError
+from botorch.models.gp_regression import FixedNoiseGP, SingleTaskGP
+from botorch.models.kernels.downsampling import DownsamplingKernel
+from botorch.models.kernels.exponential_decay import ExponentialDecayKernel
+from botorch.models.kernels.linear_truncated_fidelity import (
+    LinearTruncatedFidelityKernel,
+)
+from botorch.models.transforms.outcome import OutcomeTransform
 from gpytorch.kernels.kernel import ProductKernel
 from gpytorch.kernels.rbf_kernel import RBFKernel
 from gpytorch.kernels.scale_kernel import ScaleKernel
 from gpytorch.likelihoods.likelihood import Likelihood
 from gpytorch.priors.torch_priors import GammaPrior
 from torch import Tensor
-
-from ..exceptions.errors import UnsupportedError
-from .gp_regression import FixedNoiseGP, SingleTaskGP
-from .kernels.downsampling import DownsamplingKernel
-from .kernels.exponential_decay import ExponentialDecayKernel
-from .kernels.linear_truncated_fidelity import LinearTruncatedFidelityKernel
-from .transforms.outcome import OutcomeTransform
 
 
 class SingleTaskMultiFidelityGP(SingleTaskGP):

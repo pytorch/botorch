@@ -10,16 +10,18 @@ import warnings
 from typing import Dict, Optional, Union
 
 import torch
+from botorch import settings
+from botorch.acquisition.acquisition import AcquisitionFunction
+from botorch.acquisition.knowledge_gradient import (
+    _get_value_function,
+    qKnowledgeGradient,
+)
+from botorch.acquisition.utils import is_nonnegative
+from botorch.exceptions.warnings import BadInitialCandidatesWarning, SamplingWarning
+from botorch.utils.sampling import draw_sobol_samples, manual_seed
+from botorch.utils.transforms import standardize
 from torch import Tensor
 from torch.quasirandom import SobolEngine
-
-from .. import settings
-from ..acquisition.acquisition import AcquisitionFunction
-from ..acquisition.knowledge_gradient import _get_value_function, qKnowledgeGradient
-from ..acquisition.utils import is_nonnegative
-from ..exceptions.warnings import BadInitialCandidatesWarning, SamplingWarning
-from ..utils.sampling import draw_sobol_samples, manual_seed
-from ..utils.transforms import standardize
 
 
 def gen_batch_initial_conditions(
@@ -203,7 +205,7 @@ def gen_one_shot_kg_initial_conditions(
         objective=acq_function.objective,
         sampler=acq_function.inner_sampler,
     )
-    from .optimize import optimize_acqf
+    from botorch.optim.optimize import optimize_acqf
 
     fantasy_cands, fantasy_vals = optimize_acqf(
         acq_function=value_function,

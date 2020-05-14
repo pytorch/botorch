@@ -11,10 +11,9 @@ from typing import Optional
 
 import numpy as np
 import torch
+from botorch.posteriors.posterior import Posterior
+from botorch.sampling.samplers import IIDNormalSampler, MCSampler, SobolQMCNormalSampler
 from torch import Tensor
-
-from ..posteriors.posterior import Posterior
-from .samplers import IIDNormalSampler, MCSampler, SobolQMCNormalSampler
 
 
 class PairwiseMCSampler(MCSampler):

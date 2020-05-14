@@ -4,15 +4,14 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from torch.quasirandom import SobolEngine
-
-from .pairwise_samplers import (
+from botorch.sampling.pairwise_samplers import (
     PairwiseIIDNormalSampler,
     PairwiseMCSampler,
     PairwiseSobolQMCNormalSampler,
 )
-from .qmc import MultivariateNormalQMCEngine, NormalQMCEngine
-from .samplers import IIDNormalSampler, MCSampler, SobolQMCNormalSampler
+from botorch.sampling.qmc import MultivariateNormalQMCEngine, NormalQMCEngine
+from botorch.sampling.samplers import IIDNormalSampler, MCSampler, SobolQMCNormalSampler
+from torch.quasirandom import SobolEngine
 
 
 __all__ = [

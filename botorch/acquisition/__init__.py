@@ -4,9 +4,12 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from .acquisition import AcquisitionFunction, OneShotAcquisitionFunction
-from .active_learning import qNegIntegratedPosteriorVariance
-from .analytic import (
+from botorch.acquisition.acquisition import (
+    AcquisitionFunction,
+    OneShotAcquisitionFunction,
+)
+from botorch.acquisition.active_learning import qNegIntegratedPosteriorVariance
+from botorch.acquisition.analytic import (
     AnalyticAcquisitionFunction,
     ConstrainedExpectedImprovement,
     ExpectedImprovement,
@@ -15,11 +18,17 @@ from .analytic import (
     ProbabilityOfImprovement,
     UpperConfidenceBound,
 )
-from .cost_aware import GenericCostAwareUtility, InverseCostWeightedUtility
-from .fixed_feature import FixedFeatureAcquisitionFunction
-from .knowledge_gradient import qKnowledgeGradient
-from .max_value_entropy_search import qMaxValueEntropy, qMultiFidelityMaxValueEntropy
-from .monte_carlo import (
+from botorch.acquisition.cost_aware import (
+    GenericCostAwareUtility,
+    InverseCostWeightedUtility,
+)
+from botorch.acquisition.fixed_feature import FixedFeatureAcquisitionFunction
+from botorch.acquisition.knowledge_gradient import qKnowledgeGradient
+from botorch.acquisition.max_value_entropy_search import (
+    qMaxValueEntropy,
+    qMultiFidelityMaxValueEntropy,
+)
+from botorch.acquisition.monte_carlo import (
     MCAcquisitionFunction,
     qExpectedImprovement,
     qNoisyExpectedImprovement,
@@ -27,7 +36,7 @@ from .monte_carlo import (
     qSimpleRegret,
     qUpperConfidenceBound,
 )
-from .objective import (
+from botorch.acquisition.objective import (
     ConstrainedMCObjective,
     GenericMCObjective,
     IdentityMCObjective,
@@ -35,7 +44,7 @@ from .objective import (
     MCAcquisitionObjective,
     ScalarizedObjective,
 )
-from .utils import get_acquisition_function
+from botorch.acquisition.utils import get_acquisition_function
 
 
 __all__ = [
