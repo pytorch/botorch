@@ -3,6 +3,17 @@
 The release log for BoTorch.
 
 
+## [0.2.5] - May 14, 2020
+
+Bugfix Release
+
+#### Bug fixes
+* Fixed issue with broken wheel build (#444).
+
+#### Other changes
+* Changed code style to use absolute imports throughout (#443).
+
+
 ## [0.2.4] - May 12, 2020
 
 Bugfix Release
