@@ -13,15 +13,14 @@ from typing import List, Optional, Tuple
 from unittest import TestCase
 
 import torch
+from botorch import settings
+from botorch.models.model import Model
+from botorch.posteriors.gpytorch import GPyTorchPosterior
+from botorch.posteriors.posterior import Posterior
+from botorch.test_functions.base import BaseTestProblem
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.lazy import AddedDiagLazyTensor, DiagLazyTensor
 from torch import Tensor
-
-from .. import settings
-from ..models.model import Model
-from ..posteriors.gpytorch import GPyTorchPosterior
-from ..posteriors.posterior import Posterior
-from ..test_functions.base import BaseTestProblem
 
 
 EMPTY_SIZE = torch.Size()

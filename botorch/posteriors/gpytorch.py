@@ -14,12 +14,11 @@ from typing import Optional
 
 import gpytorch
 import torch
+from botorch.exceptions.errors import BotorchTensorDimensionError
+from botorch.posteriors.posterior import Posterior
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.lazy import BlockDiagLazyTensor, LazyTensor, SumLazyTensor
 from torch import Tensor
-
-from ..exceptions.errors import BotorchTensorDimensionError
-from .posterior import Posterior
 
 
 class GPyTorchPosterior(Posterior):

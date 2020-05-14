@@ -15,10 +15,9 @@ from functools import wraps
 from typing import Any, Callable, List, Optional
 
 import torch
+from botorch import settings
 from gpytorch import settings as gpt_settings
 from torch import Tensor
-
-from .. import settings
 
 
 def squeeze_last_dim(Y: Tensor) -> Tensor:

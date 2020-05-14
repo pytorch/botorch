@@ -14,9 +14,8 @@ import math
 from typing import Optional
 
 import torch
+from botorch.test_functions.synthetic import SyntheticTestFunction
 from torch import Tensor
-
-from .synthetic import SyntheticTestFunction
 
 
 class AugmentedBranin(SyntheticTestFunction):

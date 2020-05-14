@@ -16,14 +16,13 @@ from abc import ABC, abstractmethod
 from typing import Any, Callable, Optional
 
 import torch
+from botorch import settings
+from botorch.acquisition.objective import IdentityMCObjective, MCAcquisitionObjective
+from botorch.exceptions.warnings import CostAwareWarning
+from botorch.models.model import Model
+from botorch.sampling.samplers import MCSampler
 from torch import Tensor
 from torch.nn import Module
-
-from .. import settings
-from ..exceptions.warnings import CostAwareWarning
-from ..models.model import Model
-from ..sampling.samplers import MCSampler
-from .objective import IdentityMCObjective, MCAcquisitionObjective
 
 
 class CostAwareUtility(Module, ABC):

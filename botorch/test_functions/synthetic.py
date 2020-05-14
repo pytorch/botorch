@@ -15,9 +15,8 @@ import math
 from typing import List, Optional, Tuple
 
 import torch
+from botorch.test_functions.base import BaseTestProblem
 from torch import Tensor
-
-from .base import BaseTestProblem
 
 
 class SyntheticTestFunction(BaseTestProblem):

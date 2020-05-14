@@ -11,7 +11,7 @@ Use the botorch.generation.gen module instead.
 
 import warnings
 
-from .generation.gen import (  # noqa F401
+from botorch.generation.gen import (  # noqa F401
     gen_candidates_scipy,
     gen_candidates_torch,
     get_best_candidates,

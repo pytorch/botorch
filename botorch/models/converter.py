@@ -13,13 +13,12 @@ from __future__ import annotations
 from copy import deepcopy
 
 import torch
+from botorch.exceptions import UnsupportedError
+from botorch.models.gp_regression import FixedNoiseGP, HeteroskedasticSingleTaskGP
+from botorch.models.gp_regression_fidelity import SingleTaskMultiFidelityGP
+from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
+from botorch.models.model_list_gp_regression import ModelListGP
 from torch.nn import Module
-
-from ..exceptions import UnsupportedError
-from .gp_regression import FixedNoiseGP, HeteroskedasticSingleTaskGP
-from .gp_regression_fidelity import SingleTaskMultiFidelityGP
-from .gpytorch import BatchedMultiOutputGPyTorchModel
-from .model_list_gp_regression import ModelListGP
 
 
 def _get_module(module: Module, name: str) -> Module:

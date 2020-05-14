@@ -15,19 +15,18 @@ import warnings
 from typing import Callable, Dict, List, Optional
 
 import torch
+from botorch import settings
+from botorch.acquisition import monte_carlo  # noqa F401
+from botorch.acquisition import analytic
+from botorch.acquisition.acquisition import AcquisitionFunction
+from botorch.acquisition.objective import IdentityMCObjective, MCAcquisitionObjective
+from botorch.exceptions.errors import UnsupportedError
+from botorch.exceptions.warnings import SamplingWarning
+from botorch.models.model import Model
+from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
+from botorch.utils.transforms import squeeze_last_dim
 from torch import Tensor
 from torch.quasirandom import SobolEngine
-
-from .. import settings
-from ..exceptions.errors import UnsupportedError
-from ..exceptions.warnings import SamplingWarning
-from ..models.model import Model
-from ..sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
-from ..utils.transforms import squeeze_last_dim
-from . import monte_carlo  # noqa F401
-from . import analytic
-from .acquisition import AcquisitionFunction
-from .objective import IdentityMCObjective, MCAcquisitionObjective
 
 
 def get_acquisition_function(

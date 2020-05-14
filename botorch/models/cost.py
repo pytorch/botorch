@@ -13,9 +13,8 @@ from __future__ import annotations
 from typing import Dict, Optional
 
 import torch
+from botorch.models.deterministic import DeterministicModel
 from torch import Tensor
-
-from .deterministic import DeterministicModel
 
 
 class AffineFidelityCostModel(DeterministicModel):

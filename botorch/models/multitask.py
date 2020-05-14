@@ -13,6 +13,8 @@ from __future__ import annotations
 from typing import List, Optional, Tuple
 
 import torch
+from botorch.models.gpytorch import MultiTaskGPyTorchModel
+from botorch.models.utils import validate_input_scaling
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels.index_kernel import IndexKernel
 from gpytorch.kernels.matern_kernel import MaternKernel
@@ -25,9 +27,6 @@ from gpytorch.means.constant_mean import ConstantMean
 from gpytorch.models.exact_gp import ExactGP
 from gpytorch.priors.torch_priors import GammaPrior
 from torch import Tensor
-
-from .gpytorch import MultiTaskGPyTorchModel
-from .utils import validate_input_scaling
 
 
 class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):

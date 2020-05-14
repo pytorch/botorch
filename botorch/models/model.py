@@ -13,12 +13,11 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any, List, Optional
 
+from botorch import settings
+from botorch.posteriors import Posterior
+from botorch.sampling.samplers import MCSampler
 from torch import Tensor
 from torch.nn import Module
-
-from .. import settings
-from ..posteriors import Posterior
-from ..sampling.samplers import MCSampler
 
 
 class Model(Module, ABC):

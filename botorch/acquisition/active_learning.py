@@ -26,13 +26,12 @@ from __future__ import annotations
 from typing import Optional
 
 from botorch import settings
+from botorch.acquisition.analytic import AnalyticAcquisitionFunction
+from botorch.acquisition.objective import ScalarizedObjective
+from botorch.models.model import Model
+from botorch.sampling.samplers import MCSampler, SobolQMCNormalSampler
+from botorch.utils.transforms import concatenate_pending_points, t_batch_mode_transform
 from torch import Tensor
-
-from ..models.model import Model
-from ..sampling.samplers import MCSampler, SobolQMCNormalSampler
-from ..utils.transforms import concatenate_pending_points, t_batch_mode_transform
-from .analytic import AnalyticAcquisitionFunction
-from .objective import ScalarizedObjective
 
 
 class qNegIntegratedPosteriorVariance(AnalyticAcquisitionFunction):

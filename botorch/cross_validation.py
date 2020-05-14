@@ -13,13 +13,12 @@ from __future__ import annotations
 from typing import Any, Dict, NamedTuple, Optional, Type
 
 import torch
+from botorch.fit import fit_gpytorch_model
+from botorch.models.gpytorch import GPyTorchModel
+from botorch.optim.utils import _filter_kwargs
+from botorch.posteriors.gpytorch import GPyTorchPosterior
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from torch import Tensor
-
-from .fit import fit_gpytorch_model
-from .models.gpytorch import GPyTorchModel
-from .optim.utils import _filter_kwargs
-from .posteriors.gpytorch import GPyTorchPosterior
 
 
 class CVFolds(NamedTuple):

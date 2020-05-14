@@ -16,18 +16,17 @@ from copy import deepcopy
 from typing import Dict, Optional, Tuple, Union
 
 import torch
+from botorch.acquisition.acquisition import AcquisitionFunction
+from botorch.acquisition.objective import ScalarizedObjective
+from botorch.exceptions import UnsupportedError
+from botorch.models.gp_regression import FixedNoiseGP
+from botorch.models.gpytorch import GPyTorchModel
+from botorch.models.model import Model
+from botorch.posteriors.posterior import Posterior
+from botorch.sampling.samplers import SobolQMCNormalSampler
+from botorch.utils.transforms import convert_to_target_pre_hook, t_batch_mode_transform
 from torch import Tensor
 from torch.distributions import Normal
-
-from ..exceptions import UnsupportedError
-from ..models.gp_regression import FixedNoiseGP
-from ..models.gpytorch import GPyTorchModel
-from ..models.model import Model
-from ..posteriors.posterior import Posterior
-from ..sampling.samplers import SobolQMCNormalSampler
-from ..utils.transforms import convert_to_target_pre_hook, t_batch_mode_transform
-from .acquisition import AcquisitionFunction
-from .objective import ScalarizedObjective
 
 
 class AnalyticAcquisitionFunction(AcquisitionFunction, ABC):
