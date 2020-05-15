@@ -68,10 +68,10 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
         Example:
             >>> X1, X2 = torch.rand(10, 2), torch.rand(20, 2)
             >>> i1, i2 = torch.zeros(10, 1), torch.ones(20, 1)
-            >>> train_X = torch.stack([
+            >>> train_X = torch.cat([
             >>>     torch.cat([X1, i1], -1), torch.cat([X2, i2], -1),
             >>> ])
-            >>> train_Y = torch.cat(f1(X1), f2(X2))
+            >>> train_Y = torch.cat(f1(X1), f2(X2)).unsqueeze(-1)
             >>> model = MultiTaskGP(train_X, train_Y, task_feature=-1)
         """
         self._validate_tensor_args(X=train_X, Y=train_Y)
