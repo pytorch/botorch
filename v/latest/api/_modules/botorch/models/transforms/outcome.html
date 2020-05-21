@@ -37,13 +37,15 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">botorch.models.transforms.utils</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">norm_to_lognorm_mean</span><span class="p">,</span>
+    <span class="n">norm_to_lognorm_variance</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors</span> <span class="kn">import</span> <span class="n">GPyTorchPosterior</span><span class="p">,</span> <span class="n">Posterior</span><span class="p">,</span> <span class="n">TransformedPosterior</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">normalize_indices</span>
 <span class="kn">from</span> <span class="nn">gpytorch.lazy</span> <span class="kn">import</span> <span class="n">CholLazyTensor</span><span class="p">,</span> <span class="n">DiagLazyTensor</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span><span class="p">,</span> <span class="n">ModuleDict</span>
-
-<span class="kn">from</span> <span class="nn">...utils.transforms</span> <span class="kn">import</span> <span class="n">normalize_indices</span>
-<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">norm_to_lognorm_mean</span><span class="p">,</span> <span class="n">norm_to_lognorm_variance</span>
 
 
 <div class="viewcode-block" id="OutcomeTransform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.OutcomeTransform">[docs]</a><span class="k">class</span> <span class="nc">OutcomeTransform</span><span class="p">(</span><span class="n">Module</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>

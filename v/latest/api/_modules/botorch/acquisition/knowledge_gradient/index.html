@@ -56,18 +56,24 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AcquisitionFunction</span><span class="p">,</span>
+    <span class="n">OneShotAcquisitionFunction</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.analytic</span> <span class="kn">import</span> <span class="n">PosteriorMean</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.cost_aware</span> <span class="kn">import</span> <span class="n">CostAwareUtility</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.monte_carlo</span> <span class="kn">import</span> <span class="n">MCAcquisitionFunction</span><span class="p">,</span> <span class="n">qSimpleRegret</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AcquisitionObjective</span><span class="p">,</span>
+    <span class="n">MCAcquisitionObjective</span><span class="p">,</span>
+    <span class="n">ScalarizedObjective</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span> <span class="nn">botorch.sampling.samplers</span> <span class="kn">import</span> <span class="n">MCSampler</span><span class="p">,</span> <span class="n">SobolQMCNormalSampler</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">match_batch_shape</span><span class="p">,</span> <span class="n">t_batch_mode_transform</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
-
-<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">settings</span>
-<span class="kn">from</span> <span class="nn">..exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
-<span class="kn">from</span> <span class="nn">..models.model</span> <span class="kn">import</span> <span class="n">Model</span>
-<span class="kn">from</span> <span class="nn">..sampling.samplers</span> <span class="kn">import</span> <span class="n">MCSampler</span><span class="p">,</span> <span class="n">SobolQMCNormalSampler</span>
-<span class="kn">from</span> <span class="nn">..utils.transforms</span> <span class="kn">import</span> <span class="n">match_batch_shape</span><span class="p">,</span> <span class="n">t_batch_mode_transform</span>
-<span class="kn">from</span> <span class="nn">.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">OneShotAcquisitionFunction</span>
-<span class="kn">from</span> <span class="nn">.analytic</span> <span class="kn">import</span> <span class="n">PosteriorMean</span>
-<span class="kn">from</span> <span class="nn">.cost_aware</span> <span class="kn">import</span> <span class="n">CostAwareUtility</span>
-<span class="kn">from</span> <span class="nn">.monte_carlo</span> <span class="kn">import</span> <span class="n">MCAcquisitionFunction</span><span class="p">,</span> <span class="n">qSimpleRegret</span>
-<span class="kn">from</span> <span class="nn">.objective</span> <span class="kn">import</span> <span class="n">AcquisitionObjective</span><span class="p">,</span> <span class="n">MCAcquisitionObjective</span><span class="p">,</span> <span class="n">ScalarizedObjective</span>
 
 
 <div class="viewcode-block" id="qKnowledgeGradient"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient">[docs]</a><span class="k">class</span> <span class="nc">qKnowledgeGradient</span><span class="p">(</span><span class="n">MCAcquisitionFunction</span><span class="p">,</span> <span class="n">OneShotAcquisitionFunction</span><span class="p">):</span>

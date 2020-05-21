@@ -43,19 +43,20 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span> <span class="nn">botorch.models.gp_regression</span> <span class="kn">import</span> <span class="n">FixedNoiseGP</span><span class="p">,</span> <span class="n">SingleTaskGP</span>
+<span class="kn">from</span> <span class="nn">botorch.models.kernels.downsampling</span> <span class="kn">import</span> <span class="n">DownsamplingKernel</span>
+<span class="kn">from</span> <span class="nn">botorch.models.kernels.exponential_decay</span> <span class="kn">import</span> <span class="n">ExponentialDecayKernel</span>
+<span class="kn">from</span> <span class="nn">botorch.models.kernels.linear_truncated_fidelity</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">LinearTruncatedFidelityKernel</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">OutcomeTransform</span>
 <span class="kn">from</span> <span class="nn">gpytorch.kernels.kernel</span> <span class="kn">import</span> <span class="n">ProductKernel</span>
 <span class="kn">from</span> <span class="nn">gpytorch.kernels.rbf_kernel</span> <span class="kn">import</span> <span class="n">RBFKernel</span>
 <span class="kn">from</span> <span class="nn">gpytorch.kernels.scale_kernel</span> <span class="kn">import</span> <span class="n">ScaleKernel</span>
 <span class="kn">from</span> <span class="nn">gpytorch.likelihoods.likelihood</span> <span class="kn">import</span> <span class="n">Likelihood</span>
 <span class="kn">from</span> <span class="nn">gpytorch.priors.torch_priors</span> <span class="kn">import</span> <span class="n">GammaPrior</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
-
-<span class="kn">from</span> <span class="nn">..exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
-<span class="kn">from</span> <span class="nn">.gp_regression</span> <span class="kn">import</span> <span class="n">FixedNoiseGP</span><span class="p">,</span> <span class="n">SingleTaskGP</span>
-<span class="kn">from</span> <span class="nn">.kernels.downsampling</span> <span class="kn">import</span> <span class="n">DownsamplingKernel</span>
-<span class="kn">from</span> <span class="nn">.kernels.exponential_decay</span> <span class="kn">import</span> <span class="n">ExponentialDecayKernel</span>
-<span class="kn">from</span> <span class="nn">.kernels.linear_truncated_fidelity</span> <span class="kn">import</span> <span class="n">LinearTruncatedFidelityKernel</span>
-<span class="kn">from</span> <span class="nn">.transforms.outcome</span> <span class="kn">import</span> <span class="n">OutcomeTransform</span>
 
 
 <div class="viewcode-block" id="SingleTaskMultiFidelityGP"><a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression_fidelity.SingleTaskMultiFidelityGP">[docs]</a><span class="k">class</span> <span class="nc">SingleTaskMultiFidelityGP</span><span class="p">(</span><span class="n">SingleTaskGP</span><span class="p">):</span>

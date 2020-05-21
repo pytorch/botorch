@@ -43,16 +43,15 @@
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchError</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">BotorchWarning</span>
+<span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchModel</span>
+<span class="kn">from</span> <span class="nn">botorch.optim.numpy_converter</span> <span class="kn">import</span> <span class="n">TorchAttr</span><span class="p">,</span> <span class="n">set_params_with_array</span>
 <span class="kn">from</span> <span class="nn">gpytorch.mlls.exact_marginal_log_likelihood</span> <span class="kn">import</span> <span class="n">ExactMarginalLogLikelihood</span>
 <span class="kn">from</span> <span class="nn">gpytorch.mlls.marginal_log_likelihood</span> <span class="kn">import</span> <span class="n">MarginalLogLikelihood</span>
 <span class="kn">from</span> <span class="nn">gpytorch.mlls.sum_marginal_log_likelihood</span> <span class="kn">import</span> <span class="n">SumMarginalLogLikelihood</span>
 <span class="kn">from</span> <span class="nn">gpytorch.utils.errors</span> <span class="kn">import</span> <span class="n">NanError</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
-
-<span class="kn">from</span> <span class="nn">..exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchError</span>
-<span class="kn">from</span> <span class="nn">..exceptions.warnings</span> <span class="kn">import</span> <span class="n">BotorchWarning</span>
-<span class="kn">from</span> <span class="nn">..models.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchModel</span>
-<span class="kn">from</span> <span class="nn">.numpy_converter</span> <span class="kn">import</span> <span class="n">TorchAttr</span><span class="p">,</span> <span class="n">set_params_with_array</span>
 
 
 <div class="viewcode-block" id="sample_all_priors"><a class="viewcode-back" href="../../../optim.html#botorch.optim.utils.sample_all_priors">[docs]</a><span class="k">def</span> <span class="nf">sample_all_priors</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">GPyTorchModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>

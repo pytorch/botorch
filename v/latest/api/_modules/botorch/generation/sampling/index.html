@@ -46,20 +46,19 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
-<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
-
-<span class="kn">from</span> <span class="nn">..acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
-<span class="kn">from</span> <span class="nn">..acquisition.objective</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">AcquisitionObjective</span><span class="p">,</span>
     <span class="n">IdentityMCObjective</span><span class="p">,</span>
     <span class="n">ScalarizedObjective</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">..models.model</span> <span class="kn">import</span> <span class="n">Model</span>
-<span class="kn">from</span> <span class="nn">..sampling.samplers</span> <span class="kn">import</span> <span class="n">IIDNormalSampler</span>
-<span class="kn">from</span> <span class="nn">..utils.sampling</span> <span class="kn">import</span> <span class="n">batched_multinomial</span>
-<span class="kn">from</span> <span class="nn">..utils.transforms</span> <span class="kn">import</span> <span class="n">standardize</span>
-<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">_flip_sub_unique</span>
+<span class="kn">from</span> <span class="nn">botorch.generation.utils</span> <span class="kn">import</span> <span class="n">_flip_sub_unique</span>
+<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span> <span class="nn">botorch.sampling.samplers</span> <span class="kn">import</span> <span class="n">IIDNormalSampler</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.sampling</span> <span class="kn">import</span> <span class="n">batched_multinomial</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">standardize</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
 
 
 <div class="viewcode-block" id="SamplingStrategy"><a class="viewcode-back" href="../../../generation.html#botorch.generation.sampling.SamplingStrategy">[docs]</a><span class="k">class</span> <span class="nc">SamplingStrategy</span><span class="p">(</span><span class="n">Module</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>

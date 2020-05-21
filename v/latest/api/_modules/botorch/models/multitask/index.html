@@ -39,6 +39,8 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="kn">import</span> <span class="n">MultiTaskGPyTorchModel</span>
+<span class="kn">from</span> <span class="nn">botorch.models.utils</span> <span class="kn">import</span> <span class="n">validate_input_scaling</span>
 <span class="kn">from</span> <span class="nn">gpytorch.distributions.multivariate_normal</span> <span class="kn">import</span> <span class="n">MultivariateNormal</span>
 <span class="kn">from</span> <span class="nn">gpytorch.kernels.index_kernel</span> <span class="kn">import</span> <span class="n">IndexKernel</span>
 <span class="kn">from</span> <span class="nn">gpytorch.kernels.matern_kernel</span> <span class="kn">import</span> <span class="n">MaternKernel</span>
@@ -51,9 +53,6 @@
 <span class="kn">from</span> <span class="nn">gpytorch.models.exact_gp</span> <span class="kn">import</span> <span class="n">ExactGP</span>
 <span class="kn">from</span> <span class="nn">gpytorch.priors.torch_priors</span> <span class="kn">import</span> <span class="n">GammaPrior</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
-
-<span class="kn">from</span> <span class="nn">.gpytorch</span> <span class="kn">import</span> <span class="n">MultiTaskGPyTorchModel</span>
-<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">validate_input_scaling</span>
 
 
 <div class="viewcode-block" id="MultiTaskGP"><a class="viewcode-back" href="../../../models.html#botorch.models.multitask.MultiTaskGP">[docs]</a><span class="k">class</span> <span class="nc">MultiTaskGP</span><span class="p">(</span><span class="n">ExactGP</span><span class="p">,</span> <span class="n">MultiTaskGPyTorchModel</span><span class="p">):</span>
@@ -95,10 +94,10 @@
 <span class="sd">        Example:</span>
 <span class="sd">            &gt;&gt;&gt; X1, X2 = torch.rand(10, 2), torch.rand(20, 2)</span>
 <span class="sd">            &gt;&gt;&gt; i1, i2 = torch.zeros(10, 1), torch.ones(20, 1)</span>
-<span class="sd">            &gt;&gt;&gt; train_X = torch.stack([</span>
+<span class="sd">            &gt;&gt;&gt; train_X = torch.cat([</span>
 <span class="sd">            &gt;&gt;&gt;     torch.cat([X1, i1], -1), torch.cat([X2, i2], -1),</span>
 <span class="sd">            &gt;&gt;&gt; ])</span>
-<span class="sd">            &gt;&gt;&gt; train_Y = torch.cat(f1(X1), f2(X2))</span>
+<span class="sd">            &gt;&gt;&gt; train_Y = torch.cat(f1(X1), f2(X2)).unsqueeze(-1)</span>
 <span class="sd">            &gt;&gt;&gt; model = MultiTaskGP(train_X, train_Y, task_feature=-1)</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_validate_tensor_args</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">)</span>
