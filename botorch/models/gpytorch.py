@@ -569,6 +569,7 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
         """
         if output_indices is None:
             output_indices = self._output_tasks
+        num_outputs = len(output_indices)
         if any(i not in self._output_tasks for i in output_indices):
             raise ValueError("Too many output indices")
         cls_name = self.__class__.__name__
@@ -588,11 +589,11 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
                     f"Specifying observation noise is not yet supported by {cls_name}"
                 )
         # If single-output, return the posterior of a single-output model
-        if len(output_indices) == 1:
+        if num_outputs == 1:
             return GPyTorchPosterior(mvn=mvn)
         # Otherwise, make a MultitaskMultivariateNormal out of this
         mtmvn = MultitaskMultivariateNormal(
-            mean=mvn.mean.view(*X.shape[:-1], len(output_indices)),
+            mean=mvn.mean.view(*X.shape[:-2], num_outputs, -1).transpose(-1, -2),
             covariance_matrix=mvn.lazy_covariance_matrix,
             interleaved=False,
         )
