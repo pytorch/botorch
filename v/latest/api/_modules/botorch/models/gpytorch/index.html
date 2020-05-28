@@ -595,6 +595,7 @@
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="n">output_indices</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">output_indices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_tasks</span>
+        <span class="n">num_outputs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">output_indices</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_tasks</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">output_indices</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Too many output indices"</span><span class="p">)</span>
         <span class="n">cls_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
@@ -614,11 +615,11 @@
                     <span class="sa">f</span><span class="s2">"Specifying observation noise is not yet supported by </span><span class="si">{</span><span class="n">cls_name</span><span class="si">}</span><span class="s2">"</span>
                 <span class="p">)</span>
         <span class="c1"># If single-output, return the posterior of a single-output model</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">output_indices</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">num_outputs</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">GPyTorchPosterior</span><span class="p">(</span><span class="n">mvn</span><span class="o">=</span><span class="n">mvn</span><span class="p">)</span>
         <span class="c1"># Otherwise, make a MultitaskMultivariateNormal out of this</span>
         <span class="n">mtmvn</span> <span class="o">=</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">(</span>
-            <span class="n">mean</span><span class="o">=</span><span class="n">mvn</span><span class="o">.</span><span class="n">mean</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="nb">len</span><span class="p">(</span><span class="n">output_indices</span><span class="p">)),</span>
+            <span class="n">mean</span><span class="o">=</span><span class="n">mvn</span><span class="o">.</span><span class="n">mean</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="n">num_outputs</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">),</span>
             <span class="n">covariance_matrix</span><span class="o">=</span><span class="n">mvn</span><span class="o">.</span><span class="n">lazy_covariance_matrix</span><span class="p">,</span>
             <span class="n">interleaved</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="p">)</span>
