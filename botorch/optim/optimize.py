@@ -95,7 +95,7 @@ def optimize_acqf(
             >>> )
 
     """
-    if sequential:
+    if sequential and q > 1:
         if not return_best_only:
             raise NotImplementedError(
                 "return_best_only=False only supported for joint optimization"
