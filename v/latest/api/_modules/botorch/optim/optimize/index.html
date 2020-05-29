@@ -121,7 +121,7 @@
 <span class="sd">            &gt;&gt;&gt; )</span>
 
 <span class="sd">    """</span>
-    <span class="k">if</span> <span class="n">sequential</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">sequential</span> <span class="ow">and</span> <span class="n">q</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">return_best_only</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
                 <span class="s2">"return_best_only=False only supported for joint optimization"</span>
