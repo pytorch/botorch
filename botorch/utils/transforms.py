@@ -10,13 +10,10 @@ Some basic data transformation helpers.
 
 from __future__ import annotations
 
-from contextlib import ExitStack, contextmanager
 from functools import wraps
 from typing import Any, Callable, List, Optional
 
 import torch
-from botorch import settings
-from gpytorch import settings as gpt_settings
 from torch import Tensor
 
 
@@ -232,15 +229,3 @@ def match_batch_shape(X: Tensor, Y: Tensor) -> Tensor:
 def convert_to_target_pre_hook(module, *args):
     r"""Pre-hook for automatically calling `.to(X)` on module prior to `forward`"""
     module.to(args[0][0])
-
-
-@contextmanager
-def gpt_posterior_settings():
-    r"""Context manager for settings used for computing model posteriors."""
-    with ExitStack() as es:
-        es.enter_context(gpt_settings.debug(False))
-        es.enter_context(gpt_settings.fast_pred_var())
-        es.enter_context(
-            gpt_settings.detach_test_caches(settings.propagate_grads.off())
-        )
-        yield
