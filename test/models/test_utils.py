@@ -14,10 +14,12 @@ from botorch.models.utils import (
     check_min_max_scaling,
     check_no_nans,
     check_standardization,
+    gpt_posterior_settings,
     multioutput_to_batch_mode_transform,
     validate_input_scaling,
 )
 from botorch.utils.testing import BotorchTestCase
+from gpytorch import settings as gpt_settings
 
 
 class TestMultiOutputToBatchModeTransform(BotorchTestCase):
@@ -197,3 +199,16 @@ class TestInputDataChecks(BotorchTestCase):
         with settings.debug(True):
             with self.assertRaises(InputDataError):
                 validate_input_scaling(train_X=train_X_std, train_Y=train_Y_std)
+
+
+class TestGPTPosteriorSettings(BotorchTestCase):
+    def test_gpt_posterior_settings(self):
+        for propagate_grads in (False, True):
+            with settings.propagate_grads(propagate_grads):
+                with gpt_posterior_settings():
+                    self.assertTrue(gpt_settings.debug.off())
+                    self.assertTrue(gpt_settings.fast_pred_var.on())
+                    if settings.propagate_grads.off():
+                        self.assertTrue(gpt_settings.detach_test_caches.on())
+                    else:
+                        self.assertTrue(gpt_settings.detach_test_caches.off())

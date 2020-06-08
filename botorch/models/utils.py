@@ -11,11 +11,13 @@ Utiltiy functions for models.
 from __future__ import annotations
 
 import warnings
+from contextlib import ExitStack, contextmanager
 from typing import List, Optional, Tuple
 
 import torch
 from botorch import settings
 from botorch.exceptions import InputDataError, InputDataWarning
+from gpytorch import settings as gpt_settings
 from gpytorch.module import Module
 from gpytorch.utils.broadcasting import _mul_broadcast_shape
 from torch import Tensor
@@ -246,3 +248,15 @@ def mod_batch_shape(module: Module, names: List[str], b: int) -> None:
         m.batch_shape = m.batch_shape[:-1] + torch.Size([b] if b > 0 else [])
     else:
         mod_batch_shape(module=m, names=names[1:], b=b)
+
+
+@contextmanager
+def gpt_posterior_settings():
+    r"""Context manager for settings used for computing model posteriors."""
+    with ExitStack() as es:
+        es.enter_context(gpt_settings.debug(False))
+        es.enter_context(gpt_settings.fast_pred_var())
+        es.enter_context(
+            gpt_settings.detach_test_caches(settings.propagate_grads.off())
+        )
+        yield

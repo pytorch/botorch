@@ -26,11 +26,11 @@ from botorch.models.model import Model
 from botorch.models.utils import (
     _make_X_full,
     add_output_dim,
+    gpt_posterior_settings,
     mod_batch_shape,
     multioutput_to_batch_mode_transform,
 )
 from botorch.posteriors.gpytorch import GPyTorchPosterior
-from botorch.utils.transforms import gpt_posterior_settings
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.lazy import lazify
 from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
