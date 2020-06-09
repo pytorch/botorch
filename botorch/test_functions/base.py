@@ -43,8 +43,12 @@ class BaseTestProblem(Module, ABC):
         r"""Evaluate the function on a set of points.
 
         Args:
-            X: The point(s) at which to evaluate the function.
+            X: A `batch_shape x d`-dim tensor of point(s) at which to evaluate the
+                function.
             noise: If `True`, add observation noise as specified by `noise_std`.
+
+        Returns:
+            A `batch_shape`-dim tensor ouf function evaluations.
         """
         batch = X.ndimension() > 1
         X = X if batch else X.unsqueeze(0)
@@ -58,4 +62,69 @@ class BaseTestProblem(Module, ABC):
     @abstractmethod
     def evaluate_true(self, X: Tensor) -> Tensor:
         r"""Evaluate the function (w/o observation noise) on a set of points."""
+        pass  # pragma: no cover
+
+
+class ConstrainedBaseTestProblem(BaseTestProblem, ABC):
+    r"""Base class for test functions with constraints.
+
+    In addition to one or more objectives, a problem may have a number of outcome
+    constraints of the form `c_i(x) >= 0` for `i=1, ..., n_c`.
+
+    This base class provides common functionality for such problems.
+    """
+
+    num_constraints: int
+    _check_grad_at_opt: bool = False
+
+    def evaluate_slack(self, X: Tensor, noise: bool = True) -> Tensor:
+        r"""Evaluate the constraint slack on a set of points.
+
+        Constraints `i` is assumed to be feasible at `x` if the associated slack
+        `c_i(x)` is positive. Zero slack means that the constraint is active. Negative
+        slack means that the constraint is violated.
+
+        Args:
+            X: A `batch_shape x d`-dim tensor of point(s) at which to evaluate the
+                constraint slacks: `c_1(X), ...., c_{n_c}(X)`.
+            noise: If `True`, add observation noise to the slack as specified by
+                `noise_std`.
+
+        Returns:
+            A `batch_shape x n_c`-dim tensor of constraint slack (where positive slack
+                corresponds to the constraint being feasible).
+        """
+        cons = self.evaluate_slack_true(X=X)
+        if noise and self.noise_std is not None:
+            # TODO: Allow different noise levels for objective and constraints (and
+            # different noise levels between different constraints)
+            cons += self.noise_std * torch.randn_like(cons)
+        return cons
+
+    def is_feasible(self, X: Tensor, noise: bool = True) -> Tensor:
+        r"""Evaluate whether the constraints are feasible on a set of points.
+
+        Args:
+            X: A `batch_shape x d`-dim tensor of point(s) at which to evaluate the
+                constraints.
+            noise: If `True`, add observation noise as specified by `noise_std`.
+
+        Returns:
+            A `batch_shape`-dim boolean tensor that is `True` iff all constraint
+                slacks (potentially including observation noise) are positive.
+        """
+        return (self.evaluate_slack(X=X, noise=noise) >= 0.0).all(dim=-1)
+
+    @abstractmethod
+    def evaluate_slack_true(self, X: Tensor) -> Tensor:
+        r"""Evaluate the constraint slack (w/o observation noise) on a set of points.
+
+        Args:
+            X: A `batch_shape x d`-dim tensor of point(s) at which to evaluate the
+                constraint slacks: `c_1(X), ...., c_{n_c}(X)`.
+
+        Returns:
+            A `batch_shape x n_c`-dim tensor of constraint slack (where positive slack
+                corresponds to the constraint being feasible).
+        """
         pass  # pragma: no cover
