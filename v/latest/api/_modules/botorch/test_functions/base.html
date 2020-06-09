@@ -69,8 +69,12 @@
         <span class="sa">r</span><span class="sd">"""Evaluate the function on a set of points.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            X: The point(s) at which to evaluate the function.</span>
+<span class="sd">            X: A `batch_shape x d`-dim tensor of point(s) at which to evaluate the</span>
+<span class="sd">                function.</span>
 <span class="sd">            noise: If `True`, add observation noise as specified by `noise_std`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `batch_shape`-dim tensor ouf function evaluations.</span>
 <span class="sd">        """</span>
         <span class="n">batch</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">ndimension</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span>
         <span class="n">X</span> <span class="o">=</span> <span class="n">X</span> <span class="k">if</span> <span class="n">batch</span> <span class="k">else</span> <span class="n">X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
@@ -84,6 +88,71 @@
 <div class="viewcode-block" id="BaseTestProblem.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.base.BaseTestProblem.evaluate_true">[docs]</a>    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Evaluate the function (w/o observation noise) on a set of points."""</span>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div></div>
+
+
+<div class="viewcode-block" id="ConstrainedBaseTestProblem"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.base.ConstrainedBaseTestProblem">[docs]</a><span class="k">class</span> <span class="nc">ConstrainedBaseTestProblem</span><span class="p">(</span><span class="n">BaseTestProblem</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""Base class for test functions with constraints.</span>
+
+<span class="sd">    In addition to one or more objectives, a problem may have a number of outcome</span>
+<span class="sd">    constraints of the form `c_i(x) &gt;= 0` for `i=1, ..., n_c`.</span>
+
+<span class="sd">    This base class provides common functionality for such problems.</span>
+<span class="sd">    """</span>
+
+    <span class="n">num_constraints</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">_check_grad_at_opt</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+
+<div class="viewcode-block" id="ConstrainedBaseTestProblem.evaluate_slack"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.base.ConstrainedBaseTestProblem.evaluate_slack">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_slack</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">noise</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Evaluate the constraint slack on a set of points.</span>
+
+<span class="sd">        Constraints `i` is assumed to be feasible at `x` if the associated slack</span>
+<span class="sd">        `c_i(x)` is positive. Zero slack means that the constraint is active. Negative</span>
+<span class="sd">        slack means that the constraint is violated.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `batch_shape x d`-dim tensor of point(s) at which to evaluate the</span>
+<span class="sd">                constraint slacks: `c_1(X), ...., c_{n_c}(X)`.</span>
+<span class="sd">            noise: If `True`, add observation noise to the slack as specified by</span>
+<span class="sd">                `noise_std`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `batch_shape x n_c`-dim tensor of constraint slack (where positive slack</span>
+<span class="sd">                corresponds to the constraint being feasible).</span>
+<span class="sd">        """</span>
+        <span class="n">cons</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_slack_true</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">noise</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">noise_std</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># TODO: Allow different noise levels for objective and constraints (and</span>
+            <span class="c1"># different noise levels between different constraints)</span>
+            <span class="n">cons</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">noise_std</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn_like</span><span class="p">(</span><span class="n">cons</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cons</span></div>
+
+<div class="viewcode-block" id="ConstrainedBaseTestProblem.is_feasible"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.base.ConstrainedBaseTestProblem.is_feasible">[docs]</a>    <span class="k">def</span> <span class="nf">is_feasible</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">noise</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Evaluate whether the constraints are feasible on a set of points.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `batch_shape x d`-dim tensor of point(s) at which to evaluate the</span>
+<span class="sd">                constraints.</span>
+<span class="sd">            noise: If `True`, add observation noise as specified by `noise_std`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `batch_shape`-dim boolean tensor that is `True` iff all constraint</span>
+<span class="sd">                slacks (potentially including observation noise) are positive.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">evaluate_slack</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">noise</span><span class="o">=</span><span class="n">noise</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mf">0.0</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ConstrainedBaseTestProblem.evaluate_slack_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.base.ConstrainedBaseTestProblem.evaluate_slack_true">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">evaluate_slack_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Evaluate the constraint slack (w/o observation noise) on a set of points.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `batch_shape x d`-dim tensor of point(s) at which to evaluate the</span>
+<span class="sd">                constraint slacks: `c_1(X), ...., c_{n_c}(X)`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `batch_shape x n_c`-dim tensor of constraint slack (where positive slack</span>
+<span class="sd">                corresponds to the constraint being feasible).</span>
+<span class="sd">        """</span>
         <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div></div>
 </pre></div>
 </div>

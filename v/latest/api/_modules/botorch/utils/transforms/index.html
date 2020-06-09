@@ -36,13 +36,10 @@
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">ExitStack</span><span class="p">,</span> <span class="n">contextmanager</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">settings</span>
-<span class="kn">from</span> <span class="nn">gpytorch</span> <span class="kn">import</span> <span class="n">settings</span> <span class="k">as</span> <span class="n">gpt_settings</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
@@ -258,18 +255,6 @@
 <div class="viewcode-block" id="convert_to_target_pre_hook"><a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.convert_to_target_pre_hook">[docs]</a><span class="k">def</span> <span class="nf">convert_to_target_pre_hook</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""Pre-hook for automatically calling `.to(X)` on module prior to `forward`"""</span>
     <span class="n">module</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span></div>
-
-
-<div class="viewcode-block" id="gpt_posterior_settings"><a class="viewcode-back" href="../../../utils.html#botorch.utils.transforms.gpt_posterior_settings">[docs]</a><span class="nd">@contextmanager</span>
-<span class="k">def</span> <span class="nf">gpt_posterior_settings</span><span class="p">():</span>
-    <span class="sa">r</span><span class="sd">"""Context manager for settings used for computing model posteriors."""</span>
-    <span class="k">with</span> <span class="n">ExitStack</span><span class="p">()</span> <span class="k">as</span> <span class="n">es</span><span class="p">:</span>
-        <span class="n">es</span><span class="o">.</span><span class="n">enter_context</span><span class="p">(</span><span class="n">gpt_settings</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="kc">False</span><span class="p">))</span>
-        <span class="n">es</span><span class="o">.</span><span class="n">enter_context</span><span class="p">(</span><span class="n">gpt_settings</span><span class="o">.</span><span class="n">fast_pred_var</span><span class="p">())</span>
-        <span class="n">es</span><span class="o">.</span><span class="n">enter_context</span><span class="p">(</span>
-            <span class="n">gpt_settings</span><span class="o">.</span><span class="n">detach_test_caches</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">propagate_grads</span><span class="o">.</span><span class="n">off</span><span class="p">())</span>
-        <span class="p">)</span>
-        <span class="k">yield</span></div>
 </pre></div>
 </div>
 </div>

@@ -44,7 +44,7 @@
 </dl>
 <dl class="py attribute">
 <dt id="botorch.test_functions.base.BaseTestProblem.dim">
-<code class="sig-name descname">dim</code><em class="property">: int</em><em class="property"> = None</em><a class="headerlink" href="#botorch.test_functions.base.BaseTestProblem.dim" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">dim</code><em class="property">: int</em><a class="headerlink" href="#botorch.test_functions.base.BaseTestProblem.dim" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py method">
 <dt id="botorch.test_functions.base.BaseTestProblem.forward">
@@ -53,12 +53,16 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – The point(s) at which to evaluate the function.</p></li>
+<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x d</cite>-dim tensor of point(s) at which to evaluate the
+function.</p></li>
 <li><p><strong>noise</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If <cite>True</cite>, add observation noise as specified by <cite>noise_std</cite>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
 <dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>batch_shape</cite>-dim tensor ouf function evaluations.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -69,6 +73,101 @@
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt id="botorch.test_functions.base.ConstrainedBaseTestProblem">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.test_functions.base.</code><code class="sig-name descname">ConstrainedBaseTestProblem</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">noise_std</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">negate</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/base.html#ConstrainedBaseTestProblem"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.test_functions.base.ConstrainedBaseTestProblem" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.BaseTestProblem" title="botorch.test_functions.base.BaseTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.base.BaseTestProblem</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>Base class for test functions with constraints.</p>
+<p>In addition to one or more objectives, a problem may have a number of outcome
+constraints of the form <cite>c_i(x) &gt;= 0</cite> for <cite>i=1, …, n_c</cite>.</p>
+<p>This base class provides common functionality for such problems.</p>
+<p>Base constructor for test functions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the function.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt id="botorch.test_functions.base.ConstrainedBaseTestProblem.num_constraints">
+<code class="sig-name descname">num_constraints</code><em class="property">: int</em><a class="headerlink" href="#botorch.test_functions.base.ConstrainedBaseTestProblem.num_constraints" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py method">
+<dt id="botorch.test_functions.base.ConstrainedBaseTestProblem.evaluate_slack">
+<code class="sig-name descname">evaluate_slack</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="n">noise</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/base.html#ConstrainedBaseTestProblem.evaluate_slack"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.test_functions.base.ConstrainedBaseTestProblem.evaluate_slack" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the constraint slack on a set of points.</p>
+<p>Constraints <cite>i</cite> is assumed to be feasible at <cite>x</cite> if the associated slack
+<cite>c_i(x)</cite> is positive. Zero slack means that the constraint is active. Negative
+slack means that the constraint is violated.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x d</cite>-dim tensor of point(s) at which to evaluate the
+constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p></li>
+<li><p><strong>noise</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If <cite>True</cite>, add observation noise to the slack as specified by
+<cite>noise_std</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>A <cite>batch_shape x n_c</cite>-dim tensor of constraint slack (where positive slack</dt><dd><p>corresponds to the constraint being feasible).</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.test_functions.base.ConstrainedBaseTestProblem.is_feasible">
+<code class="sig-name descname">is_feasible</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="n">noise</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/base.html#ConstrainedBaseTestProblem.is_feasible"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.test_functions.base.ConstrainedBaseTestProblem.is_feasible" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate whether the constraints are feasible on a set of points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x d</cite>-dim tensor of point(s) at which to evaluate the
+constraints.</p></li>
+<li><p><strong>noise</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If <cite>True</cite>, add observation noise as specified by <cite>noise_std</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>A <cite>batch_shape</cite>-dim boolean tensor that is <cite>True</cite> iff all constraint</dt><dd><p>slacks (potentially including observation noise) are positive.</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.test_functions.base.ConstrainedBaseTestProblem.evaluate_slack_true">
+<em class="property">abstract </em><code class="sig-name descname">evaluate_slack_true</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/base.html#ConstrainedBaseTestProblem.evaluate_slack_true"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.test_functions.base.ConstrainedBaseTestProblem.evaluate_slack_true" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the constraint slack (w/o observation noise) on a set of points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x d</cite>-dim tensor of point(s) at which to evaluate the
+constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>A <cite>batch_shape x n_c</cite>-dim tensor of constraint slack (where positive slack</dt><dd><p>corresponds to the constraint being feasible).</p>
+</dd>
+</dl>
+</p>
 </dd>
 </dl>
 </dd></dl>
