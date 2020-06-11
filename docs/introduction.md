@@ -6,7 +6,8 @@ title: Introduction
 BoTorch (pronounced like "blow-torch") is a library for
 [Bayesian Optimization](https://en.wikipedia.org/wiki/Bayesian_optimization)
 research built on top of [PyTorch](https://pytorch.org/), and is part of the
-PyTorch ecosystem.
+PyTorch ecosystem. Read the [BoTorch paper](https://arxiv.org/abs/1910.06403)
+[^BoTorch] for a detailed exposition.
 
 Bayesian Optimization (BayesOpt) is an established technique for sequential
 optimization of costly-to-evaluate black-box functions. It can be applied to a
@@ -102,6 +103,9 @@ storage, etc. See [Using BoTorch with Ax](botorch_and_ax) for more details.
 We recommend that end-users who are not actively doing research on Bayesian
 Optimization simply use Ax.
 
+
+[^BoTorch]: M. Balandat, B. Karrer, D. R. Jiang, S. Daulton, B. Letham, A. G. Wilson,
+and E. Bakshy. BoTorch: Programmable Bayesian Optimization in PyTorch. arXiv e-prints, [arXiv:1910.06403](https://arxiv.org/abs/1910.06403), Oct. 2019.
 
 [^AutoEncVarBayes]: D. P. Kingma and M. Welling. Auto-Encoding Variational Bayes.
 ArXiv e-prints, [arXiv:1312.6114](https://arxiv.org/abs/1312.6114), Dec 2013.

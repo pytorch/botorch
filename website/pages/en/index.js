@@ -143,6 +143,16 @@ candidate, acq_value = optimize_acqf(
 )
 candidate  # tensor([0.4887, 0.5063])
     `;
+    const papertitle = `BoTorch: Programmable Bayesian Optimization in PyTorch`
+    const paper_bibtex = `${pre}plaintext
+@article{balandat2019botorch,
+  Author = {Balandat, Maximilian and Karrer, Brian and Jiang, Daniel R. and Daulton, Samuel and Letham, Benjamin and Wilson, Andrew Gordon and Bakshy, Eytan},
+  Journal = {arXiv e-prints},
+  Month = oct,
+  Pages = {arXiv:1910.06403},
+  Title = {{BoTorch: Programmable Bayesian Optimization in PyTorch}},
+  Year = 2019}
+  `;
     //
     const QuickStart = () => (
       <div
@@ -207,6 +217,19 @@ candidate  # tensor([0.4887, 0.5063])
       </div>
     );
 
+    const Reference = () => (
+      <div
+        className="productShowcaseSection"
+        id="reference"
+        style={{textAlign: 'center'}}>
+        <h2>Reference</h2>
+        <Container>
+    Read the paper: <a href={`https://arxiv.org/abs/1910.06403`}>{papertitle}</a>
+          <MarkdownBlock>{paper_bibtex}</MarkdownBlock>
+        </Container>
+      </div>
+    );
+
     const Showcase = () => {
       if ((siteConfig.users || []).length === 0) {
         return null;
@@ -241,6 +264,7 @@ candidate  # tensor([0.4887, 0.5063])
         <HomeSplash siteConfig={siteConfig} language={language} />
         <div className="landingPage mainContainer">
           <Features />
+          <Reference />
           <QuickStart />
         </div>
       </div>
