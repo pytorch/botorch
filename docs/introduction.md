@@ -105,7 +105,8 @@ Optimization simply use Ax.
 
 
 [^BoTorch]: M. Balandat, B. Karrer, D. R. Jiang, S. Daulton, B. Letham, A. G. Wilson,
-and E. Bakshy. BoTorch: Programmable Bayesian Optimization in PyTorch. arXiv e-prints, [arXiv:1910.06403](https://arxiv.org/abs/1910.06403), Oct. 2019.
+and E. Bakshy. BoTorch: Programmable Bayesian Optimization in PyTorch. arXiv e-prints,
+[arXiv:1910.06403](https://arxiv.org/abs/1910.06403), Oct. 2019.
 
 [^AutoEncVarBayes]: D. P. Kingma and M. Welling. Auto-Encoding Variational Bayes.
 ArXiv e-prints, [arXiv:1312.6114](https://arxiv.org/abs/1312.6114), Dec 2013.
