@@ -71,7 +71,14 @@ def fit_gpytorch_model(
         and mll.model._num_outputs > 1
         and sequential
     ):
+        tf = None
         try:  # check if backwards-conversion is possible
+            # remove the outcome transform since the training targets are already
+            # transformed and the outcome transform cannot currently be split.
+            # TODO: support splitting outcome transforms.
+            if hasattr(mll.model, "outcome_transform"):
+                tf = mll.model.outcome_transform
+                mll.model.outcome_transform = None
             model_list = batched_to_model_list(mll.model)
             model_ = model_list_to_batched(model_list)
             mll_ = SumMarginalLogLikelihood(model_list.likelihood, model_list)
@@ -84,10 +91,14 @@ def fit_gpytorch_model(
             )
             model_ = model_list_to_batched(mll_.model)
             mll.model.load_state_dict(model_.state_dict())
+            if tf is not None:
+                mll.model.outcome_transform = tf
             return mll.eval()
-        # NotImplentedError is omitted since it derives from RuntimeError
+        # NotImplementedError is omitted since it derives from RuntimeError
         except (UnsupportedError, RuntimeError, AttributeError):
             warnings.warn(FAILED_CONVERSION_MSG, BotorchWarning)
+            if tf is not None:
+                mll.model.outcome_transform = tf
             return fit_gpytorch_model(
                 mll=mll, optimizer=optimizer, sequential=False, max_retries=max_retries
             )

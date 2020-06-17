@@ -6,11 +6,13 @@
 
 import math
 import warnings
+from itertools import product
 
 import torch
 from botorch import fit_gpytorch_model, settings
 from botorch.exceptions.warnings import BotorchWarning, OptimizationWarning
 from botorch.models import FixedNoiseGP, HeteroskedasticSingleTaskGP, SingleTaskGP
+from botorch.models.transforms.outcome import Standardize
 from botorch.optim.fit import (
     OptimizationIteration,
     fit_gpytorch_scipy,
@@ -51,7 +53,9 @@ class TestFitGPyTorchModel(BotorchTestCase):
         mll = ExactMarginalLogLikelihood(model.likelihood, model)
         return mll.to(device=self.device, dtype=dtype)
 
-    def _getBatchedModel(self, kind="SingleTaskGP", double=False):
+    def _getBatchedModel(
+        self, kind="SingleTaskGP", double=False, outcome_transform=False
+    ):
         dtype = torch.double if double else torch.float
         train_x = torch.linspace(0, 1, 10, device=self.device, dtype=dtype).unsqueeze(
             -1
@@ -60,13 +64,18 @@ class TestFitGPyTorchModel(BotorchTestCase):
         train_y1 = torch.sin(train_x * (2 * math.pi)) + noise
         train_y2 = torch.sin(train_x * (2 * math.pi)) + noise
         train_y = torch.cat([train_y1, train_y2], dim=-1)
+        kwargs = {}
+        if outcome_transform:
+            kwargs["outcome_transform"] = Standardize(m=2)
         if kind == "SingleTaskGP":
-            model = SingleTaskGP(train_x, train_y)
+            model = SingleTaskGP(train_x, train_y, **kwargs)
         elif kind == "FixedNoiseGP":
-            model = FixedNoiseGP(train_x, train_y, 0.1 * torch.ones_like(train_y))
+            model = FixedNoiseGP(
+                train_x, train_y, 0.1 * torch.ones_like(train_y), **kwargs
+            )
         elif kind == "HeteroskedasticSingleTaskGP":
             model = HeteroskedasticSingleTaskGP(
-                train_x, train_y, 0.1 * torch.ones_like(train_y)
+                train_x, train_y, 0.1 * torch.ones_like(train_y), **kwargs
             )
         else:
             raise NotImplementedError
@@ -238,27 +247,36 @@ class TestFitGPyTorchModel(BotorchTestCase):
 
     def test_fit_gpytorch_model_sequential(self):
         options = {"disp": False, "maxiter": 1}
-        for double in (False, True):
-            for kind in ("SingleTaskGP", "FixedNoiseGP", "HeteroskedasticSingleTaskGP"):
-                with warnings.catch_warnings(record=True) as ws, settings.debug(True):
-                    mll = self._getBatchedModel(kind=kind, double=double)
-                    mll = fit_gpytorch_model(mll, options=options, max_retries=1)
-                    mll = self._getBatchedModel(kind=kind, double=double)
-                    mll = fit_gpytorch_model(
-                        mll, options=options, sequential=True, max_retries=1
+        for double, kind, outcome_transform in product(
+            (False, True),
+            ("SingleTaskGP", "FixedNoiseGP", "HeteroskedasticSingleTaskGP"),
+            (False, True),
+        ):
+            with warnings.catch_warnings(record=True) as ws, settings.debug(True):
+                mll = self._getBatchedModel(
+                    kind=kind, double=double, outcome_transform=outcome_transform
+                )
+                mll = fit_gpytorch_model(mll, options=options, max_retries=1)
+                mll = self._getBatchedModel(
+                    kind=kind, double=double, outcome_transform=outcome_transform
+                )
+                mll = fit_gpytorch_model(
+                    mll, options=options, sequential=True, max_retries=1
+                )
+                mll = self._getBatchedModel(
+                    kind=kind, double=double, outcome_transform=outcome_transform
+                )
+                mll = fit_gpytorch_model(
+                    mll, options=options, sequential=False, max_retries=1
+                )
+                if kind == "HeteroskedasticSingleTaskGP":
+                    self.assertTrue(
+                        any(issubclass(w.category, BotorchWarning) for w in ws)
                     )
-                    mll = self._getBatchedModel(kind=kind, double=double)
-                    mll = fit_gpytorch_model(
-                        mll, options=options, sequential=False, max_retries=1
+                    self.assertTrue(
+                        any(
+                            "Failed to convert ModelList to batched model"
+                            in str(w.message)
+                            for w in ws
+                        )
                     )
-                    if kind == "HeteroskedasticSingleTaskGP":
-                        self.assertTrue(
-                            any(issubclass(w.category, BotorchWarning) for w in ws)
-                        )
-                        self.assertTrue(
-                            any(
-                                "Failed to convert ModelList to batched model"
-                                in str(w.message)
-                                for w in ws
-                            )
-                        )
