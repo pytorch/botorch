@@ -34,6 +34,19 @@ class TestBaseMCSampler(BotorchTestCase):
 
 
 class TestIIDNormalSampler(BotorchTestCase):
+    def test_batch_range(self):
+        # check batch_range default and can be changed
+        sampler = IIDNormalSampler(num_samples=4)
+        self.assertEquals(sampler.batch_range, (0, -2))
+        sampler.batch_range = (-3, -2)
+        self.assertEquals(sampler.batch_range, (-3, -2))
+        # check that base samples are cleared after batch_range set
+        posterior = _get_test_posterior(self.device)
+        _ = sampler(posterior)
+        self.assertNotEquals(sampler.base_samples, None)
+        sampler.batch_range = (0, -2)
+        self.assertEquals(sampler.base_samples, None)
+
     def test_get_base_sample_shape(self):
         sampler = IIDNormalSampler(num_samples=4)
         self.assertFalse(sampler.resample)
@@ -47,6 +60,11 @@ class TestIIDNormalSampler(BotorchTestCase):
         posterior = _get_test_posterior_batched(self.device)
         bss = sampler._get_base_sample_shape(posterior=posterior)
         self.assertEqual(bss, torch.Size([4, 1, 2, 1]))
+        # check sample shape with different batch range
+        sampler.batch_range = (-3, -1)
+        posterior = _get_test_posterior_batched(self.device)
+        bss = sampler._get_base_sample_shape(posterior=posterior)
+        self.assertEqual(bss, torch.Size([4, 1, 1, 1]))
 
     def test_get_base_sample_shape_no_collapse(self):
         sampler = IIDNormalSampler(num_samples=4, collapse_batch_dims=False)
@@ -58,6 +76,11 @@ class TestIIDNormalSampler(BotorchTestCase):
         bss = sampler._get_base_sample_shape(posterior=posterior)
         self.assertEqual(bss, torch.Size([4, 2, 1]))
         # check sample shape batched
+        posterior = _get_test_posterior_batched(self.device)
+        bss = sampler._get_base_sample_shape(posterior=posterior)
+        self.assertEqual(bss, torch.Size([4, 3, 2, 1]))
+        # check sample shape with different batch range
+        sampler.batch_range = (-3, -1)
         posterior = _get_test_posterior_batched(self.device)
         bss = sampler._get_base_sample_shape(posterior=posterior)
         self.assertEqual(bss, torch.Size([4, 3, 2, 1]))
@@ -94,6 +117,15 @@ class TestIIDNormalSampler(BotorchTestCase):
             samples_batched = sampler(posterior_batched)
             self.assertEqual(samples_batched.shape, torch.Size([4, 3, 2, 1]))
             self.assertEqual(sampler.seed, 1235)
+            # ensure this works with a different batch_range
+            # should trigger a resample, so seed goes up
+            sampler.batch_range = (-3, -1)
+            posterior_batched = _get_test_posterior_batched(
+                device=self.device, dtype=dtype
+            )
+            samples_batched = sampler(posterior_batched)
+            self.assertEqual(samples_batched.shape, torch.Size([4, 3, 2, 1]))
+            self.assertEqual(sampler.seed, 1236)
 
             # resample
             sampler = IIDNormalSampler(num_samples=4, resample=True, seed=None)
@@ -116,6 +148,14 @@ class TestIIDNormalSampler(BotorchTestCase):
             samples_batched = sampler(posterior_batched)
             self.assertEqual(samples_batched.shape, torch.Size([4, 3, 2, 1]))
             self.assertEqual(sampler.seed, initial_seed + 3)
+            # ensure this works with a different batch_range
+            sampler.batch_range = (-3, -1)
+            posterior_batched = _get_test_posterior_batched(
+                device=self.device, dtype=dtype
+            )
+            samples_batched = sampler(posterior_batched)
+            self.assertEqual(samples_batched.shape, torch.Size([4, 3, 2, 1]))
+            self.assertEqual(sampler.seed, initial_seed + 4)
 
     def test_forward_no_collapse(self):
         for dtype in (torch.float, torch.double):
@@ -143,6 +183,15 @@ class TestIIDNormalSampler(BotorchTestCase):
             samples_batched = sampler(posterior_batched)
             self.assertEqual(samples_batched.shape, torch.Size([4, 3, 2, 1]))
             self.assertEqual(sampler.seed, 1236)
+            # ensure this works with a different batch_range
+            # should trigger a resample, so seed goes up
+            sampler.batch_range = (-3, -1)
+            posterior_batched = _get_test_posterior_batched(
+                device=self.device, dtype=dtype
+            )
+            samples_batched = sampler(posterior_batched)
+            self.assertEqual(samples_batched.shape, torch.Size([4, 3, 2, 1]))
+            self.assertEqual(sampler.seed, 1237)
 
             # resample
             sampler = IIDNormalSampler(
@@ -167,9 +216,30 @@ class TestIIDNormalSampler(BotorchTestCase):
             samples_batched = sampler(posterior_batched)
             self.assertEqual(samples_batched.shape, torch.Size([4, 3, 2, 1]))
             self.assertEqual(sampler.seed, initial_seed + 3)
+            # ensure this works with a different batch_range
+            sampler.batch_range = (-3, -1)
+            posterior_batched = _get_test_posterior_batched(
+                device=self.device, dtype=dtype
+            )
+            samples_batched = sampler(posterior_batched)
+            self.assertEqual(samples_batched.shape, torch.Size([4, 3, 2, 1]))
+            self.assertEqual(sampler.seed, initial_seed + 4)
 
 
 class TestSobolQMCNormalSampler(BotorchTestCase):
+    def test_batch_range(self):
+        # check batch_range default and can be changed
+        sampler = SobolQMCNormalSampler(num_samples=4)
+        self.assertEquals(sampler.batch_range, (0, -2))
+        sampler.batch_range = (-3, -2)
+        self.assertEquals(sampler.batch_range, (-3, -2))
+        # check that base samples are cleared after batch_range set
+        posterior = _get_test_posterior(self.device)
+        _ = sampler(posterior)
+        self.assertNotEquals(sampler.base_samples, None)
+        sampler.batch_range = (0, -2)
+        self.assertEquals(sampler.base_samples, None)
+
     def test_get_base_sample_shape(self):
         sampler = SobolQMCNormalSampler(num_samples=4)
         self.assertFalse(sampler.resample)
@@ -183,6 +253,11 @@ class TestSobolQMCNormalSampler(BotorchTestCase):
         posterior = _get_test_posterior_batched(self.device)
         bss = sampler._get_base_sample_shape(posterior=posterior)
         self.assertEqual(bss, torch.Size([4, 1, 2, 1]))
+        # check sample shape with different batch range
+        sampler.batch_range = (-3, -1)
+        posterior = _get_test_posterior_batched(self.device)
+        bss = sampler._get_base_sample_shape(posterior=posterior)
+        self.assertEqual(bss, torch.Size([4, 1, 1, 1]))
 
     def test_get_base_sample_shape_no_collapse(self):
         sampler = SobolQMCNormalSampler(num_samples=4, collapse_batch_dims=False)
@@ -194,6 +269,11 @@ class TestSobolQMCNormalSampler(BotorchTestCase):
         bss = sampler._get_base_sample_shape(posterior=posterior)
         self.assertEqual(bss, torch.Size([4, 2, 1]))
         # check sample shape batched
+        posterior = _get_test_posterior_batched(self.device)
+        bss = sampler._get_base_sample_shape(posterior=posterior)
+        self.assertEqual(bss, torch.Size([4, 3, 2, 1]))
+        # check sample shape with different batch range
+        sampler.batch_range = (-3, -1)
         posterior = _get_test_posterior_batched(self.device)
         bss = sampler._get_base_sample_shape(posterior=posterior)
         self.assertEqual(bss, torch.Size([4, 3, 2, 1]))
@@ -230,6 +310,15 @@ class TestSobolQMCNormalSampler(BotorchTestCase):
             samples_batched = sampler(posterior_batched)
             self.assertEqual(samples_batched.shape, torch.Size([4, 3, 2, 1]))
             self.assertEqual(sampler.seed, 1235)
+            # ensure this works with a different batch_range
+            # should trigger a resample, so seed goes up
+            sampler.batch_range = (-3, -1)
+            posterior_batched = _get_test_posterior_batched(
+                device=self.device, dtype=dtype
+            )
+            samples_batched = sampler(posterior_batched)
+            self.assertEqual(samples_batched.shape, torch.Size([4, 3, 2, 1]))
+            self.assertEqual(sampler.seed, 1236)
 
             # resample
             sampler = SobolQMCNormalSampler(num_samples=4, resample=True, seed=None)
@@ -252,6 +341,14 @@ class TestSobolQMCNormalSampler(BotorchTestCase):
             samples_batched = sampler(posterior_batched)
             self.assertEqual(samples_batched.shape, torch.Size([4, 3, 2, 1]))
             self.assertEqual(sampler.seed, initial_seed + 3)
+            # ensure this works with a different batch_range
+            sampler.batch_range = (-3, -1)
+            posterior_batched = _get_test_posterior_batched(
+                device=self.device, dtype=dtype
+            )
+            samples_batched = sampler(posterior_batched)
+            self.assertEqual(samples_batched.shape, torch.Size([4, 3, 2, 1]))
+            self.assertEqual(sampler.seed, initial_seed + 4)
 
     def test_forward_no_collapse(self):
         for dtype in (torch.float, torch.double):
@@ -279,6 +376,15 @@ class TestSobolQMCNormalSampler(BotorchTestCase):
             samples_batched = sampler(posterior_batched)
             self.assertEqual(samples_batched.shape, torch.Size([4, 3, 2, 1]))
             self.assertEqual(sampler.seed, 1236)
+            # ensure this works with a different batch_range
+            # should trigger a resample, so seed goes up
+            sampler.batch_range = (-3, -1)
+            posterior_batched = _get_test_posterior_batched(
+                device=self.device, dtype=dtype
+            )
+            samples_batched = sampler(posterior_batched)
+            self.assertEqual(samples_batched.shape, torch.Size([4, 3, 2, 1]))
+            self.assertEqual(sampler.seed, 1237)
 
             # resample
             sampler = SobolQMCNormalSampler(
@@ -303,6 +409,14 @@ class TestSobolQMCNormalSampler(BotorchTestCase):
             samples_batched = sampler(posterior_batched)
             self.assertEqual(samples_batched.shape, torch.Size([4, 3, 2, 1]))
             self.assertEqual(sampler.seed, initial_seed + 3)
+            # ensure this works with a different batch_range
+            sampler.batch_range = (-3, -1)
+            posterior_batched = _get_test_posterior_batched(
+                device=self.device, dtype=dtype
+            )
+            samples_batched = sampler(posterior_batched)
+            self.assertEqual(samples_batched.shape, torch.Size([4, 3, 2, 1]))
+            self.assertEqual(sampler.seed, initial_seed + 4)
 
     def test_unsupported_dimension(self):
         sampler = SobolQMCNormalSampler(num_samples=2)
