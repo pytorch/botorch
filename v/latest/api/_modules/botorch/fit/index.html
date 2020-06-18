@@ -97,7 +97,14 @@
         <span class="ow">and</span> <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_num_outputs</span> <span class="o">&gt;</span> <span class="mi">1</span>
         <span class="ow">and</span> <span class="n">sequential</span>
     <span class="p">):</span>
+        <span class="n">tf</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">try</span><span class="p">:</span>  <span class="c1"># check if backwards-conversion is possible</span>
+            <span class="c1"># remove the outcome transform since the training targets are already</span>
+            <span class="c1"># transformed and the outcome transform cannot currently be split.</span>
+            <span class="c1"># TODO: support splitting outcome transforms.</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="s2">"outcome_transform"</span><span class="p">):</span>
+                <span class="n">tf</span> <span class="o">=</span> <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">outcome_transform</span>
+                <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">outcome_transform</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="n">model_list</span> <span class="o">=</span> <span class="n">batched_to_model_list</span><span class="p">(</span><span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
             <span class="n">model_</span> <span class="o">=</span> <span class="n">model_list_to_batched</span><span class="p">(</span><span class="n">model_list</span><span class="p">)</span>
             <span class="n">mll_</span> <span class="o">=</span> <span class="n">SumMarginalLogLikelihood</span><span class="p">(</span><span class="n">model_list</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">model_list</span><span class="p">)</span>
@@ -110,10 +117,14 @@
             <span class="p">)</span>
             <span class="n">model_</span> <span class="o">=</span> <span class="n">model_list_to_batched</span><span class="p">(</span><span class="n">mll_</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
             <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">model_</span><span class="o">.</span><span class="n">state_dict</span><span class="p">())</span>
+            <span class="k">if</span> <span class="n">tf</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">outcome_transform</span> <span class="o">=</span> <span class="n">tf</span>
             <span class="k">return</span> <span class="n">mll</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
-        <span class="c1"># NotImplentedError is omitted since it derives from RuntimeError</span>
+        <span class="c1"># NotImplementedError is omitted since it derives from RuntimeError</span>
         <span class="k">except</span> <span class="p">(</span><span class="n">UnsupportedError</span><span class="p">,</span> <span class="ne">RuntimeError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">):</span>
             <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">FAILED_CONVERSION_MSG</span><span class="p">,</span> <span class="n">BotorchWarning</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">tf</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">outcome_transform</span> <span class="o">=</span> <span class="n">tf</span>
             <span class="k">return</span> <span class="n">fit_gpytorch_model</span><span class="p">(</span>
                 <span class="n">mll</span><span class="o">=</span><span class="n">mll</span><span class="p">,</span> <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span> <span class="n">sequential</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">max_retries</span><span class="o">=</span><span class="n">max_retries</span>
             <span class="p">)</span>
