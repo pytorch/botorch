@@ -11,7 +11,7 @@ Sampler modules to be used with MC-evaluated acquisition functions.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional, Tuple
 
 import torch
 from botorch.exceptions import UnsupportedError
@@ -41,6 +41,41 @@ class MCSampler(Module, ABC):
         >>> posterior = model.posterior(test_X)
         >>> samples = sampler(posterior)
     """
+
+    def __init__(self, batch_range: Tuple[int, int] = (0, -2)) -> None:
+        r"""Abstract base class for Samplers.
+
+        Args:
+            batch_range: The range of t-batch dimensions used by collapse_batch_dims.
+                The t-batch dims are batch_range[0]:batch_range[1]. By default, this
+                is (0, -2), for the case where the non-batch dimensions are -2 (q) and
+                -1 (d) and all dims in the front are t-batch dims.
+        """
+        super().__init__()
+        self.batch_range = batch_range
+        self.register_buffer("base_samples", None)
+
+    @property
+    def batch_range(self) -> Tuple[int, int]:
+        r"""The t-batch range."""
+        return tuple(self._batch_range.tolist())
+
+    @batch_range.setter
+    def batch_range(self, batch_range: Tuple[int, int]):
+        r"""Set the t-batch range and clear base samples.
+
+        Args:
+            batch_range: The range of t-batch dimensions used by collapse_batch_dims.
+                The t-batch dims are batch_range[0]:batch_range[1]. By default, this
+                is (0, -2), for the case where the non-batch dimensions are -2 (q) and
+                -1 (d) and all dims in the front are t-batch dims.
+        """
+        # set t-batch range if different; trigger resample & set base_samples to None
+        if not hasattr(self, "_batch_range") or self.batch_range != batch_range:
+            self.register_buffer(
+                "_batch_range", torch.tensor(batch_range, dtype=torch.long)
+            )
+            self.register_buffer("base_samples", None)
 
     def forward(self, posterior: Posterior) -> Tensor:
         r"""Draws MC samples from the posterior.
@@ -72,7 +107,12 @@ class MCSampler(Module, ABC):
         """
         event_shape = posterior.event_shape
         if self.collapse_batch_dims:
-            event_shape = torch.Size([1 for _ in event_shape[:-2]]) + event_shape[-2:]
+            batch_start, batch_end = self.batch_range
+            event_shape = (
+                event_shape[0:batch_start]
+                + torch.Size([1 for _ in event_shape[batch_start:batch_end]])
+                + event_shape[batch_end:]
+            )
         return self.sample_shape + event_shape
 
     @property
@@ -115,6 +155,7 @@ class IIDNormalSampler(MCSampler):
         resample: bool = False,
         seed: Optional[int] = None,
         collapse_batch_dims: bool = True,
+        batch_range: Tuple[int, int] = (0, -2),
     ) -> None:
         r"""Sampler for MC base samples using iid `N(0,1)` samples.
 
@@ -127,8 +168,12 @@ class IIDNormalSampler(MCSampler):
             collapse_batch_dims: If True, collapse the t-batch dimensions to
                 size 1. This is useful for preventing sampling variance across
                 t-batches.
+            batch_range: The range of t-batch dimensions used by collapse_batch_dims.
+                The t-batch dims are batch_range[0]:batch_range[1]. By default, this
+                is (0, -2), for the case where the non-batch dimensions are -2 (q) and
+                -1 (d) and all dims in the front are t-batch dims.
         """
-        super().__init__()
+        super().__init__(batch_range=batch_range)
         self._sample_shape = torch.Size([num_samples])
         self.collapse_batch_dims = collapse_batch_dims
         self.resample = resample
@@ -152,8 +197,7 @@ class IIDNormalSampler(MCSampler):
         """
         if (
             self.resample
-            or not hasattr(self, "base_samples")
-            or self.base_samples.shape[-2:] != shape[-2:]
+            or _check_shape_changed(self.base_samples, self.batch_range, shape)
             or (not self.collapse_batch_dims and shape != self.base_samples.shape)
         ):
             with manual_seed(seed=self.seed):
@@ -185,6 +229,7 @@ class SobolQMCNormalSampler(MCSampler):
         resample: bool = False,
         seed: Optional[int] = None,
         collapse_batch_dims: bool = True,
+        batch_range: Tuple[int, int] = (0, -2),
     ) -> None:
         r"""Sampler for quasi-MC base samples using Sobol sequences.
 
@@ -197,8 +242,12 @@ class SobolQMCNormalSampler(MCSampler):
             collapse_batch_dims: If True, collapse the t-batch dimensions to
                 size 1. This is useful for preventing sampling variance across
                 t-batches.
+            batch_range: The range of t-batch dimensions used by collapse_batch_dims.
+                The t-batch dims are batch_range[0]:batch_range[1]. By default, this
+                is (0, -2), for the case where the non-batch dimensions are -2 (q) and
+                -1 (d) and all dims in the front are t-batch dims.
         """
-        super().__init__()
+        super().__init__(batch_range=batch_range)
         self._sample_shape = torch.Size([num_samples])
         self.collapse_batch_dims = collapse_batch_dims
         self.resample = resample
@@ -222,11 +271,11 @@ class SobolQMCNormalSampler(MCSampler):
         """
         if (
             self.resample
-            or not hasattr(self, "base_samples")
-            or self.base_samples.shape[-2:] != shape[-2:]
+            or _check_shape_changed(self.base_samples, self.batch_range, shape)
             or (not self.collapse_batch_dims and shape != self.base_samples.shape)
         ):
-            output_dim = shape[-2:].numel()
+            batch_start, batch_end = self.batch_range
+            output_dim = (shape[:batch_start] + shape[batch_end:]).numel()
             if output_dim > SobolEngine.MAXDIM:
                 raise UnsupportedError(
                     "SobolQMCSampler only supports dimensions "
@@ -234,7 +283,7 @@ class SobolQMCNormalSampler(MCSampler):
                 )
             base_samples = draw_sobol_normal_samples(
                 d=output_dim,
-                n=shape[:-2].numel(),
+                n=shape[batch_start:batch_end].numel(),
                 device=posterior.device,
                 dtype=posterior.dtype,
                 seed=self.seed,
@@ -248,3 +297,26 @@ class SobolQMCNormalSampler(MCSampler):
             self.to(device=posterior.device)  # pragma: nocover
         if self.base_samples.dtype != posterior.dtype:
             self.to(dtype=posterior.dtype)
+
+
+def _check_shape_changed(
+    base_samples: Optional[Tensor], batch_range: Tuple[int, int], shape: torch.Size
+) -> bool:
+    r"""Check if the base samples shape matches a given shape in non batch dims.
+
+    Args:
+        base_samples: The Posterior for which to generate base samples.
+        batch_range: The range t-batch dimensions to ignore for shape check.
+        shape: The shape to compare.
+
+    Returns:
+        A bool indicating whether the shape changed.
+    """
+    if base_samples is None:
+        return True
+    batch_start = batch_range[0]
+    batch_end = batch_range[1]
+    return (
+        base_samples.shape[batch_end:] != shape[batch_end:]
+        or base_samples.shape[:batch_start] != shape[:batch_start]
+    )
