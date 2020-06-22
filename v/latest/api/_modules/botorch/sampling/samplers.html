@@ -37,7 +37,7 @@
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
@@ -67,6 +67,41 @@
 <span class="sd">        &gt;&gt;&gt; posterior = model.posterior(test_X)</span>
 <span class="sd">        &gt;&gt;&gt; samples = sampler(posterior)</span>
 <span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_range</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Abstract base class for Samplers.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            batch_range: The range of t-batch dimensions used by collapse_batch_dims.</span>
+<span class="sd">                The t-batch dims are batch_range[0]:batch_range[1]. By default, this</span>
+<span class="sd">                is (0, -2), for the case where the non-batch dimensions are -2 (q) and</span>
+<span class="sd">                -1 (d) and all dims in the front are t-batch dims.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_range</span> <span class="o">=</span> <span class="n">batch_range</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"base_samples"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">batch_range</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+        <span class="sa">r</span><span class="sd">"""The t-batch range."""</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_batch_range</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+
+    <span class="nd">@batch_range</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">batch_range</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_range</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]):</span>
+        <span class="sa">r</span><span class="sd">"""Set the t-batch range and clear base samples.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            batch_range: The range of t-batch dimensions used by collapse_batch_dims.</span>
+<span class="sd">                The t-batch dims are batch_range[0]:batch_range[1]. By default, this</span>
+<span class="sd">                is (0, -2), for the case where the non-batch dimensions are -2 (q) and</span>
+<span class="sd">                -1 (d) and all dims in the front are t-batch dims.</span>
+<span class="sd">        """</span>
+        <span class="c1"># set t-batch range if different; trigger resample &amp; set base_samples to None</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"_batch_range"</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_range</span> <span class="o">!=</span> <span class="n">batch_range</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span>
+                <span class="s2">"_batch_range"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">batch_range</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"base_samples"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
 <div class="viewcode-block" id="MCSampler.forward"><a class="viewcode-back" href="../../../sampling.html#botorch.sampling.samplers.MCSampler.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Draws MC samples from the posterior.</span>
@@ -98,7 +133,12 @@
 <span class="sd">        """</span>
         <span class="n">event_shape</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">event_shape</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">collapse_batch_dims</span><span class="p">:</span>
-            <span class="n">event_shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">event_shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]])</span> <span class="o">+</span> <span class="n">event_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>
+            <span class="n">batch_start</span><span class="p">,</span> <span class="n">batch_end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_range</span>
+            <span class="n">event_shape</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">event_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">batch_start</span><span class="p">]</span>
+                <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">event_shape</span><span class="p">[</span><span class="n">batch_start</span><span class="p">:</span><span class="n">batch_end</span><span class="p">]])</span>
+                <span class="o">+</span> <span class="n">event_shape</span><span class="p">[</span><span class="n">batch_end</span><span class="p">:]</span>
+            <span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_shape</span> <span class="o">+</span> <span class="n">event_shape</span>
 
     <span class="nd">@property</span>
@@ -141,6 +181,7 @@
         <span class="n">resample</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">collapse_batch_dims</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">batch_range</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">),</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Sampler for MC base samples using iid `N(0,1)` samples.</span>
 
@@ -153,8 +194,12 @@
 <span class="sd">            collapse_batch_dims: If True, collapse the t-batch dimensions to</span>
 <span class="sd">                size 1. This is useful for preventing sampling variance across</span>
 <span class="sd">                t-batches.</span>
+<span class="sd">            batch_range: The range of t-batch dimensions used by collapse_batch_dims.</span>
+<span class="sd">                The t-batch dims are batch_range[0]:batch_range[1]. By default, this</span>
+<span class="sd">                is (0, -2), for the case where the non-batch dimensions are -2 (q) and</span>
+<span class="sd">                -1 (d) and all dims in the front are t-batch dims.</span>
 <span class="sd">        """</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">batch_range</span><span class="o">=</span><span class="n">batch_range</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_sample_shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">num_samples</span><span class="p">])</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">collapse_batch_dims</span> <span class="o">=</span> <span class="n">collapse_batch_dims</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">resample</span> <span class="o">=</span> <span class="n">resample</span>
@@ -178,8 +223,7 @@
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">resample</span>
-            <span class="ow">or</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"base_samples"</span><span class="p">)</span>
-            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span> <span class="o">!=</span> <span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>
+            <span class="ow">or</span> <span class="n">_check_shape_changed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_samples</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_range</span><span class="p">,</span> <span class="n">shape</span><span class="p">)</span>
             <span class="ow">or</span> <span class="p">(</span><span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">collapse_batch_dims</span> <span class="ow">and</span> <span class="n">shape</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_samples</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
         <span class="p">):</span>
             <span class="k">with</span> <span class="n">manual_seed</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">seed</span><span class="p">):</span>
@@ -211,6 +255,7 @@
         <span class="n">resample</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">collapse_batch_dims</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">batch_range</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">),</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Sampler for quasi-MC base samples using Sobol sequences.</span>
 
@@ -223,8 +268,12 @@
 <span class="sd">            collapse_batch_dims: If True, collapse the t-batch dimensions to</span>
 <span class="sd">                size 1. This is useful for preventing sampling variance across</span>
 <span class="sd">                t-batches.</span>
+<span class="sd">            batch_range: The range of t-batch dimensions used by collapse_batch_dims.</span>
+<span class="sd">                The t-batch dims are batch_range[0]:batch_range[1]. By default, this</span>
+<span class="sd">                is (0, -2), for the case where the non-batch dimensions are -2 (q) and</span>
+<span class="sd">                -1 (d) and all dims in the front are t-batch dims.</span>
 <span class="sd">        """</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">batch_range</span><span class="o">=</span><span class="n">batch_range</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_sample_shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">num_samples</span><span class="p">])</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">collapse_batch_dims</span> <span class="o">=</span> <span class="n">collapse_batch_dims</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">resample</span> <span class="o">=</span> <span class="n">resample</span>
@@ -248,11 +297,11 @@
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">resample</span>
-            <span class="ow">or</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"base_samples"</span><span class="p">)</span>
-            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span> <span class="o">!=</span> <span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>
+            <span class="ow">or</span> <span class="n">_check_shape_changed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_samples</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_range</span><span class="p">,</span> <span class="n">shape</span><span class="p">)</span>
             <span class="ow">or</span> <span class="p">(</span><span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">collapse_batch_dims</span> <span class="ow">and</span> <span class="n">shape</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_samples</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
         <span class="p">):</span>
-            <span class="n">output_dim</span> <span class="o">=</span> <span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span>
+            <span class="n">batch_start</span><span class="p">,</span> <span class="n">batch_end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_range</span>
+            <span class="n">output_dim</span> <span class="o">=</span> <span class="p">(</span><span class="n">shape</span><span class="p">[:</span><span class="n">batch_start</span><span class="p">]</span> <span class="o">+</span> <span class="n">shape</span><span class="p">[</span><span class="n">batch_end</span><span class="p">:])</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">output_dim</span> <span class="o">&gt;</span> <span class="n">SobolEngine</span><span class="o">.</span><span class="n">MAXDIM</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
                     <span class="s2">"SobolQMCSampler only supports dimensions "</span>
@@ -260,7 +309,7 @@
                 <span class="p">)</span>
             <span class="n">base_samples</span> <span class="o">=</span> <span class="n">draw_sobol_normal_samples</span><span class="p">(</span>
                 <span class="n">d</span><span class="o">=</span><span class="n">output_dim</span><span class="p">,</span>
-                <span class="n">n</span><span class="o">=</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">numel</span><span class="p">(),</span>
+                <span class="n">n</span><span class="o">=</span><span class="n">shape</span><span class="p">[</span><span class="n">batch_start</span><span class="p">:</span><span class="n">batch_end</span><span class="p">]</span><span class="o">.</span><span class="n">numel</span><span class="p">(),</span>
                 <span class="n">device</span><span class="o">=</span><span class="n">posterior</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
                 <span class="n">dtype</span><span class="o">=</span><span class="n">posterior</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
                 <span class="n">seed</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">seed</span><span class="p">,</span>
@@ -274,6 +323,29 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">posterior</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>  <span class="c1"># pragma: nocover</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_samples</span><span class="o">.</span><span class="n">dtype</span> <span class="o">!=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">dtype</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">posterior</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">_check_shape_changed</span><span class="p">(</span>
+    <span class="n">base_samples</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">batch_range</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""Check if the base samples shape matches a given shape in non batch dims.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        base_samples: The Posterior for which to generate base samples.</span>
+<span class="sd">        batch_range: The range t-batch dimensions to ignore for shape check.</span>
+<span class="sd">        shape: The shape to compare.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A bool indicating whether the shape changed.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">base_samples</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="n">batch_start</span> <span class="o">=</span> <span class="n">batch_range</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">batch_end</span> <span class="o">=</span> <span class="n">batch_range</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">base_samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">batch_end</span><span class="p">:]</span> <span class="o">!=</span> <span class="n">shape</span><span class="p">[</span><span class="n">batch_end</span><span class="p">:]</span>
+        <span class="ow">or</span> <span class="n">base_samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="n">batch_start</span><span class="p">]</span> <span class="o">!=</span> <span class="n">shape</span><span class="p">[:</span><span class="n">batch_start</span><span class="p">]</span>
+    <span class="p">)</span>
 </pre></div>
 </div>
 </div>
