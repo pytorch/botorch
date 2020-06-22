@@ -14,7 +14,6 @@
 import os
 import re
 import sys
-import warnings
 
 
 base_path = os.path.abspath(os.path.join(__file__, "..", "..", "..", "botorch"))
@@ -200,14 +199,3 @@ epub_exclude_files = ["search.html"]
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
-
-
-# -- Other -------------------------------------------------------------------
-
-# Suppress warnings from sphinx_autodoc_typehints
-# TODO: Remove once the following issues is resolved:
-# https://github.com/agronholm/sphinx-autodoc-typehints/issues/133
-
-warnings.filterwarnings(
-    "ignore", message="sphinx.util.inspect.Signature\(\) is deprecated"  # noqa: W605
-)
