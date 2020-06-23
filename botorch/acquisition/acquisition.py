@@ -46,7 +46,7 @@ class AcquisitionFunction(Module, ABC):
                     " will not provide a gradient to these points.",
                     BotorchWarning,
                 )
-            self.X_pending = X_pending.clone().detach()
+            self.X_pending = X_pending.detach().clone()
         else:
             self.X_pending = X_pending
 

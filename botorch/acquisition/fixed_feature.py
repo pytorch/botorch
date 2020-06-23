@@ -56,7 +56,7 @@ class FixedFeatureAcquisitionFunction(AcquisitionFunction):
         Module.__init__(self)
         self.acq_func = acq_function
         self.d = d
-        values = torch.as_tensor(values).clone().detach()
+        values = torch.as_tensor(values).detach().clone()
         self.register_buffer("values", values)
         # build selector for _construct_X_full
         self._selector = []
