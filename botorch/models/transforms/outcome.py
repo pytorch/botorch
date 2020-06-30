@@ -175,6 +175,7 @@ class Standardize(OutcomeTransform):
         super().__init__()
         self.register_buffer("means", torch.zeros(*batch_shape, 1, m))
         self.register_buffer("stdvs", torch.zeros(*batch_shape, 1, m))
+        self.register_buffer("_stdvs_sq", torch.zeros(*batch_shape, 1, m))
         self._outputs = normalize_indices(outputs, d=m)
         self._m = m
         self._batch_shape = batch_shape
