@@ -71,28 +71,28 @@ def optimize_acqf(
         sequential: If False, uses joint optimization, otherwise uses sequential
             optimization.
 
-        Returns:
-            A two-element tuple containing
+    Returns:
+        A two-element tuple containing
 
-           - a `(num_restarts) x q x d`-dim tensor of generated candidates.
-           - a tensor of associated acquisiton values. If `sequential=False`,
-             this is a `(num_restarts)`-dim tensor of joint acquisition values
-             (with explicit restart dimension if `return_best_only=False`). If
-             `sequential=True`, this is a `q`-dim tensor of expected acquisition
-             values conditional on having observed canidates `0,1,...,i-1`.
+        - a `(num_restarts) x q x d`-dim tensor of generated candidates.
+        - a tensor of associated acquisition values. If `sequential=False`,
+            this is a `(num_restarts)`-dim tensor of joint acquisition values
+            (with explicit restart dimension if `return_best_only=False`). If
+            `sequential=True`, this is a `q`-dim tensor of expected acquisition
+            values conditional on having observed canidates `0,1,...,i-1`.
 
-        Example:
-            >>> # generate `q=2` candidates jointly using 20 random restarts
-            >>> # and 512 raw samples
-            >>> candidates, acq_value = optimize_acqf(qEI, bounds, 2, 20, 512)
+    Example:
+        >>> # generate `q=2` candidates jointly using 20 random restarts
+        >>> # and 512 raw samples
+        >>> candidates, acq_value = optimize_acqf(qEI, bounds, 2, 20, 512)
 
-            >>> generate `q=3` candidates sequentially using 15 random restarts
-            >>> # and 256 raw samples
-            >>> qEI = qExpectedImprovement(model, best_f=0.2)
-            >>> bounds = torch.tensor([[0.], [1.]])
-            >>> candidates, acq_value_list = optimize_acqf(
-            >>>     qEI, bounds, 3, 15, 256, sequential=True
-            >>> )
+        >>> generate `q=3` candidates sequentially using 15 random restarts
+        >>> # and 256 raw samples
+        >>> qEI = qExpectedImprovement(model, best_f=0.2)
+        >>> bounds = torch.tensor([[0.], [1.]])
+        >>> candidates, acq_value_list = optimize_acqf(
+        >>>     qEI, bounds, 3, 15, 256, sequential=True
+        >>> )
 
     """
     if sequential and q > 1:
@@ -235,23 +235,24 @@ def optimize_acqf_cyclic(
             If no initial conditions are provided, the default initialization will
             be used.
         cyclic_options: Options for stopping criterion for outer cyclic optimization.
-        Returns:
-            A two-element tuple containing
 
-           - a `q x d`-dim tensor of generated candidates.
-           - a `q`-dim tensor of expected acquisition
-             values, where the `i`th value is the acquistion value conditional on
-             having observed all candidates except candidate `i`.
+    Returns:
+        A two-element tuple containing
 
-        Example:
-            >>> # generate `q=3` candidates cyclically using 15 random restarts
-            >>> # 256 raw samples, and 4 cycles
-            >>>
-            >>> qEI = qExpectedImprovement(model, best_f=0.2)
-            >>> bounds = torch.tensor([[0.], [1.]])
-            >>> candidates, acq_value_list = optimize_acqf_cyclic(
-            >>>     qEI, bounds, 3, 15, 256, cyclic_options={"maxiter": 4}
-            >>> )
+        - a `q x d`-dim tensor of generated candidates.
+        - a `q`-dim tensor of expected acquisition values, where the value at
+            index `i` is the acquisition value conditional on having observed
+            all candidates except candidate `i`.
+
+    Example:
+        >>> # generate `q=3` candidates cyclically using 15 random restarts
+        >>> # 256 raw samples, and 4 cycles
+        >>>
+        >>> qEI = qExpectedImprovement(model, best_f=0.2)
+        >>> bounds = torch.tensor([[0.], [1.]])
+        >>> candidates, acq_value_list = optimize_acqf_cyclic(
+        >>>     qEI, bounds, 3, 15, 256, cyclic_options={"maxiter": 4}
+        >>> )
 
     """
     # for the first cycle, optimize the q candidates sequentially
@@ -322,7 +323,7 @@ def optimize_acqf_list(
     r"""Generate a list of candidates from a list of acquisition functions.
 
     The acquisition functions are optimized in sequence, with previous candidates
-    set as X_Pending. This is also known as `sequential greedy` optimization.
+    set as `X_pending`. This is also known as sequential greedy optimization.
 
     Args:
         acq_function_list: A list of acquisition functions.
@@ -342,13 +343,14 @@ def optimize_acqf_list(
         post_processing_func: A function that post-processes an optimization
             result appropriately (i.e., according to `round-trip`
             transformations).
-        Returns:
-            A two-element tuple containing
 
-           - a `q x d`-dim tensor of generated candidates.
-           - a `q`-dim tensor of expected acquisition
-             values, where the `i`th value is the acquistion value conditional on
-             having observed all previous candidates.
+    Returns:
+        A two-element tuple containing
+
+        - a `q x d`-dim tensor of generated candidates.
+        - a `q`-dim tensor of expected acquisition values, where the value at
+            index `i` is the acquisition value conditional on having observed
+            all candidates except candidate `i`.
 
     """
     if not acq_function_list:
