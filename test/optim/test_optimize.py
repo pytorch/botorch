@@ -318,15 +318,19 @@ class TestOptimizeAcqfList(BotorchTestCase):
         inequality_constraints = [
             [torch.tensor([3]), torch.tensor([4]), torch.tensor(5)]
         ]
+        # reinitialize so that dtype
         mock_acq_function_1 = MockAcquisitionFunction()
         mock_acq_function_2 = MockAcquisitionFunction()
         mock_acq_function_list = [mock_acq_function_1, mock_acq_function_2]
         for num_acqf, dtype in itertools.product([1, 2], (torch.float, torch.double)):
+            for m in mock_acq_function_list:
+                # clear previous X_pending
+                m.set_X_pending(None)
+            tkwargs["dtype"] = dtype
             inequality_constraints[0] = [
                 t.to(**tkwargs) for t in inequality_constraints[0]
             ]
             mock_optimize_acqf.reset_mock()
-            tkwargs["dtype"] = dtype
             bounds = bounds.to(**tkwargs)
             candidate_rvs = []
             acq_val_rvs = []
