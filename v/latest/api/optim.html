@@ -61,17 +61,29 @@ this if you do not want to use default initialization strategy.</p></li>
 random restart initializations of the optimization.</p></li>
 <li><p><strong>sequential</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If False, uses joint optimization, otherwise uses sequential
 optimization.</p></li>
-<li><p><strong>Returns</strong> – <p>A two-element tuple containing</p>
-<ul>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><p>A two-element tuple containing</p>
+<ul class="simple">
 <li><p>a <cite>(num_restarts) x q x d</cite>-dim tensor of generated candidates.</p></li>
-<li><p>a tensor of associated acquisiton values. If <cite>sequential=False</cite>,
-this is a <cite>(num_restarts)</cite>-dim tensor of joint acquisition values
+<li><dl class="simple">
+<dt>a tensor of associated acquisition values. If <cite>sequential=False</cite>,</dt><dd><p>this is a <cite>(num_restarts)</cite>-dim tensor of joint acquisition values
 (with explicit restart dimension if <cite>return_best_only=False</cite>). If
 <cite>sequential=True</cite>, this is a <cite>q</cite>-dim tensor of expected acquisition
-values conditional on having observed canidates <cite>0,1,…,i-1</cite>.</p></li>
+values conditional on having observed canidates <cite>0,1,…,i-1</cite>.</p>
+</dd>
+</dl>
+</li>
 </ul>
-</p></li>
-<li><p><strong>Example</strong> – <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># generate `q=2` candidates jointly using 20 random restarts</span>
+</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># generate `q=2` candidates jointly using 20 random restarts</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># and 512 raw samples</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">candidates</span><span class="p">,</span> <span class="n">acq_value</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span><span class="n">qEI</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">512</span><span class="p">)</span>
 </pre></div>
@@ -85,13 +97,6 @@ values conditional on having observed canidates <cite>0,1,…,i-1</cite>.</p></l
 &gt;&gt;&gt; )
 </pre></div>
 </div>
-</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py function">
 <dt id="botorch.optim.optimize.optimize_acqf_cyclic">
@@ -122,15 +127,27 @@ transformations).</p></li>
 If no initial conditions are provided, the default initialization will
 be used.</p></li>
 <li><p><strong>cyclic_options</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]]) – Options for stopping criterion for outer cyclic optimization.</p></li>
-<li><p><strong>Returns</strong> – <p>A two-element tuple containing</p>
-<ul>
-<li><p>a <cite>q x d</cite>-dim tensor of generated candidates.</p></li>
-<li><p>a <cite>q</cite>-dim tensor of expected acquisition
-values, where the <cite>i`th value is the acquistion value conditional on
-having observed all candidates except candidate `i</cite>.</p></li>
 </ul>
-</p></li>
-<li><p><strong>Example</strong> – <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># generate `q=3` candidates cyclically using 15 random restarts</span>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><p>A two-element tuple containing</p>
+<ul class="simple">
+<li><p>a <cite>q x d</cite>-dim tensor of generated candidates.</p></li>
+<li><dl class="simple">
+<dt>a <cite>q</cite>-dim tensor of expected acquisition values, where the value at</dt><dd><p>index <cite>i</cite> is the acquisition value conditional on having observed
+all candidates except candidate <cite>i</cite>.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># generate `q=3` candidates cyclically using 15 random restarts</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># 256 raw samples, and 4 cycles</span>
 <span class="go">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">qEI</span> <span class="o">=</span> <span class="n">qExpectedImprovement</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">best_f</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
@@ -140,11 +157,50 @@ having observed all candidates except candidate `i</cite>.</p></li>
 <span class="gp">&gt;&gt;&gt; </span><span class="p">)</span>
 </pre></div>
 </div>
-</p></li>
+</dd></dl>
+<dl class="py function">
+<dt id="botorch.optim.optimize.optimize_acqf_list">
+<code class="sig-prename descclassname">botorch.optim.optimize.</code><code class="sig-name descname">optimize_acqf_list</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">acq_function_list</span></em>, <em class="sig-param"><span class="n">bounds</span></em>, <em class="sig-param"><span class="n">num_restarts</span></em>, <em class="sig-param"><span class="n">raw_samples</span></em>, <em class="sig-param"><span class="n">options</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">inequality_constraints</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">equality_constraints</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">fixed_features</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">post_processing_func</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/optimize.html#optimize_acqf_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.optim.optimize.optimize_acqf_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a list of candidates from a list of acquisition functions.</p>
+<p>The acquisition functions are optimized in sequence, with previous candidates
+set as <cite>X_pending</cite>. This is also known as sequential greedy optimization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>acq_function_list</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference internal" href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code></a>]) – A list of acquisition functions.</p></li>
+<li><p><strong>bounds</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of <cite>X</cite>.</p></li>
+<li><p><strong>num_restarts</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of starting points for multistart acquisition
+function optimization.</p></li>
+<li><p><strong>raw_samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of samples for initialization</p></li>
+<li><p><strong>options</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]]) – Options for candidate generation.</p></li>
+<li><p><strong>constraints</strong> (<em>equality</em>) – A list of tuples (indices, coefficients, rhs),
+with each tuple encoding an inequality constraint of the form
+<cite>sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs</cite></p></li>
+<li><p><strong>constraints</strong> – A list of tuples (indices, coefficients, rhs),
+with each tuple encoding an inequality constraint of the form
+<cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite></p></li>
+<li><p><strong>fixed_features</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]]) – A map <cite>{feature_index: value}</cite> for features that
+should be fixed to a particular value during generation.</p></li>
+<li><p><strong>post_processing_func</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]]) – A function that post-processes an optimization
+result appropriately (i.e., according to <cite>round-trip</cite>
+transformations).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><p>A two-element tuple containing</p>
+<ul class="simple">
+<li><p>a <cite>q x d</cite>-dim tensor of generated candidates.</p></li>
+<li><dl class="simple">
+<dt>a <cite>q</cite>-dim tensor of expected acquisition values, where the value at</dt><dd><p>index <cite>i</cite> is the acquisition value conditional on having observed
+all candidates except candidate <cite>i</cite>.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</p>
 </dd>
 </dl>
 </dd></dl>
