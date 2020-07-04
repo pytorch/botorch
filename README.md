@@ -161,6 +161,19 @@ If you use BoTorch, please cite the following paper:
 }
 ```
 
+If you use $q$-Expected Hypervolume Improvement, $q$-ParEGO, or analytic Expected Hypervolume Improvement with auto-differentiation, please also cite the following paper:
+> [S. Daulton, M. Balandat, E. Bakshy. Differentiable Expected Hypervolume Improvement for Parallel Multi-Objective Bayesian Optimization. ArXiv e-prints, 2020.](http://arxiv.org/abs/1910.06403)
+
+```
+@article{daulton2020differentiable,
+  Author = {Samuel Daulton and Maximilian Balandat and Eytan Bakshy},
+  Journal = {Arxiv e-prints},
+  Title = {Differentiable Expected Hypervolume Improvement for Parallel Multi-Objective Bayesian Optimization},
+  Year = {2020},
+  url = {https://arxiv.org/abs/2006.05078}
+}
+```
+
 
 ## Contributing
 See the [CONTRIBUTING](CONTRIBUTING.md) file for how to help out.
