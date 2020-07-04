@@ -128,3 +128,42 @@ class ConstrainedBaseTestProblem(BaseTestProblem, ABC):
                 corresponds to the constraint being feasible).
         """
         pass  # pragma: no cover
+
+
+class MultiObjectiveTestProblem(BaseTestProblem):
+    r"""Base class for test multi-objective test functions.
+
+    TODO: add a pareto distance function that returns the distance
+    between a provided point and the closest point on the true pareto front.
+    """
+
+    num_objectives: int
+    _ref_point: List[float]
+    _max_hv: float
+
+    def __init__(self, noise_std: Optional[float] = None, negate: bool = False) -> None:
+        r"""Base constructor for multi-objective test functions.
+
+        Arguments:
+            noise_std: Standard deviation of the observation noise.
+            negate: If True, negate the objectives.
+        """
+        super().__init__(noise_std=noise_std, negate=negate)
+        ref_point = torch.tensor(self._ref_point, dtype=torch.float)
+        if negate:
+            ref_point *= -1
+        self.register_buffer("ref_point", ref_point)
+
+    @property
+    def max_hv(self) -> float:
+        try:
+            return self._max_hv
+        except AttributeError:
+            raise NotImplementedError(
+                f"Problem {self.__class__.__name__} does not specify maximal "
+                "hypervolume."
+            )
+
+    def gen_pareto_front(self, n: int) -> Tensor:
+        r"""Generate `n` pareto optimal points."""
+        raise NotImplementedError
