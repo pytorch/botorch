@@ -18,6 +18,7 @@ from botorch.models.model import Model
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.posteriors.posterior import Posterior
 from botorch.test_functions.base import BaseTestProblem
+from botorch.utils.transforms import unnormalize
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.lazy import AddedDiagLazyTensor, DiagLazyTensor
 from torch import Tensor
@@ -257,3 +258,48 @@ def _get_test_posterior(
             covar = covar + torch.diag_embed(flat_diag)
         mtmvn = MultitaskMultivariateNormal(mean, covar, interleaved=interleaved)
     return GPyTorchPosterior(mtmvn)
+
+
+class MultiObjectiveTestProblemBaseTestCase(BaseTestProblemBaseTestCase):
+    def test_attributes(self):
+        for f in self.functions:
+            self.assertTrue(hasattr(f, "dim"))
+            self.assertTrue(hasattr(f, "num_objectives"))
+            self.assertEqual(f.bounds.shape, torch.Size([2, f.dim]))
+
+    def test_max_hv(self):
+        for dtype in (torch.float, torch.double):
+            for f in self.functions:
+                f.to(device=self.device, dtype=dtype)
+                if not hasattr(f, "_max_hv"):
+                    with self.assertRaises(NotImplementedError):
+                        f.max_hv
+                else:
+                    self.assertEqual(f.max_hv, f._max_hv)
+
+    def test_ref_point(self):
+        for dtype in (torch.float, torch.double):
+            for f in self.functions:
+                f.to(dtype=dtype, device=self.device)
+                self.assertTrue(
+                    torch.allclose(
+                        f.ref_point,
+                        torch.tensor(f._ref_point, dtype=dtype, device=self.device),
+                    )
+                )
+
+
+class ConstrainedMultiObjectiveTestProblemBaseTestCase(
+    MultiObjectiveTestProblemBaseTestCase
+):
+    def test_num_constraints(self):
+        for f in self.functions:
+            self.assertTrue(hasattr(f, "num_constraints"))
+
+    def test_evaluate_slack_true(self):
+        for dtype in (torch.float, torch.double):
+            for f in self.functions:
+                f.to(device=self.device, dtype=dtype)
+                X = unnormalize(torch.rand(1, f.dim), bounds=f.bounds)
+                slack = f.evaluate_slack_true(X)
+                self.assertEqual(slack.shape, torch.Size([1, f.num_constraints]))
