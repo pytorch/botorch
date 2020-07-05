@@ -22,6 +22,7 @@ IGNORE = {
     # some nbs take quite a while, don't run by default
     "closed_loop_botorch_only.ipynb",
     "meta_learning_with_rgpe.ipynb",
+    "multi_objective_bo.ipynb",
     "preference_bo.ipynb",
     # some others may require setting paths to local data
     "vae_mnist.ipynb",
