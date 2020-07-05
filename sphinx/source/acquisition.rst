@@ -27,6 +27,18 @@ Monte-Carlo Acquisition Function API
 .. autoclass:: MCAcquisitionFunction
     :members:
 
+Multi-Objective Analytic Acquisition Function API
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. currentmodule:: botorch.acquisition.multi_objective.analytic
+.. autoclass:: MultiObjectiveAnalyticAcquisitionFunction
+    :members:
+
+Multi-Objective Monte-Carlo Acquisition Function API
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. currentmodule:: botorch.acquisition.multi_objective.monte_carlo
+.. autoclass:: MultiObjectiveMCAcquisitionFunction
+    :members:
+
 
 Acquisition Functions
 -------------------------------------------
@@ -42,6 +54,18 @@ Monte-Carlo Acquisition Functions
 .. automodule:: botorch.acquisition.monte_carlo
     :members:
     :exclude-members: MCAcquisitionFunction
+
+Multi-Objective Analytic Acquisition Functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.acquisition.multi_objective.analytic
+    :members:
+    :exclude-members: MultiObjectiveAnalyticAcquisitionFunction
+
+Multi-Objective Monte-Carlo Acquisition Functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.acquisition.multi_objective.monte_carlo
+    :members:
+    :exclude-members: MultiObjectiveMCAcquisitionFunction
 
 The One-Shot Knowledge Gradient
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -65,6 +89,11 @@ Objectives and Cost-Aware Utilities
 Objectives
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.acquisition.objective
+    :members:
+
+Multi-Objective Objectives
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.acquisition.multi_objective.objective
     :members:
 
 Cost-Aware Utility

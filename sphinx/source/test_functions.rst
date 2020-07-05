@@ -20,3 +20,8 @@ Multi-Fidelity Synthetic Test Functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.test_functions.multi_fidelity
     :members:
+
+Multi-Objective Synthetic Test Functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.test_functions.multi_objective
+    :members:
