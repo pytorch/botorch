@@ -146,12 +146,22 @@ candidate  # tensor([0.4887, 0.5063])
     const papertitle = `BoTorch: Programmable Bayesian Optimization in PyTorch`
     const paper_bibtex = `${pre}plaintext
 @article{balandat2019botorch,
-  Author = {Balandat, Maximilian and Karrer, Brian and Jiang, Daniel R. and Daulton, Samuel and Letham, Benjamin and Wilson, Andrew Gordon and Bakshy, Eytan},
+  Author = {Maximilian Balandat and Brian Karrer and Daniel R. Jiang and Samuel Daulton and Benjamin Letham and Andrew Gordon Wilson and Eytan Bakshy},
   Journal = {arXiv e-prints},
   Month = oct,
   Pages = {arXiv:1910.06403},
   Title = {{BoTorch: Programmable Bayesian Optimization in PyTorch}},
   Year = 2019}
+  `;
+  const ehvi_papertitle = `Differentiable Expected Hypervolume Improvement for Parallel Multi-Objective Bayesian Optimization`
+  const ehvi_paper_bibtex = `${pre}plaintext
+@article{daulton2020differentiable,
+  Author = {Samuel Daulton and Maximilian Balandat and Eytan Bakshy},
+  Journal = {Arxiv e-prints},
+  Title = {Differentiable Expected Hypervolume Improvement for Parallel Multi-Objective Bayesian Optimization},
+  Year = {2020},
+  url = {https://arxiv.org/abs/2006.05078}
+  }
   `;
     //
     const QuickStart = () => (
@@ -222,10 +232,12 @@ candidate  # tensor([0.4887, 0.5063])
         className="productShowcaseSection"
         id="reference"
         style={{textAlign: 'center'}}>
-        <h2>Reference</h2>
+        <h2>References</h2>
         <Container>
-    Read the paper: <a href={`https://arxiv.org/abs/1910.06403`}>{papertitle}</a>
+          <a href={`https://arxiv.org/abs/1910.06403`}>{papertitle}</a>
           <MarkdownBlock>{paper_bibtex}</MarkdownBlock>
+          <a href={`https://arxiv.org/abs/2006.05078`}>{ehvi_papertitle}</a>
+          <MarkdownBlock>{ehvi_paper_bibtex}</MarkdownBlock>
         </Container>
       </div>
     );
