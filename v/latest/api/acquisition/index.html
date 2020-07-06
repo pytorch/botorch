@@ -191,6 +191,88 @@ evaluations.</p>
 </dd></dl>
 </dd></dl>
 </div>
+<div class="section" id="multi-objective-analytic-acquisition-function-api">
+<h3>Multi-Objective Analytic Acquisition Function API<a class="headerlink" href="#multi-objective-analytic-acquisition-function-api" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt id="botorch.acquisition.multi_objective.analytic.MultiObjectiveAnalyticAcquisitionFunction">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.acquisition.multi_objective.analytic.</code><code class="sig-name descname">MultiObjectiveAnalyticAcquisitionFunction</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">objective</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/analytic.html#MultiObjectiveAnalyticAcquisitionFunction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.analytic.MultiObjectiveAnalyticAcquisitionFunction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.acquisition.AcquisitionFunction</span></code></a></p>
+<p>Abstract base class for Multi-Objective batch acquisition functions.</p>
+<p>Constructor for the MultiObjectiveAnalyticAcquisitionFunction base class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a>) – A fitted model.</p></li>
+<li><p><strong>objective</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="#botorch.acquisition.multi_objective.objective.AnalyticMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.AnalyticMultiOutputObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnalyticMultiOutputObjective</span></code></a>]) – An AnalyticMultiOutputObjective (optional).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="botorch.acquisition.multi_objective.analytic.MultiObjectiveAnalyticAcquisitionFunction.forward">
+<em class="property">abstract </em><code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/analytic.html#MultiObjectiveAnalyticAcquisitionFunction.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.analytic.MultiObjectiveAnalyticAcquisitionFunction.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes in a <cite>batch_shape x 1 x d</cite> X Tensor of t-batches with <cite>1</cite> <cite>d</cite>-dim
+design point each, and returns a Tensor with shape <cite>batch_shape’</cite>, where
+<cite>batch_shape’</cite> is the broadcasted batch shape of model and input <cite>X</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.acquisition.multi_objective.analytic.MultiObjectiveAnalyticAcquisitionFunction.set_X_pending">
+<code class="sig-name descname">set_X_pending</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X_pending</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/analytic.html#MultiObjectiveAnalyticAcquisitionFunction.set_X_pending"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.analytic.MultiObjectiveAnalyticAcquisitionFunction.set_X_pending" title="Permalink to this definition">¶</a></dt>
+<dd><p>Informs the acquisition function about pending design points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X_pending</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – <cite>n x d</cite> Tensor with <cite>n</cite> <cite>d</cite>-dim design points that have
+been submitted for evaluation but have not yet been evaluated.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+</div>
+<div class="section" id="multi-objective-monte-carlo-acquisition-function-api">
+<h3>Multi-Objective Monte-Carlo Acquisition Function API<a class="headerlink" href="#multi-objective-monte-carlo-acquisition-function-api" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt id="botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.acquisition.multi_objective.monte_carlo.</code><code class="sig-name descname">MultiObjectiveMCAcquisitionFunction</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">sampler</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">objective</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">X_pending</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/monte_carlo.html#MultiObjectiveMCAcquisitionFunction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.acquisition.AcquisitionFunction</span></code></a></p>
+<p>Abstract base class for Multi-Objective batch acquisition functions.</p>
+<p>Constructor for the MCAcquisitionFunction base class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a>) – A fitted model.</p></li>
+<li><p><strong>sampler</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="sampling.html#botorch.sampling.samplers.MCSampler" title="botorch.sampling.samplers.MCSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">MCSampler</span></code></a>]) – The sampler used to draw base samples. Defaults to
+<cite>SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)</cite>.</p></li>
+<li><p><strong>objective</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">MCMultiOutputObjective</span></code></a>]) – The MCMultiOutputObjective under which the samples are
+evaluated. Defaults to <cite>IdentityMultiOutputObjective()</cite>.</p></li>
+<li><p><strong>X_pending</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>m x d</cite>-dim Tensor of <cite>m</cite> design points that have
+points that have been submitted for function evaluation
+but have not yet been evaluated.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction.forward">
+<em class="property">abstract </em><code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/monte_carlo.html#MultiObjectiveMCAcquisitionFunction.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes in a <cite>batch_shape x q x d</cite> X Tensor of t-batches with <cite>q</cite> <cite>d</cite>-dim
+design points each, and returns a Tensor with shape <cite>batch_shape’</cite>, where
+<cite>batch_shape’</cite> is the broadcasted batch shape of model and input <cite>X</cite>. Should
+utilize the result of <cite>set_X_pending</cite> as needed to account for pending function
+evaluations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+</div>
 </div>
 <div class="section" id="acquisition-functions">
 <h2>Acquisition Functions<a class="headerlink" href="#acquisition-functions" title="Permalink to this headline">¶</a></h2>
@@ -796,23 +878,223 @@ model and input <cite>X</cite>.</p>
 </dd></dl>
 </dd></dl>
 </div>
+<div class="section" id="module-botorch.acquisition.multi_objective.analytic">
+<span id="multi-objective-analytic-acquisition-functions"></span><h3>Multi-Objective Analytic Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.multi_objective.analytic" title="Permalink to this headline">¶</a></h3>
+<p>Analytic Acquisition Functions for Multi-objective Bayesian optimization.</p>
+<p>References</p>
+<dl class="citation">
+<dt class="label" id="yang2019"><span class="brackets">Yang2019</span><span class="fn-backref">(<a href="#id4">1</a>,<a href="#id6">2</a>,<a href="#id7">3</a>,<a href="#id8">4</a>,<a href="#id9">5</a>)</span></dt>
+<dd><p>Yang, K., Emmerich, M., Deutz, A. et al. Efficient computation of expected
+hypervolume improvement using box decomposition algorithms. J Glob Optim 75,
+3–34 (2019)</p>
+</dd>
+</dl>
+<dl class="py class">
+<dt id="botorch.acquisition.multi_objective.analytic.ExpectedHypervolumeImprovement">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.acquisition.multi_objective.analytic.</code><code class="sig-name descname">ExpectedHypervolumeImprovement</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">ref_point</span></em>, <em class="sig-param"><span class="n">partitioning</span></em>, <em class="sig-param"><span class="n">objective</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/analytic.html#ExpectedHypervolumeImprovement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.analytic.ExpectedHypervolumeImprovement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.multi_objective.analytic.MultiObjectiveAnalyticAcquisitionFunction" title="botorch.acquisition.multi_objective.analytic.MultiObjectiveAnalyticAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.multi_objective.analytic.MultiObjectiveAnalyticAcquisitionFunction</span></code></a></p>
+<p>Expected Hypervolume Improvement supporting m&gt;=2 outcomes.</p>
+<p>This implements the computes EHVI using the algorithm from <a class="reference internal" href="#yang2019" id="id4"><span>[Yang2019]</span></a>, but
+additionally computes gradients via auto-differentiation as proposed by
+<a class="reference internal" href="#daulton2020" id="id5"><span>[Daulton2020]</span></a>.</p>
+<p>Note: this is currently inefficient in two ways due to the binary partitioning
+algorithm that we use for the box decomposition:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>We have more boxes in our decomposition</p></li>
+<li><dl class="simple">
+<dt>If we used a box decomposition that used <cite>inf</cite> as the upper bound for</dt><dd><p>the last dimension <em>in all hypercells</em>, then we could reduce the number
+of terms we need to compute from 2^m to 2^(m-1). <a class="reference internal" href="#yang2019" id="id6"><span>[Yang2019]</span></a> do this
+by using DKLV17 and LKF17 for the box decomposition.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</div></blockquote>
+<p>TODO: Use DKLV17 and LKF17 for the box decomposition as in <a class="reference internal" href="#yang2019" id="id7"><span>[Yang2019]</span></a> for
+greater efficiency.</p>
+<p>TODO: Add support for outcome constraints.</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ref_point</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">EHVI</span> <span class="o">=</span> <span class="n">ExpectedHypervolumeImprovement</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">ref_point</span><span class="p">,</span> <span class="n">partitioning</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ehvi</span> <span class="o">=</span> <span class="n">EHVI</span><span class="p">(</span><span class="n">test_X</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a>) – A fitted model.</p></li>
+<li><p><strong>ref_point</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – A list with <cite>m</cite> elements representing the reference point (in the
+outcome space) w.r.t. to which compute the hypervolume. This is a
+reference point for the objective values (i.e. after applying
+<cite>objective</cite> to the samples).</p></li>
+<li><p><strong>partitioning</strong> (<a class="reference internal" href="utils.html#botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning" title="botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning"><code class="xref py py-class docutils literal notranslate"><span class="pre">NondominatedPartitioning</span></code></a>) – A <cite>NondominatedPartitioning</cite> module that provides the non-
+dominated front and a partitioning of the non-dominated space in hyper-
+rectangles.</p></li>
+<li><p><strong>objective</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="#botorch.acquisition.multi_objective.objective.AnalyticMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.AnalyticMultiOutputObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnalyticMultiOutputObjective</span></code></a>]) – An <cite>AnalyticMultiOutputObjective</cite>.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="botorch.acquisition.multi_objective.analytic.ExpectedHypervolumeImprovement.psi">
+<code class="sig-name descname">psi</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">lower</span></em>, <em class="sig-param"><span class="n">upper</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">sigma</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/analytic.html#ExpectedHypervolumeImprovement.psi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.analytic.ExpectedHypervolumeImprovement.psi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute Psi function.</p>
+<p>For each cell i and outcome k:</p>
+<blockquote>
+<div><p>Psi(lower_{i,k}, upper_{i,k}, mu_k, sigma_k) = (
+sigma_k * PDF((upper_{i,k} - mu_k) / sigma_k) + (
+mu_k - lower_{i,k}
+) * (1 - CDF(upper_{i,k} - mu_k) / sigma_k)
+)</p>
+</div></blockquote>
+<p>See Equation 19 in <a class="reference internal" href="#yang2019" id="id8"><span>[Yang2019]</span></a> for more details.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lower</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>num_cells x m</cite>-dim tensor of lower cell bounds</p></li>
+<li><p><strong>upper</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>num_cells x m</cite>-dim tensor of upper cell bounds</p></li>
+<li><p><strong>mu</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x 1 x m</cite>-dim tensor of means</p></li>
+<li><p><strong>sigma</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x 1 x m</cite>-dim tensor of standard deviations (clamped).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>batch_shape x num_cells x m</cite>-dim tensor of values.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.acquisition.multi_objective.analytic.ExpectedHypervolumeImprovement.nu">
+<code class="sig-name descname">nu</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">lower</span></em>, <em class="sig-param"><span class="n">upper</span></em>, <em class="sig-param"><span class="n">mu</span></em>, <em class="sig-param"><span class="n">sigma</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/analytic.html#ExpectedHypervolumeImprovement.nu"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.analytic.ExpectedHypervolumeImprovement.nu" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute Nu function.</p>
+<p>For each cell i and outcome k:</p>
+<blockquote>
+<div><p>nu(lower_{i,k}, upper_{i,k}, mu_k, sigma_k) = (
+upper_{i,k} - lower_{i,k}
+) * (1 - CDF((upper_{i,k} - mu_k) / sigma_k))</p>
+</div></blockquote>
+<p>See Equation 25 in <a class="reference internal" href="#yang2019" id="id9"><span>[Yang2019]</span></a> for more details.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lower</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>num_cells x m</cite>-dim tensor of lower cell bounds</p></li>
+<li><p><strong>upper</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>num_cells x m</cite>-dim tensor of upper cell bounds</p></li>
+<li><p><strong>mu</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x 1 x m</cite>-dim tensor of means</p></li>
+<li><p><strong>sigma</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x 1 x m</cite>-dim tensor of standard deviations (clamped).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>batch_shape x num_cells x m</cite>-dim tensor of values.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.acquisition.multi_objective.analytic.ExpectedHypervolumeImprovement.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/analytic.html#ExpectedHypervolumeImprovement.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.analytic.ExpectedHypervolumeImprovement.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes in a <cite>batch_shape x 1 x d</cite> X Tensor of t-batches with <cite>1</cite> <cite>d</cite>-dim
+design point each, and returns a Tensor with shape <cite>batch_shape’</cite>, where
+<cite>batch_shape’</cite> is the broadcasted batch shape of model and input <cite>X</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+</div>
+<div class="section" id="module-botorch.acquisition.multi_objective.monte_carlo">
+<span id="multi-objective-monte-carlo-acquisition-functions"></span><h3>Multi-Objective Monte-Carlo Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.multi_objective.monte_carlo" title="Permalink to this headline">¶</a></h3>
+<p>Monte-Carlo Acquisition Functions for Multi-objective Bayesian optimization.</p>
+<p>References</p>
+<dl class="citation">
+<dt class="label" id="daulton2020"><span class="brackets">Daulton2020</span><span class="fn-backref">(<a href="#id5">1</a>,<a href="#id10">2</a>)</span></dt>
+<dd><p>S. Daulton, M. Balandat, E. Bakshy. Differentiable Expected Hypervolume
+Improvement for Parallel Multi-Objective Bayesian Optimization.
+arXiv e-prints, arXiv:2006.05078, Jun. 2020.</p>
+</dd>
+</dl>
+<dl class="py class">
+<dt id="botorch.acquisition.multi_objective.monte_carlo.qExpectedHypervolumeImprovement">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.acquisition.multi_objective.monte_carlo.</code><code class="sig-name descname">qExpectedHypervolumeImprovement</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">ref_point</span></em>, <em class="sig-param"><span class="n">partitioning</span></em>, <em class="sig-param"><span class="n">sampler</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">objective</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">constraints</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">X_pending</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">eta</span><span class="o">=</span><span class="default_value">0.001</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/monte_carlo.html#qExpectedHypervolumeImprovement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.monte_carlo.qExpectedHypervolumeImprovement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction" title="botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction</span></code></a></p>
+<p>q-Expected Hypervolume Improvement supporting m&gt;=2 outcomes.</p>
+<p>See <a class="reference internal" href="#daulton2020" id="id10"><span>[Daulton2020]</span></a> for details.</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ref_point</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">qEHVI</span> <span class="o">=</span> <span class="n">qExpectedHypervolumeImprovement</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">ref_point</span><span class="p">,</span> <span class="n">partitioning</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">qehvi</span> <span class="o">=</span> <span class="n">qEHVI</span><span class="p">(</span><span class="n">test_X</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a>) – A fitted model.</p></li>
+<li><p><strong>ref_point</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – A list with <cite>m</cite> elements representing the reference point (in the
+outcome space) w.r.t. to which compute the hypervolume. This is a
+reference point for the objective values (i.e. after applying
+<cite>objective</cite> to the samples).</p></li>
+<li><p><strong>partitioning</strong> (<a class="reference internal" href="utils.html#botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning" title="botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning"><code class="xref py py-class docutils literal notranslate"><span class="pre">NondominatedPartitioning</span></code></a>) – A <cite>NondominatedPartitioning</cite> module that provides the non-
+dominated front and a partitioning of the non-dominated space in hyper-
+rectangles. If constraints are present, this partitioning must only
+include feasible points.</p></li>
+<li><p><strong>sampler</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="sampling.html#botorch.sampling.samplers.MCSampler" title="botorch.sampling.samplers.MCSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">MCSampler</span></code></a>]) – The sampler used to draw base samples. Defaults to
+<cite>SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)</cite>.</p></li>
+<li><p><strong>objective</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">MCMultiOutputObjective</span></code></a>]) – The MCMultiOutputObjective under which the samples are evaluated.
+Defaults to <cite>IdentityMultiOutputObjective()</cite>.</p></li>
+<li><p><strong>constraints</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]]]) – A list of callables, each mapping a Tensor of dimension
+<cite>sample_shape x batch-shape x q x m</cite> to a Tensor of dimension
+<cite>sample_shape x batch-shape x q</cite>, where negative values imply
+feasibility. The acqusition function will compute expected feasible
+hypervolume.</p></li>
+<li><p><strong>X_pending</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>batch_shape x m x d</cite>-dim Tensor of <cite>m</cite> design points that have
+points that have been submitted for function evaluation but have not yet
+been evaluated. Concatenated into <cite>X</cite> upon forward call. Copied and set
+to have no gradient.</p></li>
+<li><p><strong>eta</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – The temperature parameter for the sigmoid function used for the
+differentiable approximation of the constraints.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="botorch.acquisition.multi_objective.monte_carlo.qExpectedHypervolumeImprovement.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/monte_carlo.html#qExpectedHypervolumeImprovement.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.monte_carlo.qExpectedHypervolumeImprovement.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes in a <cite>batch_shape x q x d</cite> X Tensor of t-batches with <cite>q</cite> <cite>d</cite>-dim
+design points each, and returns a Tensor with shape <cite>batch_shape’</cite>, where
+<cite>batch_shape’</cite> is the broadcasted batch shape of model and input <cite>X</cite>. Should
+utilize the result of <cite>set_X_pending</cite> as needed to account for pending function
+evaluations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+</div>
 <div class="section" id="module-botorch.acquisition.knowledge_gradient">
 <span id="the-one-shot-knowledge-gradient"></span><h3>The One-Shot Knowledge Gradient<a class="headerlink" href="#module-botorch.acquisition.knowledge_gradient" title="Permalink to this headline">¶</a></h3>
 <p>Batch Knowledge Gradient (KG) via one-shot optimization as introduced in
-<a class="reference internal" href="#balandat2019botorch" id="id4"><span>[Balandat2019botorch]</span></a>. For broader discussion of KG see also <a class="reference internal" href="#frazier2008knowledge" id="id5"><span>[Frazier2008knowledge]</span></a>
-and <a class="reference internal" href="#wu2016parallelkg" id="id6"><span>[Wu2016parallelkg]</span></a>.</p>
+<a class="reference internal" href="#balandat2019botorch" id="id11"><span>[Balandat2019botorch]</span></a>. For broader discussion of KG see also <a class="reference internal" href="#frazier2008knowledge" id="id12"><span>[Frazier2008knowledge]</span></a>
+and <a class="reference internal" href="#wu2016parallelkg" id="id13"><span>[Wu2016parallelkg]</span></a>.</p>
 <dl class="citation">
-<dt class="label" id="balandat2019botorch"><span class="brackets">Balandat2019botorch</span><span class="fn-backref">(<a href="#id3">1</a>,<a href="#id4">2</a>)</span></dt>
+<dt class="label" id="balandat2019botorch"><span class="brackets">Balandat2019botorch</span><span class="fn-backref">(<a href="#id3">1</a>,<a href="#id11">2</a>)</span></dt>
 <dd><p>M. Balandat, B. Karrer, D. R. Jiang, S. Daulton, B. Letham, A. G. Wilson,
 and E. Bakshy. BoTorch: Programmable Bayesian Optimziation in PyTorch.
 ArXiv 2019.</p>
 </dd>
-<dt class="label" id="frazier2008knowledge"><span class="brackets"><a class="fn-backref" href="#id5">Frazier2008knowledge</a></span></dt>
+<dt class="label" id="frazier2008knowledge"><span class="brackets"><a class="fn-backref" href="#id12">Frazier2008knowledge</a></span></dt>
 <dd><p>P. Frazier, W. Powell, and S. Dayanik. A Knowledge-Gradient policy for
 sequential information collection. SIAM Journal on Control and Optimization,
 2008.</p>
 </dd>
-<dt class="label" id="wu2016parallelkg"><span class="brackets"><a class="fn-backref" href="#id6">Wu2016parallelkg</a></span></dt>
+<dt class="label" id="wu2016parallelkg"><span class="brackets"><a class="fn-backref" href="#id13">Wu2016parallelkg</a></span></dt>
 <dd><p>J. Wu and P. Frazier. The parallel knowledge gradient method for batch
 bayesian optimization. NIPS 2016.</p>
 </dd>
@@ -1016,12 +1298,12 @@ maximized at fixed <cite>X_actual[b]</cite>.</p>
 multi-fidelity MES with noisy observation and trace observations.</p>
 <p>References</p>
 <dl class="citation">
-<dt class="label" id="wang2018mves"><span class="brackets"><a class="fn-backref" href="#id7">Wang2018mves</a></span></dt>
+<dt class="label" id="wang2018mves"><span class="brackets"><a class="fn-backref" href="#id14">Wang2018mves</a></span></dt>
 <dd><p>Wang, Z., Jegelka, S.,
 Max-value Entropy Search for Efficient Bayesian Optimization.
 arXiv:1703.01968v3, 2018</p>
 </dd>
-<dt class="label" id="takeno2019mfmves"><span class="brackets"><a class="fn-backref" href="#id8">Takeno2019mfmves</a></span></dt>
+<dt class="label" id="takeno2019mfmves"><span class="brackets"><a class="fn-backref" href="#id15">Takeno2019mfmves</a></span></dt>
 <dd><p>Takeno, S., et al.,
 Multi-fidelity Bayesian Optimization with Max-value Entropy Search.
 arXiv:1901.08275v1, 2019</p>
@@ -1033,7 +1315,7 @@ arXiv:1901.08275v1, 2019</p>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.monte_carlo.MCAcquisitionFunction" title="botorch.acquisition.monte_carlo.MCAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.monte_carlo.MCAcquisitionFunction</span></code></a></p>
 <p>The acquisition function for Max-value Entropy Search.</p>
 <p>This acquisition function computes the mutual information of
-max values and a candidate point X. See <a class="reference internal" href="#wang2018mves" id="id7"><span>[Wang2018mves]</span></a> for
+max values and a candidate point X. See <a class="reference internal" href="#wang2018mves" id="id14"><span>[Wang2018mves]</span></a> for
 a detailed discussion.</p>
 <p>The model must be single-outcome.
 q &gt; 1 is supported through cyclic optimization and fantasies.</p>
@@ -1106,7 +1388,7 @@ with <cite>1</cite> <cite>d</cite>-dim design points each.</p>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.max_value_entropy_search.qMaxValueEntropy" title="botorch.acquisition.max_value_entropy_search.qMaxValueEntropy"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.max_value_entropy_search.qMaxValueEntropy</span></code></a></p>
 <p>Multi-fidelity max-value entropy.</p>
 <p>The acquisition function for multi-fidelity max-value entropy search
-with support for trace observations. See <a class="reference internal" href="#takeno2019mfmves" id="id8"><span>[Takeno2019mfmves]</span></a> for a
+with support for trace observations. See <a class="reference internal" href="#takeno2019mfmves" id="id15"><span>[Takeno2019mfmves]</span></a> for a
 detailed discussion of the basic ideas on multi-fidelity MES
 (note that this implementation is somewhat different).</p>
 <p>The model must be single-outcome.
@@ -1179,15 +1461,15 @@ with <cite>1</cite> <cite>d</cite>-dim design point each.</p>
 <span id="active-learning-acquisition-functions"></span><h3>Active Learning Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.active_learning" title="Permalink to this headline">¶</a></h3>
 <p>Active learning acquisition functions.</p>
 <dl class="citation">
-<dt class="label" id="seo2014activedata"><span class="brackets"><a class="fn-backref" href="#id9">Seo2014activedata</a></span></dt>
+<dt class="label" id="seo2014activedata"><span class="brackets"><a class="fn-backref" href="#id16">Seo2014activedata</a></span></dt>
 <dd><p>S. Seo, M. Wallat, T. Graepel, and K. Obermayer. Gaussian process regression:
 Active data selection and test point rejection. IJCNN 2000.</p>
 </dd>
-<dt class="label" id="chen2014seqexpdesign"><span class="brackets"><a class="fn-backref" href="#id10">Chen2014seqexpdesign</a></span></dt>
+<dt class="label" id="chen2014seqexpdesign"><span class="brackets"><a class="fn-backref" href="#id17">Chen2014seqexpdesign</a></span></dt>
 <dd><p>X. Chen and Q. Zhou. Sequential experimental designs for stochastic kriging.
 Winter Simulation Conference 2014.</p>
 </dd>
-<dt class="label" id="binois2017repexp"><span class="brackets"><a class="fn-backref" href="#id11">Binois2017repexp</a></span></dt>
+<dt class="label" id="binois2017repexp"><span class="brackets"><a class="fn-backref" href="#id18">Binois2017repexp</a></span></dt>
 <dd><p>M. Binois, J. Huang, R. B. Gramacy, and M. Ludkovski. Replication or
 exploration? Sequential design for stochastic simulation experiments.
 ArXiv 2017.</p>
@@ -1203,7 +1485,7 @@ ArXiv 2017.</p>
 In that, it is a proxy for global model uncertainty, and thus purely focused on
 “exploration”, rather the “exploitation” of many of the classic Bayesian
 Optimization acquisition functions.</p>
-<p>See <a class="reference internal" href="#seo2014activedata" id="id9"><span>[Seo2014activedata]</span></a>, <a class="reference internal" href="#chen2014seqexpdesign" id="id10"><span>[Chen2014seqexpdesign]</span></a>, and <a class="reference internal" href="#binois2017repexp" id="id11"><span>[Binois2017repexp]</span></a>.</p>
+<p>See <a class="reference internal" href="#seo2014activedata" id="id16"><span>[Seo2014activedata]</span></a>, <a class="reference internal" href="#chen2014seqexpdesign" id="id17"><span>[Chen2014seqexpdesign]</span></a>, and <a class="reference internal" href="#binois2017repexp" id="id18"><span>[Binois2017repexp]</span></a>.</p>
 <p>q-Integrated Negative Posterior Variance.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1505,6 +1787,214 @@ samples from a model posterior.</p>
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p>A <cite>sample_shape x batch_shape x q</cite>-dim Tensor of objective values
 weighted by feasibility (assuming maximization).</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+</div>
+<div class="section" id="module-botorch.acquisition.multi_objective.objective">
+<span id="multi-objective-objectives"></span><h3>Multi-Objective Objectives<a class="headerlink" href="#module-botorch.acquisition.multi_objective.objective" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt id="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.acquisition.multi_objective.objective.</code><code class="sig-name descname">MCMultiOutputObjective</code><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#MCMultiOutputObjective"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.objective.AcquisitionObjective" title="botorch.acquisition.objective.AcquisitionObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.objective.AcquisitionObjective</span></code></a></p>
+<p>Abstract base class for multi-output objectives.</p>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="py method">
+<dt id="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective.forward">
+<em class="property">abstract </em><code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">samples</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#MCMultiOutputObjective.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the multi-output objective on the samples.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>sample_shape x batch_shape x q x m</cite>-dim Tensors of samples from
+a model posterior.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>sample_shape x batch_shape x q x m’</cite>-dim Tensor of objective values with
+<cite>m’</cite> the output dimension. assuming maximization in each output dimension).</p>
+</dd>
+</dl>
+<p>This method is usually not called directly, but via the objectives</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># `__call__` method:</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">outcomes</span> <span class="o">=</span> <span class="n">multi_obj</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt id="botorch.acquisition.multi_objective.objective.IdentityMCMultiOutputObjective">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.acquisition.multi_objective.objective.</code><code class="sig-name descname">IdentityMCMultiOutputObjective</code><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#IdentityMCMultiOutputObjective"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.IdentityMCMultiOutputObjective" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.multi_objective.objective.MCMultiOutputObjective</span></code></a></p>
+<p>Trivial objective extracting the last dimension.</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">identity_objective</span> <span class="o">=</span> <span class="n">IdentityMCObjective</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">objective</span> <span class="o">=</span> <span class="n">identity_objective</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="py method">
+<dt id="botorch.acquisition.multi_objective.objective.IdentityMCMultiOutputObjective.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">samples</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#IdentityMCMultiOutputObjective.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.IdentityMCMultiOutputObjective.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the multi-output objective on the samples.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>sample_shape x batch_shape x q x m</cite>-dim Tensors of samples from
+a model posterior.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>sample_shape x batch_shape x q x m’</cite>-dim Tensor of objective values with
+<cite>m’</cite> the output dimension. assuming maximization in each output dimension).</p>
+</dd>
+</dl>
+<p>This method is usually not called directly, but via the objectives</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># `__call__` method:</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">outcomes</span> <span class="o">=</span> <span class="n">multi_obj</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt id="botorch.acquisition.multi_objective.objective.UnstandardizeMCMultiOutputObjective">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.acquisition.multi_objective.objective.</code><code class="sig-name descname">UnstandardizeMCMultiOutputObjective</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">Y_mean</span></em>, <em class="sig-param"><span class="n">Y_std</span></em>, <em class="sig-param"><span class="n">outcomes</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#UnstandardizeMCMultiOutputObjective"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.UnstandardizeMCMultiOutputObjective" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.multi_objective.objective.MCMultiOutputObjective</span></code></a></p>
+<p>Objective that unstandardizes the samples.</p>
+<p>TODO: remove this when MultiTask models support outcome transforms.</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">unstd_objective</span> <span class="o">=</span> <span class="n">UnstandardizeMCMultiOutputObjective</span><span class="p">(</span><span class="n">Y_mean</span><span class="p">,</span> <span class="n">Y_std</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">objective</span> <span class="o">=</span> <span class="n">unstd_objective</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Initialize objective.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Y_mean</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – <cite>m</cite>-dim tensor of outcome means.</p></li>
+<li><p><strong>Y_std</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – <cite>m</cite>-dim tensor of outcome standard deviations.</p></li>
+<li><p><strong>outcomes</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]) – A list of <cite>m’ &lt;= m</cite> indices that specifies which of the <cite>m</cite> model
+outputs should be considered as the outcomes for MOO. If omitted, use
+all model outcomes. Typically used for constrained optimization.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="botorch.acquisition.multi_objective.objective.UnstandardizeMCMultiOutputObjective.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">samples</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#UnstandardizeMCMultiOutputObjective.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.UnstandardizeMCMultiOutputObjective.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the multi-output objective on the samples.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>sample_shape x batch_shape x q x m</cite>-dim Tensors of samples from
+a model posterior.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>sample_shape x batch_shape x q x m’</cite>-dim Tensor of objective values with
+<cite>m’</cite> the output dimension. assuming maximization in each output dimension).</p>
+</dd>
+</dl>
+<p>This method is usually not called directly, but via the objectives</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># `__call__` method:</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">outcomes</span> <span class="o">=</span> <span class="n">multi_obj</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt id="botorch.acquisition.multi_objective.objective.AnalyticMultiOutputObjective">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.acquisition.multi_objective.objective.</code><code class="sig-name descname">AnalyticMultiOutputObjective</code><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#AnalyticMultiOutputObjective"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.AnalyticMultiOutputObjective" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.objective.AcquisitionObjective" title="botorch.acquisition.objective.AcquisitionObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.objective.AcquisitionObjective</span></code></a></p>
+<p>Abstract base class for multi-output analyic objectives.</p>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="py method">
+<dt id="botorch.acquisition.multi_objective.objective.AnalyticMultiOutputObjective.forward">
+<em class="property">abstract </em><code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">posterior</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#AnalyticMultiOutputObjective.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.AnalyticMultiOutputObjective.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform the posterior</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>posterior</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">GPyTorchPosterior</span></code></a>) – A posterior.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">GPyTorchPosterior</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A transformed posterior.</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt id="botorch.acquisition.multi_objective.objective.IdentityAnalyticMultiOutputObjective">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.acquisition.multi_objective.objective.</code><code class="sig-name descname">IdentityAnalyticMultiOutputObjective</code><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#IdentityAnalyticMultiOutputObjective"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.IdentityAnalyticMultiOutputObjective" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.multi_objective.objective.AnalyticMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.AnalyticMultiOutputObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.multi_objective.objective.AnalyticMultiOutputObjective</span></code></a></p>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="py method">
+<dt id="botorch.acquisition.multi_objective.objective.IdentityAnalyticMultiOutputObjective.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">posterior</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#IdentityAnalyticMultiOutputObjective.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.IdentityAnalyticMultiOutputObjective.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform the posterior</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>posterior</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">GPyTorchPosterior</span></code></a>) – A posterior.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">GPyTorchPosterior</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A transformed posterior.</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt id="botorch.acquisition.multi_objective.objective.UnstandardizeAnalyticMultiOutputObjective">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.acquisition.multi_objective.objective.</code><code class="sig-name descname">UnstandardizeAnalyticMultiOutputObjective</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">Y_mean</span></em>, <em class="sig-param"><span class="n">Y_std</span></em>, <em class="sig-param"><span class="n">outcomes</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#UnstandardizeAnalyticMultiOutputObjective"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.UnstandardizeAnalyticMultiOutputObjective" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.multi_objective.objective.AnalyticMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.AnalyticMultiOutputObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.multi_objective.objective.AnalyticMultiOutputObjective</span></code></a></p>
+<p>Objective that unstandardizes the posterior.</p>
+<p>TODO: remove this when MultiTask models support outcome transforms.</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">unstd_objective</span> <span class="o">=</span> <span class="n">UnstandardizeAnalyticMultiOutputObjective</span><span class="p">(</span><span class="n">Y_mean</span><span class="p">,</span> <span class="n">Y_std</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">unstd_posterior</span> <span class="o">=</span> <span class="n">unstd_objective</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Initialize objective.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Y_mean</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – <cite>m</cite>-dim tensor of outcome means</p></li>
+<li><p><strong>Y_std</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – <cite>m</cite>-dim tensor of outcome standard deviations</p></li>
+<li><p><strong>outcomes</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]) – A list of <cite>m’ &lt;= m</cite> indices that specifies which of the <cite>m</cite> model
+outputs should be considered as the outcomes for MOO. If omitted, use
+all model outcomes. Typically used for constrained optimization.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="botorch.acquisition.multi_objective.objective.UnstandardizeAnalyticMultiOutputObjective.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">posterior</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#UnstandardizeAnalyticMultiOutputObjective.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.UnstandardizeAnalyticMultiOutputObjective.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform the posterior</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>posterior</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">GPyTorchPosterior</span></code></a>) – A posterior.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A transformed posterior.</p>
 </dd>
 </dl>
 </dd></dl>

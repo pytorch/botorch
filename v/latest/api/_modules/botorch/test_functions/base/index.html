@@ -154,6 +154,45 @@
 <span class="sd">                corresponds to the constraint being feasible).</span>
 <span class="sd">        """</span>
         <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div></div>
+
+
+<div class="viewcode-block" id="MultiObjectiveTestProblem"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.base.MultiObjectiveTestProblem">[docs]</a><span class="k">class</span> <span class="nc">MultiObjectiveTestProblem</span><span class="p">(</span><span class="n">BaseTestProblem</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""Base class for test multi-objective test functions.</span>
+
+<span class="sd">    TODO: add a pareto distance function that returns the distance</span>
+<span class="sd">    between a provided point and the closest point on the true pareto front.</span>
+<span class="sd">    """</span>
+
+    <span class="n">num_objectives</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">_ref_point</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
+    <span class="n">_max_hv</span><span class="p">:</span> <span class="nb">float</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Base constructor for multi-objective test functions.</span>
+
+<span class="sd">        Arguments:</span>
+<span class="sd">            noise_std: Standard deviation of the observation noise.</span>
+<span class="sd">            negate: If True, negate the objectives.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">noise_std</span><span class="o">=</span><span class="n">noise_std</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="n">negate</span><span class="p">)</span>
+        <span class="n">ref_point</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ref_point</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">negate</span><span class="p">:</span>
+            <span class="n">ref_point</span> <span class="o">*=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"ref_point"</span><span class="p">,</span> <span class="n">ref_point</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">max_hv</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_max_hv</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Problem </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> does not specify maximal "</span>
+                <span class="s2">"hypervolume."</span>
+            <span class="p">)</span>
+
+<div class="viewcode-block" id="MultiObjectiveTestProblem.gen_pareto_front"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.base.MultiObjectiveTestProblem.gen_pareto_front">[docs]</a>    <span class="k">def</span> <span class="nf">gen_pareto_front</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Generate `n` pareto optimal points."""</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div></div>
 </pre></div>
 </div>
 </div>
