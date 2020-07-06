@@ -3,6 +3,38 @@
 The release log for BoTorch.
 
 
+## [0.3.0] - July 6, 2020
+
+Multi-Objective Bayesian Optimization
+
+#### New Features
+* Multi-Objective Acquisition Functions (#466)
+  * q-Expected Hypervolume Improvement
+  * q-ParEGO
+  * Analytic Expected Hypervolume Improvement with auto-differentiation
+* Multi-Objective Utilities (#466)
+  * Pareto Computation
+  * Hypervolume Calculation
+  * Box Decomposition algorithm
+* Multi-Objective Test Functions (#466)
+  * Suite of synthetic test functions for multi-objective, constrained
+  optimzation
+* Multi-Objective Tutorial (#468)
+* Abstract ConstrainedBaseTestProblem (#454)
+* Add optimize_acqf_list method for sequentially, greedily optimizing 1 candidate
+from each provided acquisition function (d10aec911b241b208c59c192beb9e4d572a092cd)
+
+
+#### Bug fixes
+* Fixed re-arranging mean in MultiTask MO models (#450).
+
+#### Other changes
+* Move gpt_posterior_settings into models.utils (#449)
+* Allow specifications of batch dims to collapse in samplers (#457)
+* Remove outcome transform before model-fitting for sequential model fitting
+in MO models (#458)
+
+
 ## [0.2.5] - May 14, 2020
 
 Bugfix Release
