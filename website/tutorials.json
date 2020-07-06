@@ -15,6 +15,12 @@
       "title": "Bayesian optimization with pairwise comparison data"
     }
   ],
+  "Multi-Objective Bayesian Optimization": [
+    {
+      "id": "multi_objective_bo",
+      "title": "q-Expected Hypervolume Improvement and q-ParEGO"
+    }
+  ],
   "Bite-Sized Tutorials": [
     {
       "id": "fit_model_with_torch_optimizer",
