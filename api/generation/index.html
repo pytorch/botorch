@@ -28,9 +28,9 @@
 <div class="section" id="module-botorch.generation.gen">
 <span id="candidate-generation-utilities-for-acquisition-functions"></span><h2>Candidate Generation Utilities for Acquisition Functions<a class="headerlink" href="#module-botorch.generation.gen" title="Permalink to this headline">¶</a></h2>
 <p>Candidate generation utilities.</p>
-<dl class="py function">
+<dl class="function">
 <dt id="botorch.generation.gen.gen_candidates_scipy">
-<code class="sig-prename descclassname">botorch.generation.gen.</code><code class="sig-name descname">gen_candidates_scipy</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">initial_conditions</span></em>, <em class="sig-param"><span class="n">acquisition_function</span></em>, <em class="sig-param"><span class="n">lower_bounds</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">upper_bounds</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">inequality_constraints</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">equality_constraints</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">options</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">fixed_features</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/gen.html#gen_candidates_scipy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.generation.gen.gen_candidates_scipy" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.generation.gen.</code><code class="sig-name descname">gen_candidates_scipy</code><span class="sig-paren">(</span><em class="sig-param">initial_conditions</em>, <em class="sig-param">acquisition_function</em>, <em class="sig-param">lower_bounds=None</em>, <em class="sig-param">upper_bounds=None</em>, <em class="sig-param">inequality_constraints=None</em>, <em class="sig-param">equality_constraints=None</em>, <em class="sig-param">options=None</em>, <em class="sig-param">fixed_features=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/gen.html#gen_candidates_scipy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.generation.gen.gen_candidates_scipy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a set of candidates using <cite>scipy.optimize.minimize</cite>.</p>
 <p>Optimizes an acquisition function starting from a set of initial candidates
 using <cite>scipy.optimize.minimize</cite> via a numpy converter.</p>
@@ -85,7 +85,7 @@ compatible with lower_bounds and upper_bounds!</p></li>
 </pre></div>
 </div>
 </dd></dl>
-<dl class="py function">
+<dl class="function">
 <dt id="botorch.generation.gen.gen_candidates_torch">
 <code class="sig-prename descclassname">botorch.generation.gen.</code><code class="sig-name descname">gen_candidates_torch</code><span class="sig-paren">(</span><em class="sig-param">initial_conditions</em>, <em class="sig-param">acquisition_function</em>, <em class="sig-param">lower_bounds=None</em>, <em class="sig-param">upper_bounds=None</em>, <em class="sig-param">optimizer=&lt;class 'torch.optim.adam.Adam'&gt;</em>, <em class="sig-param">options=None</em>, <em class="sig-param">verbose=True</em>, <em class="sig-param">fixed_features=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/gen.html#gen_candidates_torch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.generation.gen.gen_candidates_torch" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a set of candidates using a <cite>torch.optim</cite> optimizer.</p>
@@ -137,9 +137,9 @@ compatible with lower_bounds and upper_bounds!</p></li>
 </pre></div>
 </div>
 </dd></dl>
-<dl class="py function">
+<dl class="function">
 <dt id="botorch.generation.gen.get_best_candidates">
-<code class="sig-prename descclassname">botorch.generation.gen.</code><code class="sig-name descname">get_best_candidates</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">batch_candidates</span></em>, <em class="sig-param"><span class="n">batch_values</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/gen.html#get_best_candidates"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.generation.gen.get_best_candidates" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.generation.gen.</code><code class="sig-name descname">get_best_candidates</code><span class="sig-paren">(</span><em class="sig-param">batch_candidates</em>, <em class="sig-param">batch_values</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/gen.html#get_best_candidates"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.generation.gen.get_best_candidates" title="Permalink to this definition">¶</a></dt>
 <dd><p>Extract best (q-batch) candidate from batch of candidates</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -183,15 +183,15 @@ space), rather than the value for a set of tensors, as acquisition functions do.
 The q-batch dimension has similar semantics as for acquisition functions in that the
 points across the q-batch are considered jointly for sampling (where as for
 q-acquisition functions we evaluate the joint value of the q-batch).</p>
-<dl class="py class">
+<dl class="class">
 <dt id="botorch.generation.sampling.SamplingStrategy">
 <em class="property">class </em><code class="sig-prename descclassname">botorch.generation.sampling.</code><code class="sig-name descname">SamplingStrategy</code><a class="reference internal" href="_modules/botorch/generation/sampling.html#SamplingStrategy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.generation.sampling.SamplingStrategy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
 <p>Abstract base class for sampling-based generation strategies.</p>
 <p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
-<dl class="py method">
+<dl class="method">
 <dt id="botorch.generation.sampling.SamplingStrategy.forward">
-<em class="property">abstract </em><code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="n">num_samples</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/sampling.html#SamplingStrategy.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.generation.sampling.SamplingStrategy.forward" title="Permalink to this definition">¶</a></dt>
+<em class="property">abstract </em><code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">num_samples=1</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/sampling.html#SamplingStrategy.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.generation.sampling.SamplingStrategy.forward" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sample according to the SamplingStrategy.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -212,9 +212,9 @@ dimension).</p></li>
 </dl>
 </dd></dl>
 </dd></dl>
-<dl class="py class">
+<dl class="class">
 <dt id="botorch.generation.sampling.MaxPosteriorSampling">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.generation.sampling.</code><code class="sig-name descname">MaxPosteriorSampling</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">objective</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">replacement</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/sampling.html#MaxPosteriorSampling"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.generation.sampling.MaxPosteriorSampling" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">botorch.generation.sampling.</code><code class="sig-name descname">MaxPosteriorSampling</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">objective=None</em>, <em class="sig-param">replacement=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/sampling.html#MaxPosteriorSampling"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.generation.sampling.MaxPosteriorSampling" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.generation.sampling.SamplingStrategy" title="botorch.generation.sampling.SamplingStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.generation.sampling.SamplingStrategy</span></code></a></p>
 <p>Sample from a set of points according to their max posterior value.</p>
 <p class="rubric">Example</p>
@@ -235,9 +235,9 @@ scalarized posterior are used. Defaults to <cite>IdentityMCObjective()</cite>.</
 </ul>
 </dd>
 </dl>
-<dl class="py method">
+<dl class="method">
 <dt id="botorch.generation.sampling.MaxPosteriorSampling.forward">
-<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="n">num_samples</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">observation_noise</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/sampling.html#MaxPosteriorSampling.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.generation.sampling.MaxPosteriorSampling.forward" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">num_samples=1</em>, <em class="sig-param">observation_noise=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/sampling.html#MaxPosteriorSampling.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.generation.sampling.MaxPosteriorSampling.forward" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sample from the model posterior.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -258,9 +258,9 @@ dimension) according to the maximum posterior value under the objective.</p></li
 </dl>
 </dd></dl>
 </dd></dl>
-<dl class="py class">
+<dl class="class">
 <dt id="botorch.generation.sampling.BoltzmannSampling">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.generation.sampling.</code><code class="sig-name descname">BoltzmannSampling</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">acq_func</span></em>, <em class="sig-param"><span class="n">eta</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">replacement</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/sampling.html#BoltzmannSampling"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.generation.sampling.BoltzmannSampling" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">botorch.generation.sampling.</code><code class="sig-name descname">BoltzmannSampling</code><span class="sig-paren">(</span><em class="sig-param">acq_func</em>, <em class="sig-param">eta=1.0</em>, <em class="sig-param">replacement=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/sampling.html#BoltzmannSampling"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.generation.sampling.BoltzmannSampling" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.generation.sampling.SamplingStrategy" title="botorch.generation.sampling.SamplingStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.generation.sampling.SamplingStrategy</span></code></a></p>
 <p>Sample from a set of points according to a tempered acquisition value.</p>
 <p>Given an acquisition function <cite>acq_func</cite>, this sampling strategies draws
@@ -292,9 +292,9 @@ acquisition functions). Can be analytic or Monte-Carlo.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py method">
+<dl class="method">
 <dt id="botorch.generation.sampling.BoltzmannSampling.forward">
-<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="n">num_samples</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/sampling.html#BoltzmannSampling.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.generation.sampling.BoltzmannSampling.forward" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">num_samples=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/sampling.html#BoltzmannSampling.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.generation.sampling.BoltzmannSampling.forward" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sample from a tempered value of the acquisition function value.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -367,7 +367,7 @@ function, then its batch shape must be broadcastable to <cite>batch_shape</cite>
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2020 Facebook Inc.</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2020 Facebook Inc.</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {

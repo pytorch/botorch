@@ -37,7 +37,8 @@
 <span class="sd">    class that has a metaclass derived from ABCMeta cannot be</span>
 <span class="sd">    instantiated unless all of its abstract methods are overridden.</span>
 <span class="sd">    The abstract methods can be called using any of the normal</span>
-<span class="sd">    'super' call mechanisms.</span>
+<span class="sd">    'super' call mechanisms.  abstractmethod() may be used to declare</span>
+<span class="sd">    abstract methods for properties and descriptors.</span>
 
 <span class="sd">    Usage:</span>
 
@@ -53,17 +54,7 @@
 <span class="k">class</span> <span class="nc">abstractclassmethod</span><span class="p">(</span><span class="nb">classmethod</span><span class="p">):</span>
     <span class="sd">"""A decorator indicating abstract classmethods.</span>
 
-<span class="sd">    Similar to abstractmethod.</span>
-
-<span class="sd">    Usage:</span>
-
-<span class="sd">        class C(metaclass=ABCMeta):</span>
-<span class="sd">            @abstractclassmethod</span>
-<span class="sd">            def my_abstract_classmethod(cls, ...):</span>
-<span class="sd">                ...</span>
-
-<span class="sd">    'abstractclassmethod' is deprecated. Use 'classmethod' with</span>
-<span class="sd">    'abstractmethod' instead.</span>
+<span class="sd">    Deprecated, use 'classmethod' with 'abstractmethod' instead.</span>
 <span class="sd">    """</span>
 
     <span class="n">__isabstractmethod__</span> <span class="o">=</span> <span class="kc">True</span>
@@ -76,17 +67,7 @@
 <span class="k">class</span> <span class="nc">abstractstaticmethod</span><span class="p">(</span><span class="nb">staticmethod</span><span class="p">):</span>
     <span class="sd">"""A decorator indicating abstract staticmethods.</span>
 
-<span class="sd">    Similar to abstractmethod.</span>
-
-<span class="sd">    Usage:</span>
-
-<span class="sd">        class C(metaclass=ABCMeta):</span>
-<span class="sd">            @abstractstaticmethod</span>
-<span class="sd">            def my_abstract_staticmethod(...):</span>
-<span class="sd">                ...</span>
-
-<span class="sd">    'abstractstaticmethod' is deprecated. Use 'staticmethod' with</span>
-<span class="sd">    'abstractmethod' instead.</span>
+<span class="sd">    Deprecated, use 'staticmethod' with 'abstractmethod' instead.</span>
 <span class="sd">    """</span>
 
     <span class="n">__isabstractmethod__</span> <span class="o">=</span> <span class="kc">True</span>
@@ -99,29 +80,7 @@
 <span class="k">class</span> <span class="nc">abstractproperty</span><span class="p">(</span><span class="nb">property</span><span class="p">):</span>
     <span class="sd">"""A decorator indicating abstract properties.</span>
 
-<span class="sd">    Requires that the metaclass is ABCMeta or derived from it.  A</span>
-<span class="sd">    class that has a metaclass derived from ABCMeta cannot be</span>
-<span class="sd">    instantiated unless all of its abstract properties are overridden.</span>
-<span class="sd">    The abstract properties can be called using any of the normal</span>
-<span class="sd">    'super' call mechanisms.</span>
-
-<span class="sd">    Usage:</span>
-
-<span class="sd">        class C(metaclass=ABCMeta):</span>
-<span class="sd">            @abstractproperty</span>
-<span class="sd">            def my_abstract_property(self):</span>
-<span class="sd">                ...</span>
-
-<span class="sd">    This defines a read-only property; you can also define a read-write</span>
-<span class="sd">    abstract property using the 'long' form of property declaration:</span>
-
-<span class="sd">        class C(metaclass=ABCMeta):</span>
-<span class="sd">            def getx(self): ...</span>
-<span class="sd">            def setx(self, value): ...</span>
-<span class="sd">            x = abstractproperty(getx, setx)</span>
-
-<span class="sd">    'abstractproperty' is deprecated. Use 'property' with 'abstractmethod'</span>
-<span class="sd">    instead.</span>
+<span class="sd">    Deprecated, use 'property' with 'abstractmethod' instead.</span>
 <span class="sd">    """</span>
 
     <span class="n">__isabstractmethod__</span> <span class="o">=</span> <span class="kc">True</span>
@@ -241,7 +200,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2020 Facebook Inc.</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2020 Facebook Inc.</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {

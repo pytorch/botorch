@@ -33,6 +33,9 @@
 <li><a href="botorch/acquisition/knowledge_gradient.html">botorch.acquisition.knowledge_gradient</a></li>
 <li><a href="botorch/acquisition/max_value_entropy_search.html">botorch.acquisition.max_value_entropy_search</a></li>
 <li><a href="botorch/acquisition/monte_carlo.html">botorch.acquisition.monte_carlo</a></li>
+<li><a href="botorch/acquisition/multi_objective/analytic.html">botorch.acquisition.multi_objective.analytic</a></li>
+<li><a href="botorch/acquisition/multi_objective/monte_carlo.html">botorch.acquisition.multi_objective.monte_carlo</a></li>
+<li><a href="botorch/acquisition/multi_objective/objective.html">botorch.acquisition.multi_objective.objective</a></li>
 <li><a href="botorch/acquisition/objective.html">botorch.acquisition.objective</a></li>
 <li><a href="botorch/acquisition/utils.html">botorch.acquisition.utils</a></li>
 <li><a href="botorch/cross_validation.html">botorch.cross_validation</a></li>
@@ -75,12 +78,18 @@
 <li><a href="botorch/settings.html">botorch.settings</a></li>
 <li><a href="botorch/test_functions/base.html">botorch.test_functions.base</a></li>
 <li><a href="botorch/test_functions/multi_fidelity.html">botorch.test_functions.multi_fidelity</a></li>
+<li><a href="botorch/test_functions/multi_objective.html">botorch.test_functions.multi_objective</a></li>
 <li><a href="botorch/test_functions/synthetic.html">botorch.test_functions.synthetic</a></li>
 <li><a href="botorch/utils/constraints.html">botorch.utils.constraints</a></li>
 <li><a href="botorch/utils/feasible_volume.html">botorch.utils.feasible_volume</a></li>
+<li><a href="botorch/utils/multi_objective/box_decomposition.html">botorch.utils.multi_objective.box_decomposition</a></li>
+<li><a href="botorch/utils/multi_objective/hypervolume.html">botorch.utils.multi_objective.hypervolume</a></li>
+<li><a href="botorch/utils/multi_objective/pareto.html">botorch.utils.multi_objective.pareto</a></li>
+<li><a href="botorch/utils/multi_objective/scalarization.html">botorch.utils.multi_objective.scalarization</a></li>
 <li><a href="botorch/utils/objective.html">botorch.utils.objective</a></li>
 <li><a href="botorch/utils/sampling.html">botorch.utils.sampling</a></li>
 <li><a href="botorch/utils/testing.html">botorch.utils.testing</a></li>
+<li><a href="botorch/utils/torch.html">botorch.utils.torch</a></li>
 <li><a href="botorch/utils/transforms.html">botorch.utils.transforms</a></li>
 </ul>
 </div>
@@ -127,7 +136,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2020 Facebook Inc.</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2020 Facebook Inc.</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {
