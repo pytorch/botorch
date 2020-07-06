@@ -43,7 +43,7 @@ class TestIIDNormalSampler(BotorchTestCase):
         # check that base samples are cleared after batch_range set
         posterior = _get_test_posterior(self.device)
         _ = sampler(posterior)
-        self.assertNotEquals(sampler.base_samples, None)
+        self.assertNotEqual(sampler.base_samples, None)
         sampler.batch_range = (0, -2)
         self.assertEqual(sampler.base_samples, None)
 
@@ -236,7 +236,7 @@ class TestSobolQMCNormalSampler(BotorchTestCase):
         # check that base samples are cleared after batch_range set
         posterior = _get_test_posterior(self.device)
         _ = sampler(posterior)
-        self.assertNotEquals(sampler.base_samples, None)
+        self.assertNotEqual(sampler.base_samples, None)
         sampler.batch_range = (0, -2)
         self.assertEqual(sampler.base_samples, None)
 
