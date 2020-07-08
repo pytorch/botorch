@@ -19,6 +19,7 @@ from botorch.models.transforms import Standardize
 from botorch.models.utils import add_output_dim
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling import SobolQMCNormalSampler
+from botorch.utils.containers import TrainingData
 from botorch.utils.sampling import manual_seed
 from botorch.utils.testing import BotorchTestCase, _get_random_data
 from gpytorch.kernels import MaternKernel, ScaleKernel
@@ -271,6 +272,22 @@ class TestSingleTaskGP(BotorchTestCase):
                 )
             )
 
+    def test_construct_inputs(self):
+        for batch_shape, dtype in itertools.product(
+            (torch.Size(), torch.Size([2])), (torch.float, torch.double)
+        ):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            model, model_kwargs = self._get_model_and_data(
+                batch_shape=batch_shape, m=2, **tkwargs
+            )
+            training_data = TrainingData(
+                Xs=model_kwargs["train_X"],
+                Ys=model_kwargs["train_Y"],
+                Yvars=torch.full_like(model_kwargs["train_Y"], 0.01),
+            )
+            data_dict = model.construct_inputs(training_data)
+            self.assertTrue("train_Yvar" not in data_dict)
+
 
 class TestFixedNoiseGP(TestSingleTaskGP):
     def _get_model_and_data(self, batch_shape, m, outcome_transform=None, **tkwargs):
@@ -302,6 +319,28 @@ class TestFixedNoiseGP(TestSingleTaskGP):
                     model_kwargs["train_Yvar"].contiguous().view(-1),
                 )
             )
+
+    def test_construct_inputs(self):
+        for batch_shape, dtype in itertools.product(
+            (torch.Size(), torch.Size([2])), (torch.float, torch.double)
+        ):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            model, model_kwargs = self._get_model_and_data(
+                batch_shape=batch_shape, m=2, **tkwargs
+            )
+            training_data = TrainingData(
+                Xs=model_kwargs["train_X"],
+                Ys=model_kwargs["train_Y"],
+                Yvars=model_kwargs["train_Yvar"],
+            )
+            data_dict = model.construct_inputs(training_data)
+            self.assertTrue("train_Yvar" in data_dict)
+            # if Yvars is missing, then raise error
+            training_data = TrainingData(
+                Xs=model_kwargs["train_X"], Ys=model_kwargs["train_Y"]
+            )
+            with self.assertRaises(ValueError):
+                model.construct_inputs(training_data)
 
 
 class TestHeteroskedasticSingleTaskGP(TestSingleTaskGP):
