@@ -27,7 +27,7 @@ and [Wu2016parallelkg]_.
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import Callable, Optional, Tuple, Union
+from typing import Any, Callable, Optional, Tuple, Union
 
 import torch
 from botorch import settings
@@ -71,6 +71,7 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
         inner_sampler: Optional[MCSampler] = None,
         X_pending: Optional[Tensor] = None,
         current_value: Optional[Tensor] = None,
+        **kwargs: Any,
     ) -> None:
         r"""q-Knowledge Gradient (one-shot optimization).
 
@@ -227,6 +228,7 @@ class qMultiFidelityKnowledgeGradient(qKnowledgeGradient):
         cost_aware_utility: Optional[CostAwareUtility] = None,
         project: Callable[[Tensor], Tensor] = lambda X: X,
         expand: Callable[[Tensor], Tensor] = lambda X: X,
+        **kwargs: Any,
     ) -> None:
         r"""Multi-Fidelity q-Knowledge Gradient (one-shot optimization).
 
