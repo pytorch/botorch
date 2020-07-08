@@ -11,11 +11,12 @@ Abstract base module for all BoTorch models.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 from botorch import settings
 from botorch.posteriors import Posterior
 from botorch.sampling.samplers import MCSampler
+from botorch.utils.containers import TrainingData
 from torch import Tensor
 from torch.nn import Module
 
@@ -123,3 +124,10 @@ class Model(Module, ABC):
             post_X = self.posterior(X, observation_noise=observation_noise)
         Y_fantasized = sampler(post_X)  # num_fantasies x batch_shape x n' x m
         return self.condition_on_observations(X=X, Y=Y_fantasized, **kwargs)
+
+    @classmethod
+    def construct_inputs(cls, training_data: TrainingData) -> Dict[str, Any]:
+        r"""Standardize kwargs of the model constructor."""
+        raise NotImplementedError(
+            f"`construct_inputs` not implemented for {cls.__name__}."
+        )

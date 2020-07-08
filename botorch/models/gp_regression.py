@@ -10,7 +10,7 @@ Gaussian Process Regression models based on GPyTorch models.
 
 from __future__ import annotations
 
-from typing import Any, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import torch
 from botorch import settings
@@ -18,6 +18,7 @@ from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
 from botorch.models.transforms.outcome import Log, OutcomeTransform
 from botorch.models.utils import validate_input_scaling
 from botorch.sampling.samplers import MCSampler
+from botorch.utils.containers import TrainingData
 from gpytorch.constraints.constraints import GreaterThan
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels.matern_kernel import MaternKernel
@@ -135,6 +136,11 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         mean_x = self.mean_module(x)
         covar_x = self.covar_module(x)
         return MultivariateNormal(mean_x, covar_x)
+
+    @classmethod
+    def construct_inputs(cls, training_data: TrainingData) -> Dict[str, Any]:
+        r"""Standardize kwargs of the model constructor."""
+        return {"train_X": training_data.Xs[0], "train_Y": training_data.Ys[-1]}
 
 
 class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
@@ -275,6 +281,17 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         new_noise = full_noise[..., idcs if len(idcs) > 1 else idcs[0], :]
         new_model.likelihood.noise_covar.noise = new_noise
         return new_model
+
+    @classmethod
+    def construct_inputs(cls, training_data: TrainingData) -> Dict[str, Any]:
+        r"""Standardize kwargs of the model constructor."""
+        if training_data.Yvars is None:
+            raise ValueError("Training data is missing Yvars member")
+        return {
+            "train_X": training_data.Xs[0],
+            "train_Y": training_data.Ys[-1],
+            "train_Yvar": training_data.Yvars[0],
+        }
 
 
 class HeteroskedasticSingleTaskGP(SingleTaskGP):
