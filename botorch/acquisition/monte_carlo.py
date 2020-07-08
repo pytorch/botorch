@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import math
 from abc import ABC, abstractmethod
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
@@ -116,6 +116,7 @@ class qExpectedImprovement(MCAcquisitionFunction):
         sampler: Optional[MCSampler] = None,
         objective: Optional[MCAcquisitionObjective] = None,
         X_pending: Optional[Tensor] = None,
+        **kwargs: Any,
     ) -> None:
         r"""q-Expected Improvement.
 
@@ -188,6 +189,7 @@ class qNoisyExpectedImprovement(MCAcquisitionFunction):
         objective: Optional[MCAcquisitionObjective] = None,
         X_pending: Optional[Tensor] = None,
         prune_baseline: bool = False,
+        **kwargs: Any,
     ) -> None:
         r"""q-Noisy Expected Improvement.
 
