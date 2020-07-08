@@ -38,6 +38,37 @@ JS_SCRIPTS = """
 """  # noqa: E501
 
 
+def validate_tutorial_links(repo_dir: str) -> None:
+    """Checks that all .ipynb files that present are linked on the website, and vice
+    versa, that any linked tutorial has an associated .ipynb file present.
+    """
+    with open(os.path.join(repo_dir, "website", "tutorials.json"), "r") as infile:
+        tutorial_config = json.load(infile)
+
+    tutorial_ids = {x["id"] for v in tutorial_config.values() for x in v}
+
+    tutorials_nbs = {
+        fn.replace(".ipynb", "")
+        for fn in os.listdir(os.path.join(repo_dir, "tutorials"))
+        if fn[-6:] == ".ipynb"
+    }
+
+    missing_files = tutorial_ids - tutorials_nbs
+    missing_ids = tutorials_nbs - tutorial_ids
+
+    if missing_files:
+        raise RuntimeError(
+            "The following tutorials are linked on the website, but missing an "
+            f"associated .ipynb file: {missing_files}."
+        )
+
+    if missing_ids:
+        raise RuntimeError(
+            "The following tutorial files are present, but are not linked on the "
+            "website: {}.".format(", ".join([nbid + ".ipynb" for nbid in missing_ids]))
+        )
+
+
 def gen_tutorials(repo_dir: str) -> None:
     """Generate HTML tutorials for botorch Docusaurus site from Jupyter notebooks.
 
@@ -45,7 +76,7 @@ def gen_tutorials(repo_dir: str) -> None:
     download.
     """
     with open(os.path.join(repo_dir, "website", "tutorials.json"), "r") as infile:
-        tutorial_config = json.loads(infile.read())
+        tutorial_config = json.load(infile)
 
     tutorial_ids = {x["id"] for v in tutorial_config.values() for x in v}
 
@@ -115,4 +146,5 @@ if __name__ == "__main__":
         help="botorch repo directory.",
     )
     args = parser.parse_args()
+    validate_tutorial_links(args.repo_dir)
     gen_tutorials(args.repo_dir)
