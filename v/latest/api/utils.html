@@ -57,6 +57,32 @@ Negative values imply feasibility. The callables support broadcasting
 </div>
 </dd></dl>
 </div>
+<div class="section" id="module-botorch.utils.containers">
+<span id="containers"></span><h2>Containers<a class="headerlink" href="#module-botorch.utils.containers" title="Permalink to this headline">¶</a></h2>
+<p>Containers to standardize inputs into models and acquisition functions.</p>
+<dl class="py class">
+<dt id="botorch.utils.containers.TrainingData">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.utils.containers.</code><code class="sig-name descname">TrainingData</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">Xs</span><span class="p">:</span> <span class="n">List<span class="p">[</span>torch.Tensor<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">Ys</span><span class="p">:</span> <span class="n">List<span class="p">[</span>torch.Tensor<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">Yvars</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>List<span class="p">[</span>torch.Tensor<span class="p">]</span><span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/containers.html#TrainingData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.containers.TrainingData" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></p>
+<p>Standardized struct of model training data.</p>
+<p>Create new instance of TrainingData(Xs, Ys, Yvars)</p>
+<dl class="py attribute">
+<dt id="botorch.utils.containers.TrainingData.Xs">
+<code class="sig-name descname">Xs</code><em class="property">: List<span class="p">[</span>torch.Tensor<span class="p">]</span></em><a class="headerlink" href="#botorch.utils.containers.TrainingData.Xs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+<dl class="py attribute">
+<dt id="botorch.utils.containers.TrainingData.Ys">
+<code class="sig-name descname">Ys</code><em class="property">: List<span class="p">[</span>torch.Tensor<span class="p">]</span></em><a class="headerlink" href="#botorch.utils.containers.TrainingData.Ys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+<dl class="py attribute">
+<dt id="botorch.utils.containers.TrainingData.Yvars">
+<code class="sig-name descname">Yvars</code><em class="property">: Optional<span class="p">[</span>List<span class="p">[</span>torch.Tensor<span class="p">]</span><span class="p">]</span></em><a class="headerlink" href="#botorch.utils.containers.TrainingData.Yvars" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 2</p>
+</dd></dl>
+</dd></dl>
+</div>
 <div class="section" id="module-botorch.utils.objective">
 <span id="objective"></span><h2>Objective<a class="headerlink" href="#module-botorch.utils.objective" title="Permalink to this headline">¶</a></h2>
 <p>Helpers for handling objectives.</p>

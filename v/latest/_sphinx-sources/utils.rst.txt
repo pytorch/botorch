@@ -12,6 +12,11 @@ Constraints
 .. automodule:: botorch.utils.constraints
 		:members:
 
+Containers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.utils.containers
+		:members:
+
 Objective
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.utils.objective
