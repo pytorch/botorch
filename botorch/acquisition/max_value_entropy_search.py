@@ -25,7 +25,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from math import log
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
 import torch
 from botorch.acquisition.cost_aware import CostAwareUtility, InverseCostWeightedUtility
@@ -70,6 +70,7 @@ class qMaxValueEntropy(MCAcquisitionFunction):
         use_gumbel: bool = True,
         maximize: bool = True,
         X_pending: Optional[Tensor] = None,
+        **kwargs: Any,
     ) -> None:
         r"""Single-outcome max-value entropy search acquisition function.
 
@@ -336,6 +337,7 @@ class qMultiFidelityMaxValueEntropy(qMaxValueEntropy):
         cost_aware_utility: Optional[CostAwareUtility] = None,
         project: Callable[[Tensor], Tensor] = lambda X: X,
         expand: Callable[[Tensor], Tensor] = lambda X: X,
+        **kwargs: Any,
     ) -> None:
         r"""Single-outcome max-value entropy search acquisition function.
 
