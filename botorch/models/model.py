@@ -126,7 +126,9 @@ class Model(Module, ABC):
         return self.condition_on_observations(X=X, Y=Y_fantasized, **kwargs)
 
     @classmethod
-    def construct_inputs(cls, training_data: TrainingData) -> Dict[str, Any]:
+    def construct_inputs(
+        cls, training_data: TrainingData, **kwargs: Any
+    ) -> Dict[str, Any]:
         r"""Standardize kwargs of the model constructor."""
         raise NotImplementedError(
             f"`construct_inputs` not implemented for {cls.__name__}."
