@@ -138,9 +138,18 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         return MultivariateNormal(mean_x, covar_x)
 
     @classmethod
-    def construct_inputs(cls, training_data: TrainingData) -> Dict[str, Any]:
+    def construct_inputs(
+        cls, training_data: TrainingData, **kwargs: Any
+    ) -> Dict[str, Any]:
         r"""Standardize kwargs of the model constructor."""
-        return {"train_X": training_data.Xs[0], "train_Y": training_data.Ys[-1]}
+        Xs = training_data.Xs
+        Ys = training_data.Ys
+        if len(Xs) == len(Ys) == 1:
+            return {"train_X": Xs[0], "train_Y": Ys[0]}
+        if all(torch.equal(Xs[0], X) for X in Xs[1:]):
+            # Use batched multioutput, single task GP.
+            return {"train_X": Xs[0], "train_Y": torch.cat(Ys, dim=-1)}
+        raise ValueError("Unexpected training data format.")
 
 
 class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
@@ -283,15 +292,25 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         return new_model
 
     @classmethod
-    def construct_inputs(cls, training_data: TrainingData) -> Dict[str, Any]:
+    def construct_inputs(
+        cls, training_data: TrainingData, **kwargs: Any
+    ) -> Dict[str, Any]:
         r"""Standardize kwargs of the model constructor."""
         if training_data.Yvars is None:
-            raise ValueError("Training data is missing Yvars member")
-        return {
-            "train_X": training_data.Xs[0],
-            "train_Y": training_data.Ys[-1],
-            "train_Yvar": training_data.Yvars[0],
-        }
+            raise ValueError(f"Yvars required for {cls.__name__}.")
+        Xs = training_data.Xs
+        Ys = training_data.Ys
+        Yvars = training_data.Yvars
+        if len(Xs) == len(Ys) == 1:
+            return {"train_X": Xs[0], "train_Y": Ys[0], "train_Yvar": Yvars[0]}
+        if all(torch.equal(Xs[0], X) for X in Xs[1:]):
+            # Use batched multioutput, single task GP.
+            return {
+                "train_X": Xs[0],
+                "train_Y": torch.cat(Ys, dim=-1),
+                "train_Yvar": torch.cat(Yvars, dim=-1),
+            }
+        raise ValueError("Unexpected training data format.")
 
 
 class HeteroskedasticSingleTaskGP(SingleTaskGP):
