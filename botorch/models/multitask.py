@@ -56,10 +56,8 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
             train_X: A `n x (d + 1)` or `b x n x (d + 1)` (batch mode) tensor
                 of training data. One of the columns should contain the task
                 features (see `task_feature` argument).
-            train_Y: A `n` or `b x n` (batch mode) tensor of training
-                observations.
-            task_feature: The index of the task feature
-                (`-d <= task_feature <= d`).
+            train_Y: A `n` or `b x n` (batch mode) tensor of training observations.
+            task_feature: The index of the task feature (`-d <= task_feature <= d`).
             output_tasks: A list of task indices for which to compute model
                 outputs for. If omitted, return outputs for all task indices.
             rank: The rank to be used for the index kernel. If omitted, use a
@@ -84,11 +82,12 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
         d = train_X.shape[-1] - 1
         if not (-d <= task_feature <= d):
             raise ValueError(f"Must have that -{d} <= task_feature <= {d}")
+        task_feature = task_feature % (d + 1)
         all_tasks = train_X[:, task_feature].unique().to(dtype=torch.long).tolist()
         if output_tasks is None:
             output_tasks = all_tasks
         else:
-            if any(t not in all_tasks for t in output_tasks):
+            if set(output_tasks) - set(all_tasks):
                 raise RuntimeError("All output tasks must be present in input data.")
         self._output_tasks = output_tasks
         self._num_outputs = len(output_tasks)
@@ -185,8 +184,7 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
                 observations.
             train_Yvar: A `n` or `b x n` (batch mode) tensor of observation
                 noise standard errors.
-            task_feature: The index of the task feature
-                (`-d <= task_feature <= d`).
+            task_feature: The index of the task feature (`-d <= task_feature <= d`).
             output_tasks: A list of task indices for which to compute model
                 outputs for. If omitted, return outputs for all task indices.
             rank: The rank to be used for the index kernel. If omitted, use a
