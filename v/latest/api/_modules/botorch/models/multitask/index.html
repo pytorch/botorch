@@ -82,10 +82,8 @@
 <span class="sd">            train_X: A `n x (d + 1)` or `b x n x (d + 1)` (batch mode) tensor</span>
 <span class="sd">                of training data. One of the columns should contain the task</span>
 <span class="sd">                features (see `task_feature` argument).</span>
-<span class="sd">            train_Y: A `n` or `b x n` (batch mode) tensor of training</span>
-<span class="sd">                observations.</span>
-<span class="sd">            task_feature: The index of the task feature</span>
-<span class="sd">                (`-d &lt;= task_feature &lt;= d`).</span>
+<span class="sd">            train_Y: A `n` or `b x n` (batch mode) tensor of training observations.</span>
+<span class="sd">            task_feature: The index of the task feature (`-d &lt;= task_feature &lt;= d`).</span>
 <span class="sd">            output_tasks: A list of task indices for which to compute model</span>
 <span class="sd">                outputs for. If omitted, return outputs for all task indices.</span>
 <span class="sd">            rank: The rank to be used for the index kernel. If omitted, use a</span>
@@ -110,11 +108,12 @@
         <span class="n">d</span> <span class="o">=</span> <span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="o">-</span><span class="n">d</span> <span class="o">&lt;=</span> <span class="n">task_feature</span> <span class="o">&lt;=</span> <span class="n">d</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Must have that -</span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2"> &lt;= task_feature &lt;= </span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">task_feature</span> <span class="o">=</span> <span class="n">task_feature</span> <span class="o">%</span> <span class="p">(</span><span class="n">d</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
         <span class="n">all_tasks</span> <span class="o">=</span> <span class="n">train_X</span><span class="p">[:,</span> <span class="n">task_feature</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">output_tasks</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">output_tasks</span> <span class="o">=</span> <span class="n">all_tasks</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">t</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">all_tasks</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">output_tasks</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="n">output_tasks</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">all_tasks</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"All output tasks must be present in input data."</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_output_tasks</span> <span class="o">=</span> <span class="n">output_tasks</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_num_outputs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">output_tasks</span><span class="p">)</span>
@@ -211,8 +210,7 @@
 <span class="sd">                observations.</span>
 <span class="sd">            train_Yvar: A `n` or `b x n` (batch mode) tensor of observation</span>
 <span class="sd">                noise standard errors.</span>
-<span class="sd">            task_feature: The index of the task feature</span>
-<span class="sd">                (`-d &lt;= task_feature &lt;= d`).</span>
+<span class="sd">            task_feature: The index of the task feature (`-d &lt;= task_feature &lt;= d`).</span>
 <span class="sd">            output_tasks: A list of task indices for which to compute model</span>
 <span class="sd">                outputs for. If omitted, return outputs for all task indices.</span>
 <span class="sd">            rank: The rank to be used for the index kernel. If omitted, use a</span>

@@ -1236,10 +1236,8 @@ noise, please use <cite>FixedNoiseMultiTaskGP</cite> instead.</p>
 <li><p><strong>train_X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>n x (d + 1)</cite> or <cite>b x n x (d + 1)</cite> (batch mode) tensor
 of training data. One of the columns should contain the task
 features (see <cite>task_feature</cite> argument).</p></li>
-<li><p><strong>train_Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>n</cite> or <cite>b x n</cite> (batch mode) tensor of training
-observations.</p></li>
-<li><p><strong>task_feature</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The index of the task feature
-(<cite>-d &lt;= task_feature &lt;= d</cite>).</p></li>
+<li><p><strong>train_Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>n</cite> or <cite>b x n</cite> (batch mode) tensor of training observations.</p></li>
+<li><p><strong>task_feature</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The index of the task feature (<cite>-d &lt;= task_feature &lt;= d</cite>).</p></li>
 <li><p><strong>output_tasks</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]) – A list of task indices for which to compute model
 outputs for. If omitted, return outputs for all task indices.</p></li>
 <li><p><strong>rank</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The rank to be used for the index kernel. If omitted, use a
@@ -1297,8 +1295,7 @@ features (see <cite>task_feature</cite> argument).</p></li>
 observations.</p></li>
 <li><p><strong>train_Yvar</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>n</cite> or <cite>b x n</cite> (batch mode) tensor of observation
 noise standard errors.</p></li>
-<li><p><strong>task_feature</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The index of the task feature
-(<cite>-d &lt;= task_feature &lt;= d</cite>).</p></li>
+<li><p><strong>task_feature</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The index of the task feature (<cite>-d &lt;= task_feature &lt;= d</cite>).</p></li>
 <li><p><strong>output_tasks</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]) – A list of task indices for which to compute model
 outputs for. If omitted, return outputs for all task indices.</p></li>
 <li><p><strong>rank</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The rank to be used for the index kernel. If omitted, use a
