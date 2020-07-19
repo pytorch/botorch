@@ -10,7 +10,7 @@ Methods for optimizing acquisition functions.
 
 from __future__ import annotations
 
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import torch
 from botorch.acquisition.acquisition import (
@@ -42,6 +42,7 @@ def optimize_acqf(
     batch_initial_conditions: Optional[Tensor] = None,
     return_best_only: bool = True,
     sequential: bool = False,
+    **kwargs: Any,
 ) -> Tuple[Tensor, Tensor]:
     r"""Generate a set of candidates via multi-start optimization.
 
@@ -70,6 +71,7 @@ def optimize_acqf(
             random restart initializations of the optimization.
         sequential: If False, uses joint optimization, otherwise uses sequential
             optimization.
+        kwargs: Additonal keyword arguments.
 
     Returns:
         A two-element tuple containing
@@ -191,7 +193,8 @@ def optimize_acqf(
         batch_acq_values = batch_acq_values[best]
 
     if isinstance(acq_function, OneShotAcquisitionFunction):
-        batch_candidates = acq_function.extract_candidates(X_full=batch_candidates)
+        if not kwargs.get("return_full_tree", False):
+            batch_candidates = acq_function.extract_candidates(X_full=batch_candidates)
 
     return batch_candidates, batch_acq_values
 
