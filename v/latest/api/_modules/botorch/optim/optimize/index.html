@@ -36,7 +36,7 @@
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="p">(</span>
@@ -68,6 +68,7 @@
     <span class="n">batch_initial_conditions</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">return_best_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">sequential</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
     <span class="sa">r</span><span class="sd">"""Generate a set of candidates via multi-start optimization.</span>
 
@@ -96,6 +97,7 @@
 <span class="sd">            random restart initializations of the optimization.</span>
 <span class="sd">        sequential: If False, uses joint optimization, otherwise uses sequential</span>
 <span class="sd">            optimization.</span>
+<span class="sd">        kwargs: Additonal keyword arguments.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A two-element tuple containing</span>
@@ -217,7 +219,8 @@
         <span class="n">batch_acq_values</span> <span class="o">=</span> <span class="n">batch_acq_values</span><span class="p">[</span><span class="n">best</span><span class="p">]</span>
 
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">acq_function</span><span class="p">,</span> <span class="n">OneShotAcquisitionFunction</span><span class="p">):</span>
-        <span class="n">batch_candidates</span> <span class="o">=</span> <span class="n">acq_function</span><span class="o">.</span><span class="n">extract_candidates</span><span class="p">(</span><span class="n">X_full</span><span class="o">=</span><span class="n">batch_candidates</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"return_full_tree"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+            <span class="n">batch_candidates</span> <span class="o">=</span> <span class="n">acq_function</span><span class="o">.</span><span class="n">extract_candidates</span><span class="p">(</span><span class="n">X_full</span><span class="o">=</span><span class="n">batch_candidates</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">batch_candidates</span><span class="p">,</span> <span class="n">batch_acq_values</span></div>
 
