@@ -158,7 +158,7 @@ class qExpectedImprovement(MCAcquisitionFunction):
         posterior = self.model.posterior(X)
         samples = self.sampler(posterior)
         obj = self.objective(samples)
-        obj = (obj - self.best_f).clamp_min(0)
+        obj = (obj - self.best_f.unsqueeze(-1)).clamp_min(0)
         q_ei = obj.max(dim=-1)[0].mean(dim=0)
         return q_ei
 
@@ -323,7 +323,8 @@ class qProbabilityOfImprovement(MCAcquisitionFunction):
         samples = self.sampler(posterior)
         obj = self.objective(samples)
         max_obj = obj.max(dim=-1)[0]
-        val = torch.sigmoid((max_obj - self.best_f) / self.tau).mean(dim=0)
+        impr = max_obj - self.best_f.unsqueeze(-1)
+        val = torch.sigmoid(impr / self.tau).mean(dim=0)
         return val
 
 
