@@ -3,6 +3,7 @@
     "About": ["introduction", "design_philosophy", "botorch_and_ax"],
     "General": ["getting_started"],
     "Basic Concepts": ["overview", "models", "posteriors", "acquisition", "optimization"],
-    "Advanced Topics": ["batching", "objectives", "samplers"]
+    "Advanced Topics": ["batching", "objectives", "samplers"],
+    "Multi-Objective Optimization": ["multi_objective"]
   }
 }
