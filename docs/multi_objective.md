@@ -4,7 +4,7 @@ title: Multi-Objective Bayesian Optimization
 ---
 
 
-BoTorch provides first-class support for Multi-Objective (MO) Bayesian Optimization (BO) including implementations of the novel [`qExpectedHypervolumeImprovement`](../api/acquisition.html#botorch.acquisition.multi_objective.monte_carlo.qExpectedHypervolumeImprovement) (q-EHVI), q-ParEGO, and analytic [`ExpectedHypervolumeImprovement`](../api/acquisition.html#mcacquisitionfunction)(../api/acquisition.html#botorch.acquisition.multi_objective.analytic.ExpectedHypervolumeImprovement) (EHVI) with gradients via auto-differentiation acquisition functions [^qEHVI].
+BoTorch provides first-class support for Multi-Objective (MO) Bayesian Optimization (BO) including implementations of the novel [`qExpectedHypervolumeImprovement`](../api/acquisition.html#botorch.acquisition.multi_objective.monte_carlo.qExpectedHypervolumeImprovement) (q-EHVI), q-ParEGO, and analytic [`ExpectedHypervolumeImprovement`](../api/acquisition.html#botorch.acquisition.multi_objective.analytic.ExpectedHypervolumeImprovement) (EHVI) with gradients via auto-differentiation acquisition functions [^qEHVI].
 
 The goal in MOBO is learn the *Pareto front*: the set of optimal trade-offs, where an improvement in one objective means deteriorating another objective. Botorch provides implementations for a number of acquisition functions specifically for the multi-objective scenario, as well as generic interfaces for implemented new multi-objective acquisition functions.
 
@@ -21,7 +21,7 @@ For a more in-depth example using these acquisition functions, check out the [Mu
 
 ## Multi-Objective Utilities
 
-BoTorch provides several utility functions for evaluating performance in MOBO including a method for computing the Pareto front [`is_non_dominated`](../api/utils.html#botorch.utils.multi_objective.pareto.is_non_dominated) and a class for efficiently computing of the [`Hypervolume`] (../api/utils.html#botorch.utils.multi_objective.hypervolume.Hypervolume) dominated by a provided set of points using a dimension sweep algorithm [^Fonseca].
+BoTorch provides several utility functions for evaluating performance in MOBO including a method for computing the Pareto front [`is_non_dominated`](../api/utils.html#botorch.utils.multi_objective.pareto.is_non_dominated) and a class for efficiently computing of the [`Hypervolume`](../api/utils.html#botorch.utils.multi_objective.hypervolume.Hypervolume) dominated by a provided set of points using a dimension sweep algorithm [^Fonseca].
 
 
 [^qEHVI]: S. Daulton, M. Balandat, and E. Bakshy. Differentiable Expected Hypervolume Improvement for Parallel Multi-Objective Bayesian Optimization. ArXiv e-prints,
@@ -31,4 +31,4 @@ BoTorch provides several utility functions for evaluating performance in MOBO in
 and E. Bakshy. BoTorch: Programmable Bayesian Optimization in PyTorch. arXiv e-prints,
 [arXiv:1910.06403](https://arxiv.org/abs/1910.06403), Oct. 2019.
 
-[^Fonseca] C. M. Fonseca, L. Paquete, and M. Lopez-Ibanez. An improved dimension-sweep algorithm for the hypervolume indicator. In IEEE Congress on Evolutionary Computation, pages 1157-1163, Vancouver, Canada, July 2006.
+[^Fonseca]: C. M. Fonseca, L. Paquete, and M. Lopez-Ibanez. An improved dimension-sweep algorithm for the hypervolume indicator. In IEEE Congress on Evolutionary Computation, pages 1157-1163, Vancouver, Canada, July 2006.
