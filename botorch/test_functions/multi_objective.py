@@ -564,12 +564,12 @@ class ConstrainedBraninCurrin(BraninCurrin, ConstrainedBaseTestProblem):
     num_constraints = 1
     _bounds = [(0.0, 1.0), (0.0, 1.0)]
     _con_bounds = [(-5.0, 10.0), (0.0, 15.0)]
-    _ref_point = [90.0, 10.0]
-    _max_hv = 372.74230433212836  # from NSGA-II with 90k evaluations
+    _ref_point = [80.0, 12.0]
+    _max_hv = 608.4004237022673  # from NSGA-II with 90k evaluations
 
     def __init__(self, noise_std: Optional[float] = None, negate: bool = False) -> None:
         super().__init__(noise_std=noise_std, negate=negate)
-        con_bounds = torch.tensor(self._con_bounds, dtype=torch.float)
+        con_bounds = torch.tensor(self._con_bounds, dtype=torch.float).transpose(-1, -2)
         self.register_buffer("con_bounds", con_bounds)
 
     def evaluate_slack_true(self, X: Tensor) -> Tensor:
