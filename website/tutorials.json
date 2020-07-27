@@ -19,6 +19,10 @@
     {
       "id": "multi_objective_bo",
       "title": "q-Expected Hypervolume Improvement and q-ParEGO"
+    },
+    {
+      "id": "constrained_multi_objective_bo",
+      "title": "Constrained q-Expected Hypervolume Improvement and q-ParEGO"
     }
   ],
   "Bite-Sized Tutorials": [
