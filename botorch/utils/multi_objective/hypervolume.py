@@ -110,14 +110,14 @@ class Hypervolume:
         Returns:
             The hypervolume.
         """
-        hvol = 0.0
+        hvol = torch.tensor(0.0, dtype=bounds.dtype, device=bounds.device)
         sentinel = self.list.sentinel
         if n_pareto == 0:
             # base case: one dimension
-            return hvol
+            return hvol.item()
         elif i == 0:
             # base case: one dimension
-            return -sentinel.next[0].data[0]
+            return -sentinel.next[0].data[0].item()
         elif i == 1:
             # two dimensions, end recursion
             q = sentinel.next[1]
@@ -130,7 +130,7 @@ class Hypervolume:
                 q = p
                 p = q.next[1]
             hvol += h * q.data[1]
-            return hvol
+            return hvol.item()
         else:
             p = sentinel
             q = p.prev[i]

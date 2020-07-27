@@ -581,7 +581,8 @@ class C2DTLZ2(DTLZ2, ConstrainedBaseTestProblem):
 
     num_constraints = 1
     _r = 0.2
-    _max_hv = 5.439801376693978  # approximate from nsga-ii, TODO: replace with analytic
+    # approximate from nsga-ii, TODO: replace with analytic
+    _max_hv = 0.3996406303723544
 
     def evaluate_slack_true(self, X: Tensor) -> Tensor:
         if X.ndim > 2:
