@@ -17,7 +17,7 @@ from typing import Callable, Dict, List, Optional
 import torch
 from botorch import settings
 from botorch.acquisition import monte_carlo  # noqa F401
-from botorch.acquisition import analytic
+from botorch.acquisition import analytic, multi_objective
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.objective import IdentityMCObjective, MCAcquisitionObjective
 from botorch.exceptions.errors import UnsupportedError
@@ -170,6 +170,8 @@ def is_nonnegative(acq_function: AcquisitionFunction) -> bool:
             monte_carlo.qExpectedImprovement,
             monte_carlo.qNoisyExpectedImprovement,
             monte_carlo.qProbabilityOfImprovement,
+            multi_objective.analytic.ExpectedHypervolumeImprovement,
+            multi_objective.monte_carlo.qExpectedHypervolumeImprovement,
         ),
     )
 
