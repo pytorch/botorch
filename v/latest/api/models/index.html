@@ -159,6 +159,10 @@ batch shape of the model).</p></li>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py attribute">
+<dt id="botorch.models.model.Model.training">
+<code class="sig-name descname">training</code><a class="headerlink" href="#botorch.models.model.Model.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 </dd></dl>
 </div>
 <div class="section" id="module-botorch.models.gpytorch">
@@ -248,6 +252,10 @@ observations passed in via kwargs).</p>
 </pre></div>
 </div>
 </dd></dl>
+<dl class="py attribute">
+<dt id="botorch.models.gpytorch.GPyTorchModel.training">
+<code class="sig-name descname">training</code><a class="headerlink" href="#botorch.models.gpytorch.GPyTorchModel.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt id="botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel">
@@ -452,6 +460,10 @@ observations passed in via kwargs).</p>
 </pre></div>
 </div>
 </dd></dl>
+<dl class="py attribute">
+<dt id="botorch.models.gpytorch.ModelListGPyTorchModel.training">
+<code class="sig-name descname">training</code><a class="headerlink" href="#botorch.models.gpytorch.ModelListGPyTorchModel.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt id="botorch.models.gpytorch.MultiTaskGPyTorchModel">
@@ -492,6 +504,10 @@ distributions over <cite>q</cite> points and the outputs selected by
 </dd>
 </dl>
 </dd></dl>
+<dl class="py attribute">
+<dt id="botorch.models.gpytorch.MultiTaskGPyTorchModel.training">
+<code class="sig-name descname">training</code><a class="headerlink" href="#botorch.models.gpytorch.MultiTaskGPyTorchModel.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 </dd></dl>
 </div>
 <div class="section" id="module-botorch.models.deterministic">
@@ -542,6 +558,10 @@ dimension <cite>m</cite> must be explicit if <cite>m=1</cite>).</p>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py attribute">
+<dt id="botorch.models.deterministic.DeterministicModel.training">
+<code class="sig-name descname">training</code><a class="headerlink" href="#botorch.models.deterministic.DeterministicModel.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt id="botorch.models.deterministic.GenericDeterministicModel">
@@ -591,6 +611,10 @@ outcome dimension <cite>m</cite> must be explicit, even if <cite>m=1</cite>).</p
 </dd>
 </dl>
 </dd></dl>
+<dl class="py attribute">
+<dt id="botorch.models.deterministic.GenericDeterministicModel.training">
+<code class="sig-name descname">training</code><a class="headerlink" href="#botorch.models.deterministic.GenericDeterministicModel.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt id="botorch.models.deterministic.AffineDeterministicModel">
@@ -646,6 +670,10 @@ dimension <cite>m</cite> must be explicit if <cite>m=1</cite>).</p>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py attribute">
+<dt id="botorch.models.deterministic.AffineDeterministicModel.training">
+<code class="sig-name descname">training</code><a class="headerlink" href="#botorch.models.deterministic.AffineDeterministicModel.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 </dd></dl>
 </div>
 </div>
@@ -698,6 +726,10 @@ an element of a q-batch).</p></li>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py attribute">
+<dt id="botorch.models.cost.AffineFidelityCostModel.training">
+<code class="sig-name descname">training</code><a class="headerlink" href="#botorch.models.cost.AffineFidelityCostModel.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 </dd></dl>
 </div>
 <div class="section" id="module-botorch.models.gp_regression">
@@ -744,16 +776,7 @@ inference (that is, the <cite>Posterior</cite> obtained by calling
 <dl class="py method">
 <dt id="botorch.models.gp_regression.SingleTaskGP.forward">
 <code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#SingleTaskGP.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gp_regression.SingleTaskGP.forward" title="Permalink to this definition">¶</a></dt>
-<dd><p>Defines the computation performed at every call.</p>
-<p>Should be overridden by all subclasses.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Although the recipe for forward pass needs to be defined within
-this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
-instead of this since the former takes care of running the
-registered hooks while the latter silently ignores them.</p>
-</div>
-<dl class="field-list simple">
+<dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">MultivariateNormal</span></code></p>
 </dd>
@@ -839,16 +862,7 @@ as the specified measurement noise.</p></li>
 <dl class="py method">
 <dt id="botorch.models.gp_regression.FixedNoiseGP.forward">
 <code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#FixedNoiseGP.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gp_regression.FixedNoiseGP.forward" title="Permalink to this definition">¶</a></dt>
-<dd><p>Defines the computation performed at every call.</p>
-<p>Should be overridden by all subclasses.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Although the recipe for forward pass needs to be defined within
-this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
-instead of this since the former takes care of running the
-registered hooks while the latter silently ignores them.</p>
-</div>
-<dl class="field-list simple">
+<dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">MultivariateNormal</span></code></p>
 </dd>
@@ -1212,6 +1226,10 @@ been added and all test-time caches have been updated.</p>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py attribute">
+<dt id="botorch.models.model_list_gp_regression.ModelListGP.training">
+<code class="sig-name descname">training</code><a class="headerlink" href="#botorch.models.model_list_gp_regression.ModelListGP.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 </dd></dl>
 </div>
 <div class="section" id="module-botorch.models.multitask">
@@ -1258,21 +1276,16 @@ full rank (i.e. number of tasks) kernel.</p></li>
 <dl class="py method">
 <dt id="botorch.models.multitask.MultiTaskGP.forward">
 <code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/multitask.html#MultiTaskGP.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.multitask.MultiTaskGP.forward" title="Permalink to this definition">¶</a></dt>
-<dd><p>Defines the computation performed at every call.</p>
-<p>Should be overridden by all subclasses.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Although the recipe for forward pass needs to be defined within
-this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
-instead of this since the former takes care of running the
-registered hooks while the latter silently ignores them.</p>
-</div>
-<dl class="field-list simple">
+<dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">MultivariateNormal</span></code></p>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py attribute">
+<dt id="botorch.models.multitask.MultiTaskGP.training">
+<code class="sig-name descname">training</code><a class="headerlink" href="#botorch.models.multitask.MultiTaskGP.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt id="botorch.models.multitask.FixedNoiseMultiTaskGP">
@@ -1314,6 +1327,10 @@ full rank (i.e. number of tasks) kernel.</p></li>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">FixedNoiseMultiTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
 </pre></div>
 </div>
+<dl class="py attribute">
+<dt id="botorch.models.multitask.FixedNoiseMultiTaskGP.training">
+<code class="sig-name descname">training</code><a class="headerlink" href="#botorch.models.multitask.FixedNoiseMultiTaskGP.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 </dd></dl>
 </div>
 <div class="section" id="module-botorch.models.pairwise_gp">
@@ -1455,6 +1472,10 @@ possibly noise observations passed in via kwargs).</p>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py attribute">
+<dt id="botorch.models.pairwise_gp.PairwiseGP.training">
+<code class="sig-name descname">training</code><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseGP.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt id="botorch.models.pairwise_gp.PairwiseLaplaceMarginalLogLikelihood">
@@ -1468,6 +1489,10 @@ possibly noise observations passed in via kwargs).</p>
 <cite>PairwiseGP</cite>)</p>
 </dd>
 </dl>
+<dl class="py attribute">
+<dt id="botorch.models.pairwise_gp.PairwiseLaplaceMarginalLogLikelihood.training">
+<code class="sig-name descname">training</code><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseLaplaceMarginalLogLikelihood.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 <dl class="py method">
 <dt id="botorch.models.pairwise_gp.PairwiseLaplaceMarginalLogLikelihood.forward">
 <code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">post</span></em>, <em class="sig-param"><span class="n">comp</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/pairwise_gp.html#PairwiseLaplaceMarginalLogLikelihood.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseLaplaceMarginalLogLikelihood.forward" title="Permalink to this definition">¶</a></dt>
@@ -1712,6 +1737,10 @@ noises associated with the training targets (if applicable).</p></li>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py attribute">
+<dt id="botorch.models.transforms.outcome.OutcomeTransform.training">
+<code class="sig-name descname">training</code><a class="headerlink" href="#botorch.models.transforms.outcome.OutcomeTransform.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt id="botorch.models.transforms.outcome.ChainedOutcomeTransform">
@@ -1790,6 +1819,10 @@ noises associated with the training targets (if applicable).</p></li>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py attribute">
+<dt id="botorch.models.transforms.outcome.ChainedOutcomeTransform.training">
+<code class="sig-name descname">training</code><a class="headerlink" href="#botorch.models.transforms.outcome.ChainedOutcomeTransform.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt id="botorch.models.transforms.outcome.Standardize">
@@ -1881,6 +1914,10 @@ the transformed posterior is again an MVN.</p>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py attribute">
+<dt id="botorch.models.transforms.outcome.Standardize.training">
+<code class="sig-name descname">training</code><a class="headerlink" href="#botorch.models.transforms.outcome.Standardize.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt id="botorch.models.transforms.outcome.Log">
@@ -1962,6 +1999,10 @@ observation noises associated with the training targets
 </dd>
 </dl>
 </dd></dl>
+<dl class="py attribute">
+<dt id="botorch.models.transforms.outcome.Log.training">
+<code class="sig-name descname">training</code><a class="headerlink" href="#botorch.models.transforms.outcome.Log.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 </dd></dl>
 </div>
 <div class="section" id="module-botorch.models.transforms.input">
@@ -2004,6 +2045,10 @@ observation noises associated with the training targets
 </dd>
 </dl>
 </dd></dl>
+<dl class="py attribute">
+<dt id="botorch.models.transforms.input.InputTransform.training">
+<code class="sig-name descname">training</code><a class="headerlink" href="#botorch.models.transforms.input.InputTransform.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt id="botorch.models.transforms.input.ChainedInputTransform">
@@ -2052,6 +2097,10 @@ transforms on the module.</p>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py attribute">
+<dt id="botorch.models.transforms.input.ChainedInputTransform.training">
+<code class="sig-name descname">training</code><a class="headerlink" href="#botorch.models.transforms.input.ChainedInputTransform.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt id="botorch.models.transforms.input.Normalize">
@@ -2122,6 +2171,10 @@ module’s bounds.</p>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py attribute">
+<dt id="botorch.models.transforms.input.Normalize.training">
+<code class="sig-name descname">training</code><a class="headerlink" href="#botorch.models.transforms.input.Normalize.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 </dd></dl>
 </div>
 <div class="section" id="module-botorch.models.transforms.utils">
