@@ -43,7 +43,7 @@
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">settings</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">monte_carlo</span>  <span class="c1"># noqa F401</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">analytic</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">analytic</span><span class="p">,</span> <span class="n">multi_objective</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">IdentityMCObjective</span><span class="p">,</span> <span class="n">MCAcquisitionObjective</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
@@ -196,6 +196,8 @@
             <span class="n">monte_carlo</span><span class="o">.</span><span class="n">qExpectedImprovement</span><span class="p">,</span>
             <span class="n">monte_carlo</span><span class="o">.</span><span class="n">qNoisyExpectedImprovement</span><span class="p">,</span>
             <span class="n">monte_carlo</span><span class="o">.</span><span class="n">qProbabilityOfImprovement</span><span class="p">,</span>
+            <span class="n">multi_objective</span><span class="o">.</span><span class="n">analytic</span><span class="o">.</span><span class="n">ExpectedHypervolumeImprovement</span><span class="p">,</span>
+            <span class="n">multi_objective</span><span class="o">.</span><span class="n">monte_carlo</span><span class="o">.</span><span class="n">qExpectedHypervolumeImprovement</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">)</span></div>
 
