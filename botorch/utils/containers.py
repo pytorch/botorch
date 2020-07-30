@@ -8,7 +8,7 @@ r"""
 Containers to standardize inputs into models and acquisition functions.
 """
 
-from typing import List, NamedTuple, Optional
+from typing import List, NamedTuple
 
 from torch import Tensor
 
@@ -18,4 +18,4 @@ class TrainingData(NamedTuple):
 
     Xs: List[Tensor]
     Ys: List[Tensor]
-    Yvars: Optional[List[Tensor]] = None
+    Yvars: List[Tensor]

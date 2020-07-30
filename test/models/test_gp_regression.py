@@ -282,7 +282,9 @@ class TestSingleTaskGP(BotorchTestCase):
             )
             # len(Xs) == len(Ys) == 1
             training_data = TrainingData(
-                Xs=[model_kwargs["train_X"][0]], Ys=[model_kwargs["train_Y"][0]]
+                Xs=[model_kwargs["train_X"][0]],
+                Ys=[model_kwargs["train_Y"][0]],
+                Yvars=[torch.full_like(model_kwargs["train_Y"][0], 0.01)],
             )
             data_dict = model.construct_inputs(training_data)
             self.assertTrue(
@@ -295,6 +297,7 @@ class TestSingleTaskGP(BotorchTestCase):
             training_data = TrainingData(
                 Xs=[model_kwargs["train_X"], model_kwargs["train_X"]],
                 Ys=[model_kwargs["train_Y"], model_kwargs["train_Y"]],
+                Yvars=[torch.full_like(model_kwargs["train_Y"], 0.01)],
             )
             data_dict = model.construct_inputs(training_data)
             self.assertTrue(torch.equal(data_dict["train_X"], model_kwargs["train_X"]))
@@ -306,13 +309,6 @@ class TestSingleTaskGP(BotorchTestCase):
                     ),
                 )
             )
-            # unexpected data format
-            training_data = TrainingData(
-                Xs=[model_kwargs["train_X"], torch.add(model_kwargs["train_X"], 1)],
-                Ys=[model_kwargs["train_Y"], model_kwargs["train_Y"]],
-            )
-            with self.assertRaises(ValueError):
-                model.construct_inputs(training_data)
             # make sure Yvar is not added to dict
             training_data = TrainingData(
                 Xs=[model_kwargs["train_X"]],
@@ -378,12 +374,6 @@ class TestFixedNoiseGP(TestSingleTaskGP):
             self.assertTrue(
                 torch.equal(data_dict["train_Yvar"], model_kwargs["train_Yvar"][0])
             )
-            # if Yvars is missing, then raise error
-            training_data = TrainingData(
-                Xs=model_kwargs["train_X"], Ys=model_kwargs["train_Y"]
-            )
-            with self.assertRaises(ValueError):
-                model.construct_inputs(training_data)
 
             # len(Xs) == len(Ys) == 1
             training_data = TrainingData(

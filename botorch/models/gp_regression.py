@@ -296,8 +296,6 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         cls, training_data: TrainingData, **kwargs: Any
     ) -> Dict[str, Any]:
         r"""Standardize kwargs of the model constructor."""
-        if training_data.Yvars is None:
-            raise ValueError(f"Yvars required for {cls.__name__}.")
         Xs = training_data.Xs
         Ys = training_data.Ys
         Yvars = training_data.Yvars

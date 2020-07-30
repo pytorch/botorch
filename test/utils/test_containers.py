@@ -15,11 +15,6 @@ class TestConstructContainers(BotorchTestCase):
         Ys = torch.tensor([[-1.0, 0.0, 0.0], [0.0, 1.0, 1.0]])
         Yvars = torch.tensor([[-1.0, 0.0, 0.0], [0.0, 1.0, 1.0]])
 
-        training_data = TrainingData(Xs, Ys)
-        self.assertTrue(torch.equal(training_data.Xs, Xs))
-        self.assertTrue(torch.equal(training_data.Ys, Ys))
-        self.assertEqual(training_data.Yvars, None)
-
         training_data = TrainingData(Xs, Ys, Yvars)
         self.assertTrue(torch.equal(training_data.Xs, Xs))
         self.assertTrue(torch.equal(training_data.Ys, Ys))

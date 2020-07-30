@@ -370,6 +370,7 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                 training_data = TrainingData(
                     Xs=[model_kwargs["train_X"], model_kwargs["train_X"]],
                     Ys=[model_kwargs["train_Y"], model_kwargs["train_Y"]],
+                    Yvars=[torch.full_like(model_kwargs["train_Y"], 0.01)],
                 )
                 data_dict = model.construct_inputs(training_data, fidelity_features=[1])
                 self.assertTrue(
@@ -383,13 +384,6 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                         ),
                     )
                 )
-                # unexpected data format
-                training_data = TrainingData(
-                    Xs=[model_kwargs["train_X"], torch.add(model_kwargs["train_X"], 1)],
-                    Ys=[model_kwargs["train_Y"], model_kwargs["train_Y"]],
-                )
-                with self.assertRaises(ValueError):
-                    model.construct_inputs(training_data, fidelity_features=[1])
 
 
 class TestFixedNoiseMultiFidelityGP(TestSingleTaskMultiFidelityGP):
@@ -473,17 +467,11 @@ class TestFixedNoiseMultiFidelityGP(TestSingleTaskMultiFidelityGP):
                     lin_truncated=lin_trunc,
                     **tkwargs,
                 )
-                training_data = TrainingData(
-                    Xs=[model_kwargs["train_X"][0]], Ys=[model_kwargs["train_Y"][0]]
-                )
-                # missing Yvars
-                with self.assertRaises(ValueError):
-                    model.construct_inputs(training_data, fidelity_features=[1])
                 # len(Xs) == len(Ys) == 1
                 training_data = TrainingData(
                     Xs=[model_kwargs["train_X"][0]],
                     Ys=[model_kwargs["train_Y"][0]],
-                    Yvars=[torch.full_like(model_kwargs["train_Y"], 0.01)[0]],
+                    Yvars=[model_kwargs["train_Yvar"][0]],
                 )
                 # missing fidelity features
                 with self.assertRaises(ValueError):
