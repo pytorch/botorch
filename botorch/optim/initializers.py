@@ -341,7 +341,7 @@ def initialize_q_batch_nonneg(
     if num_pos < n:
         # select all positive points and then fill remaining quota with randomly
         # selected points
-        remaining_indices = (~pos).nonzero().view(-1)
+        remaining_indices = (~pos).nonzero(as_tuple=False).view(-1)
         rand_indices = torch.randperm(remaining_indices.shape[0], device=Y.device)
         sampled_remaining_indices = remaining_indices[rand_indices[: n - num_pos]]
         pos[sampled_remaining_indices] = 1
