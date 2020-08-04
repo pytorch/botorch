@@ -167,8 +167,8 @@ def draw_sobol_samples(
     d = bounds.shape[-1]
     lower = bounds[0]
     rng = bounds[1] - bounds[0]
-    sobol_engine = SobolEngine(d, scramble=True, seed=seed)
-    samples_raw = sobol_engine.draw(n * q, dtype=lower.dtype).view(n, q, d)
+    sobol_engine = SobolEngine(q * d, scramble=True, seed=seed)
+    samples_raw = sobol_engine.draw(n, dtype=lower.dtype).view(n, q, d)
     samples_raw = samples_raw.to(device=lower.device)
     return lower + rng * samples_raw
 

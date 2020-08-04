@@ -15,6 +15,7 @@ from botorch.utils.sampling import (
     batched_multinomial,
     construct_base_samples,
     construct_base_samples_from_posterior,
+    draw_sobol_samples,
     manual_seed,
     sample_hypersphere,
     sample_simplex,
@@ -158,6 +159,19 @@ class TestConstructBaseSamples(BotorchTestCase):
 
 
 class TestSampleUtils(BotorchTestCase):
+    def test_draw_sobol_samples(self):
+        for d, q, n, seed, dtype in itertools.product(
+            (1, 3), (1, 2), (2, 5), (None, 1234), (torch.float, torch.double)
+        ):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            bounds = torch.stack([torch.rand(d), 1 + torch.rand(d)]).to(**tkwargs)
+            samples = draw_sobol_samples(bounds=bounds, n=n, q=q, seed=seed)
+            self.assertEqual(samples.shape, torch.Size([n, q, d]))
+            self.assertTrue(torch.all(samples >= bounds[0]))
+            self.assertTrue(torch.all(samples <= bounds[1]))
+            self.assertEqual(samples.device.type, self.device.type)
+            self.assertEqual(samples.dtype, dtype)
+
     def test_sample_simplex(self):
         for d, n, qmc, seed, dtype in itertools.product(
             (1, 2, 3), (2, 5), (False, True), (None, 1234), (torch.float, torch.double)
