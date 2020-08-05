@@ -170,6 +170,7 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         train_Yvar: Tensor,
         covar_module: Optional[Module] = None,
         outcome_transform: Optional[OutcomeTransform] = None,
+        **kwargs: Any,
     ) -> None:
         r"""A single-task exact GP model using fixed noise levels.
 
