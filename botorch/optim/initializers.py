@@ -77,10 +77,10 @@ def gen_batch_initial_conditions(
 
     q = 1 if q is None else q
     # the dimension the samples are drawn from
-    dim = bounds.shape[-1] * q
-    if dim > SobolEngine.MAXDIM and settings.debug.on():
+    effective_dim = bounds.shape[-1] * q
+    if effective_dim > SobolEngine.MAXDIM and settings.debug.on():
         warnings.warn(
-            f"Sample dimension q*d={dim} exceeding Sobol max dimension "
+            f"Sample dimension q*d={effective_dim} exceeding Sobol max dimension "
             f"({SobolEngine.MAXDIM}). Using iid samples instead.",
             SamplingWarning,
         )
@@ -88,14 +88,13 @@ def gen_batch_initial_conditions(
     while factor < max_factor:
         with warnings.catch_warnings(record=True) as ws:
             n = raw_samples * factor
-            if dim <= SobolEngine.MAXDIM:
+            if effective_dim <= SobolEngine.MAXDIM:
                 X_rnd = draw_sobol_samples(bounds=bounds, n=n, q=q, seed=seed)
             else:
                 with manual_seed(seed):
                     # load on cpu
-                    X_rnd_nlzd = torch.rand(n * dim, dtype=bounds.dtype).view(
-                        n, q, bounds.shape[-1]
-                    )
+                    X_rnd_nlzd = torch.rand(n * effective_dim, dtype=bounds.dtype)
+                    X_rnd_nlzd = X_rnd_nlzd.view(n, q, bounds.shape[-1])
                 X_rnd = bounds[0] + (bounds[1] - bounds[0]) * X_rnd_nlzd
             with torch.no_grad():
                 if batch_limit is None:
