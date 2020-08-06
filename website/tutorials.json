@@ -67,6 +67,10 @@
     {
       "id": "vae_mnist",
       "title": "High-dimensional optimization with VAEs"
+    },
+    {
+      "id": "multi_fidelity_bo",
+      "title": "Multi-fidelity Bayesian optimization with KG"
     }
   ]
 }
