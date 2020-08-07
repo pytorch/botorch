@@ -160,13 +160,22 @@ class TestConstructBaseSamples(BotorchTestCase):
 
 class TestSampleUtils(BotorchTestCase):
     def test_draw_sobol_samples(self):
-        for d, q, n, seed, dtype in itertools.product(
-            (1, 3), (1, 2), (2, 5), (None, 1234), (torch.float, torch.double)
+        batch_shapes = [None, [3, 5], torch.Size([2]), (5, 3, 2, 3), []]
+        for d, q, n, batch_shape, seed, dtype in itertools.product(
+            (1, 3),
+            (1, 2),
+            (2, 5),
+            batch_shapes,
+            (None, 1234),
+            (torch.float, torch.double),
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
             bounds = torch.stack([torch.rand(d), 1 + torch.rand(d)]).to(**tkwargs)
-            samples = draw_sobol_samples(bounds=bounds, n=n, q=q, seed=seed)
-            self.assertEqual(samples.shape, torch.Size([n, q, d]))
+            samples = draw_sobol_samples(
+                bounds=bounds, n=n, q=q, batch_shape=batch_shape, seed=seed
+            )
+            batch_shape = batch_shape or torch.Size()
+            self.assertEqual(samples.shape, torch.Size([n, *batch_shape, q, d]))
             self.assertTrue(torch.all(samples >= bounds[0]))
             self.assertTrue(torch.all(samples <= bounds[1]))
             self.assertEqual(samples.device.type, self.device.type)
