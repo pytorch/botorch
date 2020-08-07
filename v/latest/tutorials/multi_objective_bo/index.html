@@ -214,17 +214,6 @@ $$f^{(1)}(x_1\text{'}, x_2\text{'}) = (x_2\text{'} - \frac{5.1}{4 \pi^ 2} (x_1\t
     <span class="n">new_x</span> <span class="o">=</span>  <span class="n">unnormalize</span><span class="p">(</span><span class="n">candidates</span><span class="o">.</span><span class="n">detach</span><span class="p">(),</span> <span class="n">bounds</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">bounds</span><span class="p">)</span>
     <span class="n">new_obj</span> <span class="o">=</span> <span class="n">problem</span><span class="p">(</span><span class="n">new_x</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">new_x</span><span class="p">,</span> <span class="n">new_obj</span>
-
-
-<span class="k">def</span> <span class="nf">update_random_observations</span><span class="p">(</span><span class="n">best_random</span><span class="p">):</span>
-    <span class="sd">"""Simulates a random policy by taking a the current list of best values observed randomly,</span>
-<span class="sd">    drawing a new random point, observing its value, and updating the list.</span>
-<span class="sd">    """</span>
-    <span class="n">rand_x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">BATCH_SIZE</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-    <span class="n">unnormalize</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">BATCH_SIZE</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
-    <span class="n">next_random_best</span> <span class="o">=</span> <span class="n">problem</span><span class="p">(</span><span class="n">rand_x</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
-    <span class="n">best_random</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">best_random</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">next_random_best</span><span class="p">))</span>       
-    <span class="k">return</span> <span class="n">best_random</span>
 </pre></div>
 </div>
 </div>

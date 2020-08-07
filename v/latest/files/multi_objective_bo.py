@@ -125,17 +125,6 @@ def optimize_qehvi_and_get_observation(model, train_obj, sampler):
     return new_x, new_obj
 
 
-def update_random_observations(best_random):
-    """Simulates a random policy by taking a the current list of best values observed randomly,
-    drawing a new random point, observing its value, and updating the list.
-    """
-    rand_x = torch.rand(BATCH_SIZE, 2)
-    unnormalize(torch.rand(BATCH_SIZE, 2))
-    next_random_best = problem(rand_x).max().item()
-    best_random.append(max(best_random[-1], next_random_best))       
-    return best_random
-
-
 # #### Define a helper function that performs the essential BO step for $q$ParEGO
 # The helper function below similarly initializes $q$ParEGO, optimizes it, and returns the batch $\{x_1, x_2, \ldots x_q\}$ along with the observed function values. 
 # 
