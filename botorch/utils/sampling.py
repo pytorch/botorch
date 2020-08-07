@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import warnings
 from contextlib import contextmanager
-from typing import Generator, Optional
+from typing import Generator, Optional, Iterable
 
 import torch
 from botorch.exceptions.warnings import SamplingWarning
@@ -144,7 +144,11 @@ def construct_base_samples_from_posterior(
 
 
 def draw_sobol_samples(
-    bounds: Tensor, n: int, q: int, seed: Optional[int] = None
+    bounds: Tensor,
+    n: int,
+    q: int,
+    batch_shape: Optional[Iterable[int], torch.Size] = None,
+    seed: Optional[int] = None,
 ) -> Tensor:
     r"""Draw qMC samples from the box defined by bounds.
 
@@ -154,22 +158,30 @@ def draw_sobol_samples(
             to lower and upper bounds, respectively.
         n: The number of (q-batch) samples.
         q: The size of each q-batch.
+        batch_shape: The batch shape of the samples. If given, returns samples
+            of shape `n x batch_shape x q x d`, where each batch is an
+            `n x q x d`-dim tensor of qMC samples.
         seed: The seed used for initializing Owen scrambling. If None (default),
             use a random seed.
 
     Returns:
-        A `n x q x d`-dim tensor of qMC samples from the box defined by bounds.
+        A `n x batch_shape x q x d`-dim tensor of qMC samples from the box
+        defined by bounds.
 
     Example:
         >>> bounds = torch.stack([torch.zeros(3), torch.ones(3)])
         >>> samples = draw_sobol_samples(bounds, 10, 2)
     """
+    batch_shape = batch_shape or torch.Size()
+    batch_size = int(torch.prod(torch.tensor(batch_shape)))
     d = bounds.shape[-1]
     lower = bounds[0]
     rng = bounds[1] - bounds[0]
     sobol_engine = SobolEngine(q * d, scramble=True, seed=seed)
-    samples_raw = sobol_engine.draw(n, dtype=lower.dtype).view(n, q, d)
-    samples_raw = samples_raw.to(device=lower.device)
+    samples_raw = sobol_engine.draw(batch_size * n, dtype=lower.dtype)
+    samples_raw = samples_raw.view(*batch_shape, n, q, d).to(device=lower.device)
+    if batch_shape != torch.Size():
+        samples_raw = samples_raw.permute(-3, *range(len(batch_shape)), -2, -1)
     return lower + rng * samples_raw
 
 
