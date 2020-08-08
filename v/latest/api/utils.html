@@ -282,25 +282,26 @@ introduce any sampling variance across t-batches.</p>
 </dd></dl>
 <dl class="py function">
 <dt id="botorch.utils.sampling.draw_sobol_samples">
-<code class="sig-prename descclassname">botorch.utils.sampling.</code><code class="sig-name descname">draw_sobol_samples</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">bounds</span></em>, <em class="sig-param"><span class="n">n</span></em>, <em class="sig-param"><span class="n">q</span></em>, <em class="sig-param"><span class="n">seed</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#draw_sobol_samples"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.sampling.draw_sobol_samples" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.utils.sampling.</code><code class="sig-name descname">draw_sobol_samples</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">bounds</span></em>, <em class="sig-param"><span class="n">n</span></em>, <em class="sig-param"><span class="n">q</span></em>, <em class="sig-param"><span class="n">batch_shape</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">seed</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#draw_sobol_samples"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.sampling.draw_sobol_samples" title="Permalink to this definition">¶</a></dt>
 <dd><p>Draw qMC samples from the box defined by bounds.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>bounds</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>2 x d</cite> dimensional tensor specifying box constraints on a
+<li><p><strong>bounds</strong> – A <cite>2 x d</cite> dimensional tensor specifying box constraints on a
 <cite>d</cite>-dimensional space, where bounds[0, :] and bounds[1, :] correspond
 to lower and upper bounds, respectively.</p></li>
-<li><p><strong>n</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of (q-batch) samples.</p></li>
-<li><p><strong>q</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The size of each q-batch.</p></li>
-<li><p><strong>seed</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The seed used for initializing Owen scrambling. If None (default),
+<li><p><strong>n</strong> – The number of (q-batch) samples.</p></li>
+<li><p><strong>q</strong> – The size of each q-batch.</p></li>
+<li><p><strong>batch_shape</strong> – The batch shape of the samples. If given, returns samples
+of shape <cite>n x batch_shape x q x d</cite>, where each batch is an
+<cite>n x q x d</cite>-dim tensor of qMC samples.</p></li>
+<li><p><strong>seed</strong> – The seed used for initializing Owen scrambling. If None (default),
 use a random seed.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>n x q x d</cite>-dim tensor of qMC samples from the box defined by bounds.</p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>n x batch_shape x q x d</cite>-dim tensor of qMC samples from the box
+defined by bounds.</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
