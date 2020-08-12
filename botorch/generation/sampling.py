@@ -62,7 +62,7 @@ class MaxPosteriorSampling(SamplingStrategy):
     Example:
         >>> MPS = MaxPosteriorSampling(model)  # model w/ feature dim d=3
         >>> X = torch.rand(2, 100, 3)
-        >>> sampled_X = MPS(X, n=5)
+        >>> sampled_X = MPS(X, num_samples=5)
     """
 
     def __init__(
@@ -173,7 +173,7 @@ class BoltzmannSampling(SamplingStrategy):
         >>> UCB = UpperConfidenceBound(model, beta=0.1)
         >>> BMUCB = BoltzmannSampling(UCB, eta=0.5)
         >>> X = torch.rand(2, 100, 3)
-        >>> sampled_X = BMUCB(X, n=5)
+        >>> sampled_X = BMUCB(X, num_samples=5)
     """
 
     def __init__(
