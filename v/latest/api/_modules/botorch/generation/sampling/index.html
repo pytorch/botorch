@@ -88,7 +88,7 @@
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; MPS = MaxPosteriorSampling(model)  # model w/ feature dim d=3</span>
 <span class="sd">        &gt;&gt;&gt; X = torch.rand(2, 100, 3)</span>
-<span class="sd">        &gt;&gt;&gt; sampled_X = MPS(X, n=5)</span>
+<span class="sd">        &gt;&gt;&gt; sampled_X = MPS(X, num_samples=5)</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -199,7 +199,7 @@
 <span class="sd">        &gt;&gt;&gt; UCB = UpperConfidenceBound(model, beta=0.1)</span>
 <span class="sd">        &gt;&gt;&gt; BMUCB = BoltzmannSampling(UCB, eta=0.5)</span>
 <span class="sd">        &gt;&gt;&gt; X = torch.rand(2, 100, 3)</span>
-<span class="sd">        &gt;&gt;&gt; sampled_X = BMUCB(X, n=5)</span>
+<span class="sd">        &gt;&gt;&gt; sampled_X = BMUCB(X, num_samples=5)</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
