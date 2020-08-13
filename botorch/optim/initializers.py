@@ -368,8 +368,9 @@ def initialize_q_batch(X: Tensor, Y: Tensor, n: int, eta: float = 1.0) -> Tensor
         X: A `b x batch_shape x q x d` tensor of `b` - `batch_shape` samples of
             `q`-batches from a d`-dim feature space. Typically, these are generated
             using qMC sampling.
-        Y: A tensor of `b x batch_shape` outcomes associated with the samples. Typically,
-            this is the value of the batch acquisition function to be maximized.
+        Y: A tensor of `b x batch_shape` outcomes associated with the samples.
+            Typically, this is the value of the batch acquisition function to be
+            maximized.
         n: The number of initial condition to be generated. Must be less than `b`.
         eta: Temperature parameter for weighting samples.
 

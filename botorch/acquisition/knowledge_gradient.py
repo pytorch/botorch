@@ -190,8 +190,8 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
         solving the inner optimization problem.
 
         Args:
-            X_actual: A `b x q x d` Tensor with `b` t-batches of `q` design points 
-                each. Unlike `forward()`, this does not include solutions of the 
+            X_actual: A `b x q x d` Tensor with `b` t-batches of `q` design points
+                each. Unlike `forward()`, this does not include solutions of the
                 inner optimization problem.
             bounds: A `2 x d` tensor of lower and upper bounds for each column of
                 the solutions to the inner problem.
