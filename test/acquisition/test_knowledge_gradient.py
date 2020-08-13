@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from unittest import mock
+import itertools
 
 import torch
 from botorch.acquisition.analytic import PosteriorMean
@@ -17,12 +18,12 @@ from botorch.acquisition.knowledge_gradient import (
 )
 from botorch.acquisition.monte_carlo import qSimpleRegret
 from botorch.acquisition.objective import GenericMCObjective, ScalarizedObjective
+from botorch.models import SingleTaskGP
 from botorch.exceptions.errors import UnsupportedError
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 from gpytorch.distributions import MultitaskMultivariateNormal
-
 
 NO = "botorch.utils.testing.MockModel.num_outputs"
 
@@ -212,6 +213,53 @@ class TestQKnowledgeGradient(BotorchTestCase):
                     self.assertEqual(ckwargs["X"].shape, torch.Size([1, 1, 1]))
                     val_expected = (mean * weights).sum(-1).mean(0)
                     self.assertTrue(torch.allclose(val, val_expected))
+
+    def test_evaluate_KG(self):
+        options = {
+            "num_restarts": 2,
+            "raw_samples": 4,
+            "num_inner_restarts": 2,
+            "raw_inner_samples": 3,
+        }
+        for (
+            d,
+            q,
+            n,
+            n_f,
+            objective,
+            X_pending,
+            current_value,
+            dtype,
+        ) in itertools.product(
+            (1, 3),
+            (1, 2),
+            (1, 3),
+            (1, 3),
+            (None, GenericMCObjective(objective=lambda Y: Y.norm(dim=-1))),
+            (None, torch.rand(2, 1)),
+            (None, torch.rand(1)),
+            (torch.float, torch.double),
+        ):
+            # basic test
+            bounds = torch.tensor([[0], [1]], device=self.device, dtype=dtype).repeat(
+                1, d
+            )
+            X_pending = X_pending.expand(-1, d) if X_pending is not None else None
+            train_X = torch.rand(n, d, device=self.device, dtype=dtype)
+            train_Y = torch.rand(n, 1, device=self.device, dtype=dtype)
+            model = SingleTaskGP(train_X, train_Y)
+            qKG = qKnowledgeGradient(
+                model=model,
+                num_fantasies=n_f,
+                objective=objective,
+                X_pending=X_pending.to(bounds) if X_pending is not None else None,
+                current_value=current_value.to(bounds)
+                if current_value is not None
+                else None,
+            )
+            X = torch.rand(n, q, d, device=self.device, dtype=dtype)
+            val = qKG.evaluate_kg(X, bounds=bounds, options=options)
+            self.assertEqual(val.size(), torch.Size([n]))
 
 
 class TestQMultiFidelityKnowledgeGradient(BotorchTestCase):

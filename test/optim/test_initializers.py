@@ -11,11 +11,15 @@ from unittest import mock
 import torch
 from botorch import settings
 from botorch.acquisition.knowledge_gradient import qKnowledgeGradient
+from botorch.acquisition.analytic import PosteriorMean
+from botorch.models import SingleTaskGP
+from botorch.sampling import IIDNormalSampler
 from botorch.exceptions import BadInitialCandidatesWarning, SamplingWarning
 from botorch.optim import initialize_q_batch, initialize_q_batch_nonneg
-from botorch.optim.optimize import (
+from botorch.optim.initializers import (
     gen_batch_initial_conditions,
     gen_one_shot_kg_initial_conditions,
+    gen_value_function_initial_conditions,
 )
 from botorch.utils.testing import (
     BotorchTestCase,
@@ -70,25 +74,28 @@ class TestInitializeQBatch(BotorchTestCase):
 
     def test_initialize_q_batch(self):
         for dtype in (torch.float, torch.double):
-            # basic test
-            X = torch.rand(5, 3, 4, device=self.device, dtype=dtype)
-            Y = torch.rand(5, device=self.device, dtype=dtype)
-            ics = initialize_q_batch(X=X, Y=Y, n=2)
-            self.assertEqual(ics.shape, torch.Size([2, 3, 4]))
-            self.assertEqual(ics.device, X.device)
-            self.assertEqual(ics.dtype, X.dtype)
-            # ensure nothing happens if we want all samples
-            ics = initialize_q_batch(X=X, Y=Y, n=5)
-            self.assertTrue(torch.equal(X, ics))
-            # ensure raises correct warning
-            Y = torch.zeros(5, device=self.device, dtype=dtype)
-            with warnings.catch_warnings(record=True) as w, settings.debug(True):
+            for batch_shape in (torch.Size(), [3, 2], (2,), torch.Size([2, 3, 4]), []):
+                # basic test
+                X = torch.rand(5, *batch_shape, 3, 4, device=self.device, dtype=dtype)
+                Y = torch.rand(5, *batch_shape, device=self.device, dtype=dtype)
                 ics = initialize_q_batch(X=X, Y=Y, n=2)
-                self.assertEqual(len(w), 1)
-                self.assertTrue(issubclass(w[-1].category, BadInitialCandidatesWarning))
-            self.assertEqual(ics.shape, torch.Size([2, 3, 4]))
-            with self.assertRaises(RuntimeError):
-                initialize_q_batch(X=X, Y=Y, n=10)
+                self.assertEqual(ics.shape, torch.Size([2, *batch_shape, 3, 4]))
+                self.assertEqual(ics.device, X.device)
+                self.assertEqual(ics.dtype, X.dtype)
+                # ensure nothing happens if we want all samples
+                ics = initialize_q_batch(X=X, Y=Y, n=5)
+                self.assertTrue(torch.equal(X, ics))
+                # ensure raises correct warning
+                Y = torch.zeros(5, device=self.device, dtype=dtype)
+                with warnings.catch_warnings(record=True) as w, settings.debug(True):
+                    ics = initialize_q_batch(X=X, Y=Y, n=2)
+                    self.assertEqual(len(w), 1)
+                    self.assertTrue(
+                        issubclass(w[-1].category, BadInitialCandidatesWarning)
+                    )
+                self.assertEqual(ics.shape, torch.Size([2, *batch_shape, 3, 4]))
+                with self.assertRaises(RuntimeError):
+                    initialize_q_batch(X=X, Y=Y, n=10)
 
     def test_initialize_q_batch_largeZ(self):
         for dtype in (torch.float, torch.double):
@@ -241,3 +248,48 @@ class TestGenOneShotKGInitialConditions(BotorchTestCase):
                     )
                 )
                 self.assertTrue(torch.all(ics[..., -n_value:, :] == 1))
+
+
+class TestGenValueFunctionInitialConditions(BotorchTestCase):
+    def test_gen_value_function_initial_conditions(self):
+        num_fantasies = 8
+        num_solutions = 3
+        num_restarts = 4
+        raw_samples = 16
+        n_train = 4
+        dim = 2
+        for dtype in (torch.float, torch.double):
+            train_X = torch.rand(n_train, dim, device=self.device, dtype=dtype)
+            train_Y = torch.rand(n_train, 1, device=self.device, dtype=dtype)
+            model = SingleTaskGP(train_X, train_Y)
+            fant_X = torch.rand(num_solutions, 1, dim, device=self.device, dtype=dtype)
+            fantasy_model = model.fantasize(fant_X, IIDNormalSampler(num_fantasies))
+            bounds = torch.tensor([[0, 0], [1, 1]], device=self.device, dtype=dtype)
+            value_function = PosteriorMean(fantasy_model)
+            # test option error
+            with self.assertRaises(ValueError):
+                gen_value_function_initial_conditions(
+                    acq_function=value_function,
+                    bounds=bounds,
+                    num_restarts=num_restarts,
+                    raw_samples=raw_samples,
+                    current_model=model,
+                    options={"frac_random": 2.0},
+                )
+            # test output shape
+            ics = gen_value_function_initial_conditions(
+                acq_function=value_function,
+                bounds=bounds,
+                num_restarts=num_restarts,
+                raw_samples=raw_samples,
+                current_model=model,
+            )
+            self.assertEqual(
+                ics.shape,
+                torch.Size([num_restarts, num_fantasies, num_solutions, 1, dim]),
+            )
+            # test bounds
+            self.assertTrue(torch.all(ics >= bounds[0]))
+            self.assertTrue(torch.all(ics <= bounds[1]))
+            # test dtype
+            self.assertEqual(dtype, ics.dtype)

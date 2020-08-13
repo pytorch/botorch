@@ -183,6 +183,73 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
         # return average over the fantasy samples
         return values.mean(dim=0)
 
+    def evaluate_kg(
+        self, X_actual: Tensor, bounds: Tensor, options: Optional[dict] = None
+    ) -> Tensor:
+        r"""Evaluate qKnowledgeGradient on the candidate set `X_actual` by
+        solving the inner optimization problem.
+
+        Args:
+            X_actual: A `b x q x d` Tensor with `b` t-batches of `q` design points 
+                each. Unlike `forward()`, this does not include solutions of the 
+                inner optimization problem.
+            bounds: A `2 x d` tensor of lower and upper bounds for each column of
+                the solutions to the inner problem.
+            options: Options for optimization of the inner problem. This includes
+                `num_restarts`, `raw_samples` and other optimization options.
+
+        Returns:
+            A Tensor of shape `b`. For t-batch b, the q-KG value of the design
+                `X_actual[b]` is averaged across the fantasy models.
+                NOTE: If `current_value` is not provided, then this is not the
+                true KG value of `X_actual[b]`.
+        """
+        while X_actual.dim() < 3:
+            X_actual.unsqueeze_(0)
+        options = options or {}
+        options = options.copy()
+        if self.X_pending is not None:
+            X_actual = torch.cat(
+                [X_actual, match_batch_shape(self.X_pending, X_actual)], dim=-2
+            )
+
+        # construct the fantasy model of shape `num_fantasies x b`
+        fantasy_model = self.model.fantasize(
+            X=X_actual, sampler=self.sampler, observation_noise=True
+        )
+
+        # get the value function
+        value_function = _get_value_function(
+            model=fantasy_model, objective=self.objective, sampler=self.inner_sampler
+        )
+
+        # optimize the inner problem
+        from botorch.optim.initializers import gen_value_function_initial_conditions
+        from botorch.generation.gen import gen_candidates_scipy
+
+        initial_conditions = gen_value_function_initial_conditions(
+            acq_function=value_function,
+            bounds=bounds,
+            num_restarts=options.pop("num_restarts", 20),
+            raw_samples=options.pop("raw_samples", 1024),
+            current_model=self.model,
+            options=options,
+        )
+        _, values = gen_candidates_scipy(
+            initial_conditions=initial_conditions,
+            acquisition_function=value_function,
+            lower_bounds=bounds[0],
+            upper_bounds=bounds[1],
+            options=options,
+        )
+        # get the maximizer for each batch
+        values, _ = torch.max(values, dim=0)
+        if self.current_value is not None:
+            values = values - self.current_value
+
+        # return average over the fantasy samples
+        return values.mean(dim=0)
+
     def get_augmented_q_batch_size(self, q: int) -> int:
         r"""Get augmented q batch size for one-shot optimzation.
 
