@@ -35,6 +35,7 @@ from botorch.models.model import Model
 from botorch.models.utils import check_no_nans
 from botorch.sampling.samplers import SobolQMCNormalSampler
 from botorch.utils.transforms import match_batch_shape, t_batch_mode_transform
+from gpytorch.utils.cholesky import psd_safe_cholesky
 from scipy.optimize import brentq
 from torch import Tensor
 
@@ -240,7 +241,7 @@ class qMaxValueEntropy(MCAcquisitionFunction):
         # compute mean and std for fM|ym, x, Dt ~ N(u, s^2)
         samples_m = self.weight * self.sampler(posterior_m).squeeze(-1)
         # s_m x batch_shape x num_fantasies x (1 + num_trace_observations)
-        L = torch.cholesky(variance_m)
+        L = psd_safe_cholesky(variance_m)
         temp_term = torch.cholesky_solve(covar_mM.unsqueeze(-1), L).transpose(-2, -1)
         # equivalent to torch.matmul(covar_mM.unsqueeze(-2), torch.inverse(variance_m))
         # batch_shape x num_fantasies x 1 x (1 + num_trace_observations)
