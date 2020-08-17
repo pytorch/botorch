@@ -16,8 +16,7 @@ from botorch.acquisition.knowledge_gradient import (
     _get_value_function,
     qKnowledgeGradient,
 )
-from botorch.acquisition.monte_carlo import qSimpleRegret
-from botorch.acquisition.analytic import PosteriorMean
+from botorch.acquisition.monte_carlo import MCAcquisitionFunction
 from botorch.acquisition.utils import is_nonnegative
 from botorch.models.model import Model
 from botorch.exceptions.warnings import BadInitialCandidatesWarning, SamplingWarning
@@ -230,18 +229,18 @@ def gen_one_shot_kg_initial_conditions(
 
 
 def gen_value_function_initial_conditions(
-    acq_function: Union[PosteriorMean, qSimpleRegret],
+    acq_function: AcquisitionFunction,
     bounds: Tensor,
     num_restarts: int,
     raw_samples: int,
     current_model: Model,
     options: Optional[Dict[str, Union[bool, float, int]]] = None,
-) -> Optional[Tensor]:
+) -> Tensor:
     r"""Generate a batch of smart initializations for optimizing
     the value function of qKnowledgeGradient.
 
     This function generates initial conditions for optimizing the inner problem of
-    KG, i.e. its value function using the maximizer of the posterior objective.
+    KG, i.e. its value function, using the maximizer of the posterior objective.
     Intutively, the maximizer of the fantasized posterior will often be close to a
     maximizer of the current posterior. This function uses that fact to generate the
     initital conditions for the fantasy points. Specifically, a fraction of `1 -
@@ -288,11 +287,9 @@ def gen_value_function_initial_conditions(
         >>>     options={"frac_random": 0.25},
         >>> )
     """
-    # TODO: should this be added to __init__?
     options = options or {}
     seed: Optional[int] = options.get("seed")
-    batch_limit: Optional[int] = options.get("batch_limit")
-    frac_random: float = options.get("frac_random", 0.2)  # TODO: increase?
+    frac_random: float = options.get("frac_random", 0.6)
     if not 0 < frac_random < 1:
         raise ValueError(
             f"frac_random must take on values in (0,1). Value: {frac_random}"
@@ -303,7 +300,7 @@ def gen_value_function_initial_conditions(
         model=current_model,
         objective=acq_function.objective,
         sampler=acq_function.sampler
-        if isinstance(acq_function, qSimpleRegret)
+        if isinstance(acq_function, MCAcquisitionFunction)
         else None,
     )
     from botorch.optim.optimize import optimize_acqf
@@ -312,40 +309,43 @@ def gen_value_function_initial_conditions(
         acq_function=value_function,
         bounds=bounds,
         q=1,
-        # TODO: set these to num_restarts and raw_samples?
         num_restarts=options.get("num_inner_restarts", 20),
         raw_samples=options.get("raw_inner_samples", 1024),
         return_best_only=False,
+        options=options,
     )
 
     batch_shape = acq_function.model._input_batch_shape
     # sampling from the optimizers
     n_value = int((1 - frac_random) * raw_samples)  # number of non-random ICs
-    eta = options.get("eta", 2.0)
-    weights = torch.exp(eta * standardize(fantasy_vals))
-    idx = batched_multinomial(
-        weights=weights.expand(*batch_shape, -1), num_samples=n_value, replacement=True
-    ).permute(-1, *range(len(batch_shape)))
-    resampled = fantasy_cands[idx]
+    if n_value > 0:
+        eta = options.get("eta", 2.0)
+        weights = torch.exp(eta * standardize(fantasy_vals))
+        idx = batched_multinomial(
+            weights=weights.expand(*batch_shape, -1),
+            num_samples=n_value,
+            replacement=True,
+        ).permute(-1, *range(len(batch_shape)))
+        resampled = fantasy_cands[idx]
+    else:
+        resampled = torch.empty(0, *batch_shape, 1, bounds.shape[-1])
     # add qMC samples
-    randomized = draw_sobol_samples(
-        bounds=bounds, n=raw_samples - n_value, q=1, batch_shape=batch_shape, seed=seed
-    )
+    if raw_samples > n_value:
+        randomized = draw_sobol_samples(
+            bounds=bounds,
+            n=raw_samples - n_value,
+            q=1,
+            batch_shape=batch_shape,
+            seed=seed,
+        )
+    else:
+        randomized = torch.empty(0, *batch_shape, 1, bounds.shape[-1])
     # full set of raw samples
     X_rnd = torch.cat([resampled, randomized], dim=0)
 
     # evaluate the raw samples
     with torch.no_grad():
-        if batch_limit is None:
-            batch_limit = X_rnd.shape[0]
-        Y_rnd_list = []
-        start_idx = 0
-        while start_idx < X_rnd.shape[0]:
-            end_idx = min(start_idx + batch_limit, X_rnd.shape[0])
-            Y_rnd_curr = acq_function(X_rnd[start_idx:end_idx])
-            Y_rnd_list.append(Y_rnd_curr)
-            start_idx += batch_limit
-        Y_rnd = torch.cat(Y_rnd_list)
+        Y_rnd = acq_function(X_rnd)
 
     # select the restart points using the heuristic
     return initialize_q_batch(
@@ -398,8 +398,8 @@ def initialize_q_batch(X: Tensor, Y: Tensor, n: int, eta: float = 1.0) -> Tensor
     Ystd = Y.std(dim=0)
     if torch.any(Ystd == 0):
         warnings.warn(
-            "All acquisition values for raw samples points are the same at "
-            "least for one batch. Choosing initial conditions at random.",
+            "All acquisition values for raw samples points are the same for "
+            "at least one batch. Choosing initial conditions at random.",
             BadInitialCandidatesWarning,
         )
         return X[torch.randperm(n=n_samples, device=X.device)][:n]

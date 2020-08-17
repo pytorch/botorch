@@ -252,11 +252,11 @@ class TestGenOneShotKGInitialConditions(BotorchTestCase):
 
 class TestGenValueFunctionInitialConditions(BotorchTestCase):
     def test_gen_value_function_initial_conditions(self):
-        num_fantasies = 8
+        num_fantasies = 2
         num_solutions = 3
         num_restarts = 4
-        raw_samples = 16
-        n_train = 4
+        raw_samples = 5
+        n_train = 6
         dim = 2
         for dtype in (torch.float, torch.double):
             train_X = torch.rand(n_train, dim, device=self.device, dtype=dtype)

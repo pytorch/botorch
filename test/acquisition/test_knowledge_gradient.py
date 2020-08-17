@@ -5,8 +5,6 @@
 # LICENSE file in the root directory of this source tree.
 
 from unittest import mock
-import itertools
-
 import torch
 from botorch.acquisition.analytic import PosteriorMean
 from botorch.acquisition.cost_aware import GenericCostAwareUtility
@@ -214,52 +212,58 @@ class TestQKnowledgeGradient(BotorchTestCase):
                     val_expected = (mean * weights).sum(-1).mean(0)
                     self.assertTrue(torch.allclose(val, val_expected))
 
-    def test_evaluate_KG(self):
+    def test_evaluate_kg(self):
+        # a thorough test using real model and dtype double
+        d = 2
+        dtype = torch.double
+        bounds = torch.tensor([[0], [1]], device=self.device, dtype=dtype).repeat(1, d)
+        train_X = torch.rand(3, d, device=self.device, dtype=dtype)
+        train_Y = torch.rand(3, 1, device=self.device, dtype=dtype)
+        model = SingleTaskGP(train_X, train_Y)
+        qKG = qKnowledgeGradient(
+            model=model,
+            num_fantasies=2,
+            objective=None,
+            X_pending=torch.rand(2, d, device=self.device, dtype=dtype),
+            current_value=torch.rand(1, device=self.device, dtype=dtype),
+        )
+        X = torch.rand(4, 3, d, device=self.device, dtype=dtype)
         options = {
-            "num_restarts": 2,
-            "raw_samples": 4,
             "num_inner_restarts": 2,
             "raw_inner_samples": 3,
         }
-        for (
-            d,
-            q,
-            n,
-            n_f,
-            objective,
-            X_pending,
-            current_value,
-            dtype,
-        ) in itertools.product(
-            (1, 3),
-            (1, 2),
-            (1, 3),
-            (1, 3),
-            (None, GenericMCObjective(objective=lambda Y: Y.norm(dim=-1))),
-            (None, torch.rand(2, 1)),
-            (None, torch.rand(1)),
-            (torch.float, torch.double),
-        ):
-            # basic test
-            bounds = torch.tensor([[0], [1]], device=self.device, dtype=dtype).repeat(
-                1, d
-            )
-            X_pending = X_pending.expand(-1, d) if X_pending is not None else None
-            train_X = torch.rand(n, d, device=self.device, dtype=dtype)
-            train_Y = torch.rand(n, 1, device=self.device, dtype=dtype)
-            model = SingleTaskGP(train_X, train_Y)
-            qKG = qKnowledgeGradient(
-                model=model,
-                num_fantasies=n_f,
-                objective=objective,
-                X_pending=X_pending.to(bounds) if X_pending is not None else None,
-                current_value=current_value.to(bounds)
-                if current_value is not None
-                else None,
-            )
-            X = torch.rand(n, q, d, device=self.device, dtype=dtype)
-            val = qKG.evaluate_kg(X, bounds=bounds, options=options)
-            self.assertEqual(val.size(), torch.Size([n]))
+        val = qKG.evaluate(
+            X, bounds=bounds, num_restarts=2, raw_samples=3, options=options,
+        )
+        # verify output shape
+        self.assertEqual(val.size(), torch.Size([4]))
+        # verify dtype
+        self.assertEqual(val.dtype, dtype)
+
+        # test i) no dimension is squeezed out, ii) dtype float, iii) MC objective,
+        # and iv) t_batch_mode_transform
+        dtype = torch.float
+        bounds = torch.tensor([[0], [1]], device=self.device, dtype=dtype)
+        train_X = torch.rand(1, 1, device=self.device, dtype=dtype)
+        train_Y = torch.rand(1, 1, device=self.device, dtype=dtype)
+        model = SingleTaskGP(train_X, train_Y)
+        qKG = qKnowledgeGradient(
+            model=model,
+            num_fantasies=1,
+            objective=GenericMCObjective(objective=lambda Y: Y.norm(dim=-1)),
+        )
+        X = torch.rand(1, 1, device=self.device, dtype=dtype)
+        options = {
+            "num_inner_restarts": 1,
+            "raw_inner_samples": 1,
+        }
+        val = qKG.evaluate(
+            X, bounds=bounds, num_restarts=1, raw_samples=1, options=options,
+        )
+        # verify output shape
+        self.assertEqual(val.size(), torch.Size([1]))
+        # verify dtype
+        self.assertEqual(val.dtype, dtype)
 
 
 class TestQMultiFidelityKnowledgeGradient(BotorchTestCase):

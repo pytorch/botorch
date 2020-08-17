@@ -46,7 +46,11 @@ from botorch.acquisition.objective import (
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.model import Model
 from botorch.sampling.samplers import MCSampler, SobolQMCNormalSampler
-from botorch.utils.transforms import match_batch_shape, t_batch_mode_transform
+from botorch.utils.transforms import (
+    match_batch_shape,
+    t_batch_mode_transform,
+    concatenate_pending_points,
+)
 from torch import Tensor
 
 
@@ -183,9 +187,9 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
         # return average over the fantasy samples
         return values.mean(dim=0)
 
-    def evaluate_kg(
-        self, X_actual: Tensor, bounds: Tensor, options: Optional[dict] = None
-    ) -> Tensor:
+    @concatenate_pending_points
+    @t_batch_mode_transform()
+    def evaluate(self, X_actual: Tensor, bounds: Tensor, **kwargs: Any) -> Tensor:
         r"""Evaluate qKnowledgeGradient on the candidate set `X_actual` by
         solving the inner optimization problem.
 
@@ -195,8 +199,9 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
                 inner optimization problem.
             bounds: A `2 x d` tensor of lower and upper bounds for each column of
                 the solutions to the inner problem.
-            options: Options for optimization of the inner problem. This includes
-                `num_restarts`, `raw_samples` and other optimization options.
+            kwargs: Additional keyword arguments. This includes the options for
+                optimization of the inner problem, i.e. `num_restarts`, `raw_samples`
+                and an `options` dictionary to be passed on to the optimization helpers.
 
         Returns:
             A Tensor of shape `b`. For t-batch b, the q-KG value of the design
@@ -204,15 +209,6 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
                 NOTE: If `current_value` is not provided, then this is not the
                 true KG value of `X_actual[b]`.
         """
-        while X_actual.dim() < 3:
-            X_actual.unsqueeze_(0)
-        options = options or {}
-        options = options.copy()
-        if self.X_pending is not None:
-            X_actual = torch.cat(
-                [X_actual, match_batch_shape(self.X_pending, X_actual)], dim=-2
-            )
-
         # construct the fantasy model of shape `num_fantasies x b`
         fantasy_model = self.model.fantasize(
             X=X_actual, sampler=self.sampler, observation_noise=True
@@ -230,17 +226,17 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
         initial_conditions = gen_value_function_initial_conditions(
             acq_function=value_function,
             bounds=bounds,
-            num_restarts=options.pop("num_restarts", 20),
-            raw_samples=options.pop("raw_samples", 1024),
+            num_restarts=kwargs.get("num_restarts", 20),
+            raw_samples=kwargs.get("raw_samples", 1024),
             current_model=self.model,
-            options=options,
+            options=kwargs.get("options"),
         )
         _, values = gen_candidates_scipy(
             initial_conditions=initial_conditions,
             acquisition_function=value_function,
             lower_bounds=bounds[0],
             upper_bounds=bounds[1],
-            options=options,
+            options=kwargs.get("options"),
         )
         # get the maximizer for each batch
         values, _ = torch.max(values, dim=0)
