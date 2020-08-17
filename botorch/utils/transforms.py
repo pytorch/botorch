@@ -154,7 +154,7 @@ def t_batch_mode_transform(
 
     def decorator(method: Callable[[Any, Tensor], Any]) -> Callable[[Any, Tensor], Any]:
         @wraps(method)
-        def decorated(cls: Any, X: Tensor) -> Any:
+        def decorated(cls: Any, X: Tensor, **kwargs: Any) -> Any:
             if X.dim() < 2:
                 raise ValueError(
                     f"{type(cls).__name__} requires X to have at least 2 dimensions,"
@@ -166,7 +166,7 @@ def t_batch_mode_transform(
                     f" got X with shape {X.shape}."
                 )
             X = X if X.dim() > 2 else X.unsqueeze(0)
-            return method(cls, X)
+            return method(cls, X, **kwargs)
 
         return decorated
 

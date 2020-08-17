@@ -3,7 +3,7 @@
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-
+from typing import Any
 import torch
 from botorch.utils.testing import BotorchTestCase
 from botorch.utils.transforms import (
@@ -79,6 +79,11 @@ class BMIMTestClass:
     def q1_method(self, X: Tensor) -> None:
         return X
 
+    @t_batch_mode_transform()
+    def kw_method(self, X: Tensor, dummy_arg: Any = None):
+        assert dummy_arg is not None
+        return X
+
     @concatenate_pending_points
     def dummy_method(self, X: Tensor) -> Tensor:
         return X
@@ -122,6 +127,13 @@ class TestBatchModeTransform(BotorchTestCase):
         X = torch.zeros(1)
         with self.assertRaises(ValueError):
             c.q_method(X)
+
+        # test with kwargs
+        X = torch.rand(1, 2)
+        with self.assertRaises(AssertionError):
+            c.kw_method(X)
+        Xout = c.kw_method(X, dummy_arg=5)
+        self.assertTrue(torch.equal(Xout, X.unsqueeze(0)))
 
 
 class TestConcatenatePendingPoints(BotorchTestCase):
