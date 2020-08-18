@@ -258,38 +258,88 @@ class TestGenValueFunctionInitialConditions(BotorchTestCase):
         raw_samples = 5
         n_train = 6
         dim = 2
-        for dtype in (torch.float, torch.double):
-            train_X = torch.rand(n_train, dim, device=self.device, dtype=dtype)
-            train_Y = torch.rand(n_train, 1, device=self.device, dtype=dtype)
-            model = SingleTaskGP(train_X, train_Y)
-            fant_X = torch.rand(num_solutions, 1, dim, device=self.device, dtype=dtype)
-            fantasy_model = model.fantasize(fant_X, IIDNormalSampler(num_fantasies))
-            bounds = torch.tensor([[0, 0], [1, 1]], device=self.device, dtype=dtype)
-            value_function = PosteriorMean(fantasy_model)
-            # test option error
-            with self.assertRaises(ValueError):
-                gen_value_function_initial_conditions(
-                    acq_function=value_function,
-                    bounds=bounds,
-                    num_restarts=num_restarts,
-                    raw_samples=raw_samples,
-                    current_model=model,
-                    options={"frac_random": 2.0},
-                )
-            # test output shape
-            ics = gen_value_function_initial_conditions(
+        dtype = torch.float
+        # run a thorough test with dtype float
+        train_X = torch.rand(n_train, dim, device=self.device, dtype=dtype)
+        train_Y = torch.rand(n_train, 1, device=self.device, dtype=dtype)
+        model = SingleTaskGP(train_X, train_Y)
+        fant_X = torch.rand(num_solutions, 1, dim, device=self.device, dtype=dtype)
+        fantasy_model = model.fantasize(fant_X, IIDNormalSampler(num_fantasies))
+        bounds = torch.tensor([[0, 0], [1, 1]], device=self.device, dtype=dtype)
+        value_function = PosteriorMean(fantasy_model)
+        # test option error
+        with self.assertRaises(ValueError):
+            gen_value_function_initial_conditions(
                 acq_function=value_function,
                 bounds=bounds,
                 num_restarts=num_restarts,
                 raw_samples=raw_samples,
                 current_model=model,
+                options={"frac_random": 2.0},
             )
-            self.assertEqual(
-                ics.shape,
-                torch.Size([num_restarts, num_fantasies, num_solutions, 1, dim]),
-            )
-            # test bounds
-            self.assertTrue(torch.all(ics >= bounds[0]))
-            self.assertTrue(torch.all(ics <= bounds[1]))
-            # test dtype
-            self.assertEqual(dtype, ics.dtype)
+        # test output shape
+        ics = gen_value_function_initial_conditions(
+            acq_function=value_function,
+            bounds=bounds,
+            num_restarts=num_restarts,
+            raw_samples=raw_samples,
+            current_model=model,
+        )
+        self.assertEqual(
+            ics.shape,
+            torch.Size([num_restarts, num_fantasies, num_solutions, 1, dim]),
+        )
+        # test bounds
+        self.assertTrue(torch.all(ics >= bounds[0]))
+        self.assertTrue(torch.all(ics <= bounds[1]))
+        # test dtype
+        self.assertEqual(dtype, ics.dtype)
+
+        # minimal test cases for when all raw samples are resampled or all are random,
+        # with dtype double
+        dtype = torch.double
+        n_train = 2
+        dim = 1
+        num_solutions = 1
+        train_X = torch.rand(n_train, dim, device=self.device, dtype=dtype)
+        train_Y = torch.rand(n_train, 1, device=self.device, dtype=dtype)
+        model = SingleTaskGP(train_X, train_Y)
+        fant_X = torch.rand(1, 1, dim, device=self.device, dtype=dtype)
+        fantasy_model = model.fantasize(fant_X, IIDNormalSampler(num_fantasies))
+        bounds = torch.tensor([[0], [1]], device=self.device, dtype=dtype)
+        value_function = PosteriorMean(fantasy_model)
+        ics = gen_value_function_initial_conditions(
+            acq_function=value_function,
+            bounds=bounds,
+            num_restarts=1,
+            raw_samples=1,
+            current_model=model,
+            options={"frac_random": 0.01}
+        )
+        self.assertEqual(
+            ics.shape,
+            torch.Size([1, num_fantasies, num_solutions, 1, dim]),
+        )
+        # test bounds
+        self.assertTrue(torch.all(ics >= bounds[0]))
+        self.assertTrue(torch.all(ics <= bounds[1]))
+        # test dtype
+        self.assertEqual(dtype, ics.dtype)
+
+        ics = gen_value_function_initial_conditions(
+            acq_function=value_function,
+            bounds=bounds,
+            num_restarts=1,
+            raw_samples=1,
+            current_model=model,
+            options={"frac_random": 0.99}
+        )
+        self.assertEqual(
+            ics.shape,
+            torch.Size([1, num_fantasies, num_solutions, 1, dim]),
+        )
+        # test bounds
+        self.assertTrue(torch.all(ics >= bounds[0]))
+        self.assertTrue(torch.all(ics <= bounds[1]))
+        # test dtype
+        self.assertEqual(dtype, ics.dtype)
