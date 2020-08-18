@@ -70,7 +70,7 @@ class TestNormalizeAndUnnormalize(BotorchTestCase):
             self.assertTrue(torch.equal(X2, unnormalize(X2_normalized, bounds=bounds2)))
 
 
-class BMIMTestClass:
+class BMIMTestClass(BotorchTestCase):
     @t_batch_mode_transform()
     def q_method(self, X: Tensor) -> None:
         return X
@@ -81,7 +81,7 @@ class BMIMTestClass:
 
     @t_batch_mode_transform()
     def kw_method(self, X: Tensor, dummy_arg: Any = None):
-        self.assertIsNone(dummy_arg)
+        self.assertIsNotNone(dummy_arg)
         return X
 
     @concatenate_pending_points
