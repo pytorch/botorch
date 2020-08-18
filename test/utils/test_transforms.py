@@ -81,7 +81,7 @@ class BMIMTestClass:
 
     @t_batch_mode_transform()
     def kw_method(self, X: Tensor, dummy_arg: Any = None):
-        assert dummy_arg is not None
+        self.assertIsNone(dummy_arg)
         return X
 
     @concatenate_pending_points
