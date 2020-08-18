@@ -46,7 +46,11 @@ from botorch.acquisition.objective import (
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.model import Model
 from botorch.sampling.samplers import MCSampler, SobolQMCNormalSampler
-from botorch.utils.transforms import match_batch_shape, t_batch_mode_transform
+from botorch.utils.transforms import (
+    concatenate_pending_points,
+    match_batch_shape,
+    t_batch_mode_transform,
+)
 from torch import Tensor
 
 
@@ -177,6 +181,65 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
         with settings.propagate_grads(True):
             values = value_function(X=X_fantasies)  # num_fantasies x b
 
+        if self.current_value is not None:
+            values = values - self.current_value
+
+        # return average over the fantasy samples
+        return values.mean(dim=0)
+
+    @concatenate_pending_points
+    @t_batch_mode_transform()
+    def evaluate(self, X_actual: Tensor, bounds: Tensor, **kwargs: Any) -> Tensor:
+        r"""Evaluate qKnowledgeGradient on the candidate set `X_actual` by
+        solving the inner optimization problem.
+
+        Args:
+            X_actual: A `b x q x d` Tensor with `b` t-batches of `q` design points
+                each. Unlike `forward()`, this does not include solutions of the
+                inner optimization problem.
+            bounds: A `2 x d` tensor of lower and upper bounds for each column of
+                the solutions to the inner problem.
+            kwargs: Additional keyword arguments. This includes the options for
+                optimization of the inner problem, i.e. `num_restarts`, `raw_samples`
+                and an `options` dictionary to be passed on to the optimization helpers.
+
+        Returns:
+            A Tensor of shape `b`. For t-batch b, the q-KG value of the design
+                `X_actual[b]` is averaged across the fantasy models.
+                NOTE: If `current_value` is not provided, then this is not the
+                true KG value of `X_actual[b]`.
+        """
+        # construct the fantasy model of shape `num_fantasies x b`
+        fantasy_model = self.model.fantasize(
+            X=X_actual, sampler=self.sampler, observation_noise=True
+        )
+
+        # get the value function
+        value_function = _get_value_function(
+            model=fantasy_model, objective=self.objective, sampler=self.inner_sampler
+        )
+
+        # optimize the inner problem
+        from botorch.optim.initializers import gen_value_function_initial_conditions
+        from botorch.generation.gen import gen_candidates_scipy
+
+        initial_conditions = gen_value_function_initial_conditions(
+            acq_function=value_function,
+            bounds=bounds,
+            num_restarts=kwargs.get("num_restarts", 20),
+            raw_samples=kwargs.get("raw_samples", 1024),
+            current_model=self.model,
+            options=kwargs.get("options"),
+        )
+        _, values = gen_candidates_scipy(
+            initial_conditions=initial_conditions,
+            acquisition_function=value_function,
+            lower_bounds=bounds[0],
+            upper_bounds=bounds[1],
+            options=kwargs.get("options"),
+        )
+        # get the maximizer for each batch
+        values, _ = torch.max(values, dim=0)
         if self.current_value is not None:
             values = values - self.current_value
 

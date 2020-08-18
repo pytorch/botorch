@@ -18,6 +18,7 @@ from botorch.acquisition.knowledge_gradient import (
 from botorch.acquisition.monte_carlo import qSimpleRegret
 from botorch.acquisition.objective import GenericMCObjective, ScalarizedObjective
 from botorch.exceptions.errors import UnsupportedError
+from botorch.models import SingleTaskGP
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
@@ -212,6 +213,53 @@ class TestQKnowledgeGradient(BotorchTestCase):
                     self.assertEqual(ckwargs["X"].shape, torch.Size([1, 1, 1]))
                     val_expected = (mean * weights).sum(-1).mean(0)
                     self.assertTrue(torch.allclose(val, val_expected))
+
+    def test_evaluate_kg(self):
+        # a thorough test using real model and dtype double
+        d = 2
+        dtype = torch.double
+        bounds = torch.tensor([[0], [1]], device=self.device, dtype=dtype).repeat(1, d)
+        train_X = torch.rand(3, d, device=self.device, dtype=dtype)
+        train_Y = torch.rand(3, 1, device=self.device, dtype=dtype)
+        model = SingleTaskGP(train_X, train_Y)
+        qKG = qKnowledgeGradient(
+            model=model,
+            num_fantasies=2,
+            objective=None,
+            X_pending=torch.rand(2, d, device=self.device, dtype=dtype),
+            current_value=torch.rand(1, device=self.device, dtype=dtype),
+        )
+        X = torch.rand(4, 3, d, device=self.device, dtype=dtype)
+        options = {"num_inner_restarts": 2, "raw_inner_samples": 3}
+        val = qKG.evaluate(
+            X, bounds=bounds, num_restarts=2, raw_samples=3, options=options
+        )
+        # verify output shape
+        self.assertEqual(val.size(), torch.Size([4]))
+        # verify dtype
+        self.assertEqual(val.dtype, dtype)
+
+        # test i) no dimension is squeezed out, ii) dtype float, iii) MC objective,
+        # and iv) t_batch_mode_transform
+        dtype = torch.float
+        bounds = torch.tensor([[0], [1]], device=self.device, dtype=dtype)
+        train_X = torch.rand(1, 1, device=self.device, dtype=dtype)
+        train_Y = torch.rand(1, 1, device=self.device, dtype=dtype)
+        model = SingleTaskGP(train_X, train_Y)
+        qKG = qKnowledgeGradient(
+            model=model,
+            num_fantasies=1,
+            objective=GenericMCObjective(objective=lambda Y: Y.norm(dim=-1)),
+        )
+        X = torch.rand(1, 1, device=self.device, dtype=dtype)
+        options = {"num_inner_restarts": 1, "raw_inner_samples": 1}
+        val = qKG.evaluate(
+            X, bounds=bounds, num_restarts=1, raw_samples=1, options=options
+        )
+        # verify output shape
+        self.assertEqual(val.size(), torch.Size([1]))
+        # verify dtype
+        self.assertEqual(val.dtype, dtype)
 
 
 class TestQMultiFidelityKnowledgeGradient(BotorchTestCase):
