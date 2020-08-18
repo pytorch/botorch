@@ -294,8 +294,7 @@ class TestGenValueFunctionInitialConditions(BotorchTestCase):
         # test dtype
         self.assertEqual(dtype, ics.dtype)
 
-        # minimal test cases for when all raw samples are resampled or all are random,
-        # with dtype double
+        # minimal test cases for when all raw samples are random, with dtype double
         dtype = torch.double
         n_train = 2
         dim = 1
@@ -307,23 +306,6 @@ class TestGenValueFunctionInitialConditions(BotorchTestCase):
         fantasy_model = model.fantasize(fant_X, IIDNormalSampler(num_fantasies))
         bounds = torch.tensor([[0], [1]], device=self.device, dtype=dtype)
         value_function = PosteriorMean(fantasy_model)
-        ics = gen_value_function_initial_conditions(
-            acq_function=value_function,
-            bounds=bounds,
-            num_restarts=1,
-            raw_samples=1,
-            current_model=model,
-            options={"frac_random": 0.01},
-        )
-        self.assertEqual(
-            ics.shape, torch.Size([1, num_fantasies, num_solutions, 1, dim]),
-        )
-        # test bounds
-        self.assertTrue(torch.all(ics >= bounds[0]))
-        self.assertTrue(torch.all(ics <= bounds[1]))
-        # test dtype
-        self.assertEqual(dtype, ics.dtype)
-
         ics = gen_value_function_initial_conditions(
             acq_function=value_function,
             bounds=bounds,
