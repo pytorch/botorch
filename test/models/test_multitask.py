@@ -19,6 +19,7 @@ from gpytorch.likelihoods import FixedNoiseGaussianLikelihood, GaussianLikelihoo
 from gpytorch.means import ConstantMean
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.priors import GammaPrior
+from gpytorch.priors.lkj_prior import LKJCovariancePrior
 
 
 def _get_random_mt_data(**tkwargs):
@@ -59,6 +60,31 @@ def _get_fixed_noise_model_single_output(**tkwargs):
     train_Yvar = torch.full_like(train_Y, 0.05)
     model = FixedNoiseMultiTaskGP(
         train_X, train_Y, train_Yvar, task_feature=1, output_tasks=[1]
+    )
+    return model.to(**tkwargs)
+
+
+def _get_fixed_prior_model(**tkwargs):
+    train_X, train_Y = _get_random_mt_data(**tkwargs)
+    sd_prior = GammaPrior(2.0, 0.15)
+    sd_prior._event_shape = torch.Size([2])
+    model = MultiTaskGP(
+        train_X, train_Y, task_feature=1, prior=LKJCovariancePrior(2, 0.6, sd_prior)
+    )
+    return model.to(**tkwargs)
+
+
+def _get_fixed_noise_and_prior_model(**tkwargs):
+    train_X, train_Y = _get_random_mt_data(**tkwargs)
+    train_Yvar = torch.full_like(train_Y, 0.05)
+    sd_prior = GammaPrior(2.0, 0.15)
+    sd_prior._event_shape = torch.Size([2])
+    model = FixedNoiseMultiTaskGP(
+        train_X,
+        train_Y,
+        train_Yvar,
+        task_feature=1,
+        prior=LKJCovariancePrior(2, 0.6, sd_prior),
     )
     return model.to(**tkwargs)
 
@@ -173,6 +199,16 @@ class TestMultiTaskGP(BotorchTestCase):
             self.assertIsInstance(posterior_f, GPyTorchPosterior)
             self.assertIsInstance(posterior_f.mvn, MultivariateNormal)
 
+    def test_MultiTaskGP_fixed_prior(self):
+        for dtype in (torch.float, torch.double):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            model = _get_fixed_prior_model(**tkwargs)
+            self.assertIsInstance(model, MultiTaskGP)
+            self.assertIsInstance(model.task_covar_module, IndexKernel)
+            self.assertIsInstance(
+                model.task_covar_module.IndexKernelPrior, LKJCovariancePrior
+            )
+
 
 class TestFixedNoiseMultiTaskGP(BotorchTestCase):
     def test_FixedNoiseMultiTaskGP(self):
@@ -281,3 +317,13 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
             posterior_f = model.posterior(test_x)
             self.assertIsInstance(posterior_f, GPyTorchPosterior)
             self.assertIsInstance(posterior_f.mvn, MultivariateNormal)
+
+    def test_FixedNoiseMultiTaskGP_fixed_prior(self):
+        for dtype in (torch.float, torch.double):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            model = _get_fixed_noise_and_prior_model(**tkwargs)
+            self.assertIsInstance(model, FixedNoiseMultiTaskGP)
+            self.assertIsInstance(model.task_covar_module, IndexKernel)
+            self.assertIsInstance(
+                model.task_covar_module.IndexKernelPrior, LKJCovariancePrior
+            )

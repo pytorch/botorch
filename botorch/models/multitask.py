@@ -14,7 +14,6 @@ from typing import List, Optional, Tuple
 
 import torch
 from botorch.models.gpytorch import MultiTaskGPyTorchModel
-from botorch.models.utils import validate_input_scaling
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels.index_kernel import IndexKernel
 from gpytorch.kernels.matern_kernel import MaternKernel
@@ -25,6 +24,7 @@ from gpytorch.likelihoods.gaussian_likelihood import (
 )
 from gpytorch.means.constant_mean import ConstantMean
 from gpytorch.models.exact_gp import ExactGP
+from gpytorch.priors.prior import Prior
 from gpytorch.priors.torch_priors import GammaPrior
 from torch import Tensor
 
@@ -47,6 +47,7 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
         train_X: Tensor,
         train_Y: Tensor,
         task_feature: int,
+        prior: Optional[Prior] = None,
         output_tasks: Optional[List[int]] = None,
         rank: Optional[int] = None,
     ) -> None:
@@ -72,18 +73,11 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
             >>> train_Y = torch.cat(f1(X1), f2(X2)).unsqueeze(-1)
             >>> model = MultiTaskGP(train_X, train_Y, task_feature=-1)
         """
-        self._validate_tensor_args(X=train_X, Y=train_Y)
-        validate_input_scaling(train_X=train_X, train_Y=train_Y)
-        if train_X.ndim != 2:
-            # Currently, batch mode MTGPs are blocked upstream in GPyTorch
-            raise ValueError(f"Unsupported shape {train_X.shape} for train_X.")
+        all_tasks, task_feature, d = self.get_all_tasks(
+            train_X, task_feature, output_tasks
+        )
         # squeeze output dim
         train_Y = train_Y.squeeze(-1)
-        d = train_X.shape[-1] - 1
-        if not (-d <= task_feature <= d):
-            raise ValueError(f"Must have that -{d} <= task_feature <= {d}")
-        task_feature = task_feature % (d + 1)
-        all_tasks = train_X[:, task_feature].unique().to(dtype=torch.long).tolist()
         if output_tasks is None:
             output_tasks = all_tasks
         else:
@@ -112,8 +106,10 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
         )
         num_tasks = len(all_tasks)
         self._rank = rank if rank is not None else num_tasks
-        # TODO: Add LKJ prior for the index kernel
-        self.task_covar_module = IndexKernel(num_tasks=num_tasks, rank=self._rank)
+
+        self.task_covar_module = IndexKernel(
+            num_tasks=num_tasks, rank=self._rank, prior=prior
+        )
         self.to(train_X)
 
     def _split_inputs(self, x: Tensor) -> Tuple[Tensor, Tensor]:
@@ -153,6 +149,23 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
         covar = covar_x.mul(covar_i)
         return MultivariateNormal(mean_x, covar)
 
+    @classmethod
+    def get_all_tasks(
+        cls,
+        train_X: Tensor,
+        task_feature: int,
+        output_tasks: Optional[List[int]] = None,
+    ) -> Tuple[List[int], int, int]:
+        if train_X.ndim != 2:
+            # Currently, batch mode MTGPs are blocked upstream in GPyTorch
+            raise ValueError(f"Unsupported shape {train_X.shape} for train_X.")
+        d = train_X.shape[-1] - 1
+        if not (-d <= task_feature <= d):
+            raise ValueError(f"Must have that -{d} <= task_feature <= {d}")
+        task_feature = task_feature % (d + 1)
+        all_tasks = train_X[:, task_feature].unique().to(dtype=torch.long).tolist()
+        return all_tasks, task_feature, d
+
 
 class FixedNoiseMultiTaskGP(MultiTaskGP):
     r"""Multi-Task GP model using an ICM kernel, with known observation noise.
@@ -171,6 +184,7 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
         train_Y: Tensor,
         train_Yvar: Tensor,
         task_feature: int,
+        prior: Optional[Prior] = None,
         output_tasks: Optional[List[int]] = None,
         rank: Optional[int] = None,
     ) -> None:
@@ -208,6 +222,7 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
             task_feature=task_feature,
             output_tasks=output_tasks,
             rank=rank,
+            prior=prior,
         )
         self.likelihood = FixedNoiseGaussianLikelihood(noise=train_Yvar.squeeze(-1))
         self.to(train_X)
