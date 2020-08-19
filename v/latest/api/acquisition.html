@@ -1247,6 +1247,38 @@ maximized at fixed <cite>X_actual[b]</cite>.</p>
 </dl>
 </dd></dl>
 <dl class="py method">
+<dt id="botorch.acquisition.knowledge_gradient.qKnowledgeGradient.evaluate">
+<code class="sig-name descname">evaluate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X_actual</span></em>, <em class="sig-param"><span class="n">bounds</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/knowledge_gradient.html#qKnowledgeGradient.evaluate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.knowledge_gradient.qKnowledgeGradient.evaluate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate qKnowledgeGradient on the candidate set <cite>X_actual</cite> by
+solving the inner optimization problem.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X_actual</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>b x q x d</cite> Tensor with <cite>b</cite> t-batches of <cite>q</cite> design points
+each. Unlike <cite>forward()</cite>, this does not include solutions of the
+inner optimization problem.</p></li>
+<li><p><strong>bounds</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of
+the solutions to the inner problem.</p></li>
+<li><p><strong>kwargs</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>) – Additional keyword arguments. This includes the options for
+optimization of the inner problem, i.e. <cite>num_restarts</cite>, <cite>raw_samples</cite>
+and an <cite>options</cite> dictionary to be passed on to the optimization helpers.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>A Tensor of shape <cite>b</cite>. For t-batch b, the q-KG value of the design</dt><dd><p><cite>X_actual[b]</cite> is averaged across the fantasy models.
+NOTE: If <cite>current_value</cite> is not provided, then this is not the
+true KG value of <cite>X_actual[b]</cite>.</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
 <dt id="botorch.acquisition.knowledge_gradient.qKnowledgeGradient.get_augmented_q_batch_size">
 <code class="sig-name descname">get_augmented_q_batch_size</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">q</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/knowledge_gradient.html#qKnowledgeGradient.get_augmented_q_batch_size"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.knowledge_gradient.qKnowledgeGradient.get_augmented_q_batch_size" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get augmented q batch size for one-shot optimzation.</p>
