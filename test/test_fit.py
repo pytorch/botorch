@@ -131,8 +131,9 @@ class TestFitGPyTorchModel(BotorchTestCase):
             with warnings.catch_warnings(record=True) as ws, settings.debug(True):
                 mll, info_dict = optimizer(mll, options=options, track_iterations=True)
                 if optimizer == fit_gpytorch_scipy:
-                    self.assertEqual(len(ws), 1)
-                    self.assertTrue(MAX_ITER_MSG in str(ws[0].message))
+                    self.assertEqual(
+                        sum(1 for w in ws if MAX_ITER_MSG in str(w.message)), 1
+                    )
             self.assertEqual(len(info_dict["iterations"]), options["maxiter"])
             self.assertIsInstance(info_dict["iterations"][0], OptimizationIteration)
             self.assertTrue("fopt" in info_dict)
@@ -168,8 +169,9 @@ class TestFitGPyTorchModel(BotorchTestCase):
                     mll, optimizer=optimizer, options=options, max_retries=1
                 )
                 if optimizer == fit_gpytorch_scipy:
-                    self.assertEqual(len(ws), 1)
-                    self.assertTrue(MAX_RETRY_MSG in str(ws[0].message))
+                    self.assertEqual(
+                        sum(1 for w in ws if MAX_RETRY_MSG in str(w.message)), 1
+                    )
             self.assertTrue(mll.dummy_param.grad is None)
 
             # test excluding a parameter
