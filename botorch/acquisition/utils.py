@@ -19,11 +19,13 @@ from botorch import settings
 from botorch.acquisition import monte_carlo  # noqa F401
 from botorch.acquisition import analytic, multi_objective
 from botorch.acquisition.acquisition import AcquisitionFunction
+from botorch.acquisition.multi_objective import monte_carlo as moo_monte_carlo
 from botorch.acquisition.objective import IdentityMCObjective, MCAcquisitionObjective
 from botorch.exceptions.errors import UnsupportedError
 from botorch.exceptions.warnings import SamplingWarning
 from botorch.models.model import Model
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
+from botorch.utils.multi_objective.box_decomposition import NondominatedPartitioning
 from botorch.utils.transforms import squeeze_last_dim
 from torch import Tensor
 from torch.quasirandom import SobolEngine
@@ -35,6 +37,7 @@ def get_acquisition_function(
     objective: MCAcquisitionObjective,
     X_observed: Tensor,
     X_pending: Optional[Tensor] = None,
+    constraints: Optional[List[Callable[[Tensor], Tensor]]] = None,
     mc_samples: int = 500,
     qmc: bool = True,
     seed: Optional[int] = None,
@@ -50,6 +53,11 @@ def get_acquisition_function(
             already been observed.
         X_pending: A `m2 x d`-dim Tensor of `m2` design points whose evaluation
             is pending.
+        constraints: A list of callables, each mapping a Tensor of dimension
+            `sample_shape x batch-shape x q x m` to a Tensor of dimension
+            `sample_shape x batch-shape x q`, where negative values imply
+            feasibility. Used when constraint_transforms are not passed
+            as part of the objective.
         mc_samples: The number of samples to use for (q)MC evaluation of the
             acquisition function.
         qmc: If True, use quasi-Monte-Carlo sampling (instead of iid).
@@ -111,6 +119,25 @@ def get_acquisition_function(
             sampler=sampler,
             objective=objective,
             X_pending=X_pending,
+        )
+    elif acquisition_function_name == "qEHVI":
+        # pyre-fixme [16]: `Model` has no attribute `train_targets`
+        if "ref_point" not in kwargs:
+            raise ValueError("`ref_point` must be specified in kwargs for qEHVI")
+        if "Y" not in kwargs:
+            raise ValueError("`Y` must be specified in kwargs for qEHVI")
+        ref_point = kwargs["ref_point"]
+        num_outcomes = len(ref_point)
+        partitioning = NondominatedPartitioning(
+            num_outcomes=num_outcomes, Y=kwargs.get("Y")[:, :num_outcomes]
+        )
+        return moo_monte_carlo.qExpectedHypervolumeImprovement(
+            model=model,
+            ref_point=ref_point,
+            partitioning=partitioning,
+            sampler=sampler,
+            objective=objective,
+            constraints=constraints,
         )
     raise NotImplementedError(
         f"Unknown acquisition function {acquisition_function_name}"

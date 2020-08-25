@@ -12,6 +12,7 @@ from botorch.acquisition.multi_objective.objective import (
     MCMultiOutputObjective,
     UnstandardizeAnalyticMultiOutputObjective,
     UnstandardizeMCMultiOutputObjective,
+    WeightedMCMultiOutputObjective,
 )
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.models.transforms.outcome import Standardize
@@ -32,6 +33,17 @@ class TestIdentityMCMultiOutputObjective(BotorchTestCase):
         ):
             samples = torch.rand(*batch_shape, 2, m, device=self.device, dtype=dtype)
             self.assertTrue(torch.equal(objective(samples), samples))
+
+
+class TestWeightedMCMultiOutputObjective(BotorchTestCase):
+    def test_weighted_mc_multi_output_objective(self):
+        for batch_shape, m, dtype in itertools.product(
+            ([], [3]), (2, 3), (torch.float, torch.double)
+        ):
+            weights = torch.rand(m)
+            objective = WeightedMCMultiOutputObjective(weights=weights)
+            samples = torch.rand(*batch_shape, 2, m, device=self.device, dtype=dtype)
+            self.assertTrue(torch.equal(objective(samples), samples * weights))
 
 
 class TestUnstandardizeMultiOutputObjective(BotorchTestCase):

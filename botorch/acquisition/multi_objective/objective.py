@@ -44,16 +44,39 @@ class MCMultiOutputObjective(AcquisitionObjective):
 
 
 class IdentityMCMultiOutputObjective(MCMultiOutputObjective):
-    r"""Trivial objective extracting the last dimension.
+    r"""Trivial objective that returns the unaltered samples.
 
     Example:
-        >>> identity_objective = IdentityMCObjective()
+        >>> identity_objective = IdentityMCMultiOutputObjective()
         >>> samples = sampler(posterior)
         >>> objective = identity_objective(samples)
     """
 
     def forward(self, samples: Tensor) -> Tensor:
         return samples
+
+
+class WeightedMCMultiOutputObjective(MCMultiOutputObjective):
+    r"""Objective that reweights samples by given weights vector.
+
+    Example:
+        >>> weights = torch.tensor([1.0, -1.0])
+        >>> weighted_objective = WeightedMCMultiOutputObjective(weights)
+        >>> samples = sampler(posterior)
+        >>> objective = weighted_objective(samples)
+    """
+
+    def __init__(self, weights: Tensor) -> None:
+        r"""Initialize Objective.
+
+        Args:
+            weights: `m`-dim tensor of outcome weights.
+        """
+        super().__init__()
+        self.register_buffer("weights", weights)
+
+    def forward(self, samples: Tensor) -> Tensor:
+        return samples * self.weights
 
 
 class UnstandardizeMCMultiOutputObjective(MCMultiOutputObjective):

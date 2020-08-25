@@ -19,6 +19,7 @@ from botorch.acquisition.multi_objective.objective import (
     MCMultiOutputObjective,
     UnstandardizeAnalyticMultiOutputObjective,
     UnstandardizeMCMultiOutputObjective,
+    WeightedMCMultiOutputObjective,
 )
 
 
