@@ -150,8 +150,7 @@ class qExpectedHypervolumeImprovement(MultiObjectiveMCAcquisitionFunction):
         self.constraints = constraints
         self.eta = eta
         self.register_buffer("ref_point", ref_point)
-        self.partitioning = partitioning
-        cell_bounds = self.partitioning.get_hypercell_bounds(ref_point=self.ref_point)
+        cell_bounds = partitioning.get_hypercell_bounds(ref_point=self.ref_point)
         self.register_buffer("cell_lower_bounds", cell_bounds[0])
         self.register_buffer("cell_upper_bounds", cell_bounds[1])
         self.q = -1
@@ -231,35 +230,23 @@ class qExpectedHypervolumeImprovement(MultiObjectiveMCAcquisitionFunction):
             # memory usage.
             q_choose_i = self.q_subset_indices[f"q_choose_{i}"]
             # this tensor is mc_samples x batch_shape x i x q_choose_i x m
-            obj_subsets = torch.stack(
-                [obj.index_select(dim=-2, index=q_choose_i[:, k]) for k in range(i)],
-                dim=-3,
+            obj_subsets = obj.index_select(dim=-2, index=q_choose_i.view(-1))
+            obj_subsets = obj_subsets.view(
+                obj.shape[:-2] + q_choose_i.shape + obj.shape[-1:]
             )
             # since all hyperrectangles share one vertex, the opposite vertex of the
             # overlap is given by the component-wise minimum.
             # take the minimum in each subset
-            overlap_vertices = obj_subsets.min(dim=-3).values
-            expanded_shape = (
-                batch_shape
-                + self.cell_upper_bounds.shape[-2:-1]
-                + overlap_vertices.shape[-2:]
-            )
+            overlap_vertices = obj_subsets.min(dim=-2).values
             # add batch-dim to compute area for each segment (pseudo-pareto-vertex)
             # this tensor is mc_samples x batch_shape x num_cells x q_choose_i x m
-            overlap_vertices = overlap_vertices.unsqueeze(-3).expand(
-                *batch_shape,
-                self.cell_lower_bounds.shape[-2],
-                *overlap_vertices.shape[-2:],
-            )
             overlap_vertices = torch.min(
-                overlap_vertices,
-                self.cell_upper_bounds.view(view_shape).expand(expanded_shape),
+                overlap_vertices.unsqueeze(-3), self.cell_upper_bounds.view(view_shape)
             )
             # substract cell lower bounds, clamp min at zero
-            lengths_i = overlap_vertices - self.cell_lower_bounds.view(
-                view_shape
-            ).expand(expanded_shape)
-            lengths_i = lengths_i.clamp_min(0.0)
+            lengths_i = (
+                overlap_vertices - self.cell_lower_bounds.view(view_shape)
+            ).clamp_min(0.0)
             # take product over hyperrectangle side lengths to compute area
             # sum over all subsets of size i
             areas_i = lengths_i.prod(dim=-1).sum(dim=-1)
