@@ -11,7 +11,7 @@ from typing import List, Optional
 
 import torch
 from botorch.acquisition.objective import AcquisitionObjective
-from botorch.exceptions.errors import BotorchTensorDimensionError
+from botorch.exceptions.errors import BotorchError, BotorchTensorDimensionError
 from botorch.models.transforms.outcome import Standardize
 from botorch.posteriors import GPyTorchPosterior
 from botorch.utils.transforms import normalize_indices
@@ -19,10 +19,10 @@ from torch import Tensor
 
 
 class MCMultiOutputObjective(AcquisitionObjective):
-    r"""Abstract base class for multi-output objectives."""
+    r"""Abstract base class for MC multi-output objectives."""
 
     @abstractmethod
-    def forward(self, samples: Tensor) -> Tensor:
+    def forward(self, samples: Tensor, **kwargs) -> Tensor:
         r"""Evaluate the multi-output objective on the samples.
 
         Args:
@@ -52,11 +52,29 @@ class IdentityMCMultiOutputObjective(MCMultiOutputObjective):
         >>> objective = identity_objective(samples)
     """
 
+    def __init__(
+        self, outcomes: Optional[List[int]] = None, num_outcomes: Optional[int] = None
+    ) -> None:
+        super().__init__()
+        if outcomes is not None:
+            if len(outcomes) < 2:
+                raise BotorchTensorDimensionError(
+                    "Must specify at least two outcomes for MOO."
+                )
+            elif num_outcomes is None and [i < 0 for i in outcomes]:
+                raise BotorchError(
+                    "num_outcomes is required if any outcomes are less than 0."
+                )
+            nlzd_idcs = normalize_indices(outcomes, num_outcomes)
+            self.register_buffer("outcomes", torch.tensor(nlzd_idcs, dtype=torch.long))
+
     def forward(self, samples: Tensor) -> Tensor:
+        if hasattr(self, "outcomes"):
+            return samples.index_select(-1, self.outcomes.to(device=samples.device))
         return samples
 
 
-class WeightedMCMultiOutputObjective(MCMultiOutputObjective):
+class WeightedMCMultiOutputObjective(IdentityMCMultiOutputObjective):
     r"""Objective that reweights samples by given weights vector.
 
     Example:
@@ -66,20 +84,26 @@ class WeightedMCMultiOutputObjective(MCMultiOutputObjective):
         >>> objective = weighted_objective(samples)
     """
 
-    def __init__(self, weights: Tensor) -> None:
+    def __init__(
+        self,
+        weights: Tensor,
+        outcomes: Optional[List[int]] = None,
+        num_outcomes: Optional[int] = None,
+    ) -> None:
         r"""Initialize Objective.
 
         Args:
             weights: `m`-dim tensor of outcome weights.
         """
-        super().__init__()
+        super().__init__(outcomes=outcomes, num_outcomes=num_outcomes)
         self.register_buffer("weights", weights)
 
     def forward(self, samples: Tensor) -> Tensor:
+        samples = super().forward(samples=samples)
         return samples * self.weights
 
 
-class UnstandardizeMCMultiOutputObjective(MCMultiOutputObjective):
+class UnstandardizeMCMultiOutputObjective(IdentityMCMultiOutputObjective):
     r"""Objective that unstandardizes the samples.
 
     TODO: remove this when MultiTask models support outcome transforms.
@@ -107,22 +131,13 @@ class UnstandardizeMCMultiOutputObjective(MCMultiOutputObjective):
                 "Y_mean and Y_std must both be 1-dimensional, but got "
                 f"{Y_mean.ndim} and {Y_std.ndim}"
             )
-        super().__init__()
-        if outcomes is not None:
-            if len(outcomes) < 2:
-                raise BotorchTensorDimensionError(
-                    "Must specify at least two outcomes for MOO."
-                )
-            elif len(outcomes) > Y_mean.shape[-1]:
-                raise BotorchTensorDimensionError(
-                    f"Cannot specify more ({len(outcomes)}) outcomes that present in "
-                    f"the normalization inputs ({Y_mean.shape[-1]})."
-                )
-            nlzd_idcs = normalize_indices(outcomes, Y_mean.shape[-1])
-            self.register_buffer(
-                "outcomes",
-                torch.tensor(nlzd_idcs, dtype=torch.long).to(device=Y_mean.device),
+        elif outcomes is not None and len(outcomes) > Y_mean.shape[-1]:
+            raise BotorchTensorDimensionError(
+                f"Cannot specify more ({len(outcomes)}) outcomes that present in "
+                f"the normalization inputs ({Y_mean.shape[-1]})."
             )
+        super().__init__(outcomes=outcomes, num_outcomes=Y_mean.shape[-1])
+        if outcomes is not None:
             Y_mean = Y_mean.index_select(-1, self.outcomes)
             Y_std = Y_std.index_select(-1, self.outcomes)
 
@@ -130,8 +145,7 @@ class UnstandardizeMCMultiOutputObjective(MCMultiOutputObjective):
         self.register_buffer("Y_std", Y_std)
 
     def forward(self, samples: Tensor) -> Tensor:
-        if hasattr(self, "outcomes"):
-            samples = samples.index_select(-1, self.outcomes)
+        samples = super().forward(samples=samples)
         return samples * self.Y_std + self.Y_mean
 
 
@@ -166,17 +180,12 @@ class UnstandardizeAnalyticMultiOutputObjective(AnalyticMultiOutputObjective):
         >>> unstd_posterior = unstd_objective(posterior)
     """
 
-    def __init__(
-        self, Y_mean: Tensor, Y_std: Tensor, outcomes: Optional[List[int]] = None
-    ) -> None:
+    def __init__(self, Y_mean: Tensor, Y_std: Tensor) -> None:
         r"""Initialize objective.
 
         Args:
             Y_mean: `m`-dim tensor of outcome means
             Y_std: `m`-dim tensor of outcome standard deviations
-            outcomes: A list of `m' <= m` indices that specifies which of the `m` model
-                outputs should be considered as the outcomes for MOO. If omitted, use
-                all model outcomes. Typically used for constrained optimization.
 
         """
         if Y_mean.ndim > 1 or Y_std.ndim > 1:
@@ -184,20 +193,8 @@ class UnstandardizeAnalyticMultiOutputObjective(AnalyticMultiOutputObjective):
                 "Y_mean and Y_std must both be 1-dimensional, but got "
                 f"{Y_mean.ndim} and {Y_std.ndim}"
             )
-        if outcomes is not None:
-            if len(outcomes) < 2:
-                raise BotorchTensorDimensionError(
-                    "Must specify at least two outcomes for MOO."
-                )
-            elif len(outcomes) > Y_mean.shape[-1]:
-                raise BotorchTensorDimensionError(
-                    f"Cannot specify more ({len(outcomes)}) outcomes that present in "
-                    f"the normalization inputs ({Y_mean.shape[-1]})."
-                )
         super().__init__()
-        self.outcome_transform = Standardize(m=Y_mean.shape[0], outputs=outcomes).to(
-            Y_mean
-        )
+        self.outcome_transform = Standardize(m=Y_mean.shape[0]).to(Y_mean)
         Y_std_unsqueezed = Y_std.unsqueeze(0)
         self.outcome_transform.means = Y_mean.unsqueeze(0)
         self.outcome_transform.stdvs = Y_std_unsqueezed

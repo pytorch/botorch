@@ -14,7 +14,7 @@ from botorch.acquisition.multi_objective.objective import (
     UnstandardizeMCMultiOutputObjective,
     WeightedMCMultiOutputObjective,
 )
-from botorch.exceptions.errors import BotorchTensorDimensionError
+from botorch.exceptions.errors import BotorchError, BotorchTensorDimensionError
 from botorch.models.transforms.outcome import Standardize
 from botorch.utils.testing import BotorchTestCase, MockPosterior
 
@@ -28,6 +28,11 @@ class TestMCMultiOutputObjective(BotorchTestCase):
 class TestIdentityMCMultiOutputObjective(BotorchTestCase):
     def test_identity_mc_multi_output_objective(self):
         objective = IdentityMCMultiOutputObjective()
+        with self.assertRaises(BotorchTensorDimensionError):
+            IdentityMCMultiOutputObjective(outcomes=[0])
+        # test negative outcome without specifying num_outcomes
+        with self.assertRaises(BotorchError):
+            IdentityMCMultiOutputObjective(outcomes=[0, -1])
         for batch_shape, m, dtype in itertools.product(
             ([], [3]), (2, 3), (torch.float, torch.double)
         ):
@@ -48,29 +53,30 @@ class TestWeightedMCMultiOutputObjective(BotorchTestCase):
 
 class TestUnstandardizeMultiOutputObjective(BotorchTestCase):
     def test_unstandardize_mo_objective(self):
+        Y_mean = torch.ones(2)
+        Y_std = torch.ones(2)
+        with self.assertRaises(BotorchTensorDimensionError):
+            UnstandardizeMCMultiOutputObjective(
+                Y_mean=Y_mean, Y_std=Y_std, outcomes=[0, 1, 2]
+            )
         for objective_class in (
             UnstandardizeMCMultiOutputObjective,
             UnstandardizeAnalyticMultiOutputObjective,
         ):
-            Y_mean = torch.ones(2)
-            Y_std = torch.ones(2)
             with self.assertRaises(BotorchTensorDimensionError):
                 objective_class(Y_mean=Y_mean.unsqueeze(0), Y_std=Y_std)
             with self.assertRaises(BotorchTensorDimensionError):
                 objective_class(Y_mean=Y_mean, Y_std=Y_std.unsqueeze(0))
-            with self.assertRaises(BotorchTensorDimensionError):
-                objective_class(Y_mean=Y_mean, Y_std=Y_std, outcomes=[0])
-            with self.assertRaises(BotorchTensorDimensionError):
-                objective_class(Y_mean=Y_mean, Y_std=Y_std, outcomes=[0, 1, 2])
             objective = objective_class(Y_mean=Y_mean, Y_std=Y_std)
             for batch_shape, m, outcomes, dtype in itertools.product(
                 ([], [3]), (2, 3), (None, [-2, -1]), (torch.float, torch.double)
             ):
                 Y_mean = torch.rand(m, dtype=dtype, device=self.device)
                 Y_std = torch.rand(m, dtype=dtype, device=self.device).clamp_min(1e-3)
-                objective = objective_class(
-                    Y_mean=Y_mean, Y_std=Y_std, outcomes=outcomes
-                )
+                kwargs = {}
+                if objective_class == UnstandardizeMCMultiOutputObjective:
+                    kwargs["outcomes"] = outcomes
+                objective = objective_class(Y_mean=Y_mean, Y_std=Y_std, **kwargs)
                 if objective_class == UnstandardizeAnalyticMultiOutputObjective:
                     if outcomes is None:
                         # passing outcomes is not currently supported
