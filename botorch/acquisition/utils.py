@@ -128,8 +128,13 @@ def get_acquisition_function(
             raise ValueError("`Y` must be specified in kwargs for qEHVI")
         ref_point = kwargs["ref_point"]
         num_outcomes = len(ref_point)
+        Y = kwargs.get("Y")
+        # get feasible points
+        if constraints is not None:
+            feas = torch.stack([c(Y) <= 0 for c in constraints], dim=-1).all(dim=-1)
+            Y = Y[feas]
         partitioning = NondominatedPartitioning(
-            num_outcomes=num_outcomes, Y=kwargs.get("Y")[:, :num_outcomes]
+            num_outcomes=num_outcomes, Y=Y[:, :num_outcomes]
         )
         return moo_monte_carlo.qExpectedHypervolumeImprovement(
             model=model,
