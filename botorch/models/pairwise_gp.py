@@ -49,7 +49,7 @@ from torch import Tensor, float32, float64
 
 
 class PairwiseGP(Model, GP):
-    r""" Probit GP for preference learning with Laplace approximation
+    r"""Probit GP for preference learning with Laplace approximation
 
     Implementation is based on [Chu2005preference]_.
     Also see [Brochu2010tutorial]_ for additional reference.
@@ -372,7 +372,7 @@ class PairwiseGP(Model, GP):
         covar_inv: Tensor,
         ret_np: bool = False,
     ) -> Union[Tensor, np.ndarray]:
-        r""" Compute the gradient of S loss wrt to f/utility in [Chu2005preference]_.
+        r"""Compute the gradient of S loss wrt to f/utility in [Chu2005preference]_.
 
         For finding f_map, which is negative of the log posterior, i.e., -log(p(f|D))
         Derivative of (10) in [Chu2005preference]_.

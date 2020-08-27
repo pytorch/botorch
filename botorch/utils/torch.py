@@ -77,8 +77,7 @@ class BufferDict(Module):
         return key in self._buffers
 
     def clear(self):
-        """Remove all items from the BufferDict.
-        """
+        """Remove all items from the BufferDict."""
         self._buffers.clear()
 
     def pop(self, key):
@@ -92,18 +91,15 @@ class BufferDict(Module):
         return v
 
     def keys(self):
-        r"""Return an iterable of the BufferDict keys.
-        """
+        r"""Return an iterable of the BufferDict keys."""
         return self._buffers.keys()
 
     def items(self):
-        r"""Return an iterable of the BufferDict key/value pairs.
-        """
+        r"""Return an iterable of the BufferDict key/value pairs."""
         return self._buffers.items()
 
     def values(self):
-        r"""Return an iterable of the BufferDict values.
-        """
+        r"""Return an iterable of the BufferDict values."""
         return self._buffers.values()
 
     def update(self, buffers):
