@@ -34,4 +34,5 @@ __all__ = [
     "qExpectedHypervolumeImprovement",
     "UnstandardizeAnalyticMultiOutputObjective",
     "UnstandardizeMCMultiOutputObjective",
+    "WeightedMCMultiOutputObjective",
 ]
