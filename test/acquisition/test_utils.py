@@ -362,6 +362,23 @@ class TestGetAcquisitionFunction(BotorchTestCase):
 
         self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
         self.assertEqual(sampler.seed, 2)
+        # test constraints
+        acqf = get_acquisition_function(
+            acquisition_function_name="qEHVI",
+            model=self.model,
+            objective=self.objective,
+            X_observed=self.X_observed,
+            X_pending=self.X_pending,
+            mc_samples=self.mc_samples,
+            constraints=[lambda Y: Y[..., -1]],
+            seed=2,
+            qmc=False,
+            ref_point=self.ref_point,
+            Y=self.Y,
+        )
+        _, kwargs = mock_acqf.call_args
+        partitioning = kwargs["partitioning"]
+        self.assertEqual(partitioning._pareto_Y.shape[0], 0)
 
     def test_GetUnknownAcquisitionFunction(self):
         with self.assertRaises(NotImplementedError):
