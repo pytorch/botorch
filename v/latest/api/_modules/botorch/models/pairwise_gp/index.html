@@ -75,7 +75,7 @@
 
 
 <div class="viewcode-block" id="PairwiseGP"><a class="viewcode-back" href="../../../models.html#botorch.models.pairwise_gp.PairwiseGP">[docs]</a><span class="k">class</span> <span class="nc">PairwiseGP</span><span class="p">(</span><span class="n">Model</span><span class="p">,</span> <span class="n">GP</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">""" Probit GP for preference learning with Laplace approximation</span>
+    <span class="sa">r</span><span class="sd">"""Probit GP for preference learning with Laplace approximation</span>
 
 <span class="sd">    Implementation is based on [Chu2005preference]_.</span>
 <span class="sd">    Also see [Brochu2010tutorial]_ for additional reference.</span>
@@ -398,7 +398,7 @@
         <span class="n">covar_inv</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">ret_np</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
-        <span class="sa">r</span><span class="sd">""" Compute the gradient of S loss wrt to f/utility in [Chu2005preference]_.</span>
+        <span class="sa">r</span><span class="sd">"""Compute the gradient of S loss wrt to f/utility in [Chu2005preference]_.</span>
 
 <span class="sd">        For finding f_map, which is negative of the log posterior, i.e., -log(p(f|D))</span>
 <span class="sd">        Derivative of (10) in [Chu2005preference]_.</span>

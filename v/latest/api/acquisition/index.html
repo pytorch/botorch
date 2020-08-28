@@ -1990,9 +1990,9 @@ a model posterior.</p>
 <dt id="botorch.acquisition.multi_objective.objective.IdentityMCMultiOutputObjective">
 <em class="property">class </em><code class="sig-prename descclassname">botorch.acquisition.multi_objective.objective.</code><code class="sig-name descname">IdentityMCMultiOutputObjective</code><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#IdentityMCMultiOutputObjective"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.IdentityMCMultiOutputObjective" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.multi_objective.objective.MCMultiOutputObjective</span></code></a></p>
-<p>Trivial objective extracting the last dimension.</p>
+<p>Trivial objective that returns the unaltered samples.</p>
 <p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">identity_objective</span> <span class="o">=</span> <span class="n">IdentityMCObjective</span><span class="p">()</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">identity_objective</span> <span class="o">=</span> <span class="n">IdentityMCMultiOutputObjective</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">objective</span> <span class="o">=</span> <span class="n">identity_objective</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
 </pre></div>
@@ -2026,6 +2026,54 @@ a model posterior.</p>
 <dl class="py attribute">
 <dt id="botorch.acquisition.multi_objective.objective.IdentityMCMultiOutputObjective.training">
 <code class="sig-name descname">training</code><em class="property">: bool</em><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.IdentityMCMultiOutputObjective.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt id="botorch.acquisition.multi_objective.objective.WeightedMCMultiOutputObjective">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.acquisition.multi_objective.objective.</code><code class="sig-name descname">WeightedMCMultiOutputObjective</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">weights</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#WeightedMCMultiOutputObjective"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.WeightedMCMultiOutputObjective" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.multi_objective.objective.MCMultiOutputObjective</span></code></a></p>
+<p>Objective that reweights samples by given weights vector.</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">weights</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">weighted_objective</span> <span class="o">=</span> <span class="n">WeightedMCMultiOutputObjective</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">objective</span> <span class="o">=</span> <span class="n">weighted_objective</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Initialize Objective.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>weights</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – <cite>m</cite>-dim tensor of outcome weights.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="botorch.acquisition.multi_objective.objective.WeightedMCMultiOutputObjective.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">samples</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#WeightedMCMultiOutputObjective.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.WeightedMCMultiOutputObjective.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the multi-output objective on the samples.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>sample_shape x batch_shape x q x m</cite>-dim Tensors of samples from
+a model posterior.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>sample_shape x batch_shape x q x m’</cite>-dim Tensor of objective values with
+<cite>m’</cite> the output dimension. assuming maximization in each output dimension).</p>
+</dd>
+</dl>
+<p>This method is usually not called directly, but via the objectives</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># `__call__` method:</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">outcomes</span> <span class="o">=</span> <span class="n">multi_obj</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+<dl class="py attribute">
+<dt id="botorch.acquisition.multi_objective.objective.WeightedMCMultiOutputObjective.training">
+<code class="sig-name descname">training</code><em class="property">: bool</em><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.WeightedMCMultiOutputObjective.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
 <dl class="py class">
@@ -2386,7 +2434,7 @@ by adding <cite>values</cite> in the appropriate places (see
 <p>Utilities for acquisition functions.</p>
 <dl class="py function">
 <dt id="botorch.acquisition.utils.get_acquisition_function">
-<code class="sig-prename descclassname">botorch.acquisition.utils.</code><code class="sig-name descname">get_acquisition_function</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">acquisition_function_name</span></em>, <em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">objective</span></em>, <em class="sig-param"><span class="n">X_observed</span></em>, <em class="sig-param"><span class="n">X_pending</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">mc_samples</span><span class="o">=</span><span class="default_value">500</span></em>, <em class="sig-param"><span class="n">qmc</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">seed</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/utils.html#get_acquisition_function"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.utils.get_acquisition_function" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.acquisition.utils.</code><code class="sig-name descname">get_acquisition_function</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">acquisition_function_name</span></em>, <em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">objective</span></em>, <em class="sig-param"><span class="n">X_observed</span></em>, <em class="sig-param"><span class="n">X_pending</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">constraints</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">mc_samples</span><span class="o">=</span><span class="default_value">500</span></em>, <em class="sig-param"><span class="n">qmc</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">seed</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/utils.html#get_acquisition_function"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.utils.get_acquisition_function" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convenience function for initializing botorch acquisition functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -2398,6 +2446,11 @@ by adding <cite>values</cite> in the appropriate places (see
 already been observed.</p></li>
 <li><p><strong>X_pending</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>m2 x d</cite>-dim Tensor of <cite>m2</cite> design points whose evaluation
 is pending.</p></li>
+<li><p><strong>constraints</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]]]) – A list of callables, each mapping a Tensor of dimension
+<cite>sample_shape x batch-shape x q x m</cite> to a Tensor of dimension
+<cite>sample_shape x batch-shape x q</cite>, where negative values imply
+feasibility. Used when constraint_transforms are not passed
+as part of the objective.</p></li>
 <li><p><strong>mc_samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of samples to use for (q)MC evaluation of the
 acquisition function.</p></li>
 <li><p><strong>qmc</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, use quasi-Monte-Carlo sampling (instead of iid).</p></li>

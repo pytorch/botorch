@@ -70,16 +70,39 @@
 
 
 <div class="viewcode-block" id="IdentityMCMultiOutputObjective"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.objective.IdentityMCMultiOutputObjective">[docs]</a><span class="k">class</span> <span class="nc">IdentityMCMultiOutputObjective</span><span class="p">(</span><span class="n">MCMultiOutputObjective</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Trivial objective extracting the last dimension.</span>
+    <span class="sa">r</span><span class="sd">"""Trivial objective that returns the unaltered samples.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; identity_objective = IdentityMCObjective()</span>
+<span class="sd">        &gt;&gt;&gt; identity_objective = IdentityMCMultiOutputObjective()</span>
 <span class="sd">        &gt;&gt;&gt; samples = sampler(posterior)</span>
 <span class="sd">        &gt;&gt;&gt; objective = identity_objective(samples)</span>
 <span class="sd">    """</span>
 
 <div class="viewcode-block" id="IdentityMCMultiOutputObjective.forward"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.objective.IdentityMCMultiOutputObjective.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">samples</span></div></div>
+
+
+<div class="viewcode-block" id="WeightedMCMultiOutputObjective"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.objective.WeightedMCMultiOutputObjective">[docs]</a><span class="k">class</span> <span class="nc">WeightedMCMultiOutputObjective</span><span class="p">(</span><span class="n">MCMultiOutputObjective</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""Objective that reweights samples by given weights vector.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; weights = torch.tensor([1.0, -1.0])</span>
+<span class="sd">        &gt;&gt;&gt; weighted_objective = WeightedMCMultiOutputObjective(weights)</span>
+<span class="sd">        &gt;&gt;&gt; samples = sampler(posterior)</span>
+<span class="sd">        &gt;&gt;&gt; objective = weighted_objective(samples)</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Initialize Objective.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            weights: `m`-dim tensor of outcome weights.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"weights"</span><span class="p">,</span> <span class="n">weights</span><span class="p">)</span>
+
+<div class="viewcode-block" id="WeightedMCMultiOutputObjective.forward"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.objective.WeightedMCMultiOutputObjective.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">samples</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span></div></div>
 
 
 <div class="viewcode-block" id="UnstandardizeMCMultiOutputObjective"><a class="viewcode-back" href="../../../../acquisition.html#botorch.acquisition.multi_objective.objective.UnstandardizeMCMultiOutputObjective">[docs]</a><span class="k">class</span> <span class="nc">UnstandardizeMCMultiOutputObjective</span><span class="p">(</span><span class="n">MCMultiOutputObjective</span><span class="p">):</span>
