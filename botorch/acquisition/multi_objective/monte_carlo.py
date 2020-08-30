@@ -249,18 +249,15 @@ class qExpectedHypervolumeImprovement(MultiObjectiveMCAcquisitionFunction):
             ).clamp_min(0.0)
             # take product over hyperrectangle side lengths to compute area
             # sum over all subsets of size i
-            areas_i = lengths_i.prod(dim=-1).sum(dim=-1)
+            areas_i = lengths_i.prod(dim=-1)
             # if constraints are present, apply a differentiable approximation of
             # the indicator function
             if self.constraints is not None:
-                feas_subsets = torch.cat(
-                    [
-                        feas_weights.index_select(dim=-1, index=q_choose_i[:, k])
-                        for k in range(i)
-                    ],
-                    dim=-1,
-                )
-                areas_i = areas_i * feas_subsets.prod(-1, keepdim=True)
+                feas_subsets = feas_weights.index_select(
+                    dim=-1, index=q_choose_i.view(-1)
+                ).view(feas_weights.shape[:-1] + q_choose_i.shape)
+                areas_i = areas_i * feas_subsets.unsqueeze(-3).prod(dim=-1)
+            areas_i = areas_i.sum(dim=-1)
             # Using the inclusion-exclusion principle, set the sign to be positive
             # for subsets of odd sizes and negative for subsets of even size
             areas_per_segment += (-1) ** (i + 1) * areas_i
