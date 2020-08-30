@@ -52,6 +52,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         self.mc_samples = 250
         self.qmc = True
         self.ref_point = [0.0, 0.0]
+        self.mo_objective = DummyMCMultiOutputObjective()
         self.Y = torch.tensor([[1.0, 2.0]])
         self.seed = 1
 
@@ -133,6 +134,17 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
         self.assertEqual(sampler.seed, 2)
         self.assertTrue(torch.equal(kwargs["X_pending"], self.X_pending))
+        acqf = get_acquisition_function(
+            acquisition_function_name="qPI",
+            model=self.model,
+            objective=self.objective,
+            X_observed=self.X_observed,
+            X_pending=self.X_pending,
+            mc_samples=self.mc_samples,
+            qmc=False,
+            seed=2,
+            tau=1.0,
+        )
 
     @mock.patch(f"{monte_carlo.__name__}.qNoisyExpectedImprovement")
     def test_GetQNEI(self, mock_acqf):
@@ -291,7 +303,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             acqf = get_acquisition_function(
                 acquisition_function_name="qEHVI",
                 model=self.model,
-                objective=self.objective,
+                objective=self.mo_objective,
                 X_observed=self.X_observed,
                 X_pending=self.X_pending,
                 mc_samples=self.mc_samples,
@@ -303,7 +315,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             acqf = get_acquisition_function(
                 acquisition_function_name="qEHVI",
                 model=self.model,
-                objective=self.objective,
+                objective=self.mo_objective,
                 X_observed=self.X_observed,
                 X_pending=self.X_pending,
                 mc_samples=self.mc_samples,
@@ -313,7 +325,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         acqf = get_acquisition_function(
             acquisition_function_name="qEHVI",
             model=self.model,
-            objective=self.objective,
+            objective=self.mo_objective,
             X_observed=self.X_observed,
             X_pending=self.X_pending,
             mc_samples=self.mc_samples,
@@ -325,7 +337,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         mock_acqf.assert_called_once_with(
             constraints=None,
             model=self.model,
-            objective=self.objective,
+            objective=self.mo_objective,
             ref_point=self.ref_point,
             partitioning=mock.ANY,
             sampler=mock.ANY,
@@ -340,7 +352,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         acqf = get_acquisition_function(
             acquisition_function_name="qEHVI",
             model=self.model,
-            objective=self.objective,
+            objective=self.mo_objective,
             X_observed=self.X_observed,
             X_pending=self.X_pending,
             mc_samples=self.mc_samples,
@@ -355,8 +367,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         self.assertEqual(kwargs["ref_point"], self.ref_point)
         sampler = kwargs["sampler"]
         self.assertIsInstance(sampler, IIDNormalSampler)
-        ref_point = kwargs["ref_point"]
-        self.assertEqual(ref_point, self.ref_point)
+        self.assertIsInstance(kwargs["objective"], DummyMCMultiOutputObjective)
         partitioning = kwargs["partitioning"]
         self.assertIsInstance(partitioning, NondominatedPartitioning)
 
@@ -366,7 +377,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         acqf = get_acquisition_function(
             acquisition_function_name="qEHVI",
             model=self.model,
-            objective=self.objective,
+            objective=self.mo_objective,
             X_observed=self.X_observed,
             X_pending=self.X_pending,
             mc_samples=self.mc_samples,

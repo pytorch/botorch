@@ -195,7 +195,7 @@ class qExpectedHypervolumeImprovement(MultiObjectiveMCAcquisitionFunction):
         q = samples.shape[-2]
         # Note that the objective may subset the outcomes (e.g. this will usually happen
         # if there are constraints present).
-        obj = self.objective(samples)[..., : self.ref_point.shape[0]]
+        obj = self.objective(samples)
         if self.constraints is not None:
             feas_weights = torch.ones(
                 obj.shape[:-1], device=obj.device, dtype=obj.dtype
