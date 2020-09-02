@@ -10,10 +10,11 @@ Multi-Task GP models.
 
 from __future__ import annotations
 
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import torch
 from botorch.models.gpytorch import MultiTaskGPyTorchModel
+from botorch.utils.containers import TrainingData
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels.index_kernel import IndexKernel
 from gpytorch.kernels.matern_kernel import MaternKernel
@@ -166,6 +167,29 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
         all_tasks = train_X[:, task_feature].unique().to(dtype=torch.long).tolist()
         return all_tasks, task_feature, d
 
+    @classmethod
+    def construct_inputs(cls, training_data: TrainingData, **kwargs) -> Dict[str, Any]:
+        r"""Construct kwargs for the `Model` from `TrainingData`.
+
+        Args:
+            training_data: `TrainingData` container with data for single outcome
+                or for multiple outcomes for batched multi-output case.
+            **kwargs: Additional options for the model that pertain to the
+                training data:
+                - `task_features` – indices of the input columns containing the task
+                features (expected list of length 1).
+        """
+
+        task_features = kwargs.get("task_features")
+        if task_features is None:
+            raise ValueError(f"task features required for {cls.__name__}.")
+
+        return {
+            "train_X": training_data.X,
+            "train_Y": training_data.Y,
+            "task_feature": task_features[0],
+        }
+
 
 class FixedNoiseMultiTaskGP(MultiTaskGP):
     r"""Multi-Task GP model using an ICM kernel, with known observation noise.
@@ -226,3 +250,28 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
         )
         self.likelihood = FixedNoiseGaussianLikelihood(noise=train_Yvar.squeeze(-1))
         self.to(train_X)
+
+    @classmethod
+    def construct_inputs(cls, training_data: TrainingData, **kwargs) -> Dict[str, Any]:
+        r"""Construct kwargs for the `Model` from `TrainingData`.
+
+        Args:
+            training_data: `TrainingData` container with data for single outcome
+                or for multiple outcomes for batched multi-output case.
+            **kwargs: Additional options for the model that pertain to the
+                training data:
+                - `task_features` – indices of task features in X.
+        """
+
+        task_features = kwargs.get("task_features")
+        if task_features is None:
+            raise ValueError(f"task features required for {cls.__name__}.")
+        if training_data.Yvar is None:
+            raise ValueError(f"Yvar required for {cls.__name__}.")
+
+        return {
+            "train_X": training_data.X,
+            "train_Y": training_data.Y,
+            "train_Yvar": training_data.Yvar,
+            "task_feature": task_features[0],
+        }

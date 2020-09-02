@@ -348,9 +348,9 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                 )
                 # len(Xs) == len(Ys) == 1
                 training_data = TrainingData(
-                    Xs=[model_kwargs["train_X"][0]],
-                    Ys=[model_kwargs["train_Y"][0]],
-                    Yvars=[torch.full_like(model_kwargs["train_Y"], 0.01)[0]],
+                    X=model_kwargs["train_X"],
+                    Y=model_kwargs["train_Y"],
+                    Yvar=torch.full_like(model_kwargs["train_Y"], 0.01),
                 )
                 # missing fidelity features
                 with self.assertRaises(ValueError):
@@ -361,35 +361,11 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                 self.assertEqual(data_dict["data_fidelity"], 1)
                 data_dict = model.construct_inputs(training_data, fidelity_features=[1])
                 self.assertTrue(
-                    torch.equal(data_dict["train_X"], model_kwargs["train_X"][0])
-                )
-                self.assertTrue(
-                    torch.equal(data_dict["train_Y"], model_kwargs["train_Y"][0])
-                )
-                # all X's are equal
-                training_data = TrainingData(
-                    Xs=[model_kwargs["train_X"], model_kwargs["train_X"]],
-                    Ys=[model_kwargs["train_Y"], model_kwargs["train_Y"]],
-                )
-                data_dict = model.construct_inputs(training_data, fidelity_features=[1])
-                self.assertTrue(
                     torch.equal(data_dict["train_X"], model_kwargs["train_X"])
                 )
                 self.assertTrue(
-                    torch.equal(
-                        data_dict["train_Y"],
-                        torch.cat(
-                            [model_kwargs["train_Y"], model_kwargs["train_Y"]], dim=-1
-                        ),
-                    )
+                    torch.equal(data_dict["train_Y"], model_kwargs["train_Y"])
                 )
-                # unexpected data format
-                training_data = TrainingData(
-                    Xs=[model_kwargs["train_X"], torch.add(model_kwargs["train_X"], 1)],
-                    Ys=[model_kwargs["train_Y"], model_kwargs["train_Y"]],
-                )
-                with self.assertRaises(ValueError):
-                    model.construct_inputs(training_data, fidelity_features=[1])
 
 
 class TestFixedNoiseMultiFidelityGP(TestSingleTaskMultiFidelityGP):
@@ -474,16 +450,16 @@ class TestFixedNoiseMultiFidelityGP(TestSingleTaskMultiFidelityGP):
                     **tkwargs,
                 )
                 training_data = TrainingData(
-                    Xs=[model_kwargs["train_X"][0]], Ys=[model_kwargs["train_Y"][0]]
+                    X=model_kwargs["train_X"], Y=model_kwargs["train_Y"]
                 )
                 # missing Yvars
                 with self.assertRaises(ValueError):
                     model.construct_inputs(training_data, fidelity_features=[1])
                 # len(Xs) == len(Ys) == 1
                 training_data = TrainingData(
-                    Xs=[model_kwargs["train_X"][0]],
-                    Ys=[model_kwargs["train_Y"][0]],
-                    Yvars=[torch.full_like(model_kwargs["train_Y"], 0.01)[0]],
+                    X=model_kwargs["train_X"],
+                    Y=model_kwargs["train_Y"],
+                    Yvar=torch.full_like(model_kwargs["train_Y"], 0.01),
                 )
                 # missing fidelity features
                 with self.assertRaises(ValueError):
@@ -494,34 +470,8 @@ class TestFixedNoiseMultiFidelityGP(TestSingleTaskMultiFidelityGP):
                 self.assertEqual(data_dict["data_fidelity"], 1)
                 data_dict = model.construct_inputs(training_data, fidelity_features=[1])
                 self.assertTrue(
-                    torch.equal(data_dict["train_X"], model_kwargs["train_X"][0])
-                )
-                self.assertTrue(
-                    torch.equal(data_dict["train_Y"], model_kwargs["train_Y"][0])
-                )
-                # all X's are equal
-                training_data = TrainingData(
-                    Xs=[model_kwargs["train_X"], model_kwargs["train_X"]],
-                    Ys=[model_kwargs["train_Y"], model_kwargs["train_Y"]],
-                    Yvars=[model_kwargs["train_Yvar"], model_kwargs["train_Yvar"]],
-                )
-                data_dict = model.construct_inputs(training_data, fidelity_features=[1])
-                self.assertTrue(
                     torch.equal(data_dict["train_X"], model_kwargs["train_X"])
                 )
                 self.assertTrue(
-                    torch.equal(
-                        data_dict["train_Y"],
-                        torch.cat(
-                            [model_kwargs["train_Y"], model_kwargs["train_Y"]], dim=-1
-                        ),
-                    )
+                    torch.equal(data_dict["train_Y"], model_kwargs["train_Y"])
                 )
-                # unexpected data format
-                training_data = TrainingData(
-                    Xs=[model_kwargs["train_X"], torch.add(model_kwargs["train_X"], 1)],
-                    Ys=[model_kwargs["train_Y"], model_kwargs["train_Y"]],
-                    Yvars=[model_kwargs["train_Yvar"], model_kwargs["train_Yvar"]],
-                )
-                with self.assertRaises(ValueError):
-                    model.construct_inputs(training_data, fidelity_features=[1])

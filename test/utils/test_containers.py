@@ -11,16 +11,16 @@ from botorch.utils.testing import BotorchTestCase
 
 class TestConstructContainers(BotorchTestCase):
     def test_TrainingData(self):
-        Xs = torch.tensor([[-1.0, 0.0, 0.0], [0.0, 1.0, 1.0]])
-        Ys = torch.tensor([[-1.0, 0.0, 0.0], [0.0, 1.0, 1.0]])
-        Yvars = torch.tensor([[-1.0, 0.0, 0.0], [0.0, 1.0, 1.0]])
+        X = torch.tensor([[-1.0, 0.0, 0.0], [0.0, 1.0, 1.0]])
+        Y = torch.tensor([[-1.0, 0.0, 0.0], [0.0, 1.0, 1.0]])
+        Yvar = torch.tensor([[-1.0, 0.0, 0.0], [0.0, 1.0, 1.0]])
 
-        training_data = TrainingData(Xs, Ys)
-        self.assertTrue(torch.equal(training_data.Xs, Xs))
-        self.assertTrue(torch.equal(training_data.Ys, Ys))
-        self.assertEqual(training_data.Yvars, None)
+        training_data = TrainingData(X, Y)
+        self.assertTrue(torch.equal(training_data.X, X))
+        self.assertTrue(torch.equal(training_data.Y, Y))
+        self.assertEqual(training_data.Yvar, None)
 
-        training_data = TrainingData(Xs, Ys, Yvars)
-        self.assertTrue(torch.equal(training_data.Xs, Xs))
-        self.assertTrue(torch.equal(training_data.Ys, Ys))
-        self.assertTrue(torch.equal(training_data.Yvars, Yvars))
+        training_data = TrainingData(X, Y, Yvar)
+        self.assertTrue(torch.equal(training_data.X, X))
+        self.assertTrue(torch.equal(training_data.Y, Y))
+        self.assertTrue(torch.equal(training_data.Yvar, Yvar))

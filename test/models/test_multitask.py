@@ -12,6 +12,7 @@ from botorch.exceptions.warnings import OptimizationWarning
 from botorch.fit import fit_gpytorch_model
 from botorch.models.multitask import FixedNoiseMultiTaskGP, MultiTaskGP
 from botorch.posteriors import GPyTorchPosterior
+from botorch.utils.containers import TrainingData
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.kernels import IndexKernel, MaternKernel, ScaleKernel
@@ -37,9 +38,13 @@ def _get_random_mt_data(**tkwargs):
 
 
 def _get_model(**tkwargs):
+    return _get_model_and_training_data(**tkwargs)[0]
+
+
+def _get_model_and_training_data(**tkwargs):
     train_X, train_Y = _get_random_mt_data(**tkwargs)
     model = MultiTaskGP(train_X, train_Y, task_feature=1)
-    return model.to(**tkwargs)
+    return model.to(**tkwargs), train_X, train_Y
 
 
 def _get_model_single_output(**tkwargs):
@@ -49,10 +54,14 @@ def _get_model_single_output(**tkwargs):
 
 
 def _get_fixed_noise_model(**tkwargs):
+    return _get_fixed_noise_model_and_training_data(**tkwargs)[0]
+
+
+def _get_fixed_noise_model_and_training_data(**tkwargs):
     train_X, train_Y = _get_random_mt_data(**tkwargs)
     train_Yvar = torch.full_like(train_Y, 0.05)
     model = FixedNoiseMultiTaskGP(train_X, train_Y, train_Yvar, task_feature=1)
-    return model.to(**tkwargs)
+    return model.to(**tkwargs), train_X, train_Y, train_Yvar
 
 
 def _get_fixed_noise_model_single_output(**tkwargs):
@@ -327,3 +336,36 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
             self.assertIsInstance(
                 model.task_covar_module.IndexKernelPrior, LKJCovariancePrior
             )
+
+    def test_MultiTaskGP_construct_inputs(self):
+        for dtype in (torch.float, torch.double):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            model, train_X, train_Y = _get_model_and_training_data(**tkwargs)
+            training_data = TrainingData(X=train_X, Y=train_Y)
+            # if task_features is missing, then raise error
+            with self.assertRaises(ValueError):
+                model.construct_inputs(training_data)
+            data_dict = model.construct_inputs(training_data, task_features=[0])
+            self.assertTrue(torch.equal(data_dict["train_X"], train_X))
+            self.assertTrue(torch.equal(data_dict["train_Y"], train_Y))
+
+    def test_FixedNoiseMultiTaskGP_construct_inputs(self):
+        for dtype in (torch.float, torch.double):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            (
+                model,
+                train_X,
+                train_Y,
+                train_Yvar,
+            ) = _get_fixed_noise_model_and_training_data(**tkwargs)
+            td_no_Yvar = TrainingData(X=train_X, Y=train_Y)
+            # if task_features is missing, then raise error
+            with self.assertRaisesRegex(ValueError, "task features required"):
+                model.construct_inputs(td_no_Yvar)
+            # if task_features is missing, then raise error
+            with self.assertRaisesRegex(ValueError, "Yvar required"):
+                model.construct_inputs(td_no_Yvar, task_features=[0])
+            training_data = TrainingData(X=train_X, Y=train_Y, Yvar=train_Yvar)
+            data_dict = model.construct_inputs(training_data, task_features=[0])
+            self.assertTrue(torch.equal(data_dict["train_X"], train_X))
+            self.assertTrue(torch.equal(data_dict["train_Y"], train_Y))

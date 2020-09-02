@@ -129,7 +129,7 @@ class Model(Module, ABC):
     def construct_inputs(
         cls, training_data: TrainingData, **kwargs: Any
     ) -> Dict[str, Any]:
-        r"""Standardize kwargs of the model constructor."""
+        r"""Construct kwargs for the `Model` from `TrainingData`."""
         raise NotImplementedError(
             f"`construct_inputs` not implemented for {cls.__name__}."
         )
