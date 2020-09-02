@@ -117,26 +117,23 @@ class SingleTaskMultiFidelityGP(SingleTaskGP):
 
     @classmethod
     def construct_inputs(cls, training_data: TrainingData, **kwargs) -> Dict[str, Any]:
-        r"""Standardize kwargs of the model constructor."""
+        r"""Construct kwargs for the `Model` from `TrainingData`.
+
+        Args:
+            training_data: `TrainingData` container with data for single outcome
+                or for multiple outcomes for batched multi-output case.
+            **kwargs: Options, expected for this class:
+                - fidelity_features: List of columns of X that are fidelity parameters.
+        """
         fidelity_features = kwargs.get("fidelity_features")
         if fidelity_features is None:
             raise ValueError(f"Fidelity features required for {cls.__name__}.")
-        Xs = training_data.Xs
-        Ys = training_data.Ys
-        if len(Xs) == len(Ys) == 1:
-            return {
-                "train_X": Xs[0],
-                "train_Y": Ys[0],
-                "data_fidelity": fidelity_features[0],
-            }
-        if all(torch.equal(Xs[0], X) for X in Xs[1:]):
-            # Use batched multioutput, single task GP.
-            return {
-                "train_X": Xs[0],
-                "train_Y": torch.cat(Ys, dim=-1),
-                "data_fidelity": fidelity_features[0],
-            }
-        raise ValueError("Unexpected training data format.")
+
+        return {
+            "train_X": training_data.X,
+            "train_Y": training_data.Y,
+            "data_fidelity": fidelity_features[0],
+        }
 
 
 class FixedNoiseMultiFidelityGP(FixedNoiseGP):
@@ -220,31 +217,26 @@ class FixedNoiseMultiFidelityGP(FixedNoiseGP):
 
     @classmethod
     def construct_inputs(cls, training_data: TrainingData, **kwargs) -> Dict[str, Any]:
-        r"""Standardize kwargs of the model constructor."""
-        if training_data.Yvars is None:
-            raise ValueError(f"Yvars required for {cls.__name__}.")
-        Xs = training_data.Xs
-        Ys = training_data.Ys
-        Yvars = training_data.Yvars
+        r"""Construct kwargs for the `Model` from `TrainingData`.
+
+        Args:
+            training_data: `TrainingData` container with data for single outcome
+                or for multiple outcomes for batched multi-output case.
+            **kwargs: Options, expected for this class:
+                - fidelity_features: List of columns of X that are fidelity parameters.
+        """
         fidelity_features = kwargs.get("fidelity_features")
         if fidelity_features is None:
             raise ValueError(f"Fidelity features required for {cls.__name__}.")
-        if len(Xs) == len(Ys) == 1:
-            return {
-                "train_X": Xs[0],
-                "train_Y": Ys[0],
-                "train_Yvar": Yvars[0],
-                "data_fidelity": fidelity_features[0],
-            }
-        if all(torch.equal(Xs[0], X) for X in Xs[1:]):
-            # Use batched multioutput, single task GP.
-            return {
-                "train_X": Xs[0],
-                "train_Y": torch.cat(Ys, dim=-1),
-                "train_Yvar": torch.cat(Yvars, dim=-1),
-                "data_fidelity": fidelity_features[0],
-            }
-        raise ValueError("Unexpected training data format.")
+        if training_data.Yvar is None:
+            raise ValueError(f"Yvar required for {cls.__name__}.")
+
+        return {
+            "train_X": training_data.X,
+            "train_Y": training_data.Y,
+            "train_Yvar": training_data.Yvar,
+            "data_fidelity": fidelity_features[0],
+        }
 
 
 def _setup_multifidelity_covar_module(

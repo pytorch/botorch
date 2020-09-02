@@ -8,14 +8,14 @@ r"""
 Containers to standardize inputs into models and acquisition functions.
 """
 
-from typing import List, NamedTuple, Optional
+from typing import NamedTuple, Optional
 
 from torch import Tensor
 
 
 class TrainingData(NamedTuple):
-    r"""Standardized struct of model training data."""
+    r"""Standardized struct of model training data for a single outcome."""
 
-    Xs: List[Tensor]
-    Ys: List[Tensor]
-    Yvars: Optional[List[Tensor]] = None
+    X: Tensor
+    Y: Tensor
+    Yvar: Optional[Tensor] = None

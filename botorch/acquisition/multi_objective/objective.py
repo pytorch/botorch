@@ -31,7 +31,8 @@ class MCMultiOutputObjective(AcquisitionObjective):
 
         Returns:
             A `sample_shape x batch_shape x q x m'`-dim Tensor of objective values with
-            `m'` the output dimension. This assumes maximization in each output dimension).
+            `m'` the output dimension. This assumes maximization in each output
+            dimension).
 
         This method is usually not called directly, but via the objectives
 
