@@ -13,6 +13,7 @@ from __future__ import annotations
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 import torch
+from botorch.generation.utils import get_candidate_optim_objective
 from botorch.optim.parameter_constraints import (
     _arrayify,
     make_scipy_bounds,
@@ -35,6 +36,7 @@ def gen_candidates_scipy(
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     options: Optional[Dict[str, Any]] = None,
     fixed_features: Optional[Dict[int, Optional[float]]] = None,
+    post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
 ) -> Tuple[Tensor, Tensor]:
     r"""Generate a set of candidates using `scipy.optimize.minimize`.
 
@@ -61,6 +63,9 @@ def gen_candidates_scipy(
             If the dictionary value is None, then that feature will just be
             fixed to the clamped value and not optimized. Assumes values to be
             compatible with lower_bounds and upper_bounds!
+        post_processing_func: A function that post-processes an optimization
+            result appropriately (i.e., according to `round-trip`
+            transformations).
 
     Returns:
         2-element tuple containing
@@ -81,6 +86,11 @@ def gen_candidates_scipy(
                 upper_bounds=bounds[1],
             )
     """
+    if post_processing_func is None or not options.get("apply_post_processing", False):
+
+        def post_processing_func(X):
+            return X
+
     options = options or {}
     clamped_candidates = columnwise_clamp(
         X=initial_conditions, lower=lower_bounds, upper=upper_bounds
@@ -96,30 +106,22 @@ def gen_candidates_scipy(
         inequality_constraints=inequality_constraints,
         equality_constraints=equality_constraints,
     )
-
-    def f(x):
-        X = (
-            torch.from_numpy(x)
-            .to(initial_conditions)
-            .view(shapeX)
-            .contiguous()
-            .requires_grad_(True)
-        )
-        X_fix = fix_features(X=X, fixed_features=fixed_features)
-        loss = -acquisition_function(X_fix).sum()
-        # compute gradient w.r.t. the inputs (does not accumulate in leaves)
-        gradf = _arrayify(torch.autograd.grad(loss, X)[0].contiguous().view(-1))
-        fval = loss.item()
-        return fval, gradf
-
+    with_grad = options.get("with_grad", True)
+    f = get_candidate_optim_objective(
+        initial_conditions=initial_conditions,
+        acquisition_function=acquisition_function,
+        with_grad=with_grad,
+        fixed_features=fixed_features,
+        post_processing_func=post_processing_func,
+    )
     res = minimize(
         f,
         x0,
         method=options.get("method", "SLSQP" if constraints else "L-BFGS-B"),
-        jac=True,
+        jac=with_grad,
         bounds=bounds,
         constraints=constraints,
-        options={k: v for k, v in options.items() if k != "method"},
+        options={k: v for k, v in options.items() if k not in ("method", "with_grad")},
     )
     candidates = fix_features(
         X=torch.from_numpy(res.x).to(initial_conditions).view(shapeX).contiguous(),

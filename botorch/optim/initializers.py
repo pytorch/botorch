@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import Dict, Optional, Union
+from typing import Callable, Dict, Optional, Union
 
 import torch
 from botorch import settings
@@ -33,6 +33,7 @@ def gen_batch_initial_conditions(
     num_restarts: int,
     raw_samples: int,
     options: Optional[Dict[str, Union[bool, float, int]]] = None,
+    post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
 ) -> Tensor:
     r"""Generate a batch of initial conditions for random-restart optimziation.
 
@@ -49,6 +50,9 @@ def gen_batch_initial_conditions(
             contains a `nonnegative=True` entry, then `acq_function` is
             assumed to be non-negative (useful when using custom acquisition
             functions).
+        post_processing_func: A function that post-processes an optimization
+            result appropriately (i.e., according to `round-trip`
+            transformations).
 
     Returns:
         A `num_restarts x q x d` tensor of initial conditions.
@@ -98,6 +102,8 @@ def gen_batch_initial_conditions(
                     X_rnd_nlzd = torch.rand(n * effective_dim, dtype=bounds.dtype)
                     X_rnd_nlzd = X_rnd_nlzd.view(n, q, bounds.shape[-1])
                 X_rnd = bounds[0] + (bounds[1] - bounds[0]) * X_rnd_nlzd
+            if post_processing_func is not None:
+                X_rnd = post_processing_func(X_rnd)
             with torch.no_grad():
                 if batch_limit is None:
                     batch_limit = X_rnd.shape[0]
@@ -135,6 +141,7 @@ def gen_one_shot_kg_initial_conditions(
     num_restarts: int,
     raw_samples: int,
     options: Optional[Dict[str, Union[bool, float, int]]] = None,
+    post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
 ) -> Optional[Tensor]:
     r"""Generate a batch of smart initializations for qKnowledgeGradient.
 
@@ -168,6 +175,9 @@ def gen_one_shot_kg_initial_conditions(
             restarts and raw samples for solving the posterior objective
             maximization problem, respectively) and `eta` (temperature parameter
             for sampling heuristic from posterior objective maximizers).
+        post_processing_func: A function that post-processes an optimization
+            result appropriately (i.e., according to `round-trip`
+            transformations).
 
     Returns:
         A `num_restarts x q' x d` tensor that can be used as initial conditions
@@ -198,6 +208,7 @@ def gen_one_shot_kg_initial_conditions(
         num_restarts=num_restarts,
         raw_samples=raw_samples,
         options=options,
+        post_processing_func=post_processing_func,
     )
 
     # compute maximizer of the value function
@@ -214,6 +225,7 @@ def gen_one_shot_kg_initial_conditions(
         q=1,
         num_restarts=options.get("num_inner_restarts", 20),
         raw_samples=options.get("raw_inner_samples", 1024),
+        post_processing_func=post_processing_func,
         return_best_only=False,
     )
 

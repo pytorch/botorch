@@ -39,6 +39,7 @@ def optimize_acqf(
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     fixed_features: Optional[Dict[int, float]] = None,
     post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
+    init_cond_post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
     batch_initial_conditions: Optional[Tensor] = None,
     return_best_only: bool = True,
     sequential: bool = False,
@@ -64,6 +65,9 @@ def optimize_acqf(
             should be fixed to a particular value during generation.
         post_processing_func: A function that post-processes an optimization
             result appropriately (i.e., according to `round-trip`
+            transformations).
+        init_cond_post_processing_func: A function that post-processes initial
+            conditions appropriately (i.e., according to `round-trip`
             transformations).
         batch_initial_conditions: A tensor to specify the initial conditions. Set
             this if you do not want to use default initialization strategy.
@@ -122,6 +126,7 @@ def optimize_acqf(
                 equality_constraints=equality_constraints,
                 fixed_features=fixed_features,
                 post_processing_func=post_processing_func,
+                init_cond_post_processing_func=init_cond_post_processing_func,
                 batch_initial_conditions=None,
                 return_best_only=True,
                 sequential=False,
@@ -155,6 +160,7 @@ def optimize_acqf(
             num_restarts=num_restarts,
             raw_samples=raw_samples,
             options=options,
+            post_processing_func=init_cond_post_processing_func,
         )
 
     batch_limit: int = options.get("batch_limit", num_restarts)
@@ -177,6 +183,7 @@ def optimize_acqf(
             inequality_constraints=inequality_constraints,
             equality_constraints=equality_constraints,
             fixed_features=fixed_features,
+            post_processing_func=post_processing_func,
         )
         batch_candidates_list.append(batch_candidates_curr)
         batch_acq_values_list.append(batch_acq_values_curr)
