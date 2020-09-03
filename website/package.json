@@ -10,5 +10,8 @@
   },
   "devDependencies": {
     "docusaurus": "^1.9.0"
+  },
+  "dependencies": {
+    "bl": "^2.2.1"
   }
 }
