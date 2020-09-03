@@ -10,15 +10,17 @@ from copy import deepcopy
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.models.transforms.input import (
+    CategoricalSpec,
     ChainedInputTransform,
     InputTransform,
     Normalize,
+    OneHot,
 )
 from botorch.utils.testing import BotorchTestCase
 
 
 class NotSoAbstractInputTransform(InputTransform):
-    def forward(self, X):
+    def transform(self, X):
         pass
 
 
@@ -99,6 +101,11 @@ class TestInputTransforms(BotorchTestCase):
                 X_unnlzd = nlz.untransform(X_nlzd)
                 self.assertTrue(torch.allclose(X, X_unnlzd, atol=1e-4, rtol=1e-4))
 
+                # test no normalization on eval
+                nlz = Normalize(d=2, batch_shape=batch_shape, transform_on_eval=False)
+                nlz.eval()
+                self.assertTrue(torch.equal(nlz(X), X))
+
     def test_chained_input_transform(self):
 
         ds = (1, 2)
@@ -129,3 +136,86 @@ class TestInputTransforms(BotorchTestCase):
             self.assertTrue(torch.equal(X_tf, X_tf_))
             X_utf = tf.untransform(X_tf)
             self.assertTrue(torch.allclose(X_utf, X, atol=1e-4, rtol=1e-4))
+
+            # test not transformed on eval
+            tf = ChainedInputTransform(
+                stz_fixed=tf1, stz_learned=tf2, transform_on_eval=False
+            )
+            tf.eval()
+            self.assertTrue(torch.equal(tf(X), X))
+
+    def test_one_hot_transform(self):
+        batch_shapes = (torch.Size(), torch.Size([2]))
+        dtypes = (torch.float, torch.double)
+        tkwargs = {"device": self.device}
+        for batch_shape, dtype in itertools.product(batch_shapes, dtypes):
+            tkwargs["dtype"] = dtype
+            # test d = 1
+            d = 1
+            X = torch.randint(0, 3, batch_shape + torch.Size([4, d]), **tkwargs)
+            spec = CategoricalSpec(idx=0, num_categories=3)
+            tf = OneHot([spec], dim=d)
+            X_tf = tf(X)
+            self.assertTrue(torch.equal(X_tf.argmax(dim=-1, keepdim=True).to(X), X))
+            self.assertTrue((X_tf.max(dim=-1).values == 1).all())
+            self.assertTrue((X_tf.min(dim=-1).values == 0).all())
+            self.assertTrue((X_tf.sum(dim=-1) == 1).all())
+            self.assertTrue(torch.equal(X, tf.untransform(X_tf)))
+
+            # test transform_bounds
+            bounds = torch.tensor([[0.0], [2.0]], **tkwargs)
+            tf_bounds = tf.transform_bounds(bounds)
+            expected_bounds = torch.zeros(2, tf._emb_dim, **tkwargs)
+            expected_bounds[1] = 1
+            self.assertTrue(torch.equal(tf_bounds, expected_bounds))
+
+            # test d=3, num_categorical=2
+            d = 3
+            X = torch.cat(
+                [
+                    torch.randint(0, 3, batch_shape + torch.Size([4, 1]), **tkwargs),
+                    torch.rand(batch_shape + torch.Size([4, 1]), **tkwargs),
+                    torch.randint(0, 2, batch_shape + torch.Size([4, 1]), **tkwargs),
+                ],
+                dim=-1,
+            )
+            specs = [
+                CategoricalSpec(idx=0, num_categories=3),
+                # test negative index
+                CategoricalSpec(idx=-1, num_categories=2),
+            ]
+            tf = OneHot(specs, dim=d)
+            X_tf = tf(X)
+            X_cont = X_tf[..., 0:1]
+            X_cat1 = X_tf[..., 1:4]
+            X_cat2 = X_tf[..., 4:]
+            untransformed_X = torch.cat(
+                [
+                    X_cat1.argmax(dim=-1, keepdim=True),
+                    X_cont,
+                    X_cat2.argmax(dim=-1, keepdim=True),
+                ],
+                dim=-1,
+            )
+            self.assertTrue(torch.equal(untransformed_X, X))
+            for X_cat in (X_cat1, X_cat2):
+                self.assertTrue((X_cat.max(dim=-1).values == 1).all())
+                self.assertTrue((X_cat.min(dim=-1).values == 0).all())
+                self.assertTrue((X_cat.sum(dim=-1) == 1).all())
+            self.assertTrue(torch.equal(X, tf.untransform(X_tf)))
+            # test eval mode
+            tf.eval()
+            # test that X is not transformed in eval mode by default
+            self.assertTrue(torch.equal(tf(X), X))
+            # test that X is transformed in eval mode
+            tf = OneHot(specs, dim=d, transform_on_eval=True)
+            tf.eval()
+            self.assertTrue(torch.equal(tf(X), X_tf))
+
+            # test transform_bounds
+            bounds = torch.tensor([[0.0, 1.0, 0.0], [2.0, 2.0, 1.0]], **tkwargs)
+            tf_bounds = tf.transform_bounds(bounds)
+            expected_bounds = torch.zeros(2, 1 + tf._emb_dim, **tkwargs)
+            expected_bounds[:, 0] = bounds[:, 1]
+            expected_bounds[1, 1:] = 1
+            self.assertTrue(torch.equal(tf_bounds, expected_bounds))
