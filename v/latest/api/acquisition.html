@@ -1954,11 +1954,11 @@ weighted by feasibility (assuming maximization).</p>
 <dt id="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective">
 <em class="property">class </em><code class="sig-prename descclassname">botorch.acquisition.multi_objective.objective.</code><code class="sig-name descname">MCMultiOutputObjective</code><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#MCMultiOutputObjective"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.objective.AcquisitionObjective" title="botorch.acquisition.objective.AcquisitionObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.objective.AcquisitionObjective</span></code></a></p>
-<p>Abstract base class for multi-output objectives.</p>
+<p>Abstract base class for MC multi-output objectives.</p>
 <p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
 <dl class="py method">
 <dt id="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective.forward">
-<em class="property">abstract </em><code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">samples</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#MCMultiOutputObjective.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective.forward" title="Permalink to this definition">¶</a></dt>
+<em class="property">abstract </em><code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">samples</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#MCMultiOutputObjective.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective.forward" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the multi-output objective on the samples.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1970,7 +1970,8 @@ a model posterior.</p>
 </dd>
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p>A <cite>sample_shape x batch_shape x q x m’</cite>-dim Tensor of objective values with
-<cite>m’</cite> the output dimension. assuming maximization in each output dimension).</p>
+<cite>m’</cite> the output dimension. This assumes maximization in each output
+dimension).</p>
 </dd>
 </dl>
 <p>This method is usually not called directly, but via the objectives</p>
@@ -1988,7 +1989,7 @@ a model posterior.</p>
 </dd></dl>
 <dl class="py class">
 <dt id="botorch.acquisition.multi_objective.objective.IdentityMCMultiOutputObjective">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.acquisition.multi_objective.objective.</code><code class="sig-name descname">IdentityMCMultiOutputObjective</code><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#IdentityMCMultiOutputObjective"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.IdentityMCMultiOutputObjective" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">botorch.acquisition.multi_objective.objective.</code><code class="sig-name descname">IdentityMCMultiOutputObjective</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">outcomes</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">num_outcomes</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#IdentityMCMultiOutputObjective"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.IdentityMCMultiOutputObjective" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.multi_objective.objective.MCMultiOutputObjective</span></code></a></p>
 <p>Trivial objective that returns the unaltered samples.</p>
 <p class="rubric">Example</p>
@@ -1997,7 +1998,17 @@ a model posterior.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">objective</span> <span class="o">=</span> <span class="n">identity_objective</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<p>Initialize Objective.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>weights</strong> – <cite>m’</cite>-dim tensor of outcome weights.</p></li>
+<li><p><strong>outcomes</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]) – A list of the <cite>m’</cite> indices that the weights should be
+applied to.</p></li>
+<li><p><strong>num_outcomes</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The total number of outcomes <cite>m</cite></p></li>
+</ul>
+</dd>
+</dl>
 <dl class="py method">
 <dt id="botorch.acquisition.multi_objective.objective.IdentityMCMultiOutputObjective.forward">
 <code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">samples</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#IdentityMCMultiOutputObjective.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.IdentityMCMultiOutputObjective.forward" title="Permalink to this definition">¶</a></dt>
@@ -2012,7 +2023,8 @@ a model posterior.</p>
 </dd>
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p>A <cite>sample_shape x batch_shape x q x m’</cite>-dim Tensor of objective values with
-<cite>m’</cite> the output dimension. assuming maximization in each output dimension).</p>
+<cite>m’</cite> the output dimension. This assumes maximization in each output
+dimension).</p>
 </dd>
 </dl>
 <p>This method is usually not called directly, but via the objectives</p>
@@ -2030,8 +2042,8 @@ a model posterior.</p>
 </dd></dl>
 <dl class="py class">
 <dt id="botorch.acquisition.multi_objective.objective.WeightedMCMultiOutputObjective">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.acquisition.multi_objective.objective.</code><code class="sig-name descname">WeightedMCMultiOutputObjective</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">weights</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#WeightedMCMultiOutputObjective"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.WeightedMCMultiOutputObjective" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.multi_objective.objective.MCMultiOutputObjective</span></code></a></p>
+<em class="property">class </em><code class="sig-prename descclassname">botorch.acquisition.multi_objective.objective.</code><code class="sig-name descname">WeightedMCMultiOutputObjective</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">weights</span></em>, <em class="sig-param"><span class="n">outcomes</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">num_outcomes</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#WeightedMCMultiOutputObjective"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.WeightedMCMultiOutputObjective" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.multi_objective.objective.IdentityMCMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.IdentityMCMultiOutputObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.multi_objective.objective.IdentityMCMultiOutputObjective</span></code></a></p>
 <p>Objective that reweights samples by given weights vector.</p>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">weights</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">])</span>
@@ -2043,7 +2055,12 @@ a model posterior.</p>
 <p>Initialize Objective.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>weights</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – <cite>m</cite>-dim tensor of outcome weights.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>weights</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – <cite>m’</cite>-dim tensor of outcome weights.</p></li>
+<li><p><strong>outcomes</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]) – A list of the <cite>m’</cite> indices that the weights should be
+applied to.</p></li>
+<li><p><strong>num_outcomes</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – the total number of outcomes <cite>m</cite></p></li>
+</ul>
 </dd>
 </dl>
 <dl class="py method">
@@ -2060,7 +2077,8 @@ a model posterior.</p>
 </dd>
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p>A <cite>sample_shape x batch_shape x q x m’</cite>-dim Tensor of objective values with
-<cite>m’</cite> the output dimension. assuming maximization in each output dimension).</p>
+<cite>m’</cite> the output dimension. This assumes maximization in each output
+dimension).</p>
 </dd>
 </dl>
 <p>This method is usually not called directly, but via the objectives</p>
@@ -2079,7 +2097,7 @@ a model posterior.</p>
 <dl class="py class">
 <dt id="botorch.acquisition.multi_objective.objective.UnstandardizeMCMultiOutputObjective">
 <em class="property">class </em><code class="sig-prename descclassname">botorch.acquisition.multi_objective.objective.</code><code class="sig-name descname">UnstandardizeMCMultiOutputObjective</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">Y_mean</span></em>, <em class="sig-param"><span class="n">Y_std</span></em>, <em class="sig-param"><span class="n">outcomes</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#UnstandardizeMCMultiOutputObjective"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.UnstandardizeMCMultiOutputObjective" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.multi_objective.objective.MCMultiOutputObjective</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.multi_objective.objective.IdentityMCMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.IdentityMCMultiOutputObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.multi_objective.objective.IdentityMCMultiOutputObjective</span></code></a></p>
 <p>Objective that unstandardizes the samples.</p>
 <p>TODO: remove this when MultiTask models support outcome transforms.</p>
 <p class="rubric">Example</p>
@@ -2114,7 +2132,8 @@ a model posterior.</p>
 </dd>
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p>A <cite>sample_shape x batch_shape x q x m’</cite>-dim Tensor of objective values with
-<cite>m’</cite> the output dimension. assuming maximization in each output dimension).</p>
+<cite>m’</cite> the output dimension. This assumes maximization in each output
+dimension).</p>
 </dd>
 </dl>
 <p>This method is usually not called directly, but via the objectives</p>
@@ -2185,7 +2204,7 @@ a model posterior.</p>
 </dd></dl>
 <dl class="py class">
 <dt id="botorch.acquisition.multi_objective.objective.UnstandardizeAnalyticMultiOutputObjective">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.acquisition.multi_objective.objective.</code><code class="sig-name descname">UnstandardizeAnalyticMultiOutputObjective</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">Y_mean</span></em>, <em class="sig-param"><span class="n">Y_std</span></em>, <em class="sig-param"><span class="n">outcomes</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#UnstandardizeAnalyticMultiOutputObjective"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.UnstandardizeAnalyticMultiOutputObjective" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">botorch.acquisition.multi_objective.objective.</code><code class="sig-name descname">UnstandardizeAnalyticMultiOutputObjective</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">Y_mean</span></em>, <em class="sig-param"><span class="n">Y_std</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#UnstandardizeAnalyticMultiOutputObjective"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.UnstandardizeAnalyticMultiOutputObjective" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.multi_objective.objective.AnalyticMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.AnalyticMultiOutputObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.multi_objective.objective.AnalyticMultiOutputObjective</span></code></a></p>
 <p>Objective that unstandardizes the posterior.</p>
 <p>TODO: remove this when MultiTask models support outcome transforms.</p>
@@ -2200,9 +2219,6 @@ a model posterior.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>Y_mean</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – <cite>m</cite>-dim tensor of outcome means</p></li>
 <li><p><strong>Y_std</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – <cite>m</cite>-dim tensor of outcome standard deviations</p></li>
-<li><p><strong>outcomes</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]) – A list of <cite>m’ &lt;= m</cite> indices that specifies which of the <cite>m</cite> model
-outputs should be considered as the outcomes for MOO. If omitted, use
-all model outcomes. Typically used for constrained optimization.</p></li>
 </ul>
 </dd>
 </dl>

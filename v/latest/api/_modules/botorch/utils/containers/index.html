@@ -34,17 +34,17 @@
 <span class="sd">Containers to standardize inputs into models and acquisition functions.</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
 <div class="viewcode-block" id="TrainingData"><a class="viewcode-back" href="../../../utils.html#botorch.utils.containers.TrainingData">[docs]</a><span class="k">class</span> <span class="nc">TrainingData</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Standardized struct of model training data."""</span>
+    <span class="sa">r</span><span class="sd">"""Standardized struct of model training data for a single outcome."""</span>
 
-    <span class="n">Xs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span>
-    <span class="n">Ys</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span>
-    <span class="n">Yvars</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span></div>
+    <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span>
+    <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span>
+    <span class="n">Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
 </pre></div>
 </div>
 </div>

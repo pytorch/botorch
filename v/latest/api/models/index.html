@@ -152,7 +152,7 @@ batch shape of the model).</p></li>
 <dl class="py method">
 <dt id="botorch.models.model.Model.construct_inputs">
 <em class="property">classmethod </em><code class="sig-name descname">construct_inputs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">training_data</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model.html#Model.construct_inputs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.model.Model.construct_inputs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Standardize kwargs of the model constructor.</p>
+<dd><p>Construct kwargs for the <cite>Model</cite> from <cite>TrainingData</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]</p>
@@ -785,10 +785,17 @@ inference (that is, the <cite>Posterior</cite> obtained by calling
 <dl class="py method">
 <dt id="botorch.models.gp_regression.SingleTaskGP.construct_inputs">
 <em class="property">classmethod </em><code class="sig-name descname">construct_inputs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">training_data</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#SingleTaskGP.construct_inputs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gp_regression.SingleTaskGP.construct_inputs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Standardize kwargs of the model constructor.</p>
+<dd><p>Construct kwargs for the <cite>Model</cite> from <cite>TrainingData</cite>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]</p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.containers.TrainingData" title="botorch.utils.containers.TrainingData"><code class="xref py py-class docutils literal notranslate"><span class="pre">TrainingData</span></code></a>) – <cite>TrainingData</cite> container with data for single outcome
+or for multiple outcomes for batched multi-output case.</p></li>
+<li><p><strong>**kwargs</strong> – None expected for this class.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -887,10 +894,17 @@ as the specified measurement noise.</p></li>
 <dl class="py method">
 <dt id="botorch.models.gp_regression.FixedNoiseGP.construct_inputs">
 <em class="property">classmethod </em><code class="sig-name descname">construct_inputs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">training_data</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#FixedNoiseGP.construct_inputs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gp_regression.FixedNoiseGP.construct_inputs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Standardize kwargs of the model constructor.</p>
+<dd><p>Construct kwargs for the <cite>Model</cite> from <cite>TrainingData</cite>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]</p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.containers.TrainingData" title="botorch.utils.containers.TrainingData"><code class="xref py py-class docutils literal notranslate"><span class="pre">TrainingData</span></code></a>) – <cite>TrainingData</cite> container with data for single outcome
+or for multiple outcomes for batched multi-output case.</p></li>
+<li><p><strong>**kwargs</strong> – None expected for this class.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1062,10 +1076,18 @@ inference (that is, the <cite>Posterior</cite> obtained by calling
 <dl class="py method">
 <dt id="botorch.models.gp_regression_fidelity.SingleTaskMultiFidelityGP.construct_inputs">
 <em class="property">classmethod </em><code class="sig-name descname">construct_inputs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">training_data</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression_fidelity.html#SingleTaskMultiFidelityGP.construct_inputs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gp_regression_fidelity.SingleTaskMultiFidelityGP.construct_inputs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Standardize kwargs of the model constructor.</p>
+<dd><p>Construct kwargs for the <cite>Model</cite> from <cite>TrainingData</cite>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]</p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.containers.TrainingData" title="botorch.utils.containers.TrainingData"><code class="xref py py-class docutils literal notranslate"><span class="pre">TrainingData</span></code></a>) – <cite>TrainingData</cite> container with data for single outcome
+or for multiple outcomes for batched multi-output case.</p></li>
+<li><p><strong>**kwargs</strong> – Options, expected for this class:
+- fidelity_features: List of columns of X that are fidelity parameters.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1139,10 +1161,18 @@ inference (that is, the <cite>Posterior</cite> obtained by calling
 <dl class="py method">
 <dt id="botorch.models.gp_regression_fidelity.FixedNoiseMultiFidelityGP.construct_inputs">
 <em class="property">classmethod </em><code class="sig-name descname">construct_inputs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">training_data</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression_fidelity.html#FixedNoiseMultiFidelityGP.construct_inputs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gp_regression_fidelity.FixedNoiseMultiFidelityGP.construct_inputs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Standardize kwargs of the model constructor.</p>
+<dd><p>Construct kwargs for the <cite>Model</cite> from <cite>TrainingData</cite>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]</p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.containers.TrainingData" title="botorch.utils.containers.TrainingData"><code class="xref py py-class docutils literal notranslate"><span class="pre">TrainingData</span></code></a>) – <cite>TrainingData</cite> container with data for single outcome
+or for multiple outcomes for batched multi-output case.</p></li>
+<li><p><strong>**kwargs</strong> – Options, expected for this class:
+- fidelity_features: List of columns of X that are fidelity parameters.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1291,6 +1321,26 @@ full rank (i.e. number of tasks) kernel.</p></li>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py method">
+<dt id="botorch.models.multitask.MultiTaskGP.construct_inputs">
+<em class="property">classmethod </em><code class="sig-name descname">construct_inputs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">training_data</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/multitask.html#MultiTaskGP.construct_inputs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.multitask.MultiTaskGP.construct_inputs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct kwargs for the <cite>Model</cite> from <cite>TrainingData</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.containers.TrainingData" title="botorch.utils.containers.TrainingData"><code class="xref py py-class docutils literal notranslate"><span class="pre">TrainingData</span></code></a>) – <cite>TrainingData</cite> container with data for single outcome
+or for multiple outcomes for batched multi-output case.</p></li>
+<li><p><strong>**kwargs</strong> – Additional options for the model that pertain to the
+training data:
+- <cite>task_features</cite> – indices of the input columns containing the task
+features (expected list of length 1).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
 <dl class="py attribute">
 <dt id="botorch.models.multitask.MultiTaskGP.training">
 <code class="sig-name descname">training</code><em class="property">: bool</em><a class="headerlink" href="#botorch.models.multitask.MultiTaskGP.training" title="Permalink to this definition">¶</a></dt>
@@ -1336,6 +1386,25 @@ full rank (i.e. number of tasks) kernel.</p></li>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">FixedNoiseMultiTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">train_Yvar</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
 </pre></div>
 </div>
+<dl class="py method">
+<dt id="botorch.models.multitask.FixedNoiseMultiTaskGP.construct_inputs">
+<em class="property">classmethod </em><code class="sig-name descname">construct_inputs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">training_data</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/multitask.html#FixedNoiseMultiTaskGP.construct_inputs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.multitask.FixedNoiseMultiTaskGP.construct_inputs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct kwargs for the <cite>Model</cite> from <cite>TrainingData</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.containers.TrainingData" title="botorch.utils.containers.TrainingData"><code class="xref py py-class docutils literal notranslate"><span class="pre">TrainingData</span></code></a>) – <cite>TrainingData</cite> container with data for single outcome
+or for multiple outcomes for batched multi-output case.</p></li>
+<li><p><strong>**kwargs</strong> – Additional options for the model that pertain to the
+training data:
+- <cite>task_features</cite> – indices of task features in X.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
 <dl class="py attribute">
 <dt id="botorch.models.multitask.FixedNoiseMultiTaskGP.training">
 <code class="sig-name descname">training</code><em class="property">: bool</em><a class="headerlink" href="#botorch.models.multitask.FixedNoiseMultiTaskGP.training" title="Permalink to this definition">¶</a></dt>
