@@ -448,3 +448,43 @@ class LatentCategoricalEmbedding(EmbeddingTransform):
             new_X[..., idx] = int_categories
             start_idx = end_idx
         return new_X
+
+    def round_approx(
+        self,
+        X: Tensor,
+        dist_func: Optional[Callable[[Tensor, Tensor, int], Tensor]] = None,
+        temp: float = 1000.0,
+    ) -> Tensor:
+        r"""Approximately round the categorical vectors of X to the closest embeddings.
+
+        This is differentiable.
+
+        Args:
+            X: A `batch_shape x n x d_cont + d_latent`-dim tensor of transformed valiues
+            dist_func: A broadcastable distance function mapping a two input tensors with
+                shapes `batch_shape x n x 1 x d_latent` and `n_categories x d_latent` and
+                an integer starting index of the latent embedding to to a
+                `batch_shape x n x n_categories`-dim tensor of distances. The default is
+                L2 distance.
+            temp: The temperature parameter for the softmax
+
+        Returns:
+            The rounded tensor.
+        """
+        new_X = X.clone()
+        start_idx = self.dim - self.categ_idcs.shape[0]
+        softmax = torch.nn.Softmax(dim=-1)
+        for idx in self.categ_idcs.tolist():
+            emb_table = self.get_emb_table(idx)
+            emb_dim = emb_table.shape[-1]
+            end_idx = start_idx + emb_dim
+            x = X[..., start_idx:end_idx].unsqueeze(-2)
+            x_emb = emb_table.unsqueeze(-3)
+            if dist_func is not None:
+                dist = dist_func(x, x_emb, start_idx)
+            else:
+                dist = torch.norm(x - x_emb, dim=-1)
+            weights = softmax(temp * -dist)
+            new_X[..., start_idx:end_idx] = weights @ emb_table
+            start_idx = end_idx
+        return new_X
