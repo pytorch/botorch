@@ -8,14 +8,19 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Callable, List, Optional
 
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
+from botorch.utils.sampling import draw_sobol_normal_samples
 from botorch.utils.transforms import normalize_indices
+from gpytorch.constraints import Interval
 from gpytorch.module import Module as GPyTorchModule
-from torch import Tensor
+from torch import Tensor, nn
 from torch.nn import Module, ModuleDict
+
+
+EPS = 1e-4
 
 
 class InputTransform(Module, ABC):
@@ -206,6 +211,11 @@ class CategoricalSpec:
     num_categories: int
 
 
+@dataclass
+class LatentCategoricalSpec(CategoricalSpec):
+    latent_dim: int = 2
+
+
 class EmbeddingTransform(InputTransform, GPyTorchModule):
     r"""Abstract base class for Embedding-based transforms"""
     _emb_dim: int
@@ -326,6 +336,115 @@ class OneHot(EmbeddingTransform):
             emb_dim = emb_table.shape[-1]
             end_idx = start_idx + emb_dim
             int_categories = X[..., start_idx:end_idx].argmax(dim=-1).to(dtype=X.dtype)
+            new_X[..., idx] = int_categories
+            start_idx = end_idx
+        return new_X
+
+
+class LatentCategoricalEmbedding(EmbeddingTransform):
+    r"""Latent embeddings for categorical variables.
+
+    Note: this current uses the same latent embeddings across batched.
+    This means that a batched multi-output model will use the same latent
+    embeddings for all outputs.
+    """
+
+    def __init__(
+        self,
+        categorical_specs: List[LatentCategoricalSpec],
+        dim: int,
+        transform_on_eval: bool = False,
+    ) -> None:
+        r"""Initialize input transform.
+
+        Args:
+            categorical_specs: A list of LatentCategoricalSpec objects.
+            dim: the total dimension of the inputs.
+            transform_on_eval: A boolean indicating whether to apply the
+                transform in eval() mode. Default: False
+        """
+        GPyTorchModule.__init__(self)
+        self.dim = dim
+        self.transform_on_eval = transform_on_eval
+        self._emb_dim = 0
+        categ_idcs = []
+        # TODO: replace with ParameterDict when supported in GPyTorch
+        for c in categorical_specs:
+            nlzd_idx = normalize_indices([c.idx], dim)[0]
+            categ_idcs.append(nlzd_idx)
+
+            init_bounds = torch.full((2, c.latent_dim), EPS)
+            init_bounds[1] = 1 - EPS
+            # initialize embeddings with sobol points in [0.25, 0.75]^d_latent
+            init_emb_table = draw_sobol_normal_samples(n=c.num_categories, d=c.latent_dim).squeeze(
+                0
+            )
+            constraint = Interval(lower_bound=EPS, upper_bound=1.0 - EPS)
+            self.register_parameter(
+                f"raw_latent_emb_tables_{nlzd_idx}",
+                # nn.Parameter(constraint.inverse_transform(init_emb_table)),
+                nn.Parameter(init_emb_table),
+            )
+            self.register_constraint(
+                param_name=f"raw_latent_emb_tables_{nlzd_idx}", constraint=constraint
+            )
+            self._emb_dim += c.latent_dim
+        self.register_buffer("categ_idcs", torch.tensor(categ_idcs, dtype=torch.long))
+        non_categ_mask = torch.ones(dim, dtype=bool)
+        non_categ_mask[self.categ_idcs] = 0
+        self.register_buffer("non_categ_mask", non_categ_mask)
+
+    def get_emb_table(self, idx: int) -> Tensor:
+        r"""Get the embedding table for the specified categorical feature.
+
+        Args:
+            idx: The index of the categorical feature
+
+        Returns:
+            A `num_categories x latent_dim`-dim tensor containing the embeddings
+            for each category.
+        """
+        constraint = getattr(self, f"raw_latent_emb_tables_{idx}_constraint")
+        raw_emb_table = getattr(self, f"raw_latent_emb_tables_{idx}")
+        return constraint.transform(raw_emb_table)
+
+    def untransform(
+        self,
+        X: Tensor,
+        dist_func: Optional[Callable[[Tensor, Tensor, int], Tensor]] = None,
+    ) -> Tensor:
+        r"""Untransform X to represent categoricals as integers.
+
+        The transformation assigns the category to be the index corresponding to the
+        closest embedding. Note: this is not differentiable.
+
+        Args:
+            X: A `batch_shape x n x d_cont + d_latent`-dim tensor of transformed valiues
+            dist_func: A broadcastable distance function mapping a two input tensors with
+                shapes `batch_shape x n x 1 x d_latent` and `n_categories x d_latent` and
+                an integer starting index to to a `batch_shape x n x n_categories`-dim
+                tensor of distances. The default is L2 distance.
+
+        Returns:
+            The untransformed tensor.
+        """
+        new_X = torch.empty(
+            X.shape[:-1] + torch.Size([self.dim]), dtype=X.dtype, device=X.device
+        )
+        num_non_categ_features = X.shape[-1] - self._emb_dim
+        new_X[..., self.non_categ_mask] = X[..., :num_non_categ_features]
+        start_idx = self.dim - self.categ_idcs.shape[0]
+        for idx in self.categ_idcs.tolist():
+            emb_table = self.get_emb_table(idx)
+            emb_dim = emb_table.shape[-1]
+            end_idx = start_idx + emb_dim
+            x = X[..., start_idx:end_idx].unsqueeze(-2)
+            x_emb = emb_table.unsqueeze(-3)
+            if dist_func is not None:
+                dist = dist_func(x, x_emb, start_idx)
+            else:
+                dist = torch.norm(x - x_emb, dim=-1)
+            int_categories = dist.argmin(dim=-1).to(dtype=X.dtype)
             new_X[..., idx] = int_categories
             start_idx = end_idx
         return new_X

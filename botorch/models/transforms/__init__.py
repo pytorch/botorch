@@ -7,6 +7,8 @@
 from botorch.models.transforms.input import (
     CategoricalSpec,
     ChainedInputTransform,
+    LatentCategoricalEmbedding,
+    LatentCategoricalSpec,
     Normalize,
     OneHot,
 )
@@ -17,6 +19,8 @@ __all__ = [
     "CategoricalSpec",
     "ChainedInputTransform",
     "ChainedOutcomeTransform",
+    "LatentCategoricalEmbedding",
+    "LatentCategoricalSpec",
     "Log",
     "Normalize",
     "OneHot",
