@@ -21,7 +21,7 @@ BOTORCH_LIBRARY_PATH = "botorch"
 AUTOMODULE_REGEX = re.compile(r"\.\. automodule:: ([\.\w]*)")
 
 # The top-level modules in botorch not to be validated
-EXCLUDED_MODULES = {}
+EXCLUDED_MODULES = {"version"}
 
 
 def parse_rst(rst_filename: str) -> Set[str]:

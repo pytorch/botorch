@@ -23,7 +23,10 @@ from botorch.generation.gen import (
 from botorch.utils import manual_seed
 
 
-__version__ = "0.3.0"
+try:
+    from botorch.version import version as __version__
+except Exception:  # pragma: no cover
+    __version__ = "Unknown"  # pragma: no cover
 
 
 __all__ = [

@@ -4,8 +4,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import os
-import re
 import sys
 
 from setuptools import find_packages, setup
@@ -34,17 +32,12 @@ DEV_REQUIRES = TEST_REQUIRES + ["black", "flake8", "sphinx", "sphinx-autodoc-typ
 
 TUTORIALS_REQUIRES = ["jupyter", "matplotlib", "cma", "torchvision"]
 
-# get version string from module
-with open(os.path.join(os.path.dirname(__file__), "botorch/__init__.py"), "r") as f:
-    version = re.search(r"__version__ = ['\"]([^'\"]*)['\"]", f.read(), re.M).group(1)
-
 # read in README.md as the long description
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(
     name="botorch",
-    version=version,
     description="Bayesian Optimization in PyTorch",
     author="Facebook, Inc.",
     license="MIT",
@@ -66,6 +59,8 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     python_requires=">=3.7",
+    setup_requires=["setuptools_scm"],
+    use_scm_version={"write_to": "botorch/version.py"},
     install_requires=["torch>=1.6", "gpytorch>=1.2", "scipy"],
     packages=find_packages(),
     extras_require={
