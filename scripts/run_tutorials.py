@@ -27,6 +27,7 @@ IGNORE = {
     "preference_bo.ipynb",
     # some others may require setting paths to local data
     "vae_mnist.ipynb",
+    "custom_botorch_model_in_ax.ipynb",  # TODO: Remove after next Ax release
 }
 
 
