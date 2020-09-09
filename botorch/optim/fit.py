@@ -208,6 +208,7 @@ def fit_gpytorch_scipy(
         "wall_time": Wall time of fitting.
         "iterations": List of OptimizationIteration objects with information on each
         iteration. If track_iterations is False, will be empty.
+        "OptimizeResult": The result returned by `scipy.optim.minimize`.
 
     Example:
         >>> gp = SingleTaskGP(train_X, train_Y)
@@ -255,6 +256,7 @@ def fit_gpytorch_scipy(
         "fopt": float(res.fun),
         "wall_time": time.time() - t1,
         "iterations": iterations,
+        "OptimizeResult": res,
     }
     if not res.success:
         try:
