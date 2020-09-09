@@ -24,14 +24,16 @@ test:
     - botorch
     - botorch.acquisition
     - botorch.exceptions
+    - botorch.generation
     - botorch.models
     - botorch.optim
     - botorch.posteriors
     - botorch.sampling
     - botorch.test_functions
     - botorch.utils
+    - botorch.cross_validation
     - botorch.fit
-    - botorch.gen
+    - botorch.logging
     - botorch.settings
 
 about:
