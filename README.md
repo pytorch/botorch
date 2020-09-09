@@ -50,8 +50,8 @@ Optimization simply use Ax.
 
 **Installation Requirements**
 - Python >= 3.7
-- PyTorch >= 1.5
-- gpytorch >= 1.1.1
+- PyTorch >= 1.6
+- gpytorch >= 1.2
 - scipy
 
 
