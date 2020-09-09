@@ -200,8 +200,9 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
             bounds: A `2 x d` tensor of lower and upper bounds for each column of
                 the solutions to the inner problem.
             kwargs: Additional keyword arguments. This includes the options for
-                optimization of the inner problem, i.e. `num_restarts`, `raw_samples`
-                and an `options` dictionary to be passed on to the optimization helpers.
+                optimization of the inner problem, i.e. `num_restarts`, `raw_samples`,
+                an `options` dictionary to be passed on to the optimization helpers, and
+                a `scipy_options` dictionary to be passed to `scipy.minimize`.
 
         Returns:
             A Tensor of shape `b`. For t-batch b, the q-KG value of the design
@@ -229,14 +230,15 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
             num_restarts=kwargs.get("num_restarts", 20),
             raw_samples=kwargs.get("raw_samples", 1024),
             current_model=self.model,
-            options=kwargs.get("options"),
+            options={**kwargs.get("options", {}), **kwargs.get("scipy_options", {})},
         )
+
         _, values = gen_candidates_scipy(
             initial_conditions=initial_conditions,
             acquisition_function=value_function,
             lower_bounds=bounds[0],
             upper_bounds=bounds[1],
-            options=kwargs.get("options"),
+            options=kwargs.get("scipy_options"),
         )
         # get the maximizer for each batch
         values, _ = torch.max(values, dim=0)

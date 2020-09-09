@@ -312,7 +312,12 @@ def gen_value_function_initial_conditions(
         num_restarts=options.get("num_inner_restarts", 20),
         raw_samples=options.get("raw_inner_samples", 1024),
         return_best_only=False,
-        options=options,
+        options={
+            k: v
+            for k, v in options.items()
+            if k
+            not in ("frac_random", "num_inner_restarts", "raw_inner_samples", "eta")
+        },
     )
 
     batch_shape = acq_function.model._input_batch_shape
