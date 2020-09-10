@@ -13,6 +13,7 @@ import tempfile
 import time
 from pathlib import Path
 from subprocess import CalledProcessError
+from typing import Optional
 
 import nbformat
 from nbconvert import PythonExporter
@@ -51,7 +52,7 @@ def run_script(script: str) -> None:
     return run_out
 
 
-def run_tutorial(tutorial: Path) -> None:
+def run_tutorial(tutorial: Path) -> Optional[str]:
     script = parse_ipynb(tutorial)
     tic = time.time()
     print(f"Running tutorial {tutorial.name}.")
@@ -59,30 +60,38 @@ def run_tutorial(tutorial: Path) -> None:
     try:
         run_out.check_returncode()
     except CalledProcessError:
-        raise RuntimeError(
-            "\n".join(
-                [
-                    f"Encountered error running tutorial {tutorial.name}:",
-                    "stdout:",
-                    run_out.stdout,
-                    "stderr:",
-                    run_out.stderr,
-                ]
-            )
+        return "\n".join(
+            [
+                f"Encountered error running tutorial {tutorial.name}:",
+                "stdout:",
+                run_out.stdout,
+                "stderr:",
+                run_out.stderr,
+            ]
         )
     runtime = time.time() - tic
     print(f"Running tutorial {tutorial.name} took {runtime:.2f} seconds.")
 
 
-def run_tutorials(repo_dir: str) -> None:
+def run_tutorials(repo_dir: str, include_ignored: bool = False) -> None:
     tutorial_dir = Path(repo_dir).joinpath("tutorials")
+    num_runs = 0
+    num_errors = 0
     for tutorial in tutorial_dir.iterdir():
         if not tutorial.is_file or tutorial.suffix != ".ipynb":
             continue
-        if tutorial.name in IGNORE:
+        if not include_ignored and tutorial.name in IGNORE:
             print(f"Ignoring tutorial {tutorial.name}.")
             continue
-        run_tutorial(tutorial)
+        num_runs += 1
+        error = run_tutorial(tutorial)
+        if error is not None:
+            num_errors += 1
+            print(error)
+    if num_errors > 0:
+        raise RuntimeError(
+            f"Running {num_runs} tutorials resulted in {num_errors} errors."
+        )
 
 
 if __name__ == "__main__":
@@ -90,5 +99,10 @@ if __name__ == "__main__":
     parser.add_argument(
         "-p", "--path", metavar="path", required=True, help="botorch repo directory."
     )
+    parser.add_argument(
+        "--include-ignored",
+        action="store_true",
+        help="Run all tutorials (incl. ignored).",
+    )
     args = parser.parse_args()
-    run_tutorials(args.path)
+    run_tutorials(repo_dir=args.path, include_ignored=args.include_ignored)
