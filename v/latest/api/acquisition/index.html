@@ -1260,8 +1260,9 @@ inner optimization problem.</p></li>
 <li><p><strong>bounds</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of
 the solutions to the inner problem.</p></li>
 <li><p><strong>kwargs</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>) – Additional keyword arguments. This includes the options for
-optimization of the inner problem, i.e. <cite>num_restarts</cite>, <cite>raw_samples</cite>
-and an <cite>options</cite> dictionary to be passed on to the optimization helpers.</p></li>
+optimization of the inner problem, i.e. <cite>num_restarts</cite>, <cite>raw_samples</cite>,
+an <cite>options</cite> dictionary to be passed on to the optimization helpers, and
+a <cite>scipy_options</cite> dictionary to be passed to <cite>scipy.minimize</cite>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -2671,7 +2672,6 @@ assumes that the last column of X contains the fidelity parameters.</p></li>
 <li class="toctree-l1"><a class="reference internal" href="test_functions.html">botorch.test_functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="exceptions.html">botorch.exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="utils.html">botorch.utils</a></li>
-<li class="toctree-l1"><a class="reference internal" href="gen.html">Generation utilities [DEPRECATED - use botorch.generation.gen]</a></li>
 </ul>
 <div class="relations">
 <h3>Related Topics</h3>

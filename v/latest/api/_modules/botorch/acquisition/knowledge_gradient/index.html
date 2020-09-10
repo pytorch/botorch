@@ -226,8 +226,9 @@
 <span class="sd">            bounds: A `2 x d` tensor of lower and upper bounds for each column of</span>
 <span class="sd">                the solutions to the inner problem.</span>
 <span class="sd">            kwargs: Additional keyword arguments. This includes the options for</span>
-<span class="sd">                optimization of the inner problem, i.e. `num_restarts`, `raw_samples`</span>
-<span class="sd">                and an `options` dictionary to be passed on to the optimization helpers.</span>
+<span class="sd">                optimization of the inner problem, i.e. `num_restarts`, `raw_samples`,</span>
+<span class="sd">                an `options` dictionary to be passed on to the optimization helpers, and</span>
+<span class="sd">                a `scipy_options` dictionary to be passed to `scipy.minimize`.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A Tensor of shape `b`. For t-batch b, the q-KG value of the design</span>
@@ -255,14 +256,15 @@
             <span class="n">num_restarts</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"num_restarts"</span><span class="p">,</span> <span class="mi">20</span><span class="p">),</span>
             <span class="n">raw_samples</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"raw_samples"</span><span class="p">,</span> <span class="mi">1024</span><span class="p">),</span>
             <span class="n">current_model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
-            <span class="n">options</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"options"</span><span class="p">),</span>
+            <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="o">**</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"options"</span><span class="p">,</span> <span class="p">{}),</span> <span class="o">**</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"scipy_options"</span><span class="p">,</span> <span class="p">{})},</span>
         <span class="p">)</span>
+
         <span class="n">_</span><span class="p">,</span> <span class="n">values</span> <span class="o">=</span> <span class="n">gen_candidates_scipy</span><span class="p">(</span>
             <span class="n">initial_conditions</span><span class="o">=</span><span class="n">initial_conditions</span><span class="p">,</span>
             <span class="n">acquisition_function</span><span class="o">=</span><span class="n">value_function</span><span class="p">,</span>
             <span class="n">lower_bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
             <span class="n">upper_bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
-            <span class="n">options</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"options"</span><span class="p">),</span>
+            <span class="n">options</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"scipy_options"</span><span class="p">),</span>
         <span class="p">)</span>
         <span class="c1"># get the maximizer for each batch</span>
         <span class="n">values</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
@@ -515,7 +517,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../test_functions.html">botorch.test_functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">botorch.exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../utils.html">botorch.utils</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../gen.html">Generation utilities [DEPRECATED - use botorch.generation.gen]</a></li>
 </ul>
 <div class="relations">
 <h3>Related Topics</h3>

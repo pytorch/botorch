@@ -24,7 +24,6 @@ BoTorch API Reference
    test_functions
    exceptions
    utils
-   gen
 
 
 Indices and Tables
