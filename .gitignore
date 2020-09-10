@@ -84,6 +84,9 @@ ENV/
 # cython-generated C-code
 botorch/qmc/sobol.c*
 
+# version file
+botorch/version.py
+
 # Sphinx documentation
 sphinx/build/
 

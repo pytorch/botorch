@@ -12,8 +12,9 @@
 # -- Path setup --------------------------------------------------------------
 
 import os
-import re
 import sys
+
+from pkg_resources import get_distribution
 
 
 base_path = os.path.abspath(os.path.join(__file__, "..", "..", "..", "botorch"))
@@ -26,16 +27,8 @@ project = "BoTorch"
 copyright = "2019, Facebook, Inc."
 author = "Facebook, Inc."
 
-
-# get version string from setup.py
-with open(os.path.join(base_path, "__init__.py"), "r") as f:
-    match = re.search(r"__version__ = ['\"]([^'\"]*)['\"]", f.read(), re.M)
-
-# The full version (of the form X.Y.ZaW or X.Y.Z.pW)
-release = match.group(1)
-# The short X.Y.Z version
-splits = release.split(".")
-version = ".".join(splits[:2] + [splits[2][:1]])  # TODO: be smarter here
+# get version string
+version = get_distribution("botorch").version
 
 
 # -- General configuration ---------------------------------------------------
