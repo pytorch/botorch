@@ -16,6 +16,7 @@ from botorch.sampling.pairwise_samplers import PairwiseSobolQMCNormalSampler
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.kernels import RBFKernel
 from gpytorch.kernels.linear_kernel import LinearKernel
+from gpytorch.likelihoods.noise_models import HomoskedasticNoise
 from gpytorch.means import ConstantMean
 from gpytorch.priors import GammaPrior
 
@@ -85,6 +86,14 @@ class TestPairwiseGP(BotorchTestCase):
             self.assertIsInstance(model.covar_module.lengthscale_prior, GammaPrior)
             self.assertEqual(model.num_outputs, 1)
 
+            # test custom noise prior
+            custom_noise_prior = GammaPrior(concentration=2.0, rate=1.0)
+            custom_noise_module = HomoskedasticNoise(noise_prior=custom_noise_prior)
+            custom_m = PairwiseGP(**model_kwargs, noise_module=custom_noise_module)
+            self.assertEqual(
+                custom_m.noise_module.noise_prior.concentration, torch.tensor(2.0)
+            )
+            self.assertEqual(custom_m.noise_module.noise_prior.rate, torch.tensor(1.0))
             # test custom models
             custom_m = PairwiseGP(**model_kwargs, covar_module=LinearKernel())
             self.assertIsInstance(custom_m.covar_module, LinearKernel)
