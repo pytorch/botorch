@@ -28,15 +28,15 @@ else
   conda install -y -c pytorch pytorch cpuonly
 fi
 
+# install other deps
+conda install -y pip scipy sphinx pytest flake8
+conda install -y -c conda-forge black pytest-cov sphinx-autodoc-typehints
+
 # get gpytorch master
 git clone https://github.com/cornellius-gp/gpytorch.git ../gpytorch
 
 # install gpytorch
-conda develop ../gpytorch
-
-# install other deps
-conda install -y scipy sphinx pytest flake8
-conda install -y -c conda-forge black pytest-cov sphinx-autodoc-typehints
+pip install -e ../gpytorch
 
 # install botorch
-conda develop .
+pip install -e .
