@@ -100,7 +100,7 @@ of the form $b_1 \times \cdots \times b_k$.
 
 ##### Batched Models
 GPyTorch models can also be
-[fit on batched training points](https://github.com/cornellius-gp/gpytorch/blob/master/examples/01_Simple_GP_Regression/Simple_Batch_Mode_GP_Regression.ipynb)
+[fit on batched training points](https://github.com/cornellius-gp/gpytorch/blob/master/examples/08_Advanced_Usage/Simple_Batch_Mode_GP_Regression.ipynb)
 with shape $\textit{batch_shape} \times n \times d$. Here, each batch is modeled
 independently (i.e., each batch has its own hyperparameters).
 For example, if the training points have shape $b_1 \times b_2 \times n \times d$
