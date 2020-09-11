@@ -3,6 +3,51 @@
 The release log for BoTorch.
 
 
+## [0.3.1] - Sep 12, 2020
+
+Maintenance Release
+
+#### New Features
+* Constrained Multi-Objective tutorial (#493)
+* Multi-fidelity Knowledge Gradient tutorial (#509)
+* Support for batch qMC sampling (#510)
+* New `evaluate` method for `qKnowledgeGradient` (#515)
+
+#### Compatibility
+* Require PyTorch >=1.6 (#535)
+* Require GPyTorch >=1.2 (#535)
+* Remove deprecated `botorch.gen module` (#532)
+
+#### Bug fixes
+* Fix bad backward-indexing of task_feature in `MultiTaskGP` (#485)
+* Fix bounds in constrained Branin-Currin test function (#491)
+* Fix max_hv for C2DTLZ2 and make Hypervolume always return a float (#494)
+* Fix bug in `draw_sobol_samples` that did not use the proper effective dimension (#505)
+* Fix constraints for `q>1` in `qExpectedHypervolumeImprovement` (c80c4fdb0f83f0e4f12e4ec4090d0478b1a8b532)
+* Only use feasible observations in partitioning for `qExpectedHypervolumeImprovement`
+  in `get_acquisition_function` (#523)
+* Improved GPU compatibility for `PairwiseGP` (#537)
+
+#### Performance Improvements
+* Reduce memory footprint in `qExpectedHypervolumeImprovement` (#522)
+* Add `(q)ExpectedHypervolumeImprovement` to nonnegative functions
+  [for better initialization] (#496)
+
+#### Other changes
+* Support batched `best_f` in `qExpectedImprovement` (#487)
+* Allow to return full tree of solutions in `OneShotAcquisitionFunction` (#488)
+* Added `construct_inputs` class method to models to programmatically construct the
+  inputs to the constructor from a standardized `TrainingData` representation
+  (#477, #482, 3621198d02195b723195b043e86738cd5c3b8e40)
+* Acquisition function constructors now accept catch-all `**kwargs` options
+  (#478, e5b69352954bb10df19a59efe9221a72932bfe6c)
+* Use `psd_safe_cholesky` in `qMaxValueEntropy` for better numerical stabilty (#518)
+* Added `WeightedMCMultiOutputObjective` (81d91fd2e115774e561c8282b724457233b6d49f)
+* Add ability to specify `outcomes` to all multi-output objectives (#524)
+* Return optimization output in `info_dict` for `fit_gpytorch_scipy` (#534)
+* Use `setuptools_scm` for versioning (#539)
+
+
 ## [0.3.0] - July 6, 2020
 
 Multi-Objective Bayesian Optimization
@@ -18,12 +63,11 @@ Multi-Objective Bayesian Optimization
   * Box Decomposition algorithm
 * Multi-Objective Test Functions (#466)
   * Suite of synthetic test functions for multi-objective, constrained
-  optimzation
+    optimzation
 * Multi-Objective Tutorial (#468)
 * Abstract ConstrainedBaseTestProblem (#454)
 * Add optimize_acqf_list method for sequentially, greedily optimizing 1 candidate
-from each provided acquisition function (d10aec911b241b208c59c192beb9e4d572a092cd)
-
+  from each provided acquisition function (d10aec911b241b208c59c192beb9e4d572a092cd)
 
 #### Bug fixes
 * Fixed re-arranging mean in MultiTask MO models (#450).
@@ -32,7 +76,7 @@ from each provided acquisition function (d10aec911b241b208c59c192beb9e4d572a092c
 * Move gpt_posterior_settings into models.utils (#449)
 * Allow specifications of batch dims to collapse in samplers (#457)
 * Remove outcome transform before model-fitting for sequential model fitting
-in MO models (#458)
+  in MO models (#458)
 
 
 ## [0.2.5] - May 14, 2020
