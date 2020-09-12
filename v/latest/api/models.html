@@ -1428,7 +1428,7 @@ arXiv preprint arXiv:1012.2599 (2010).</p>
 </dl>
 <dl class="py class">
 <dt id="botorch.models.pairwise_gp.PairwiseGP">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.models.pairwise_gp.</code><code class="sig-name descname">PairwiseGP</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">datapoints</span></em>, <em class="sig-param"><span class="n">comparisons</span></em>, <em class="sig-param"><span class="n">covar_module</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/pairwise_gp.html#PairwiseGP"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseGP" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.pairwise_gp.</code><code class="sig-name descname">PairwiseGP</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">datapoints</span></em>, <em class="sig-param"><span class="n">comparisons</span></em>, <em class="sig-param"><span class="n">covar_module</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">noise_module</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/pairwise_gp.html#PairwiseGP"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseGP" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.model.Model</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">gpytorch.models.gp.GP</span></code></p>
 <p>Probit GP for preference learning with Laplace approximation</p>
 <p>Implementation is based on <a class="reference internal" href="#chu2005preference" id="id3"><span>[Chu2005preference]</span></a>.
@@ -1567,10 +1567,6 @@ possibly noise observations passed in via kwargs).</p>
 <cite>PairwiseGP</cite>)</p>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt id="botorch.models.pairwise_gp.PairwiseLaplaceMarginalLogLikelihood.training">
-<code class="sig-name descname">training</code><em class="property">: bool</em><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseLaplaceMarginalLogLikelihood.training" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 <dl class="py method">
 <dt id="botorch.models.pairwise_gp.PairwiseLaplaceMarginalLogLikelihood.forward">
 <code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">post</span></em>, <em class="sig-param"><span class="n">comp</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/pairwise_gp.html#PairwiseLaplaceMarginalLogLikelihood.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseLaplaceMarginalLogLikelihood.forward" title="Permalink to this definition">¶</a></dt>
@@ -1590,6 +1586,10 @@ possibly noise observations passed in via kwargs).</p>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py attribute">
+<dt id="botorch.models.pairwise_gp.PairwiseLaplaceMarginalLogLikelihood.training">
+<code class="sig-name descname">training</code><em class="property">: bool</em><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseLaplaceMarginalLogLikelihood.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 </dd></dl>
 </div>
 </div>
