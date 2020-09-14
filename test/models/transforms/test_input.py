@@ -155,6 +155,15 @@ class TestInputTransforms(BotorchTestCase):
                 X_unnlzd = nlz.untransform(X_nlzd)
                 self.assertTrue(torch.allclose(X, X_unnlzd, atol=1e-4, rtol=1e-4))
 
+                # test reverse
+                nlz = Normalize(
+                    d=2, bounds=bounds, batch_shape=batch_shape, reverse=True
+                )
+                X2 = nlz(X_nlzd)
+                self.assertTrue(torch.allclose(X2, X, atol=1e-4, rtol=1e-4))
+                X_nlzd2 = nlz.untransform(X2)
+                self.assertTrue(torch.allclose(X_nlzd, X_nlzd2, atol=1e-4, rtol=1e-4))
+
     def test_chained_input_transform(self):
 
         ds = (1, 2)
