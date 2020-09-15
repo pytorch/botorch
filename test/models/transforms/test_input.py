@@ -59,6 +59,16 @@ class TestInputTransforms(BotorchTestCase):
         ipt.eval()
         self.assertTrue(torch.equal(ipt(X), X))
 
+        # test equals
+        ipt2 = NotSoAbstractInputTransform(
+            transform_on_train=False, transform_on_eval=False
+        )
+        self.assertTrue(ipt.equals(ipt2))
+        ipt3 = NotSoAbstractInputTransform(
+            transform_on_train=True, transform_on_eval=False
+        )
+        self.assertFalse(ipt.equals(ipt3))
+
         with self.assertRaises(NotImplementedError):
             ipt.untransform(None)
 
@@ -164,6 +174,23 @@ class TestInputTransforms(BotorchTestCase):
                 X_nlzd2 = nlz.untransform(X2)
                 self.assertTrue(torch.allclose(X_nlzd, X_nlzd2, atol=1e-4, rtol=1e-4))
 
+                # test equals
+                nlz2 = Normalize(
+                    d=2, bounds=bounds, batch_shape=batch_shape, reverse=False
+                )
+                self.assertFalse(nlz.equals(nlz2))
+                nlz3 = Normalize(
+                    d=2, bounds=bounds, batch_shape=batch_shape, reverse=True
+                )
+                self.assertTrue(nlz.equals(nlz3))
+                new_bounds = bounds + 1
+                nlz4 = Normalize(
+                    d=2, bounds=new_bounds, batch_shape=batch_shape, reverse=True
+                )
+                self.assertFalse(nlz.equals(nlz4))
+                nlz5 = Normalize(d=2, batch_shape=batch_shape)
+                self.assertFalse(nlz.equals(nlz5))
+
     def test_chained_input_transform(self):
 
         ds = (1, 2)
@@ -197,13 +224,24 @@ class TestInputTransforms(BotorchTestCase):
 
             # test not transformed on eval
             tf = ChainedInputTransform(
-                stz_fixed=tf1, stz_learned=tf2, transform_on_eval=False
+                transform_on_eval=False, stz_fixed=tf1, stz_learned=tf2
             )
             tf.eval()
             self.assertTrue(torch.equal(tf(X), X))
 
             # test not transformed on train
             tf = ChainedInputTransform(
-                stz_fixed=tf1, stz_learned=tf2, transform_on_train=False
+                transform_on_train=False, stz_fixed=tf1, stz_learned=tf2
             )
             self.assertTrue(torch.equal(tf(X), X))
+
+            # test __eq__
+            other_tf = ChainedInputTransform(
+                transform_on_train=False, stz_fixed=tf1, stz_learned=tf2
+            )
+            self.assertTrue(tf.equals(other_tf))
+            # change order
+            other_tf = ChainedInputTransform(
+                transform_on_train=False, stz_learned=tf2, stz_fixed=tf1
+            )
+            self.assertFalse(tf.equals(other_tf))
