@@ -18,15 +18,47 @@ from botorch.utils.testing import BotorchTestCase
 
 
 class NotSoAbstractInputTransform(InputTransform):
-    def forward(self, X):
-        pass
+    def __init__(self, transform_on_train, transform_on_eval):
+        super().__init__()
+        self.transform_on_train = transform_on_train
+        self.transform_on_eval = transform_on_eval
+
+    def transform(self, X):
+        return X + 1
 
 
 class TestInputTransforms(BotorchTestCase):
     def test_abstract_base_input_transform(self):
         with self.assertRaises(TypeError):
             InputTransform()
-        ipt = NotSoAbstractInputTransform()
+        X = torch.zeros([1])
+        X_tf = torch.ones([1])
+        # test transform_on_train and transform_on_eval
+        ipt = NotSoAbstractInputTransform(
+            transform_on_train=True, transform_on_eval=True
+        )
+        self.assertTrue(torch.equal(ipt(X), X_tf))
+        ipt.eval()
+        self.assertTrue(torch.equal(ipt(X), X_tf))
+        ipt = NotSoAbstractInputTransform(
+            transform_on_train=True, transform_on_eval=False
+        )
+        self.assertTrue(torch.equal(ipt(X), X_tf))
+        ipt.eval()
+        self.assertTrue(torch.equal(ipt(X), X))
+        ipt = NotSoAbstractInputTransform(
+            transform_on_train=False, transform_on_eval=True
+        )
+        self.assertTrue(torch.equal(ipt(X), X))
+        ipt.eval()
+        self.assertTrue(torch.equal(ipt(X), X_tf))
+        ipt = NotSoAbstractInputTransform(
+            transform_on_train=False, transform_on_eval=False
+        )
+        self.assertTrue(torch.equal(ipt(X), X))
+        ipt.eval()
+        self.assertTrue(torch.equal(ipt(X), X))
+
         with self.assertRaises(NotImplementedError):
             ipt.untransform(None)
 
@@ -99,6 +131,30 @@ class TestInputTransforms(BotorchTestCase):
                 X_unnlzd = nlz.untransform(X_nlzd)
                 self.assertTrue(torch.allclose(X, X_unnlzd, atol=1e-4, rtol=1e-4))
 
+                # test no normalization on eval
+                nlz = Normalize(
+                    d=2, bounds=bounds, batch_shape=batch_shape, transform_on_eval=False
+                )
+                X_nlzd = nlz(X)
+                X_unnlzd = nlz.untransform(X_nlzd)
+                self.assertTrue(torch.allclose(X, X_unnlzd, atol=1e-4, rtol=1e-4))
+                nlz.eval()
+                self.assertTrue(torch.equal(nlz(X), X))
+
+                # test no normalization on train
+                nlz = Normalize(
+                    d=2,
+                    bounds=bounds,
+                    batch_shape=batch_shape,
+                    transform_on_train=False,
+                )
+                X_nlzd = nlz(X)
+                self.assertTrue(torch.equal(nlz(X), X))
+                nlz.eval()
+                X_nlzd = nlz(X)
+                X_unnlzd = nlz.untransform(X_nlzd)
+                self.assertTrue(torch.allclose(X, X_unnlzd, atol=1e-4, rtol=1e-4))
+
     def test_chained_input_transform(self):
 
         ds = (1, 2)
@@ -129,3 +185,16 @@ class TestInputTransforms(BotorchTestCase):
             self.assertTrue(torch.equal(X_tf, X_tf_))
             X_utf = tf.untransform(X_tf)
             self.assertTrue(torch.allclose(X_utf, X, atol=1e-4, rtol=1e-4))
+
+            # test not transformed on eval
+            tf = ChainedInputTransform(
+                stz_fixed=tf1, stz_learned=tf2, transform_on_eval=False
+            )
+            tf.eval()
+            self.assertTrue(torch.equal(tf(X), X))
+
+            # test not transformed on train
+            tf = ChainedInputTransform(
+                stz_fixed=tf1, stz_learned=tf2, transform_on_train=False
+            )
+            self.assertTrue(torch.equal(tf(X), X))

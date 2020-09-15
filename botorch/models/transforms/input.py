@@ -18,8 +18,28 @@ from torch.nn import Module, ModuleDict
 class InputTransform(Module, ABC):
     r"""Abstract base class for input transforms."""
 
-    @abstractmethod
+    # booleans indicating whether to apply the transform
+    # in train() and/or eval() mode.
+    transform_on_eval: bool
+    transform_on_train: bool
+
     def forward(self, X: Tensor) -> Tensor:
+        r"""Transform the inputs to a model.
+
+        Args:
+            X: A `batch_shape x n x d`-dim tensor of inputs.
+
+        Returns:
+            A `batch_shape x n x d`-dim tensor of transformed inputs.
+        """
+        if (self.training and self.transform_on_train) or (
+            not self.training and self.transform_on_eval
+        ):
+            return self.transform(X)
+        return X
+
+    @abstractmethod
+    def transform(self, X: Tensor) -> Tensor:
         r"""Transform the inputs to a model.
 
         Args:
@@ -47,17 +67,28 @@ class InputTransform(Module, ABC):
 class ChainedInputTransform(InputTransform, ModuleDict):
     r"""An input transform representing the chaining of individual transforms"""
 
-    def __init__(self, **transforms: InputTransform) -> None:
+    def __init__(
+        self,
+        transform_on_train: bool = True,
+        transform_on_eval: bool = True,
+        **transforms: InputTransform,
+    ) -> None:
         r"""Chaining of input transforms.
 
         Args:
+            transform_on_train: A boolean indicating whether to apply the
+                transforms in train() mode. Default: True
+            transform_on_eval: A boolean indicating whether to apply the
+                transforms in eval() mode. Default: True
             transforms: The transforms to chain. Internally, the names of the
                 kwargs are used as the keys for accessing the individual
                 transforms on the module.
         """
+        self.transform_on_train = transform_on_train
+        self.transform_on_eval = transform_on_eval
         super().__init__(transforms)
 
-    def forward(self, X: Tensor) -> Tensor:
+    def transform(self, X: Tensor) -> Tensor:
         r"""Transform the inputs to a model.
 
         Individual transforms are applied in sequence.
@@ -102,6 +133,8 @@ class Normalize(InputTransform):
         d: int,
         bounds: Optional[Tensor] = None,
         batch_shape: torch.Size = torch.Size(),  # noqa: B008
+        transform_on_train: bool = True,
+        transform_on_eval: bool = True,
     ) -> None:
         r"""Normalize the inputs to the unit cube.
 
@@ -112,6 +145,10 @@ class Normalize(InputTransform):
             batch_shape: The batch shape of the inputs (asssuming input tensors
                 of shape `batch_shape x n x d`). If provided, perform individual
                 normalization per batch, otherwise uses a single normalization.
+            transform_on_train: A boolean indicating whether to apply the
+                transforms in train() mode. Default: True
+            transform_on_eval: A boolean indicating whether to apply the
+                transform in eval() mode. Default: True
         """
         super().__init__()
         if bounds is not None:
@@ -129,8 +166,10 @@ class Normalize(InputTransform):
         self.register_buffer("mins", mins)
         self.register_buffer("ranges", ranges)
         self._d = d
+        self.transform_on_train = transform_on_train
+        self.transform_on_eval = transform_on_eval
 
-    def forward(self, X: Tensor) -> Tensor:
+    def transform(self, X: Tensor) -> Tensor:
         r"""Normalize the inputs.
 
         If no explicit bounds are provided, this is stateful: In train mode,
