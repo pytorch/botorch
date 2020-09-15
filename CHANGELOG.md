@@ -3,7 +3,7 @@
 The release log for BoTorch.
 
 
-## [0.3.1] - Sep 12, 2020
+## [0.3.1] - Sep 15, 2020
 
 Maintenance Release
 
