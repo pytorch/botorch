@@ -4,6 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import os
 import sys
 
 from setuptools import find_packages, setup
@@ -32,8 +33,10 @@ DEV_REQUIRES = TEST_REQUIRES + ["black", "flake8", "sphinx", "sphinx-autodoc-typ
 
 TUTORIALS_REQUIRES = ["jupyter", "matplotlib", "cma", "torchvision"]
 
+root_dir = os.path.dirname(__file__)
+
 # read in README.md as the long description
-with open("README.md", "r") as fh:
+with open(os.path.join(root_dir, "README.md"), "r") as fh:
     long_description = fh.read()
 
 setup(
@@ -60,7 +63,11 @@ setup(
     long_description_content_type="text/markdown",
     python_requires=">=3.7",
     setup_requires=["setuptools_scm"],
-    use_scm_version={"write_to": "botorch/version.py"},
+    use_scm_version={
+        "root": ".",
+        "relative_to": __file__,
+        "write_to": os.path.join(root_dir, "botorch", "version.py"),
+    },
     install_requires=["torch>=1.6", "gpytorch>=1.2", "scipy"],
     packages=find_packages(),
     extras_require={

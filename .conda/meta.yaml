@@ -2,7 +2,7 @@
 
 package:
   name: {{ data.get("name")|lower }}
-  version: {{ data.get("version") }}
+  version: {{ data.get("version", environ["BOTORCH_VERSION"]) }}
 
 source:
   path: ..
