@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import torch
 from botorch.models.gpytorch import MultiTaskGPyTorchModel
+from botorch.models.transforms.input import InputTransform
 from botorch.utils.containers import TrainingData
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels.index_kernel import IndexKernel
@@ -51,6 +52,7 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
         prior: Optional[Prior] = None,
         output_tasks: Optional[List[int]] = None,
         rank: Optional[int] = None,
+        input_transform: Optional[InputTransform] = None,
     ) -> None:
         r"""Multi-Task GP model using an ICM kernel, inferring observation noise.
 
@@ -64,6 +66,8 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
                 outputs for. If omitted, return outputs for all task indices.
             rank: The rank to be used for the index kernel. If omitted, use a
                 full rank (i.e. number of tasks) kernel.
+            input_transform: An input transform that is applied in the model's
+                forward pass.
 
         Example:
             >>> X1, X2 = torch.rand(10, 2), torch.rand(20, 2)
@@ -74,8 +78,14 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
             >>> train_Y = torch.cat(f1(X1), f2(X2)).unsqueeze(-1)
             >>> model = MultiTaskGP(train_X, train_Y, task_feature=-1)
         """
+        if input_transform is None:
+            transformed_X = train_X
+        else:
+            input_transform = input_transform.to(train_X)
+            transformed_X = input_transform(train_X)
+        self._validate_tensor_args(X=transformed_X, Y=train_Y)
         all_tasks, task_feature, d = self.get_all_tasks(
-            train_X, task_feature, output_tasks
+            transformed_X, task_feature, output_tasks
         )
         # squeeze output dim
         train_Y = train_Y.squeeze(-1)
@@ -111,6 +121,8 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
         self.task_covar_module = IndexKernel(
             num_tasks=num_tasks, rank=self._rank, prior=prior
         )
+        if input_transform is not None:
+            self.input_transform = input_transform
         self.to(train_X)
 
     def _split_inputs(self, x: Tensor) -> Tuple[Tensor, Tensor]:
@@ -140,6 +152,8 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
         return x_basic, task_idcs
 
     def forward(self, x: Tensor) -> MultivariateNormal:
+        if hasattr(self, "input_transform"):
+            x = self.input_transform(x)
         x_basic, task_idcs = self._split_inputs(x)
         # Compute base mean and covariance
         mean_x = self.mean_module(x_basic)
@@ -211,8 +225,9 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
         prior: Optional[Prior] = None,
         output_tasks: Optional[List[int]] = None,
         rank: Optional[int] = None,
+        input_transform: Optional[InputTransform] = None,
     ) -> None:
-        r"""Multi-Task GP model using an ICM kernel and known observatioon noise.
+        r"""Multi-Task GP model using an ICM kernel and known observation noise.
 
         Args:
             train_X: A `n x (d + 1)` or `b x n x (d + 1)` (batch mode) tensor
@@ -227,6 +242,8 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
                 outputs for. If omitted, return outputs for all task indices.
             rank: The rank to be used for the index kernel. If omitted, use a
                 full rank (i.e. number of tasks) kernel.
+            input_transform: An input transform that is applied in the model's
+                forward pass.
 
         Example:
             >>> X1, X2 = torch.rand(10, 2), torch.rand(20, 2)
@@ -238,7 +255,8 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
             >>> train_Yvar = 0.1 + 0.1 * torch.rand_like(train_Y)
             >>> model = FixedNoiseMultiTaskGP(train_X, train_Y, train_Yvar, -1)
         """
-        self._validate_tensor_args(X=train_X, Y=train_Y, Yvar=train_Yvar)
+        transformed_X = train_X if input_transform is None else input_transform(train_X)
+        self._validate_tensor_args(X=transformed_X, Y=train_Y, Yvar=train_Yvar)
         # We'll instatiate a MultiTaskGP and simply override the likelihood
         super().__init__(
             train_X=train_X,
@@ -247,6 +265,7 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
             output_tasks=output_tasks,
             rank=rank,
             prior=prior,
+            input_transform=input_transform,
         )
         self.likelihood = FixedNoiseGaussianLikelihood(noise=train_Yvar.squeeze(-1))
         self.to(train_X)

@@ -83,6 +83,23 @@ def _check_compatibility(models: ModelListGP) -> None:
     ):
         raise UnsupportedError("training inputs must agree for all sub-models.")
 
+    # check that there are no batched input transforms
+    for m in models:
+        if hasattr(m, "input_transform"):
+            default_size = torch.Size([])
+            if (
+                m.input_transform is not None
+                and len(getattr(m.input_transform, "batch_shape", default_size)) != 0
+            ):
+                raise UnsupportedError("Batched input_transforms are not supported.")
+
+    # check that all models have the same input transforms
+    if any(hasattr(m, "input_transform") for m in models):
+        if not all(
+            m.input_transform.equals(models[0].input_transform) for m in models[1:]
+        ):
+            raise UnsupportedError("All models must have the same input_transforms.")
+
 
 def model_list_to_batched(model_list: ModelListGP) -> BatchedMultiOutputGPyTorchModel:
     """Convert a ModelListGP to a BatchedMultiOutputGPyTorchModel.
@@ -123,10 +140,19 @@ def model_list_to_batched(model_list: ModelListGP) -> BatchedMultiOutputGPyTorch
         kwargs.update(init_args)
 
     # construct the batched GP model
-    batch_gp = models[0].__class__(**kwargs)
+    input_transform = getattr(models[0], "input_transform", None)
+    batch_gp = models[0].__class__(input_transform=input_transform, **kwargs)
 
     tensors = {n for n, p in batch_gp.state_dict().items() if len(p.shape) > 0}
     scalars = set(batch_gp.state_dict()) - tensors
+    # don't modify input transform buffers, so add them to scalars set and remove
+    # them from tensors
+    if input_transform is not None:
+        input_transform_keys = {
+            "input_transform." + n for n, p in input_transform.state_dict().items()
+        }
+        scalars = scalars.union(input_transform_keys)
+        tensors = set(tensors) - input_transform_keys
     input_batch_dims = len(models[0]._input_batch_shape)
 
     # ensure scalars agree (TODO: Allow different priors for different outputs)
@@ -184,10 +210,19 @@ def batched_to_model_list(batch_model: BatchedMultiOutputGPyTorchModel) -> Model
         raise NotImplementedError(
             "Conversion of HeteroskedasticSingleTaskGP currently not supported."
         )
+    input_transform = getattr(batch_model, "input_transform", None)
     batch_sd = batch_model.state_dict()
 
     tensors = {n for n, p in batch_sd.items() if len(p.shape) > 0}
     scalars = set(batch_sd) - tensors
+    # don't modify input transform buffers, so add them to scalars set and remove
+    # them from tensors
+    if input_transform is not None:
+        input_transform_keys = {
+            "input_transform." + n for n, p in input_transform.state_dict().items()
+        }
+        scalars = scalars.union(input_transform_keys)
+        tensors = set(tensors) - input_transform_keys
     input_bdims = len(batch_model._input_batch_shape)
 
     models = []
@@ -216,7 +251,7 @@ def batched_to_model_list(batch_model: BatchedMultiOutputGPyTorchModel) -> Model
             )
         if isinstance(batch_model, SingleTaskMultiFidelityGP):
             kwargs.update(batch_model._init_args)
-        model = batch_model.__class__(**kwargs)
+        model = batch_model.__class__(input_transform=input_transform, **kwargs)
         model.load_state_dict(sd)
         models.append(model)
 

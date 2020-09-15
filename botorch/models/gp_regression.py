@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional, Union
 import torch
 from botorch import settings
 from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
+from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import Log, OutcomeTransform
 from botorch.models.utils import validate_input_scaling
 from botorch.sampling.samplers import MCSampler
@@ -66,6 +67,7 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         likelihood: Optional[Likelihood] = None,
         covar_module: Optional[Module] = None,
         outcome_transform: Optional[OutcomeTransform] = None,
+        input_transform: Optional[InputTransform] = None,
     ) -> None:
         r"""A single-task exact GP model.
 
@@ -80,16 +82,23 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
                 training data during instantiation and to the posterior during
                 inference (that is, the `Posterior` obtained by calling
                 `.posterior` on the model will be on the original scale).
+            input_transform: An input transform that is applied in the model's
+                forward pass.
 
         Example:
             >>> train_X = torch.rand(20, 2)
             >>> train_Y = torch.sin(train_X).sum(dim=1, keepdim=True)
             >>> model = SingleTaskGP(train_X, train_Y)
         """
+        if input_transform is None:
+            transformed_X = train_X
+        else:
+            input_transform = input_transform.to(train_X)
+            transformed_X = input_transform(train_X)
         if outcome_transform is not None:
             train_Y, _ = outcome_transform(train_Y)
-        self._validate_tensor_args(X=train_X, Y=train_Y)
-        validate_input_scaling(train_X=train_X, train_Y=train_Y)
+        self._validate_tensor_args(X=transformed_X, Y=train_Y)
+        validate_input_scaling(train_X=transformed_X, train_Y=train_Y)
         self._set_dimensions(train_X=train_X, train_Y=train_Y)
         train_X, train_Y, _ = self._transform_tensor_args(X=train_X, Y=train_Y)
         if likelihood is None:
@@ -112,7 +121,7 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
             self.covar_module = ScaleKernel(
                 MaternKernel(
                     nu=2.5,
-                    ard_num_dims=train_X.shape[-1],
+                    ard_num_dims=transformed_X.shape[-1],
                     batch_shape=self._aug_batch_shape,
                     lengthscale_prior=GammaPrior(3.0, 6.0),
                 ),
@@ -130,9 +139,13 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         # TODO: Allow subsetting of other covar modules
         if outcome_transform is not None:
             self.outcome_transform = outcome_transform
+        if input_transform is not None:
+            self.input_transform = input_transform
         self.to(train_X)
 
     def forward(self, x: Tensor) -> MultivariateNormal:
+        if hasattr(self, "input_transform"):
+            x = self.input_transform(x)
         mean_x = self.mean_module(x)
         covar_x = self.covar_module(x)
         return MultivariateNormal(mean_x, covar_x)
@@ -169,6 +182,7 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         train_Yvar: Tensor,
         covar_module: Optional[Module] = None,
         outcome_transform: Optional[OutcomeTransform] = None,
+        input_transform: Optional[InputTransform] = None,
         **kwargs: Any,
     ) -> None:
         r"""A single-task exact GP model using fixed noise levels.
@@ -182,6 +196,8 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
                 training data during instantiation and to the posterior during
                 inference (that is, the `Posterior` obtained by calling
                 `.posterior` on the model will be on the original scale).
+            input_transform: An input transfrom that is applied in the model's
+                forward pass.
 
         Example:
             >>> train_X = torch.rand(20, 2)
@@ -189,10 +205,17 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
             >>> train_Yvar = torch.full_like(train_Y, 0.2)
             >>> model = FixedNoiseGP(train_X, train_Y, train_Yvar)
         """
+        if input_transform is None:
+            transformed_X = train_X
+        else:
+            input_transform = input_transform.to(train_X)
+            transformed_X = input_transform.transform(train_X)
         if outcome_transform is not None:
             train_Y, train_Yvar = outcome_transform(train_Y, train_Yvar)
-        self._validate_tensor_args(X=train_X, Y=train_Y, Yvar=train_Yvar)
-        validate_input_scaling(train_X=train_X, train_Y=train_Y, train_Yvar=train_Yvar)
+        self._validate_tensor_args(X=transformed_X, Y=train_Y, Yvar=train_Yvar)
+        validate_input_scaling(
+            train_X=transformed_X, train_Y=train_Y, train_Yvar=train_Yvar
+        )
         self._set_dimensions(train_X=train_X, train_Y=train_Y)
         train_X, train_Y, train_Yvar = self._transform_tensor_args(
             X=train_X, Y=train_Y, Yvar=train_Yvar
@@ -208,7 +231,7 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
             self.covar_module = ScaleKernel(
                 base_kernel=MaternKernel(
                     nu=2.5,
-                    ard_num_dims=train_X.shape[-1],
+                    ard_num_dims=transformed_X.shape[-1],
                     batch_shape=self._aug_batch_shape,
                     lengthscale_prior=GammaPrior(3.0, 6.0),
                 ),
@@ -223,6 +246,8 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         else:
             self.covar_module = covar_module
         # TODO: Allow subsetting of other covar modules
+        if input_transform is not None:
+            self.input_transform = input_transform
         if outcome_transform is not None:
             self.outcome_transform = outcome_transform
 
@@ -272,6 +297,8 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         return self.condition_on_observations(X=X, Y=Y_fantasized, noise=noise)
 
     def forward(self, x: Tensor) -> MultivariateNormal:
+        if hasattr(self, "input_transform"):
+            x = self.input_transform(x)
         mean_x = self.mean_module(x)
         covar_x = self.covar_module(x)
         return MultivariateNormal(mean_x, covar_x)
@@ -325,6 +352,7 @@ class HeteroskedasticSingleTaskGP(SingleTaskGP):
         train_Y: Tensor,
         train_Yvar: Tensor,
         outcome_transform: Optional[OutcomeTransform] = None,
+        input_transform: Optional[InputTransform] = None,
     ) -> None:
         r"""A single-task exact GP model using a heteroskedastic noise model.
 
@@ -339,6 +367,8 @@ class HeteroskedasticSingleTaskGP(SingleTaskGP):
                 `.posterior` on the model will be on the original scale).
                 Note that the noise model internally log-transforms the
                 variances, which will happen after this transform is applied.
+            input_transform: An input transfrom that is applied in the model's
+                forward pass.
 
         Example:
             >>> train_X = torch.rand(20, 2)
@@ -364,9 +394,15 @@ class HeteroskedasticSingleTaskGP(SingleTaskGP):
             train_Y=train_Yvar,
             likelihood=noise_likelihood,
             outcome_transform=Log(),
+            input_transform=input_transform,
         )
         likelihood = _GaussianLikelihoodBase(HeteroskedasticNoise(noise_model))
-        super().__init__(train_X=train_X, train_Y=train_Y, likelihood=likelihood)
+        super().__init__(
+            train_X=train_X,
+            train_Y=train_Y,
+            likelihood=likelihood,
+            input_transform=input_transform,
+        )
         self.register_added_loss_term("noise_added_loss")
         self.update_added_loss_term(
             "noise_added_loss", NoiseModelAddedLossTerm(noise_model)

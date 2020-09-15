@@ -15,6 +15,7 @@ from botorch.models import (
     SingleTaskMultiFidelityGP,
 )
 from botorch.models.converter import batched_to_model_list, model_list_to_batched
+from botorch.models.transforms.input import Normalize
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.likelihoods import GaussianLikelihood
 
@@ -49,6 +50,18 @@ class TestConverters(BotorchTestCase):
             )
             with self.assertRaises(NotImplementedError):
                 batched_to_model_list(batch_gp)
+            # test input transform
+            input_tf = Normalize(
+                d=2,
+                bounds=torch.tensor(
+                    [[0.0, 0.0], [1.0, 1.0]], device=self.device, dtype=dtype
+                ),
+            )
+            batch_gp = SingleTaskGP(train_X, train_Y, input_transform=input_tf)
+            list_gp = batched_to_model_list(batch_gp)
+            for m in list_gp.models:
+                self.assertIsInstance(m.input_transform, Normalize)
+                self.assertTrue(torch.equal(m.input_transform.bounds, input_tf.bounds))
 
     def test_model_list_to_batched(self):
         for dtype in (torch.float, torch.double):
@@ -118,6 +131,33 @@ class TestConverters(BotorchTestCase):
             list_gp = ModelListGP(gp1_, gp2_)
             batch_gp = model_list_to_batched(list_gp)
             gp2_ = SingleTaskMultiFidelityGP(train_X, train_Y2, iteration_fidelity=2)
+            list_gp = ModelListGP(gp1_, gp2_)
+            with self.assertRaises(UnsupportedError):
+                model_list_to_batched(list_gp)
+            # test input transform
+            input_tf = Normalize(
+                d=2,
+                bounds=torch.tensor(
+                    [[0.0, 0.0], [1.0, 1.0]], device=self.device, dtype=dtype
+                ),
+            )
+            gp1_ = SingleTaskGP(train_X, train_Y1, input_transform=input_tf)
+            gp2_ = SingleTaskGP(train_X, train_Y2, input_transform=input_tf)
+            list_gp = ModelListGP(gp1_, gp2_)
+            batch_gp = model_list_to_batched(list_gp)
+            self.assertIsInstance(batch_gp.input_transform, Normalize)
+            self.assertTrue(
+                torch.equal(batch_gp.input_transform.bounds, input_tf.bounds)
+            )
+            # test different input transforms
+            input_tf2 = Normalize(
+                d=2,
+                bounds=torch.tensor(
+                    [[-1.0, -1.0], [1.0, 1.0]], device=self.device, dtype=dtype
+                ),
+            )
+            gp1_ = SingleTaskGP(train_X, train_Y1, input_transform=input_tf)
+            gp2_ = SingleTaskGP(train_X, train_Y2, input_transform=input_tf2)
             list_gp = ModelListGP(gp1_, gp2_)
             with self.assertRaises(UnsupportedError):
                 model_list_to_batched(list_gp)

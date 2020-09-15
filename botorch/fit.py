@@ -93,9 +93,14 @@ def fit_gpytorch_model(
             mll.model.load_state_dict(model_.state_dict())
             if tf is not None:
                 mll.model.outcome_transform = tf
+            if hasattr(mll.model, "input_transform"):
+                tf_X = mll.model.input_transform(mll.model.train_inputs[0])
+                mll.model.set_train_data(tf_X, mll.model.train_targets, strict=False)
             return mll.eval()
         # NotImplementedError is omitted since it derives from RuntimeError
-        except (UnsupportedError, RuntimeError, AttributeError):
+        except (UnsupportedError, RuntimeError, AttributeError) as e:
+            print("ERROR!")
+            raise e
             warnings.warn(FAILED_CONVERSION_MSG, BotorchWarning)
             if tf is not None:
                 mll.model.outcome_transform = tf
@@ -113,6 +118,11 @@ def fit_gpytorch_model(
                 sample_all_priors(mll.model)
             mll, _ = optimizer(mll, track_iterations=False, **kwargs)
             if not any(issubclass(w.category, OptimizationWarning) for w in ws):
+                if hasattr(mll.model, "input_transform"):
+                    tf_X = mll.model.input_transform(mll.model.train_inputs[0])
+                    mll.model.set_train_data(
+                        tf_X, mll.model.train_targets, strict=False
+                    )
                 mll.eval()
                 return mll
             retry += 1
