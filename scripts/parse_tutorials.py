@@ -89,8 +89,11 @@ def gen_tutorials(repo_dir: str) -> None:
             nb_str = infile.read()
             nb = nbformat.reads(nb_str, nbformat.NO_CONVERT)
 
+        metadata = nb["metadata"]
+        if "kernelspec" not in metadata:
+            metadata["kernelspec"] = {"language": "python", "name": "python3"}
         # displayname is absent from notebook metadata
-        nb["metadata"]["kernelspec"]["display_name"] = "python3"
+        metadata["kernelspec"]["display_name"] = "python3"
 
         exporter = HTMLExporter()
         html, meta = exporter.from_notebook_node(nb)
