@@ -257,8 +257,9 @@ def prune_inferior_points(
         if posterior.event_shape.numel() > SobolEngine.MAXDIM:
             if settings.debug.on():
                 warnings.warn(
-                    f"Sample dimension q*m={posterior.event_shape.numel()} exceeding Sobol "
-                    f"max dimension ({SobolEngine.MAXDIM}). Using iid samples instead.",
+                    f"Sample dimension q*m={posterior.event_shape.numel()} exceeding "
+                    f"Sobol max dimension ({SobolEngine.MAXDIM}). Using iid samples "
+                    "instead.",
                     SamplingWarning,
                 )
             sampler = IIDNormalSampler(num_samples=num_samples)
