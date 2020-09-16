@@ -43,13 +43,15 @@
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">settings</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">monte_carlo</span>  <span class="c1"># noqa F401</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">analytic</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">analytic</span><span class="p">,</span> <span class="n">multi_objective</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective</span> <span class="kn">import</span> <span class="n">monte_carlo</span> <span class="k">as</span> <span class="n">moo_monte_carlo</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">IdentityMCObjective</span><span class="p">,</span> <span class="n">MCAcquisitionObjective</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">SamplingWarning</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.samplers</span> <span class="kn">import</span> <span class="n">IIDNormalSampler</span><span class="p">,</span> <span class="n">SobolQMCNormalSampler</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decomposition</span> <span class="kn">import</span> <span class="n">NondominatedPartitioning</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">squeeze_last_dim</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.quasirandom</span> <span class="kn">import</span> <span class="n">SobolEngine</span>
@@ -61,6 +63,7 @@
     <span class="n">objective</span><span class="p">:</span> <span class="n">MCAcquisitionObjective</span><span class="p">,</span>
     <span class="n">X_observed</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
     <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">mc_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">500</span><span class="p">,</span>
     <span class="n">qmc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -76,6 +79,11 @@
 <span class="sd">            already been observed.</span>
 <span class="sd">        X_pending: A `m2 x d`-dim Tensor of `m2` design points whose evaluation</span>
 <span class="sd">            is pending.</span>
+<span class="sd">        constraints: A list of callables, each mapping a Tensor of dimension</span>
+<span class="sd">            `sample_shape x batch-shape x q x m` to a Tensor of dimension</span>
+<span class="sd">            `sample_shape x batch-shape x q`, where negative values imply</span>
+<span class="sd">            feasibility. Used when constraint_transforms are not passed</span>
+<span class="sd">            as part of the objective.</span>
 <span class="sd">        mc_samples: The number of samples to use for (q)MC evaluation of the</span>
 <span class="sd">            acquisition function.</span>
 <span class="sd">        qmc: If True, use quasi-Monte-Carlo sampling (instead of iid).</span>
@@ -138,6 +146,28 @@
             <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
             <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
         <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">acquisition_function_name</span> <span class="o">==</span> <span class="s2">"qEHVI"</span><span class="p">:</span>
+        <span class="c1"># pyre-fixme [16]: `Model` has no attribute `train_targets`</span>
+        <span class="k">if</span> <span class="s2">"ref_point"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"`ref_point` must be specified in kwargs for qEHVI"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">"Y"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"`Y` must be specified in kwargs for qEHVI"</span><span class="p">)</span>
+        <span class="n">ref_point</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">"ref_point"</span><span class="p">]</span>
+        <span class="n">Y</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"Y"</span><span class="p">)</span>
+        <span class="c1"># get feasible points</span>
+        <span class="k">if</span> <span class="n">constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">feas</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">c</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">constraints</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">Y</span> <span class="o">=</span> <span class="n">Y</span><span class="p">[</span><span class="n">feas</span><span class="p">]</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="n">objective</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>
+        <span class="n">partitioning</span> <span class="o">=</span> <span class="n">NondominatedPartitioning</span><span class="p">(</span><span class="n">num_outcomes</span><span class="o">=</span><span class="n">obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">Y</span><span class="o">=</span><span class="n">obj</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">moo_monte_carlo</span><span class="o">.</span><span class="n">qExpectedHypervolumeImprovement</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">ref_point</span><span class="o">=</span><span class="n">ref_point</span><span class="p">,</span>
+            <span class="n">partitioning</span><span class="o">=</span><span class="n">partitioning</span><span class="p">,</span>
+            <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
+            <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+            <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
         <span class="sa">f</span><span class="s2">"Unknown acquisition function </span><span class="si">{</span><span class="n">acquisition_function_name</span><span class="si">}</span><span class="s2">"</span>
     <span class="p">)</span></div>
@@ -196,6 +226,8 @@
             <span class="n">monte_carlo</span><span class="o">.</span><span class="n">qExpectedImprovement</span><span class="p">,</span>
             <span class="n">monte_carlo</span><span class="o">.</span><span class="n">qNoisyExpectedImprovement</span><span class="p">,</span>
             <span class="n">monte_carlo</span><span class="o">.</span><span class="n">qProbabilityOfImprovement</span><span class="p">,</span>
+            <span class="n">multi_objective</span><span class="o">.</span><span class="n">analytic</span><span class="o">.</span><span class="n">ExpectedHypervolumeImprovement</span><span class="p">,</span>
+            <span class="n">multi_objective</span><span class="o">.</span><span class="n">monte_carlo</span><span class="o">.</span><span class="n">qExpectedHypervolumeImprovement</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">)</span></div>
 
@@ -382,7 +414,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../test_functions.html">botorch.test_functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">botorch.exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../utils.html">botorch.utils</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../gen.html">Generation utilities [DEPRECATED - use botorch.generation.gen]</a></li>
 </ul>
 <div class="relations">
 <h3>Related Topics</h3>

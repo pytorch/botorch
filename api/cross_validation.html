@@ -26,71 +26,71 @@
 <div class="section" id="module-botorch.cross_validation">
 <span id="botorch-cross-validation"></span><h1>botorch.cross_validation<a class="headerlink" href="#module-botorch.cross_validation" title="Permalink to this headline">¶</a></h1>
 <p>Cross-validation utilities using batch evaluation mode.</p>
-<dl class="class">
+<dl class="py class">
 <dt id="botorch.cross_validation.CVFolds">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.cross_validation.</code><code class="sig-name descname">CVFolds</code><span class="sig-paren">(</span><em class="sig-param">train_X</em>, <em class="sig-param">test_X</em>, <em class="sig-param">train_Y</em>, <em class="sig-param">test_Y</em>, <em class="sig-param">train_Yvar</em>, <em class="sig-param">test_Yvar</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/cross_validation.html#CVFolds"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.cross_validation.CVFolds" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">botorch.cross_validation.</code><code class="sig-name descname">CVFolds</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">train_X</span></em>, <em class="sig-param"><span class="n">test_X</span></em>, <em class="sig-param"><span class="n">train_Y</span></em>, <em class="sig-param"><span class="n">test_Y</span></em>, <em class="sig-param"><span class="n">train_Yvar</span></em>, <em class="sig-param"><span class="n">test_Yvar</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/cross_validation.html#CVFolds"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.cross_validation.CVFolds" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></p>
 <p>Create new instance of CVFolds(train_X, test_X, train_Y, test_Y, train_Yvar, test_Yvar)</p>
-<dl class="attribute">
+<dl class="py method">
 <dt id="botorch.cross_validation.CVFolds.train_X">
-<code class="sig-name descname">train_X</code><a class="headerlink" href="#botorch.cross_validation.CVFolds.train_X" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">train_X</code><a class="headerlink" href="#botorch.cross_validation.CVFolds.train_X" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 0</p>
 </dd></dl>
-<dl class="attribute">
+<dl class="py method">
 <dt id="botorch.cross_validation.CVFolds.test_X">
-<code class="sig-name descname">test_X</code><a class="headerlink" href="#botorch.cross_validation.CVFolds.test_X" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">test_X</code><a class="headerlink" href="#botorch.cross_validation.CVFolds.test_X" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 1</p>
 </dd></dl>
-<dl class="attribute">
+<dl class="py method">
 <dt id="botorch.cross_validation.CVFolds.train_Y">
-<code class="sig-name descname">train_Y</code><a class="headerlink" href="#botorch.cross_validation.CVFolds.train_Y" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">train_Y</code><a class="headerlink" href="#botorch.cross_validation.CVFolds.train_Y" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 2</p>
 </dd></dl>
-<dl class="attribute">
+<dl class="py method">
 <dt id="botorch.cross_validation.CVFolds.test_Y">
-<code class="sig-name descname">test_Y</code><a class="headerlink" href="#botorch.cross_validation.CVFolds.test_Y" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">test_Y</code><a class="headerlink" href="#botorch.cross_validation.CVFolds.test_Y" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 3</p>
 </dd></dl>
-<dl class="attribute">
+<dl class="py method">
 <dt id="botorch.cross_validation.CVFolds.train_Yvar">
-<code class="sig-name descname">train_Yvar</code><a class="headerlink" href="#botorch.cross_validation.CVFolds.train_Yvar" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">train_Yvar</code><a class="headerlink" href="#botorch.cross_validation.CVFolds.train_Yvar" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 4</p>
 </dd></dl>
-<dl class="attribute">
+<dl class="py method">
 <dt id="botorch.cross_validation.CVFolds.test_Yvar">
-<code class="sig-name descname">test_Yvar</code><a class="headerlink" href="#botorch.cross_validation.CVFolds.test_Yvar" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">test_Yvar</code><a class="headerlink" href="#botorch.cross_validation.CVFolds.test_Yvar" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 5</p>
 </dd></dl>
 </dd></dl>
-<dl class="class">
+<dl class="py class">
 <dt id="botorch.cross_validation.CVResults">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.cross_validation.</code><code class="sig-name descname">CVResults</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">posterior</em>, <em class="sig-param">observed_Y</em>, <em class="sig-param">observed_Yvar</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/cross_validation.html#CVResults"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.cross_validation.CVResults" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">botorch.cross_validation.</code><code class="sig-name descname">CVResults</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">posterior</span></em>, <em class="sig-param"><span class="n">observed_Y</span></em>, <em class="sig-param"><span class="n">observed_Yvar</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/cross_validation.html#CVResults"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.cross_validation.CVResults" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></p>
 <p>Create new instance of CVResults(model, posterior, observed_Y, observed_Yvar)</p>
-<dl class="attribute">
+<dl class="py method">
 <dt id="botorch.cross_validation.CVResults.model">
-<code class="sig-name descname">model</code><a class="headerlink" href="#botorch.cross_validation.CVResults.model" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">model</code><a class="headerlink" href="#botorch.cross_validation.CVResults.model" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 0</p>
 </dd></dl>
-<dl class="attribute">
+<dl class="py method">
 <dt id="botorch.cross_validation.CVResults.posterior">
-<code class="sig-name descname">posterior</code><a class="headerlink" href="#botorch.cross_validation.CVResults.posterior" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">posterior</code><a class="headerlink" href="#botorch.cross_validation.CVResults.posterior" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 1</p>
 </dd></dl>
-<dl class="attribute">
+<dl class="py method">
 <dt id="botorch.cross_validation.CVResults.observed_Y">
-<code class="sig-name descname">observed_Y</code><a class="headerlink" href="#botorch.cross_validation.CVResults.observed_Y" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">observed_Y</code><a class="headerlink" href="#botorch.cross_validation.CVResults.observed_Y" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 2</p>
 </dd></dl>
-<dl class="attribute">
+<dl class="py method">
 <dt id="botorch.cross_validation.CVResults.observed_Yvar">
-<code class="sig-name descname">observed_Yvar</code><a class="headerlink" href="#botorch.cross_validation.CVResults.observed_Yvar" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">observed_Yvar</code><a class="headerlink" href="#botorch.cross_validation.CVResults.observed_Yvar" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 3</p>
 </dd></dl>
 </dd></dl>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.cross_validation.gen_loo_cv_folds">
-<code class="sig-prename descclassname">botorch.cross_validation.</code><code class="sig-name descname">gen_loo_cv_folds</code><span class="sig-paren">(</span><em class="sig-param">train_X</em>, <em class="sig-param">train_Y</em>, <em class="sig-param">train_Yvar=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/cross_validation.html#gen_loo_cv_folds"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.cross_validation.gen_loo_cv_folds" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.cross_validation.</code><code class="sig-name descname">gen_loo_cv_folds</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">train_X</span></em>, <em class="sig-param"><span class="n">train_Y</span></em>, <em class="sig-param"><span class="n">train_Yvar</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/cross_validation.html#gen_loo_cv_folds"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.cross_validation.gen_loo_cv_folds" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate LOO CV folds w.r.t. to <cite>n</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -131,9 +131,9 @@ measurement noise.</p></li>
 </pre></div>
 </div>
 </dd></dl>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.cross_validation.batch_cross_validation">
-<code class="sig-prename descclassname">botorch.cross_validation.</code><code class="sig-name descname">batch_cross_validation</code><span class="sig-paren">(</span><em class="sig-param">model_cls</em>, <em class="sig-param">mll_cls</em>, <em class="sig-param">cv_folds</em>, <em class="sig-param">fit_args=None</em>, <em class="sig-param">observation_noise=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/cross_validation.html#batch_cross_validation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.cross_validation.batch_cross_validation" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.cross_validation.</code><code class="sig-name descname">batch_cross_validation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model_cls</span></em>, <em class="sig-param"><span class="n">mll_cls</span></em>, <em class="sig-param"><span class="n">cv_folds</span></em>, <em class="sig-param"><span class="n">fit_args</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">observation_noise</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/cross_validation.html#batch_cross_validation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.cross_validation.batch_cross_validation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform cross validation by using gpytorch batch mode.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -200,7 +200,6 @@ measurement noise.</p></li>
 <li class="toctree-l1"><a class="reference internal" href="test_functions.html">botorch.test_functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="exceptions.html">botorch.exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="utils.html">botorch.utils</a></li>
-<li class="toctree-l1"><a class="reference internal" href="gen.html">Generation utilities [DEPRECATED - use botorch.generation.gen]</a></li>
 </ul>
 <div class="relations">
 <h3>Related Topics</h3>

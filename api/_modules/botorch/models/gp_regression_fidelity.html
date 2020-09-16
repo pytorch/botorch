@@ -40,7 +40,7 @@
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
@@ -51,6 +51,7 @@
     <span class="n">LinearTruncatedFidelityKernel</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">OutcomeTransform</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.containers</span> <span class="kn">import</span> <span class="n">TrainingData</span>
 <span class="kn">from</span> <span class="nn">gpytorch.kernels.kernel</span> <span class="kn">import</span> <span class="n">ProductKernel</span>
 <span class="kn">from</span> <span class="nn">gpytorch.kernels.rbf_kernel</span> <span class="kn">import</span> <span class="n">RBFKernel</span>
 <span class="kn">from</span> <span class="nn">gpytorch.kernels.scale_kernel</span> <span class="kn">import</span> <span class="n">ScaleKernel</span>
@@ -138,7 +139,27 @@
             <span class="s2">"covar_module.raw_outputscale"</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
             <span class="o">**</span><span class="n">subset_batch_dict</span><span class="p">,</span>
         <span class="p">}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SingleTaskMultiFidelityGP.construct_inputs"><a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression_fidelity.SingleTaskMultiFidelityGP.construct_inputs">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">construct_inputs</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">training_data</span><span class="p">:</span> <span class="n">TrainingData</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="sa">r</span><span class="sd">"""Construct kwargs for the `Model` from `TrainingData`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            training_data: `TrainingData` container with data for single outcome</span>
+<span class="sd">                or for multiple outcomes for batched multi-output case.</span>
+<span class="sd">            **kwargs: Options, expected for this class:</span>
+<span class="sd">                - fidelity_features: List of columns of X that are fidelity parameters.</span>
+<span class="sd">        """</span>
+        <span class="n">fidelity_features</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"fidelity_features"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">fidelity_features</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Fidelity features required for </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"train_X"</span><span class="p">:</span> <span class="n">training_data</span><span class="o">.</span><span class="n">X</span><span class="p">,</span>
+            <span class="s2">"train_Y"</span><span class="p">:</span> <span class="n">training_data</span><span class="o">.</span><span class="n">Y</span><span class="p">,</span>
+            <span class="s2">"data_fidelity"</span><span class="p">:</span> <span class="n">fidelity_features</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="p">}</span></div></div>
 
 
 <div class="viewcode-block" id="FixedNoiseMultiFidelityGP"><a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression_fidelity.FixedNoiseMultiFidelityGP">[docs]</a><span class="k">class</span> <span class="nc">FixedNoiseMultiFidelityGP</span><span class="p">(</span><span class="n">FixedNoiseGP</span><span class="p">):</span>
@@ -218,7 +239,30 @@
             <span class="s2">"covar_module.raw_outputscale"</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
             <span class="o">**</span><span class="n">subset_batch_dict</span><span class="p">,</span>
         <span class="p">}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FixedNoiseMultiFidelityGP.construct_inputs"><a class="viewcode-back" href="../../../models.html#botorch.models.gp_regression_fidelity.FixedNoiseMultiFidelityGP.construct_inputs">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">construct_inputs</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">training_data</span><span class="p">:</span> <span class="n">TrainingData</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="sa">r</span><span class="sd">"""Construct kwargs for the `Model` from `TrainingData`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            training_data: `TrainingData` container with data for single outcome</span>
+<span class="sd">                or for multiple outcomes for batched multi-output case.</span>
+<span class="sd">            **kwargs: Options, expected for this class:</span>
+<span class="sd">                - fidelity_features: List of columns of X that are fidelity parameters.</span>
+<span class="sd">        """</span>
+        <span class="n">fidelity_features</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"fidelity_features"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">fidelity_features</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Fidelity features required for </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">training_data</span><span class="o">.</span><span class="n">Yvar</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Yvar required for </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"train_X"</span><span class="p">:</span> <span class="n">training_data</span><span class="o">.</span><span class="n">X</span><span class="p">,</span>
+            <span class="s2">"train_Y"</span><span class="p">:</span> <span class="n">training_data</span><span class="o">.</span><span class="n">Y</span><span class="p">,</span>
+            <span class="s2">"train_Yvar"</span><span class="p">:</span> <span class="n">training_data</span><span class="o">.</span><span class="n">Yvar</span><span class="p">,</span>
+            <span class="s2">"data_fidelity"</span><span class="p">:</span> <span class="n">fidelity_features</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="p">}</span></div></div>
 
 
 <span class="k">def</span> <span class="nf">_setup_multifidelity_covar_module</span><span class="p">(</span>
@@ -347,7 +391,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../test_functions.html">botorch.test_functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">botorch.exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../utils.html">botorch.utils</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../gen.html">Generation utilities [DEPRECATED - use botorch.generation.gen]</a></li>
 </ul>
 <div class="relations">
 <h3>Related Topics</h3>

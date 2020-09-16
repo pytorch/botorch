@@ -1,0 +1,1091 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/v/0.3.1/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/v/0.3.1/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/v/0.3.1/img/botorch.png"/><link rel="shortcut icon" href="/v/0.3.1/img/botorch.ico"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+              })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+              ga('create', 'UA-139570076-2', 'auto');
+              ga('send', 'pageview');
+            </script><link rel="stylesheet" href="/v/0.3.1/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/v/0.3.1/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/v/0.3.1/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/v/0.3.1/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/0.3.1/css/main.css"/><script src="/v/0.3.1/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/0.3.1/"><img class="logo" src="/v/0.3.1/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/0.3.1/versions"><h3>0.3.1</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/0.3.1/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/0.3.1/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/0.3.1/api/" target="_self">API Reference</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+<script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/underscore.js"></script>
+<script type="text/javascript" src="/js/doctools.js"></script>
+<script type="text/javascript" src="/js/language_data.js"></script>
+<script type="text/javascript" src="/js/searchtools.js"></script>
+<div class="sphinx"><div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body" role="main">
+<h1>Source code for botorch.models.pairwise_gp</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># Copyright (c) Facebook, Inc. and its affiliates.</span>
+<span class="c1">#</span>
+<span class="c1"># This source code is licensed under the MIT license found in the</span>
+<span class="c1"># LICENSE file in the root directory of this source tree.</span>
+
+<span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">Preference Learning with Gaussian Process</span>
+
+<span class="sd">.. [Chu2005preference]</span>
+<span class="sd">    Wei Chu, and Zoubin Ghahramani. Preference learning with Gaussian processes.</span>
+<span class="sd">    Proceedings of the 22nd international conference on Machine learning. 2005.</span>
+
+<span class="sd">.. [Brochu2010tutorial]</span>
+<span class="sd">    Eric Brochu, Vlad M. Cora, and Nando De Freitas.</span>
+<span class="sd">    A tutorial on Bayesian optimization of expensive cost functions,</span>
+<span class="sd">    with application to active user modeling and hierarchical reinforcement learning.</span>
+<span class="sd">    arXiv preprint arXiv:1012.2599 (2010).</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span> <span class="nn">botorch.posteriors.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchPosterior</span>
+<span class="kn">from</span> <span class="nn">botorch.posteriors.posterior</span> <span class="kn">import</span> <span class="n">Posterior</span>
+<span class="kn">from</span> <span class="nn">gpytorch</span> <span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span> <span class="nn">gpytorch.constraints</span> <span class="kn">import</span> <span class="n">GreaterThan</span><span class="p">,</span> <span class="n">Positive</span>
+<span class="kn">from</span> <span class="nn">gpytorch.distributions.multivariate_normal</span> <span class="kn">import</span> <span class="n">MultivariateNormal</span>
+<span class="kn">from</span> <span class="nn">gpytorch.kernels.rbf_kernel</span> <span class="kn">import</span> <span class="n">RBFKernel</span>
+<span class="kn">from</span> <span class="nn">gpytorch.lazy.added_diag_lazy_tensor</span> <span class="kn">import</span> <span class="n">AddedDiagLazyTensor</span>
+<span class="kn">from</span> <span class="nn">gpytorch.lazy.lazy_tensor</span> <span class="kn">import</span> <span class="n">LazyTensor</span>
+<span class="kn">from</span> <span class="nn">gpytorch.likelihoods.noise_models</span> <span class="kn">import</span> <span class="n">HomoskedasticNoise</span>
+<span class="kn">from</span> <span class="nn">gpytorch.means.constant_mean</span> <span class="kn">import</span> <span class="n">ConstantMean</span>
+<span class="kn">from</span> <span class="nn">gpytorch.mlls</span> <span class="kn">import</span> <span class="n">MarginalLogLikelihood</span>
+<span class="kn">from</span> <span class="nn">gpytorch.models.gp</span> <span class="kn">import</span> <span class="n">GP</span>
+<span class="kn">from</span> <span class="nn">gpytorch.module</span> <span class="kn">import</span> <span class="n">Module</span>
+<span class="kn">from</span> <span class="nn">gpytorch.priors.smoothed_box_prior</span> <span class="kn">import</span> <span class="n">SmoothedBoxPrior</span>
+<span class="kn">from</span> <span class="nn">gpytorch.priors.torch_priors</span> <span class="kn">import</span> <span class="n">GammaPrior</span>
+<span class="kn">from</span> <span class="nn">gpytorch.utils.cholesky</span> <span class="kn">import</span> <span class="n">psd_safe_cholesky</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">optimize</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">float32</span><span class="p">,</span> <span class="n">float64</span>
+
+
+<div class="viewcode-block" id="PairwiseGP"><a class="viewcode-back" href="../../../models.html#botorch.models.pairwise_gp.PairwiseGP">[docs]</a><span class="k">class</span> <span class="nc">PairwiseGP</span><span class="p">(</span><span class="n">Model</span><span class="p">,</span> <span class="n">GP</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""Probit GP for preference learning with Laplace approximation</span>
+
+<span class="sd">    Implementation is based on [Chu2005preference]_.</span>
+<span class="sd">    Also see [Brochu2010tutorial]_ for additional reference.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">datapoints</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">comparisons</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">covar_module</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Module</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">noise_module</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">HomoskedasticNoise</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="sa">r</span><span class="sd">"""A probit-likelihood GP with Laplace approximation model.</span>
+
+<span class="sd">        A probit-likelihood GP with Laplace approximation model that learns via</span>
+<span class="sd">        pairwise comparison data. By default it uses a scaled-RBF kernel.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            datapoints: A `batch_shape x n x d` tensor of training features.</span>
+<span class="sd">            comparisons: A `batch_shape x m x 2` training comparisons;</span>
+<span class="sd">                comparisons[i] is a noisy indicator suggesting the utility value</span>
+<span class="sd">                of comparisons[i, 0]-th is greater than comparisons[i, 1]-th.</span>
+<span class="sd">            covar_module: Covariance module</span>
+<span class="sd">            noise_module: Noise module</span>
+<span class="sd">        """</span>
+
+        <span class="c1"># Compatibility variables with fit_gpytorch_*: Dummy likelihood</span>
+        <span class="c1"># Likelihood is tightly tied with this model and</span>
+        <span class="c1"># it doesn't make much sense to keep it separate</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># TODO: remove these variables from `state_dict()` so that when calling</span>
+        <span class="c1">#       `load_state_dict()`, only the hyperparameters are copied over</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"datapoints"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"comparisons"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"utility"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"covar_chol"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"likelihood_hess"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"hlcov_eye"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"covar"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"covar_inv"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">train_inputs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">train_targets</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">pred_cov_fac_need_update</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_input_batch_shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dim</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="c1"># will be set to match datapoints' dtype and device</span>
+        <span class="c1"># since scipy.optimize.fsolve only works on cpu, it'd be the</span>
+        <span class="c1"># fastest to fit the model on cpu and take samples on gpu to avoid</span>
+        <span class="c1"># overhead of moving data back and forth during fitting time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tkwargs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="c1"># See set_train_data for additional compatibility variables</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_train_data</span><span class="p">(</span><span class="n">datapoints</span><span class="p">,</span> <span class="n">comparisons</span><span class="p">,</span> <span class="n">update_model</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="c1"># Set optional parameters</span>
+        <span class="c1"># jitter to add for numerical stability</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_jitter</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"jitter"</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
+        <span class="c1"># Clamping z lim for better numerical stability. See self._calc_z for detail</span>
+        <span class="c1"># norm_cdf(z=3) ~= 0.999, top 0.1% percent</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_zlim</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"zlim"</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="c1"># Stopping creteria in scipy.optimize.fsolve used to find f_map in _update()</span>
+        <span class="c1"># If None, set to 1e-6 by default in _update</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_xtol</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"xtol"</span><span class="p">)</span>
+        <span class="c1"># The maximum number of calls to the function in scipy.optimize.fsolve</span>
+        <span class="c1"># If None, set to 100 by default in _update</span>
+        <span class="c1"># If zero, then 100*(N+1) is used by default by fsolve;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_maxfev</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"maxfev"</span><span class="p">)</span>
+
+        <span class="c1"># Set hyperparameters</span>
+        <span class="c1"># Do not set the batch_shape explicitly so mean_module can operate in both mode</span>
+        <span class="c1"># once fsolve used in _update can run in batch mode, we should explicitly set</span>
+        <span class="c1"># the bacth shape here</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span> <span class="o">=</span> <span class="n">ConstantMean</span><span class="p">()</span>
+        <span class="c1"># Do not optimize constant mean prior</span>
+        <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span><span class="o">.</span><span class="n">parameters</span><span class="p">():</span>
+            <span class="n">param</span><span class="o">.</span><span class="n">requires_grad</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="c1"># set covariance module</span>
+        <span class="k">if</span> <span class="n">noise_module</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">noise_module</span> <span class="o">=</span> <span class="n">HomoskedasticNoise</span><span class="p">(</span>
+                <span class="n">noise_prior</span><span class="o">=</span><span class="n">SmoothedBoxPrior</span><span class="p">(</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">),</span>
+                <span class="n">noise_constraint</span><span class="o">=</span><span class="n">GreaterThan</span><span class="p">(</span><span class="mf">1e-4</span><span class="p">),</span>  <span class="c1"># if None, 1e-4 by default</span>
+                <span class="n">batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_input_batch_shape</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">noise_module</span> <span class="o">=</span> <span class="n">noise_module</span>
+
+        <span class="c1"># set covariance module</span>
+        <span class="k">if</span> <span class="n">covar_module</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">ls_prior</span> <span class="o">=</span> <span class="n">GammaPrior</span><span class="p">(</span><span class="mf">1.2</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>
+            <span class="n">ls_prior_mode</span> <span class="o">=</span> <span class="p">(</span><span class="n">ls_prior</span><span class="o">.</span><span class="n">concentration</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">ls_prior</span><span class="o">.</span><span class="n">rate</span>
+            <span class="n">covar_module</span> <span class="o">=</span> <span class="n">RBFKernel</span><span class="p">(</span>
+                <span class="n">batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_input_batch_shape</span><span class="p">,</span>
+                <span class="n">ard_num_dims</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span>
+                <span class="n">lengthscale_prior</span><span class="o">=</span><span class="n">ls_prior</span><span class="p">,</span>
+                <span class="n">lengthscale_constraint</span><span class="o">=</span><span class="n">Positive</span><span class="p">(</span>
+                    <span class="n">transform</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initial_value</span><span class="o">=</span><span class="n">ls_prior_mode</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span> <span class="o">=</span> <span class="n">covar_module</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_x0</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># will store temporary results for warm-starting</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">comparisons</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update</span><span class="p">()</span>  <span class="c1"># Find f_map for initial parameters</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__deepcopy__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">memo</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PairwiseGP</span><span class="p">:</span>
+        <span class="n">attrs</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">"datapoints"</span><span class="p">,</span>
+            <span class="s2">"comparisons"</span><span class="p">,</span>
+            <span class="s2">"covar"</span><span class="p">,</span>
+            <span class="s2">"covar_inv"</span><span class="p">,</span>
+            <span class="s2">"covar_chol"</span><span class="p">,</span>
+            <span class="s2">"likelihood_hess"</span><span class="p">,</span>
+            <span class="s2">"utility"</span><span class="p">,</span>
+            <span class="s2">"hlcov_eye"</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">attrs</span><span class="p">):</span>
+            <span class="c1"># Temporarily remove non-leaf tensors so that pytorch allows deepcopy</span>
+            <span class="n">old_attr</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">attrs</span><span class="p">:</span>
+                <span class="n">old_attr</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">new_model</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">memo</span><span class="p">)</span>
+            <span class="c1"># now set things back</span>
+            <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">attrs</span><span class="p">:</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">old_attr</span><span class="p">[</span><span class="n">attr</span><span class="p">])</span>
+            <span class="k">return</span> <span class="n">new_model</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">dcp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__deepcopy__</span>
+            <span class="c1"># make sure we don't fall into the infinite recursive loop</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__deepcopy__</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">new_model</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">memo</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__deepcopy__</span> <span class="o">=</span> <span class="n">dcp</span>
+            <span class="k">return</span> <span class="n">new_model</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">std_noise</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">noise_module</span><span class="o">.</span><span class="n">noise</span>
+
+    <span class="nd">@std_noise</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">std_noise</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">noise_module</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">noise</span><span class="o">=</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">num_outputs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""The number of outputs of the model."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_outputs</span>
+
+    <span class="k">def</span> <span class="nf">_has_no_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sa">r</span><span class="sd">"""Return true if the model does not have both datapoints and comparisons"""</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">size</span><span class="p">())</span> <span class="o">==</span> <span class="mi">0</span>
+            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">comparisons</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_calc_covar</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">X1</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X2</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">observation_noise</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">LazyTensor</span><span class="p">]:</span>
+        <span class="sa">r</span><span class="sd">"""Calculate the covariance matrix given two sets of datapoints"""</span>
+        <span class="n">X1</span><span class="p">,</span> <span class="n">X2</span> <span class="o">=</span> <span class="n">X1</span><span class="p">,</span> <span class="n">X2</span>
+        <span class="n">covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span> <span class="n">X2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">observation_noise</span><span class="p">:</span>
+            <span class="n">noise_shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_batch_shape</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:]</span>
+            <span class="n">noise</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">noise_module</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="n">noise_shape</span><span class="p">)</span>
+            <span class="n">covar</span> <span class="o">=</span> <span class="n">AddedDiagLazyTensor</span><span class="p">(</span><span class="n">covar</span><span class="p">,</span> <span class="n">noise</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">covar</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_batch_chol_inv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mat_chol</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Wrapper to perform (batched) cholesky inverse"""</span>
+        <span class="c1"># TODO: get rid of this once cholesky_inverse supports batch mode</span>
+        <span class="n">batch_eye</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span>
+            <span class="n">mat_chol</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+            <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">mat_chol</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">mat_inv</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cholesky_inverse</span><span class="p">(</span><span class="n">mat_chol</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">mat_chol</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="ow">and</span> <span class="p">(</span><span class="n">mat_chol</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">mat_chol</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]):</span>
+            <span class="n">batch_eye</span> <span class="o">=</span> <span class="n">batch_eye</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">mat_chol</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]),</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">chol_inv</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">triangular_solve</span><span class="p">(</span><span class="n">batch_eye</span><span class="p">,</span> <span class="n">mat_chol</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">solution</span>
+            <span class="n">mat_inv</span> <span class="o">=</span> <span class="n">chol_inv</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="o">@</span> <span class="n">chol_inv</span>
+
+        <span class="k">return</span> <span class="n">mat_inv</span>
+
+    <span class="k">def</span> <span class="nf">_update_covar</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Update values derived from the data and hyperparameters</span>
+
+<span class="sd">        covar, covar_chol, and covar_inv will be of shape batch_shape x n x n</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calc_covar</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">covar_chol</span> <span class="o">=</span> <span class="n">psd_safe_cholesky</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">covar</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">covar_inv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_batch_chol_inv</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">covar_chol</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_prior_mean</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">LazyTensor</span><span class="p">]:</span>
+        <span class="sa">r</span><span class="sd">"""Return point prediction using prior only</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `batch_size x n' x d`-dim Tensor at which to evaluate prior</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Prior mean prediction</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_prior_predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+        <span class="sa">r</span><span class="sd">"""Predict utility based on prior info only</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `batch_size x n' x d`-dim Tensor at which to evaluate prior</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pred_mean: predictive mean</span>
+<span class="sd">            pred_covar: predictive covariance</span>
+<span class="sd">        """</span>
+        <span class="n">pred_mean</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prior_mean</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">pred_covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calc_covar</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pred_mean</span><span class="p">,</span> <span class="n">pred_covar</span>
+
+    <span class="k">def</span> <span class="nf">_add_jitter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">jitter_prev</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">Eye</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+            <span class="n">jitter_new</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jitter</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="n">i</span><span class="p">)</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">X</span> <span class="o">+</span> <span class="p">(</span><span class="n">jitter_new</span> <span class="o">-</span> <span class="n">jitter_prev</span><span class="p">)</span> <span class="o">*</span> <span class="n">Eye</span>
+            <span class="n">jitter_prev</span> <span class="o">=</span> <span class="n">jitter_new</span>
+            <span class="c1"># This may be VERY slow given upstream pytorch issue:</span>
+            <span class="c1"># https://github.com/pytorch/pytorch/issues/34272</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">_</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cholesky</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                    <span class="s2">"X is not a p.d. matrix; "</span>
+                    <span class="sa">f</span><span class="s2">"Added jitter of </span><span class="si">{</span><span class="n">jitter_new</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2"> to the diagonal"</span><span class="p">,</span>
+                    <span class="ne">RuntimeWarning</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="n">X</span>
+            <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>
+                <span class="k">continue</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Failed to render X p.d. after adding </span><span class="si">{</span><span class="n">jitter_new</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2"> jitter"</span><span class="p">,</span>
+            <span class="ne">RuntimeWarning</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">X</span>
+
+    <span class="k">def</span> <span class="nf">_calc_z</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">utility</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">std_noise</span><span class="p">:</span> <span class="n">Tensor</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+        <span class="sa">r</span><span class="sd">"""Calculate z score.</span>
+
+<span class="sd">        Calculate z score as in [Chu2005preference]_: the standarized difference</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            utility: A Tensor of shape `batch_size x n`, the utility at MAP point</span>
+<span class="sd">            D: as in self.D</span>
+<span class="sd">            std_noise: comparison noise (as a Tensor since it's a pytorch param)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            z: z score calculated as in [Chu2005preference]_.</span>
+<span class="sd">            z_logpdf: log PDF of z</span>
+<span class="sd">            z_logcdf: log CDF of z</span>
+<span class="sd">            hazard: hazard function defined as pdf(z)/cdf(z)</span>
+<span class="sd">        """</span>
+
+        <span class="n">scaled_util</span> <span class="o">=</span> <span class="p">(</span><span class="n">utility</span> <span class="o">/</span> <span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">std_noise</span><span class="p">))</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">D</span><span class="p">)</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="p">(</span><span class="n">D</span> <span class="o">@</span> <span class="n">scaled_util</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">std_norm</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">normal</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">z</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">z</span><span class="o">.</span><span class="n">device</span><span class="p">),</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">z</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">z</span><span class="o">.</span><span class="n">device</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="c1"># Clamp z for stable log transformation. This also prevent extreme values</span>
+        <span class="c1"># from appearing in the hess matrix, which should help with numerical</span>
+        <span class="c1"># stability and avoid extreme fitted hyperparameters</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">z</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">_zlim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_zlim</span><span class="p">)</span>
+        <span class="n">z_logpdf</span> <span class="o">=</span> <span class="n">std_norm</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+        <span class="n">z_cdf</span> <span class="o">=</span> <span class="n">std_norm</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+        <span class="n">z_logcdf</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">z_cdf</span><span class="p">)</span>
+        <span class="n">hazard</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">z_logpdf</span> <span class="o">-</span> <span class="n">z_logcdf</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">z</span><span class="p">,</span> <span class="n">z_logpdf</span><span class="p">,</span> <span class="n">z_logcdf</span><span class="p">,</span> <span class="n">hazard</span>
+
+    <span class="k">def</span> <span class="nf">_grad_likelihood_f_sum</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">utility</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">std_noise</span><span class="p">:</span> <span class="n">Tensor</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Compute the sum over of grad. of negative Log-LH wrt utility f.</span>
+<span class="sd">        Original grad should be of dimension m x n, as in (6) from [Chu2005preference]_.</span>
+<span class="sd">        Sum over the first dimension and return a tensor of shape n</span>
+<span class="sd">        Needed for calculating utility value at f_map to fill in torch gradient</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            utility: A Tensor of shape `batch_size x n`</span>
+<span class="sd">            D: A Tensor of shape `batch_size x m x n` as in self.D</span>
+<span class="sd">            std_noise: A Tensor of shape `batch_size x 1`, as in self.std_noise</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The sum over the first dimension of grad. of negative Log-LH wrt utility f</span>
+<span class="sd">        """</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calc_z</span><span class="p">(</span><span class="n">utility</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">std_noise</span><span class="p">)</span>
+        <span class="n">h_factor</span> <span class="o">=</span> <span class="p">(</span><span class="n">h</span> <span class="o">/</span> <span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">std_noise</span><span class="p">))</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">grad</span> <span class="o">=</span> <span class="p">(</span><span class="n">h_factor</span> <span class="o">@</span> <span class="p">(</span><span class="o">-</span><span class="n">D</span><span class="p">))</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">grad</span>
+
+    <span class="k">def</span> <span class="nf">_hess_likelihood_f_sum</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">utility</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">DT</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">std_noise</span><span class="p">:</span> <span class="n">Tensor</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Compute the sum over of hessian of neg. Log-LH wrt utility f.</span>
+
+<span class="sd">        Original hess should be of dimension m x n x n, as in (7) from</span>
+<span class="sd">        [Chu2005preference]_ Sum over the first dimension and return a tensor of</span>
+<span class="sd">        shape n x n.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            utility: A Tensor of shape `batch_size x n`</span>
+<span class="sd">            D: A Tensor of shape `batch_size x m x n` as in self.D</span>
+<span class="sd">            DT: Transpose of D. A Tensor of shape `batch_size x n x m` as in self.DT</span>
+<span class="sd">            std_noise: A Tensor of shape `batch_size x 1`, as in self.std_noise</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The sum over the first dimension of hess. of negative Log-LH wrt utility f</span>
+<span class="sd">        """</span>
+        <span class="n">z</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calc_z</span><span class="p">(</span><span class="n">utility</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">std_noise</span><span class="p">)</span>
+        <span class="n">mul_factor</span> <span class="o">=</span> <span class="n">h</span> <span class="o">*</span> <span class="p">(</span><span class="n">h</span> <span class="o">+</span> <span class="n">z</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">std_noise</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
+        <span class="n">weighted_DT</span> <span class="o">=</span> <span class="n">DT</span> <span class="o">*</span> <span class="n">mul_factor</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">*</span><span class="n">DT</span><span class="o">.</span><span class="n">size</span><span class="p">())</span>
+        <span class="n">hess</span> <span class="o">=</span> <span class="n">weighted_DT</span> <span class="o">@</span> <span class="n">D</span>
+
+        <span class="k">return</span> <span class="n">hess</span>
+
+    <span class="k">def</span> <span class="nf">_grad_posterior_f</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">utility</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+        <span class="n">datapoints</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">DT</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">std_noise</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">covar_chol</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">covar_inv</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">ret_np</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+        <span class="sa">r</span><span class="sd">"""Compute the gradient of S loss wrt to f/utility in [Chu2005preference]_.</span>
+
+<span class="sd">        For finding f_map, which is negative of the log posterior, i.e., -log(p(f|D))</span>
+<span class="sd">        Derivative of (10) in [Chu2005preference]_.</span>
+<span class="sd">        Also see [Brochu2010tutorial]_ page 26. This is needed for estimating f_map.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            utility: A Tensor of shape `batch_size x n`</span>
+<span class="sd">            datapoints: A Tensor of shape `batch_size x n x d` as in self.datapoints</span>
+<span class="sd">            D: A Tensor of shape `batch_size x m x n` as in self.D</span>
+<span class="sd">            DT: Transpose of D. A Tensor of shape `batch_size x n x m` as in self.DT</span>
+<span class="sd">            std_noise: A Tensor of shape `batch_size x 1`, as in self.std_noise</span>
+<span class="sd">            covar_chol: A Tensor of shape `batch_size x n x n`, as in self.covar_chol</span>
+<span class="sd">            covar_inv: A Tensor of shape `batch_size x n x n`, as in self.covar_inv</span>
+<span class="sd">            ret_np: return a numpy array if true, otherwise a Tensor</span>
+<span class="sd">        """</span>
+        <span class="n">prior_mean</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prior_mean</span><span class="p">(</span><span class="n">datapoints</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">ret_np</span><span class="p">:</span>
+            <span class="n">utility</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">utility</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+            <span class="n">prior_mean</span> <span class="o">=</span> <span class="n">prior_mean</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
+
+        <span class="n">b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_grad_likelihood_f_sum</span><span class="p">(</span><span class="n">utility</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">std_noise</span><span class="p">)</span>
+
+        <span class="c1"># g_ = covar_inv x (utility - pred_prior)</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="p">(</span><span class="n">utility</span> <span class="o">-</span> <span class="n">prior_mean</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">covar_chol</span><span class="p">)</span>
+        <span class="n">g_</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cholesky_solve</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">covar_chol</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">g_</span> <span class="o">+</span> <span class="n">b</span>
+
+        <span class="k">if</span> <span class="n">ret_np</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">g</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">g</span>
+
+    <span class="k">def</span> <span class="nf">_hess_posterior_f</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">utility</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+        <span class="n">datapoints</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">DT</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">std_noise</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">covar_chol</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">covar_inv</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">ret_np</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+        <span class="sa">r</span><span class="sd">"""Compute the hessian of S loss wrt utility for finding f_map.</span>
+
+<span class="sd">        which is negative of the log posterior, i.e., -log(p(f|D))</span>
+<span class="sd">        Following [Chu2005preference]_ section 2.2.1.</span>
+<span class="sd">        This is needed for estimating f_map</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            utility: A Tensor of shape `batch_size x n`</span>
+<span class="sd">            datapoints: A Tensor of shape `batch_size x n x d` as in self.datapoints</span>
+<span class="sd">            D: A Tensor of shape `batch_size x m x n` as in self.D</span>
+<span class="sd">            DT: Transpose of D. A Tensor of shape `batch_size x n x m` as in self.DT</span>
+<span class="sd">            std_noise: A Tensor of shape `batch_size x 1`, as in self.std_noise</span>
+<span class="sd">            covar_chol: A Tensor of shape `batch_size x n x n`, as in self.covar_chol</span>
+<span class="sd">            covar_inv: A Tensor of shape `batch_size x n x n`, as in self.covar_inv</span>
+<span class="sd">            ret_np: return a numpy array if true, otherwise a Tensor</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">ret_np</span><span class="p">:</span>
+            <span class="n">utility</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">utility</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+
+        <span class="n">hl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hess_likelihood_f_sum</span><span class="p">(</span><span class="n">utility</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">DT</span><span class="p">,</span> <span class="n">std_noise</span><span class="p">)</span>
+        <span class="n">hess</span> <span class="o">=</span> <span class="n">hl</span> <span class="o">+</span> <span class="n">covar_inv</span>
+        <span class="k">return</span> <span class="n">hess</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span> <span class="k">if</span> <span class="n">ret_np</span> <span class="k">else</span> <span class="n">hess</span>
+
+    <span class="k">def</span> <span class="nf">_posterior_f</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">utility</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Calculate the negative of the log posterior, i.e., -log(P(f|D)).</span>
+
+<span class="sd">        This is the S loss function as in equation (10) of [Chu2005preference]_.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            utility: A Tensor of shape `batch_size x n`</span>
+<span class="sd">        """</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">z_logcdf</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calc_z</span><span class="p">(</span><span class="n">utility</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">std_noise</span><span class="p">)</span>
+        <span class="n">loss1</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">z_logcdf</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">))</span>
+        <span class="n">inv_prod</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cholesky_solve</span><span class="p">(</span><span class="n">utility</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_chol</span><span class="p">)</span>
+        <span class="n">loss2</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">utility</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="o">@</span> <span class="n">inv_prod</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">loss1</span> <span class="o">+</span> <span class="n">loss2</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">loss</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">loss</span>
+
+    <span class="k">def</span> <span class="nf">_update_utility_derived_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Calculate utility-derived values not needed during optimization</span>
+
+<span class="sd">        Using subsitution method for better numerical stability</span>
+<span class="sd">        Let `pred_cov_fac = (covar + hl^-1)`, which is needed for calculate</span>
+<span class="sd">        predictive covariance = `K - k.T @ pred_cov_fac^-1 @ k`</span>
+<span class="sd">        (Also see posterior mode in `forward`)</span>
+<span class="sd">        Instead of inverting `pred_cov_fac`, let `hlcov_eye = (hl @ covar + I)`</span>
+<span class="sd">        Then we can obtain `pred_cov_fac^-1 @ k` by solving for p in</span>
+<span class="sd">        `(hl @ k) p = hlcov_eye`</span>
+<span class="sd">        `hlcov_eye p = hl @ k`</span>
+<span class="sd">        """</span>
+        <span class="n">hl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood_hess</span>  <span class="c1"># "C" from page 27, [Brochu2010tutorial]_</span>
+        <span class="n">hlcov</span> <span class="o">=</span> <span class="n">hl</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar</span>
+        <span class="n">eye</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span>
+            <span class="n">hlcov</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">device</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">hlcov</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hlcov_eye</span> <span class="o">=</span> <span class="n">hlcov</span> <span class="o">+</span> <span class="n">eye</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">pred_cov_fac_need_update</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Update the model by updating the covar matrix and MAP utility values</span>
+
+<span class="sd">        Update the model by</span>
+<span class="sd">        1. Re-evaluating the covar matrix as the data or hyperparams may have changed</span>
+<span class="sd">        2. Approximating maximum a posteriori of the utility function f using fsolve</span>
+
+<span class="sd">        Should be called after data or hyperparameters are changed to update</span>
+<span class="sd">        f_map and related values</span>
+
+<span class="sd">        self._xtol and self._maxfev are passed to fsolve as xtol and maxfev</span>
+<span class="sd">        to control stopping criteria</span>
+<span class="sd">        """</span>
+
+        <span class="n">xtol</span> <span class="o">=</span> <span class="mf">1e-6</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_xtol</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_xtol</span>
+        <span class="n">maxfev</span> <span class="o">=</span> <span class="mi">100</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_maxfev</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_maxfev</span>
+
+        <span class="c1"># Using the latest param for covariance before calculating f_map</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_covar</span><span class="p">()</span>
+
+        <span class="c1"># scipy newton raphson</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="c1"># warm start</span>
+            <span class="n">init_x0_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_batch_shape</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">])</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x0</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_x0</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">!=</span> <span class="n">init_x0_size</span><span class="p">:</span>
+                <span class="n">x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="o">*</span><span class="n">init_x0_size</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">x0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x0</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_input_batch_shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># batch mode, do optimize.fsolve sequentially on CPU</span>
+                <span class="c1"># TODO: enable vectorization/parallelization here</span>
+                <span class="n">x0</span> <span class="o">=</span> <span class="n">x0</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">)</span>
+                <span class="n">dp_v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">)</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
+                <span class="n">D_v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">m</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">)</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
+                <span class="n">DT_v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">DT</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">m</span><span class="p">)</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
+                <span class="c1"># Use `expand` here since we need to expand std_noise along</span>
+                <span class="c1"># the batch shape dimensions if we start off as non-batch model,</span>
+                <span class="c1"># but later conditioned on batched new data</span>
+                <span class="n">sn_v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">std_noise</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">*</span><span class="n">init_x0_size</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
+                <span class="n">ch_v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_chol</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">)</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
+                <span class="n">ci_v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_inv</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">)</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">x0</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">x0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                    <span class="n">fsolve_args</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">dp_v</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                        <span class="n">D_v</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                        <span class="n">DT_v</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                        <span class="n">sn_v</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                        <span class="n">ch_v</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                        <span class="n">ci_v</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                        <span class="kc">True</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+                        <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">RuntimeWarning</span><span class="p">)</span>
+                        <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">optimize</span><span class="o">.</span><span class="n">fsolve</span><span class="p">(</span>
+                            <span class="n">x0</span><span class="o">=</span><span class="n">x0</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                            <span class="n">func</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_grad_posterior_f</span><span class="p">,</span>
+                            <span class="n">fprime</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_hess_posterior_f</span><span class="p">,</span>
+                            <span class="n">xtol</span><span class="o">=</span><span class="n">xtol</span><span class="p">,</span>
+                            <span class="n">maxfev</span><span class="o">=</span><span class="n">maxfev</span><span class="p">,</span>
+                            <span class="n">args</span><span class="o">=</span><span class="n">fsolve_args</span><span class="p">,</span>
+                            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+                        <span class="p">)</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">*</span><span class="n">init_x0_size</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># fsolve only works on CPU</span>
+                <span class="n">fsolve_args</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">cpu</span><span class="p">(),</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="o">.</span><span class="n">cpu</span><span class="p">(),</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">DT</span><span class="o">.</span><span class="n">cpu</span><span class="p">(),</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">std_noise</span><span class="o">.</span><span class="n">cpu</span><span class="p">(),</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">covar_chol</span><span class="o">.</span><span class="n">cpu</span><span class="p">(),</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">covar_inv</span><span class="o">.</span><span class="n">cpu</span><span class="p">(),</span>
+                    <span class="kc">True</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+                    <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">RuntimeWarning</span><span class="p">)</span>
+                    <span class="n">x</span> <span class="o">=</span> <span class="n">optimize</span><span class="o">.</span><span class="n">fsolve</span><span class="p">(</span>
+                        <span class="n">x0</span><span class="o">=</span><span class="n">x0</span><span class="p">,</span>
+                        <span class="n">func</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_grad_posterior_f</span><span class="p">,</span>
+                        <span class="n">fprime</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_hess_posterior_f</span><span class="p">,</span>
+                        <span class="n">xtol</span><span class="o">=</span><span class="n">xtol</span><span class="p">,</span>
+                        <span class="n">maxfev</span><span class="o">=</span><span class="n">maxfev</span><span class="p">,</span>
+                        <span class="n">args</span><span class="o">=</span><span class="n">fsolve_args</span><span class="p">,</span>
+                        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+                    <span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_x0</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>  <span class="c1"># save for warm-starting</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+                <span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">device</span>
+            <span class="p">)</span>
+
+        <span class="c1"># To perform hyperparameter optimization, this need to be recalculated</span>
+        <span class="c1"># when calling forward() in order to obtain correct gradients</span>
+        <span class="c1"># self.likelihood_hess is updated here is for the rare case where we</span>
+        <span class="c1"># do not want to call forward()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">likelihood_hess</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hess_likelihood_f_sum</span><span class="p">(</span>
+            <span class="n">f</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">DT</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">std_noise</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Lazy update hlcov_eye, which is used in calculating posterior during training</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pred_cov_fac_need_update</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="c1"># fill in dummy values for hlcov_eye so that load_state_dict can function</span>
+        <span class="n">hlcov_eye_size</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">((</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">likelihood_hess</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hlcov_eye</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">hlcov_eye_size</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">utility</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_transform_batch_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X_new</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+        <span class="sa">r</span><span class="sd">"""Transform X and X_new into the same shape</span>
+
+<span class="sd">        Transform the batch shape of X to be compatible</span>
+<span class="sd">        with `X_new` to calculate the posterior.</span>
+<span class="sd">        If X has the same batch size as `X_new`, return it as is.</span>
+<span class="sd">        If one is in batch mode and the other one is not, convert both</span>
+<span class="sd">        into batch mode.</span>
+<span class="sd">        If both are in batch mode, this will only work if X_batch_shape</span>
+<span class="sd">        can propagate to X_new_batch_shape</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `batch_shape x q x d`-dim or `(1 x) q x d`-dim Tensor</span>
+<span class="sd">            X_new: A `batch_shape x q x d`-dim Tensor</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Transformed X and X_new pair</span>
+<span class="sd">        """</span>
+        <span class="n">X_bs</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>  <span class="c1"># X batch shape</span>
+        <span class="n">X_new_bs</span> <span class="o">=</span> <span class="n">X_new</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>  <span class="c1"># X_new batch shape</span>
+        <span class="k">if</span> <span class="n">X_new_bs</span> <span class="o">==</span> <span class="n">X_bs</span><span class="p">:</span>
+            <span class="c1"># if batch shapes match, there's no need to transform</span>
+            <span class="c1"># X_new may or may not have batch_shape dimensions</span>
+            <span class="k">return</span> <span class="n">X</span><span class="p">,</span> <span class="n">X_new</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">X_new_bs</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">X_bs</span><span class="p">):</span>
+            <span class="c1"># if X_new has fewer dimension, try to expand it to X's shape</span>
+            <span class="k">return</span> <span class="n">X</span><span class="p">,</span> <span class="n">X_new</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">X_bs</span> <span class="o">+</span> <span class="n">X_new</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># if X has fewer dimension, try to expand it to X_new's shape</span>
+            <span class="k">return</span> <span class="n">X</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">X_new_bs</span> <span class="o">+</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]),</span> <span class="n">X_new</span>
+
+    <span class="k">def</span> <span class="nf">_util_newton_updates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">xtol</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Make `max_iter` newton updates on utility.</span>
+
+<span class="sd">        This is used in `forward` to calculate and fill in gradient into tensors.</span>
+<span class="sd">        Instead of doing utility -= H^-1 @ g, use substition method.</span>
+<span class="sd">        See more explanation in _update_utility_derived_values.dd</span>
+<span class="sd">        By default only need to run one iteration just to fill the the gradients.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            x0: A `batch_size x n` dimension tensor, initial values</span>
+<span class="sd">            max_iter: Max number of iterations</span>
+<span class="sd">            xtol: Stop creteria. If `None`, do not stop until</span>
+<span class="sd">                finishing `max_iter` updates</span>
+<span class="sd">        """</span>
+        <span class="n">xtol</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"-Inf"</span><span class="p">)</span> <span class="k">if</span> <span class="n">xtol</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">xtol</span>
+        <span class="n">dp</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">DT</span><span class="p">,</span> <span class="n">sn</span><span class="p">,</span> <span class="n">ch</span><span class="p">,</span> <span class="n">ci</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">DT</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">std_noise</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">covar_chol</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">covar_inv</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar</span>
+        <span class="n">diff</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"Inf"</span><span class="p">)</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x0</span>
+        <span class="n">eye</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">max_iter</span> <span class="ow">and</span> <span class="n">diff</span> <span class="o">&gt;</span> <span class="n">xtol</span><span class="p">:</span>
+            <span class="n">hl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hess_likelihood_f_sum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">DT</span><span class="p">,</span> <span class="n">sn</span><span class="p">)</span>
+            <span class="n">cov_hl</span> <span class="o">=</span> <span class="n">covar</span> <span class="o">@</span> <span class="n">hl</span>
+            <span class="k">if</span> <span class="n">eye</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">eye</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span>
+                    <span class="n">cov_hl</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+                    <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                    <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">cov_hl</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+            <span class="n">cov_hl</span> <span class="o">=</span> <span class="n">cov_hl</span> <span class="o">+</span> <span class="n">eye</span>  <span class="c1"># add 1 to cov_hl</span>
+            <span class="n">g</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_grad_posterior_f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dp</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">DT</span><span class="p">,</span> <span class="n">sn</span><span class="p">,</span> <span class="n">ch</span><span class="p">,</span> <span class="n">ci</span><span class="p">)</span>
+            <span class="n">cov_g</span> <span class="o">=</span> <span class="n">covar</span> <span class="o">@</span> <span class="n">g</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">x_update</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">cov_g</span><span class="p">,</span> <span class="n">cov_hl</span><span class="p">)</span><span class="o">.</span><span class="n">solution</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">x_next</span> <span class="o">=</span> <span class="n">x</span> <span class="o">-</span> <span class="n">x_update</span>
+            <span class="n">diff</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">x_next</span><span class="p">)</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">x_next</span>
+            <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">x</span>
+
+    <span class="c1"># ============== public APIs ==============</span>
+
+<div class="viewcode-block" id="PairwiseGP.set_train_data"><a class="viewcode-back" href="../../../models.html#botorch.models.pairwise_gp.PairwiseGP.set_train_data">[docs]</a>    <span class="k">def</span> <span class="nf">set_train_data</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">datapoints</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">comparisons</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">update_model</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Set datapoints and comparisons and update model properties if needed</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            datapoints: A `batch_shape x n x d` dimension tensor X</span>
+<span class="sd">            comparisons: A tensor of size `batch_shape x m x 2`. (i, j) means</span>
+<span class="sd">                f_i is preferred over f_j</span>
+<span class="sd">            update_model: True if we want to refit the model (see _update) after</span>
+<span class="sd">                re-setting the data</span>
+<span class="sd">        """</span>
+        <span class="c1"># When datapoints and/or comparisons are None, we are constructing</span>
+        <span class="c1"># a prior-only model</span>
+        <span class="k">if</span> <span class="n">datapoints</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">comparisons</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c1"># store datapoints and other quantities as double for better numerical stability</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span> <span class="o">=</span> <span class="n">datapoints</span>
+        <span class="c1"># convert to long so that it can be used as index and work with Tensor.scatter_</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">comparisons</span> <span class="o">=</span> <span class="n">comparisons</span><span class="o">.</span><span class="n">long</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">tkwargs</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"dtype"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+            <span class="s2">"device"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Compatibility variables with fit_gpytorch_*</span>
+        <span class="c1"># alias for datapoints (train_inputs) and comparisons ("train_targets" here)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">train_inputs</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">train_targets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comparisons</span>
+        <span class="c1"># Compatibility variables with optimize_acqf</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dtype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">dtype</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_num_outputs</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># 1 latent value output per observation</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_input_batch_shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># feature dimensions</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>  <span class="c1"># num datapoints</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comparisons</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>  <span class="c1"># num pairwise comparisons</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">utility</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="c1"># D is batch_sizem x n or num_comparison x num_datapoints.</span>
+        <span class="c1"># D_k_i is the s_k(x_i) value as in equation (6) in [Chu2005preference]_</span>
+        <span class="c1"># D will usually be very sparse as well</span>
+        <span class="c1"># TODO swap out scatter_ so that comparisons could be int instead of long</span>
+        <span class="c1"># TODO: make D a sparse matrix once pytorch has better support for</span>
+        <span class="c1">#       sparse tensors</span>
+        <span class="n">D_size</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">((</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_input_batch_shape</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">m</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">D</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+            <span class="n">D_size</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">device</span>
+        <span class="p">)</span>
+        <span class="n">comp_view</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comparisons</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">m</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">long</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">sub_D</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">m</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">)):</span>
+            <span class="n">sub_D</span><span class="o">.</span><span class="n">scatter_</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">comp_view</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:,</span> <span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">sub_D</span><span class="o">.</span><span class="n">scatter_</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">comp_view</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:,</span> <span class="p">[</span><span class="mi">1</span><span class="p">]],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">DT</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">update_model</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PairwiseGP.forward"><a class="viewcode-back" href="../../../models.html#botorch.models.pairwise_gp.PairwiseGP.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datapoints</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultivariateNormal</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Calculate a posterior or prior prediction.</span>
+
+<span class="sd">        During training mode, forward implemented solely for gradient-based</span>
+<span class="sd">        hyperparam opt. Essentially what it does is to re-calculate the utility</span>
+<span class="sd">        f using its analytical form at f_map so that we are able to obtain</span>
+<span class="sd">        gradients of the hyperparameters.</span>
+<span class="sd">        We only take in one parameter datapoints without the comparisons for the</span>
+<span class="sd">        compatibility with other gpytorch/botorch APIs. It assumes `datapoints` is</span>
+<span class="sd">        the same as `self.datapoints`. That's what "Must train on training data" means.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            datapoints: A `batch_shape x n x d` Tensor,</span>
+<span class="sd">                should be the same as self.datapoints</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A MultivariateNormal object, being one of the followings:</span>
+<span class="sd">                1. Posterior centered at MAP points for training data (training mode)</span>
+<span class="sd">                2. Prior predictions (prior mode)</span>
+<span class="sd">                3. Predictive posterior (eval mode)</span>
+<span class="sd">        """</span>
+
+        <span class="c1"># Training mode: optimizing</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_has_no_data</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="s2">"datapoints and comparisons cannot be None in training mode. "</span>
+                    <span class="s2">"Call .eval() for prior predictions, "</span>
+                    <span class="s2">"or call .set_train_data() to add training data."</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">datapoints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"Must train on training data"</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_train_data</span><span class="p">(</span><span class="n">datapoints</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">comparisons</span><span class="p">,</span> <span class="n">update_model</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="c1"># Take a newton step on the posterior MAP point to fill</span>
+            <span class="c1"># in gradients for pytorch</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">utility</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_util_newton_updates</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">utility</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+            <span class="n">hl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood_hess</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hess_likelihood_f_sum</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">utility</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">DT</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">std_noise</span>
+            <span class="p">)</span>
+            <span class="n">covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar</span>
+            <span class="c1"># Apply matrix inversion lemma on eq. in page 27 of [Brochu2010tutorial]_</span>
+            <span class="c1"># (A + B)^-1 = A^-1 - A^-1 @ (I + BA^-1)^-1 @ BA^-1</span>
+            <span class="c1"># where A = covar_inv, B = hl</span>
+            <span class="n">hl_cov</span> <span class="o">=</span> <span class="n">hl</span> <span class="o">@</span> <span class="n">covar</span>
+            <span class="n">eye</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span>
+                <span class="n">hl_cov</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+                <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">hl_cov</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+            <span class="n">hl_cov_I</span> <span class="o">=</span> <span class="n">hl_cov</span> <span class="o">+</span> <span class="n">eye</span>  <span class="c1"># add I to hl_cov</span>
+            <span class="n">train_covar_map</span> <span class="o">=</span> <span class="n">covar</span> <span class="o">-</span> <span class="n">covar</span> <span class="o">@</span> <span class="n">torch</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">hl_cov</span><span class="p">,</span> <span class="n">hl_cov_I</span><span class="p">)</span><span class="o">.</span><span class="n">solution</span>
+            <span class="n">output_mean</span><span class="p">,</span> <span class="n">output_covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">utility</span><span class="p">,</span> <span class="n">train_covar_map</span>
+
+        <span class="c1"># Prior mode</span>
+        <span class="k">elif</span> <span class="n">settings</span><span class="o">.</span><span class="n">prior_mode</span><span class="o">.</span><span class="n">on</span><span class="p">()</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_has_no_data</span><span class="p">():</span>
+            <span class="n">X_new</span> <span class="o">=</span> <span class="n">datapoints</span>
+            <span class="c1"># if we don't have any data yet, use prior GP to make predictions</span>
+            <span class="n">output_mean</span><span class="p">,</span> <span class="n">output_covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prior_predict</span><span class="p">(</span><span class="n">X_new</span><span class="p">)</span>
+
+        <span class="c1"># Posterior mode</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># self.utility might be None if exception was raised and _update</span>
+            <span class="c1"># was failed to be called during hyperparameter optimization</span>
+            <span class="c1"># procedures (e.g., fit_gpytorch_scipy)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">utility</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_update</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred_cov_fac_need_update</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_update_utility_derived_values</span><span class="p">()</span>
+            <span class="n">datapoints</span> <span class="o">=</span> <span class="n">datapoints</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="p">)</span>
+            <span class="n">X</span><span class="p">,</span> <span class="n">X_new</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform_batch_shape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="p">,</span> <span class="n">datapoints</span><span class="p">)</span>
+            <span class="n">covar_chol</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform_batch_shape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">covar_chol</span><span class="p">,</span> <span class="n">X_new</span><span class="p">)</span>
+            <span class="n">hl</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform_batch_shape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">likelihood_hess</span><span class="p">,</span> <span class="n">X_new</span><span class="p">)</span>
+            <span class="n">hlcov_eye</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform_batch_shape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hlcov_eye</span><span class="p">,</span> <span class="n">X_new</span><span class="p">)</span>
+
+            <span class="c1"># otherwise compute predictive mean and covariance</span>
+            <span class="n">covar_xnew_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calc_covar</span><span class="p">(</span><span class="n">X_new</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span>
+            <span class="n">covar_x_xnew</span> <span class="o">=</span> <span class="n">covar_xnew_x</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+            <span class="n">covar_xnew</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calc_covar</span><span class="p">(</span><span class="n">X_new</span><span class="p">,</span> <span class="n">X_new</span><span class="p">)</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">utility</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prior_mean</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+
+            <span class="n">covar_inv_p</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cholesky_solve</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">covar_chol</span><span class="p">)</span>
+            <span class="n">pred_mean</span> <span class="o">=</span> <span class="p">(</span><span class="n">covar_xnew_x</span> <span class="o">@</span> <span class="n">covar_inv_p</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">pred_mean</span> <span class="o">=</span> <span class="n">pred_mean</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prior_mean</span><span class="p">(</span><span class="n">X_new</span><span class="p">)</span>
+
+            <span class="c1"># [Brochu2010tutorial]_ page 27</span>
+            <span class="c1"># Preictive covariance fatcor: hlcov_eye = (K + C^-1)</span>
+            <span class="c1"># fac = (K + C^-1)^-1 @ k = pred_cov_fac_inv @ covar_x_xnew</span>
+            <span class="c1"># used substitution method here to calculate fac</span>
+            <span class="n">fac</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">hl</span> <span class="o">@</span> <span class="n">covar_x_xnew</span><span class="p">,</span> <span class="n">hlcov_eye</span><span class="p">)</span><span class="o">.</span><span class="n">solution</span>
+            <span class="n">pred_covar</span> <span class="o">=</span> <span class="n">covar_xnew</span> <span class="o">-</span> <span class="p">(</span><span class="n">covar_xnew_x</span> <span class="o">@</span> <span class="n">fac</span><span class="p">)</span>
+
+            <span class="n">output_mean</span><span class="p">,</span> <span class="n">output_covar</span> <span class="o">=</span> <span class="n">pred_mean</span><span class="p">,</span> <span class="n">pred_covar</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">diag_jitter</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">output_covar</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">diag_jitter</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span>
+                    <span class="n">output_covar</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+                    <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                    <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="n">diag_jitter</span> <span class="o">=</span> <span class="n">diag_jitter</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">output_covar</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+            <span class="n">diag_jitter</span> <span class="o">=</span> <span class="n">diag_jitter</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jitter</span>
+            <span class="c1"># Preemptively adding jitter to diagonal to prevent the use of _add_jitter</span>
+            <span class="c1"># given that torch.cholesky may be very slow on non-pd matrix input</span>
+            <span class="c1"># See https://github.com/pytorch/pytorch/issues/34272</span>
+            <span class="c1"># TODO: remove this once torch.cholesky issue is resolved</span>
+            <span class="n">output_covar</span> <span class="o">=</span> <span class="n">output_covar</span> <span class="o">+</span> <span class="n">diag_jitter</span>
+            <span class="n">post</span> <span class="o">=</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">output_mean</span><span class="p">,</span> <span class="n">output_covar</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>
+            <span class="n">output_covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_add_jitter</span><span class="p">(</span><span class="n">output_covar</span><span class="p">)</span>
+            <span class="n">post</span> <span class="o">=</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">output_mean</span><span class="p">,</span> <span class="n">output_covar</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">post</span></div>
+
+    <span class="c1"># ============== botorch.models.model.Model interfaces ==============</span>
+<div class="viewcode-block" id="PairwiseGP.posterior"><a class="viewcode-back" href="../../../models.html#botorch.models.pairwise_gp.PairwiseGP.posterior">[docs]</a>    <span class="k">def</span> <span class="nf">posterior</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">output_indices</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">observation_noise</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Posterior</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Computes the posterior over model outputs at the provided points.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `batch_shape x q x d`-dim Tensor, where `d` is the dimension</span>
+<span class="sd">                of the feature space and `q` is the number of points considered jointly.</span>
+<span class="sd">            output_indices: As defined in parent Model class, not used for this model.</span>
+<span class="sd">            observation_noise: If True, add observation noise to the posterior.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `Posterior` object, representing joint</span>
+<span class="sd">                distributions over `q` points. Includes observation noise if specified.</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>  <span class="c1"># make sure model is in eval mode</span>
+
+        <span class="k">if</span> <span class="n">output_indices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">"output_indices is not None. PairwiseGP should not be a"</span>
+                <span class="s2">"multi-output model."</span>
+            <span class="p">)</span>
+
+        <span class="n">post</span> <span class="o">=</span> <span class="bp">self</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">observation_noise</span><span class="p">:</span>
+            <span class="n">noise_module</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">noise_module</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="n">post</span><span class="o">.</span><span class="n">mean</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span>
+            <span class="n">post</span> <span class="o">=</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">post</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span> <span class="n">post</span><span class="o">.</span><span class="n">covariance_matrix</span> <span class="o">+</span> <span class="n">noise_module</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">GPyTorchPosterior</span><span class="p">(</span><span class="n">post</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PairwiseGP.condition_on_observations"><a class="viewcode-back" href="../../../models.html#botorch.models.pairwise_gp.PairwiseGP.condition_on_observations">[docs]</a>    <span class="k">def</span> <span class="nf">condition_on_observations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Model</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Condition the model on new observations.</span>
+
+<span class="sd">        Note that unlike other BoTorch models, PairwiseGP requires Y to be</span>
+<span class="sd">        pairwise comparisons</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `batch_shape x n x d` dimension tensor X</span>
+<span class="sd">            Y: A tensor of size `batch_shape x m x 2`. (i, j) means</span>
+<span class="sd">                f_i is preferred over f_j</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A (deepcopied) `Model` object of the same type, representing the</span>
+<span class="sd">            original model conditioned on the new observations `(X, Y)` (and</span>
+<span class="sd">            possibly noise observations passed in via kwargs).</span>
+<span class="sd">        """</span>
+        <span class="n">new_model</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_has_no_data</span><span class="p">():</span>
+            <span class="c1"># If the model previously has no data, set X and Y as the data directly</span>
+            <span class="n">new_model</span><span class="o">.</span><span class="n">set_train_data</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">update_model</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Can only condition on pairwise comparisons instead of the directly</span>
+            <span class="c1"># observed values. Raise a RuntimeError if Y is not a tensor presenting</span>
+            <span class="c1"># pairwise comparisons</span>
+            <span class="k">if</span> <span class="n">Y</span><span class="o">.</span><span class="n">dtype</span> <span class="ow">in</span> <span class="p">(</span><span class="n">float32</span><span class="p">,</span> <span class="n">float64</span><span class="p">)</span> <span class="ow">or</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="s2">"Conditioning on non-pairwise comparison observations."</span>
+                <span class="p">)</span>
+
+            <span class="c1"># Reshaping datapoints and comparisons by batches</span>
+            <span class="n">Y_new_batch_shape</span> <span class="o">=</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+            <span class="n">new_datapoints</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span>
+                <span class="n">Y_new_batch_shape</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>
+            <span class="p">)</span>
+            <span class="n">new_comparisons</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comparisons</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span>
+                <span class="n">Y_new_batch_shape</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">comparisons</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>
+            <span class="p">)</span>
+            <span class="c1"># Reshape X since Y may have additional batch dim. from fantasy models</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">Y_new_batch_shape</span> <span class="o">+</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:])</span>
+
+            <span class="n">new_datapoints</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">new_datapoints</span><span class="p">,</span> <span class="n">X</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">new_datapoints</span><span class="p">)),</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
+
+            <span class="n">shifted_comp</span> <span class="o">=</span> <span class="n">Y</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">new_comparisons</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span>
+            <span class="n">new_comparisons</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">new_comparisons</span><span class="p">,</span> <span class="n">shifted_comp</span><span class="p">),</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
+
+            <span class="c1"># TODO: be smart about how we can update covar matrix here</span>
+            <span class="n">new_model</span><span class="o">.</span><span class="n">set_train_data</span><span class="p">(</span><span class="n">new_datapoints</span><span class="p">,</span> <span class="n">new_comparisons</span><span class="p">,</span> <span class="n">update_model</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_model</span></div></div>
+
+
+<div class="viewcode-block" id="PairwiseLaplaceMarginalLogLikelihood"><a class="viewcode-back" href="../../../models.html#botorch.models.pairwise_gp.PairwiseLaplaceMarginalLogLikelihood">[docs]</a><span class="k">class</span> <span class="nc">PairwiseLaplaceMarginalLogLikelihood</span><span class="p">(</span><span class="n">MarginalLogLikelihood</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">PairwiseGP</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Laplace-approximated marginal log likelihood/evidence for PairwiseGP</span>
+
+<span class="sd">        See (12) from [Chu2005preference]_.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            model: A model using laplace approximation (currently only supports</span>
+<span class="sd">                `PairwiseGP`)</span>
+<span class="sd">        """</span>
+        <span class="c1"># Do not use likelihood module here as it's implicitly included in the model</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+
+<div class="viewcode-block" id="PairwiseLaplaceMarginalLogLikelihood.forward"><a class="viewcode-back" href="../../../models.html#botorch.models.pairwise_gp.PairwiseLaplaceMarginalLogLikelihood.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">post</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">,</span> <span class="n">comp</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Calculate approximated log evidence, i.e., log(P(D|theta))</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            post: training posterior distribution from self.model</span>
+<span class="sd">            comp: Comparisons pairs, see PairwiseGP.__init__ for more details</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The approximated evidence, i.e., the marginal log likelihood</span>
+<span class="sd">        """</span>
+
+        <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span>
+        <span class="k">if</span> <span class="n">comp</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">model</span><span class="o">.</span><span class="n">comparisons</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"Must train on training data"</span><span class="p">)</span>
+
+        <span class="n">f_max</span> <span class="o">=</span> <span class="n">post</span><span class="o">.</span><span class="n">mean</span>
+        <span class="n">log_posterior</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">_posterior_f</span><span class="p">(</span><span class="n">f_max</span><span class="p">)</span>
+        <span class="n">part1</span> <span class="o">=</span> <span class="o">-</span><span class="n">log_posterior</span>
+
+        <span class="n">part2</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">covar</span> <span class="o">@</span> <span class="n">model</span><span class="o">.</span><span class="n">likelihood_hess</span>
+        <span class="n">eye</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span>
+            <span class="n">part2</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">device</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">part2</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">part2</span> <span class="o">=</span> <span class="n">part2</span> <span class="o">+</span> <span class="n">eye</span>
+        <span class="n">part2</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">logdet</span><span class="p">(</span><span class="n">part2</span><span class="p">)</span>
+
+        <span class="n">evidence</span> <span class="o">=</span> <span class="n">part1</span> <span class="o">+</span> <span class="n">part2</span>
+
+        <span class="c1"># Sum up mll first so that when adding prior probs it won't</span>
+        <span class="c1"># propagate and double count</span>
+        <span class="n">evidence</span> <span class="o">=</span> <span class="n">evidence</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+        <span class="c1"># Add log probs of priors on the (functions of) parameters</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">prior</span><span class="p">,</span> <span class="n">closure</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">named_priors</span><span class="p">():</span>
+            <span class="n">evidence</span> <span class="o">=</span> <span class="n">evidence</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">prior</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">closure</span><span class="p">())</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+
+        <span class="k">return</span> <span class="n">evidence</span></div></div>
+</pre></div>
+</div>
+</div>
+</div>
+<div aria-label="main navigation" class="sphinxsidebar" role="navigation">
+<div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">BoTorch</a></h1>
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../acquisition.html">botorch.acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../models.html">botorch.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generation.html">botorch.generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../posteriors.html">botorch.posteriors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../optim.html">botorch.optim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fit.html">botorch.fit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sampling.html">botorch.sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cross_validation.html">botorch.cross_validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../settings.html">botorch.settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../logging.html">botorch.logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">botorch.exceptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils.html">botorch.utils</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+<li><a href="../../../index.html">Documentation overview</a><ul>
+<li><a href="../../index.html">Module code</a><ul>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+<div id="searchbox" role="search" style="display: none">
+<h3 id="searchlabel">Quick search</h3>
+<div class="searchformwrapper">
+<form action="../../../search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" name="q" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</div>
+<script>$('#searchbox').show(0);</script>
+</div>
+</div>
+<div class="clearer"></div>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/v/0.3.1/" class="nav-home"><img src="/v/0.3.1/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/v/0.3.1/docs/introduction">Introduction</a><a href="/v/0.3.1/docs/getting_started">Getting Started</a><a href="/v/0.3.1/tutorials/">Tutorials</a><a href="/v/0.3.1/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/v/0.3.1/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2020 Facebook Inc.</section><script>
+            (function() {
+              var BAD_BASE = '/botorch/';
+              if (window.location.origin !== 'https://botorch.org') {
+                var pathname = window.location.pathname;
+                var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);
+                var newLocation = 'https://botorch.org/v/0.3.1/' + newPathname;
+                console.log('redirecting to ' + newLocation);
+                window.location.href = newLocation;
+              }
+            })();
+          </script></footer></div></body></html>

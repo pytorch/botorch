@@ -26,17 +26,17 @@
 <div class="section" id="module-botorch.settings">
 <span id="botorch-settings"></span><h1>botorch.settings<a class="headerlink" href="#module-botorch.settings" title="Permalink to this headline">¶</a></h1>
 <p>BoTorch settings.</p>
-<dl class="class">
+<dl class="py class">
 <dt id="botorch.settings.propagate_grads">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.settings.</code><code class="sig-name descname">propagate_grads</code><span class="sig-paren">(</span><em class="sig-param">state=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/settings.html#propagate_grads"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.settings.propagate_grads" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">botorch.settings.</code><code class="sig-name descname">propagate_grads</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">state</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/settings.html#propagate_grads"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.settings.propagate_grads" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.settings._Flag</span></code></p>
 <p>Flag for propagating gradients to model training inputs / training data.</p>
 <p>When set to <cite>True</cite>, gradients will be propagated to the training inputs.
 This is useful in particular for propating gradients through fantasy models.</p>
 </dd></dl>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.settings.suppress_botorch_warnings">
-<code class="sig-prename descclassname">botorch.settings.</code><code class="sig-name descname">suppress_botorch_warnings</code><span class="sig-paren">(</span><em class="sig-param">suppress</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/settings.html#suppress_botorch_warnings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.settings.suppress_botorch_warnings" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.settings.</code><code class="sig-name descname">suppress_botorch_warnings</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">suppress</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/settings.html#suppress_botorch_warnings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.settings.suppress_botorch_warnings" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set botorch warning filter.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -47,18 +47,18 @@ This is useful in particular for propating gradients through fantasy models.</p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="class">
+<dl class="py class">
 <dt id="botorch.settings.debug">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.settings.</code><code class="sig-name descname">debug</code><span class="sig-paren">(</span><em class="sig-param">state=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/settings.html#debug"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.settings.debug" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">botorch.settings.</code><code class="sig-name descname">debug</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">state</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/settings.html#debug"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.settings.debug" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.settings._Flag</span></code></p>
 <p>Flag for printing verbose BotorchWarnings.</p>
 <p>When set to <cite>True</cite>, verbose <cite>BotorchWarning`s will be printed for debuggability.
 Warnings that are not subclasses of `BotorchWarning</cite> will not be affected by
 this context_manager.</p>
 </dd></dl>
-<dl class="class">
+<dl class="py class">
 <dt id="botorch.settings.validate_input_scaling">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.settings.</code><code class="sig-name descname">validate_input_scaling</code><span class="sig-paren">(</span><em class="sig-param">state=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/settings.html#validate_input_scaling"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.settings.validate_input_scaling" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">botorch.settings.</code><code class="sig-name descname">validate_input_scaling</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">state</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/settings.html#validate_input_scaling"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.settings.validate_input_scaling" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.settings._Flag</span></code></p>
 <p>Flag for validating input normalization/standardization.</p>
 <p>When set to <cite>True</cite>, standard botorch models will validate (up to reasonable
@@ -69,15 +69,15 @@ tolerance) that
 No checks (other than the NaN check) are performed for observed variances
 (<cite>train_Y_var</cite>) at this point.</p>
 </dd></dl>
-<dl class="class">
+<dl class="py class">
 <dt id="botorch.settings.log_level">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.settings.</code><code class="sig-name descname">log_level</code><span class="sig-paren">(</span><em class="sig-param">level=50</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/settings.html#log_level"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.settings.log_level" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">botorch.settings.</code><code class="sig-name descname">log_level</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">level</span><span class="o">=</span><span class="default_value">50</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/settings.html#log_level"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.settings.log_level" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Flag for printing verbose logging statements.</p>
 <p>Applies the given level to logging.getLogger(‘botorch’) calls. For
 instance, when set to logging.INFO, all logger calls of level INFO or
 above will be printed to STDERR</p>
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="botorch.settings.log_level.level">
 <code class="sig-name descname">level</code><em class="property">: int</em><em class="property"> = 50</em><a class="headerlink" href="#botorch.settings.log_level.level" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -105,7 +105,6 @@ above will be printed to STDERR</p>
 <li class="toctree-l1"><a class="reference internal" href="test_functions.html">botorch.test_functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="exceptions.html">botorch.exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="utils.html">botorch.utils</a></li>
-<li class="toctree-l1"><a class="reference internal" href="gen.html">Generation utilities [DEPRECATED - use botorch.generation.gen]</a></li>
 </ul>
 <div class="relations">
 <h3>Related Topics</h3>

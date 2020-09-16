@@ -590,12 +590,12 @@
     <span class="n">num_constraints</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">_bounds</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)]</span>
     <span class="n">_con_bounds</span> <span class="o">=</span> <span class="p">[(</span><span class="o">-</span><span class="mf">5.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">15.0</span><span class="p">)]</span>
-    <span class="n">_ref_point</span> <span class="o">=</span> <span class="p">[</span><span class="mf">90.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">]</span>
-    <span class="n">_max_hv</span> <span class="o">=</span> <span class="mf">372.74230433212836</span>  <span class="c1"># from NSGA-II with 90k evaluations</span>
+    <span class="n">_ref_point</span> <span class="o">=</span> <span class="p">[</span><span class="mf">80.0</span><span class="p">,</span> <span class="mf">12.0</span><span class="p">]</span>
+    <span class="n">_max_hv</span> <span class="o">=</span> <span class="mf">608.4004237022673</span>  <span class="c1"># from NSGA-II with 90k evaluations</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">noise_std</span><span class="o">=</span><span class="n">noise_std</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="n">negate</span><span class="p">)</span>
-        <span class="n">con_bounds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_con_bounds</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+        <span class="n">con_bounds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_con_bounds</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"con_bounds"</span><span class="p">,</span> <span class="n">con_bounds</span><span class="p">)</span>
 
 <div class="viewcode-block" id="ConstrainedBraninCurrin.evaluate_slack_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.ConstrainedBraninCurrin.evaluate_slack_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_slack_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
@@ -607,7 +607,8 @@
 
     <span class="n">num_constraints</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">_r</span> <span class="o">=</span> <span class="mf">0.2</span>
-    <span class="n">_max_hv</span> <span class="o">=</span> <span class="mf">5.439801376693978</span>  <span class="c1"># approximate from nsga-ii, TODO: replace with analytic</span>
+    <span class="c1"># approximate from nsga-ii, TODO: replace with analytic</span>
+    <span class="n">_max_hv</span> <span class="o">=</span> <span class="mf">0.3996406303723544</span>
 
 <div class="viewcode-block" id="C2DTLZ2.evaluate_slack_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.C2DTLZ2.evaluate_slack_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_slack_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
@@ -649,7 +650,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../test_functions.html">botorch.test_functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">botorch.exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../utils.html">botorch.utils</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../gen.html">Generation utilities [DEPRECATED - use botorch.generation.gen]</a></li>
 </ul>
 <div class="relations">
 <h3>Related Topics</h3>

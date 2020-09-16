@@ -28,9 +28,9 @@
 <div class="section" id="module-botorch.utils.constraints">
 <span id="constraints"></span><h2>Constraints<a class="headerlink" href="#module-botorch.utils.constraints" title="Permalink to this headline">¶</a></h2>
 <p>Helpers for handling outcome constraints.</p>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.utils.constraints.get_outcome_constraint_transforms">
-<code class="sig-prename descclassname">botorch.utils.constraints.</code><code class="sig-name descname">get_outcome_constraint_transforms</code><span class="sig-paren">(</span><em class="sig-param">outcome_constraints</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/constraints.html#get_outcome_constraint_transforms"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.constraints.get_outcome_constraint_transforms" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.utils.constraints.</code><code class="sig-name descname">get_outcome_constraint_transforms</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">outcome_constraints</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/constraints.html#get_outcome_constraint_transforms"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.constraints.get_outcome_constraint_transforms" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create outcome constraint callables from outcome constraint tensors.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -57,12 +57,38 @@ Negative values imply feasibility. The callables support broadcasting
 </div>
 </dd></dl>
 </div>
+<div class="section" id="module-botorch.utils.containers">
+<span id="containers"></span><h2>Containers<a class="headerlink" href="#module-botorch.utils.containers" title="Permalink to this headline">¶</a></h2>
+<p>Containers to standardize inputs into models and acquisition functions.</p>
+<dl class="py class">
+<dt id="botorch.utils.containers.TrainingData">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.utils.containers.</code><code class="sig-name descname">TrainingData</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span><span class="p">:</span> <span class="n">torch.Tensor</span></em>, <em class="sig-param"><span class="n">Y</span><span class="p">:</span> <span class="n">torch.Tensor</span></em>, <em class="sig-param"><span class="n">Yvar</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>torch.Tensor<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/containers.html#TrainingData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.containers.TrainingData" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></p>
+<p>Standardized struct of model training data for a single outcome.</p>
+<p>Create new instance of TrainingData(X, Y, Yvar)</p>
+<dl class="py method">
+<dt id="botorch.utils.containers.TrainingData.X">
+<em class="property">property </em><code class="sig-name descname">X</code><a class="headerlink" href="#botorch.utils.containers.TrainingData.X" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.utils.containers.TrainingData.Y">
+<em class="property">property </em><code class="sig-name descname">Y</code><a class="headerlink" href="#botorch.utils.containers.TrainingData.Y" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.utils.containers.TrainingData.Yvar">
+<em class="property">property </em><code class="sig-name descname">Yvar</code><a class="headerlink" href="#botorch.utils.containers.TrainingData.Yvar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 2</p>
+</dd></dl>
+</dd></dl>
+</div>
 <div class="section" id="module-botorch.utils.objective">
 <span id="objective"></span><h2>Objective<a class="headerlink" href="#module-botorch.utils.objective" title="Permalink to this headline">¶</a></h2>
 <p>Helpers for handling objectives.</p>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.utils.objective.get_objective_weights_transform">
-<code class="sig-prename descclassname">botorch.utils.objective.</code><code class="sig-name descname">get_objective_weights_transform</code><span class="sig-paren">(</span><em class="sig-param">weights</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/objective.html#get_objective_weights_transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.objective.get_objective_weights_transform" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.utils.objective.</code><code class="sig-name descname">get_objective_weights_transform</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">weights</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/objective.html#get_objective_weights_transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.objective.get_objective_weights_transform" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a linear objective callable from a set of weights.</p>
 <p>Create a callable mapping a Tensor of size <cite>b x q x m</cite> to a Tensor of size
 <cite>b x q</cite>, where <cite>m</cite> is the number of outputs of the model using scalarization
@@ -87,9 +113,9 @@ If not provided, the identity mapping is used.</p>
 </pre></div>
 </div>
 </dd></dl>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.utils.objective.apply_constraints_nonnegative_soft">
-<code class="sig-prename descclassname">botorch.utils.objective.</code><code class="sig-name descname">apply_constraints_nonnegative_soft</code><span class="sig-paren">(</span><em class="sig-param">obj</em>, <em class="sig-param">constraints</em>, <em class="sig-param">samples</em>, <em class="sig-param">eta</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/objective.html#apply_constraints_nonnegative_soft"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.objective.apply_constraints_nonnegative_soft" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.utils.objective.</code><code class="sig-name descname">apply_constraints_nonnegative_soft</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">obj</span></em>, <em class="sig-param"><span class="n">constraints</span></em>, <em class="sig-param"><span class="n">samples</span></em>, <em class="sig-param"><span class="n">eta</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/objective.html#apply_constraints_nonnegative_soft"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.objective.apply_constraints_nonnegative_soft" title="Permalink to this definition">¶</a></dt>
 <dd><p>Applies constraints to a non-negative objective.</p>
 <p>This function uses a sigmoid approximation to an indicator function for
 each constraint.</p>
@@ -113,9 +139,9 @@ output models (<cite>m</cite> &gt; 1).</p></li>
 </dd>
 </dl>
 </dd></dl>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.utils.objective.soft_eval_constraint">
-<code class="sig-prename descclassname">botorch.utils.objective.</code><code class="sig-name descname">soft_eval_constraint</code><span class="sig-paren">(</span><em class="sig-param">lhs</em>, <em class="sig-param">eta=0.001</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/objective.html#soft_eval_constraint"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.objective.soft_eval_constraint" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.utils.objective.</code><code class="sig-name descname">soft_eval_constraint</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">lhs</span></em>, <em class="sig-param"><span class="n">eta</span><span class="o">=</span><span class="default_value">0.001</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/objective.html#soft_eval_constraint"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.objective.soft_eval_constraint" title="Permalink to this definition">¶</a></dt>
 <dd><p>Element-wise evaluation of a constraint in a ‘soft’ fashion</p>
 <p><cite>value(x) = 1 / (1 + exp(x / eta))</cite></p>
 <dl class="field-list simple">
@@ -136,9 +162,9 @@ For each element <cite>x</cite>, <cite>value(x) -&gt; 0</cite> as <cite>x</cite>
 </dd>
 </dl>
 </dd></dl>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.utils.objective.apply_constraints">
-<code class="sig-prename descclassname">botorch.utils.objective.</code><code class="sig-name descname">apply_constraints</code><span class="sig-paren">(</span><em class="sig-param">obj</em>, <em class="sig-param">constraints</em>, <em class="sig-param">samples</em>, <em class="sig-param">infeasible_cost</em>, <em class="sig-param">eta=0.001</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/objective.html#apply_constraints"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.objective.apply_constraints" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.utils.objective.</code><code class="sig-name descname">apply_constraints</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">obj</span></em>, <em class="sig-param"><span class="n">constraints</span></em>, <em class="sig-param"><span class="n">samples</span></em>, <em class="sig-param"><span class="n">infeasible_cost</span></em>, <em class="sig-param"><span class="n">eta</span><span class="o">=</span><span class="default_value">0.001</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/objective.html#apply_constraints"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.objective.apply_constraints" title="Permalink to this definition">¶</a></dt>
 <dd><p>Apply constraints using an infeasible_cost <cite>M</cite> for negative objectives.</p>
 <p>This allows feasibility-weighting an objective for the case where the
 objective can be negative by usingthe following strategy:
@@ -170,9 +196,9 @@ output models (<cite>m</cite> &gt; 1).</p></li>
 <div class="section" id="module-botorch.utils.sampling">
 <span id="sampling"></span><h2>Sampling<a class="headerlink" href="#module-botorch.utils.sampling" title="Permalink to this headline">¶</a></h2>
 <p>Utilities for MC and qMC sampling.</p>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.utils.sampling.manual_seed">
-<code class="sig-prename descclassname">botorch.utils.sampling.</code><code class="sig-name descname">manual_seed</code><span class="sig-paren">(</span><em class="sig-param">seed=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#manual_seed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.sampling.manual_seed" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.utils.sampling.</code><code class="sig-name descname">manual_seed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">seed</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#manual_seed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.sampling.manual_seed" title="Permalink to this definition">¶</a></dt>
 <dd><p>Contextmanager for manual setting the torch.random seed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -191,9 +217,9 @@ output models (<cite>m</cite> &gt; 1).</p></li>
 </pre></div>
 </div>
 </dd></dl>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.utils.sampling.construct_base_samples">
-<code class="sig-prename descclassname">botorch.utils.sampling.</code><code class="sig-name descname">construct_base_samples</code><span class="sig-paren">(</span><em class="sig-param">batch_shape</em>, <em class="sig-param">output_shape</em>, <em class="sig-param">sample_shape</em>, <em class="sig-param">qmc=True</em>, <em class="sig-param">seed=None</em>, <em class="sig-param">device=None</em>, <em class="sig-param">dtype=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#construct_base_samples"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.sampling.construct_base_samples" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.utils.sampling.</code><code class="sig-name descname">construct_base_samples</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">batch_shape</span></em>, <em class="sig-param"><span class="n">output_shape</span></em>, <em class="sig-param"><span class="n">sample_shape</span></em>, <em class="sig-param"><span class="n">qmc</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">seed</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">device</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dtype</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#construct_base_samples"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.sampling.construct_base_samples" title="Permalink to this definition">¶</a></dt>
 <dd><p>Construct base samples from a multi-variate standard normal N(0, I_qo).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -224,9 +250,9 @@ Here <cite>output_shape = q x m</cite>.</p>
 </pre></div>
 </div>
 </dd></dl>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.utils.sampling.construct_base_samples_from_posterior">
-<code class="sig-prename descclassname">botorch.utils.sampling.</code><code class="sig-name descname">construct_base_samples_from_posterior</code><span class="sig-paren">(</span><em class="sig-param">posterior</em>, <em class="sig-param">sample_shape</em>, <em class="sig-param">qmc=True</em>, <em class="sig-param">collapse_batch_dims=True</em>, <em class="sig-param">seed=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#construct_base_samples_from_posterior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.sampling.construct_base_samples_from_posterior" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.utils.sampling.</code><code class="sig-name descname">construct_base_samples_from_posterior</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">posterior</span></em>, <em class="sig-param"><span class="n">sample_shape</span></em>, <em class="sig-param"><span class="n">qmc</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">collapse_batch_dims</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">seed</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#construct_base_samples_from_posterior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.sampling.construct_base_samples_from_posterior" title="Permalink to this definition">¶</a></dt>
 <dd><p>Construct a tensor of normally distributed base samples.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -254,27 +280,28 @@ introduce any sampling variance across t-batches.</p>
 </pre></div>
 </div>
 </dd></dl>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.utils.sampling.draw_sobol_samples">
-<code class="sig-prename descclassname">botorch.utils.sampling.</code><code class="sig-name descname">draw_sobol_samples</code><span class="sig-paren">(</span><em class="sig-param">bounds</em>, <em class="sig-param">n</em>, <em class="sig-param">q</em>, <em class="sig-param">seed=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#draw_sobol_samples"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.sampling.draw_sobol_samples" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.utils.sampling.</code><code class="sig-name descname">draw_sobol_samples</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">bounds</span></em>, <em class="sig-param"><span class="n">n</span></em>, <em class="sig-param"><span class="n">q</span></em>, <em class="sig-param"><span class="n">batch_shape</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">seed</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#draw_sobol_samples"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.sampling.draw_sobol_samples" title="Permalink to this definition">¶</a></dt>
 <dd><p>Draw qMC samples from the box defined by bounds.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>bounds</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>2 x d</cite> dimensional tensor specifying box constraints on a
+<li><p><strong>bounds</strong> – A <cite>2 x d</cite> dimensional tensor specifying box constraints on a
 <cite>d</cite>-dimensional space, where bounds[0, :] and bounds[1, :] correspond
 to lower and upper bounds, respectively.</p></li>
-<li><p><strong>n</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of (q-batch) samples.</p></li>
-<li><p><strong>q</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The size of each q-batch.</p></li>
-<li><p><strong>seed</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The seed used for initializing Owen scrambling. If None (default),
+<li><p><strong>n</strong> – The number of (q-batch) samples.</p></li>
+<li><p><strong>q</strong> – The size of each q-batch.</p></li>
+<li><p><strong>batch_shape</strong> – The batch shape of the samples. If given, returns samples
+of shape <cite>n x batch_shape x q x d</cite>, where each batch is an
+<cite>n x q x d</cite>-dim tensor of qMC samples.</p></li>
+<li><p><strong>seed</strong> – The seed used for initializing Owen scrambling. If None (default),
 use a random seed.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>n x q x d</cite>-dim tensor of qMC samples from the box defined by bounds.</p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>n x batch_shape x q x d</cite>-dim tensor of qMC samples from the box
+defined by bounds.</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -283,9 +310,9 @@ use a random seed.</p></li>
 </pre></div>
 </div>
 </dd></dl>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.utils.sampling.draw_sobol_normal_samples">
-<code class="sig-prename descclassname">botorch.utils.sampling.</code><code class="sig-name descname">draw_sobol_normal_samples</code><span class="sig-paren">(</span><em class="sig-param">d</em>, <em class="sig-param">n</em>, <em class="sig-param">device=None</em>, <em class="sig-param">dtype=None</em>, <em class="sig-param">seed=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#draw_sobol_normal_samples"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.sampling.draw_sobol_normal_samples" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.utils.sampling.</code><code class="sig-name descname">draw_sobol_normal_samples</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">d</span></em>, <em class="sig-param"><span class="n">n</span></em>, <em class="sig-param"><span class="n">device</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dtype</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">seed</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#draw_sobol_normal_samples"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.sampling.draw_sobol_normal_samples" title="Permalink to this definition">¶</a></dt>
 <dd><p>Draw qMC samples from a multi-variate standard normal N(0, I_d)</p>
 <p>A primary use-case for this functionality is to compute an QMC average
 of f(X) over X where each element of X is drawn N(0, 1).</p>
@@ -313,9 +340,9 @@ and dtype specified by the input.</p>
 </pre></div>
 </div>
 </dd></dl>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.utils.sampling.sample_hypersphere">
-<code class="sig-prename descclassname">botorch.utils.sampling.</code><code class="sig-name descname">sample_hypersphere</code><span class="sig-paren">(</span><em class="sig-param">d</em>, <em class="sig-param">n=1</em>, <em class="sig-param">qmc=False</em>, <em class="sig-param">seed=None</em>, <em class="sig-param">device=None</em>, <em class="sig-param">dtype=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#sample_hypersphere"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.sampling.sample_hypersphere" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.utils.sampling.</code><code class="sig-name descname">sample_hypersphere</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">d</span></em>, <em class="sig-param"><span class="n">n</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">qmc</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">seed</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">device</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dtype</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#sample_hypersphere"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.sampling.sample_hypersphere" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sample uniformly from a unit d-sphere.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -340,9 +367,9 @@ and dtype specified by the input.</p>
 </pre></div>
 </div>
 </dd></dl>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.utils.sampling.sample_simplex">
-<code class="sig-prename descclassname">botorch.utils.sampling.</code><code class="sig-name descname">sample_simplex</code><span class="sig-paren">(</span><em class="sig-param">d</em>, <em class="sig-param">n=1</em>, <em class="sig-param">qmc=False</em>, <em class="sig-param">seed=None</em>, <em class="sig-param">device=None</em>, <em class="sig-param">dtype=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#sample_simplex"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.sampling.sample_simplex" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.utils.sampling.</code><code class="sig-name descname">sample_simplex</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">d</span></em>, <em class="sig-param"><span class="n">n</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">qmc</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">seed</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">device</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dtype</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#sample_simplex"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.sampling.sample_simplex" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sample uniformly from a d-simplex.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -367,9 +394,9 @@ and dtype specified by the input.</p>
 </pre></div>
 </div>
 </dd></dl>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.utils.sampling.batched_multinomial">
-<code class="sig-prename descclassname">botorch.utils.sampling.</code><code class="sig-name descname">batched_multinomial</code><span class="sig-paren">(</span><em class="sig-param">weights</em>, <em class="sig-param">num_samples</em>, <em class="sig-param">replacement=False</em>, <em class="sig-param">generator=None</em>, <em class="sig-param">out=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#batched_multinomial"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.sampling.batched_multinomial" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.utils.sampling.</code><code class="sig-name descname">batched_multinomial</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">weights</span></em>, <em class="sig-param"><span class="n">num_samples</span></em>, <em class="sig-param"><span class="n">replacement</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">generator</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">out</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#batched_multinomial"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.sampling.batched_multinomial" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sample from multinomial with an arbitrary number of batch dimensions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -406,9 +433,9 @@ allows a single batch dimension). The calling signature is the same as for
 </div>
 <div class="section" id="module-botorch.utils.testing">
 <span id="testing"></span><h2>Testing<a class="headerlink" href="#module-botorch.utils.testing" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
+<dl class="py class">
 <dt id="botorch.utils.testing.BotorchTestCase">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.utils.testing.</code><code class="sig-name descname">BotorchTestCase</code><span class="sig-paren">(</span><em class="sig-param">methodName='runTest'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#BotorchTestCase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.testing.BotorchTestCase" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">botorch.utils.testing.</code><code class="sig-name descname">BotorchTestCase</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">methodName</span><span class="o">=</span><span class="default_value">'runTest'</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#BotorchTestCase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.testing.BotorchTestCase" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">unittest.case.TestCase</span></code></p>
 <p>Basic test case for Botorch.</p>
 <dl class="simple">
@@ -421,52 +448,52 @@ allows a single batch dimension). The calling signature is the same as for
 <p>Create an instance of the class that will use the named test
 method when executed. Raises a ValueError if the instance does
 not have a method with the specified name.</p>
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="botorch.utils.testing.BotorchTestCase.device">
 <code class="sig-name descname">device</code><em class="property"> = device(type='cpu')</em><a class="headerlink" href="#botorch.utils.testing.BotorchTestCase.device" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.testing.BotorchTestCase.setUp">
 <code class="sig-name descname">setUp</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#BotorchTestCase.setUp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.testing.BotorchTestCase.setUp" title="Permalink to this definition">¶</a></dt>
 <dd><p>Hook method for setting up the test fixture before exercising it.</p>
 </dd></dl>
 </dd></dl>
-<dl class="class">
+<dl class="py class">
 <dt id="botorch.utils.testing.BaseTestProblemBaseTestCase">
 <em class="property">class </em><code class="sig-prename descclassname">botorch.utils.testing.</code><code class="sig-name descname">BaseTestProblemBaseTestCase</code><a class="reference internal" href="_modules/botorch/utils/testing.html#BaseTestProblemBaseTestCase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.testing.BaseTestProblemBaseTestCase" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="botorch.utils.testing.BaseTestProblemBaseTestCase.functions">
-<code class="sig-name descname">functions</code><em class="property">: List[BaseTestProblem]</em><em class="property"> = None</em><a class="headerlink" href="#botorch.utils.testing.BaseTestProblemBaseTestCase.functions" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">functions</code><em class="property">: List<span class="p">[</span><a class="reference internal" href="test_functions.html#botorch.test_functions.base.BaseTestProblem" title="botorch.test_functions.base.BaseTestProblem">botorch.test_functions.base.BaseTestProblem</a><span class="p">]</span></em><a class="headerlink" href="#botorch.utils.testing.BaseTestProblemBaseTestCase.functions" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.testing.BaseTestProblemBaseTestCase.test_forward">
 <code class="sig-name descname">test_forward</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#BaseTestProblemBaseTestCase.test_forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.testing.BaseTestProblemBaseTestCase.test_forward" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
-<dl class="class">
+<dl class="py class">
 <dt id="botorch.utils.testing.SyntheticTestFunctionBaseTestCase">
 <em class="property">class </em><code class="sig-prename descclassname">botorch.utils.testing.</code><code class="sig-name descname">SyntheticTestFunctionBaseTestCase</code><a class="reference internal" href="_modules/botorch/utils/testing.html#SyntheticTestFunctionBaseTestCase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.testing.SyntheticTestFunctionBaseTestCase" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.utils.testing.BaseTestProblemBaseTestCase" title="botorch.utils.testing.BaseTestProblemBaseTestCase"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.utils.testing.BaseTestProblemBaseTestCase</span></code></a></p>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.testing.SyntheticTestFunctionBaseTestCase.test_optimal_value">
 <code class="sig-name descname">test_optimal_value</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#SyntheticTestFunctionBaseTestCase.test_optimal_value"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.testing.SyntheticTestFunctionBaseTestCase.test_optimal_value" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.testing.SyntheticTestFunctionBaseTestCase.test_optimizer">
 <code class="sig-name descname">test_optimizer</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#SyntheticTestFunctionBaseTestCase.test_optimizer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.testing.SyntheticTestFunctionBaseTestCase.test_optimizer" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="botorch.utils.testing.SyntheticTestFunctionBaseTestCase.functions">
-<code class="sig-name descname">functions</code><em class="property"> = None</em><a class="headerlink" href="#botorch.utils.testing.SyntheticTestFunctionBaseTestCase.functions" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">functions</code><em class="property">: List<span class="p">[</span><a class="reference internal" href="test_functions.html#botorch.test_functions.base.BaseTestProblem" title="botorch.test_functions.base.BaseTestProblem">botorch.test_functions.base.BaseTestProblem</a><span class="p">]</span></em><a class="headerlink" href="#botorch.utils.testing.SyntheticTestFunctionBaseTestCase.functions" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
-<dl class="class">
+<dl class="py class">
 <dt id="botorch.utils.testing.MockPosterior">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.utils.testing.</code><code class="sig-name descname">MockPosterior</code><span class="sig-paren">(</span><em class="sig-param">mean=None</em>, <em class="sig-param">variance=None</em>, <em class="sig-param">samples=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MockPosterior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.testing.MockPosterior" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">botorch.utils.testing.</code><code class="sig-name descname">MockPosterior</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mean</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">variance</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">samples</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MockPosterior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.testing.MockPosterior" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="posteriors.html#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.posteriors.posterior.Posterior</span></code></a></p>
 <p>Mock object that implements dummy methods and feeds through specified outputs</p>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.testing.MockPosterior.device">
 <em class="property">property </em><code class="sig-name descname">device</code><a class="headerlink" href="#botorch.utils.testing.MockPosterior.device" title="Permalink to this definition">¶</a></dt>
 <dd><p>The torch device of the posterior.</p>
@@ -476,7 +503,7 @@ not have a method with the specified name.</p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.testing.MockPosterior.dtype">
 <em class="property">property </em><code class="sig-name descname">dtype</code><a class="headerlink" href="#botorch.utils.testing.MockPosterior.dtype" title="Permalink to this definition">¶</a></dt>
 <dd><p>The torch dtype of the posterior.</p>
@@ -486,7 +513,7 @@ not have a method with the specified name.</p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.testing.MockPosterior.event_shape">
 <em class="property">property </em><code class="sig-name descname">event_shape</code><a class="headerlink" href="#botorch.utils.testing.MockPosterior.event_shape" title="Permalink to this definition">¶</a></dt>
 <dd><p>The event shape (i.e. the shape of a single sample).</p>
@@ -496,19 +523,19 @@ not have a method with the specified name.</p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.testing.MockPosterior.mean">
 <em class="property">property </em><code class="sig-name descname">mean</code><a class="headerlink" href="#botorch.utils.testing.MockPosterior.mean" title="Permalink to this definition">¶</a></dt>
 <dd><p>The mean of the posterior as a <cite>(b) x n x m</cite>-dim Tensor.</p>
 </dd></dl>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.testing.MockPosterior.variance">
 <em class="property">property </em><code class="sig-name descname">variance</code><a class="headerlink" href="#botorch.utils.testing.MockPosterior.variance" title="Permalink to this definition">¶</a></dt>
 <dd><p>The variance of the posterior as a <cite>(b) x n x m</cite>-dim Tensor.</p>
 </dd></dl>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.testing.MockPosterior.rsample">
-<code class="sig-name descname">rsample</code><span class="sig-paren">(</span><em class="sig-param">sample_shape=None</em>, <em class="sig-param">base_samples=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MockPosterior.rsample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.testing.MockPosterior.rsample" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">rsample</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sample_shape</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">base_samples</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MockPosterior.rsample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.testing.MockPosterior.rsample" title="Permalink to this definition">¶</a></dt>
 <dd><p>Mock sample by repeating self._samples. If base_samples is provided,
 do a shape check but return the same mock samples.</p>
 <dl class="field-list simple">
@@ -518,15 +545,15 @@ do a shape check but return the same mock samples.</p>
 </dl>
 </dd></dl>
 </dd></dl>
-<dl class="class">
+<dl class="py class">
 <dt id="botorch.utils.testing.MockModel">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.utils.testing.</code><code class="sig-name descname">MockModel</code><span class="sig-paren">(</span><em class="sig-param">posterior</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MockModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.testing.MockModel" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">botorch.utils.testing.</code><code class="sig-name descname">MockModel</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">posterior</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MockModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.testing.MockModel" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.model.Model</span></code></a></p>
 <p>Mock object that implements dummy methods and feeds through specified outputs</p>
 <p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.testing.MockModel.posterior">
-<code class="sig-name descname">posterior</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">output_indices=None</em>, <em class="sig-param">observation_noise=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MockModel.posterior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.testing.MockModel.posterior" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">posterior</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="n">output_indices</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">observation_noise</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MockModel.posterior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.testing.MockModel.posterior" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes the posterior over model outputs at the provided points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -551,7 +578,7 @@ over <cite>q</cite> points and <cite>m</cite> outputs each.</p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.testing.MockModel.num_outputs">
 <em class="property">property </em><code class="sig-name descname">num_outputs</code><a class="headerlink" href="#botorch.utils.testing.MockModel.num_outputs" title="Permalink to this definition">¶</a></dt>
 <dd><p>The number of outputs of the model.</p>
@@ -561,7 +588,7 @@ over <cite>q</cite> points and <cite>m</cite> outputs each.</p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.testing.MockModel.state_dict">
 <code class="sig-name descname">state_dict</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MockModel.state_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.testing.MockModel.state_dict" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a dictionary containing a whole state of the module.</p>
@@ -581,9 +608,9 @@ included. Keys are corresponding parameter and buffer names.</p>
 </pre></div>
 </div>
 </dd></dl>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.testing.MockModel.load_state_dict">
-<code class="sig-name descname">load_state_dict</code><span class="sig-paren">(</span><em class="sig-param">state_dict=None</em>, <em class="sig-param">strict=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MockModel.load_state_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.testing.MockModel.load_state_dict" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">load_state_dict</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">state_dict</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">strict</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MockModel.load_state_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.testing.MockModel.load_state_dict" title="Permalink to this definition">¶</a></dt>
 <dd><p>Copies parameters and buffers from <a class="reference internal" href="#botorch.utils.testing.MockModel.state_dict" title="botorch.utils.testing.MockModel.state_dict"><code class="xref py py-attr docutils literal notranslate"><span class="pre">state_dict</span></code></a> into
 this module and its descendants. If <code class="xref py py-attr docutils literal notranslate"><span class="pre">strict</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>, then
 the keys of <a class="reference internal" href="#botorch.utils.testing.MockModel.state_dict" title="botorch.utils.testing.MockModel.state_dict"><code class="xref py py-attr docutils literal notranslate"><span class="pre">state_dict</span></code></a> must exactly match the keys returned
@@ -610,61 +637,65 @@ in <a class="reference internal" href="#botorch.utils.testing.MockModel.state_di
 </dd>
 </dl>
 </dd></dl>
+<dl class="py attribute">
+<dt id="botorch.utils.testing.MockModel.training">
+<code class="sig-name descname">training</code><em class="property">: bool</em><a class="headerlink" href="#botorch.utils.testing.MockModel.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 </dd></dl>
-<dl class="class">
+<dl class="py class">
 <dt id="botorch.utils.testing.MockAcquisitionFunction">
 <em class="property">class </em><code class="sig-prename descclassname">botorch.utils.testing.</code><code class="sig-name descname">MockAcquisitionFunction</code><a class="reference internal" href="_modules/botorch/utils/testing.html#MockAcquisitionFunction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.testing.MockAcquisitionFunction" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Mock acquisition function object that implements dummy methods.</p>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.testing.MockAcquisitionFunction.set_X_pending">
-<code class="sig-name descname">set_X_pending</code><span class="sig-paren">(</span><em class="sig-param">X_pending=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MockAcquisitionFunction.set_X_pending"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.testing.MockAcquisitionFunction.set_X_pending" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">set_X_pending</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X_pending</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MockAcquisitionFunction.set_X_pending"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.testing.MockAcquisitionFunction.set_X_pending" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
-<dl class="class">
+<dl class="py class">
 <dt id="botorch.utils.testing.MultiObjectiveTestProblemBaseTestCase">
 <em class="property">class </em><code class="sig-prename descclassname">botorch.utils.testing.</code><code class="sig-name descname">MultiObjectiveTestProblemBaseTestCase</code><a class="reference internal" href="_modules/botorch/utils/testing.html#MultiObjectiveTestProblemBaseTestCase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.testing.MultiObjectiveTestProblemBaseTestCase" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.utils.testing.BaseTestProblemBaseTestCase" title="botorch.utils.testing.BaseTestProblemBaseTestCase"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.utils.testing.BaseTestProblemBaseTestCase</span></code></a></p>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.testing.MultiObjectiveTestProblemBaseTestCase.test_attributes">
 <code class="sig-name descname">test_attributes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MultiObjectiveTestProblemBaseTestCase.test_attributes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.testing.MultiObjectiveTestProblemBaseTestCase.test_attributes" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.testing.MultiObjectiveTestProblemBaseTestCase.test_max_hv">
 <code class="sig-name descname">test_max_hv</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MultiObjectiveTestProblemBaseTestCase.test_max_hv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.testing.MultiObjectiveTestProblemBaseTestCase.test_max_hv" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.testing.MultiObjectiveTestProblemBaseTestCase.test_ref_point">
 <code class="sig-name descname">test_ref_point</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MultiObjectiveTestProblemBaseTestCase.test_ref_point"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.testing.MultiObjectiveTestProblemBaseTestCase.test_ref_point" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="botorch.utils.testing.MultiObjectiveTestProblemBaseTestCase.functions">
-<code class="sig-name descname">functions</code><em class="property"> = None</em><a class="headerlink" href="#botorch.utils.testing.MultiObjectiveTestProblemBaseTestCase.functions" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">functions</code><em class="property">: List<span class="p">[</span><a class="reference internal" href="test_functions.html#botorch.test_functions.base.BaseTestProblem" title="botorch.test_functions.base.BaseTestProblem">botorch.test_functions.base.BaseTestProblem</a><span class="p">]</span></em><a class="headerlink" href="#botorch.utils.testing.MultiObjectiveTestProblemBaseTestCase.functions" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
-<dl class="class">
+<dl class="py class">
 <dt id="botorch.utils.testing.ConstrainedMultiObjectiveTestProblemBaseTestCase">
 <em class="property">class </em><code class="sig-prename descclassname">botorch.utils.testing.</code><code class="sig-name descname">ConstrainedMultiObjectiveTestProblemBaseTestCase</code><a class="reference internal" href="_modules/botorch/utils/testing.html#ConstrainedMultiObjectiveTestProblemBaseTestCase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.testing.ConstrainedMultiObjectiveTestProblemBaseTestCase" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.utils.testing.MultiObjectiveTestProblemBaseTestCase" title="botorch.utils.testing.MultiObjectiveTestProblemBaseTestCase"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.utils.testing.MultiObjectiveTestProblemBaseTestCase</span></code></a></p>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.testing.ConstrainedMultiObjectiveTestProblemBaseTestCase.test_num_constraints">
 <code class="sig-name descname">test_num_constraints</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#ConstrainedMultiObjectiveTestProblemBaseTestCase.test_num_constraints"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.testing.ConstrainedMultiObjectiveTestProblemBaseTestCase.test_num_constraints" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.testing.ConstrainedMultiObjectiveTestProblemBaseTestCase.test_evaluate_slack_true">
 <code class="sig-name descname">test_evaluate_slack_true</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#ConstrainedMultiObjectiveTestProblemBaseTestCase.test_evaluate_slack_true"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.testing.ConstrainedMultiObjectiveTestProblemBaseTestCase.test_evaluate_slack_true" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="botorch.utils.testing.ConstrainedMultiObjectiveTestProblemBaseTestCase.functions">
-<code class="sig-name descname">functions</code><em class="property"> = None</em><a class="headerlink" href="#botorch.utils.testing.ConstrainedMultiObjectiveTestProblemBaseTestCase.functions" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">functions</code><em class="property">: List<span class="p">[</span><a class="reference internal" href="test_functions.html#botorch.test_functions.base.BaseTestProblem" title="botorch.test_functions.base.BaseTestProblem">botorch.test_functions.base.BaseTestProblem</a><span class="p">]</span></em><a class="headerlink" href="#botorch.utils.testing.ConstrainedMultiObjectiveTestProblemBaseTestCase.functions" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
 </div>
 <div class="section" id="module-botorch.utils.torch">
 <span id="torch"></span><h2>Torch<a class="headerlink" href="#module-botorch.utils.torch" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
+<dl class="py class">
 <dt id="botorch.utils.torch.BufferDict">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.utils.torch.</code><code class="sig-name descname">BufferDict</code><span class="sig-paren">(</span><em class="sig-param">buffers=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/torch.html#BufferDict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.torch.BufferDict" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">botorch.utils.torch.</code><code class="sig-name descname">BufferDict</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">buffers</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/torch.html#BufferDict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.torch.BufferDict" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code></p>
 <p>Holds buffers in a dictionary.</p>
 <p>BufferDict can be indexed like a regular Python dictionary, but buffers it
@@ -701,14 +732,14 @@ of type (string, <code class="xref py py-class docutils literal notranslate"><sp
 </pre></div>
 </div>
 <p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.torch.BufferDict.clear">
 <code class="sig-name descname">clear</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/torch.html#BufferDict.clear"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.torch.BufferDict.clear" title="Permalink to this definition">¶</a></dt>
 <dd><p>Remove all items from the BufferDict.</p>
 </dd></dl>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.torch.BufferDict.pop">
-<code class="sig-name descname">pop</code><span class="sig-paren">(</span><em class="sig-param">key</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/torch.html#BufferDict.pop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.torch.BufferDict.pop" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">pop</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/torch.html#BufferDict.pop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.torch.BufferDict.pop" title="Permalink to this definition">¶</a></dt>
 <dd><p>Remove key from the BufferDict and return its buffer.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -716,24 +747,24 @@ of type (string, <code class="xref py py-class docutils literal notranslate"><sp
 </dd>
 </dl>
 </dd></dl>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.torch.BufferDict.keys">
 <code class="sig-name descname">keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/torch.html#BufferDict.keys"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.torch.BufferDict.keys" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return an iterable of the BufferDict keys.</p>
 </dd></dl>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.torch.BufferDict.items">
 <code class="sig-name descname">items</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/torch.html#BufferDict.items"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.torch.BufferDict.items" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return an iterable of the BufferDict key/value pairs.</p>
 </dd></dl>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.torch.BufferDict.values">
 <code class="sig-name descname">values</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/torch.html#BufferDict.values"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.torch.BufferDict.values" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return an iterable of the BufferDict values.</p>
 </dd></dl>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.torch.BufferDict.update">
-<code class="sig-name descname">update</code><span class="sig-paren">(</span><em class="sig-param">buffers</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/torch.html#BufferDict.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.torch.BufferDict.update" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">update</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">buffers</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/torch.html#BufferDict.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.torch.BufferDict.update" title="Permalink to this definition">¶</a></dt>
 <dd><p>Update the <code class="xref py py-class docutils literal notranslate"><span class="pre">BufferDict</span></code> with the key-value pairs from a
 mapping or an iterable, overwriting existing keys.</p>
 <div class="admonition note">
@@ -750,7 +781,7 @@ key-value pairs of type (string, <code class="xref py py-class docutils literal 
 </dd>
 </dl>
 </dd></dl>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.torch.BufferDict.extra_repr">
 <code class="sig-name descname">extra_repr</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/torch.html#BufferDict.extra_repr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.torch.BufferDict.extra_repr" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set the extra representation of the module</p>
@@ -758,14 +789,18 @@ key-value pairs of type (string, <code class="xref py py-class docutils literal 
 this method in your own modules. Both single-line and multi-line
 strings are acceptable.</p>
 </dd></dl>
+<dl class="py attribute">
+<dt id="botorch.utils.torch.BufferDict.training">
+<code class="sig-name descname">training</code><em class="property">: bool</em><a class="headerlink" href="#botorch.utils.torch.BufferDict.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 </dd></dl>
 </div>
 <div class="section" id="module-botorch.utils.transforms">
 <span id="transformations"></span><h2>Transformations<a class="headerlink" href="#module-botorch.utils.transforms" title="Permalink to this headline">¶</a></h2>
 <p>Some basic data transformation helpers.</p>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.utils.transforms.squeeze_last_dim">
-<code class="sig-prename descclassname">botorch.utils.transforms.</code><code class="sig-name descname">squeeze_last_dim</code><span class="sig-paren">(</span><em class="sig-param">Y</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/transforms.html#squeeze_last_dim"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.transforms.squeeze_last_dim" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.utils.transforms.</code><code class="sig-name descname">squeeze_last_dim</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">Y</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/transforms.html#squeeze_last_dim"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.transforms.squeeze_last_dim" title="Permalink to this definition">¶</a></dt>
 <dd><p>Squeeze the last dimension of a Tensor.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -784,9 +819,9 @@ strings are acceptable.</p>
 </pre></div>
 </div>
 </dd></dl>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.utils.transforms.standardize">
-<code class="sig-prename descclassname">botorch.utils.transforms.</code><code class="sig-name descname">standardize</code><span class="sig-paren">(</span><em class="sig-param">Y</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/transforms.html#standardize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.transforms.standardize" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.utils.transforms.</code><code class="sig-name descname">standardize</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">Y</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/transforms.html#standardize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.transforms.standardize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Standardizes (zero mean, unit variance) a tensor by dim=-2.</p>
 <p>If the tensor is single-dimensional, simply standardizes the tensor.
 If for some batch index all elements are equal (of if there is only a single
@@ -808,9 +843,9 @@ data point), this function will return 0 for that batch index.</p>
 </pre></div>
 </div>
 </dd></dl>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.utils.transforms.normalize">
-<code class="sig-prename descclassname">botorch.utils.transforms.</code><code class="sig-name descname">normalize</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">bounds</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/transforms.html#normalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.transforms.normalize" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.utils.transforms.</code><code class="sig-name descname">normalize</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="n">bounds</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/transforms.html#normalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.transforms.normalize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Min-max normalize X w.r.t. the provided bounds.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -840,9 +875,9 @@ contained within <cite>[0, 1]^d</cite>.</p>
 </pre></div>
 </div>
 </dd></dl>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.utils.transforms.unnormalize">
-<code class="sig-prename descclassname">botorch.utils.transforms.</code><code class="sig-name descname">unnormalize</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">bounds</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/transforms.html#unnormalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.transforms.unnormalize" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.utils.transforms.</code><code class="sig-name descname">unnormalize</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="n">bounds</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/transforms.html#unnormalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.transforms.unnormalize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Un-normalizes X w.r.t. the provided bounds.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -872,9 +907,9 @@ contained within <cite>bounds</cite>.</p>
 </pre></div>
 </div>
 </dd></dl>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.utils.transforms.normalize_indices">
-<code class="sig-prename descclassname">botorch.utils.transforms.</code><code class="sig-name descname">normalize_indices</code><span class="sig-paren">(</span><em class="sig-param">indices</em>, <em class="sig-param">d</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/transforms.html#normalize_indices"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.transforms.normalize_indices" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.utils.transforms.</code><code class="sig-name descname">normalize_indices</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">indices</span></em>, <em class="sig-param"><span class="n">d</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/transforms.html#normalize_indices"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.transforms.normalize_indices" title="Permalink to this definition">¶</a></dt>
 <dd><p>Normalize a list of indices to ensure that they are positive.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -893,9 +928,9 @@ contained within <cite>bounds</cite>.</p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.utils.transforms.t_batch_mode_transform">
-<code class="sig-prename descclassname">botorch.utils.transforms.</code><code class="sig-name descname">t_batch_mode_transform</code><span class="sig-paren">(</span><em class="sig-param">expected_q=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/transforms.html#t_batch_mode_transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.transforms.t_batch_mode_transform" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.utils.transforms.</code><code class="sig-name descname">t_batch_mode_transform</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">expected_q</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/transforms.html#t_batch_mode_transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.transforms.t_batch_mode_transform" title="Permalink to this definition">¶</a></dt>
 <dd><p>Factory for decorators taking a t-batched <cite>X</cite> tensor.</p>
 <p>This method creates decorators for instance methods to transform an input tensor
 <cite>X</cite> to t-batch mode (i.e. with at least 3 dimensions). This assumes the tensor
@@ -925,9 +960,9 @@ AssertitionError if X’s q-batch size does not equal expected_q.</p>
 </pre></div>
 </div>
 </dd></dl>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.utils.transforms.concatenate_pending_points">
-<code class="sig-prename descclassname">botorch.utils.transforms.</code><code class="sig-name descname">concatenate_pending_points</code><span class="sig-paren">(</span><em class="sig-param">method</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/transforms.html#concatenate_pending_points"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.transforms.concatenate_pending_points" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.utils.transforms.</code><code class="sig-name descname">concatenate_pending_points</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">method</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/transforms.html#concatenate_pending_points"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.transforms.concatenate_pending_points" title="Permalink to this definition">¶</a></dt>
 <dd><p>Decorator concatenating X_pending into an acquisition function’s argument.</p>
 <p>This decorator works on the <cite>forward</cite> method of acquisition functions taking
 a tensor <cite>X</cite> as the argument. If the acquisition function has an <cite>X_pending</cite>
@@ -947,9 +982,9 @@ appropriately expanding the pending points to match the batch shape of <cite>X</
 </dd>
 </dl>
 </dd></dl>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.utils.transforms.match_batch_shape">
-<code class="sig-prename descclassname">botorch.utils.transforms.</code><code class="sig-name descname">match_batch_shape</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">Y</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/transforms.html#match_batch_shape"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.transforms.match_batch_shape" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.utils.transforms.</code><code class="sig-name descname">match_batch_shape</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="n">Y</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/transforms.html#match_batch_shape"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.transforms.match_batch_shape" title="Permalink to this definition">¶</a></dt>
 <dd><p>Matches the batch dimension of a tensor to that of another tensor.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -979,17 +1014,17 @@ the batch dimensions of <cite>Y</cite> (if compatible). For instance, if <cite>X
 </pre></div>
 </div>
 </dd></dl>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.utils.transforms.convert_to_target_pre_hook">
-<code class="sig-prename descclassname">botorch.utils.transforms.</code><code class="sig-name descname">convert_to_target_pre_hook</code><span class="sig-paren">(</span><em class="sig-param">module</em>, <em class="sig-param">*args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/transforms.html#convert_to_target_pre_hook"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.transforms.convert_to_target_pre_hook" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.utils.transforms.</code><code class="sig-name descname">convert_to_target_pre_hook</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">module</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/transforms.html#convert_to_target_pre_hook"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.transforms.convert_to_target_pre_hook" title="Permalink to this definition">¶</a></dt>
 <dd><p>Pre-hook for automatically calling <cite>.to(X)</cite> on module prior to <cite>forward</cite></p>
 </dd></dl>
 </div>
 <div class="section" id="module-botorch.utils.feasible_volume">
 <span id="feasible-volume"></span><h2>Feasible Volume<a class="headerlink" href="#module-botorch.utils.feasible_volume" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.utils.feasible_volume.get_feasible_samples">
-<code class="sig-prename descclassname">botorch.utils.feasible_volume.</code><code class="sig-name descname">get_feasible_samples</code><span class="sig-paren">(</span><em class="sig-param">samples</em>, <em class="sig-param">inequality_constraints=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/feasible_volume.html#get_feasible_samples"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.feasible_volume.get_feasible_samples" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.utils.feasible_volume.</code><code class="sig-name descname">get_feasible_samples</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">samples</span></em>, <em class="sig-param"><span class="n">inequality_constraints</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/feasible_volume.html#get_feasible_samples"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.feasible_volume.get_feasible_samples" title="Permalink to this definition">¶</a></dt>
 <dd><p>Checks which of the samples satisfy all of the inequality constraints.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1014,9 +1049,9 @@ with each tuple encoding an inequality constraint of the form
 </dd>
 </dl>
 </dd></dl>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.utils.feasible_volume.get_outcome_feasibility_probability">
-<code class="sig-prename descclassname">botorch.utils.feasible_volume.</code><code class="sig-name descname">get_outcome_feasibility_probability</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">X</em>, <em class="sig-param">outcome_constraints</em>, <em class="sig-param">threshold=0.1</em>, <em class="sig-param">nsample_outcome=1000</em>, <em class="sig-param">seed=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/feasible_volume.html#get_outcome_feasibility_probability"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.feasible_volume.get_outcome_feasibility_probability" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.utils.feasible_volume.</code><code class="sig-name descname">get_outcome_feasibility_probability</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="n">outcome_constraints</span></em>, <em class="sig-param"><span class="n">threshold</span><span class="o">=</span><span class="default_value">0.1</span></em>, <em class="sig-param"><span class="n">nsample_outcome</span><span class="o">=</span><span class="default_value">1000</span></em>, <em class="sig-param"><span class="n">seed</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/feasible_volume.html#get_outcome_feasibility_probability"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.feasible_volume.get_outcome_feasibility_probability" title="Permalink to this definition">¶</a></dt>
 <dd><p>Monte Carlo estimate of the feasible volume with respect to the outcome constraints.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1041,9 +1076,9 @@ the given threshold.</p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.utils.feasible_volume.estimate_feasible_volume">
-<code class="sig-prename descclassname">botorch.utils.feasible_volume.</code><code class="sig-name descname">estimate_feasible_volume</code><span class="sig-paren">(</span><em class="sig-param">bounds</em>, <em class="sig-param">model</em>, <em class="sig-param">outcome_constraints</em>, <em class="sig-param">inequality_constraints=None</em>, <em class="sig-param">nsample_feature=1000</em>, <em class="sig-param">nsample_outcome=1000</em>, <em class="sig-param">threshold=0.1</em>, <em class="sig-param">verbose=False</em>, <em class="sig-param">seed=None</em>, <em class="sig-param">device=None</em>, <em class="sig-param">dtype=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/feasible_volume.html#estimate_feasible_volume"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.feasible_volume.estimate_feasible_volume" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.utils.feasible_volume.</code><code class="sig-name descname">estimate_feasible_volume</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">bounds</span></em>, <em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">outcome_constraints</span></em>, <em class="sig-param"><span class="n">inequality_constraints</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">nsample_feature</span><span class="o">=</span><span class="default_value">1000</span></em>, <em class="sig-param"><span class="n">nsample_outcome</span><span class="o">=</span><span class="default_value">1000</span></em>, <em class="sig-param"><span class="n">threshold</span><span class="o">=</span><span class="default_value">0.1</span></em>, <em class="sig-param"><span class="n">verbose</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">seed</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">device</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dtype</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/feasible_volume.html#estimate_feasible_volume"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.feasible_volume.estimate_feasible_volume" title="Permalink to this definition">¶</a></dt>
 <dd><p>Monte Carlo estimate of the feasible volume with respect
 to feature constraints and outcome constraints.</p>
 <dl class="field-list simple">
@@ -1104,9 +1139,9 @@ Multiobjective Optimization: Multiobjective statistical criterions,”
 pp. 1-8.</p>
 </dd>
 </dl>
-<dl class="class">
+<dl class="py class">
 <dt id="botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.utils.multi_objective.box_decomposition.</code><code class="sig-name descname">NondominatedPartitioning</code><span class="sig-paren">(</span><em class="sig-param">num_outcomes</em>, <em class="sig-param">Y=None</em>, <em class="sig-param">alpha=0.0</em>, <em class="sig-param">eps=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decomposition.html#NondominatedPartitioning"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">botorch.utils.multi_objective.box_decomposition.</code><code class="sig-name descname">NondominatedPartitioning</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">num_outcomes</span></em>, <em class="sig-param"><span class="n">Y</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">alpha</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">eps</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decomposition.html#NondominatedPartitioning"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code></p>
 <p>A class for partitioning the non-dominated space into hyper-cells.</p>
 <p>Note: this assumes maximization. Internally, it multiplies by -1 and performs
@@ -1135,7 +1170,7 @@ decomposition.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.eps">
 <em class="property">property </em><code class="sig-name descname">eps</code><a class="headerlink" href="#botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.eps" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
@@ -1144,7 +1179,7 @@ decomposition.</p></li>
 </dd>
 </dl>
 </dd></dl>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.pareto_Y">
 <em class="property">property </em><code class="sig-name descname">pareto_Y</code><a class="headerlink" href="#botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.pareto_Y" title="Permalink to this definition">¶</a></dt>
 <dd><p>This returns the non-dominated set.</p>
@@ -1158,9 +1193,9 @@ decomposition.</p></li>
 </dd>
 </dl>
 </dd></dl>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.update">
-<code class="sig-name descname">update</code><span class="sig-paren">(</span><em class="sig-param">Y</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decomposition.html#NondominatedPartitioning.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.update" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">update</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">Y</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decomposition.html#NondominatedPartitioning.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.update" title="Permalink to this definition">¶</a></dt>
 <dd><p>Update non-dominated front and decomposition.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1171,7 +1206,7 @@ decomposition.</p></li>
 </dd>
 </dl>
 </dd></dl>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.binary_partition_non_dominated_space">
 <code class="sig-name descname">binary_partition_non_dominated_space</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decomposition.html#NondominatedPartitioning.binary_partition_non_dominated_space"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.binary_partition_non_dominated_space" title="Permalink to this definition">¶</a></dt>
 <dd><p>Partition the non-dominated space into disjoint hypercells.</p>
@@ -1179,7 +1214,7 @@ decomposition.</p></li>
 less efficient than <cite>partition_non_dominated_space_2d</cite> for the
 2-outcome case.</p>
 </dd></dl>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.partition_non_dominated_space_2d">
 <code class="sig-name descname">partition_non_dominated_space_2d</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decomposition.html#NondominatedPartitioning.partition_non_dominated_space_2d"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.partition_non_dominated_space_2d" title="Permalink to this definition">¶</a></dt>
 <dd><p>Partition the non-dominated space into disjoint hypercells.</p>
@@ -1190,9 +1225,9 @@ less efficient than <cite>partition_non_dominated_space_2d</cite> for the
 </dd>
 </dl>
 </dd></dl>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.get_hypercell_bounds">
-<code class="sig-name descname">get_hypercell_bounds</code><span class="sig-paren">(</span><em class="sig-param">ref_point</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decomposition.html#NondominatedPartitioning.get_hypercell_bounds"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.get_hypercell_bounds" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get_hypercell_bounds</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ref_point</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decomposition.html#NondominatedPartitioning.get_hypercell_bounds"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.get_hypercell_bounds" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the bounds of each hypercell in the decomposition.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1210,9 +1245,9 @@ less efficient than <cite>partition_non_dominated_space_2d</cite> for the
 </dd>
 </dl>
 </dd></dl>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.compute_hypervolume">
-<code class="sig-name descname">compute_hypervolume</code><span class="sig-paren">(</span><em class="sig-param">ref_point</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decomposition.html#NondominatedPartitioning.compute_hypervolume"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.compute_hypervolume" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">compute_hypervolume</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ref_point</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decomposition.html#NondominatedPartitioning.compute_hypervolume"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.compute_hypervolume" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute the hypervolume for the given reference point.</p>
 <p>Note: This assumes minimization.</p>
 <p>This method computes the hypervolume of the non-dominated space
@@ -1234,6 +1269,10 @@ is quite fast.</p>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py attribute">
+<dt id="botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.training">
+<code class="sig-name descname">training</code><em class="property">: bool</em><a class="headerlink" href="#botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 </dd></dl>
 </div>
 <div class="section" id="module-botorch.utils.multi_objective.hypervolume">
@@ -1247,9 +1286,9 @@ algorithm for the hypervolume indicator. In IEEE Congress on Evolutionary
 Computation, pages 1157-1163, Vancouver, Canada, July 2006.</p>
 </dd>
 </dl>
-<dl class="class">
+<dl class="py class">
 <dt id="botorch.utils.multi_objective.hypervolume.Hypervolume">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.utils.multi_objective.hypervolume.</code><code class="sig-name descname">Hypervolume</code><span class="sig-paren">(</span><em class="sig-param">ref_point</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/hypervolume.html#Hypervolume"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.hypervolume.Hypervolume" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">botorch.utils.multi_objective.hypervolume.</code><code class="sig-name descname">Hypervolume</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ref_point</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/hypervolume.html#Hypervolume"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.hypervolume.Hypervolume" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Hypervolume computation dimension sweep algorithm from <a class="reference internal" href="#fonseca2006" id="id3"><span>[Fonseca2006]</span></a>.</p>
 <p>Adapted from Simon Wessing’s implementation of the algorithm
@@ -1263,7 +1302,7 @@ Computation, pages 1157-1163, Vancouver, Canada, July 2006.</p>
 <dd class="field-odd"><p><strong>ref_point</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – <cite>m</cite>-dim Tensor containing the reference point.</p>
 </dd>
 </dl>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.multi_objective.hypervolume.Hypervolume.ref_point">
 <em class="property">property </em><code class="sig-name descname">ref_point</code><a class="headerlink" href="#botorch.utils.multi_objective.hypervolume.Hypervolume.ref_point" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get reference point (for maximization).</p>
@@ -1276,9 +1315,9 @@ Computation, pages 1157-1163, Vancouver, Canada, July 2006.</p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.multi_objective.hypervolume.Hypervolume.compute">
-<code class="sig-name descname">compute</code><span class="sig-paren">(</span><em class="sig-param">pareto_Y</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/hypervolume.html#Hypervolume.compute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.hypervolume.Hypervolume.compute" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">compute</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pareto_Y</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/hypervolume.html#Hypervolume.compute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.hypervolume.Hypervolume.compute" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute hypervolume.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1293,9 +1332,9 @@ Computation, pages 1157-1163, Vancouver, Canada, July 2006.</p>
 </dl>
 </dd></dl>
 </dd></dl>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.utils.multi_objective.hypervolume.sort_by_dimension">
-<code class="sig-prename descclassname">botorch.utils.multi_objective.hypervolume.</code><code class="sig-name descname">sort_by_dimension</code><span class="sig-paren">(</span><em class="sig-param">nodes</em>, <em class="sig-param">i</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/hypervolume.html#sort_by_dimension"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.hypervolume.sort_by_dimension" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.utils.multi_objective.hypervolume.</code><code class="sig-name descname">sort_by_dimension</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">nodes</span></em>, <em class="sig-param"><span class="n">i</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/hypervolume.html#sort_by_dimension"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.hypervolume.sort_by_dimension" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sorts the list of nodes in-place by the specified objective.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1309,9 +1348,9 @@ Computation, pages 1157-1163, Vancouver, Canada, July 2006.</p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="class">
+<dl class="py class">
 <dt id="botorch.utils.multi_objective.hypervolume.Node">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.utils.multi_objective.hypervolume.</code><code class="sig-name descname">Node</code><span class="sig-paren">(</span><em class="sig-param">m</em>, <em class="sig-param">dtype</em>, <em class="sig-param">device</em>, <em class="sig-param">data=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/hypervolume.html#Node"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.hypervolume.Node" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">botorch.utils.multi_objective.hypervolume.</code><code class="sig-name descname">Node</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">m</span></em>, <em class="sig-param"><span class="n">dtype</span></em>, <em class="sig-param"><span class="n">device</span></em>, <em class="sig-param"><span class="n">data</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/hypervolume.html#Node"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.hypervolume.Node" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Node in the MultiList data structure.</p>
 <p>Initialize MultiList.</p>
@@ -1326,9 +1365,9 @@ Computation, pages 1157-1163, Vancouver, Canada, July 2006.</p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="class">
+<dl class="py class">
 <dt id="botorch.utils.multi_objective.hypervolume.MultiList">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.utils.multi_objective.hypervolume.</code><code class="sig-name descname">MultiList</code><span class="sig-paren">(</span><em class="sig-param">m</em>, <em class="sig-param">dtype</em>, <em class="sig-param">device</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/hypervolume.html#MultiList"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.hypervolume.MultiList" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">botorch.utils.multi_objective.hypervolume.</code><code class="sig-name descname">MultiList</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">m</span></em>, <em class="sig-param"><span class="n">dtype</span></em>, <em class="sig-param"><span class="n">device</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/hypervolume.html#MultiList"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.hypervolume.MultiList" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A special data structure used in hypervolume computation.</p>
 <p>It consists of several doubly linked lists that share common nodes.
@@ -1343,9 +1382,9 @@ Every node has multiple predecessors and successors, one in every list.</p>
 </ul>
 </dd>
 </dl>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.multi_objective.hypervolume.MultiList.append">
-<code class="sig-name descname">append</code><span class="sig-paren">(</span><em class="sig-param">node</em>, <em class="sig-param">index</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/hypervolume.html#MultiList.append"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.hypervolume.MultiList.append" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">append</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">node</span></em>, <em class="sig-param"><span class="n">index</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/hypervolume.html#MultiList.append"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.hypervolume.MultiList.append" title="Permalink to this definition">¶</a></dt>
 <dd><p>Appends a node to the end of the list at the given index.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1359,9 +1398,9 @@ Every node has multiple predecessors and successors, one in every list.</p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.multi_objective.hypervolume.MultiList.extend">
-<code class="sig-name descname">extend</code><span class="sig-paren">(</span><em class="sig-param">nodes</em>, <em class="sig-param">index</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/hypervolume.html#MultiList.extend"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.hypervolume.MultiList.extend" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">extend</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">nodes</span></em>, <em class="sig-param"><span class="n">index</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/hypervolume.html#MultiList.extend"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.hypervolume.MultiList.extend" title="Permalink to this definition">¶</a></dt>
 <dd><p>Extends the list at the given index with the nodes.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1375,9 +1414,9 @@ Every node has multiple predecessors and successors, one in every list.</p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.multi_objective.hypervolume.MultiList.remove">
-<code class="sig-name descname">remove</code><span class="sig-paren">(</span><em class="sig-param">node</em>, <em class="sig-param">index</em>, <em class="sig-param">bounds</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/hypervolume.html#MultiList.remove"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.hypervolume.MultiList.remove" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">remove</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">node</span></em>, <em class="sig-param"><span class="n">index</span></em>, <em class="sig-param"><span class="n">bounds</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/hypervolume.html#MultiList.remove"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.hypervolume.MultiList.remove" title="Permalink to this definition">¶</a></dt>
 <dd><p>Removes and returns ‘node’ from all lists in [0, ‘index’].</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1392,9 +1431,9 @@ Every node has multiple predecessors and successors, one in every list.</p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="method">
+<dl class="py method">
 <dt id="botorch.utils.multi_objective.hypervolume.MultiList.reinsert">
-<code class="sig-name descname">reinsert</code><span class="sig-paren">(</span><em class="sig-param">node</em>, <em class="sig-param">index</em>, <em class="sig-param">bounds</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/hypervolume.html#MultiList.reinsert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.hypervolume.MultiList.reinsert" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">reinsert</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">node</span></em>, <em class="sig-param"><span class="n">index</span></em>, <em class="sig-param"><span class="n">bounds</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/hypervolume.html#MultiList.reinsert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.hypervolume.MultiList.reinsert" title="Permalink to this definition">¶</a></dt>
 <dd><p>Re-inserts the node at its original position.</p>
 <p>Re-inserts the node at its original position in all lists in [0, ‘index’]
 before it was removed. This method assumes that the next and previous
@@ -1416,9 +1455,9 @@ nodes of the node that is reinserted are in the list.</p>
 </div>
 <div class="section" id="module-botorch.utils.multi_objective.pareto">
 <span id="pareto"></span><h2>Pareto<a class="headerlink" href="#module-botorch.utils.multi_objective.pareto" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.utils.multi_objective.pareto.is_non_dominated">
-<code class="sig-prename descclassname">botorch.utils.multi_objective.pareto.</code><code class="sig-name descname">is_non_dominated</code><span class="sig-paren">(</span><em class="sig-param">Y</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/pareto.html#is_non_dominated"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.pareto.is_non_dominated" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.utils.multi_objective.pareto.</code><code class="sig-name descname">is_non_dominated</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">Y</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/pareto.html#is_non_dominated"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.pareto.is_non_dominated" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes the non-dominated front.</p>
 <p>Note: this assumes maximization.</p>
 <dl class="field-list simple">
@@ -1446,9 +1485,9 @@ for expensive multiobjective optimization problems,” in IEEE Transactions
 on Evolutionary Computation, vol. 10, no. 1, pp. 50-66, Feb. 2006.</p>
 </dd>
 </dl>
-<dl class="function">
+<dl class="py function">
 <dt id="botorch.utils.multi_objective.scalarization.get_chebyshev_scalarization">
-<code class="sig-prename descclassname">botorch.utils.multi_objective.scalarization.</code><code class="sig-name descname">get_chebyshev_scalarization</code><span class="sig-paren">(</span><em class="sig-param">weights</em>, <em class="sig-param">Y</em>, <em class="sig-param">alpha=0.05</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/scalarization.html#get_chebyshev_scalarization"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.scalarization.get_chebyshev_scalarization" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.utils.multi_objective.scalarization.</code><code class="sig-name descname">get_chebyshev_scalarization</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">weights</span></em>, <em class="sig-param"><span class="n">Y</span></em>, <em class="sig-param"><span class="n">alpha</span><span class="o">=</span><span class="default_value">0.05</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/scalarization.html#get_chebyshev_scalarization"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.scalarization.get_chebyshev_scalarization" title="Permalink to this definition">¶</a></dt>
 <dd><p>Construct an augmented Chebyshev scalarization.</p>
 <p>Outcomes are first normalized to [0,1] and then an augmented
 Chebyshev scalarization is applied.</p>
@@ -1507,14 +1546,12 @@ default value comes from <a class="reference internal" href="#knowles2005" id="i
 <li class="toctree-l1"><a class="reference internal" href="test_functions.html">botorch.test_functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="exceptions.html">botorch.exceptions</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">botorch.utils</a></li>
-<li class="toctree-l1"><a class="reference internal" href="gen.html">Generation utilities [DEPRECATED - use botorch.generation.gen]</a></li>
 </ul>
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
 <li><a href="index.html">Documentation overview</a><ul>
 <li>Previous: <a href="exceptions.html" title="previous chapter">botorch.exceptions</a></li>
-<li>Next: <a href="gen.html" title="next chapter">Generation utilities [DEPRECATED - use botorch.generation.gen]</a></li>
 </ul></li>
 </ul>
 </div>

@@ -53,7 +53,7 @@
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">settings</span>
@@ -72,7 +72,11 @@
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.samplers</span> <span class="kn">import</span> <span class="n">MCSampler</span><span class="p">,</span> <span class="n">SobolQMCNormalSampler</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">match_batch_shape</span><span class="p">,</span> <span class="n">t_batch_mode_transform</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">concatenate_pending_points</span><span class="p">,</span>
+    <span class="n">match_batch_shape</span><span class="p">,</span>
+    <span class="n">t_batch_mode_transform</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
@@ -97,6 +101,7 @@
         <span class="n">inner_sampler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCSampler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">X_pending</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">current_value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""q-Knowledge Gradient (one-shot optimization).</span>
 
@@ -208,6 +213,67 @@
         <span class="c1"># return average over the fantasy samples</span>
         <span class="k">return</span> <span class="n">values</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
 
+<div class="viewcode-block" id="qKnowledgeGradient.evaluate"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient.evaluate">[docs]</a>    <span class="nd">@concatenate_pending_points</span>
+    <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_actual</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Evaluate qKnowledgeGradient on the candidate set `X_actual` by</span>
+<span class="sd">        solving the inner optimization problem.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X_actual: A `b x q x d` Tensor with `b` t-batches of `q` design points</span>
+<span class="sd">                each. Unlike `forward()`, this does not include solutions of the</span>
+<span class="sd">                inner optimization problem.</span>
+<span class="sd">            bounds: A `2 x d` tensor of lower and upper bounds for each column of</span>
+<span class="sd">                the solutions to the inner problem.</span>
+<span class="sd">            kwargs: Additional keyword arguments. This includes the options for</span>
+<span class="sd">                optimization of the inner problem, i.e. `num_restarts`, `raw_samples`,</span>
+<span class="sd">                an `options` dictionary to be passed on to the optimization helpers, and</span>
+<span class="sd">                a `scipy_options` dictionary to be passed to `scipy.minimize`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A Tensor of shape `b`. For t-batch b, the q-KG value of the design</span>
+<span class="sd">                `X_actual[b]` is averaged across the fantasy models.</span>
+<span class="sd">                NOTE: If `current_value` is not provided, then this is not the</span>
+<span class="sd">                true KG value of `X_actual[b]`.</span>
+<span class="sd">        """</span>
+        <span class="c1"># construct the fantasy model of shape `num_fantasies x b`</span>
+        <span class="n">fantasy_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">fantasize</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">=</span><span class="n">X_actual</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="p">,</span> <span class="n">observation_noise</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+
+        <span class="c1"># get the value function</span>
+        <span class="n">value_function</span> <span class="o">=</span> <span class="n">_get_value_function</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">fantasy_model</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">inner_sampler</span>
+        <span class="p">)</span>
+
+        <span class="c1"># optimize the inner problem</span>
+        <span class="kn">from</span> <span class="nn">botorch.optim.initializers</span> <span class="kn">import</span> <span class="n">gen_value_function_initial_conditions</span>
+        <span class="kn">from</span> <span class="nn">botorch.generation.gen</span> <span class="kn">import</span> <span class="n">gen_candidates_scipy</span>
+
+        <span class="n">initial_conditions</span> <span class="o">=</span> <span class="n">gen_value_function_initial_conditions</span><span class="p">(</span>
+            <span class="n">acq_function</span><span class="o">=</span><span class="n">value_function</span><span class="p">,</span>
+            <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+            <span class="n">num_restarts</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"num_restarts"</span><span class="p">,</span> <span class="mi">20</span><span class="p">),</span>
+            <span class="n">raw_samples</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"raw_samples"</span><span class="p">,</span> <span class="mi">1024</span><span class="p">),</span>
+            <span class="n">current_model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="o">**</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"options"</span><span class="p">,</span> <span class="p">{}),</span> <span class="o">**</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"scipy_options"</span><span class="p">,</span> <span class="p">{})},</span>
+        <span class="p">)</span>
+
+        <span class="n">_</span><span class="p">,</span> <span class="n">values</span> <span class="o">=</span> <span class="n">gen_candidates_scipy</span><span class="p">(</span>
+            <span class="n">initial_conditions</span><span class="o">=</span><span class="n">initial_conditions</span><span class="p">,</span>
+            <span class="n">acquisition_function</span><span class="o">=</span><span class="n">value_function</span><span class="p">,</span>
+            <span class="n">lower_bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="n">upper_bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">options</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"scipy_options"</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="c1"># get the maximizer for each batch</span>
+        <span class="n">values</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="n">values</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_value</span>
+
+        <span class="c1"># return average over the fantasy samples</span>
+        <span class="k">return</span> <span class="n">values</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
+
 <div class="viewcode-block" id="qKnowledgeGradient.get_augmented_q_batch_size"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient.get_augmented_q_batch_size">[docs]</a>    <span class="k">def</span> <span class="nf">get_augmented_q_batch_size</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Get augmented q batch size for one-shot optimzation.</span>
 
@@ -253,6 +319,7 @@
         <span class="n">cost_aware_utility</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">CostAwareUtility</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">project</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">X</span><span class="p">:</span> <span class="n">X</span><span class="p">,</span>
         <span class="n">expand</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">X</span><span class="p">:</span> <span class="n">X</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Multi-Fidelity q-Knowledge Gradient (one-shot optimization).</span>
 
@@ -450,7 +517,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../test_functions.html">botorch.test_functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">botorch.exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../utils.html">botorch.utils</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../gen.html">Generation utilities [DEPRECATED - use botorch.generation.gen]</a></li>
 </ul>
 <div class="relations">
 <h3>Related Topics</h3>
