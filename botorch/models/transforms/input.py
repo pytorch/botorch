@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections import OrderedDict
 from typing import Optional
 
 import torch
@@ -68,6 +69,31 @@ class InputTransform(Module, ABC):
             f"{self.__class__.__name__} does not implement the `untransform` method"
         )
 
+    def equals(self, other: InputTransform) -> bool:
+        r"""Check if another input transform is equivalent.
+
+        Note: The reason that a custom equals method is definde rather than
+        defining an __eq__ method is because defining an __eq__ method sets
+        the __hash__ method to None. Hashing modules is currently used in
+        pytorch. See https://github.com/pytorch/pytorch/issues/7733.
+
+        Args:
+            other: Another input transform
+
+        Returns:
+            A boolean indicating if the other transform is equivalent.
+        """
+        other_state_dict = other.state_dict()
+        return (
+            type(self) == type(other)
+            and (self.transform_on_train == other.transform_on_train)
+            and (self.transform_on_eval == other.transform_on_eval)
+            and all(
+                torch.allclose(v, other_state_dict[k].to(v))
+                for k, v in self.state_dict().items()
+            )
+        )
+
 
 class ChainedInputTransform(InputTransform, ModuleDict):
     r"""An input transform representing the chaining of individual transforms"""
@@ -99,9 +125,9 @@ class ChainedInputTransform(InputTransform, ModuleDict):
             Normalize()
 
         """
+        super().__init__(OrderedDict(transforms))
         self.transform_on_train = transform_on_train
         self.transform_on_eval = transform_on_eval
-        super().__init__(transforms)
 
     def transform(self, X: Tensor) -> Tensor:
         r"""Transform the inputs to a model.
@@ -132,6 +158,19 @@ class ChainedInputTransform(InputTransform, ModuleDict):
         for tf in reversed(self.values()):
             X = tf.untransform(X)
         return X
+
+    def equals(self, other: InputTransform) -> bool:
+        r"""Check if another input transform is equivalent.
+
+        Args:
+            other: Another input transform
+
+        Returns:
+            A boolean indicating if the other transform is equivalent.
+        """
+        return super().equals(other=other) and all(
+            t1 == t2 for t1, t2 in zip(self.values(), other.values())
+        )
 
 
 class ReversibleInputTransform(InputTransform, ABC):
@@ -188,6 +227,17 @@ class ReversibleInputTransform(InputTransform, ABC):
             A `batch_shape x n x d`-dim tensor of transformed inputs.
         """
         pass  # pragma: no cover
+
+    def equals(self, other: InputTransform) -> bool:
+        r"""Check if another input transform is equivalent.
+
+        Args:
+            other: Another input transform
+
+        Returns:
+            A boolean indicating if the other transform is equivalent.
+        """
+        return super().equals(other=other) and (self.reverse == other.reverse)
 
 
 class Normalize(ReversibleInputTransform):
@@ -284,3 +334,18 @@ class Normalize(ReversibleInputTransform):
     def bounds(self) -> Tensor:
         r"""The bounds used for normalizing the inputs."""
         return torch.cat([self.mins, self.mins + self.ranges], dim=-2)
+
+    def equals(self, other: InputTransform) -> bool:
+        r"""Check if another input transform is equivalent.
+
+        Args:
+            other: Another input transform
+
+        Returns:
+            A boolean indicating if the other transform is equivalent.
+        """
+        return (
+            super().equals(other=other)
+            and (self._d == other._d)
+            and (self.learn_bounds == other.learn_bounds)
+        )
