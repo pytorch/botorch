@@ -17,9 +17,6 @@ while getopts 'n' flag; do
 # update conda
 conda update -y -n base -c defaults conda
 
-# required to use conda develop
-conda install -y conda-build
-
 if [[ $PYTORCH_NIGHTLY == true ]]; then
   # install CPU version for much smaller download
   conda install -y -c pytorch-nightly pytorch cpuonly
