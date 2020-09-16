@@ -134,7 +134,63 @@ class ChainedInputTransform(InputTransform, ModuleDict):
         return X
 
 
-class Normalize(InputTransform):
+class ReversibleInputTransform(InputTransform, ABC):
+    r"""An abstract class for a reversible input transform.
+
+    Properties:
+        reverse: A boolean indicating if the functionality of transform
+            and untransform methods should be swapped.
+    """
+    reverse: bool
+
+    def transform(self, X: Tensor) -> Tensor:
+        r"""Transform the inputs.
+
+        Args:
+            X: A `batch_shape x n x d`-dim tensor of inputs.
+
+        Returns:
+            A `batch_shape x n x d`-dim tensor of transformed inputs.
+        """
+        return self._untransform(X) if self.reverse else self._transform(X)
+
+    def untransform(self, X: Tensor) -> Tensor:
+        r"""Un-transform the inputs.
+
+        Args:
+            X: A `batch_shape x n x d`-dim tensor of inputs.
+
+        Returns:
+            A `batch_shape x n x d`-dim tensor of un-transformed inputs.
+        """
+        return self._transform(X) if self.reverse else self._untransform(X)
+
+    @abstractmethod
+    def _transform(self, X: Tensor) -> Tensor:
+        r"""Forward transform the inputs.
+
+        Args:
+            X: A `batch_shape x n x d`-dim tensor of inputs.
+
+        Returns:
+            A `batch_shape x n x d`-dim tensor of transformed inputs.
+        """
+        pass  # pragma: no cover
+
+    @abstractmethod
+    def _untransform(self, X: Tensor) -> Tensor:
+        r"""Reverse transform the inputs.
+
+        Args:
+            X: A `batch_shape x n x d`-dim tensor of inputs.
+
+        Returns:
+            A `batch_shape x n x d`-dim tensor of transformed inputs.
+        """
+        pass  # pragma: no cover
+
+
+class Normalize(ReversibleInputTransform):
     r"""Normalize the inputs to the unit cube.
 
     If no explicit bounds are provided this module is stateful: If in train mode,
@@ -150,6 +206,7 @@ class Normalize(InputTransform):
         batch_shape: torch.Size = torch.Size(),  # noqa: B008
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
+        reverse: bool = False,
     ) -> None:
         r"""Normalize the inputs to the unit cube.
 
@@ -164,6 +221,8 @@ class Normalize(InputTransform):
                 transforms in train() mode. Default: True
             transform_on_eval: A boolean indicating whether to apply the
                 transform in eval() mode. Default: True
+            reverse: A boolean indicating whether the forward pass should untransform
+                the inputs.
         """
         super().__init__()
         if bounds is not None:
@@ -183,8 +242,9 @@ class Normalize(InputTransform):
         self._d = d
         self.transform_on_train = transform_on_train
         self.transform_on_eval = transform_on_eval
+        self.reverse = reverse
 
-    def transform(self, X: Tensor) -> Tensor:
+    def _transform(self, X: Tensor) -> Tensor:
         r"""Normalize the inputs.
 
         If no explicit bounds are provided, this is stateful: In train mode,
@@ -209,7 +269,7 @@ class Normalize(InputTransform):
             self.ranges = X.max(dim=-2, keepdim=True)[0] - self.mins
         return (X - self.mins) / self.ranges
 
-    def untransform(self, X: Tensor) -> Tensor:
+    def _untransform(self, X: Tensor) -> Tensor:
         r"""Un-normalize the inputs.
 
         Args:
