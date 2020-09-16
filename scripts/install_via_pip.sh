@@ -46,5 +46,5 @@ if [[ $TUTORIAL_DEPS == true ]]; then
 fi
 
 if [[ $DEPLOY == true ]]; then
-  sudo pip install --progress-bar off beautifulsoup4 ipython nbconvert
+  sudo pip install --progress-bar off beautifulsoup4 ipython "nbconvert<6.0"
 fi
