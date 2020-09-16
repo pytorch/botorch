@@ -278,7 +278,7 @@ class PairwiseGP(Model, GP):
 
     def _add_jitter(self, X: Tensor) -> Tensor:
         jitter_prev = 0
-        Eye = torch.eye(X.size(-1)).expand(X.shape)
+        Eye = torch.eye(X.size(-1), device=X.device, dtype=X.dtype).expand(X.shape)
         for i in range(3):
             jitter_new = self._jitter * (10 ** i)
             X = X + (jitter_new - jitter_prev) * Eye

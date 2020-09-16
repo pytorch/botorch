@@ -24,7 +24,7 @@ from botorch.acquisition.objective import IdentityMCObjective, MCAcquisitionObje
 from botorch.exceptions.errors import UnsupportedError
 from botorch.exceptions.warnings import SamplingWarning
 from botorch.models.model import Model
-from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
+from botorch.sampling.samplers import IIDNormalSampler, MCSampler, SobolQMCNormalSampler
 from botorch.utils.multi_objective.box_decomposition import NondominatedPartitioning
 from botorch.utils.transforms import squeeze_last_dim
 from torch import Tensor
@@ -212,6 +212,7 @@ def prune_inferior_points(
     objective: Optional[MCAcquisitionObjective] = None,
     num_samples: int = 2048,
     max_frac: float = 1.0,
+    sampler: Optional[MCSampler] = None,
 ) -> Tensor:
     r"""Prune points from an input tensor that are unlikely to be the best point.
 
@@ -231,6 +232,8 @@ def prune_inferior_points(
         max_frac: The maximum fraction of points to retain. Must satisfy
             `0 < max_frac <= 1`. Ensures that the number of elements in the
             returned tensor does not exceed `ceil(max_frac * n)`.
+        sampler: If provided, will use this customized sampler instead of
+            automatically constructing one with `num_samples`.
 
     Returns:
         A `n' x d` with subset of points in `X`, where
@@ -250,16 +253,17 @@ def prune_inferior_points(
         raise ValueError(f"max_frac must take values in (0, 1], is {max_frac}")
     with torch.no_grad():
         posterior = model.posterior(X=X)
-    if posterior.event_shape.numel() > SobolEngine.MAXDIM:
-        if settings.debug.on():
-            warnings.warn(
-                f"Sample dimension q*m={posterior.event_shape.numel()} exceeding Sobol "
-                f"max dimension ({SobolEngine.MAXDIM}). Using iid samples instead.",
-                SamplingWarning,
-            )
-        sampler = IIDNormalSampler(num_samples=num_samples)
-    else:
-        sampler = SobolQMCNormalSampler(num_samples=num_samples)
+    if sampler is None:
+        if posterior.event_shape.numel() > SobolEngine.MAXDIM:
+            if settings.debug.on():
+                warnings.warn(
+                    f"Sample dimension q*m={posterior.event_shape.numel()} exceeding Sobol "
+                    f"max dimension ({SobolEngine.MAXDIM}). Using iid samples instead.",
+                    SamplingWarning,
+                )
+            sampler = IIDNormalSampler(num_samples=num_samples)
+        else:
+            sampler = SobolQMCNormalSampler(num_samples=num_samples)
     samples = sampler(posterior)
     if objective is None:
         objective = IdentityMCObjective()
