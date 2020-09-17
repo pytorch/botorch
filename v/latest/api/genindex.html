@@ -888,6 +888,15 @@
 </li>
 <li><a href="utils.html#botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.eps">eps() (botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning property)</a>
 </li>
+<li><a href="models.html#botorch.models.transforms.input.ChainedInputTransform.equals">equals() (botorch.models.transforms.input.ChainedInputTransform method)</a>
+<ul>
+<li><a href="models.html#botorch.models.transforms.input.InputTransform.equals">(botorch.models.transforms.input.InputTransform method)</a>
+</li>
+<li><a href="models.html#botorch.models.transforms.input.Normalize.equals">(botorch.models.transforms.input.Normalize method)</a>
+</li>
+<li><a href="models.html#botorch.models.transforms.input.ReversibleInputTransform.equals">(botorch.models.transforms.input.ReversibleInputTransform method)</a>
+</li>
+</ul></li>
 <li><a href="utils.html#botorch.utils.feasible_volume.estimate_feasible_volume">estimate_feasible_volume() (in module botorch.utils.feasible_volume)</a>
 </li>
 <li><a href="optim.html#botorch.optim.parameter_constraints.eval_lin_constraint">eval_lin_constraint() (in module botorch.optim.parameter_constraints)</a>
@@ -1143,11 +1152,7 @@
 </li>
 <li><a href="models.html#botorch.models.pairwise_gp.PairwiseLaplaceMarginalLogLikelihood.forward">(botorch.models.pairwise_gp.PairwiseLaplaceMarginalLogLikelihood method)</a>
 </li>
-<li><a href="models.html#botorch.models.transforms.input.ChainedInputTransform.forward">(botorch.models.transforms.input.ChainedInputTransform method)</a>
-</li>
 <li><a href="models.html#botorch.models.transforms.input.InputTransform.forward">(botorch.models.transforms.input.InputTransform method)</a>
-</li>
-<li><a href="models.html#botorch.models.transforms.input.Normalize.forward">(botorch.models.transforms.input.Normalize method)</a>
 </li>
 <li><a href="models.html#botorch.models.transforms.outcome.ChainedOutcomeTransform.forward">(botorch.models.transforms.outcome.ChainedOutcomeTransform method)</a>
 </li>
@@ -1790,8 +1795,15 @@
 </li>
 <li><a href="sampling.html#botorch.sampling.samplers.MCSampler.resample">resample (botorch.sampling.samplers.MCSampler attribute)</a>
 </li>
+<li><a href="models.html#botorch.models.transforms.input.Normalize.reverse">reverse (botorch.models.transforms.input.Normalize attribute)</a>
+<ul>
+<li><a href="models.html#botorch.models.transforms.input.ReversibleInputTransform.reverse">(botorch.models.transforms.input.ReversibleInputTransform attribute)</a>
+</li>
+</ul></li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="models.html#botorch.models.transforms.input.ReversibleInputTransform">ReversibleInputTransform (class in botorch.models.transforms.input)</a>
+</li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Rosenbrock">Rosenbrock (class in botorch.test_functions.synthetic)</a>
 </li>
 <li><a href="posteriors.html#botorch.posteriors.deterministic.DeterministicPosterior.rsample">rsample() (botorch.posteriors.deterministic.DeterministicPosterior method)</a>
@@ -2055,12 +2067,6 @@
 </li>
 <li><a href="models.html#botorch.models.pairwise_gp.PairwiseLaplaceMarginalLogLikelihood.training">(botorch.models.pairwise_gp.PairwiseLaplaceMarginalLogLikelihood attribute)</a>
 </li>
-<li><a href="models.html#botorch.models.transforms.input.ChainedInputTransform.training">(botorch.models.transforms.input.ChainedInputTransform attribute)</a>
-</li>
-<li><a href="models.html#botorch.models.transforms.input.InputTransform.training">(botorch.models.transforms.input.InputTransform attribute)</a>
-</li>
-<li><a href="models.html#botorch.models.transforms.input.Normalize.training">(botorch.models.transforms.input.Normalize attribute)</a>
-</li>
 <li><a href="models.html#botorch.models.transforms.outcome.ChainedOutcomeTransform.training">(botorch.models.transforms.outcome.ChainedOutcomeTransform attribute)</a>
 </li>
 <li><a href="models.html#botorch.models.transforms.outcome.Log.training">(botorch.models.transforms.outcome.Log attribute)</a>
@@ -2092,6 +2098,23 @@
 <td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="utils.html#botorch.utils.containers.TrainingData">TrainingData (class in botorch.utils.containers)</a>
 </li>
+<li><a href="models.html#botorch.models.transforms.input.ChainedInputTransform.transform">transform() (botorch.models.transforms.input.ChainedInputTransform method)</a>
+<ul>
+<li><a href="models.html#botorch.models.transforms.input.InputTransform.transform">(botorch.models.transforms.input.InputTransform method)</a>
+</li>
+<li><a href="models.html#botorch.models.transforms.input.ReversibleInputTransform.transform">(botorch.models.transforms.input.ReversibleInputTransform method)</a>
+</li>
+</ul></li>
+<li><a href="models.html#botorch.models.transforms.input.ChainedInputTransform.transform_on_eval">transform_on_eval (botorch.models.transforms.input.ChainedInputTransform attribute)</a>
+<ul>
+<li><a href="models.html#botorch.models.transforms.input.InputTransform.transform_on_eval">(botorch.models.transforms.input.InputTransform attribute)</a>
+</li>
+</ul></li>
+<li><a href="models.html#botorch.models.transforms.input.ChainedInputTransform.transform_on_train">transform_on_train (botorch.models.transforms.input.ChainedInputTransform attribute)</a>
+<ul>
+<li><a href="models.html#botorch.models.transforms.input.InputTransform.transform_on_train">(botorch.models.transforms.input.InputTransform attribute)</a>
+</li>
+</ul></li>
 <li><a href="posteriors.html#botorch.posteriors.transformed.TransformedPosterior">TransformedPosterior (class in botorch.posteriors.transformed)</a>
 </li>
 </ul></td>
@@ -2111,7 +2134,7 @@
 <ul>
 <li><a href="models.html#botorch.models.transforms.input.InputTransform.untransform">(botorch.models.transforms.input.InputTransform method)</a>
 </li>
-<li><a href="models.html#botorch.models.transforms.input.Normalize.untransform">(botorch.models.transforms.input.Normalize method)</a>
+<li><a href="models.html#botorch.models.transforms.input.ReversibleInputTransform.untransform">(botorch.models.transforms.input.ReversibleInputTransform method)</a>
 </li>
 <li><a href="models.html#botorch.models.transforms.outcome.ChainedOutcomeTransform.untransform">(botorch.models.transforms.outcome.ChainedOutcomeTransform method)</a>
 </li>

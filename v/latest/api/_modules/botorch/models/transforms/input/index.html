@@ -33,6 +33,7 @@
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
@@ -42,10 +43,35 @@
 
 
 <div class="viewcode-block" id="InputTransform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.InputTransform">[docs]</a><span class="k">class</span> <span class="nc">InputTransform</span><span class="p">(</span><span class="n">Module</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Abstract base class for input transforms."""</span>
+    <span class="sa">r</span><span class="sd">"""Abstract base class for input transforms.</span>
 
-<div class="viewcode-block" id="InputTransform.forward"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.InputTransform.forward">[docs]</a>    <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="sd">    Properties:</span>
+<span class="sd">        transform_on_train: A boolean indicating whether to apply the</span>
+<span class="sd">            transform in train() mode.</span>
+<span class="sd">        transform_on_eval: A boolean indicating whether to apply the</span>
+<span class="sd">            transform in eval() mode.</span>
+<span class="sd">    """</span>
+
+    <span class="n">transform_on_eval</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">transform_on_train</span><span class="p">:</span> <span class="nb">bool</span>
+
+<div class="viewcode-block" id="InputTransform.forward"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.InputTransform.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Transform the inputs to a model.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `batch_shape x n x d`-dim tensor of inputs.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `batch_shape x n x d`-dim tensor of transformed inputs.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">training</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_train</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span>
+            <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_eval</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">X</span></div>
+
+<div class="viewcode-block" id="InputTransform.transform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.InputTransform.transform">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Transform the inputs to a model.</span>
 
 <span class="sd">        Args:</span>
@@ -67,23 +93,69 @@
 <span class="sd">        """</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> does not implement the `untransform` method"</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="InputTransform.equals"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.InputTransform.equals">[docs]</a>    <span class="k">def</span> <span class="nf">equals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">InputTransform</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Check if another input transform is equivalent.</span>
+
+<span class="sd">        Note: The reason that a custom equals method is definde rather than</span>
+<span class="sd">        defining an __eq__ method is because defining an __eq__ method sets</span>
+<span class="sd">        the __hash__ method to None. Hashing modules is currently used in</span>
+<span class="sd">        pytorch. See https://github.com/pytorch/pytorch/issues/7733.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            other: Another input transform</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A boolean indicating if the other transform is equivalent.</span>
+<span class="sd">        """</span>
+        <span class="n">other_state_dict</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">==</span> <span class="nb">type</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transform_on_train</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">transform_on_train</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transform_on_eval</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">transform_on_eval</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">other_state_dict</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="p">)</span>
         <span class="p">)</span></div></div>
 
 
 <div class="viewcode-block" id="ChainedInputTransform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.ChainedInputTransform">[docs]</a><span class="k">class</span> <span class="nc">ChainedInputTransform</span><span class="p">(</span><span class="n">InputTransform</span><span class="p">,</span> <span class="n">ModuleDict</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""An input transform representing the chaining of individual transforms"""</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">transforms</span><span class="p">:</span> <span class="n">InputTransform</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">transform_on_train</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">transform_on_eval</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">transforms</span><span class="p">:</span> <span class="n">InputTransform</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Chaining of input transforms.</span>
 
 <span class="sd">        Args:</span>
+<span class="sd">            transform_on_train: A boolean indicating whether to apply the</span>
+<span class="sd">                transforms in train() mode. Default: True</span>
+<span class="sd">            transform_on_eval: A boolean indicating whether to apply the</span>
+<span class="sd">                transforms in eval() mode. Default: True</span>
 <span class="sd">            transforms: The transforms to chain. Internally, the names of the</span>
 <span class="sd">                kwargs are used as the keys for accessing the individual</span>
 <span class="sd">                transforms on the module.</span>
-<span class="sd">        """</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">transforms</span><span class="p">)</span>
 
-<div class="viewcode-block" id="ChainedInputTransform.forward"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.ChainedInputTransform.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; tf1 = Normalize(d=2)</span>
+<span class="sd">            &gt;&gt;&gt; tf2 = Normalize(d=2)</span>
+<span class="sd">            &gt;&gt;&gt; tf = ChainedInputTransform(tf1=tf1, tf2=tf2)</span>
+<span class="sd">            &gt;&gt;&gt; list(tf.keys())</span>
+<span class="sd">            ['tf1', 'tf2']</span>
+<span class="sd">            &gt;&gt;&gt; tf["tf1"]</span>
+<span class="sd">            Normalize()</span>
+
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">OrderedDict</span><span class="p">(</span><span class="n">transforms</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_train</span> <span class="o">=</span> <span class="n">transform_on_train</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_eval</span> <span class="o">=</span> <span class="n">transform_on_eval</span>
+
+<div class="viewcode-block" id="ChainedInputTransform.transform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.ChainedInputTransform.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Transform the inputs to a model.</span>
 
 <span class="sd">        Individual transforms are applied in sequence.</span>
@@ -111,10 +183,90 @@
 <span class="sd">        """</span>
         <span class="k">for</span> <span class="n">tf</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
             <span class="n">X</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">untransform</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">X</span></div></div>
+        <span class="k">return</span> <span class="n">X</span></div>
+
+<div class="viewcode-block" id="ChainedInputTransform.equals"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.ChainedInputTransform.equals">[docs]</a>    <span class="k">def</span> <span class="nf">equals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">InputTransform</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Check if another input transform is equivalent.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            other: Another input transform</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A boolean indicating if the other transform is equivalent.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">equals</span><span class="p">(</span><span class="n">other</span><span class="o">=</span><span class="n">other</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span>
+            <span class="n">t1</span> <span class="o">==</span> <span class="n">t2</span> <span class="k">for</span> <span class="n">t1</span><span class="p">,</span> <span class="n">t2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="n">other</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="Normalize"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.Normalize">[docs]</a><span class="k">class</span> <span class="nc">Normalize</span><span class="p">(</span><span class="n">InputTransform</span><span class="p">):</span>
+<div class="viewcode-block" id="ReversibleInputTransform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.ReversibleInputTransform">[docs]</a><span class="k">class</span> <span class="nc">ReversibleInputTransform</span><span class="p">(</span><span class="n">InputTransform</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""An abstract class for a reversible input transform.</span>
+
+<span class="sd">    Properties:</span>
+<span class="sd">        reverse: A boolean indicating if the functionality of transform</span>
+<span class="sd">            and untransform methods should be swapped.</span>
+<span class="sd">    """</span>
+    <span class="n">reverse</span><span class="p">:</span> <span class="nb">bool</span>
+
+<div class="viewcode-block" id="ReversibleInputTransform.transform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.ReversibleInputTransform.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Transform the inputs.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `batch_shape x n x d`-dim tensor of inputs.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `batch_shape x n x d`-dim tensor of transformed inputs.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_untransform</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reverse</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform</span><span class="p">(</span><span class="n">X</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ReversibleInputTransform.untransform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.ReversibleInputTransform.untransform">[docs]</a>    <span class="k">def</span> <span class="nf">untransform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Un-transform the inputs.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `batch_shape x n x d`-dim tensor of inputs.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `batch_shape x n x d`-dim tensor of un-transformed inputs.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reverse</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_untransform</span><span class="p">(</span><span class="n">X</span><span class="p">)</span></div>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Forward transform the inputs.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `batch_shape x n x d`-dim tensor of inputs.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `batch_shape x n x d`-dim tensor of transformed inputs.</span>
+<span class="sd">        """</span>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">_untransform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Reverse transform the inputs.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `batch_shape x n x d`-dim tensor of inputs.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `batch_shape x n x d`-dim tensor of transformed inputs.</span>
+<span class="sd">        """</span>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
+
+<div class="viewcode-block" id="ReversibleInputTransform.equals"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.ReversibleInputTransform.equals">[docs]</a>    <span class="k">def</span> <span class="nf">equals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">InputTransform</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Check if another input transform is equivalent.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            other: Another input transform</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A boolean indicating if the other transform is equivalent.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">equals</span><span class="p">(</span><span class="n">other</span><span class="o">=</span><span class="n">other</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reverse</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">reverse</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="Normalize"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.Normalize">[docs]</a><span class="k">class</span> <span class="nc">Normalize</span><span class="p">(</span><span class="n">ReversibleInputTransform</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""Normalize the inputs to the unit cube.</span>
 
 <span class="sd">    If no explicit bounds are provided this module is stateful: If in train mode,</span>
@@ -128,6 +280,9 @@
         <span class="n">d</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">batch_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">(),</span>  <span class="c1"># noqa: B008</span>
+        <span class="n">transform_on_train</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">transform_on_eval</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">reverse</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Normalize the inputs to the unit cube.</span>
 
@@ -138,6 +293,12 @@
 <span class="sd">            batch_shape: The batch shape of the inputs (asssuming input tensors</span>
 <span class="sd">                of shape `batch_shape x n x d`). If provided, perform individual</span>
 <span class="sd">                normalization per batch, otherwise uses a single normalization.</span>
+<span class="sd">            transform_on_train: A boolean indicating whether to apply the</span>
+<span class="sd">                transforms in train() mode. Default: True</span>
+<span class="sd">            transform_on_eval: A boolean indicating whether to apply the</span>
+<span class="sd">                transform in eval() mode. Default: True</span>
+<span class="sd">            reverse: A boolean indicating whether the forward pass should untransform</span>
+<span class="sd">                the inputs.</span>
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">bounds</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -155,8 +316,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"mins"</span><span class="p">,</span> <span class="n">mins</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"ranges"</span><span class="p">,</span> <span class="n">ranges</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_d</span> <span class="o">=</span> <span class="n">d</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_train</span> <span class="o">=</span> <span class="n">transform_on_train</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_eval</span> <span class="o">=</span> <span class="n">transform_on_eval</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reverse</span> <span class="o">=</span> <span class="n">reverse</span>
 
-<div class="viewcode-block" id="Normalize.forward"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.Normalize.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Normalize the inputs.</span>
 
 <span class="sd">        If no explicit bounds are provided, this is stateful: In train mode,</span>
@@ -179,9 +343,9 @@
                 <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mins</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ranges</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">mins</span>
-        <span class="k">return</span> <span class="p">(</span><span class="n">X</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">mins</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">ranges</span></div>
+        <span class="k">return</span> <span class="p">(</span><span class="n">X</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">mins</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">ranges</span>
 
-<div class="viewcode-block" id="Normalize.untransform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.Normalize.untransform">[docs]</a>    <span class="k">def</span> <span class="nf">untransform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">_untransform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Un-normalize the inputs.</span>
 
 <span class="sd">        Args:</span>
@@ -190,12 +354,27 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            A `batch_shape x n x d`-dim tensor of un-normalized inputs.</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mins</span> <span class="o">+</span> <span class="n">X</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">ranges</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mins</span> <span class="o">+</span> <span class="n">X</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">ranges</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""The bounds used for normalizing the inputs."""</span>
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">mins</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mins</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">ranges</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">mins</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mins</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">ranges</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Normalize.equals"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.Normalize.equals">[docs]</a>    <span class="k">def</span> <span class="nf">equals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">InputTransform</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Check if another input transform is equivalent.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            other: Another input transform</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A boolean indicating if the other transform is equivalent.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">equals</span><span class="p">(</span><span class="n">other</span><span class="o">=</span><span class="n">other</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_d</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">_d</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">learn_bounds</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">learn_bounds</span><span class="p">)</span>
+        <span class="p">)</span></div></div>
 </pre></div>
 </div>
 </div>

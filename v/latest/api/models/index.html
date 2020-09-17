@@ -2090,10 +2090,43 @@ observation noises associated with the training targets
 <em class="property">class </em><code class="sig-prename descclassname">botorch.models.transforms.input.</code><code class="sig-name descname">InputTransform</code><a class="reference internal" href="_modules/botorch/models/transforms/input.html#InputTransform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.InputTransform" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
 <p>Abstract base class for input transforms.</p>
+<dl class="simple">
+<dt>Properties:</dt><dd><dl class="simple">
+<dt>transform_on_train: A boolean indicating whether to apply the</dt><dd><p>transform in train() mode.</p>
+</dd>
+<dt>transform_on_eval: A boolean indicating whether to apply the</dt><dd><p>transform in eval() mode.</p>
+</dd>
+</dl>
+</dd>
+</dl>
 <p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="py attribute">
+<dt id="botorch.models.transforms.input.InputTransform.transform_on_eval">
+<code class="sig-name descname">transform_on_eval</code><em class="property">: bool</em><a class="headerlink" href="#botorch.models.transforms.input.InputTransform.transform_on_eval" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt id="botorch.models.transforms.input.InputTransform.transform_on_train">
+<code class="sig-name descname">transform_on_train</code><em class="property">: bool</em><a class="headerlink" href="#botorch.models.transforms.input.InputTransform.transform_on_train" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 <dl class="py method">
 <dt id="botorch.models.transforms.input.InputTransform.forward">
-<em class="property">abstract </em><code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#InputTransform.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.InputTransform.forward" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#InputTransform.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.InputTransform.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform the inputs to a model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x d</cite>-dim tensor of inputs.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>batch_shape x n x d</cite>-dim tensor of transformed inputs.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.models.transforms.input.InputTransform.transform">
+<em class="property">abstract </em><code class="sig-name descname">transform</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#InputTransform.transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.InputTransform.transform" title="Permalink to this definition">¶</a></dt>
 <dd><p>Transform the inputs to a model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -2123,27 +2156,67 @@ observation noises associated with the training targets
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt id="botorch.models.transforms.input.InputTransform.training">
-<code class="sig-name descname">training</code><em class="property">: bool</em><a class="headerlink" href="#botorch.models.transforms.input.InputTransform.training" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dl class="py method">
+<dt id="botorch.models.transforms.input.InputTransform.equals">
+<code class="sig-name descname">equals</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#InputTransform.equals"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.InputTransform.equals" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if another input transform is equivalent.</p>
+<p>Note: The reason that a custom equals method is definde rather than
+defining an __eq__ method is because defining an __eq__ method sets
+the __hash__ method to None. Hashing modules is currently used in
+pytorch. See <a class="reference external" href="https://github.com/pytorch/pytorch/issues/7733">https://github.com/pytorch/pytorch/issues/7733</a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>other</strong> (<a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">InputTransform</span></code></a>) – Another input transform</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A boolean indicating if the other transform is equivalent.</p>
+</dd>
+</dl>
+</dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt id="botorch.models.transforms.input.ChainedInputTransform">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.models.transforms.input.</code><code class="sig-name descname">ChainedInputTransform</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">transforms</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#ChainedInputTransform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.ChainedInputTransform" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.transforms.input.</code><code class="sig-name descname">ChainedInputTransform</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">transform_on_train</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">transform_on_eval</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">transforms</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#ChainedInputTransform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.ChainedInputTransform" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.transforms.input.InputTransform</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.container.ModuleDict</span></code></p>
 <p>An input transform representing the chaining of individual transforms</p>
 <p>Chaining of input transforms.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>transforms</strong> (<a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">InputTransform</span></code></a>) – The transforms to chain. Internally, the names of the
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>transform_on_train</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – A boolean indicating whether to apply the
+transforms in train() mode. Default: True</p></li>
+<li><p><strong>transform_on_eval</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – A boolean indicating whether to apply the
+transforms in eval() mode. Default: True</p></li>
+<li><p><strong>transforms</strong> (<a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">InputTransform</span></code></a>) – The transforms to chain. Internally, the names of the
 kwargs are used as the keys for accessing the individual
-transforms on the module.</p>
+transforms on the module.</p></li>
+</ul>
 </dd>
 </dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">tf1</span> <span class="o">=</span> <span class="n">Normalize</span><span class="p">(</span><span class="n">d</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">tf2</span> <span class="o">=</span> <span class="n">Normalize</span><span class="p">(</span><span class="n">d</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">tf</span> <span class="o">=</span> <span class="n">ChainedInputTransform</span><span class="p">(</span><span class="n">tf1</span><span class="o">=</span><span class="n">tf1</span><span class="p">,</span> <span class="n">tf2</span><span class="o">=</span><span class="n">tf2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">list</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+<span class="go">['tf1', 'tf2']</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">tf</span><span class="p">[</span><span class="s2">"tf1"</span><span class="p">]</span>
+<span class="go">Normalize()</span>
+</pre></div>
+</div>
+<dl class="py attribute">
+<dt id="botorch.models.transforms.input.ChainedInputTransform.transform_on_train">
+<code class="sig-name descname">transform_on_train</code><em class="property">: bool</em><a class="headerlink" href="#botorch.models.transforms.input.ChainedInputTransform.transform_on_train" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt id="botorch.models.transforms.input.ChainedInputTransform.transform_on_eval">
+<code class="sig-name descname">transform_on_eval</code><em class="property">: bool</em><a class="headerlink" href="#botorch.models.transforms.input.ChainedInputTransform.transform_on_eval" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 <dl class="py method">
-<dt id="botorch.models.transforms.input.ChainedInputTransform.forward">
-<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#ChainedInputTransform.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.ChainedInputTransform.forward" title="Permalink to this definition">¶</a></dt>
+<dt id="botorch.models.transforms.input.ChainedInputTransform.transform">
+<code class="sig-name descname">transform</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#ChainedInputTransform.transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.ChainedInputTransform.transform" title="Permalink to this definition">¶</a></dt>
 <dd><p>Transform the inputs to a model.</p>
 <p>Individual transforms are applied in sequence.</p>
 <dl class="field-list simple">
@@ -2175,15 +2248,93 @@ transforms on the module.</p>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py method">
+<dt id="botorch.models.transforms.input.ChainedInputTransform.equals">
+<code class="sig-name descname">equals</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#ChainedInputTransform.equals"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.ChainedInputTransform.equals" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if another input transform is equivalent.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>other</strong> (<a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">InputTransform</span></code></a>) – Another input transform</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A boolean indicating if the other transform is equivalent.</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt id="botorch.models.transforms.input.ReversibleInputTransform">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.transforms.input.</code><code class="sig-name descname">ReversibleInputTransform</code><a class="reference internal" href="_modules/botorch/models/transforms/input.html#ReversibleInputTransform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.ReversibleInputTransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.transforms.input.InputTransform</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>An abstract class for a reversible input transform.</p>
+<dl class="simple">
+<dt>Properties:</dt><dd><dl class="simple">
+<dt>reverse: A boolean indicating if the functionality of transform</dt><dd><p>and untransform methods should be swapped.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
 <dl class="py attribute">
-<dt id="botorch.models.transforms.input.ChainedInputTransform.training">
-<code class="sig-name descname">training</code><em class="property">: bool</em><a class="headerlink" href="#botorch.models.transforms.input.ChainedInputTransform.training" title="Permalink to this definition">¶</a></dt>
+<dt id="botorch.models.transforms.input.ReversibleInputTransform.reverse">
+<code class="sig-name descname">reverse</code><em class="property">: bool</em><a class="headerlink" href="#botorch.models.transforms.input.ReversibleInputTransform.reverse" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
+<dl class="py method">
+<dt id="botorch.models.transforms.input.ReversibleInputTransform.transform">
+<code class="sig-name descname">transform</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#ReversibleInputTransform.transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.ReversibleInputTransform.transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform the inputs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x d</cite>-dim tensor of inputs.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>batch_shape x n x d</cite>-dim tensor of transformed inputs.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.models.transforms.input.ReversibleInputTransform.untransform">
+<code class="sig-name descname">untransform</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#ReversibleInputTransform.untransform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.ReversibleInputTransform.untransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Un-transform the inputs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x d</cite>-dim tensor of inputs.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>batch_shape x n x d</cite>-dim tensor of un-transformed inputs.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.models.transforms.input.ReversibleInputTransform.equals">
+<code class="sig-name descname">equals</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#ReversibleInputTransform.equals"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.ReversibleInputTransform.equals" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if another input transform is equivalent.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>other</strong> (<a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">InputTransform</span></code></a>) – Another input transform</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A boolean indicating if the other transform is equivalent.</p>
+</dd>
+</dl>
+</dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt id="botorch.models.transforms.input.Normalize">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.models.transforms.input.</code><code class="sig-name descname">Normalize</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">d</span></em>, <em class="sig-param"><span class="n">bounds</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">batch_shape</span><span class="o">=</span><span class="default_value">torch.Size([])</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#Normalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.Normalize" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.transforms.input.InputTransform</span></code></a></p>
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.transforms.input.</code><code class="sig-name descname">Normalize</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">d</span></em>, <em class="sig-param"><span class="n">bounds</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">batch_shape</span><span class="o">=</span><span class="default_value">torch.Size([])</span></em>, <em class="sig-param"><span class="n">transform_on_train</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">transform_on_eval</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">reverse</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#Normalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.Normalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.input.ReversibleInputTransform" title="botorch.models.transforms.input.ReversibleInputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.transforms.input.ReversibleInputTransform</span></code></a></p>
 <p>Normalize the inputs to the unit cube.</p>
 <p>If no explicit bounds are provided this module is stateful: If in train mode,
 calling <cite>forward</cite> updates the module state (i.e. the normalizing bounds). If
@@ -2199,46 +2350,19 @@ omitted, learn the bounds in train mode.</p></li>
 <li><p><strong>batch_shape</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code>) – The batch shape of the inputs (asssuming input tensors
 of shape <cite>batch_shape x n x d</cite>). If provided, perform individual
 normalization per batch, otherwise uses a single normalization.</p></li>
+<li><p><strong>transform_on_train</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – A boolean indicating whether to apply the
+transforms in train() mode. Default: True</p></li>
+<li><p><strong>transform_on_eval</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – A boolean indicating whether to apply the
+transform in eval() mode. Default: True</p></li>
+<li><p><strong>reverse</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – A boolean indicating whether the forward pass should untransform
+the inputs.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py method">
-<dt id="botorch.models.transforms.input.Normalize.forward">
-<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#Normalize.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.Normalize.forward" title="Permalink to this definition">¶</a></dt>
-<dd><p>Normalize the inputs.</p>
-<p>If no explicit bounds are provided, this is stateful: In train mode,
-calling <cite>forward</cite> updates the module state (i.e. the normalizing bounds).
-In eval mode, calling <cite>forward</cite> simply applies the normalization using
-the current module state.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x d</cite>-dim tensor of inputs.</p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>batch_shape x n x d</cite>-dim tensor of inputs normalized to the
-module’s bounds.</p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py method">
-<dt id="botorch.models.transforms.input.Normalize.untransform">
-<code class="sig-name descname">untransform</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#Normalize.untransform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.Normalize.untransform" title="Permalink to this definition">¶</a></dt>
-<dd><p>Un-normalize the inputs.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x d</cite>-dim tensor of normalized inputs.</p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>batch_shape x n x d</cite>-dim tensor of un-normalized inputs.</p>
-</dd>
-</dl>
-</dd></dl>
+<dl class="py attribute">
+<dt id="botorch.models.transforms.input.Normalize.reverse">
+<code class="sig-name descname">reverse</code><em class="property">: bool</em><a class="headerlink" href="#botorch.models.transforms.input.Normalize.reverse" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 <dl class="py method">
 <dt id="botorch.models.transforms.input.Normalize.bounds">
 <em class="property">property </em><code class="sig-name descname">bounds</code><a class="headerlink" href="#botorch.models.transforms.input.Normalize.bounds" title="Permalink to this definition">¶</a></dt>
@@ -2249,10 +2373,22 @@ module’s bounds.</p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="py attribute">
-<dt id="botorch.models.transforms.input.Normalize.training">
-<code class="sig-name descname">training</code><em class="property">: bool</em><a class="headerlink" href="#botorch.models.transforms.input.Normalize.training" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dl class="py method">
+<dt id="botorch.models.transforms.input.Normalize.equals">
+<code class="sig-name descname">equals</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#Normalize.equals"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.Normalize.equals" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if another input transform is equivalent.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>other</strong> (<a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">InputTransform</span></code></a>) – Another input transform</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A boolean indicating if the other transform is equivalent.</p>
+</dd>
+</dl>
+</dd></dl>
 </dd></dl>
 </div>
 <div class="section" id="module-botorch.models.transforms.utils">

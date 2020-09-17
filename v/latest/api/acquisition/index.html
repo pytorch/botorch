@@ -2545,7 +2545,7 @@ is unknown (for custom acquisition functions).</p>
 </dd></dl>
 <dl class="py function">
 <dt id="botorch.acquisition.utils.prune_inferior_points">
-<code class="sig-prename descclassname">botorch.acquisition.utils.</code><code class="sig-name descname">prune_inferior_points</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="n">objective</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">num_samples</span><span class="o">=</span><span class="default_value">2048</span></em>, <em class="sig-param"><span class="n">max_frac</span><span class="o">=</span><span class="default_value">1.0</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/utils.html#prune_inferior_points"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.utils.prune_inferior_points" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.acquisition.utils.</code><code class="sig-name descname">prune_inferior_points</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="n">objective</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">num_samples</span><span class="o">=</span><span class="default_value">2048</span></em>, <em class="sig-param"><span class="n">max_frac</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">sampler</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/utils.html#prune_inferior_points"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.utils.prune_inferior_points" title="Permalink to this definition">¶</a></dt>
 <dd><p>Prune points from an input tensor that are unlikely to be the best point.</p>
 <p>Given a model, an objective, and an input tensor <cite>X</cite>, this function returns
 the subset of points in <cite>X</cite> that have some probability of being the best
@@ -2564,6 +2564,8 @@ probabilities of being the best point.</p></li>
 <li><p><strong>max_frac</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – The maximum fraction of points to retain. Must satisfy
 <cite>0 &lt; max_frac &lt;= 1</cite>. Ensures that the number of elements in the
 returned tensor does not exceed <cite>ceil(max_frac * n)</cite>.</p></li>
+<li><p><strong>sampler</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="sampling.html#botorch.sampling.samplers.MCSampler" title="botorch.sampling.samplers.MCSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">MCSampler</span></code></a>]) – If provided, will use this customized sampler instead of
+automatically constructing one with <cite>num_samples</cite>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
