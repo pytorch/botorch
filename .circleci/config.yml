@@ -98,12 +98,19 @@ commands:
           name: "Upload coverage report"
           command: bash <(curl -s https://codecov.io/bash)
 
+  test_packaging:
+    description: "Test packaging (python sdist and wheel, conda package)"
+    steps:
+       - run:
+          name: "Build pacakges"
+          command: ./scripts/test_packaging.sh
+
 
 jobs:
 
   lint_test_py38_pip:
     docker:
-      - image: circleci/python:3.8.1
+      - image: circleci/python:3.8
     resource_class: large
     steps:
       - checkout
@@ -133,7 +140,7 @@ jobs:
 
   run_tutorials_py38_pip:
     docker:
-      - image: circleci/python:3.8.1
+      - image: circleci/python:3.8
     resource_class: large
     steps:
       - checkout
@@ -143,7 +150,7 @@ jobs:
 
   auto_deploy_site:
     docker:
-      - image: circleci/python:3.8.1-node
+      - image: circleci/python:3.8-node
     steps:
       - checkout
       - pip_install:
@@ -154,6 +161,14 @@ jobs:
       - sphinx
       - configure_docusaurus_bot
       - deploy_site
+
+  package:
+    docker:
+      - image: continuumio/miniconda3
+    resource_class: large
+    steps:
+      - checkout
+      - test_packaging
 
 
 aliases:
@@ -176,6 +191,17 @@ workflows:
       - run_tutorials_py38_pip:
           filters: *exclude_ghpages_fbconfig
 
+  package:
+    triggers:
+      - schedule:
+          cron: "0 9 * * *" # UTC
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - package
+          
   auto_deploy_site:
     triggers:
       - schedule:
