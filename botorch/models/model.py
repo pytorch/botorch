@@ -133,3 +133,22 @@ class Model(Module, ABC):
         raise NotImplementedError(
             f"`construct_inputs` not implemented for {cls.__name__}."
         )
+
+    def transform_inputs(
+        self, X: Tensor, input_transform: Optional[Module] = None
+    ) -> Tensor:
+        r"""Transform inputs.
+
+        Args:
+            X: A tensor of inputs
+            input_transform: A Module that performs the input transformation.
+
+        Returns:
+            A tensor of transformed inputs
+        """
+        if input_transform is not None:
+            return input_transform(X)
+        try:
+            return self.input_transform(X)
+        except AttributeError:
+            return X
