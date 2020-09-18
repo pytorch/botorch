@@ -451,3 +451,54 @@ class Round(InputTransform):
             and self.approximate == other.approximate
             and self.tau == other.tau
         )
+
+
+class Log10(ReversibleInputTransform):
+    def __init__(
+        self,
+        indices: List[int],
+        transform_on_train: bool = True,
+        transform_on_eval: bool = True,
+        reverse: bool = False,
+    ) -> None:
+        """
+        Args:
+            indices: The indices of the inputs to log transform
+            transform_on_train: A boolean indicating whether to apply the
+                transforms in train() mode. Default: True
+            transform_on_eval: A boolean indicating whether to apply the
+                transform in eval() mode. Default: True
+            reverse: A boolean indicating whether the forward pass should untransform
+                the inputs.
+        """
+        super().__init__()
+        self.register_buffer("indices", torch.tensor(indices, dtype=torch.long))
+        self.transform_on_train = transform_on_train
+        self.transform_on_eval = transform_on_eval
+        self.reverse = reverse
+
+    def _transform(self, X: Tensor) -> Tensor:
+        r"""Log transform the inputs.
+
+        Args:
+            X: A `batch_shape x n x d`-dim tensor of inputs.
+
+        Returns:
+            A `batch_shape x n x d`-dim tensor of transformed inputs.
+        """
+        X_new = X.clone()
+        X_new[..., self.indices] = X_new[..., self.indices].log10()
+        return X_new
+
+    def _untransform(self, X: Tensor) -> Tensor:
+        r"""Reverse the log transformation.
+
+        Args:
+            X: A `batch_shape x n x d`-dim tensor of normalized inputs.
+
+        Returns:
+            A `batch_shape x n x d`-dim tensor of un-normalized inputs.
+        """
+        X_new = X.clone()
+        X_new[..., self.indices] = 10.0 ** X_new[..., self.indices]
+        return X_new
