@@ -24,6 +24,7 @@ from botorch.models.kernels.exponential_decay import ExponentialDecayKernel
 from botorch.models.kernels.linear_truncated_fidelity import (
     LinearTruncatedFidelityKernel,
 )
+from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
 from botorch.utils.containers import TrainingData
 from gpytorch.kernels.kernel import ProductKernel
@@ -62,6 +63,8 @@ class SingleTaskMultiFidelityGP(SingleTaskGP):
                 training data during instantiation and to the posterior during
                 inference (that is, the `Posterior` obtained by calling
                 `.posterior` on the model will be on the original scale).
+        input_transform: An input transform that is applied in the model's
+                forward pass.
 
     Example:
         >>> train_X = torch.rand(20, 4)
@@ -79,6 +82,7 @@ class SingleTaskMultiFidelityGP(SingleTaskGP):
         nu: float = 2.5,
         likelihood: Optional[Likelihood] = None,
         outcome_transform: Optional[OutcomeTransform] = None,
+        input_transform: Optional[InputTransform] = None,
     ) -> None:
         self._init_args = {
             "iteration_fidelity": iteration_fidelity,
@@ -91,9 +95,15 @@ class SingleTaskMultiFidelityGP(SingleTaskGP):
             raise UnsupportedError(
                 "SingleTaskMultiFidelityGP requires at least one fidelity parameter."
             )
-        self._set_dimensions(train_X=train_X, train_Y=train_Y)
+        if input_transform is not None:
+            input_transform.to(train_X)
+        transformed_X = self.transform_inputs(
+            X=train_X, input_transform=input_transform
+        )
+
+        self._set_dimensions(train_X=transformed_X, train_Y=train_Y)
         covar_module, subset_batch_dict = _setup_multifidelity_covar_module(
-            dim=train_X.size(-1),
+            dim=transformed_X.size(-1),
             aug_batch_shape=self._aug_batch_shape,
             iteration_fidelity=iteration_fidelity,
             data_fidelity=data_fidelity,
@@ -106,6 +116,7 @@ class SingleTaskMultiFidelityGP(SingleTaskGP):
             likelihood=likelihood,
             covar_module=covar_module,
             outcome_transform=outcome_transform,
+            input_transform=input_transform,
         )
         self._subset_batch_dict = {
             "likelihood.noise_covar.raw_noise": -2,
@@ -163,6 +174,9 @@ class FixedNoiseMultiFidelityGP(FixedNoiseGP):
             training data during instantiation and to the posterior during
             inference (that is, the `Posterior` obtained by calling
             `.posterior` on the model will be on the original scale).
+        input_transform: An input transform that is applied in the model's
+                forward pass.
+
 
     Example:
         >>> train_X = torch.rand(20, 4)
@@ -186,14 +200,20 @@ class FixedNoiseMultiFidelityGP(FixedNoiseGP):
         linear_truncated: bool = True,
         nu: float = 2.5,
         outcome_transform: Optional[OutcomeTransform] = None,
+        input_transform: Optional[InputTransform] = None,
     ) -> None:
         if iteration_fidelity is None and data_fidelity is None:
             raise UnsupportedError(
                 "FixedNoiseMultiFidelityGP requires at least one fidelity parameter."
             )
-        self._set_dimensions(train_X=train_X, train_Y=train_Y)
+        if input_transform is not None:
+            input_transform.to(train_X)
+        transformed_X = self.transform_inputs(
+            X=train_X, input_transform=input_transform
+        )
+        self._set_dimensions(train_X=transformed_X, train_Y=train_Y)
         covar_module, subset_batch_dict = _setup_multifidelity_covar_module(
-            dim=train_X.size(-1),
+            dim=transformed_X.size(-1),
             aug_batch_shape=self._aug_batch_shape,
             iteration_fidelity=iteration_fidelity,
             data_fidelity=data_fidelity,
@@ -206,6 +226,7 @@ class FixedNoiseMultiFidelityGP(FixedNoiseGP):
             train_Yvar=train_Yvar,
             covar_module=covar_module,
             outcome_transform=outcome_transform,
+            input_transform=input_transform,
         )
         self._subset_batch_dict = {
             "likelihood.noise_covar.raw_noise": -2,
