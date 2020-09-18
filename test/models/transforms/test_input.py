@@ -8,11 +8,12 @@ import itertools
 from copy import deepcopy
 
 import torch
-from botorch.exceptions.errors import BotorchTensorDimensionError
+from botorch.exceptions.errors import BotorchTensorDimensionError, UnsupportedError
 from botorch.models.transforms.input import (
     ChainedInputTransform,
     InputTransform,
     Normalize,
+    Round,
 )
 from botorch.utils.testing import BotorchTestCase
 
@@ -245,3 +246,87 @@ class TestInputTransforms(BotorchTestCase):
                 transform_on_train=False, stz_learned=tf2, stz_fixed=tf1
             )
             self.assertFalse(tf.equals(other_tf))
+
+    def test_round_transform(self):
+        for dtype in (torch.float, torch.double):
+            # basic init
+            int_idcs = [0, 2]
+            round_tf = Round(integer_indices=[0, 2])
+            self.assertEqual(round_tf.int_idxr.tolist(), int_idcs)
+            self.assertTrue(round_tf.training)
+            self.assertTrue(round_tf.approximate)
+            self.assertEqual(round_tf.tau, 1e-3)
+
+            # basic usage
+            for batch_shape, approx in itertools.product(
+                (torch.Size(), torch.Size([3])), (False, True)
+            ):
+                X = 5 * torch.rand(*batch_shape, 4, 3, device=self.device, dtype=dtype)
+                round_tf = Round(integer_indices=[0, 2], approximate=approx)
+                X_rounded = round_tf(X)
+                exact_rounded_X_ints = X[..., int_idcs].round()
+                # check non-integers parameters are unchanged
+                self.assertTrue(torch.equal(X_rounded[..., 1], X[..., 1]))
+                if approx:
+                    # check that approximate rounding is closer to rounded values than
+                    # the original inputs
+                    self.assertTrue(
+                        (
+                            (X_rounded[..., int_idcs] - exact_rounded_X_ints).abs()
+                            <= (X[..., int_idcs] - exact_rounded_X_ints).abs()
+                        ).all()
+                    )
+                else:
+                    # check that exact rounding behaves as expected
+                    self.assertTrue(
+                        torch.equal(X_rounded[..., int_idcs], exact_rounded_X_ints)
+                    )
+                with self.assertRaises(UnsupportedError):
+                    round_tf.untransform(X_rounded)
+
+                # test no transform on eval
+                round_tf = Round(
+                    integer_indices=int_idcs,
+                    approximate=approx,
+                    transform_on_eval=False,
+                )
+                X_rounded = round_tf(X)
+                self.assertFalse(torch.equal(X, X_rounded))
+                round_tf.eval()
+                X_rounded = round_tf(X)
+                self.assertTrue(torch.equal(X, X_rounded))
+
+                # test no transform on train
+                round_tf = Round(
+                    integer_indices=int_idcs,
+                    approximate=approx,
+                    transform_on_train=False,
+                )
+                X_rounded = round_tf(X)
+                self.assertTrue(torch.equal(X, X_rounded))
+                round_tf.eval()
+                X_rounded = round_tf(X)
+                self.assertFalse(torch.equal(X, X_rounded))
+
+                # test equals
+                round_tf2 = Round(
+                    integer_indices=int_idcs,
+                    approximate=approx,
+                    transform_on_train=False,
+                )
+                self.assertTrue(round_tf.equals(round_tf2))
+                # test different transform_on_train
+                round_tf2 = Round(integer_indices=int_idcs, approximate=approx)
+                self.assertFalse(round_tf.equals(round_tf2))
+                # test different approx
+                round_tf2 = Round(
+                    integer_indices=int_idcs,
+                    approximate=not approx,
+                    transform_on_train=False,
+                )
+                self.assertFalse(round_tf.equals(round_tf2))
+                # test different indices
+                round_tf2 = Round(
+                    integer_indices=[0, 1], approximate=approx, transform_on_train=False
+                )
+                self.assertFalse(round_tf.equals(round_tf2))
