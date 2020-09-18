@@ -37,7 +37,7 @@ def standardize(Y: Tensor) -> Tensor:
     r"""Standardizes (zero mean, unit variance) a tensor by dim=-2.
 
     If the tensor is single-dimensional, simply standardizes the tensor.
-    If for some batch index all elements are equal (of if there is only a single
+    If for some batch index all elements are equal (or if there is only a single
     data point), this function will return 0 for that batch index.
 
     Args:
