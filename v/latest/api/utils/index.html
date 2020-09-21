@@ -824,7 +824,7 @@ strings are acceptable.</p>
 <code class="sig-prename descclassname">botorch.utils.transforms.</code><code class="sig-name descname">standardize</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">Y</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/transforms.html#standardize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.transforms.standardize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Standardizes (zero mean, unit variance) a tensor by dim=-2.</p>
 <p>If the tensor is single-dimensional, simply standardizes the tensor.
-If for some batch index all elements are equal (of if there is only a single
+If for some batch index all elements are equal (or if there is only a single
 data point), this function will return 0 for that batch index.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
