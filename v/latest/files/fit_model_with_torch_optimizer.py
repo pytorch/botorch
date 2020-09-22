@@ -7,7 +7,7 @@
 # 
 # This tutorial allows you to customize model fitting to your needs using the familiar PyTorch-style model fitting loop.
 # 
-# This tutorial is adapted from GPyTorch's [Simple GP Regression Tutorial](https://github.com/cornellius-gp/gpytorch/blob/master/examples/01_Simple_GP_Regression/Simple_GP_Regression.ipynb) and has very few changes because the out-of-the box models that BoTorch provides are GPyTorch models; in fact, they are proper subclasses that add the `botorch.models.Model` API functions.
+# This tutorial is adapted from GPyTorch's [Simple GP Regression Tutorial](https://github.com/cornellius-gp/gpytorch/blob/master/examples/01_Exact_GPs/Simple_GP_Regression.ipynb) and has very few changes because the out-of-the box models that BoTorch provides are GPyTorch models; in fact, they are proper subclasses that add the `botorch.models.Model` API functions.
 
 # In[1]:
 

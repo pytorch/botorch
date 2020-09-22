@@ -77,7 +77,7 @@
 <div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="Fitting-models-in-BoTorch-with-a-torch.optim.Optimizer">Fitting models in BoTorch with a torch.optim.Optimizer<a class="anchor-link" href="#Fitting-models-in-BoTorch-with-a-torch.optim.Optimizer">¶</a></h2><p>BoTorch provides a convenient <code>botorch.fit.fit_gpytorch_model</code> function with sensible defaults that work on most basic models, including those that botorch ships with. Internally, this function uses L-BFGS-B to fit the parameters. However, in more advanced use cases you may need or want to implement your own model fitting logic.</p>
 <p>This tutorial allows you to customize model fitting to your needs using the familiar PyTorch-style model fitting loop.</p>
-<p>This tutorial is adapted from GPyTorch's <a href="https://github.com/cornellius-gp/gpytorch/blob/master/examples/01_Simple_GP_Regression/Simple_GP_Regression.ipynb">Simple GP Regression Tutorial</a> and has very few changes because the out-of-the box models that BoTorch provides are GPyTorch models; in fact, they are proper subclasses that add the <code>botorch.models.Model</code> API functions.</p>
+<p>This tutorial is adapted from GPyTorch's <a href="https://github.com/cornellius-gp/gpytorch/blob/master/examples/01_Exact_GPs/Simple_GP_Regression.ipynb">Simple GP Regression Tutorial</a> and has very few changes because the out-of-the box models that BoTorch provides are GPyTorch models; in fact, they are proper subclasses that add the <code>botorch.models.Model</code> API functions.</p>
 </div>
 </div>
 </div>
