@@ -28,6 +28,7 @@ class InputTransform(Module, ABC):
 
     transform_on_eval: bool
     transform_on_train: bool
+    transform_on_set_train_data: bool
 
     def forward(self, X: Tensor) -> Tensor:
         r"""Transform the inputs to a model.
@@ -94,23 +95,27 @@ class InputTransform(Module, ABC):
             )
         )
 
+    def set_train_data_transform(self, X: Tensor) -> Tensor:
+        r"""Apply transforms for setting training data.
+
+        Args:
+            X: A `batch_shape x n x d`-dim tensor of inputs.
+
+        Returns:
+            A `batch_shape x n x d`-dim tensor of (transformed) inputs.
+        """
+        if self.transform_on_set_train_data:
+            return self.transform(X)
+        return X
+
 
 class ChainedInputTransform(InputTransform, ModuleDict):
     r"""An input transform representing the chaining of individual transforms"""
 
-    def __init__(
-        self,
-        transform_on_train: bool = True,
-        transform_on_eval: bool = True,
-        **transforms: InputTransform,
-    ) -> None:
+    def __init__(self, **transforms: InputTransform) -> None:
         r"""Chaining of input transforms.
 
         Args:
-            transform_on_train: A boolean indicating whether to apply the
-                transforms in train() mode. Default: True
-            transform_on_eval: A boolean indicating whether to apply the
-                transforms in eval() mode. Default: True
             transforms: The transforms to chain. Internally, the names of the
                 kwargs are used as the keys for accessing the individual
                 transforms on the module.
@@ -126,8 +131,13 @@ class ChainedInputTransform(InputTransform, ModuleDict):
 
         """
         super().__init__(OrderedDict(transforms))
-        self.transform_on_train = transform_on_train
-        self.transform_on_eval = transform_on_eval
+        self.transform_on_train = False
+        self.transform_on_eval = False
+        self.transform_on_set_train_data = False
+        for tf in transforms.values():
+            self.transform_on_train |= tf.transform_on_train
+            self.transform_on_eval |= tf.transform_on_eval
+            self.transform_on_set_train_data |= tf.transform_on_set_train_data
 
     def transform(self, X: Tensor) -> Tensor:
         r"""Transform the inputs to a model.
@@ -171,6 +181,19 @@ class ChainedInputTransform(InputTransform, ModuleDict):
         return super().equals(other=other) and all(
             t1 == t2 for t1, t2 in zip(self.values(), other.values())
         )
+
+    def set_train_data_transform(self, X: Tensor) -> Tensor:
+        r"""Apply transforms for setting training data.
+
+        Args:
+            X: A `batch_shape x n x d`-dim tensor of inputs.
+
+        Returns:
+            A `batch_shape x n x d`-dim tensor of (transformed) inputs.
+        """
+        for tf in self.values():
+            X = tf.set_train_data_transform(X)
+        return X
 
 
 class ReversibleInputTransform(InputTransform, ABC):
@@ -256,6 +279,7 @@ class Normalize(ReversibleInputTransform):
         batch_shape: torch.Size = torch.Size(),  # noqa: B008
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
+        transform_on_set_train_data: bool = False,
         reverse: bool = False,
     ) -> None:
         r"""Normalize the inputs to the unit cube.
@@ -271,6 +295,8 @@ class Normalize(ReversibleInputTransform):
                 transforms in train() mode. Default: True
             transform_on_eval: A boolean indicating whether to apply the
                 transform in eval() mode. Default: True
+            transform_on_set_train_data: A boolean indicating whether to apply the
+                transform when setting training inputs on the mode. Default: False
             reverse: A boolean indicating whether the forward pass should untransform
                 the inputs.
         """
@@ -292,6 +318,7 @@ class Normalize(ReversibleInputTransform):
         self._d = d
         self.transform_on_train = transform_on_train
         self.transform_on_eval = transform_on_eval
+        self.transform_on_set_train_data = transform_on_set_train_data
         self.reverse = reverse
 
     def _transform(self, X: Tensor) -> Tensor:
