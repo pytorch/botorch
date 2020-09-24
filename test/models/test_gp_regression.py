@@ -15,7 +15,7 @@ from botorch.models.gp_regression import (
     HeteroskedasticSingleTaskGP,
     SingleTaskGP,
 )
-from botorch.models.transforms import Standardize
+from botorch.models.transforms import Normalize, Standardize
 from botorch.models.utils import add_output_dim
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling import SobolQMCNormalSampler
@@ -36,27 +36,45 @@ from gpytorch.priors import GammaPrior
 
 
 class TestSingleTaskGP(BotorchTestCase):
-    def _get_model_and_data(self, batch_shape, m, outcome_transform=None, **tkwargs):
+    def _get_model_and_data(
+        self, batch_shape, m, outcome_transform=None, input_transform=None, **tkwargs
+    ):
         train_X, train_Y = _get_random_data(
             batch_shape=batch_shape, num_outputs=m, **tkwargs
         )
-        model_kwargs = {"train_X": train_X, "train_Y": train_Y}
-        if outcome_transform is not None:
-            model_kwargs["outcome_transform"] = outcome_transform
+        model_kwargs = {
+            "train_X": train_X,
+            "train_Y": train_Y,
+            "outcome_transform": outcome_transform,
+            "input_transform": input_transform,
+        }
         model = SingleTaskGP(**model_kwargs)
         return model, model_kwargs
 
     def test_gp(self):
-        for batch_shape, m, dtype, use_octf in itertools.product(
+        bounds = torch.tensor([[-1.0], [1.0]])
+        for batch_shape, m, dtype, use_octf, use_intf in itertools.product(
             (torch.Size(), torch.Size([2])),
             (1, 2),
             (torch.float, torch.double),
             (False, True),
+            (False, True),
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
             octf = Standardize(m=m, batch_shape=batch_shape) if use_octf else None
-            model, _ = self._get_model_and_data(
-                batch_shape=batch_shape, m=m, outcome_transform=octf, **tkwargs
+            intf = (
+                Normalize(
+                    d=1, bounds=bounds.to(**tkwargs), transform_on_set_train_data=True
+                )
+                if use_intf
+                else None
+            )
+            model, model_kwargs = self._get_model_and_data(
+                batch_shape=batch_shape,
+                m=m,
+                outcome_transform=octf,
+                input_transform=intf,
+                **tkwargs
             )
             mll = ExactMarginalLogLikelihood(model.likelihood, model).to(**tkwargs)
             with warnings.catch_warnings():
@@ -71,6 +89,14 @@ class TestSingleTaskGP(BotorchTestCase):
             self.assertIsInstance(matern_kernel.lengthscale_prior, GammaPrior)
             if use_octf:
                 self.assertIsInstance(model.outcome_transform, Standardize)
+            if use_intf:
+                self.assertIsInstance(model.input_transform, Normalize)
+                # permute output dim
+                train_X, train_Y, _ = model._transform_tensor_args(
+                    X=model_kwargs["train_X"], Y=model_kwargs["train_Y"]
+                )
+                # check that the train inputs have been transformed and set on the model
+                self.assertTrue(torch.equal(model.train_inputs[0], intf(train_X)))
 
             # test param sizes
             params = dict(model.named_parameters())
@@ -200,7 +226,7 @@ class TestSingleTaskGP(BotorchTestCase):
                         model_kwargs_non_batch["train_Yvar"] = model_kwargs[
                             "train_Yvar"
                         ][0]
-                    if "outcome_transform" in model_kwargs:
+                    if model_kwargs["outcome_transform"] is not None:
                         model_kwargs_non_batch["outcome_transform"] = Standardize(m=m)
                     model_non_batch = type(model)(**model_kwargs_non_batch)
                     model_non_batch.load_state_dict(state_dict_non_batch)
@@ -289,7 +315,9 @@ class TestSingleTaskGP(BotorchTestCase):
 
 
 class TestFixedNoiseGP(TestSingleTaskGP):
-    def _get_model_and_data(self, batch_shape, m, outcome_transform=None, **tkwargs):
+    def _get_model_and_data(
+        self, batch_shape, m, outcome_transform=None, input_transform=None, **tkwargs
+    ):
         train_X, train_Y = _get_random_data(
             batch_shape=batch_shape, num_outputs=m, **tkwargs
         )
@@ -297,9 +325,9 @@ class TestFixedNoiseGP(TestSingleTaskGP):
             "train_X": train_X,
             "train_Y": train_Y,
             "train_Yvar": torch.full_like(train_Y, 0.01),
+            "input_transform": input_transform,
+            "outcome_transform": outcome_transform,
         }
-        if outcome_transform is not None:
-            model_kwargs["outcome_transform"] = outcome_transform
         model = FixedNoiseGP(**model_kwargs)
         return model, model_kwargs
 
@@ -348,7 +376,9 @@ class TestFixedNoiseGP(TestSingleTaskGP):
 
 
 class TestHeteroskedasticSingleTaskGP(TestSingleTaskGP):
-    def _get_model_and_data(self, batch_shape, m, outcome_transform=None, **tkwargs):
+    def _get_model_and_data(
+        self, batch_shape, m, outcome_transform=None, input_transform=None, **tkwargs
+    ):
         with manual_seed(0):
             train_X, train_Y = _get_random_data(
                 batch_shape=batch_shape, num_outputs=m, **tkwargs
@@ -358,9 +388,9 @@ class TestHeteroskedasticSingleTaskGP(TestSingleTaskGP):
             "train_X": train_X,
             "train_Y": train_Y,
             "train_Yvar": train_Yvar,
+            "input_transform": input_transform,
+            "outcome_transform": outcome_transform,
         }
-        if outcome_transform is not None:
-            model_kwargs["outcome_transform"] = outcome_transform
         model = HeteroskedasticSingleTaskGP(**model_kwargs)
         return model, model_kwargs
 

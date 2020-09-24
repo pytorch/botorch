@@ -15,9 +15,10 @@ import warnings
 from copy import deepcopy
 from typing import Any, Callable
 
-from botorch.exceptions.errors import UnsupportedError
+from botorch.exceptions.errors import BotorchError, UnsupportedError
 from botorch.exceptions.warnings import BotorchWarning, OptimizationWarning
 from botorch.models.converter import batched_to_model_list, model_list_to_batched
+from botorch.models.gp_regression import HeteroskedasticSingleTaskGP
 from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
 from botorch.optim.fit import fit_gpytorch_scipy
 from botorch.optim.utils import sample_all_priors
@@ -91,6 +92,17 @@ def fit_gpytorch_model(
             )
             model_ = model_list_to_batched(mll_.model)
             mll.model.load_state_dict(model_.state_dict())
+            # setting the transformed inputs is necessary because gpytorch
+            # stores the raw training inputs on the ExactGP in the
+            # ExactGP.__init__ call. At evaluation time, the test inputs will
+            # already be in the transformed space if some transforms have
+            # transform_on_eval set to False. ExactGP.__call__ will
+            # concatenate the test points with the training inputs. Therefore,
+            # it is important to set the ExactGP's train_inputs to also be
+            # transformed data using all transforms (including the transforms
+            # with transform_on_train set to True).
+            mll.train()
+            _set_transformed_inputs(mll=mll)
             if tf is not None:
                 mll.model.outcome_transform = tf
             return mll.eval()
@@ -113,6 +125,7 @@ def fit_gpytorch_model(
                 sample_all_priors(mll.model)
             mll, _ = optimizer(mll, track_iterations=False, **kwargs)
             if not any(issubclass(w.category, OptimizationWarning) for w in ws):
+                _set_transformed_inputs(mll=mll)
                 mll.eval()
                 return mll
             retry += 1
@@ -120,3 +133,27 @@ def fit_gpytorch_model(
 
     warnings.warn("Fitting failed on all retries.", OptimizationWarning)
     return mll.eval()
+
+
+def _set_transformed_inputs(mll: MarginalLogLikelihood) -> None:
+    r"""Update training inputs with transformed inputs.
+
+    Args:
+        mll: The marginal likelihood.
+    """
+    models = (
+        mll.model.models if isinstance(mll, SumMarginalLogLikelihood) else [mll.model]
+    )
+    for m in models:
+        if hasattr(m, "input_transform"):
+            X_tf = m.input_transform.set_train_data_transform(m.train_inputs[0])
+            if not hasattr(m, "set_train_data"):
+                raise BotorchError(
+                    "fit_gpytorch_model requires that a model has a set_train_data "
+                    "method when an input_transform is used."
+                )
+            m.set_train_data(X_tf, strict=False)
+            # TODO: override set_train_data in HeteroskedasticSingleTaskGP to do this
+            # automatically
+            if isinstance(m, HeteroskedasticSingleTaskGP):
+                m.likelihood.noise_covar.noise_model.set_train_data(X_tf, strict=False)

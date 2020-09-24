@@ -320,6 +320,7 @@ class Normalize(ReversibleInputTransform):
         self.transform_on_eval = transform_on_eval
         self.transform_on_set_train_data = transform_on_set_train_data
         self.reverse = reverse
+        self.batch_shape = batch_shape
 
     def _transform(self, X: Tensor) -> Tensor:
         r"""Normalize the inputs.

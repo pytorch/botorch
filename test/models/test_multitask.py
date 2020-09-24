@@ -4,6 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import itertools
 import math
 import warnings
 
@@ -11,6 +12,7 @@ import torch
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.fit import fit_gpytorch_model
 from botorch.models.multitask import FixedNoiseMultiTaskGP, MultiTaskGP
+from botorch.models.transforms.input import Normalize
 from botorch.posteriors import GPyTorchPosterior
 from botorch.utils.containers import TrainingData
 from botorch.utils.testing import BotorchTestCase
@@ -37,13 +39,15 @@ def _get_random_mt_data(**tkwargs):
     return train_X, train_Y
 
 
-def _get_model(**tkwargs):
-    return _get_model_and_training_data(**tkwargs)[0]
+def _get_model(input_transform=None, **tkwargs):
+    return _get_model_and_training_data(input_transform=input_transform, **tkwargs)[0]
 
 
-def _get_model_and_training_data(**tkwargs):
+def _get_model_and_training_data(input_transform=None, **tkwargs):
     train_X, train_Y = _get_random_mt_data(**tkwargs)
-    model = MultiTaskGP(train_X, train_Y, task_feature=1)
+    model = MultiTaskGP(
+        train_X, train_Y, task_feature=1, input_transform=input_transform
+    )
     return model.to(**tkwargs), train_X, train_Y
 
 
@@ -53,14 +57,18 @@ def _get_model_single_output(**tkwargs):
     return model.to(**tkwargs)
 
 
-def _get_fixed_noise_model(**tkwargs):
-    return _get_fixed_noise_model_and_training_data(**tkwargs)[0]
+def _get_fixed_noise_model(input_transform=None, **tkwargs):
+    return _get_fixed_noise_model_and_training_data(
+        input_transform=input_transform, **tkwargs
+    )[0]
 
 
-def _get_fixed_noise_model_and_training_data(**tkwargs):
+def _get_fixed_noise_model_and_training_data(input_transform=None, **tkwargs):
     train_X, train_Y = _get_random_mt_data(**tkwargs)
     train_Yvar = torch.full_like(train_Y, 0.05)
-    model = FixedNoiseMultiTaskGP(train_X, train_Y, train_Yvar, task_feature=1)
+    model = FixedNoiseMultiTaskGP(
+        train_X, train_Y, train_Yvar, task_feature=1, input_transform=input_transform
+    )
     return model.to(**tkwargs), train_X, train_Y, train_Yvar
 
 
@@ -100,9 +108,21 @@ def _get_fixed_noise_and_prior_model(**tkwargs):
 
 class TestMultiTaskGP(BotorchTestCase):
     def test_MultiTaskGP(self):
-        for dtype in (torch.float, torch.double):
+        bounds = torch.tensor([[-1.0, 0.0], [1.0, 1.0]])
+        for dtype, use_intf in itertools.product(
+            (torch.float, torch.double), (False, True)
+        ):
             tkwargs = {"device": self.device, "dtype": dtype}
-            model = _get_model(**tkwargs)
+            intf = (
+                Normalize(
+                    d=2, bounds=bounds.to(**tkwargs), transform_on_set_train_data=True
+                )
+                if use_intf
+                else None
+            )
+            model, train_X, _ = _get_model_and_training_data(
+                input_transform=intf, **tkwargs
+            )
             self.assertIsInstance(model, MultiTaskGP)
             self.assertEqual(model.num_outputs, 2)
             self.assertIsInstance(model.likelihood, GaussianLikelihood)
@@ -116,6 +136,8 @@ class TestMultiTaskGP(BotorchTestCase):
             self.assertEqual(
                 model.task_covar_module.covar_factor.shape[-1], model._rank
             )
+            if use_intf:
+                self.assertIsInstance(model.input_transform, Normalize)
 
             # test model fitting
             mll = ExactMarginalLogLikelihood(model.likelihood, model)
@@ -130,6 +152,13 @@ class TestMultiTaskGP(BotorchTestCase):
             self.assertIsInstance(posterior_f.mvn, MultitaskMultivariateNormal)
             self.assertEqual(posterior_f.mean.shape, torch.Size([2, 2]))
             self.assertEqual(posterior_f.variance.shape, torch.Size([2, 2]))
+
+            # check that training data has input transform applied
+            # check that the train inputs have been transformed and set on the model
+            if use_intf:
+                self.assertTrue(
+                    torch.equal(model.train_inputs[0], model.input_transform(train_X))
+                )
 
             # test that posterior w/ observation noise raises appropriate error
             with self.assertRaises(NotImplementedError):
@@ -221,9 +250,21 @@ class TestMultiTaskGP(BotorchTestCase):
 
 class TestFixedNoiseMultiTaskGP(BotorchTestCase):
     def test_FixedNoiseMultiTaskGP(self):
-        for dtype in (torch.float, torch.double):
+        bounds = torch.tensor([[-1.0, 0.0], [1.0, 1.0]])
+        for dtype, use_intf in itertools.product(
+            (torch.float, torch.double), (False, True)
+        ):
             tkwargs = {"device": self.device, "dtype": dtype}
-            model = _get_fixed_noise_model(**tkwargs)
+            intf = (
+                Normalize(
+                    d=2, bounds=bounds.to(**tkwargs), transform_on_set_train_data=True
+                )
+                if use_intf
+                else None
+            )
+            model, train_X, _, _ = _get_fixed_noise_model_and_training_data(
+                input_transform=intf, **tkwargs
+            )
             self.assertIsInstance(model, FixedNoiseMultiTaskGP)
             self.assertEqual(model.num_outputs, 2)
             self.assertIsInstance(model.likelihood, FixedNoiseGaussianLikelihood)
@@ -237,12 +278,21 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
             self.assertEqual(
                 model.task_covar_module.covar_factor.shape[-1], model._rank
             )
+            if use_intf:
+                self.assertIsInstance(model.input_transform, Normalize)
 
             # test model fitting
             mll = ExactMarginalLogLikelihood(model.likelihood, model)
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=OptimizationWarning)
                 mll = fit_gpytorch_model(mll, options={"maxiter": 1}, max_retries=1)
+
+            # check that training data has input transform applied
+            # check that the train inputs have been transformed and set on the model
+            if use_intf:
+                self.assertTrue(
+                    torch.equal(model.train_inputs[0], model.input_transform(train_X))
+                )
 
             # test posterior
             test_x = torch.rand(2, 1, **tkwargs)
@@ -290,6 +340,8 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
             # test that bad output task throws correct error
             with self.assertRaises(RuntimeError):
                 FixedNoiseMultiTaskGP(train_X, train_Y, train_Yvar, 0, output_tasks=[2])
+
+            # test input transform
 
     def test_FixedNoiseMultiTaskGP_single_output(self):
         for dtype in (torch.float, torch.double):
