@@ -12,6 +12,7 @@ from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.models.transforms.input import (
     ChainedInputTransform,
     InputTransform,
+    Log10,
     Normalize,
     Round,
 )
@@ -351,3 +352,56 @@ class TestInputTransforms(BotorchTestCase):
                 self.assertTrue(
                     torch.equal(round_tf.set_train_data_transform(X), X_rounded)
                 )
+
+    def test_log10_transform(self):
+        for dtype in (torch.float, torch.double):
+            # basic init
+            indices = [0, 2]
+            log_tf = Log10(indices=indices)
+            self.assertEqual(log_tf.indices.tolist(), indices)
+            self.assertTrue(log_tf.training)
+
+            # basic usage
+            for batch_shape in (torch.Size(), torch.Size([3])):
+                X = 1 + 5 * torch.rand(
+                    *batch_shape, 4, 3, device=self.device, dtype=dtype
+                )
+                log_tf = Log10(indices=indices)
+                X_tf = log_tf(X)
+                expected_X_tf = X.clone()
+                expected_X_tf[..., indices] = expected_X_tf[..., indices].log10()
+                # check non-integers parameters are unchanged
+                self.assertTrue(torch.equal(expected_X_tf, X_tf))
+                untransformed_X = log_tf.untransform(X_tf)
+                self.assertTrue(torch.allclose(untransformed_X, X))
+
+                # test no transform on eval
+                log_tf = Log10(indices=indices, transform_on_eval=False)
+                X_tf = log_tf(X)
+                self.assertFalse(torch.equal(X, X_tf))
+                log_tf.eval()
+                X_tf = log_tf(X)
+                self.assertTrue(torch.equal(X, X_tf))
+
+                # test no transform on train
+                log_tf = Log10(indices=indices, transform_on_train=False)
+                X_tf = log_tf(X)
+                self.assertTrue(torch.equal(X, X_tf))
+                log_tf.eval()
+                X_tf = log_tf(X)
+                self.assertFalse(torch.equal(X, X_tf))
+
+                # test equals
+                log_tf2 = Log10(indices=indices, transform_on_train=False)
+                self.assertTrue(log_tf.equals(log_tf2))
+                # test different transform_on_train
+                log_tf2 = Log10(indices=indices)
+                self.assertFalse(log_tf.equals(log_tf2))
+                # test different indices
+                log_tf2 = Log10(indices=[0, 1], transform_on_train=False)
+                self.assertFalse(log_tf.equals(log_tf2))
+
+                # test set_train_data_transform
+                self.assertTrue(torch.equal(log_tf.set_train_data_transform(X), X))
+                log_tf.transform_on_set_train_data = True
+                self.assertTrue(torch.equal(log_tf.set_train_data_transform(X), X_tf))
