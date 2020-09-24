@@ -8,10 +8,11 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections import OrderedDict
-from typing import Optional
+from typing import List, Optional
 
 import torch
-from botorch.exceptions.errors import BotorchTensorDimensionError
+from botorch.exceptions.errors import BotorchTensorDimensionError, UnsupportedError
+from botorch.utils.rounding import approximate_round
 from torch import Tensor
 from torch.nn import Module, ModuleDict
 
@@ -376,4 +377,108 @@ class Normalize(ReversibleInputTransform):
             super().equals(other=other)
             and (self._d == other._d)
             and (self.learn_bounds == other.learn_bounds)
+        )
+
+
+class Round(InputTransform):
+    r"""A rounding transformation for integer inputs.
+
+    This will typically be used in conjunction with normalization:
+        Case 1: eval() mode
+            In eval() mode (i.e. after training), the inputs pass
+            would typically be normalized to the unit cube (e.g.
+            during candidate optimization).
+                1. These are unnormalized back to the raw input space.
+                2. The integers are rounded.
+                3. All values are normalized to the unit cube
+        Case 2: train() mode
+            In train() mode, the inputs can either (a) be normalized
+            to the unit cube or (b) provided using their raw values.
+            In the case of (a) transform_on_train should be set to True,
+            so that the normalized inputs are unnormalized before rounding.
+            In the case of (b) transform_on_train should be set to False,
+            so that the raw inputs are rounded and then normalized to the unit
+            cube.
+
+    This transformation uses differentiable approximate rounding by default.
+    The rounding function is approximated with a piece-wise function where
+    each piece is a hyperbolic tangent function.
+
+    Example:
+        >>> unnormalize_tf = Normalize(
+        >>>     d=d,
+        >>>     bounds=bounds,
+        >>>     transform_on_eval=True,
+        >>>     transform_on_train=True,
+        >>>     reverse=True,
+        >>> )
+        >>> round_tf = Round(integer_indices)
+        >>> normalize_tf = Normalize(d=d, bounds=bounds)
+        >>> tf = ChainedInputTransform(
+        >>>     tf1=unnormalize_tf, tf2=round_tf, tf3=normalize_tf
+        >>> )
+    """
+
+    def __init__(
+        self,
+        indices: List[int],
+        transform_on_train: bool = True,
+        transform_on_eval: bool = True,
+        transform_on_set_train_data: bool = False,
+        approximate: bool = True,
+        tau: float = 1e-3,
+    ) -> None:
+        r"""Initialize transform.
+
+        Args:
+            indices: The indices of the integer inputs
+            transform_on_train: A boolean indicating whether to apply the
+                transforms in train() mode. Default: True
+            transform_on_eval: A boolean indicating whether to apply the
+                transform in eval() mode. Default: True
+            transform_on_set_train_data: A boolean indicating whether to apply the
+                transform when setting training inputs on the mode. Default: False
+            approximate: A boolean indicating whether approximate or exact
+                rounding should be used. Default: approximate
+            tau: The temperature parameter for approximate rounding
+        """
+        super().__init__()
+        self.transform_on_train = transform_on_train
+        self.transform_on_eval = transform_on_eval
+        self.transform_on_set_train_data = transform_on_set_train_data
+        self.register_buffer("indices", torch.tensor(indices, dtype=torch.long))
+        self.approximate = approximate
+        self.tau = tau
+
+    def transform(self, X: Tensor) -> Tensor:
+        r"""Round the inputs.
+
+        Args:
+            X: A `batch_shape x n x d`-dim tensor of inputs.
+
+        Returns:
+            A `batch_shape x n x d`-dim tensor of rounded inputs.
+        """
+        X_rounded = X.clone()
+        X_int = X_rounded[..., self.indices]
+        if self.approximate:
+            X_int = approximate_round(X_int, tau=self.tau)
+        else:
+            X_int = X_int.round()
+        X_rounded[..., self.indices] = X_int
+        return X_rounded
+
+    def equals(self, other: InputTransform) -> bool:
+        r"""Check if another input transform is equivalent.
+
+        Args:
+            other: Another input transform
+
+        Returns:
+            A boolean indicating if the other transform is equivalent.
+        """
+        return (
+            super().equals(other=other)
+            and self.approximate == other.approximate
+            and self.tau == other.tau
         )
