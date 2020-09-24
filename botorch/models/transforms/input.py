@@ -11,7 +11,7 @@ from collections import OrderedDict
 from typing import List, Optional
 
 import torch
-from botorch.exceptions.errors import BotorchTensorDimensionError, UnsupportedError
+from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.utils.rounding import approximate_round
 from torch import Tensor
 from torch.nn import Module, ModuleDict
