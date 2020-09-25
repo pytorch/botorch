@@ -11,7 +11,7 @@ from collections import OrderedDict
 from typing import List, Optional
 
 import torch
-from botorch.exceptions.errors import BotorchTensorDimensionError, UnsupportedError
+from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.utils.rounding import approximate_round
 from torch import Tensor
 from torch.nn import Module, ModuleDict
@@ -383,22 +383,21 @@ class Normalize(ReversibleInputTransform):
 class Round(InputTransform):
     r"""A rounding transformation for integer inputs.
 
-    This will typically be used in conjunction with normalization:
-        Case 1: eval() mode
-            In eval() mode (i.e. after training), the inputs pass
-            would typically be normalized to the unit cube (e.g.
-            during candidate optimization).
-                1. These are unnormalized back to the raw input space.
-                2. The integers are rounded.
-                3. All values are normalized to the unit cube
-        Case 2: train() mode
-            In train() mode, the inputs can either (a) be normalized
-            to the unit cube or (b) provided using their raw values.
-            In the case of (a) transform_on_train should be set to True,
-            so that the normalized inputs are unnormalized before rounding.
-            In the case of (b) transform_on_train should be set to False,
-            so that the raw inputs are rounded and then normalized to the unit
-            cube.
+    This will typically be used in conjunction with normalization as
+    follows:
+
+    In eval() mode (i.e. after training), the inputs pass
+    would typically be normalized to the unit cube (e.g. during candidate
+    optimization). 1. These are unnormalized back to the raw input space.
+    2. The integers are rounded. 3. All values are normalized to the unit
+    cube.
+
+    In train() mode, the inputs can either (a) be normalized to the unit
+    cube or (b) provided using their raw values. In the case of (a)
+    transform_on_train should be set to True, so that the normalized inputs
+    are unnormalized before rounding. In the case of (b) transform_on_train
+    should be set to False, so that the raw inputs are rounded and then
+    normalized to the unit cube.
 
     This transformation uses differentiable approximate rounding by default.
     The rounding function is approximated with a piece-wise function where
