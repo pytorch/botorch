@@ -22,6 +22,11 @@ Objective
 .. automodule:: botorch.utils.objective
 		:members:
 
+Rounding
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.utils.rounding
+		:members:
+
 Sampling
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.utils.sampling
