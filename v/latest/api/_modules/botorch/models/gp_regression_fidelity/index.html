@@ -50,6 +50,7 @@
 <span class="kn">from</span> <span class="nn">botorch.models.kernels.linear_truncated_fidelity</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">LinearTruncatedFidelityKernel</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">botorch.models.transforms.input</span> <span class="kn">import</span> <span class="n">InputTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">OutcomeTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.containers</span> <span class="kn">import</span> <span class="n">TrainingData</span>
 <span class="kn">from</span> <span class="nn">gpytorch.kernels.kernel</span> <span class="kn">import</span> <span class="n">ProductKernel</span>
@@ -88,6 +89,8 @@
 <span class="sd">                training data during instantiation and to the posterior during</span>
 <span class="sd">                inference (that is, the `Posterior` obtained by calling</span>
 <span class="sd">                `.posterior` on the model will be on the original scale).</span>
+<span class="sd">        input_transform: An input transform that is applied in the model's</span>
+<span class="sd">                forward pass.</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; train_X = torch.rand(20, 4)</span>
@@ -105,6 +108,7 @@
         <span class="n">nu</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.5</span><span class="p">,</span>
         <span class="n">likelihood</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Likelihood</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_init_args</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">"iteration_fidelity"</span><span class="p">:</span> <span class="n">iteration_fidelity</span><span class="p">,</span>
@@ -117,9 +121,15 @@
             <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
                 <span class="s2">"SingleTaskMultiFidelityGP requires at least one fidelity parameter."</span>
             <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_set_dimensions</span><span class="p">(</span><span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">input_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">input_transform</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
+        <span class="n">transformed_X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_dimensions</span><span class="p">(</span><span class="n">train_X</span><span class="o">=</span><span class="n">transformed_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">)</span>
         <span class="n">covar_module</span><span class="p">,</span> <span class="n">subset_batch_dict</span> <span class="o">=</span> <span class="n">_setup_multifidelity_covar_module</span><span class="p">(</span>
-            <span class="n">dim</span><span class="o">=</span><span class="n">train_X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+            <span class="n">dim</span><span class="o">=</span><span class="n">transformed_X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span>
             <span class="n">aug_batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span><span class="p">,</span>
             <span class="n">iteration_fidelity</span><span class="o">=</span><span class="n">iteration_fidelity</span><span class="p">,</span>
             <span class="n">data_fidelity</span><span class="o">=</span><span class="n">data_fidelity</span><span class="p">,</span>
@@ -132,6 +142,7 @@
             <span class="n">likelihood</span><span class="o">=</span><span class="n">likelihood</span><span class="p">,</span>
             <span class="n">covar_module</span><span class="o">=</span><span class="n">covar_module</span><span class="p">,</span>
             <span class="n">outcome_transform</span><span class="o">=</span><span class="n">outcome_transform</span><span class="p">,</span>
+            <span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_subset_batch_dict</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">"likelihood.noise_covar.raw_noise"</span><span class="p">:</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
@@ -189,6 +200,9 @@
 <span class="sd">            training data during instantiation and to the posterior during</span>
 <span class="sd">            inference (that is, the `Posterior` obtained by calling</span>
 <span class="sd">            `.posterior` on the model will be on the original scale).</span>
+<span class="sd">        input_transform: An input transform that is applied in the model's</span>
+<span class="sd">                forward pass.</span>
+
 
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; train_X = torch.rand(20, 4)</span>
@@ -212,14 +226,20 @@
         <span class="n">linear_truncated</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">nu</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.5</span><span class="p">,</span>
         <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">iteration_fidelity</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">data_fidelity</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
                 <span class="s2">"FixedNoiseMultiFidelityGP requires at least one fidelity parameter."</span>
             <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_set_dimensions</span><span class="p">(</span><span class="n">train_X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">input_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">input_transform</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
+        <span class="n">transformed_X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span>
+            <span class="n">X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_dimensions</span><span class="p">(</span><span class="n">train_X</span><span class="o">=</span><span class="n">transformed_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">)</span>
         <span class="n">covar_module</span><span class="p">,</span> <span class="n">subset_batch_dict</span> <span class="o">=</span> <span class="n">_setup_multifidelity_covar_module</span><span class="p">(</span>
-            <span class="n">dim</span><span class="o">=</span><span class="n">train_X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+            <span class="n">dim</span><span class="o">=</span><span class="n">transformed_X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span>
             <span class="n">aug_batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span><span class="p">,</span>
             <span class="n">iteration_fidelity</span><span class="o">=</span><span class="n">iteration_fidelity</span><span class="p">,</span>
             <span class="n">data_fidelity</span><span class="o">=</span><span class="n">data_fidelity</span><span class="p">,</span>
@@ -232,6 +252,7 @@
             <span class="n">train_Yvar</span><span class="o">=</span><span class="n">train_Yvar</span><span class="p">,</span>
             <span class="n">covar_module</span><span class="o">=</span><span class="n">covar_module</span><span class="p">,</span>
             <span class="n">outcome_transform</span><span class="o">=</span><span class="n">outcome_transform</span><span class="p">,</span>
+            <span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_subset_batch_dict</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">"likelihood.noise_covar.raw_noise"</span><span class="p">:</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span>

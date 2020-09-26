@@ -193,6 +193,30 @@ output models (<cite>m</cite> &gt; 1).</p></li>
 </dl>
 </dd></dl>
 </div>
+<div class="section" id="module-botorch.utils.rounding">
+<span id="rounding"></span><h2>Rounding<a class="headerlink" href="#module-botorch.utils.rounding" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt id="botorch.utils.rounding.approximate_round">
+<code class="sig-prename descclassname">botorch.utils.rounding.</code><code class="sig-name descname">approximate_round</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="n">tau</span><span class="o">=</span><span class="default_value">0.001</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/rounding.html#approximate_round"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.rounding.approximate_round" title="Permalink to this definition">¶</a></dt>
+<dd><p>Diffentiable approximate rounding function.</p>
+<p>This method is a piecewise approximation of a rounding function where
+each piece is a hyperbolic tangent function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – The tensor to round to the nearest integer (element-wise).</p></li>
+<li><p><strong>tau</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – A temperature hyperparameter.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The approximately rounded input tensor.</p>
+</dd>
+</dl>
+</dd></dl>
+</div>
 <div class="section" id="module-botorch.utils.sampling">
 <span id="sampling"></span><h2>Sampling<a class="headerlink" href="#module-botorch.utils.sampling" title="Permalink to this headline">¶</a></h2>
 <p>Utilities for MC and qMC sampling.</p>

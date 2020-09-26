@@ -41,9 +41,10 @@
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span>
 
-<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchError</span><span class="p">,</span> <span class="n">UnsupportedError</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">BotorchWarning</span><span class="p">,</span> <span class="n">OptimizationWarning</span>
 <span class="kn">from</span> <span class="nn">botorch.models.converter</span> <span class="kn">import</span> <span class="n">batched_to_model_list</span><span class="p">,</span> <span class="n">model_list_to_batched</span>
+<span class="kn">from</span> <span class="nn">botorch.models.gp_regression</span> <span class="kn">import</span> <span class="n">HeteroskedasticSingleTaskGP</span>
 <span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="kn">import</span> <span class="n">BatchedMultiOutputGPyTorchModel</span>
 <span class="kn">from</span> <span class="nn">botorch.optim.fit</span> <span class="kn">import</span> <span class="n">fit_gpytorch_scipy</span>
 <span class="kn">from</span> <span class="nn">botorch.optim.utils</span> <span class="kn">import</span> <span class="n">sample_all_priors</span>
@@ -117,6 +118,17 @@
             <span class="p">)</span>
             <span class="n">model_</span> <span class="o">=</span> <span class="n">model_list_to_batched</span><span class="p">(</span><span class="n">mll_</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
             <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">model_</span><span class="o">.</span><span class="n">state_dict</span><span class="p">())</span>
+            <span class="c1"># setting the transformed inputs is necessary because gpytorch</span>
+            <span class="c1"># stores the raw training inputs on the ExactGP in the</span>
+            <span class="c1"># ExactGP.__init__ call. At evaluation time, the test inputs will</span>
+            <span class="c1"># already be in the transformed space if some transforms have</span>
+            <span class="c1"># transform_on_eval set to False. ExactGP.__call__ will</span>
+            <span class="c1"># concatenate the test points with the training inputs. Therefore,</span>
+            <span class="c1"># it is important to set the ExactGP's train_inputs to also be</span>
+            <span class="c1"># transformed data using all transforms (including the transforms</span>
+            <span class="c1"># with transform_on_train set to True).</span>
+            <span class="n">mll</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+            <span class="n">_set_transformed_inputs</span><span class="p">(</span><span class="n">mll</span><span class="o">=</span><span class="n">mll</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">tf</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">outcome_transform</span> <span class="o">=</span> <span class="n">tf</span>
             <span class="k">return</span> <span class="n">mll</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
@@ -139,6 +151,7 @@
                 <span class="n">sample_all_priors</span><span class="p">(</span><span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
             <span class="n">mll</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">optimizer</span><span class="p">(</span><span class="n">mll</span><span class="p">,</span> <span class="n">track_iterations</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="nb">issubclass</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">OptimizationWarning</span><span class="p">)</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">ws</span><span class="p">):</span>
+                <span class="n">_set_transformed_inputs</span><span class="p">(</span><span class="n">mll</span><span class="o">=</span><span class="n">mll</span><span class="p">)</span>
                 <span class="n">mll</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
                 <span class="k">return</span> <span class="n">mll</span>
             <span class="n">retry</span> <span class="o">+=</span> <span class="mi">1</span>
@@ -146,6 +159,30 @@
 
     <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">"Fitting failed on all retries."</span><span class="p">,</span> <span class="n">OptimizationWarning</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">mll</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span></div>
+
+
+<span class="k">def</span> <span class="nf">_set_transformed_inputs</span><span class="p">(</span><span class="n">mll</span><span class="p">:</span> <span class="n">MarginalLogLikelihood</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""Update training inputs with transformed inputs.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        mll: The marginal likelihood.</span>
+<span class="sd">    """</span>
+    <span class="n">models</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">models</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mll</span><span class="p">,</span> <span class="n">SumMarginalLogLikelihood</span><span class="p">)</span> <span class="k">else</span> <span class="p">[</span><span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">models</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="s2">"input_transform"</span><span class="p">):</span>
+            <span class="n">X_tf</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">input_transform</span><span class="o">.</span><span class="n">set_train_data_transform</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="s2">"set_train_data"</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">BotorchError</span><span class="p">(</span>
+                    <span class="s2">"fit_gpytorch_model requires that a model has a set_train_data "</span>
+                    <span class="s2">"method when an input_transform is used."</span>
+                <span class="p">)</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">set_train_data</span><span class="p">(</span><span class="n">X_tf</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="c1"># TODO: override set_train_data in HeteroskedasticSingleTaskGP to do this</span>
+            <span class="c1"># automatically</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">HeteroskedasticSingleTaskGP</span><span class="p">):</span>
+                <span class="n">m</span><span class="o">.</span><span class="n">likelihood</span><span class="o">.</span><span class="n">noise_covar</span><span class="o">.</span><span class="n">noise_model</span><span class="o">.</span><span class="n">set_train_data</span><span class="p">(</span><span class="n">X_tf</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>

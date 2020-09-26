@@ -78,6 +78,8 @@
 </li>
 <li><a href="utils.html#botorch.utils.objective.apply_constraints_nonnegative_soft">apply_constraints_nonnegative_soft() (in module botorch.utils.objective)</a>
 </li>
+<li><a href="utils.html#botorch.utils.rounding.approximate_round">approximate_round() (in module botorch.utils.rounding)</a>
+</li>
 <li><a href="test_functions.html#botorch.test_functions.multi_fidelity.AugmentedBranin">AugmentedBranin (class in botorch.test_functions.multi_fidelity)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_fidelity.AugmentedHartmann">AugmentedHartmann (class in botorch.test_functions.multi_fidelity)</a>
@@ -634,6 +636,13 @@
 </li>
 </ul></li>
 <li>
+    botorch.utils.rounding
+
+      <ul>
+<li><a href="utils.html#module-botorch.utils.rounding">module</a>
+</li>
+</ul></li>
+<li>
     botorch.utils.sampling
 
       <ul>
@@ -895,6 +904,8 @@
 <li><a href="models.html#botorch.models.transforms.input.Normalize.equals">(botorch.models.transforms.input.Normalize method)</a>
 </li>
 <li><a href="models.html#botorch.models.transforms.input.ReversibleInputTransform.equals">(botorch.models.transforms.input.ReversibleInputTransform method)</a>
+</li>
+<li><a href="models.html#botorch.models.transforms.input.Round.equals">(botorch.models.transforms.input.Round method)</a>
 </li>
 </ul></li>
 <li><a href="utils.html#botorch.utils.feasible_volume.estimate_feasible_volume">estimate_feasible_volume() (in module botorch.utils.feasible_volume)</a>
@@ -1323,13 +1334,15 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.objective.LinearMCObjective">LinearMCObjective (class in botorch.acquisition.objective)</a>
 </li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="models.html#botorch.models.kernels.linear_truncated_fidelity.LinearTruncatedFidelityKernel">LinearTruncatedFidelityKernel (class in botorch.models.kernels.linear_truncated_fidelity)</a>
 </li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="utils.html#botorch.utils.testing.MockModel.load_state_dict">load_state_dict() (botorch.utils.testing.MockModel method)</a>
 </li>
 <li><a href="models.html#botorch.models.transforms.outcome.Log">Log (class in botorch.models.transforms.outcome)</a>
+</li>
+<li><a href="models.html#botorch.models.transforms.input.Log10">Log10 (class in botorch.models.transforms.input)</a>
 </li>
 <li><a href="settings.html#botorch.settings.log_level">log_level (class in botorch.settings)</a>
 </li>
@@ -1542,6 +1555,8 @@
 <li><a href="utils.html#module-botorch.utils.multi_objective.scalarization">botorch.utils.multi_objective.scalarization</a>
 </li>
 <li><a href="utils.html#module-botorch.utils.objective">botorch.utils.objective</a>
+</li>
+<li><a href="utils.html#module-botorch.utils.rounding">botorch.utils.rounding</a>
 </li>
 <li><a href="utils.html#module-botorch.utils.sampling">botorch.utils.sampling</a>
 </li>
@@ -1795,8 +1810,10 @@
 </li>
 <li><a href="sampling.html#botorch.sampling.samplers.MCSampler.resample">resample (botorch.sampling.samplers.MCSampler attribute)</a>
 </li>
-<li><a href="models.html#botorch.models.transforms.input.Normalize.reverse">reverse (botorch.models.transforms.input.Normalize attribute)</a>
+<li><a href="models.html#botorch.models.transforms.input.Log10.reverse">reverse (botorch.models.transforms.input.Log10 attribute)</a>
 <ul>
+<li><a href="models.html#botorch.models.transforms.input.Normalize.reverse">(botorch.models.transforms.input.Normalize attribute)</a>
+</li>
 <li><a href="models.html#botorch.models.transforms.input.ReversibleInputTransform.reverse">(botorch.models.transforms.input.ReversibleInputTransform attribute)</a>
 </li>
 </ul></li>
@@ -1805,6 +1822,8 @@
 <li><a href="models.html#botorch.models.transforms.input.ReversibleInputTransform">ReversibleInputTransform (class in botorch.models.transforms.input)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Rosenbrock">Rosenbrock (class in botorch.test_functions.synthetic)</a>
+</li>
+<li><a href="models.html#botorch.models.transforms.input.Round">Round (class in botorch.models.transforms.input)</a>
 </li>
 <li><a href="posteriors.html#botorch.posteriors.deterministic.DeterministicPosterior.rsample">rsample() (botorch.posteriors.deterministic.DeterministicPosterior method)</a>
 <ul>
@@ -1844,6 +1863,11 @@
 </li>
 <li><a href="models.html#botorch.models.pairwise_gp.PairwiseGP.set_train_data">set_train_data() (botorch.models.pairwise_gp.PairwiseGP method)</a>
 </li>
+<li><a href="models.html#botorch.models.transforms.input.ChainedInputTransform.set_train_data_transform">set_train_data_transform() (botorch.models.transforms.input.ChainedInputTransform method)</a>
+<ul>
+<li><a href="models.html#botorch.models.transforms.input.InputTransform.set_train_data_transform">(botorch.models.transforms.input.InputTransform method)</a>
+</li>
+</ul></li>
 <li><a href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction.set_X_pending">set_X_pending() (botorch.acquisition.acquisition.AcquisitionFunction method)</a>
 <ul>
 <li><a href="acquisition.html#botorch.acquisition.analytic.AnalyticAcquisitionFunction.set_X_pending">(botorch.acquisition.analytic.AnalyticAcquisitionFunction method)</a>
@@ -1863,10 +1887,10 @@
 </li>
 <li><a href="models.html#botorch.models.gp_regression.SingleTaskGP">SingleTaskGP (class in botorch.models.gp_regression)</a>
 </li>
-<li><a href="models.html#botorch.models.gp_regression_fidelity.SingleTaskMultiFidelityGP">SingleTaskMultiFidelityGP (class in botorch.models.gp_regression_fidelity)</a>
-</li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="models.html#botorch.models.gp_regression_fidelity.SingleTaskMultiFidelityGP">SingleTaskMultiFidelityGP (class in botorch.models.gp_regression_fidelity)</a>
+</li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.SixHumpCamel">SixHumpCamel (class in botorch.test_functions.synthetic)</a>
 </li>
 <li><a href="sampling.html#botorch.sampling.samplers.SobolQMCNormalSampler">SobolQMCNormalSampler (class in botorch.sampling.samplers)</a>
@@ -2104,15 +2128,30 @@
 </li>
 <li><a href="models.html#botorch.models.transforms.input.ReversibleInputTransform.transform">(botorch.models.transforms.input.ReversibleInputTransform method)</a>
 </li>
+<li><a href="models.html#botorch.models.transforms.input.Round.transform">(botorch.models.transforms.input.Round method)</a>
+</li>
 </ul></li>
+<li><a href="models.html#botorch.models.model.Model.transform_inputs">transform_inputs() (botorch.models.model.Model method)</a>
+</li>
 <li><a href="models.html#botorch.models.transforms.input.ChainedInputTransform.transform_on_eval">transform_on_eval (botorch.models.transforms.input.ChainedInputTransform attribute)</a>
 <ul>
 <li><a href="models.html#botorch.models.transforms.input.InputTransform.transform_on_eval">(botorch.models.transforms.input.InputTransform attribute)</a>
+</li>
+<li><a href="models.html#botorch.models.transforms.input.Round.transform_on_eval">(botorch.models.transforms.input.Round attribute)</a>
+</li>
+</ul></li>
+<li><a href="models.html#botorch.models.transforms.input.ChainedInputTransform.transform_on_set_train_data">transform_on_set_train_data (botorch.models.transforms.input.ChainedInputTransform attribute)</a>
+<ul>
+<li><a href="models.html#botorch.models.transforms.input.InputTransform.transform_on_set_train_data">(botorch.models.transforms.input.InputTransform attribute)</a>
+</li>
+<li><a href="models.html#botorch.models.transforms.input.Round.transform_on_set_train_data">(botorch.models.transforms.input.Round attribute)</a>
 </li>
 </ul></li>
 <li><a href="models.html#botorch.models.transforms.input.ChainedInputTransform.transform_on_train">transform_on_train (botorch.models.transforms.input.ChainedInputTransform attribute)</a>
 <ul>
 <li><a href="models.html#botorch.models.transforms.input.InputTransform.transform_on_train">(botorch.models.transforms.input.InputTransform attribute)</a>
+</li>
+<li><a href="models.html#botorch.models.transforms.input.Round.transform_on_train">(botorch.models.transforms.input.Round attribute)</a>
 </li>
 </ul></li>
 <li><a href="posteriors.html#botorch.posteriors.transformed.TransformedPosterior">TransformedPosterior (class in botorch.posteriors.transformed)</a>
