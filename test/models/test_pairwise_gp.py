@@ -14,11 +14,10 @@ from botorch.models.pairwise_gp import PairwiseGP, PairwiseLaplaceMarginalLogLik
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling.pairwise_samplers import PairwiseSobolQMCNormalSampler
 from botorch.utils.testing import BotorchTestCase
-from gpytorch.kernels import RBFKernel
+from gpytorch.kernels import RBFKernel, ScaleKernel
 from gpytorch.kernels.linear_kernel import LinearKernel
-from gpytorch.likelihoods.noise_models import HomoskedasticNoise
 from gpytorch.means import ConstantMean
-from gpytorch.priors import GammaPrior
+from gpytorch.priors import GammaPrior, SmoothedBoxPrior
 
 
 class TestPairwiseGP(BotorchTestCase):
@@ -82,43 +81,25 @@ class TestPairwiseGP(BotorchTestCase):
 
             # test init
             self.assertIsInstance(model.mean_module, ConstantMean)
-            self.assertIsInstance(model.covar_module, RBFKernel)
-            self.assertIsInstance(model.covar_module.lengthscale_prior, GammaPrior)
+            self.assertIsInstance(model.covar_module, ScaleKernel)
+            self.assertIsInstance(model.covar_module.base_kernel, RBFKernel)
+            self.assertIsInstance(
+                model.covar_module.base_kernel.lengthscale_prior, GammaPrior
+            )
+            self.assertIsInstance(
+                model.covar_module.outputscale_prior, SmoothedBoxPrior
+            )
             self.assertEqual(model.num_outputs, 1)
 
-            # test custom noise prior
-            custom_noise_prior = GammaPrior(concentration=2.0, rate=1.0)
-            custom_noise_module = HomoskedasticNoise(noise_prior=custom_noise_prior)
-            custom_m = PairwiseGP(**model_kwargs, noise_module=custom_noise_module)
-            self.assertEqual(
-                custom_m.noise_module.noise_prior.concentration, torch.tensor(2.0)
-            )
-            self.assertEqual(custom_m.noise_module.noise_prior.rate, torch.tensor(1.0))
             # test custom models
             custom_m = PairwiseGP(**model_kwargs, covar_module=LinearKernel())
             self.assertIsInstance(custom_m.covar_module, LinearKernel)
-            # std_noise setter
-            custom_m.std_noise = 123
-            self.assertTrue(torch.all(custom_m.std_noise == 123))
             # prior prediction
             prior_m = PairwiseGP(None, None)
             prior_m.eval()
             post = prior_m.posterior(train_X)
             self.assertIsInstance(post, GPyTorchPosterior)
 
-            # test methods that are not commonly or explicitly used
-            # _calc_covar with observation noise
-            no_noise_cov = model._calc_covar(train_X, train_X, observation_noise=False)
-            noise_cov = model._calc_covar(train_X, train_X, observation_noise=True)
-            diag_diff = (noise_cov - no_noise_cov).diagonal(dim1=-2, dim2=-1)
-            self.assertTrue(
-                torch.allclose(
-                    diag_diff,
-                    model.std_noise.expand(diag_diff.shape),
-                    rtol=1e-4,
-                    atol=1e-5,
-                )
-            )
             # test trying adding jitter
             pd_mat = torch.eye(2, 2)
             with warnings.catch_warnings():
@@ -155,18 +136,6 @@ class TestPairwiseGP(BotorchTestCase):
             posterior = model.posterior(X)
             self.assertIsInstance(posterior, GPyTorchPosterior)
 
-            # test adding observation noise
-            posterior_pred = model.posterior(X, observation_noise=True)
-            self.assertIsInstance(posterior_pred, GPyTorchPosterior)
-            self.assertEqual(posterior_pred.mean.shape, expected_shape)
-            self.assertEqual(posterior_pred.variance.shape, expected_shape)
-            pvar = posterior_pred.variance
-            reshaped_noise = model.std_noise.unsqueeze(-2).expand(
-                posterior.variance.shape
-            )
-            pvar_exp = posterior.variance + reshaped_noise
-            self.assertTrue(torch.allclose(pvar, pvar_exp, rtol=1e-4, atol=1e-5))
-
             # test batch evaluation
             X = torch.rand(2, *batch_shape, 3, X_dim, **tkwargs)
             expected_shape = torch.Size([2]) + batch_shape + torch.Size([3, 1])
@@ -174,16 +143,6 @@ class TestPairwiseGP(BotorchTestCase):
             posterior = model.posterior(X)
             self.assertIsInstance(posterior, GPyTorchPosterior)
             self.assertEqual(posterior.mean.shape, expected_shape)
-            # test adding observation noise in batch mode
-            posterior_pred = model.posterior(X, observation_noise=True)
-            self.assertIsInstance(posterior_pred, GPyTorchPosterior)
-            self.assertEqual(posterior_pred.mean.shape, expected_shape)
-            pvar = posterior_pred.variance
-            reshaped_noise = model.std_noise.unsqueeze(-2).expand(
-                posterior.variance.shape
-            )
-            pvar_exp = posterior.variance + reshaped_noise
-            self.assertTrue(torch.allclose(pvar, pvar_exp, rtol=1e-4, atol=1e-5))
 
     def test_condition_on_observations(self):
         for batch_shape, dtype in itertools.product(
