@@ -182,7 +182,7 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
 
     @classmethod
     def construct_inputs(cls, training_data: TrainingData, **kwargs) -> Dict[str, Any]:
-        r"""Construct kwargs for the `Model` from `TrainingData`.
+        r"""Construct kwargs for the `Model` from `TrainingData` and other options.
 
         Args:
             training_data: `TrainingData` container with data for single outcome
@@ -201,6 +201,7 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
             "train_X": training_data.X,
             "train_Y": training_data.Y,
             "task_feature": task_features[0],
+            "rank": kwargs.get("rank"),
         }
 
 
@@ -275,7 +276,7 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
 
     @classmethod
     def construct_inputs(cls, training_data: TrainingData, **kwargs) -> Dict[str, Any]:
-        r"""Construct kwargs for the `Model` from `TrainingData`.
+        r"""Construct kwargs for the `Model` from `TrainingData` and other options. and other options.
 
         Args:
             training_data: `TrainingData` container with data for single outcome
@@ -296,4 +297,5 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
             "train_Y": training_data.Y,
             "train_Yvar": training_data.Yvar,
             "task_feature": task_features[0],
+            "rank": kwargs.get("rank"),
         }

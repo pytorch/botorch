@@ -153,7 +153,7 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
     def construct_inputs(
         cls, training_data: TrainingData, **kwargs: Any
     ) -> Dict[str, Any]:
-        r"""Construct kwargs for the `Model` from `TrainingData`.
+        r"""Construct kwargs for the `Model` from `TrainingData` and other options.
 
         Args:
             training_data: `TrainingData` container with data for single outcome
@@ -320,7 +320,7 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
     def construct_inputs(
         cls, training_data: TrainingData, **kwargs: Any
     ) -> Dict[str, Any]:
-        r"""Construct kwargs for the `Model` from `TrainingData`.
+        r"""Construct kwargs for the `Model` from `TrainingData` and other options.
 
         Args:
             training_data: `TrainingData` container with data for single outcome
