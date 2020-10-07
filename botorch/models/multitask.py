@@ -26,6 +26,7 @@ from gpytorch.likelihoods.gaussian_likelihood import (
 )
 from gpytorch.means.constant_mean import ConstantMean
 from gpytorch.models.exact_gp import ExactGP
+from gpytorch.priors.lkj_prior import LKJCovariancePrior
 from gpytorch.priors.prior import Prior
 from gpytorch.priors.torch_priors import GammaPrior
 from torch import Tensor
@@ -49,7 +50,7 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
         train_X: Tensor,
         train_Y: Tensor,
         task_feature: int,
-        prior: Optional[Prior] = None,
+        task_covar_prior: Optional[Prior] = None,
         output_tasks: Optional[List[int]] = None,
         rank: Optional[int] = None,
         input_transform: Optional[InputTransform] = None,
@@ -66,6 +67,8 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
                 outputs for. If omitted, return outputs for all task indices.
             rank: The rank to be used for the index kernel. If omitted, use a
                 full rank (i.e. number of tasks) kernel.
+            task_covar_prior : A Prior on the task covariance matrix. Must operate
+                on p.s.d. matrices. A common prior for this is the `LKJ` prior.
             input_transform: An input transform that is applied in the model's
                 forward pass.
 
@@ -119,7 +122,7 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
         self._rank = rank if rank is not None else num_tasks
 
         self.task_covar_module = IndexKernel(
-            num_tasks=num_tasks, rank=self._rank, prior=prior
+            num_tasks=num_tasks, rank=self._rank, prior=task_covar_prior
         )
         if input_transform is not None:
             self.input_transform = input_transform
@@ -190,19 +193,47 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
             **kwargs: Additional options for the model that pertain to the
                 training data:
                 - `task_features` – indices of the input columns containing the task
-                features (expected list of length 1).
+                features (expected list of length 1),
+                - `task_covar_prior` – a GPyTorch `Prior` object to use as prior for
+                this model,
+                - `prior_config` – a dict representing a prior config, should only be
+                used if `prior` is not passed directly. Should contain:
+                `use_LKJ_prior` (whether to use LKJ prior) and `eta` (eta value, float),
+                - `rank` – rank for the MTGP.
         """
 
-        task_features = kwargs.get("task_features")
+        task_features = kwargs.pop("task_features", None)
         if task_features is None:
-            raise ValueError(f"task features required for {cls.__name__}.")
-
-        return {
+            raise ValueError(f"`task_features` required for {cls.__name__}.")
+        task_feature = task_features[0]
+        inputs = {
             "train_X": training_data.X,
             "train_Y": training_data.Y,
-            "task_feature": task_features[0],
+            "task_feature": task_feature,
             "rank": kwargs.get("rank"),
         }
+
+        prior = kwargs.get("task_covar_prior")
+        prior_config = kwargs.get("prior_config")
+        if prior and prior_config:
+            raise ValueError(
+                "Only one of `prior` and `prior_config` arguments expected."
+            )
+
+        if prior_config:
+            if not prior_config.get("use_LKJ_prior"):
+                raise ValueError("Currently only config for LKJ prior is supported.")
+            all_tasks, _, _ = MultiTaskGP.get_all_tasks(training_data.X, task_feature)
+            num_tasks = len(all_tasks)
+            sd_prior = GammaPrior(1.0, 0.15)
+            sd_prior._event_shape = torch.Size([num_tasks])
+            eta = prior_config.get("eta", 0.5)
+            if not isinstance(eta, float) and not isinstance(eta, int):
+                raise ValueError(f"eta must be a real number, your eta was {eta}.")
+            prior = LKJCovariancePrior(num_tasks, eta, sd_prior)
+
+        inputs["task_covar_prior"] = prior
+        return inputs
 
 
 class FixedNoiseMultiTaskGP(MultiTaskGP):
@@ -222,7 +253,7 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
         train_Y: Tensor,
         train_Yvar: Tensor,
         task_feature: int,
-        prior: Optional[Prior] = None,
+        task_covar_prior: Optional[Prior] = None,
         output_tasks: Optional[List[int]] = None,
         rank: Optional[int] = None,
         input_transform: Optional[InputTransform] = None,
@@ -238,6 +269,8 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
             train_Yvar: A `n` or `b x n` (batch mode) tensor of observation
                 noise standard errors.
             task_feature: The index of the task feature (`-d <= task_feature <= d`).
+            task_covar_prior : A Prior on the task covariance matrix. Must operate
+                on p.s.d. matrices. A common prior for this is the `LKJ` prior.
             output_tasks: A list of task indices for which to compute model
                 outputs for. If omitted, return outputs for all task indices.
             rank: The rank to be used for the index kernel. If omitted, use a
@@ -268,7 +301,7 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
             task_feature=task_feature,
             output_tasks=output_tasks,
             rank=rank,
-            prior=prior,
+            task_covar_prior=task_covar_prior,
             input_transform=input_transform,
         )
         self.likelihood = FixedNoiseGaussianLikelihood(noise=train_Yvar.squeeze(-1))
@@ -282,20 +315,21 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
             training_data: `TrainingData` container with data for single outcome
                 or for multiple outcomes for batched multi-output case.
             **kwargs: Additional options for the model that pertain to the
+                training data, including:
+           **kwargs: Additional options for the model that pertain to the
                 training data:
-                - `task_features` – indices of task features in X.
+                - `task_features` – indices of the input columns containing the task
+                features (expected list of length 1),
+                - `task_covar_prior` – a GPyTorch `Prior` object to use as prior
+                for this model,
+                - `prior_config` – a dict representing a prior config, should only be
+                used if `prior` is not passed directly. Should contain:
+                `use_LKJ_prior` (whether to use LKJ prior) and `eta` (eta value, float),
+                - `rank` – rank for the MTGP.
         """
-
-        task_features = kwargs.get("task_features")
-        if task_features is None:
-            raise ValueError(f"task features required for {cls.__name__}.")
         if training_data.Yvar is None:
             raise ValueError(f"Yvar required for {cls.__name__}.")
 
-        return {
-            "train_X": training_data.X,
-            "train_Y": training_data.Y,
-            "train_Yvar": training_data.Yvar,
-            "task_feature": task_features[0],
-            "rank": kwargs.get("rank"),
-        }
+        inputs = super().construct_inputs(training_data=training_data, **kwargs)
+        inputs["train_Yvar"] = training_data.Yvar
+        return inputs

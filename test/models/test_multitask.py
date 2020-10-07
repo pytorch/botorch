@@ -86,7 +86,10 @@ def _get_fixed_prior_model(**tkwargs):
     sd_prior = GammaPrior(2.0, 0.15)
     sd_prior._event_shape = torch.Size([2])
     model = MultiTaskGP(
-        train_X, train_Y, task_feature=1, prior=LKJCovariancePrior(2, 0.6, sd_prior)
+        train_X,
+        train_Y,
+        task_feature=1,
+        task_covar_prior=LKJCovariancePrior(2, 0.6, sd_prior),
     )
     return model.to(**tkwargs)
 
@@ -101,7 +104,7 @@ def _get_fixed_noise_and_prior_model(**tkwargs):
         train_Y,
         train_Yvar,
         task_feature=1,
-        prior=LKJCovariancePrior(2, 0.6, sd_prior),
+        task_covar_prior=LKJCovariancePrior(2, 0.6, sd_prior),
     )
     return model.to(**tkwargs)
 
@@ -394,12 +397,43 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
             tkwargs = {"device": self.device, "dtype": dtype}
             model, train_X, train_Y = _get_model_and_training_data(**tkwargs)
             training_data = TrainingData(X=train_X, Y=train_Y)
-            # if task_features is missing, then raise error
-            with self.assertRaises(ValueError):
+            # Test that task features are required.
+            with self.assertRaisesRegex(ValueError, "`task_features` required"):
                 model.construct_inputs(training_data)
-            data_dict = model.construct_inputs(training_data, task_features=[0])
+            # Validate prior config.
+            with self.assertRaisesRegex(
+                ValueError, ".* only config for LKJ prior is supported"
+            ):
+                data_dict = model.construct_inputs(
+                    training_data,
+                    task_features=[0],
+                    prior_config={"use_LKJ_prior": False},
+                )
+            # Validate eta.
+            with self.assertRaisesRegex(ValueError, "eta must be a real number"):
+                data_dict = model.construct_inputs(
+                    training_data,
+                    task_features=[0],
+                    prior_config={"use_LKJ_prior": True, "eta": "not_number"},
+                )
+            # Test that presence of `prior` and `prior_config` kwargs at the
+            # same time causes error.
+            with self.assertRaisesRegex(ValueError, ".* one of `prior` and `prior_"):
+                data_dict = model.construct_inputs(
+                    training_data,
+                    task_features=[0],
+                    task_covar_prior=1,
+                    prior_config={"use_LKJ_prior": True, "eta": "not_number"},
+                )
+            data_dict = model.construct_inputs(
+                training_data,
+                task_features=[0],
+                prior_config={"use_LKJ_prior": True, "eta": 0.6},
+            )
             self.assertTrue(torch.equal(data_dict["train_X"], train_X))
             self.assertTrue(torch.equal(data_dict["train_Y"], train_Y))
+            self.assertEqual(data_dict["task_feature"], 0)
+            self.assertIsInstance(data_dict["task_covar_prior"], LKJCovariancePrior)
 
     def test_FixedNoiseMultiTaskGP_construct_inputs(self):
         for dtype in (torch.float, torch.double):
@@ -411,13 +445,29 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
                 train_Yvar,
             ) = _get_fixed_noise_model_and_training_data(**tkwargs)
             td_no_Yvar = TrainingData(X=train_X, Y=train_Y)
-            # if task_features is missing, then raise error
-            with self.assertRaisesRegex(ValueError, "task features required"):
-                model.construct_inputs(td_no_Yvar)
-            # if task_features is missing, then raise error
+            # Test that Yvar is required.
             with self.assertRaisesRegex(ValueError, "Yvar required"):
-                model.construct_inputs(td_no_Yvar, task_features=[0])
+                model.construct_inputs(td_no_Yvar)
             training_data = TrainingData(X=train_X, Y=train_Y, Yvar=train_Yvar)
-            data_dict = model.construct_inputs(training_data, task_features=[0])
+            # Test that task features are required.
+            with self.assertRaisesRegex(ValueError, "`task_features` required"):
+                model.construct_inputs(training_data)
+            # Validate prior config.
+            with self.assertRaisesRegex(
+                ValueError, ".* only config for LKJ prior is supported"
+            ):
+                data_dict = model.construct_inputs(
+                    training_data,
+                    task_features=[0],
+                    prior_config={"use_LKJ_prior": False},
+                )
+            data_dict = model.construct_inputs(
+                training_data,
+                task_features=[0],
+                prior_config={"use_LKJ_prior": True, "eta": 0.6},
+            )
             self.assertTrue(torch.equal(data_dict["train_X"], train_X))
             self.assertTrue(torch.equal(data_dict["train_Y"], train_Y))
+            self.assertTrue(torch.equal(data_dict["train_Yvar"], train_Yvar))
+            self.assertEqual(data_dict["task_feature"], 0)
+            self.assertIsInstance(data_dict["task_covar_prior"], LKJCovariancePrior)
