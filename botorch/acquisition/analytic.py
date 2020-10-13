@@ -303,7 +303,7 @@ class UpperConfidenceBound(AnalyticAcquisitionFunction):
         if self.maximize:
             return mean + delta
         else:
-            return mean - delta
+            return -mean + delta
 
 
 class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):

@@ -251,20 +251,20 @@ class TestProbabilityOfImprovement(BotorchTestCase):
 class TestUpperConfidenceBound(BotorchTestCase):
     def test_upper_confidence_bound(self):
         for dtype in (torch.float, torch.double):
-            mean = torch.tensor([[0.0]], device=self.device, dtype=dtype)
+            mean = torch.tensor([[0.5]], device=self.device, dtype=dtype)
             variance = torch.tensor([[1.0]], device=self.device, dtype=dtype)
             mm = MockModel(MockPosterior(mean=mean, variance=variance))
 
             module = UpperConfidenceBound(model=mm, beta=1.0)
             X = torch.zeros(1, 1, device=self.device, dtype=dtype)
             ucb = module(X)
-            ucb_expected = torch.tensor([1.0], device=self.device, dtype=dtype)
+            ucb_expected = torch.tensor([1.5], device=self.device, dtype=dtype)
             self.assertTrue(torch.allclose(ucb, ucb_expected, atol=1e-4))
 
             module = UpperConfidenceBound(model=mm, beta=1.0, maximize=False)
             X = torch.zeros(1, 1, device=self.device, dtype=dtype)
             ucb = module(X)
-            ucb_expected = torch.tensor([-1.0], device=self.device, dtype=dtype)
+            ucb_expected = torch.tensor([0.5], device=self.device, dtype=dtype)
             self.assertTrue(torch.allclose(ucb, ucb_expected, atol=1e-4))
 
             # check for proper error if multi-output model
