@@ -136,7 +136,7 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
                 Should be of float/double data type.
 
         Returns:
-            2-element tuple containin
+            2-element tuple containing
 
             - A `q x d` or `b x q x d` (batch mode) tensor with trailing
             dimension made up of the `d` non-task-index columns of `x`, arranged
@@ -191,15 +191,17 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
             training_data: `TrainingData` container with data for single outcome
                 or for multiple outcomes for batched multi-output case.
             **kwargs: Additional options for the model that pertain to the
-                training data:
-                - `task_features` – indices of the input columns containing the task
-                features (expected list of length 1),
-                - `task_covar_prior` – a GPyTorch `Prior` object to use as prior for
-                this model,
-                - `prior_config` – a dict representing a prior config, should only be
-                used if `prior` is not passed directly. Should contain:
-                `use_LKJ_prior` (whether to use LKJ prior) and `eta` (eta value, float),
-                - `rank` – rank for the MTGP.
+                training data, including:
+
+                - `task_features`: Indices of the input columns containing the task
+                  features (expected list of length 1),
+                - `task_covar_prior`: A GPyTorch `Prior` object to use as prior on
+                  the cross-task covariance matrix,
+                - `prior_config`: A dict representing a prior config, should only be
+                  used if `prior` is not passed directly. Should contain:
+                  `use_LKJ_prior` (whether to use LKJ prior) and `eta` (eta value,
+                  float),
+                - `rank`: The rank of the cross-task covariance matrix.
         """
 
         task_features = kwargs.pop("task_features", None)
@@ -309,23 +311,23 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
 
     @classmethod
     def construct_inputs(cls, training_data: TrainingData, **kwargs) -> Dict[str, Any]:
-        r"""Construct kwargs for the `Model` from `TrainingData` and other options. and other options.
+        r"""Construct kwargs for the `Model` from `TrainingData` and other options.
 
         Args:
             training_data: `TrainingData` container with data for single outcome
                 or for multiple outcomes for batched multi-output case.
             **kwargs: Additional options for the model that pertain to the
                 training data, including:
-           **kwargs: Additional options for the model that pertain to the
-                training data:
-                - `task_features` – indices of the input columns containing the task
-                features (expected list of length 1),
-                - `task_covar_prior` – a GPyTorch `Prior` object to use as prior
-                for this model,
-                - `prior_config` – a dict representing a prior config, should only be
-                used if `prior` is not passed directly. Should contain:
-                `use_LKJ_prior` (whether to use LKJ prior) and `eta` (eta value, float),
-                - `rank` – rank for the MTGP.
+
+                - `task_features`: Indices of the input columns containing the task
+                  features (expected list of length 1),
+                - `task_covar_prior`: A GPyTorch `Prior` object to use as prior on
+                  the cross-task covariance matrix,
+                - `prior_config`: A dict representing a prior config, should only be
+                  used if `prior` is not passed directly. Should contain:
+                  use_LKJ_prior` (whether to use LKJ prior) and `eta` (eta value,
+                  float),
+                - `rank`: The rank of the cross-task covariance matrix.
         """
         if training_data.Yvar is None:
             raise ValueError(f"Yvar required for {cls.__name__}.")
