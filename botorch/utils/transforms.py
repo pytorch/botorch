@@ -125,7 +125,8 @@ def normalize_indices(indices: Optional[List[int]], d: int) -> Optional[List[int
 
 
 def t_batch_mode_transform(
-    expected_q: Optional[int] = None, assert_output_shape: bool = True,
+    expected_q: Optional[int] = None,
+    assert_output_shape: bool = True,
 ) -> Callable[[Callable[[Any, Tensor], Any]], Callable[[Any, Tensor], Any]]:
     r"""Factory for decorators taking a t-batched `X` tensor.
 
