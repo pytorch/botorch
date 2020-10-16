@@ -72,9 +72,10 @@
         <span class="sa">r</span><span class="sd">"""Abstract base class for Samplers.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            batch_range: The range of t-batch dimensions used by collapse_batch_dims.</span>
-<span class="sd">                The t-batch dims are batch_range[0]:batch_range[1]. By default, this</span>
-<span class="sd">                is (0, -2), for the case where the non-batch dimensions are -2 (q) and</span>
+<span class="sd">            batch_range: The range of t-batch dimensions in the `event_shape`</span>
+<span class="sd">                used by `collapse_batch_dims`. The t-batch dims are</span>
+<span class="sd">                batch_range[0]:batch_range[1]. By default, this is (0, -2),</span>
+<span class="sd">                for the case where the non-batch dimensions are -2 (q) and</span>
 <span class="sd">                -1 (d) and all dims in the front are t-batch dims.</span>
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -91,9 +92,10 @@
         <span class="sa">r</span><span class="sd">"""Set the t-batch range and clear base samples.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            batch_range: The range of t-batch dimensions used by collapse_batch_dims.</span>
-<span class="sd">                The t-batch dims are batch_range[0]:batch_range[1]. By default, this</span>
-<span class="sd">                is (0, -2), for the case where the non-batch dimensions are -2 (q) and</span>
+<span class="sd">            batch_range: The range of t-batch dimensions in the `event_shape`</span>
+<span class="sd">                used by `collapse_batch_dims`. The t-batch dims are</span>
+<span class="sd">                batch_range[0]:batch_range[1]. By default, this is (0, -2),</span>
+<span class="sd">                for the case where the non-batch dimensions are -2 (q) and</span>
 <span class="sd">                -1 (d) and all dims in the front are t-batch dims.</span>
 <span class="sd">        """</span>
         <span class="c1"># set t-batch range if different; trigger resample &amp; set base_samples to None</span>
@@ -153,11 +155,14 @@
 <span class="sd">        This function will generate a new set of base samples and register the</span>
 <span class="sd">        `base_samples` buffer if one of the following is true:</span>
 
-<span class="sd">         - `resample=True`</span>
-<span class="sd">         - the MCSampler has no `base_samples` attribute.</span>
-<span class="sd">         - `shape` is different than `self.base_samples.shape` (if</span>
-<span class="sd">           `collapse_batch_dims=True`, then batch dimensions of will be</span>
-<span class="sd">           automatically broadcasted as necessary)</span>
+<span class="sd">        - `resample=True`</span>
+<span class="sd">        - the MCSampler has no `base_samples` attribute.</span>
+<span class="sd">        - `shape` is different than `self.base_samples.shape` (if</span>
+<span class="sd">            `collapse_batch_dims=True`, then batch dimensions of will be</span>
+<span class="sd">            automatically broadcasted as necessary). This shape is expected to</span>
+<span class="sd">            be `sample_shape + event_shape`, where `event_shape` has been</span>
+<span class="sd">            adjusted to account for `collapse_batch_dims` (i.e., the output</span>
+<span class="sd">            of the function `_get_base_sample_shape`).</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            posterior: The Posterior for which to generate base samples.</span>
@@ -194,9 +199,10 @@
 <span class="sd">            collapse_batch_dims: If True, collapse the t-batch dimensions to</span>
 <span class="sd">                size 1. This is useful for preventing sampling variance across</span>
 <span class="sd">                t-batches.</span>
-<span class="sd">            batch_range: The range of t-batch dimensions used by collapse_batch_dims.</span>
-<span class="sd">                The t-batch dims are batch_range[0]:batch_range[1]. By default, this</span>
-<span class="sd">                is (0, -2), for the case where the non-batch dimensions are -2 (q) and</span>
+<span class="sd">            batch_range: The range of t-batch dimensions in the `event_shape`</span>
+<span class="sd">                used by `collapse_batch_dims`. The t-batch dims are</span>
+<span class="sd">                batch_range[0]:batch_range[1]. By default, this is (0, -2),</span>
+<span class="sd">                for the case where the non-batch dimensions are -2 (q) and</span>
 <span class="sd">                -1 (d) and all dims in the front are t-batch dims.</span>
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">batch_range</span><span class="o">=</span><span class="n">batch_range</span><span class="p">)</span>
@@ -215,7 +221,10 @@
 <span class="sd">        - the MCSampler has no `base_samples` attribute.</span>
 <span class="sd">        - `shape` is different than `self.base_samples.shape` (if</span>
 <span class="sd">            `collapse_batch_dims=True`, then batch dimensions of will be</span>
-<span class="sd">            automatically broadcasted as necessary)</span>
+<span class="sd">            automatically broadcasted as necessary). This shape is expected to</span>
+<span class="sd">            be `sample_shape + event_shape`, where `event_shape` has been</span>
+<span class="sd">            adjusted to account for `collapse_batch_dims` (i.e., the output</span>
+<span class="sd">            of the function `_get_base_sample_shape`).</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            posterior: The Posterior for which to generate base samples.</span>
@@ -268,9 +277,10 @@
 <span class="sd">            collapse_batch_dims: If True, collapse the t-batch dimensions to</span>
 <span class="sd">                size 1. This is useful for preventing sampling variance across</span>
 <span class="sd">                t-batches.</span>
-<span class="sd">            batch_range: The range of t-batch dimensions used by collapse_batch_dims.</span>
-<span class="sd">                The t-batch dims are batch_range[0]:batch_range[1]. By default, this</span>
-<span class="sd">                is (0, -2), for the case where the non-batch dimensions are -2 (q) and</span>
+<span class="sd">            batch_range: The range of t-batch dimensions in the `event_shape`</span>
+<span class="sd">                used by `collapse_batch_dims`. The t-batch dims are</span>
+<span class="sd">                batch_range[0]:batch_range[1]. By default, this is (0, -2),</span>
+<span class="sd">                for the case where the non-batch dimensions are -2 (q) and</span>
 <span class="sd">                -1 (d) and all dims in the front are t-batch dims.</span>
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">batch_range</span><span class="o">=</span><span class="n">batch_range</span><span class="p">)</span>
@@ -288,8 +298,11 @@
 <span class="sd">        - `resample=True`</span>
 <span class="sd">        - the MCSampler has no `base_samples` attribute.</span>
 <span class="sd">        - `shape` is different than `self.base_samples.shape` (if</span>
-<span class="sd">          `collapse_batch_dims=True`, then batch dimensions of will be</span>
-<span class="sd">          automatically broadcasted as necessary)</span>
+<span class="sd">            `collapse_batch_dims=True`, then batch dimensions of will be</span>
+<span class="sd">            automatically broadcasted as necessary). This shape is expected to</span>
+<span class="sd">            be `sample_shape + event_shape`, where `event_shape` has been</span>
+<span class="sd">            adjusted to account for `collapse_batch_dims` (i.e., the output</span>
+<span class="sd">            of the function `_get_base_sample_shape`).</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            posterior: The Posterior for which to generate base samples.</span>
@@ -301,7 +314,8 @@
             <span class="ow">or</span> <span class="p">(</span><span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">collapse_batch_dims</span> <span class="ow">and</span> <span class="n">shape</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_samples</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
         <span class="p">):</span>
             <span class="n">batch_start</span><span class="p">,</span> <span class="n">batch_end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_range</span>
-            <span class="n">output_dim</span> <span class="o">=</span> <span class="p">(</span><span class="n">shape</span><span class="p">[:</span><span class="n">batch_start</span><span class="p">]</span> <span class="o">+</span> <span class="n">shape</span><span class="p">[</span><span class="n">batch_end</span><span class="p">:])</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span>
+            <span class="n">sample_shape</span><span class="p">,</span> <span class="n">event_shape</span> <span class="o">=</span> <span class="n">_split_sample_event_shapes</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
+            <span class="n">output_dim</span> <span class="o">=</span> <span class="p">(</span><span class="n">event_shape</span><span class="p">[:</span><span class="n">batch_start</span><span class="p">]</span> <span class="o">+</span> <span class="n">event_shape</span><span class="p">[</span><span class="n">batch_end</span><span class="p">:])</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">output_dim</span> <span class="o">&gt;</span> <span class="n">SobolEngine</span><span class="o">.</span><span class="n">MAXDIM</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
                     <span class="s2">"SobolQMCSampler only supports dimensions "</span>
@@ -309,7 +323,7 @@
                 <span class="p">)</span>
             <span class="n">base_samples</span> <span class="o">=</span> <span class="n">draw_sobol_normal_samples</span><span class="p">(</span>
                 <span class="n">d</span><span class="o">=</span><span class="n">output_dim</span><span class="p">,</span>
-                <span class="n">n</span><span class="o">=</span><span class="n">shape</span><span class="p">[</span><span class="n">batch_start</span><span class="p">:</span><span class="n">batch_end</span><span class="p">]</span><span class="o">.</span><span class="n">numel</span><span class="p">(),</span>
+                <span class="n">n</span><span class="o">=</span><span class="p">(</span><span class="n">sample_shape</span> <span class="o">+</span> <span class="n">event_shape</span><span class="p">[</span><span class="n">batch_start</span><span class="p">:</span><span class="n">batch_end</span><span class="p">])</span><span class="o">.</span><span class="n">numel</span><span class="p">(),</span>
                 <span class="n">device</span><span class="o">=</span><span class="n">posterior</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
                 <span class="n">dtype</span><span class="o">=</span><span class="n">posterior</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
                 <span class="n">seed</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">seed</span><span class="p">,</span>
@@ -333,7 +347,7 @@
 <span class="sd">    Args:</span>
 <span class="sd">        base_samples: The Posterior for which to generate base samples.</span>
 <span class="sd">        batch_range: The range t-batch dimensions to ignore for shape check.</span>
-<span class="sd">        shape: The shape to compare.</span>
+<span class="sd">        shape: The base sample shape to compare.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A bool indicating whether the shape changed.</span>
@@ -342,10 +356,27 @@
         <span class="k">return</span> <span class="kc">True</span>
     <span class="n">batch_start</span> <span class="o">=</span> <span class="n">batch_range</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">batch_end</span> <span class="o">=</span> <span class="n">batch_range</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">b_sample_shape</span><span class="p">,</span> <span class="n">b_event_shape</span> <span class="o">=</span> <span class="n">_split_sample_event_shapes</span><span class="p">(</span><span class="n">base_samples</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">sample_shape</span><span class="p">,</span> <span class="n">event_shape</span> <span class="o">=</span> <span class="n">_split_sample_event_shapes</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
     <span class="k">return</span> <span class="p">(</span>
-        <span class="n">base_samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">batch_end</span><span class="p">:]</span> <span class="o">!=</span> <span class="n">shape</span><span class="p">[</span><span class="n">batch_end</span><span class="p">:]</span>
-        <span class="ow">or</span> <span class="n">base_samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="n">batch_start</span><span class="p">]</span> <span class="o">!=</span> <span class="n">shape</span><span class="p">[:</span><span class="n">batch_start</span><span class="p">]</span>
+        <span class="n">b_sample_shape</span> <span class="o">!=</span> <span class="n">sample_shape</span>
+        <span class="ow">or</span> <span class="n">b_event_shape</span><span class="p">[</span><span class="n">batch_end</span><span class="p">:]</span> <span class="o">!=</span> <span class="n">event_shape</span><span class="p">[</span><span class="n">batch_end</span><span class="p">:]</span>
+        <span class="ow">or</span> <span class="n">b_event_shape</span><span class="p">[:</span><span class="n">batch_start</span><span class="p">]</span> <span class="o">!=</span> <span class="n">event_shape</span><span class="p">[:</span><span class="n">batch_start</span><span class="p">]</span>
     <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_split_sample_event_shapes</span><span class="p">(</span>
+    <span class="n">base_sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">]:</span>
+    <span class="sa">r</span><span class="sd">"""Split a base sample shape into sample and event shapes.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        base_sample_shape: The base sample shape.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A tuple containing the sample and event shape.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">base_sample_shape</span><span class="p">[:</span><span class="mi">1</span><span class="p">],</span> <span class="n">base_sample_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
 </pre></div>
 </div>
 </div>

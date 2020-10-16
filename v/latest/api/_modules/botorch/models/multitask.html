@@ -52,6 +52,7 @@
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">gpytorch.means.constant_mean</span> <span class="kn">import</span> <span class="n">ConstantMean</span>
 <span class="kn">from</span> <span class="nn">gpytorch.models.exact_gp</span> <span class="kn">import</span> <span class="n">ExactGP</span>
+<span class="kn">from</span> <span class="nn">gpytorch.priors.lkj_prior</span> <span class="kn">import</span> <span class="n">LKJCovariancePrior</span>
 <span class="kn">from</span> <span class="nn">gpytorch.priors.prior</span> <span class="kn">import</span> <span class="n">Prior</span>
 <span class="kn">from</span> <span class="nn">gpytorch.priors.torch_priors</span> <span class="kn">import</span> <span class="n">GammaPrior</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
@@ -75,7 +76,7 @@
         <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">task_feature</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">prior</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Prior</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">task_covar_prior</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Prior</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">output_tasks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">rank</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -92,6 +93,8 @@
 <span class="sd">                outputs for. If omitted, return outputs for all task indices.</span>
 <span class="sd">            rank: The rank to be used for the index kernel. If omitted, use a</span>
 <span class="sd">                full rank (i.e. number of tasks) kernel.</span>
+<span class="sd">            task_covar_prior : A Prior on the task covariance matrix. Must operate</span>
+<span class="sd">                on p.s.d. matrices. A common prior for this is the `LKJ` prior.</span>
 <span class="sd">            input_transform: An input transform that is applied in the model's</span>
 <span class="sd">                forward pass.</span>
 
@@ -145,7 +148,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_rank</span> <span class="o">=</span> <span class="n">rank</span> <span class="k">if</span> <span class="n">rank</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">num_tasks</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">task_covar_module</span> <span class="o">=</span> <span class="n">IndexKernel</span><span class="p">(</span>
-            <span class="n">num_tasks</span><span class="o">=</span><span class="n">num_tasks</span><span class="p">,</span> <span class="n">rank</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_rank</span><span class="p">,</span> <span class="n">prior</span><span class="o">=</span><span class="n">prior</span>
+            <span class="n">num_tasks</span><span class="o">=</span><span class="n">num_tasks</span><span class="p">,</span> <span class="n">rank</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_rank</span><span class="p">,</span> <span class="n">prior</span><span class="o">=</span><span class="n">task_covar_prior</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">input_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">input_transform</span> <span class="o">=</span> <span class="n">input_transform</span>
@@ -159,7 +162,7 @@
 <span class="sd">                Should be of float/double data type.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            2-element tuple containin</span>
+<span class="sd">            2-element tuple containing</span>
 
 <span class="sd">            - A `q x d` or `b x q x d` (batch mode) tensor with trailing</span>
 <span class="sd">            dimension made up of the `d` non-task-index columns of `x`, arranged</span>
@@ -208,26 +211,57 @@
 
 <div class="viewcode-block" id="MultiTaskGP.construct_inputs"><a class="viewcode-back" href="../../../models.html#botorch.models.multitask.MultiTaskGP.construct_inputs">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">construct_inputs</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">training_data</span><span class="p">:</span> <span class="n">TrainingData</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-        <span class="sa">r</span><span class="sd">"""Construct kwargs for the `Model` from `TrainingData`.</span>
+        <span class="sa">r</span><span class="sd">"""Construct kwargs for the `Model` from `TrainingData` and other options.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            training_data: `TrainingData` container with data for single outcome</span>
 <span class="sd">                or for multiple outcomes for batched multi-output case.</span>
 <span class="sd">            **kwargs: Additional options for the model that pertain to the</span>
-<span class="sd">                training data:</span>
-<span class="sd">                - `task_features` – indices of the input columns containing the task</span>
-<span class="sd">                features (expected list of length 1).</span>
+<span class="sd">                training data, including:</span>
+
+<span class="sd">                - `task_features`: Indices of the input columns containing the task</span>
+<span class="sd">                  features (expected list of length 1),</span>
+<span class="sd">                - `task_covar_prior`: A GPyTorch `Prior` object to use as prior on</span>
+<span class="sd">                  the cross-task covariance matrix,</span>
+<span class="sd">                - `prior_config`: A dict representing a prior config, should only be</span>
+<span class="sd">                  used if `prior` is not passed directly. Should contain:</span>
+<span class="sd">                  `use_LKJ_prior` (whether to use LKJ prior) and `eta` (eta value,</span>
+<span class="sd">                  float),</span>
+<span class="sd">                - `rank`: The rank of the cross-task covariance matrix.</span>
 <span class="sd">        """</span>
 
-        <span class="n">task_features</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"task_features"</span><span class="p">)</span>
+        <span class="n">task_features</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"task_features"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">task_features</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"task features required for </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="p">{</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"`task_features` required for </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+        <span class="n">task_feature</span> <span class="o">=</span> <span class="n">task_features</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">inputs</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">"train_X"</span><span class="p">:</span> <span class="n">training_data</span><span class="o">.</span><span class="n">X</span><span class="p">,</span>
             <span class="s2">"train_Y"</span><span class="p">:</span> <span class="n">training_data</span><span class="o">.</span><span class="n">Y</span><span class="p">,</span>
-            <span class="s2">"task_feature"</span><span class="p">:</span> <span class="n">task_features</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
-        <span class="p">}</span></div></div>
+            <span class="s2">"task_feature"</span><span class="p">:</span> <span class="n">task_feature</span><span class="p">,</span>
+            <span class="s2">"rank"</span><span class="p">:</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"rank"</span><span class="p">),</span>
+        <span class="p">}</span>
+
+        <span class="n">prior</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"task_covar_prior"</span><span class="p">)</span>
+        <span class="n">prior_config</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"prior_config"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">prior</span> <span class="ow">and</span> <span class="n">prior_config</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"Only one of `prior` and `prior_config` arguments expected."</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">prior_config</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">prior_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"use_LKJ_prior"</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Currently only config for LKJ prior is supported."</span><span class="p">)</span>
+            <span class="n">all_tasks</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">MultiTaskGP</span><span class="o">.</span><span class="n">get_all_tasks</span><span class="p">(</span><span class="n">training_data</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="n">task_feature</span><span class="p">)</span>
+            <span class="n">num_tasks</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_tasks</span><span class="p">)</span>
+            <span class="n">sd_prior</span> <span class="o">=</span> <span class="n">GammaPrior</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">)</span>
+            <span class="n">sd_prior</span><span class="o">.</span><span class="n">_event_shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="n">num_tasks</span><span class="p">])</span>
+            <span class="n">eta</span> <span class="o">=</span> <span class="n">prior_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"eta"</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"eta must be a real number, your eta was </span><span class="si">{</span><span class="n">eta</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+            <span class="n">prior</span> <span class="o">=</span> <span class="n">LKJCovariancePrior</span><span class="p">(</span><span class="n">num_tasks</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="n">sd_prior</span><span class="p">)</span>
+
+        <span class="n">inputs</span><span class="p">[</span><span class="s2">"task_covar_prior"</span><span class="p">]</span> <span class="o">=</span> <span class="n">prior</span>
+        <span class="k">return</span> <span class="n">inputs</span></div></div>
 
 
 <div class="viewcode-block" id="FixedNoiseMultiTaskGP"><a class="viewcode-back" href="../../../models.html#botorch.models.multitask.FixedNoiseMultiTaskGP">[docs]</a><span class="k">class</span> <span class="nc">FixedNoiseMultiTaskGP</span><span class="p">(</span><span class="n">MultiTaskGP</span><span class="p">):</span>
@@ -247,7 +281,7 @@
         <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">train_Yvar</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">task_feature</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">prior</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Prior</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">task_covar_prior</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Prior</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">output_tasks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">rank</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -263,6 +297,8 @@
 <span class="sd">            train_Yvar: A `n` or `b x n` (batch mode) tensor of observation</span>
 <span class="sd">                noise standard errors.</span>
 <span class="sd">            task_feature: The index of the task feature (`-d &lt;= task_feature &lt;= d`).</span>
+<span class="sd">            task_covar_prior : A Prior on the task covariance matrix. Must operate</span>
+<span class="sd">                on p.s.d. matrices. A common prior for this is the `LKJ` prior.</span>
 <span class="sd">            output_tasks: A list of task indices for which to compute model</span>
 <span class="sd">                outputs for. If omitted, return outputs for all task indices.</span>
 <span class="sd">            rank: The rank to be used for the index kernel. If omitted, use a</span>
@@ -293,7 +329,7 @@
             <span class="n">task_feature</span><span class="o">=</span><span class="n">task_feature</span><span class="p">,</span>
             <span class="n">output_tasks</span><span class="o">=</span><span class="n">output_tasks</span><span class="p">,</span>
             <span class="n">rank</span><span class="o">=</span><span class="n">rank</span><span class="p">,</span>
-            <span class="n">prior</span><span class="o">=</span><span class="n">prior</span><span class="p">,</span>
+            <span class="n">task_covar_prior</span><span class="o">=</span><span class="n">task_covar_prior</span><span class="p">,</span>
             <span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span> <span class="o">=</span> <span class="n">FixedNoiseGaussianLikelihood</span><span class="p">(</span><span class="n">noise</span><span class="o">=</span><span class="n">train_Yvar</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
@@ -301,28 +337,30 @@
 
 <div class="viewcode-block" id="FixedNoiseMultiTaskGP.construct_inputs"><a class="viewcode-back" href="../../../models.html#botorch.models.multitask.FixedNoiseMultiTaskGP.construct_inputs">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">construct_inputs</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">training_data</span><span class="p">:</span> <span class="n">TrainingData</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-        <span class="sa">r</span><span class="sd">"""Construct kwargs for the `Model` from `TrainingData`.</span>
+        <span class="sa">r</span><span class="sd">"""Construct kwargs for the `Model` from `TrainingData` and other options.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            training_data: `TrainingData` container with data for single outcome</span>
 <span class="sd">                or for multiple outcomes for batched multi-output case.</span>
 <span class="sd">            **kwargs: Additional options for the model that pertain to the</span>
-<span class="sd">                training data:</span>
-<span class="sd">                - `task_features` – indices of task features in X.</span>
-<span class="sd">        """</span>
+<span class="sd">                training data, including:</span>
 
-        <span class="n">task_features</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"task_features"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">task_features</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"task features required for </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+<span class="sd">                - `task_features`: Indices of the input columns containing the task</span>
+<span class="sd">                  features (expected list of length 1),</span>
+<span class="sd">                - `task_covar_prior`: A GPyTorch `Prior` object to use as prior on</span>
+<span class="sd">                  the cross-task covariance matrix,</span>
+<span class="sd">                - `prior_config`: A dict representing a prior config, should only be</span>
+<span class="sd">                  used if `prior` is not passed directly. Should contain:</span>
+<span class="sd">                  use_LKJ_prior` (whether to use LKJ prior) and `eta` (eta value,</span>
+<span class="sd">                  float),</span>
+<span class="sd">                - `rank`: The rank of the cross-task covariance matrix.</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="n">training_data</span><span class="o">.</span><span class="n">Yvar</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Yvar required for </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="s2">"train_X"</span><span class="p">:</span> <span class="n">training_data</span><span class="o">.</span><span class="n">X</span><span class="p">,</span>
-            <span class="s2">"train_Y"</span><span class="p">:</span> <span class="n">training_data</span><span class="o">.</span><span class="n">Y</span><span class="p">,</span>
-            <span class="s2">"train_Yvar"</span><span class="p">:</span> <span class="n">training_data</span><span class="o">.</span><span class="n">Yvar</span><span class="p">,</span>
-            <span class="s2">"task_feature"</span><span class="p">:</span> <span class="n">task_features</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
-        <span class="p">}</span></div></div>
+        <span class="n">inputs</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">construct_inputs</span><span class="p">(</span><span class="n">training_data</span><span class="o">=</span><span class="n">training_data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">inputs</span><span class="p">[</span><span class="s2">"train_Yvar"</span><span class="p">]</span> <span class="o">=</span> <span class="n">training_data</span><span class="o">.</span><span class="n">Yvar</span>
+        <span class="k">return</span> <span class="n">inputs</span></div></div>
 </pre></div>
 </div>
 </div>

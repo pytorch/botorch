@@ -56,9 +56,10 @@ variance across t-batches.</p>
 <p>Abstract base class for Samplers.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>batch_range</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The range of t-batch dimensions used by collapse_batch_dims.
-The t-batch dims are batch_range[0]:batch_range[1]. By default, this
-is (0, -2), for the case where the non-batch dimensions are -2 (q) and
+<dd class="field-odd"><p><strong>batch_range</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The range of t-batch dimensions in the <cite>event_shape</cite>
+used by <cite>collapse_batch_dims</cite>. The t-batch dims are
+batch_range[0]:batch_range[1]. By default, this is (0, -2),
+for the case where the non-batch dimensions are -2 (q) and
 -1 (d) and all dims in the front are t-batch dims.</p>
 </dd>
 </dl>
@@ -126,9 +127,10 @@ not be used with deterministic optimization algorithms).</p></li>
 <li><p><strong>collapse_batch_dims</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, collapse the t-batch dimensions to
 size 1. This is useful for preventing sampling variance across
 t-batches.</p></li>
-<li><p><strong>batch_range</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The range of t-batch dimensions used by collapse_batch_dims.
-The t-batch dims are batch_range[0]:batch_range[1]. By default, this
-is (0, -2), for the case where the non-batch dimensions are -2 (q) and
+<li><p><strong>batch_range</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The range of t-batch dimensions in the <cite>event_shape</cite>
+used by <cite>collapse_batch_dims</cite>. The t-batch dims are
+batch_range[0]:batch_range[1]. By default, this is (0, -2),
+for the case where the non-batch dimensions are -2 (q) and
 -1 (d) and all dims in the front are t-batch dims.</p></li>
 </ul>
 </dd>
@@ -161,9 +163,10 @@ not be used with deterministic optimization algorithms).</p></li>
 <li><p><strong>collapse_batch_dims</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, collapse the t-batch dimensions to
 size 1. This is useful for preventing sampling variance across
 t-batches.</p></li>
-<li><p><strong>batch_range</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The range of t-batch dimensions used by collapse_batch_dims.
-The t-batch dims are batch_range[0]:batch_range[1]. By default, this
-is (0, -2), for the case where the non-batch dimensions are -2 (q) and
+<li><p><strong>batch_range</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The range of t-batch dimensions in the <cite>event_shape</cite>
+used by <cite>collapse_batch_dims</cite>. The t-batch dims are
+batch_range[0]:batch_range[1]. By default, this is (0, -2),
+for the case where the non-batch dimensions are -2 (q) and
 -1 (d) and all dims in the front are t-batch dims.</p></li>
 </ul>
 </dd>

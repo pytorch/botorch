@@ -57,12 +57,11 @@
 <span class="kn">from</span> <span class="nn">botorch.posteriors.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchPosterior</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.posterior</span> <span class="kn">import</span> <span class="n">Posterior</span>
 <span class="kn">from</span> <span class="nn">gpytorch</span> <span class="kn">import</span> <span class="n">settings</span>
-<span class="kn">from</span> <span class="nn">gpytorch.constraints</span> <span class="kn">import</span> <span class="n">GreaterThan</span><span class="p">,</span> <span class="n">Positive</span>
+<span class="kn">from</span> <span class="nn">gpytorch.constraints</span> <span class="kn">import</span> <span class="n">Positive</span>
 <span class="kn">from</span> <span class="nn">gpytorch.distributions.multivariate_normal</span> <span class="kn">import</span> <span class="n">MultivariateNormal</span>
 <span class="kn">from</span> <span class="nn">gpytorch.kernels.rbf_kernel</span> <span class="kn">import</span> <span class="n">RBFKernel</span>
-<span class="kn">from</span> <span class="nn">gpytorch.lazy.added_diag_lazy_tensor</span> <span class="kn">import</span> <span class="n">AddedDiagLazyTensor</span>
+<span class="kn">from</span> <span class="nn">gpytorch.kernels.scale_kernel</span> <span class="kn">import</span> <span class="n">ScaleKernel</span>
 <span class="kn">from</span> <span class="nn">gpytorch.lazy.lazy_tensor</span> <span class="kn">import</span> <span class="n">LazyTensor</span>
-<span class="kn">from</span> <span class="nn">gpytorch.likelihoods.noise_models</span> <span class="kn">import</span> <span class="n">HomoskedasticNoise</span>
 <span class="kn">from</span> <span class="nn">gpytorch.means.constant_mean</span> <span class="kn">import</span> <span class="n">ConstantMean</span>
 <span class="kn">from</span> <span class="nn">gpytorch.mlls</span> <span class="kn">import</span> <span class="n">MarginalLogLikelihood</span>
 <span class="kn">from</span> <span class="nn">gpytorch.models.gp</span> <span class="kn">import</span> <span class="n">GP</span>
@@ -79,6 +78,12 @@
 
 <span class="sd">    Implementation is based on [Chu2005preference]_.</span>
 <span class="sd">    Also see [Brochu2010tutorial]_ for additional reference.</span>
+
+<span class="sd">    Note that in [Chu2005preference]_ the likelihood of a pairwise comparison</span>
+<span class="sd">    is :math:`\left(\frac{f(x_1) - f(x_2)}{\sqrt{2}\sigma}\right)`, i.e. a scale is</span>
+<span class="sd">    used in the denominator. To maintain consistency with usage of kernels</span>
+<span class="sd">    elsewhere in botorch, we instead do not include :math:`\sigma` in the code</span>
+<span class="sd">    (implicitly setting it to 1) and use ScaleKernel to scale the function.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -86,14 +91,11 @@
         <span class="n">datapoints</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">comparisons</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">covar_module</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Module</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">noise_module</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">HomoskedasticNoise</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="sa">r</span><span class="sd">"""A probit-likelihood GP with Laplace approximation model.</span>
-
-<span class="sd">        A probit-likelihood GP with Laplace approximation model that learns via</span>
-<span class="sd">        pairwise comparison data. By default it uses a scaled-RBF kernel.</span>
+        <span class="sa">r</span><span class="sd">"""A probit-likelihood GP with Laplace approximation model that learns via</span>
+<span class="sd">            pairwise comparison data. By default it uses a scaled RBF kernel.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            datapoints: A `batch_shape x n x d` tensor of training features.</span>
@@ -101,7 +103,6 @@
 <span class="sd">                comparisons[i] is a noisy indicator suggesting the utility value</span>
 <span class="sd">                of comparisons[i, 0]-th is greater than comparisons[i, 1]-th.</span>
 <span class="sd">            covar_module: Covariance module</span>
-<span class="sd">            noise_module: Noise module</span>
 <span class="sd">        """</span>
 
         <span class="c1"># Compatibility variables with fit_gpytorch_*: Dummy likelihood</span>
@@ -158,26 +159,24 @@
             <span class="n">param</span><span class="o">.</span><span class="n">requires_grad</span> <span class="o">=</span> <span class="kc">False</span>
 
         <span class="c1"># set covariance module</span>
-        <span class="k">if</span> <span class="n">noise_module</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">noise_module</span> <span class="o">=</span> <span class="n">HomoskedasticNoise</span><span class="p">(</span>
-                <span class="n">noise_prior</span><span class="o">=</span><span class="n">SmoothedBoxPrior</span><span class="p">(</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">),</span>
-                <span class="n">noise_constraint</span><span class="o">=</span><span class="n">GreaterThan</span><span class="p">(</span><span class="mf">1e-4</span><span class="p">),</span>  <span class="c1"># if None, 1e-4 by default</span>
-                <span class="n">batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_input_batch_shape</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">noise_module</span> <span class="o">=</span> <span class="n">noise_module</span>
-
-        <span class="c1"># set covariance module</span>
+        <span class="c1"># the default outputscale here is only a rule of thumb, meant to keep</span>
+        <span class="c1"># estimates away from scale value that would make Phi(f(x)) saturate</span>
+        <span class="c1"># at 0 or 1</span>
         <span class="k">if</span> <span class="n">covar_module</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">ls_prior</span> <span class="o">=</span> <span class="n">GammaPrior</span><span class="p">(</span><span class="mf">1.2</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>
             <span class="n">ls_prior_mode</span> <span class="o">=</span> <span class="p">(</span><span class="n">ls_prior</span><span class="o">.</span><span class="n">concentration</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">ls_prior</span><span class="o">.</span><span class="n">rate</span>
-            <span class="n">covar_module</span> <span class="o">=</span> <span class="n">RBFKernel</span><span class="p">(</span>
-                <span class="n">batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_input_batch_shape</span><span class="p">,</span>
-                <span class="n">ard_num_dims</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span>
-                <span class="n">lengthscale_prior</span><span class="o">=</span><span class="n">ls_prior</span><span class="p">,</span>
-                <span class="n">lengthscale_constraint</span><span class="o">=</span><span class="n">Positive</span><span class="p">(</span>
-                    <span class="n">transform</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initial_value</span><span class="o">=</span><span class="n">ls_prior_mode</span>
+            <span class="n">covar_module</span> <span class="o">=</span> <span class="n">ScaleKernel</span><span class="p">(</span>
+                <span class="n">RBFKernel</span><span class="p">(</span>
+                    <span class="n">batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_input_batch_shape</span><span class="p">,</span>
+                    <span class="n">ard_num_dims</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span>
+                    <span class="n">lengthscale_prior</span><span class="o">=</span><span class="n">ls_prior</span><span class="p">,</span>
+                    <span class="n">lengthscale_constraint</span><span class="o">=</span><span class="n">Positive</span><span class="p">(</span>
+                        <span class="n">transform</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initial_value</span><span class="o">=</span><span class="n">ls_prior_mode</span>
+                    <span class="p">),</span>
                 <span class="p">),</span>
+                <span class="n">outputscale_prior</span><span class="o">=</span><span class="n">SmoothedBoxPrior</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="mi">4</span><span class="p">),</span>
             <span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span> <span class="o">=</span> <span class="n">covar_module</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_x0</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># will store temporary results for warm-starting</span>
@@ -218,14 +217,6 @@
             <span class="k">return</span> <span class="n">new_model</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">std_noise</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">noise_module</span><span class="o">.</span><span class="n">noise</span>
-
-    <span class="nd">@std_noise</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">std_noise</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">noise_module</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">noise</span><span class="o">=</span><span class="n">value</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">num_outputs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""The number of outputs of the model."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_outputs</span>
@@ -238,16 +229,9 @@
             <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">comparisons</span> <span class="ow">is</span> <span class="kc">None</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_calc_covar</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">X1</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X2</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">observation_noise</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">LazyTensor</span><span class="p">]:</span>
+    <span class="k">def</span> <span class="nf">_calc_covar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X1</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X2</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">LazyTensor</span><span class="p">]:</span>
         <span class="sa">r</span><span class="sd">"""Calculate the covariance matrix given two sets of datapoints"""</span>
-        <span class="n">X1</span><span class="p">,</span> <span class="n">X2</span> <span class="o">=</span> <span class="n">X1</span><span class="p">,</span> <span class="n">X2</span>
         <span class="n">covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span> <span class="n">X2</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">observation_noise</span><span class="p">:</span>
-            <span class="n">noise_shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_batch_shape</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:]</span>
-            <span class="n">noise</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">noise_module</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="n">noise_shape</span><span class="p">)</span>
-            <span class="n">covar</span> <span class="o">=</span> <span class="n">AddedDiagLazyTensor</span><span class="p">(</span><span class="n">covar</span><span class="p">,</span> <span class="n">noise</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">covar</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">_batch_chol_inv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mat_chol</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
@@ -328,7 +312,7 @@
         <span class="k">return</span> <span class="n">X</span>
 
     <span class="k">def</span> <span class="nf">_calc_z</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">utility</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">std_noise</span><span class="p">:</span> <span class="n">Tensor</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">utility</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
         <span class="sa">r</span><span class="sd">"""Calculate z score.</span>
 
@@ -337,7 +321,6 @@
 <span class="sd">        Args:</span>
 <span class="sd">            utility: A Tensor of shape `batch_size x n`, the utility at MAP point</span>
 <span class="sd">            D: as in self.D</span>
-<span class="sd">            std_noise: comparison noise (as a Tensor since it's a pytorch param)</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            z: z score calculated as in [Chu2005preference]_.</span>
@@ -346,7 +329,7 @@
 <span class="sd">            hazard: hazard function defined as pdf(z)/cdf(z)</span>
 <span class="sd">        """</span>
 
-        <span class="n">scaled_util</span> <span class="o">=</span> <span class="p">(</span><span class="n">utility</span> <span class="o">/</span> <span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">std_noise</span><span class="p">))</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">D</span><span class="p">)</span>
+        <span class="n">scaled_util</span> <span class="o">=</span> <span class="p">(</span><span class="n">utility</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">D</span><span class="p">)</span>
         <span class="n">z</span> <span class="o">=</span> <span class="p">(</span><span class="n">D</span> <span class="o">@</span> <span class="n">scaled_util</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">std_norm</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">normal</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span>
             <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">z</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">z</span><span class="o">.</span><span class="n">device</span><span class="p">),</span>
@@ -362,9 +345,7 @@
         <span class="n">hazard</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">z_logpdf</span> <span class="o">-</span> <span class="n">z_logcdf</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">z</span><span class="p">,</span> <span class="n">z_logpdf</span><span class="p">,</span> <span class="n">z_logcdf</span><span class="p">,</span> <span class="n">hazard</span>
 
-    <span class="k">def</span> <span class="nf">_grad_likelihood_f_sum</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">utility</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">std_noise</span><span class="p">:</span> <span class="n">Tensor</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">_grad_likelihood_f_sum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">utility</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Compute the sum over of grad. of negative Log-LH wrt utility f.</span>
 <span class="sd">        Original grad should be of dimension m x n, as in (6) from [Chu2005preference]_.</span>
 <span class="sd">        Sum over the first dimension and return a tensor of shape n</span>
@@ -373,20 +354,17 @@
 <span class="sd">        Args:</span>
 <span class="sd">            utility: A Tensor of shape `batch_size x n`</span>
 <span class="sd">            D: A Tensor of shape `batch_size x m x n` as in self.D</span>
-<span class="sd">            std_noise: A Tensor of shape `batch_size x 1`, as in self.std_noise</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The sum over the first dimension of grad. of negative Log-LH wrt utility f</span>
 <span class="sd">        """</span>
-        <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calc_z</span><span class="p">(</span><span class="n">utility</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">std_noise</span><span class="p">)</span>
-        <span class="n">h_factor</span> <span class="o">=</span> <span class="p">(</span><span class="n">h</span> <span class="o">/</span> <span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">std_noise</span><span class="p">))</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calc_z</span><span class="p">(</span><span class="n">utility</span><span class="p">,</span> <span class="n">D</span><span class="p">)</span>
+        <span class="n">h_factor</span> <span class="o">=</span> <span class="p">(</span><span class="n">h</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
         <span class="n">grad</span> <span class="o">=</span> <span class="p">(</span><span class="n">h_factor</span> <span class="o">@</span> <span class="p">(</span><span class="o">-</span><span class="n">D</span><span class="p">))</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">grad</span>
 
-    <span class="k">def</span> <span class="nf">_hess_likelihood_f_sum</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">utility</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">DT</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">std_noise</span><span class="p">:</span> <span class="n">Tensor</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">_hess_likelihood_f_sum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">utility</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">DT</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Compute the sum over of hessian of neg. Log-LH wrt utility f.</span>
 
 <span class="sd">        Original hess should be of dimension m x n x n, as in (7) from</span>
@@ -397,13 +375,12 @@
 <span class="sd">            utility: A Tensor of shape `batch_size x n`</span>
 <span class="sd">            D: A Tensor of shape `batch_size x m x n` as in self.D</span>
 <span class="sd">            DT: Transpose of D. A Tensor of shape `batch_size x n x m` as in self.DT</span>
-<span class="sd">            std_noise: A Tensor of shape `batch_size x 1`, as in self.std_noise</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The sum over the first dimension of hess. of negative Log-LH wrt utility f</span>
 <span class="sd">        """</span>
-        <span class="n">z</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calc_z</span><span class="p">(</span><span class="n">utility</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">std_noise</span><span class="p">)</span>
-        <span class="n">mul_factor</span> <span class="o">=</span> <span class="n">h</span> <span class="o">*</span> <span class="p">(</span><span class="n">h</span> <span class="o">+</span> <span class="n">z</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">std_noise</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
+        <span class="n">z</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calc_z</span><span class="p">(</span><span class="n">utility</span><span class="p">,</span> <span class="n">D</span><span class="p">)</span>
+        <span class="n">mul_factor</span> <span class="o">=</span> <span class="n">h</span> <span class="o">*</span> <span class="p">(</span><span class="n">h</span> <span class="o">+</span> <span class="n">z</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
         <span class="n">weighted_DT</span> <span class="o">=</span> <span class="n">DT</span> <span class="o">*</span> <span class="n">mul_factor</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">*</span><span class="n">DT</span><span class="o">.</span><span class="n">size</span><span class="p">())</span>
         <span class="n">hess</span> <span class="o">=</span> <span class="n">weighted_DT</span> <span class="o">@</span> <span class="n">D</span>
 
@@ -415,7 +392,6 @@
         <span class="n">datapoints</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">DT</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
-        <span class="n">std_noise</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">covar_chol</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">covar_inv</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">ret_np</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
@@ -431,7 +407,6 @@
 <span class="sd">            datapoints: A Tensor of shape `batch_size x n x d` as in self.datapoints</span>
 <span class="sd">            D: A Tensor of shape `batch_size x m x n` as in self.D</span>
 <span class="sd">            DT: Transpose of D. A Tensor of shape `batch_size x n x m` as in self.DT</span>
-<span class="sd">            std_noise: A Tensor of shape `batch_size x 1`, as in self.std_noise</span>
 <span class="sd">            covar_chol: A Tensor of shape `batch_size x n x n`, as in self.covar_chol</span>
 <span class="sd">            covar_inv: A Tensor of shape `batch_size x n x n`, as in self.covar_inv</span>
 <span class="sd">            ret_np: return a numpy array if true, otherwise a Tensor</span>
@@ -442,7 +417,7 @@
             <span class="n">utility</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">utility</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
             <span class="n">prior_mean</span> <span class="o">=</span> <span class="n">prior_mean</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
 
-        <span class="n">b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_grad_likelihood_f_sum</span><span class="p">(</span><span class="n">utility</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">std_noise</span><span class="p">)</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_grad_likelihood_f_sum</span><span class="p">(</span><span class="n">utility</span><span class="p">,</span> <span class="n">D</span><span class="p">)</span>
 
         <span class="c1"># g_ = covar_inv x (utility - pred_prior)</span>
         <span class="n">p</span> <span class="o">=</span> <span class="p">(</span><span class="n">utility</span> <span class="o">-</span> <span class="n">prior_mean</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">covar_chol</span><span class="p">)</span>
@@ -460,7 +435,6 @@
         <span class="n">datapoints</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">D</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">DT</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
-        <span class="n">std_noise</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">covar_chol</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">covar_inv</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">ret_np</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
@@ -476,7 +450,6 @@
 <span class="sd">            datapoints: A Tensor of shape `batch_size x n x d` as in self.datapoints</span>
 <span class="sd">            D: A Tensor of shape `batch_size x m x n` as in self.D</span>
 <span class="sd">            DT: Transpose of D. A Tensor of shape `batch_size x n x m` as in self.DT</span>
-<span class="sd">            std_noise: A Tensor of shape `batch_size x 1`, as in self.std_noise</span>
 <span class="sd">            covar_chol: A Tensor of shape `batch_size x n x n`, as in self.covar_chol</span>
 <span class="sd">            covar_inv: A Tensor of shape `batch_size x n x n`, as in self.covar_inv</span>
 <span class="sd">            ret_np: return a numpy array if true, otherwise a Tensor</span>
@@ -484,7 +457,7 @@
         <span class="k">if</span> <span class="n">ret_np</span><span class="p">:</span>
             <span class="n">utility</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">utility</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
 
-        <span class="n">hl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hess_likelihood_f_sum</span><span class="p">(</span><span class="n">utility</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">DT</span><span class="p">,</span> <span class="n">std_noise</span><span class="p">)</span>
+        <span class="n">hl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hess_likelihood_f_sum</span><span class="p">(</span><span class="n">utility</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">DT</span><span class="p">)</span>
         <span class="n">hess</span> <span class="o">=</span> <span class="n">hl</span> <span class="o">+</span> <span class="n">covar_inv</span>
         <span class="k">return</span> <span class="n">hess</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span> <span class="k">if</span> <span class="n">ret_np</span> <span class="k">else</span> <span class="n">hess</span>
 
@@ -496,7 +469,7 @@
 <span class="sd">        Args:</span>
 <span class="sd">            utility: A Tensor of shape `batch_size x n`</span>
 <span class="sd">        """</span>
-        <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">z_logcdf</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calc_z</span><span class="p">(</span><span class="n">utility</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">std_noise</span><span class="p">)</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">z_logcdf</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calc_z</span><span class="p">(</span><span class="n">utility</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="p">)</span>
         <span class="n">loss1</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">z_logcdf</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">))</span>
         <span class="n">inv_prod</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cholesky_solve</span><span class="p">(</span><span class="n">utility</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_chol</span><span class="p">)</span>
         <span class="n">loss2</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">utility</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="o">@</span> <span class="n">inv_prod</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
@@ -562,23 +535,11 @@
                 <span class="n">dp_v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">)</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
                 <span class="n">D_v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">m</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">)</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
                 <span class="n">DT_v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">DT</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">m</span><span class="p">)</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
-                <span class="c1"># Use `expand` here since we need to expand std_noise along</span>
-                <span class="c1"># the batch shape dimensions if we start off as non-batch model,</span>
-                <span class="c1"># but later conditioned on batched new data</span>
-                <span class="n">sn_v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">std_noise</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">*</span><span class="n">init_x0_size</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
                 <span class="n">ch_v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_chol</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">)</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
                 <span class="n">ci_v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_inv</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">)</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
                 <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">x0</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">x0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
-                    <span class="n">fsolve_args</span> <span class="o">=</span> <span class="p">(</span>
-                        <span class="n">dp_v</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
-                        <span class="n">D_v</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
-                        <span class="n">DT_v</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
-                        <span class="n">sn_v</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
-                        <span class="n">ch_v</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
-                        <span class="n">ci_v</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
-                        <span class="kc">True</span><span class="p">,</span>
-                    <span class="p">)</span>
+                    <span class="n">fsolve_args</span> <span class="o">=</span> <span class="p">(</span><span class="n">dp_v</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">D_v</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">DT_v</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">ch_v</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">ci_v</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="kc">True</span><span class="p">)</span>
                     <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
                         <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">RuntimeWarning</span><span class="p">)</span>
                         <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">optimize</span><span class="o">.</span><span class="n">fsolve</span><span class="p">(</span>
@@ -597,7 +558,6 @@
                     <span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">cpu</span><span class="p">(),</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="o">.</span><span class="n">cpu</span><span class="p">(),</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">DT</span><span class="o">.</span><span class="n">cpu</span><span class="p">(),</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">std_noise</span><span class="o">.</span><span class="n">cpu</span><span class="p">(),</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">covar_chol</span><span class="o">.</span><span class="n">cpu</span><span class="p">(),</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">covar_inv</span><span class="o">.</span><span class="n">cpu</span><span class="p">(),</span>
                     <span class="kc">True</span><span class="p">,</span>
@@ -623,9 +583,7 @@
         <span class="c1"># when calling forward() in order to obtain correct gradients</span>
         <span class="c1"># self.likelihood_hess is updated here is for the rare case where we</span>
         <span class="c1"># do not want to call forward()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">likelihood_hess</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hess_likelihood_f_sum</span><span class="p">(</span>
-            <span class="n">f</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">DT</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">std_noise</span>
-        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">likelihood_hess</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hess_likelihood_f_sum</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">DT</span><span class="p">)</span>
 
         <span class="c1"># Lazy update hlcov_eye, which is used in calculating posterior during training</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">pred_cov_fac_need_update</span> <span class="o">=</span> <span class="kc">True</span>
@@ -681,11 +639,10 @@
 <span class="sd">                finishing `max_iter` updates</span>
 <span class="sd">        """</span>
         <span class="n">xtol</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"-Inf"</span><span class="p">)</span> <span class="k">if</span> <span class="n">xtol</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">xtol</span>
-        <span class="n">dp</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">DT</span><span class="p">,</span> <span class="n">sn</span><span class="p">,</span> <span class="n">ch</span><span class="p">,</span> <span class="n">ci</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">dp</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">DT</span><span class="p">,</span> <span class="n">ch</span><span class="p">,</span> <span class="n">ci</span> <span class="o">=</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">DT</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">std_noise</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">covar_chol</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">covar_inv</span><span class="p">,</span>
         <span class="p">)</span>
@@ -695,7 +652,7 @@
         <span class="n">x</span> <span class="o">=</span> <span class="n">x0</span>
         <span class="n">eye</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">max_iter</span> <span class="ow">and</span> <span class="n">diff</span> <span class="o">&gt;</span> <span class="n">xtol</span><span class="p">:</span>
-            <span class="n">hl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hess_likelihood_f_sum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">DT</span><span class="p">,</span> <span class="n">sn</span><span class="p">)</span>
+            <span class="n">hl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hess_likelihood_f_sum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">DT</span><span class="p">)</span>
             <span class="n">cov_hl</span> <span class="o">=</span> <span class="n">covar</span> <span class="o">@</span> <span class="n">hl</span>
             <span class="k">if</span> <span class="n">eye</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">eye</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span>
@@ -704,7 +661,7 @@
                     <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
                 <span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">cov_hl</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
             <span class="n">cov_hl</span> <span class="o">=</span> <span class="n">cov_hl</span> <span class="o">+</span> <span class="n">eye</span>  <span class="c1"># add 1 to cov_hl</span>
-            <span class="n">g</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_grad_posterior_f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dp</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">DT</span><span class="p">,</span> <span class="n">sn</span><span class="p">,</span> <span class="n">ch</span><span class="p">,</span> <span class="n">ci</span><span class="p">)</span>
+            <span class="n">g</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_grad_posterior_f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dp</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">DT</span><span class="p">,</span> <span class="n">ch</span><span class="p">,</span> <span class="n">ci</span><span class="p">)</span>
             <span class="n">cov_g</span> <span class="o">=</span> <span class="n">covar</span> <span class="o">@</span> <span class="n">g</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
             <span class="n">x_update</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">cov_g</span><span class="p">,</span> <span class="n">cov_hl</span><span class="p">)</span><span class="o">.</span><span class="n">solution</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
             <span class="n">x_next</span> <span class="o">=</span> <span class="n">x</span> <span class="o">-</span> <span class="n">x_update</span>
@@ -815,7 +772,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">utility</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_util_newton_updates</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">utility</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
             <span class="n">hl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood_hess</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hess_likelihood_f_sum</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">utility</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">DT</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">std_noise</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">utility</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">DT</span>
             <span class="p">)</span>
             <span class="n">covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar</span>
             <span class="c1"># Apply matrix inversion lemma on eq. in page 27 of [Brochu2010tutorial]_</span>
@@ -909,11 +866,12 @@
 <span class="sd">            X: A `batch_shape x q x d`-dim Tensor, where `d` is the dimension</span>
 <span class="sd">                of the feature space and `q` is the number of points considered jointly.</span>
 <span class="sd">            output_indices: As defined in parent Model class, not used for this model.</span>
-<span class="sd">            observation_noise: If True, add observation noise to the posterior.</span>
+<span class="sd">            observation_noise: Ignored (since noise is not identifiable from scale</span>
+<span class="sd">                in probit models).</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A `Posterior` object, representing joint</span>
-<span class="sd">                distributions over `q` points. Includes observation noise if specified.</span>
+<span class="sd">                distributions over `q` points.</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>  <span class="c1"># make sure model is in eval mode</span>
 
@@ -924,10 +882,6 @@
             <span class="p">)</span>
 
         <span class="n">post</span> <span class="o">=</span> <span class="bp">self</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">observation_noise</span><span class="p">:</span>
-            <span class="n">noise_module</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">noise_module</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="n">post</span><span class="o">.</span><span class="n">mean</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span>
-            <span class="n">post</span> <span class="o">=</span> <span class="n">MultivariateNormal</span><span class="p">(</span><span class="n">post</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span> <span class="n">post</span><span class="o">.</span><span class="n">covariance_matrix</span> <span class="o">+</span> <span class="n">noise_module</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">GPyTorchPosterior</span><span class="p">(</span><span class="n">post</span><span class="p">)</span></div>
 
@@ -944,8 +898,7 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A (deepcopied) `Model` object of the same type, representing the</span>
-<span class="sd">            original model conditioned on the new observations `(X, Y)` (and</span>
-<span class="sd">            possibly noise observations passed in via kwargs).</span>
+<span class="sd">            original model conditioned on the new observations `(X, Y)`.</span>
 <span class="sd">        """</span>
         <span class="n">new_model</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_has_no_data</span><span class="p">():</span>

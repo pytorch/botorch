@@ -152,7 +152,7 @@ batch shape of the model).</p></li>
 <dl class="py method">
 <dt id="botorch.models.model.Model.construct_inputs">
 <em class="property">classmethod </em><code class="sig-name descname">construct_inputs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">training_data</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model.html#Model.construct_inputs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.model.Model.construct_inputs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Construct kwargs for the <cite>Model</cite> from <cite>TrainingData</cite>.</p>
+<dd><p>Construct kwargs for the <cite>Model</cite> from <cite>TrainingData</cite> and other options.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]</p>
@@ -806,7 +806,7 @@ forward pass.</p></li>
 <dl class="py method">
 <dt id="botorch.models.gp_regression.SingleTaskGP.construct_inputs">
 <em class="property">classmethod </em><code class="sig-name descname">construct_inputs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">training_data</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#SingleTaskGP.construct_inputs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gp_regression.SingleTaskGP.construct_inputs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Construct kwargs for the <cite>Model</cite> from <cite>TrainingData</cite>.</p>
+<dd><p>Construct kwargs for the <cite>Model</cite> from <cite>TrainingData</cite> and other options.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -917,7 +917,7 @@ as the specified measurement noise.</p></li>
 <dl class="py method">
 <dt id="botorch.models.gp_regression.FixedNoiseGP.construct_inputs">
 <em class="property">classmethod </em><code class="sig-name descname">construct_inputs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">training_data</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#FixedNoiseGP.construct_inputs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gp_regression.FixedNoiseGP.construct_inputs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Construct kwargs for the <cite>Model</cite> from <cite>TrainingData</cite>.</p>
+<dd><p>Construct kwargs for the <cite>Model</cite> from <cite>TrainingData</cite> and other options.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -1105,7 +1105,7 @@ forward pass.</p></li>
 <dl class="py method">
 <dt id="botorch.models.gp_regression_fidelity.SingleTaskMultiFidelityGP.construct_inputs">
 <em class="property">classmethod </em><code class="sig-name descname">construct_inputs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">training_data</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression_fidelity.html#SingleTaskMultiFidelityGP.construct_inputs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gp_regression_fidelity.SingleTaskMultiFidelityGP.construct_inputs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Construct kwargs for the <cite>Model</cite> from <cite>TrainingData</cite>.</p>
+<dd><p>Construct kwargs for the <cite>Model</cite> from <cite>TrainingData</cite> and other options.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -1194,7 +1194,7 @@ forward pass.</p></li>
 <dl class="py method">
 <dt id="botorch.models.gp_regression_fidelity.FixedNoiseMultiFidelityGP.construct_inputs">
 <em class="property">classmethod </em><code class="sig-name descname">construct_inputs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">training_data</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression_fidelity.html#FixedNoiseMultiFidelityGP.construct_inputs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gp_regression_fidelity.FixedNoiseMultiFidelityGP.construct_inputs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Construct kwargs for the <cite>Model</cite> from <cite>TrainingData</cite>.</p>
+<dd><p>Construct kwargs for the <cite>Model</cite> from <cite>TrainingData</cite> and other options.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -1300,7 +1300,7 @@ been added and all test-time caches have been updated.</p>
 <p>Multi-Task GP models.</p>
 <dl class="py class">
 <dt id="botorch.models.multitask.MultiTaskGP">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.models.multitask.</code><code class="sig-name descname">MultiTaskGP</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">train_X</span></em>, <em class="sig-param"><span class="n">train_Y</span></em>, <em class="sig-param"><span class="n">task_feature</span></em>, <em class="sig-param"><span class="n">prior</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">output_tasks</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">rank</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">input_transform</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/multitask.html#MultiTaskGP"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.multitask.MultiTaskGP" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.multitask.</code><code class="sig-name descname">MultiTaskGP</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">train_X</span></em>, <em class="sig-param"><span class="n">train_Y</span></em>, <em class="sig-param"><span class="n">task_feature</span></em>, <em class="sig-param"><span class="n">task_covar_prior</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">output_tasks</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">rank</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">input_transform</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/multitask.html#MultiTaskGP"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.multitask.MultiTaskGP" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">gpytorch.models.exact_gp.ExactGP</span></code>, <a class="reference internal" href="#botorch.models.gpytorch.MultiTaskGPyTorchModel" title="botorch.models.gpytorch.MultiTaskGPyTorchModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.gpytorch.MultiTaskGPyTorchModel</span></code></a></p>
 <p>Multi-Task GP model using an ICM kernel, inferring observation noise.</p>
 <p>Multi-task exact GP that uses a simple ICM kernel. Can be single-output or
@@ -1323,6 +1323,8 @@ features (see <cite>task_feature</cite> argument).</p></li>
 outputs for. If omitted, return outputs for all task indices.</p></li>
 <li><p><strong>rank</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The rank to be used for the index kernel. If omitted, use a
 full rank (i.e. number of tasks) kernel.</p></li>
+<li><p><strong>task_covar_prior</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Prior</span></code>]) – A Prior on the task covariance matrix. Must operate
+on p.s.d. matrices. A common prior for this is the <cite>LKJ</cite> prior.</p></li>
 <li><p><strong>input_transform</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">InputTransform</span></code></a>]) – An input transform that is applied in the model’s
 forward pass.</p></li>
 </ul>
@@ -1359,16 +1361,26 @@ forward pass.</p></li>
 <dl class="py method">
 <dt id="botorch.models.multitask.MultiTaskGP.construct_inputs">
 <em class="property">classmethod </em><code class="sig-name descname">construct_inputs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">training_data</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/multitask.html#MultiTaskGP.construct_inputs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.multitask.MultiTaskGP.construct_inputs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Construct kwargs for the <cite>Model</cite> from <cite>TrainingData</cite>.</p>
+<dd><p>Construct kwargs for the <cite>Model</cite> from <cite>TrainingData</cite> and other options.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.containers.TrainingData" title="botorch.utils.containers.TrainingData"><code class="xref py py-class docutils literal notranslate"><span class="pre">TrainingData</span></code></a>) – <cite>TrainingData</cite> container with data for single outcome
 or for multiple outcomes for batched multi-output case.</p></li>
-<li><p><strong>**kwargs</strong> – Additional options for the model that pertain to the
-training data:
-- <cite>task_features</cite> – indices of the input columns containing the task
-features (expected list of length 1).</p></li>
+<li><p><strong>**kwargs</strong> – <p>Additional options for the model that pertain to the
+training data, including:</p>
+<ul>
+<li><p><cite>task_features</cite>: Indices of the input columns containing the task
+features (expected list of length 1),</p></li>
+<li><p><cite>task_covar_prior</cite>: A GPyTorch <cite>Prior</cite> object to use as prior on
+the cross-task covariance matrix,</p></li>
+<li><p><cite>prior_config</cite>: A dict representing a prior config, should only be
+used if <cite>prior</cite> is not passed directly. Should contain:
+<cite>use_LKJ_prior</cite> (whether to use LKJ prior) and <cite>eta</cite> (eta value,
+float),</p></li>
+<li><p><cite>rank</cite>: The rank of the cross-task covariance matrix.</p></li>
+</ul>
+</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -1383,7 +1395,7 @@ features (expected list of length 1).</p></li>
 </dd></dl>
 <dl class="py class">
 <dt id="botorch.models.multitask.FixedNoiseMultiTaskGP">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.models.multitask.</code><code class="sig-name descname">FixedNoiseMultiTaskGP</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">train_X</span></em>, <em class="sig-param"><span class="n">train_Y</span></em>, <em class="sig-param"><span class="n">train_Yvar</span></em>, <em class="sig-param"><span class="n">task_feature</span></em>, <em class="sig-param"><span class="n">prior</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">output_tasks</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">rank</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">input_transform</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/multitask.html#FixedNoiseMultiTaskGP"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.multitask.FixedNoiseMultiTaskGP" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.multitask.</code><code class="sig-name descname">FixedNoiseMultiTaskGP</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">train_X</span></em>, <em class="sig-param"><span class="n">train_Y</span></em>, <em class="sig-param"><span class="n">train_Yvar</span></em>, <em class="sig-param"><span class="n">task_feature</span></em>, <em class="sig-param"><span class="n">task_covar_prior</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">output_tasks</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">rank</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">input_transform</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/multitask.html#FixedNoiseMultiTaskGP"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.multitask.FixedNoiseMultiTaskGP" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.multitask.MultiTaskGP" title="botorch.models.multitask.MultiTaskGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.multitask.MultiTaskGP</span></code></a></p>
 <p>Multi-Task GP model using an ICM kernel, with known observation noise.</p>
 <p>Multi-task exact GP that uses a simple ICM kernel. Can be single-output or
@@ -1403,6 +1415,8 @@ observations.</p></li>
 <li><p><strong>train_Yvar</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>n</cite> or <cite>b x n</cite> (batch mode) tensor of observation
 noise standard errors.</p></li>
 <li><p><strong>task_feature</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The index of the task feature (<cite>-d &lt;= task_feature &lt;= d</cite>).</p></li>
+<li><p><strong>task_covar_prior</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Prior</span></code>]) – A Prior on the task covariance matrix. Must operate
+on p.s.d. matrices. A common prior for this is the <cite>LKJ</cite> prior.</p></li>
 <li><p><strong>output_tasks</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]) – A list of task indices for which to compute model
 outputs for. If omitted, return outputs for all task indices.</p></li>
 <li><p><strong>rank</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The rank to be used for the index kernel. If omitted, use a
@@ -1426,15 +1440,26 @@ forward pass.</p></li>
 <dl class="py method">
 <dt id="botorch.models.multitask.FixedNoiseMultiTaskGP.construct_inputs">
 <em class="property">classmethod </em><code class="sig-name descname">construct_inputs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">training_data</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/multitask.html#FixedNoiseMultiTaskGP.construct_inputs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.multitask.FixedNoiseMultiTaskGP.construct_inputs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Construct kwargs for the <cite>Model</cite> from <cite>TrainingData</cite>.</p>
+<dd><p>Construct kwargs for the <cite>Model</cite> from <cite>TrainingData</cite> and other options.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>training_data</strong> (<a class="reference internal" href="utils.html#botorch.utils.containers.TrainingData" title="botorch.utils.containers.TrainingData"><code class="xref py py-class docutils literal notranslate"><span class="pre">TrainingData</span></code></a>) – <cite>TrainingData</cite> container with data for single outcome
 or for multiple outcomes for batched multi-output case.</p></li>
-<li><p><strong>**kwargs</strong> – Additional options for the model that pertain to the
-training data:
-- <cite>task_features</cite> – indices of task features in X.</p></li>
+<li><p><strong>**kwargs</strong> – <p>Additional options for the model that pertain to the
+training data, including:</p>
+<ul>
+<li><p><cite>task_features</cite>: Indices of the input columns containing the task
+features (expected list of length 1),</p></li>
+<li><p><cite>task_covar_prior</cite>: A GPyTorch <cite>Prior</cite> object to use as prior on
+the cross-task covariance matrix,</p></li>
+<li><p><cite>prior_config</cite>: A dict representing a prior config, should only be
+used if <cite>prior</cite> is not passed directly. Should contain:
+use_LKJ_prior` (whether to use LKJ prior) and <cite>eta</cite> (eta value,
+float),</p></li>
+<li><p><cite>rank</cite>: The rank of the cross-task covariance matrix.</p></li>
+</ul>
+</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -1452,7 +1477,7 @@ training data:
 <span id="pairwise-gp-models"></span><h3>Pairwise GP Models<a class="headerlink" href="#module-botorch.models.pairwise_gp" title="Permalink to this headline">¶</a></h3>
 <p>Preference Learning with Gaussian Process</p>
 <dl class="citation">
-<dt class="label" id="chu2005preference"><span class="brackets">Chu2005preference</span><span class="fn-backref">(<a href="#id3">1</a>,<a href="#id5">2</a>)</span></dt>
+<dt class="label" id="chu2005preference"><span class="brackets">Chu2005preference</span><span class="fn-backref">(<a href="#id3">1</a>,<a href="#id5">2</a>,<a href="#id6">3</a>)</span></dt>
 <dd><p>Wei Chu, and Zoubin Ghahramani. Preference learning with Gaussian processes.
 Proceedings of the 22nd international conference on Machine learning. 2005.</p>
 </dd>
@@ -1465,21 +1490,17 @@ arXiv preprint arXiv:1012.2599 (2010).</p>
 </dl>
 <dl class="py class">
 <dt id="botorch.models.pairwise_gp.PairwiseGP">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.models.pairwise_gp.</code><code class="sig-name descname">PairwiseGP</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">datapoints</span></em>, <em class="sig-param"><span class="n">comparisons</span></em>, <em class="sig-param"><span class="n">covar_module</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">noise_module</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/pairwise_gp.html#PairwiseGP"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseGP" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.pairwise_gp.</code><code class="sig-name descname">PairwiseGP</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">datapoints</span></em>, <em class="sig-param"><span class="n">comparisons</span></em>, <em class="sig-param"><span class="n">covar_module</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/pairwise_gp.html#PairwiseGP"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseGP" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.model.Model</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">gpytorch.models.gp.GP</span></code></p>
 <p>Probit GP for preference learning with Laplace approximation</p>
 <p>Implementation is based on <a class="reference internal" href="#chu2005preference" id="id3"><span>[Chu2005preference]</span></a>.
 Also see <a class="reference internal" href="#brochu2010tutorial" id="id4"><span>[Brochu2010tutorial]</span></a> for additional reference.</p>
+<p>Note that in <a class="reference internal" href="#chu2005preference" id="id5"><span>[Chu2005preference]</span></a> the likelihood of a pairwise comparison
+is <span class="math notranslate nohighlight">\(\left(\frac{f(x_1) - f(x_2)}{\sqrt{2}\sigma}\right)\)</span>, i.e. a scale is
+used in the denominator. To maintain consistency with usage of kernels
+elsewhere in botorch, we instead do not include <span class="math notranslate nohighlight">\(\sigma\)</span> in the code
+(implicitly setting it to 1) and use ScaleKernel to scale the function.</p>
 <p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
-<dl class="py method">
-<dt id="botorch.models.pairwise_gp.PairwiseGP.std_noise">
-<em class="property">property </em><code class="sig-name descname">std_noise</code><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseGP.std_noise" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-</dl>
-</dd></dl>
 <dl class="py method">
 <dt id="botorch.models.pairwise_gp.PairwiseGP.num_outputs">
 <em class="property">property </em><code class="sig-name descname">num_outputs</code><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseGP.num_outputs" title="Permalink to this definition">¶</a></dt>
@@ -1505,7 +1526,7 @@ re-setting the data</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1548,7 +1569,8 @@ should be the same as self.datapoints</p>
 <li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x q x d</cite>-dim Tensor, where <cite>d</cite> is the dimension
 of the feature space and <cite>q</cite> is the number of points considered jointly.</p></li>
 <li><p><strong>output_indices</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]) – As defined in parent Model class, not used for this model.</p></li>
-<li><p><strong>observation_noise</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, add observation noise to the posterior.</p></li>
+<li><p><strong>observation_noise</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Ignored (since noise is not identifiable from scale
+in probit models).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -1556,7 +1578,7 @@ of the feature space and <cite>q</cite> is the number of points considered joint
 </dd>
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p><dl class="simple">
-<dt>A <cite>Posterior</cite> object, representing joint</dt><dd><p>distributions over <cite>q</cite> points. Includes observation noise if specified.</p>
+<dt>A <cite>Posterior</cite> object, representing joint</dt><dd><p>distributions over <cite>q</cite> points.</p>
 </dd>
 </dl>
 </p>
@@ -1582,8 +1604,7 @@ f_i is preferred over f_j</p></li>
 </dd>
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p>A (deepcopied) <cite>Model</cite> object of the same type, representing the
-original model conditioned on the new observations <cite>(X, Y)</cite> (and
-possibly noise observations passed in via kwargs).</p>
+original model conditioned on the new observations <cite>(X, Y)</cite>.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1597,7 +1618,7 @@ possibly noise observations passed in via kwargs).</p>
 <em class="property">class </em><code class="sig-prename descclassname">botorch.models.pairwise_gp.</code><code class="sig-name descname">PairwiseLaplaceMarginalLogLikelihood</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/pairwise_gp.html#PairwiseLaplaceMarginalLogLikelihood"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseLaplaceMarginalLogLikelihood" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">gpytorch.mlls.marginal_log_likelihood.MarginalLogLikelihood</span></code></p>
 <p>Laplace-approximated marginal log likelihood/evidence for PairwiseGP</p>
-<p>See (12) from <a class="reference internal" href="#chu2005preference" id="id5"><span>[Chu2005preference]</span></a>.</p>
+<p>See (12) from <a class="reference internal" href="#chu2005preference" id="id6"><span>[Chu2005preference]</span></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>model</strong> (<a class="reference internal" href="#botorch.models.pairwise_gp.PairwiseGP" title="botorch.models.pairwise_gp.PairwiseGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">PairwiseGP</span></code></a>) – A model using laplace approximation (currently only supports
@@ -2821,7 +2842,7 @@ features.</p></li>
 <dd class="field-odd"><p><strong>Z</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – The input tensor.</p>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2841,7 +2862,7 @@ just to be contained within the unit cube).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2861,7 +2882,7 @@ train targets of a model. Standardization is checked across the
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2893,7 +2914,7 @@ No checks (other than the NaN check) are performed for observed variances
 (<cite>train_Yvar</cite>) at this point.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
@@ -2914,7 +2935,7 @@ attribute.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
