@@ -18,6 +18,8 @@ from botorch.utils.transforms import (
     t_batch_mode_transform,
     unnormalize,
 )
+from botorch.acquisition import AcquisitionFunction
+from botorch.utils.testing import MockModel
 from torch import Tensor
 
 
@@ -72,19 +74,42 @@ class TestNormalizeAndUnnormalize(BotorchTestCase):
             self.assertTrue(torch.equal(X2, unnormalize(X2_normalized, bounds=bounds2)))
 
 
+class DummyAcqf(AcquisitionFunction):
+    def forward(self, X: Tensor) -> Tensor:
+        raise NotImplementedError
+
+    @t_batch_mode_transform(assert_output_shape=True)
+    def wrong_batch_shape_method(self, X: Tensor):
+        self.model._input_batch_shape = X.shape[:-2]
+        return X.mean(dim=(-1, -2)).repeat(2, *[1] * (X.dim() - 2))
+
+    @t_batch_mode_transform(assert_output_shape=True)
+    def correct_batch_shape_method(self, X: Tensor):
+        self.model._input_batch_shape = torch.Size([2]) + X.shape[:-2]
+        return X.mean(dim=(-1, -2)).repeat(2, *[1] * (X.dim() - 2))
+
+
 class BMIMTestClass(BotorchTestCase):
-    @t_batch_mode_transform()
+    @t_batch_mode_transform(assert_output_shape=False)
     def q_method(self, X: Tensor) -> None:
         return X
 
-    @t_batch_mode_transform(expected_q=1)
+    @t_batch_mode_transform(expected_q=1, assert_output_shape=False)
     def q1_method(self, X: Tensor) -> None:
         return X
 
-    @t_batch_mode_transform()
+    @t_batch_mode_transform(assert_output_shape=False)
     def kw_method(self, X: Tensor, dummy_arg: Any = None):
         self.assertIsNotNone(dummy_arg)
         return X
+
+    @t_batch_mode_transform(assert_output_shape=True)
+    def wrong_shape_method(self, X: Tensor):
+        return X
+
+    @t_batch_mode_transform(assert_output_shape=True)
+    def correct_shape_method(self, X: Tensor):
+        return X.mean(dim=(-1, -2)).squeeze(-1)
 
     @concatenate_pending_points
     def dummy_method(self, X: Tensor) -> Tensor:
@@ -136,6 +161,22 @@ class TestBatchModeTransform(BotorchTestCase):
             c.kw_method(X)
         Xout = c.kw_method(X, dummy_arg=5)
         self.assertTrue(torch.equal(Xout, X.unsqueeze(0)))
+
+        # test assert_output_shape
+        X = torch.rand(5, 1, 2)
+        with self.assertRaises(AssertionError):
+            c.wrong_shape_method(X)
+        Xout = c.correct_shape_method(X)
+        self.assertEqual(Xout.shape, X.shape[:-2])
+        # test when output shape is torch.Size()
+        Xout = c.correct_shape_method(torch.rand(1, 2))
+        self.assertEqual(Xout.shape, torch.Size())
+        # test with model batch shape
+        acqf = DummyAcqf(model=MockModel(None))
+        with self.assertRaises(AssertionError):
+            acqf.wrong_batch_shape_method(X)
+        Xout = acqf.correct_batch_shape_method(X)
+        self.assertEqual(Xout.shape, acqf.model._input_batch_shape)
 
 
 class TestConcatenatePendingPoints(BotorchTestCase):

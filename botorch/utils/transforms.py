@@ -125,18 +125,22 @@ def normalize_indices(indices: Optional[List[int]], d: int) -> Optional[List[int
 
 
 def t_batch_mode_transform(
-    expected_q: Optional[int] = None,
+    expected_q: Optional[int] = None, assert_output_shape: bool = True,
 ) -> Callable[[Callable[[Any, Tensor], Any]], Callable[[Any, Tensor], Any]]:
     r"""Factory for decorators taking a t-batched `X` tensor.
 
     This method creates decorators for instance methods to transform an input tensor
     `X` to t-batch mode (i.e. with at least 3 dimensions). This assumes the tensor
     has a q-batch dimension. The decorator also checks the q-batch size if `expected_q`
-    is provided.
+    is provided, and the output shape if `assert_output_shape` is `True`.
 
     Args:
         expected_q: The expected q-batch size of X. If specified, this will raise an
-            AssertitionError if X's q-batch size does not equal expected_q.
+            AssertionError if X's q-batch size does not equal expected_q.
+        assert_output_shape: If `True`, this will raise an AssertionError if the
+            output shape does not match either the t-batch shape of X,
+            or the `cls.model._input_batch_shape` for acquisition functions using
+            batched models.
 
     Returns:
         The decorated instance method.
@@ -166,7 +170,29 @@ def t_batch_mode_transform(
                     f" got X with shape {X.shape}."
                 )
             X = X if X.dim() > 2 else X.unsqueeze(0)
-            return method(cls, X, **kwargs)
+            output = method(cls, X, **kwargs)
+            if (
+                assert_output_shape
+                and output.shape != X.shape[:-2]
+                and not (
+                    output.shape == torch.Size() and X.shape[:-2] == torch.Size([1])
+                )  # output of size 1 is typically squeezed
+            ):
+                # the check above may fail when using a batched model.
+                # ensure that this is not the case
+                from botorch.acquisition import AcquisitionFunction
+
+                if (
+                    not isinstance(cls, AcquisitionFunction)
+                    or output.shape != cls.model._input_batch_shape
+                ):
+                    raise AssertionError(
+                        f"Expected the output shape to match either the batch shape of "
+                        f"X, or the `model._input_batch_shape` in the case of "
+                        f"acquisition functions using batch models; but got output "
+                        f"with shape {output.shape} for X with shape {X.shape}."
+                    )
+            return output
 
         return decorated
 

@@ -29,7 +29,7 @@ NO = "botorch.utils.testing.MockModel.num_outputs"
 
 
 def mock_util(X, deltas):
-    return 0.5 * deltas.sum(dim=0)
+    return 0.5 * deltas
 
 
 class TestQKnowledgeGradient(BotorchTestCase):
@@ -173,7 +173,7 @@ class TestQKnowledgeGradient(BotorchTestCase):
             self.assertTrue(torch.equal(qKG.extract_candidates(X), X[..., :-n_f, :]))
             # test objective (inner MC sampling)
             objective = GenericMCObjective(objective=lambda Y: Y.norm(dim=-1))
-            samples = torch.randn(3, 1, 1, device=self.device, dtype=dtype)
+            samples = torch.randn(n_f, 1, 1, 1, device=self.device, dtype=dtype)
             mfm = MockModel(MockPosterior(samples=samples))
             X = torch.rand(n_f + 1, 1, device=self.device, dtype=dtype)
             with mock.patch.object(MockModel, "fantasize", return_value=mfm) as patch_f:
@@ -329,8 +329,8 @@ class TestQMultiFidelityKnowledgeGradient(BotorchTestCase):
             b = 2
             current_value = torch.rand(b, device=self.device, dtype=dtype)
             cau = GenericCostAwareUtility(mock_util)
-            mean = torch.rand(n_f, b, 1, device=self.device, dtype=dtype)
-            variance = torch.rand(n_f, b, 1, device=self.device, dtype=dtype)
+            mean = torch.rand(n_f, b, 1, 1, device=self.device, dtype=dtype)
+            variance = torch.rand(n_f, b, 1, 1, device=self.device, dtype=dtype)
             mfm = MockModel(MockPosterior(mean=mean, variance=variance))
             X = torch.rand(b, n_f + 1, 1, device=self.device, dtype=dtype)
             with mock.patch.object(MockModel, "fantasize", return_value=mfm) as patch_f:
@@ -347,7 +347,9 @@ class TestQMultiFidelityKnowledgeGradient(BotorchTestCase):
                     patch_f.assert_called_once()
                     cargs, ckwargs = patch_f.call_args
                     self.assertEqual(ckwargs["X"].shape, torch.Size([b, 1, 1]))
-            val_exp = mock_util(X, mean.squeeze(-1) - current_value).mean(dim=0)
+            val_exp = mock_util(X, mean.squeeze(-1).squeeze(-1) - current_value).mean(
+                dim=0
+            )
             self.assertTrue(torch.allclose(val, val_exp, atol=1e-4))
             self.assertTrue(torch.equal(qMFKG.extract_candidates(X), X[..., :-n_f, :]))
             # pending points and current value
@@ -377,7 +379,7 @@ class TestQMultiFidelityKnowledgeGradient(BotorchTestCase):
             self.assertTrue(torch.equal(qMFKG.extract_candidates(X), X[..., :-n_f, :]))
             # test objective (inner MC sampling)
             objective = GenericMCObjective(objective=lambda Y: Y.norm(dim=-1))
-            samples = torch.randn(3, 1, 1, device=self.device, dtype=dtype)
+            samples = torch.randn(n_f, 1, 1, 1, device=self.device, dtype=dtype)
             mfm = MockModel(MockPosterior(samples=samples))
             X = torch.rand(n_f + 1, 1, device=self.device, dtype=dtype)
             with mock.patch.object(MockModel, "fantasize", return_value=mfm) as patch_f:

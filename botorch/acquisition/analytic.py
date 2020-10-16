@@ -120,7 +120,7 @@ class ExpectedImprovement(AnalyticAcquisitionFunction):
             best_f = torch.tensor(best_f)
         self.register_buffer("best_f", best_f)
 
-    @t_batch_mode_transform(expected_q=1)
+    @t_batch_mode_transform(expected_q=1, assert_output_shape=False)
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate Expected Improvement on the candidate set X.
 

@@ -64,6 +64,7 @@ class TestQNegIntegratedPosteriorVariance(BotorchTestCase):
                     mock_num_outputs.return_value = 1
                     # TODO: Make this work with arbitrary models
                     mm = MockModel(None)
+                    mm._input_batch_shape = torch.Size([2])
                     qNIPV = qNegIntegratedPosteriorVariance(
                         model=mm, mc_points=mc_points
                     )
@@ -120,7 +121,7 @@ class TestQNegIntegratedPosteriorVariance(BotorchTestCase):
                         mc_points=mc_points,
                         objective=ScalarizedObjective(weights=weights),
                     )
-                    X = torch.empty(1, 1, device=self.device, dtype=dtype)  # dummy
+                    X = torch.empty(3, 1, 1, device=self.device, dtype=dtype)  # dummy
                     val = qNIPV(X)
                     val_exp = -0.5 * variance.mean(dim=0).view(3, -1).mean(dim=-1)
                     self.assertTrue(torch.allclose(val, val_exp, atol=1e-4))
