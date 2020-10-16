@@ -205,7 +205,6 @@ class PairwiseGP(Model, GP):
 
     def _calc_covar(self, X1: Tensor, X2: Tensor) -> Union[Tensor, LazyTensor]:
         r"""Calculate the covariance matrix given two sets of datapoints"""
-        X1, X2 = X1, X2
         covar = self.covar_module(X1, X2)
         return covar.evaluate()
 
