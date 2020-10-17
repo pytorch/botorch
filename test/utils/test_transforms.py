@@ -90,6 +90,8 @@ class DummyAcqf(AcquisitionFunction):
 
 
 class BMIMTestClass(BotorchTestCase):
+    model = None
+
     @t_batch_mode_transform(assert_output_shape=False)
     def q_method(self, X: Tensor) -> None:
         return X

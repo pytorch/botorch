@@ -178,21 +178,17 @@ def t_batch_mode_transform(
                 and not (
                     output.shape == torch.Size() and X.shape[:-2] == torch.Size([1])
                 )  # output of size 1 is typically squeezed
-            ):
-                # the check above may fail when using a batched model.
-                # ensure that this is not the case
-                from botorch.acquisition import AcquisitionFunction
-
-                if (
-                    not isinstance(cls, AcquisitionFunction)
+                and (
+                    not hasattr(cls.model, "_input_batch_shape")
                     or output.shape != cls.model._input_batch_shape
-                ):
-                    raise AssertionError(
-                        f"Expected the output shape to match either the batch shape of "
-                        f"X, or the `model._input_batch_shape` in the case of "
-                        f"acquisition functions using batch models; but got output "
-                        f"with shape {output.shape} for X with shape {X.shape}."
-                    )
+                )  # in case of a batch model with broadcastable X
+            ):
+                raise AssertionError(
+                    "Expected the output shape to match either the batch shape of "
+                    "X, or the `model._input_batch_shape` in the case of "
+                    "acquisition functions using batch models; but got output "
+                    f"with shape {output.shape} for X with shape {X.shape}."
+                )
             return output
 
         return decorated
