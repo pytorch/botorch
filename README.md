@@ -149,27 +149,27 @@ For more details see our [Documentation](https://botorch.org/docs/introduction) 
 ## Citing BoTorch
 
 If you use BoTorch, please cite the following paper:
-> [M. Balandat, B. Karrer, D. R. Jiang, S. Daulton, B. Letham, A. G. Wilson, and E. Bakshy. BoTorch: Programmable Bayesian Optimization in PyTorch. ArXiv e-prints, 2019.](http://arxiv.org/abs/1910.06403)
+> [M. Balandat, B. Karrer, D. R. Jiang, S. Daulton, B. Letham, A. G. Wilson, and E. Bakshy. BoTorch: A Framework for Efficient Monte-Carlo Bayesian Optimization. Advances in Neural Information Processing Systems 33, 2020.](https://arxiv.org/abs/1910.06403)
 
 ```
-@article{balandat2019botorch,
-  Author = {Balandat, Maximilian and Karrer, Brian and Jiang, Daniel R. and Daulton, Samuel and Letham, Benjamin and Wilson, Andrew Gordon and Bakshy, Eytan},
-  Journal = {arxiv e-prints},
-  Title = {{BoTorch: Programmable Bayesian Optimization in PyTorch}},
-  Year = {2019},
+@inproceedings{balandat2020botorch,
+  title={{BoTorch: A Framework for Efficient Monte-Carlo Bayesian Optimization}},
+  author={Balandat, Maximilian and Karrer, Brian and Jiang, Daniel R. and Daulton, Samuel and Letham, Benjamin and Wilson, Andrew Gordon and Bakshy, Eytan},
+  booktitle = {Advances in Neural Information Processing Systems 33},
+  year={2020},
   url = {http://arxiv.org/abs/1910.06403}
 }
 ```
 
 If you use q-Expected Hypervolume Improvement, q-ParEGO, or analytic Expected Hypervolume Improvement with auto-differentiation, please also cite the following paper:
-> [S. Daulton, M. Balandat, E. Bakshy. Differentiable Expected Hypervolume Improvement for Parallel Multi-Objective Bayesian Optimization. ArXiv e-prints, 2020.](https://arxiv.org/abs/2006.05078)
+> [S. Daulton, M. Balandat, and E. Bakshy. Differentiable Expected Hypervolume Improvement for Parallel Multi-Objective Bayesian Optimization. Advances in Neural Information Processing Systems 33, 2020.](https://arxiv.org/abs/2006.05078)
 
 ```
-@article{daulton2020differentiable,
-  Author = {Samuel Daulton and Maximilian Balandat and Eytan Bakshy},
-  Journal = {Arxiv e-prints},
-  Title = {Differentiable Expected Hypervolume Improvement for Parallel Multi-Objective Bayesian Optimization},
-  Year = {2020},
+@inproceedings{daulton2020ehvi,
+  title={{Differentiable Expected Hypervolume Improvement for Parallel Multi-Objective Bayesian Optimization}},
+  author={Daulton, Samuel and Balandat, Maximilian and Bakshy, Eytan},
+  booktitle={Advances in Neural Information Processing Systems 33},
+  year={2020},
   url = {https://arxiv.org/abs/2006.05078}
 }
 ```

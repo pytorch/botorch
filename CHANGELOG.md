@@ -62,8 +62,7 @@ Multi-Objective Bayesian Optimization
   * Hypervolume Calculation
   * Box Decomposition algorithm
 * Multi-Objective Test Functions (#466)
-  * Suite of synthetic test functions for multi-objective, constrained
-    optimzation
+  * Suite of synthetic test functions for multi-objective, constrained optimization
 * Multi-Objective Tutorial (#468)
 * Abstract ConstrainedBaseTestProblem (#454)
 * Add optimize_acqf_list method for sequentially, greedily optimizing 1 candidate

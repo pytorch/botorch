@@ -40,7 +40,7 @@ def get_chebyshev_scalarization(
     See [Knowles2005]_ for details.
 
     This scalarization can be used with qExpectedImprovement to implement q-ParEGO
-    as proposed in [Daulton2020]_.
+    as proposed in [Daulton2020qehvi]_.
 
     Args:
         weights: A `m`-dim tensor of weights.
