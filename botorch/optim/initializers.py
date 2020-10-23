@@ -48,7 +48,10 @@ def gen_batch_initial_conditions(
             `initialize_q_batch` and `initialize_q_batch_nonneg`. If `options`
             contains a `nonnegative=True` entry, then `acq_function` is
             assumed to be non-negative (useful when using custom acquisition
-            functions).
+            functions). In addition, an "init_batch_limit" option can be passed
+            to specify the batch limit for the initialization. This is useful
+            for avoiding memory limits when computing the batch posterior over
+            raw samples.
 
     Returns:
         A `num_restarts x q x d` tensor of initial conditions.
@@ -62,7 +65,9 @@ def gen_batch_initial_conditions(
     """
     options = options or {}
     seed: Optional[int] = options.get("seed")
-    batch_limit: Optional[int] = options.get("batch_limit")
+    batch_limit: Optional[int] = options.get(
+        "init_batch_limit", options.get("batch_limit")
+    )
     batch_initial_arms: Tensor
     factor, max_factor = 1, 5
     init_kwargs = {}

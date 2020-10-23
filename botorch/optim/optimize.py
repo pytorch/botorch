@@ -172,7 +172,7 @@ def optimize_acqf(
             options={
                 k: v
                 for k, v in options.items()
-                if k not in ("batch_limit", "nonnegative")
+                if k not in ("init_batch_limit", "batch_limit", "nonnegative")
             },
             inequality_constraints=inequality_constraints,
             equality_constraints=equality_constraints,
