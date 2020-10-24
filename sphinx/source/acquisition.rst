@@ -110,6 +110,11 @@ Fixed Feature Acquisition Function
 .. automodule:: botorch.acquisition.fixed_feature
     :members:
 
+Penalized Acquisition Function Wrapper
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.acquisition.penalized
+    :members:
+
 General Utilities for Acquisition Functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.acquisition.utils
