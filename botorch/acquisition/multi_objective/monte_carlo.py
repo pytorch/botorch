@@ -9,10 +9,10 @@ Monte-Carlo Acquisition Functions for Multi-objective Bayesian optimization.
 
 References
 
-.. [Daulton2020]
-    S. Daulton, M. Balandat, E. Bakshy. Differentiable Expected Hypervolume
-    Improvement for Parallel Multi-Objective Bayesian Optimization.
-    arXiv e-prints, arXiv:2006.05078, Jun. 2020.
+.. [Daulton2020qehvi]
+    S. Daulton, M. Balandat, and E. Bakshy. Differentiable Expected Hypervolume
+    Improvement for Parallel Multi-Objective Bayesian Optimization. Advances in Neural
+    Information Processing Systems 33, 2020.
 
 """
 
@@ -99,7 +99,7 @@ class qExpectedHypervolumeImprovement(MultiObjectiveMCAcquisitionFunction):
     ) -> None:
         r"""q-Expected Hypervolume Improvement supporting m>=2 outcomes.
 
-        See [Daulton2020]_ for details.
+        See [Daulton2020qehvi]_ for details.
 
         Example:
             >>> model = SingleTaskGP(train_X, train_Y)
