@@ -2,6 +2,31 @@
 
 The release log for BoTorch.
 
+## [0.3.2] - Oct 23, 2020
+
+Maintenance Release
+
+#### New Features
+* Add `PenalizedAcquisitionFunction` wrapper (#585)
+* Input transforms
+  * Reversible input transform (#550)
+  * Rounding input transform (#562)
+  * Log input transform (#563)
+* Differentiable approximate rounding for integers (#561)
+
+#### Bug fixes
+* Fix sign error in UCB when `maximize=False` (a4bfacbfb2109d3b89107d171d2101e1995822bb)
+* Fix batch_range sample shape logic (#574)
+
+#### Other changes
+* Better support for two stage sampling in preference learning
+  (0cd13d0cb49b1ac8d0971e42f1f0e9dd6126fd9a)
+* Remove noise term in `PairwiseGP` and add `ScaleKernel` by default (#571)
+* Rename `prior` to `task_covar_prior` in `MultiTaskGP` and `FixedNoiseMultiTaskGP`
+  (8e42ea82856b165a7df9db2a9b6f43ebd7328fc4)
+* Support only transforming inputs on training or evaluation (#551)
+* Add `equals` method for `InputTransform` (#552)
+
 
 ## [0.3.1] - Sep 15, 2020
 
