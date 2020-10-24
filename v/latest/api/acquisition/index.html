@@ -92,7 +92,7 @@ design points <cite>X</cite>.</p>
 <dl class="py method">
 <dt id="botorch.acquisition.acquisition.OneShotAcquisitionFunction.get_augmented_q_batch_size">
 <em class="property">abstract </em><code class="sig-name descname">get_augmented_q_batch_size</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">q</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/acquisition.html#OneShotAcquisitionFunction.get_augmented_q_batch_size"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.acquisition.OneShotAcquisitionFunction.get_augmented_q_batch_size" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get augmented q batch size for one-shot optimzation.</p>
+<dd><p>Get augmented q batch size for one-shot optimziation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>q</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of candidates to consider jointly.</p>
@@ -101,7 +101,7 @@ design points <cite>X</cite>.</p>
 <dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
 </dd>
 <dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>The augmented size for one-shot optimzation (including variables
+<dd class="field-odd"><p>The augmented size for one-shot optimization (including variables
 parameterizing the fantasy solutions).</p>
 </dd>
 </dl>
@@ -629,7 +629,7 @@ the given design points <cite>X</cite>.</p>
 <span id="monte-carlo-acquisition-functions"></span><h3>Monte-Carlo Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.monte_carlo" title="Permalink to this headline">¶</a></h3>
 <p>Batch acquisition functions using the reparameterization trick in combination
 with (quasi) Monte-Carlo sampling. See <a class="reference internal" href="#rezende2014reparam" id="id1"><span>[Rezende2014reparam]</span></a>, <a class="reference internal" href="#wilson2017reparam" id="id2"><span>[Wilson2017reparam]</span></a> and
-<a class="reference internal" href="#balandat2019botorch" id="id3"><span>[Balandat2019botorch]</span></a>.</p>
+<a class="reference internal" href="#balandat2020botorch" id="id3"><span>[Balandat2020botorch]</span></a>.</p>
 <dl class="citation">
 <dt class="label" id="rezende2014reparam"><span class="brackets"><a class="fn-backref" href="#id1">Rezende2014reparam</a></span></dt>
 <dd><p>D. J. Rezende, S. Mohamed, and D. Wierstra. Stochastic backpropagation and
@@ -964,7 +964,7 @@ hypervolume improvement using box decomposition algorithms. J Glob Optim 75,
 <p>Expected Hypervolume Improvement supporting m&gt;=2 outcomes.</p>
 <p>This implements the computes EHVI using the algorithm from <a class="reference internal" href="#yang2019" id="id4"><span>[Yang2019]</span></a>, but
 additionally computes gradients via auto-differentiation as proposed by
-<a class="reference internal" href="#daulton2020" id="id5"><span>[Daulton2020]</span></a>.</p>
+<a class="reference internal" href="#daulton2020qehvi" id="id5"><span>[Daulton2020qehvi]</span></a>.</p>
 <p>Note: this is currently inefficient in two ways due to the binary partitioning
 algorithm that we use for the box decomposition:</p>
 <blockquote>
@@ -1085,10 +1085,10 @@ design point each, and returns a Tensor with shape <cite>batch_shape’</cite>, 
 <p>Monte-Carlo Acquisition Functions for Multi-objective Bayesian optimization.</p>
 <p>References</p>
 <dl class="citation">
-<dt class="label" id="daulton2020"><span class="brackets">Daulton2020</span><span class="fn-backref">(<a href="#id5">1</a>,<a href="#id10">2</a>)</span></dt>
-<dd><p>S. Daulton, M. Balandat, E. Bakshy. Differentiable Expected Hypervolume
-Improvement for Parallel Multi-Objective Bayesian Optimization.
-arXiv e-prints, arXiv:2006.05078, Jun. 2020.</p>
+<dt class="label" id="daulton2020qehvi"><span class="brackets">Daulton2020qehvi</span><span class="fn-backref">(<a href="#id5">1</a>,<a href="#id10">2</a>)</span></dt>
+<dd><p>S. Daulton, M. Balandat, and E. Bakshy. Differentiable Expected Hypervolume
+Improvement for Parallel Multi-Objective Bayesian Optimization. Advances in Neural
+Information Processing Systems 33, 2020.</p>
 </dd>
 </dl>
 <dl class="py class">
@@ -1096,7 +1096,7 @@ arXiv e-prints, arXiv:2006.05078, Jun. 2020.</p>
 <em class="property">class </em><code class="sig-prename descclassname">botorch.acquisition.multi_objective.monte_carlo.</code><code class="sig-name descname">qExpectedHypervolumeImprovement</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">ref_point</span></em>, <em class="sig-param"><span class="n">partitioning</span></em>, <em class="sig-param"><span class="n">sampler</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">objective</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">constraints</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">X_pending</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">eta</span><span class="o">=</span><span class="default_value">0.001</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/monte_carlo.html#qExpectedHypervolumeImprovement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.monte_carlo.qExpectedHypervolumeImprovement" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction" title="botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.multi_objective.monte_carlo.MultiObjectiveMCAcquisitionFunction</span></code></a></p>
 <p>q-Expected Hypervolume Improvement supporting m&gt;=2 outcomes.</p>
-<p>See <a class="reference internal" href="#daulton2020" id="id10"><span>[Daulton2020]</span></a> for details.</p>
+<p>See <a class="reference internal" href="#daulton2020qehvi" id="id10"><span>[Daulton2020qehvi]</span></a> for details.</p>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">ref_point</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]</span>
@@ -1157,13 +1157,13 @@ evaluations.</p>
 <div class="section" id="module-botorch.acquisition.knowledge_gradient">
 <span id="the-one-shot-knowledge-gradient"></span><h3>The One-Shot Knowledge Gradient<a class="headerlink" href="#module-botorch.acquisition.knowledge_gradient" title="Permalink to this headline">¶</a></h3>
 <p>Batch Knowledge Gradient (KG) via one-shot optimization as introduced in
-<a class="reference internal" href="#balandat2019botorch" id="id11"><span>[Balandat2019botorch]</span></a>. For broader discussion of KG see also <a class="reference internal" href="#frazier2008knowledge" id="id12"><span>[Frazier2008knowledge]</span></a>
+<a class="reference internal" href="#balandat2020botorch" id="id11"><span>[Balandat2020botorch]</span></a>. For broader discussion of KG see also <a class="reference internal" href="#frazier2008knowledge" id="id12"><span>[Frazier2008knowledge]</span></a>
 and <a class="reference internal" href="#wu2016parallelkg" id="id13"><span>[Wu2016parallelkg]</span></a>.</p>
 <dl class="citation">
-<dt class="label" id="balandat2019botorch"><span class="brackets">Balandat2019botorch</span><span class="fn-backref">(<a href="#id3">1</a>,<a href="#id11">2</a>)</span></dt>
-<dd><p>M. Balandat, B. Karrer, D. R. Jiang, S. Daulton, B. Letham, A. G. Wilson,
-and E. Bakshy. BoTorch: Programmable Bayesian Optimziation in PyTorch.
-ArXiv 2019.</p>
+<dt class="label" id="balandat2020botorch"><span class="brackets">Balandat2020botorch</span><span class="fn-backref">(<a href="#id3">1</a>,<a href="#id11">2</a>)</span></dt>
+<dd><p>M. Balandat, B. Karrer, D. R. Jiang, S. Daulton, B. Letham, A. G. Wilson, and
+E. Bakshy. BoTorch: A Framework for Efficient Monte-Carlo Bayesian Optimization.
+Advances in Neural Information Processing Systems 33, 2020.</p>
 </dd>
 <dt class="label" id="frazier2008knowledge"><span class="brackets"><a class="fn-backref" href="#id12">Frazier2008knowledge</a></span></dt>
 <dd><p>P. Frazier, W. Powell, and S. Dayanik. A Knowledge-Gradient policy for
@@ -1282,7 +1282,7 @@ true KG value of <cite>X_actual[b]</cite>.</p>
 <dl class="py method">
 <dt id="botorch.acquisition.knowledge_gradient.qKnowledgeGradient.get_augmented_q_batch_size">
 <code class="sig-name descname">get_augmented_q_batch_size</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">q</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/knowledge_gradient.html#qKnowledgeGradient.get_augmented_q_batch_size"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.knowledge_gradient.qKnowledgeGradient.get_augmented_q_batch_size" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get augmented q batch size for one-shot optimzation.</p>
+<dd><p>Get augmented q batch size for one-shot optimization.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>q</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of candidates to consider jointly.</p>
@@ -1291,7 +1291,7 @@ true KG value of <cite>X_actual[b]</cite>.</p>
 <dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
 </dd>
 <dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>The augmented size for one-shot optimzation (including variables
+<dd class="field-odd"><p>The augmented size for one-shot optimization (including variables
 parameterizing the fantasy solutions).</p>
 </dd>
 </dl>

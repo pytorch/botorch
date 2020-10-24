@@ -74,7 +74,10 @@
 <span class="sd">            `initialize_q_batch` and `initialize_q_batch_nonneg`. If `options`</span>
 <span class="sd">            contains a `nonnegative=True` entry, then `acq_function` is</span>
 <span class="sd">            assumed to be non-negative (useful when using custom acquisition</span>
-<span class="sd">            functions).</span>
+<span class="sd">            functions). In addition, an "init_batch_limit" option can be passed</span>
+<span class="sd">            to specify the batch limit for the initialization. This is useful</span>
+<span class="sd">            for avoiding memory limits when computing the batch posterior over</span>
+<span class="sd">            raw samples.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A `num_restarts x q x d` tensor of initial conditions.</span>
@@ -88,7 +91,9 @@
 <span class="sd">    """</span>
     <span class="n">options</span> <span class="o">=</span> <span class="n">options</span> <span class="ow">or</span> <span class="p">{}</span>
     <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"seed"</span><span class="p">)</span>
-    <span class="n">batch_limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"batch_limit"</span><span class="p">)</span>
+    <span class="n">batch_limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+        <span class="s2">"init_batch_limit"</span><span class="p">,</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"batch_limit"</span><span class="p">)</span>
+    <span class="p">)</span>
     <span class="n">batch_initial_arms</span><span class="p">:</span> <span class="n">Tensor</span>
     <span class="n">factor</span><span class="p">,</span> <span class="n">max_factor</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">5</span>
     <span class="n">init_kwargs</span> <span class="o">=</span> <span class="p">{}</span>

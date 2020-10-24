@@ -79,7 +79,7 @@
 <p>We use the parallel ParEGO ($q$ParEGO) [1] and parallel Expected Hypervolume Improvement ($q$EHVI) [1]  acquisition functions to optimize a  synthetic Branin-Currin test function. The two objectives are</p>
 $$f^{(1)}(x_1\text{'}, x_2\text{'}) = (x_2\text{'} - \frac{5.1}{4 \pi^ 2} (x_1\text{'})^2 + \frac{5}{\pi} x_1\text{'} - r)^2 + 10 (1-\frac{1}{8 \pi}) \cos(x_1\text{'}) + 10$$$$f^{(2)}(x_1, x_2) = \bigg[1 - \exp\bigg(-\frac{1} {(2x_2)}\bigg)\bigg] \frac{2300 x_1^3 + 1900x_1^2 + 2092 x_1 + 60}{100 x_1^3 + 500x_1^2 + 4x_1 + 20}$$<p>where $x_1, x_2 \in [0,1]$, $x_1\text{'} = 15x_1 - 5$, and $x_2\text{'} = 15x_2$ (parameter values can be found in <code>botorch/test_functions/multi_objective.py</code>).</p>
 <p>Since botorch assumes a maximization of all objectives, we seek to find the pareto frontier, the set of optimal trade-offs where improving one metric means deteriorating another.</p>
-<p>[1] <a href="https://arxiv.org/abs/2006.05078">Samuel Daulton, Maximillian Balandat, Eytan Bakshy. Differentiable Expected Hypervolume Improvement for Parallel Multi-Objective Bayesian Optimization. ArXiv e-prints, 2020.</a></p>
+<p>[1] <a href="https://arxiv.org/abs/2006.05078">S. Daulton, M. Balandat, and E. Bakshy. Differentiable Expected Hypervolume Improvement for Parallel Multi-Objective Bayesian Optimization. Advances in Neural Information Processing Systems 33, 2020.</a></p>
 </div>
 </div>
 </div>

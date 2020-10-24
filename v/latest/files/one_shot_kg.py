@@ -29,7 +29,7 @@
 # The key difference from the envelope theorem approach is that we do not solve the inner optimization problem to completion for every fantasy point for every gradient step with respect to $\mathbf{x}$. Instead, we solve the nested optimization problem jointly over $\mathbf{x}$ and the fantasy points $\mathbf{X}'$. The resulting optimization problem is of higher dimension, namely $(q + N_{\!f})d$ instead of $qd$, but unlike the envelope theorem formulation it can be solved as a single optimization problem, which can be solved using standard methods for deterministic optimization. 
 # 
 # 
-# [1] M. Balandat, B. Karrer, D. R. Jiang, S. Daulton, B. Letham, A. G. Wilson, and E. Bakshy. BoTorch: Programmable Bayesian Optimization in PyTorch. ArXiv 2019.
+# [1] M. Balandat, B. Karrer, D. R. Jiang, S. Daulton, B. Letham, A. G. Wilson, and E. Bakshy. BoTorch: A Framework for Efficient Monte-Carlo Bayesian Optimization. Advances in Neural Information Processing Systems 33, 2020.
 # 
 # [2] P. Frazier, W. Powell, and S. Dayanik. A Knowledge-Gradient policy for sequential information collection. SIAM Journal on Control and Optimization, 2008.
 # 

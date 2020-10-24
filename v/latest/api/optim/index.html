@@ -324,7 +324,10 @@ heuristic.</p></li>
 <cite>initialize_q_batch</cite> and <cite>initialize_q_batch_nonneg</cite>. If <cite>options</cite>
 contains a <cite>nonnegative=True</cite> entry, then <cite>acq_function</cite> is
 assumed to be non-negative (useful when using custom acquisition
-functions).</p></li>
+functions). In addition, an “init_batch_limit” option can be passed
+to specify the batch limit for the initialization. This is useful
+for avoiding memory limits when computing the batch posterior over
+raw samples.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>

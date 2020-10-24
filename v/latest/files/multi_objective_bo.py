@@ -15,7 +15,7 @@
 # 
 # Since botorch assumes a maximization of all objectives, we seek to find the pareto frontier, the set of optimal trade-offs where improving one metric means deteriorating another.
 # 
-# [1] [Samuel Daulton, Maximillian Balandat, Eytan Bakshy. Differentiable Expected Hypervolume Improvement for Parallel Multi-Objective Bayesian Optimization. ArXiv e-prints, 2020.](https://arxiv.org/abs/2006.05078)
+# [1] [S. Daulton, M. Balandat, and E. Bakshy. Differentiable Expected Hypervolume Improvement for Parallel Multi-Objective Bayesian Optimization. Advances in Neural Information Processing Systems 33, 2020.](https://arxiv.org/abs/2006.05078)
 
 # ### Set dtype and device
 # Note: $q$EHVI aggressively exploits parallel hardware and is much faster when run on a GPU. See [1] for details.
