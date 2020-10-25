@@ -207,6 +207,13 @@
 </li>
 </ul></li>
 <li>
+    botorch.acquisition.penalized
+
+      <ul>
+<li><a href="acquisition.html#module-botorch.acquisition.penalized">module</a>
+</li>
+</ul></li>
+<li>
     botorch.acquisition.utils
 
       <ul>
@@ -1139,6 +1146,14 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.objective.ScalarizedObjective.forward">(botorch.acquisition.objective.ScalarizedObjective method)</a>
 </li>
+<li><a href="acquisition.html#botorch.acquisition.penalized.GaussianPenalty.forward">(botorch.acquisition.penalized.GaussianPenalty method)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.penalized.GroupLassoPenalty.forward">(botorch.acquisition.penalized.GroupLassoPenalty method)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.penalized.L2Penalty.forward">(botorch.acquisition.penalized.L2Penalty method)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.penalized.PenalizedAcquisitionFunction.forward">(botorch.acquisition.penalized.PenalizedAcquisitionFunction method)</a>
+</li>
 <li><a href="generation.html#botorch.generation.sampling.BoltzmannSampling.forward">(botorch.generation.sampling.BoltzmannSampling method)</a>
 </li>
 <li><a href="generation.html#botorch.generation.sampling.MaxPosteriorSampling.forward">(botorch.generation.sampling.MaxPosteriorSampling method)</a>
@@ -1196,6 +1211,8 @@
 <h2 id="G">G</h2>
 <table class="indextable genindextable" style="width: 100%"><tr>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="acquisition.html#botorch.acquisition.penalized.GaussianPenalty">GaussianPenalty (class in botorch.acquisition.penalized)</a>
+</li>
 <li><a href="optim.html#botorch.optim.initializers.gen_batch_initial_conditions">gen_batch_initial_conditions() (in module botorch.optim.initializers)</a>
 </li>
 <li><a href="generation.html#botorch.generation.gen.gen_candidates_scipy">gen_candidates_scipy() (in module botorch.generation.gen)</a>
@@ -1264,6 +1281,10 @@
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Griewank">Griewank (class in botorch.test_functions.synthetic)</a>
 </li>
+<li><a href="acquisition.html#botorch.acquisition.penalized.group_lasso_regularizer">group_lasso_regularizer() (in module botorch.acquisition.penalized)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.penalized.GroupLassoPenalty">GroupLassoPenalty (class in botorch.acquisition.penalized)</a>
+</li>
 </ul></td>
 </tr></table>
 <h2 id="H">H</h2>
@@ -1326,6 +1347,8 @@
 <h2 id="L">L</h2>
 <table class="indextable genindextable" style="width: 100%"><tr>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="acquisition.html#botorch.acquisition.penalized.L2Penalty">L2Penalty (class in botorch.acquisition.penalized)</a>
+</li>
 <li><a href="settings.html#botorch.settings.log_level.level">level (botorch.settings.log_level attribute)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Levy">Levy (class in botorch.test_functions.synthetic)</a>
@@ -1334,10 +1357,10 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.objective.LinearMCObjective">LinearMCObjective (class in botorch.acquisition.objective)</a>
 </li>
-<li><a href="models.html#botorch.models.kernels.linear_truncated_fidelity.LinearTruncatedFidelityKernel">LinearTruncatedFidelityKernel (class in botorch.models.kernels.linear_truncated_fidelity)</a>
-</li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="models.html#botorch.models.kernels.linear_truncated_fidelity.LinearTruncatedFidelityKernel">LinearTruncatedFidelityKernel (class in botorch.models.kernels.linear_truncated_fidelity)</a>
+</li>
 <li><a href="utils.html#botorch.utils.testing.MockModel.load_state_dict">load_state_dict() (botorch.utils.testing.MockModel method)</a>
 </li>
 <li><a href="models.html#botorch.models.transforms.outcome.Log">Log (class in botorch.models.transforms.outcome)</a>
@@ -1433,6 +1456,8 @@
 <li><a href="acquisition.html#module-botorch.acquisition.multi_objective.objective">botorch.acquisition.multi_objective.objective</a>
 </li>
 <li><a href="acquisition.html#module-botorch.acquisition.objective">botorch.acquisition.objective</a>
+</li>
+<li><a href="acquisition.html#module-botorch.acquisition.penalized">botorch.acquisition.penalized</a>
 </li>
 <li><a href="acquisition.html#module-botorch.acquisition.utils">botorch.acquisition.utils</a>
 </li>
@@ -1727,6 +1752,8 @@
 </li>
 <li><a href="utils.html#botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.partition_non_dominated_space_2d">partition_non_dominated_space_2d() (botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning method)</a>
 </li>
+<li><a href="acquisition.html#botorch.acquisition.penalized.PenalizedAcquisitionFunction">PenalizedAcquisitionFunction (class in botorch.acquisition.penalized)</a>
+</li>
 <li><a href="utils.html#botorch.utils.torch.BufferDict.pop">pop() (botorch.utils.torch.BufferDict method)</a>
 </li>
 <li><a href="cross_validation.html#botorch.cross_validation.CVResults.posterior">posterior (botorch.cross_validation.CVResults attribute)</a>
@@ -1876,6 +1903,8 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.analytic.MultiObjectiveAnalyticAcquisitionFunction.set_X_pending">(botorch.acquisition.multi_objective.analytic.MultiObjectiveAnalyticAcquisitionFunction method)</a>
 </li>
+<li><a href="acquisition.html#botorch.acquisition.penalized.PenalizedAcquisitionFunction.set_X_pending">(botorch.acquisition.penalized.PenalizedAcquisitionFunction method)</a>
+</li>
 <li><a href="utils.html#botorch.utils.testing.MockAcquisitionFunction.set_X_pending">(botorch.utils.testing.MockAcquisitionFunction method)</a>
 </li>
 </ul></li>
@@ -1885,10 +1914,10 @@
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Shekel">Shekel (class in botorch.test_functions.synthetic)</a>
 </li>
-<li><a href="models.html#botorch.models.gp_regression.SingleTaskGP">SingleTaskGP (class in botorch.models.gp_regression)</a>
-</li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="models.html#botorch.models.gp_regression.SingleTaskGP">SingleTaskGP (class in botorch.models.gp_regression)</a>
+</li>
 <li><a href="models.html#botorch.models.gp_regression_fidelity.SingleTaskMultiFidelityGP">SingleTaskMultiFidelityGP (class in botorch.models.gp_regression_fidelity)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.SixHumpCamel">SixHumpCamel (class in botorch.test_functions.synthetic)</a>
@@ -2056,6 +2085,14 @@
 <li><a href="acquisition.html#botorch.acquisition.objective.MCAcquisitionObjective.training">(botorch.acquisition.objective.MCAcquisitionObjective attribute)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.objective.ScalarizedObjective.training">(botorch.acquisition.objective.ScalarizedObjective attribute)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.penalized.GaussianPenalty.training">(botorch.acquisition.penalized.GaussianPenalty attribute)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.penalized.GroupLassoPenalty.training">(botorch.acquisition.penalized.GroupLassoPenalty attribute)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.penalized.L2Penalty.training">(botorch.acquisition.penalized.L2Penalty attribute)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.penalized.PenalizedAcquisitionFunction.training">(botorch.acquisition.penalized.PenalizedAcquisitionFunction attribute)</a>
 </li>
 <li><a href="generation.html#botorch.generation.sampling.BoltzmannSampling.training">(botorch.generation.sampling.BoltzmannSampling attribute)</a>
 </li>
@@ -2239,6 +2276,10 @@
 <table class="indextable genindextable" style="width: 100%"><tr>
 <td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="utils.html#botorch.utils.containers.TrainingData.X">X (botorch.utils.containers.TrainingData attribute)</a>
+</li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="acquisition.html#botorch.acquisition.penalized.PenalizedAcquisitionFunction.X_pending">X_pending() (botorch.acquisition.penalized.PenalizedAcquisitionFunction property)</a>
 </li>
 </ul></td>
 </tr></table>

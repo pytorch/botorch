@@ -2446,6 +2446,194 @@ by adding <cite>values</cite> in the appropriate places (see
 <dd></dd></dl>
 </dd></dl>
 </div>
+<div class="section" id="module-botorch.acquisition.penalized">
+<span id="penalized-acquisition-function-wrapper"></span><h3>Penalized Acquisition Function Wrapper<a class="headerlink" href="#module-botorch.acquisition.penalized" title="Permalink to this headline">¶</a></h3>
+<p>Modules to add regularization to acquisition functions.</p>
+<dl class="py class">
+<dt id="botorch.acquisition.penalized.L2Penalty">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.acquisition.penalized.</code><code class="sig-name descname">L2Penalty</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">init_point</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/penalized.html#L2Penalty"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.penalized.L2Penalty" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code></p>
+<p>L2 penalty class to be added to any arbitrary acquisition function.</p>
+<p>Initializing L2 regularization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>init_point</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – The “1 x dim” reference point against which
+we want to regularize.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="botorch.acquisition.penalized.L2Penalty.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/penalized.html#L2Penalty.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.penalized.L2Penalty.forward" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A “batch_shape x q x dim” representing the points to be evaluated.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A tensor of size “batch_shape” representing the acqfn for each q-batch.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt id="botorch.acquisition.penalized.L2Penalty.training">
+<code class="sig-name descname">training</code><em class="property">: bool</em><a class="headerlink" href="#botorch.acquisition.penalized.L2Penalty.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt id="botorch.acquisition.penalized.GaussianPenalty">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.acquisition.penalized.</code><code class="sig-name descname">GaussianPenalty</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">init_point</span></em>, <em class="sig-param"><span class="n">sigma</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/penalized.html#GaussianPenalty"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.penalized.GaussianPenalty" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code></p>
+<p>Gaussian penalty class to be added to any arbitrary acquisition function.</p>
+<p>Initializing Gaussian regularization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>init_point</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – The “1 x dim” reference point against which
+we want to regularize.</p></li>
+<li><p><strong>sigma</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – The parameter used in gaussian function.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="botorch.acquisition.penalized.GaussianPenalty.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/penalized.html#GaussianPenalty.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.penalized.GaussianPenalty.forward" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A “batch_shape x q x dim” representing the points to be evaluated.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A tensor of size “batch_shape” representing the acqfn for each q-batch.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt id="botorch.acquisition.penalized.GaussianPenalty.training">
+<code class="sig-name descname">training</code><em class="property">: bool</em><a class="headerlink" href="#botorch.acquisition.penalized.GaussianPenalty.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt id="botorch.acquisition.penalized.GroupLassoPenalty">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.acquisition.penalized.</code><code class="sig-name descname">GroupLassoPenalty</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">init_point</span></em>, <em class="sig-param"><span class="n">groups</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/penalized.html#GroupLassoPenalty"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.penalized.GroupLassoPenalty" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code></p>
+<p>Group lasso penalty class to be added to any arbitrary acquisition function.</p>
+<p>Initializing Group-Lasso regularization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>init_point</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – The “1 x dim” reference point against which we want
+to regularize.</p></li>
+<li><p><strong>groups</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]) – Groups of indices used in group lasso.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="botorch.acquisition.penalized.GroupLassoPenalty.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/penalized.html#GroupLassoPenalty.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.penalized.GroupLassoPenalty.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>X should be batch_shape x 1 x dim tensor. Evaluation for q-batch is not
+implemented yet.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt id="botorch.acquisition.penalized.GroupLassoPenalty.training">
+<code class="sig-name descname">training</code><em class="property">: bool</em><a class="headerlink" href="#botorch.acquisition.penalized.GroupLassoPenalty.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt id="botorch.acquisition.penalized.PenalizedAcquisitionFunction">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.acquisition.penalized.</code><code class="sig-name descname">PenalizedAcquisitionFunction</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">raw_acqf</span></em>, <em class="sig-param"><span class="n">penalty_func</span></em>, <em class="sig-param"><span class="n">regularization_parameter</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/penalized.html#PenalizedAcquisitionFunction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.penalized.PenalizedAcquisitionFunction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.acquisition.AcquisitionFunction</span></code></a></p>
+<p>Single-outcome acquisition function regularized by the given penalty.</p>
+<dl class="simple">
+<dt>The usage is similar to:</dt><dd><p>raw_acqf = NoisyExpectedImprovement(…)
+penalty = GroupLassoPenalty(…)
+acqf = PenalizedAcquisitionFunction(raw_acqf, penalty)</p>
+</dd>
+</dl>
+<p>Initializing Group-Lasso regularization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>raw_acqf</strong> (<a class="reference internal" href="#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code></a>) – The raw acquisition function that is going to be regularized.</p></li>
+<li><p><strong>penalty_func</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>) – The regularization function.</p></li>
+<li><p><strong>regularization_parameter</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Regularization parameter used in optimization.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="botorch.acquisition.penalized.PenalizedAcquisitionFunction.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/penalized.html#PenalizedAcquisitionFunction.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.penalized.PenalizedAcquisitionFunction.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the acquisition function on the candidate set X.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>(b) x q x d</cite>-dim Tensor of <cite>(b)</cite> t-batches with <cite>q</cite> <cite>d</cite>-dim
+design points each.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>(b)</cite>-dim Tensor of acquisition function values at the given
+design points <cite>X</cite>.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.acquisition.penalized.PenalizedAcquisitionFunction.X_pending">
+<em class="property">property </em><code class="sig-name descname">X_pending</code><a class="headerlink" href="#botorch.acquisition.penalized.PenalizedAcquisitionFunction.X_pending" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.acquisition.penalized.PenalizedAcquisitionFunction.set_X_pending">
+<code class="sig-name descname">set_X_pending</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X_pending</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/penalized.html#PenalizedAcquisitionFunction.set_X_pending"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.penalized.PenalizedAcquisitionFunction.set_X_pending" title="Permalink to this definition">¶</a></dt>
+<dd><p>Informs the acquisition function about pending design points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X_pending</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – <cite>n x d</cite> Tensor with <cite>n</cite> <cite>d</cite>-dim design points that have
+been submitted for evaluation but have not yet been evaluated.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt id="botorch.acquisition.penalized.PenalizedAcquisitionFunction.training">
+<code class="sig-name descname">training</code><em class="property">: bool</em><a class="headerlink" href="#botorch.acquisition.penalized.PenalizedAcquisitionFunction.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py function">
+<dt id="botorch.acquisition.penalized.group_lasso_regularizer">
+<code class="sig-prename descclassname">botorch.acquisition.penalized.</code><code class="sig-name descname">group_lasso_regularizer</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="n">groups</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/penalized.html#group_lasso_regularizer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.penalized.group_lasso_regularizer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the group lasso regularization function for the given point.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A bxd tensor representing the points to evaluate the regularization at.</p></li>
+<li><p><strong>groups</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]) – List of indices of different groups.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Computed group lasso norm of at the given points.</p>
+</dd>
+</dl>
+</dd></dl>
+</div>
 <div class="section" id="module-botorch.acquisition.utils">
 <span id="general-utilities-for-acquisition-functions"></span><h3>General Utilities for Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.utils" title="Permalink to this headline">¶</a></h3>
 <p>Utilities for acquisition functions.</p>
