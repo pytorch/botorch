@@ -193,6 +193,30 @@ output models (<cite>m</cite> &gt; 1).</p></li>
 </dl>
 </dd></dl>
 </div>
+<div class="section" id="module-botorch.utils.rounding">
+<span id="rounding"></span><h2>Rounding<a class="headerlink" href="#module-botorch.utils.rounding" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt id="botorch.utils.rounding.approximate_round">
+<code class="sig-prename descclassname">botorch.utils.rounding.</code><code class="sig-name descname">approximate_round</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="n">tau</span><span class="o">=</span><span class="default_value">0.001</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/rounding.html#approximate_round"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.rounding.approximate_round" title="Permalink to this definition">¶</a></dt>
+<dd><p>Diffentiable approximate rounding function.</p>
+<p>This method is a piecewise approximation of a rounding function where
+each piece is a hyperbolic tangent function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – The tensor to round to the nearest integer (element-wise).</p></li>
+<li><p><strong>tau</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – A temperature hyperparameter.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The approximately rounded input tensor.</p>
+</dd>
+</dl>
+</dd></dl>
+</div>
 <div class="section" id="module-botorch.utils.sampling">
 <span id="sampling"></span><h2>Sampling<a class="headerlink" href="#module-botorch.utils.sampling" title="Permalink to this headline">¶</a></h2>
 <p>Utilities for MC and qMC sampling.</p>
@@ -205,7 +229,7 @@ output models (<cite>m</cite> &gt; 1).</p></li>
 <dd class="field-odd"><p><strong>seed</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The seed to set the random number generator to.</p>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Generator</span></code>[<code class="docutils literal notranslate"><span class="pre">None</span></code>, <code class="docutils literal notranslate"><span class="pre">None</span></code>, <code class="docutils literal notranslate"><span class="pre">None</span></code>]</p>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Generator</span></code>[<code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>]</p>
 </dd>
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p>Generator</p>
@@ -824,7 +848,7 @@ strings are acceptable.</p>
 <code class="sig-prename descclassname">botorch.utils.transforms.</code><code class="sig-name descname">standardize</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">Y</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/transforms.html#standardize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.transforms.standardize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Standardizes (zero mean, unit variance) a tensor by dim=-2.</p>
 <p>If the tensor is single-dimensional, simply standardizes the tensor.
-If for some batch index all elements are equal (of if there is only a single
+If for some batch index all elements are equal (or if there is only a single
 data point), this function will return 0 for that batch index.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1202,7 +1226,7 @@ decomposition.</p></li>
 <dd class="field-odd"><p><strong>Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>n x m</cite>-dim tensor of outcomes.</p>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1221,7 +1245,7 @@ less efficient than <cite>partition_non_dominated_space_2d</cite> for the
 <p>This direct method works for <cite>m=2</cite> outcomes.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1344,7 +1368,7 @@ Computation, pages 1157-1163, Vancouver, Canada, July 2006.</p>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1394,7 +1418,7 @@ Every node has multiple predecessors and successors, one in every list.</p>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1410,7 +1434,7 @@ Every node has multiple predecessors and successors, one in every list.</p>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1447,7 +1471,7 @@ nodes of the node that is reinserted are in the list.</p>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1498,7 +1522,7 @@ Chebyshev scalarization is applied.</p>
 <p>Note: this assumes maximization.</p>
 <p>See <a class="reference internal" href="#knowles2005" id="id5"><span>[Knowles2005]</span></a> for details.</p>
 <p>This scalarization can be used with qExpectedImprovement to implement q-ParEGO
-as proposed in <a class="reference internal" href="acquisition.html#daulton2020" id="id6"><span>[Daulton2020]</span></a>.</p>
+as proposed in <a class="reference internal" href="acquisition.html#daulton2020qehvi" id="id6"><span>[Daulton2020qehvi]</span></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">

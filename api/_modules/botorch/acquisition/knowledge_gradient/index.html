@@ -32,13 +32,13 @@
 
 <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">Batch Knowledge Gradient (KG) via one-shot optimization as introduced in</span>
-<span class="sd">[Balandat2019botorch]_. For broader discussion of KG see also [Frazier2008knowledge]_</span>
+<span class="sd">[Balandat2020botorch]_. For broader discussion of KG see also [Frazier2008knowledge]_</span>
 <span class="sd">and [Wu2016parallelkg]_.</span>
 
-<span class="sd">.. [Balandat2019botorch]</span>
-<span class="sd">    M. Balandat, B. Karrer, D. R. Jiang, S. Daulton, B. Letham, A. G. Wilson,</span>
-<span class="sd">    and E. Bakshy. BoTorch: Programmable Bayesian Optimziation in PyTorch.</span>
-<span class="sd">    ArXiv 2019.</span>
+<span class="sd">.. [Balandat2020botorch]</span>
+<span class="sd">    M. Balandat, B. Karrer, D. R. Jiang, S. Daulton, B. Letham, A. G. Wilson, and</span>
+<span class="sd">    E. Bakshy. BoTorch: A Framework for Efficient Monte-Carlo Bayesian Optimization.</span>
+<span class="sd">    Advances in Neural Information Processing Systems 33, 2020.</span>
 
 <span class="sd">.. [Frazier2008knowledge]</span>
 <span class="sd">    P. Frazier, W. Powell, and S. Dayanik. A Knowledge-Gradient policy for</span>
@@ -275,13 +275,13 @@
         <span class="k">return</span> <span class="n">values</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="qKnowledgeGradient.get_augmented_q_batch_size"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient.get_augmented_q_batch_size">[docs]</a>    <span class="k">def</span> <span class="nf">get_augmented_q_batch_size</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Get augmented q batch size for one-shot optimzation.</span>
+        <span class="sa">r</span><span class="sd">"""Get augmented q batch size for one-shot optimization.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            q: The number of candidates to consider jointly.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            The augmented size for one-shot optimzation (including variables</span>
+<span class="sd">            The augmented size for one-shot optimization (including variables</span>
 <span class="sd">            parameterizing the fantasy solutions).</span>
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="n">q</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_fantasies</span></div>

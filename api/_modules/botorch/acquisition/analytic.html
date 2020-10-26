@@ -329,7 +329,7 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">maximize</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">mean</span> <span class="o">+</span> <span class="n">delta</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">mean</span> <span class="o">-</span> <span class="n">delta</span></div></div>
+            <span class="k">return</span> <span class="o">-</span><span class="n">mean</span> <span class="o">+</span> <span class="n">delta</span></div></div>
 
 
 <div class="viewcode-block" id="ConstrainedExpectedImprovement"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.ConstrainedExpectedImprovement">[docs]</a><span class="k">class</span> <span class="nc">ConstrainedExpectedImprovement</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
