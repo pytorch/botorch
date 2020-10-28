@@ -797,7 +797,16 @@ forward pass.</p></li>
 <dl class="py method">
 <dt id="botorch.models.gp_regression.SingleTaskGP.forward">
 <code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#SingleTaskGP.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gp_regression.SingleTaskGP.forward" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+<dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">MultivariateNormal</span></code></p>
 </dd>
@@ -892,7 +901,16 @@ as the specified measurement noise.</p></li>
 <dl class="py method">
 <dt id="botorch.models.gp_regression.FixedNoiseGP.forward">
 <code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gp_regression.html#FixedNoiseGP.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gp_regression.FixedNoiseGP.forward" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+<dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">MultivariateNormal</span></code></p>
 </dd>
@@ -1343,7 +1361,16 @@ forward pass.</p></li>
 <dl class="py method">
 <dt id="botorch.models.multitask.MultiTaskGP.forward">
 <code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/multitask.html#MultiTaskGP.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.multitask.MultiTaskGP.forward" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+<dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">MultivariateNormal</span></code></p>
 </dd>
