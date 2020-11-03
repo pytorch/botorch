@@ -111,6 +111,9 @@ jobs:
   lint_test_py38_pip:
     docker:
       - image: circleci/python:3.8
+        auth:
+          username: $DOCKERHUB_USERNAME
+          password: $DOCKERHUB_PASSWORD
     resource_class: large
     steps:
       - checkout
@@ -126,6 +129,9 @@ jobs:
   lint_test_py37_conda:
     docker:
       - image: continuumio/miniconda3
+        auth:
+          username: $DOCKERHUB_USERNAME
+          password: $DOCKERHUB_PASSWORD
     resource_class: large
     steps:
       - checkout
@@ -141,6 +147,9 @@ jobs:
   run_tutorials_py38_pip:
     docker:
       - image: circleci/python:3.8
+        auth:
+          username: $DOCKERHUB_USERNAME
+          password: $DOCKERHUB_PASSWORD
     resource_class: large
     steps:
       - checkout
@@ -151,6 +160,9 @@ jobs:
   auto_deploy_site:
     docker:
       - image: circleci/python:3.8-node
+        auth:
+          username: $DOCKERHUB_USERNAME
+          password: $DOCKERHUB_PASSWORD
     steps:
       - checkout
       - pip_install:
@@ -165,6 +177,9 @@ jobs:
   package:
     docker:
       - image: continuumio/miniconda3
+        auth:
+          username: $DOCKERHUB_USERNAME
+          password: $DOCKERHUB_PASSWORD
     resource_class: large
     steps:
       - checkout
