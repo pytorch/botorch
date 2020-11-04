@@ -143,24 +143,24 @@ candidate, acq_value = optimize_acqf(
 )
 candidate  # tensor([0.4887, 0.5063])
     `;
-    const papertitle = `BoTorch: Programmable Bayesian Optimization in PyTorch`
+    const papertitle = `BoTorch: A Framework for Efficient Monte-Carlo Bayesian Optimization`
     const paper_bibtex = `${pre}plaintext
-@article{balandat2019botorch,
-  Author = {Maximilian Balandat and Brian Karrer and Daniel R. Jiang and Samuel Daulton and Benjamin Letham and Andrew Gordon Wilson and Eytan Bakshy},
-  Journal = {arXiv e-prints},
-  Month = oct,
-  Pages = {arXiv:1910.06403},
-  Title = {{BoTorch: Programmable Bayesian Optimization in PyTorch}},
-  Year = 2019}
+@inproceedings{balandat2020botorch,
+  title = {{BoTorch: A Framework for Efficient Monte-Carlo Bayesian Optimization}},
+  author = {Balandat, Maximilian and Karrer, Brian and Jiang, Daniel R. and Daulton, Samuel and Letham, Benjamin and Wilson, Andrew Gordon and Bakshy, Eytan},
+  booktitle = {Advances in Neural Information Processing Systems 33},
+  year = 2020,
+  url = {http://arxiv.org/abs/1910.06403}
+}
   `;
   const ehvi_papertitle = `Differentiable Expected Hypervolume Improvement for Parallel Multi-Objective Bayesian Optimization`
   const ehvi_paper_bibtex = `${pre}plaintext
-@article{daulton2020differentiable,
-  Author = {Samuel Daulton and Maximilian Balandat and Eytan Bakshy},
-  Journal = {Arxiv e-prints},
-  Title = {Differentiable Expected Hypervolume Improvement for Parallel Multi-Objective Bayesian Optimization},
-  Year = {2020},
-  url = {https://arxiv.org/abs/2006.05078}
+  @inproceedings{daulton2020ehvi,
+    title = {{Differentiable Expected Hypervolume Improvement for Parallel Multi-Objective Bayesian Optimization}},
+    author = {Daulton, Samuel and Balandat, Maximilian and Bakshy, Eytan},
+    booktitle = {Advances in Neural Information Processing Systems 33},
+    year = 2020,
+    url = {https://arxiv.org/abs/2006.05078}
   }
   `;
     //
