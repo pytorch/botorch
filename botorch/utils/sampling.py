@@ -12,8 +12,10 @@ from __future__ import annotations
 
 import warnings
 from contextlib import contextmanager
-from typing import Generator, Iterable, Optional
+from typing import Generator, Iterable, Optional, Tuple
 
+import numpy as np
+import scipy.optimize
 import torch
 from botorch.exceptions.warnings import SamplingWarning
 from botorch.posteriors.posterior import Posterior
@@ -340,3 +342,204 @@ def batched_multinomial(
         out=None if out is None else out.view(-1, num_samples),
     )
     return flat_samples.view(*batch_shape, num_samples)
+
+
+class PolytopeSampler:
+    r"""
+    Sampling points from a polytope described via a set of inequality and
+    equality constraints.
+    """
+
+    def __init__(
+        self,
+        inequality_constraints: Tuple[Tensor, Tensor],
+        n_burnin: int = 0,
+        equality_constraints: Optional[Tuple[Tensor, Tensor]] = None,
+        initial_point: Optional[Tensor] = None,
+    ) -> None:
+        r"""
+        Args:
+            inequality_constraints: Tensors (A, b) describing inequality constraint: A*x<=b,
+                A: (n_ineq_con, d_sample)-dim Tensor, b: (n_ineq_con, 1)-dim Tensor with n_ineq_con
+                being the number of inequalities and d_sample the dimension of the sample space.
+            n_burnin: The number of burn in samples.
+            equality_constraints: Tensors (C, d) describing the equality constraint: C*x=d,
+                C: (n_eq_con, d_sample)-dim Tensor, d: (n_eq_con-dim, 1) Tensor with n_eq_con
+                being the number of equalities.
+            initial_point: An (d_sample, 1)-dim Tensor presenting an inital point of
+                the chain satisfying all the conditions. Determined automatically (by solving an LP)
+                if not provided.
+        """
+        self.A, self.b = inequality_constraints
+        self.n_burnin = n_burnin
+        self.equality_constraints = equality_constraints
+
+        if equality_constraints is not None:
+            self.C, self.d = equality_constraints
+            U, S, V = torch.svd(self.C, some=False)
+            r = torch.nonzero(S).size(0)  # rank of matrix C
+            self.nullC = V[:, r:]  # orthonormal null space of C, satisfying
+            # C @ nullC = 0 and nullC.T @ nullC = I
+            # using the change of variables x=x0+nullC*y, sample y satisfies A*nullC*y<=b-A*x0.
+            # the linear constraint is automatically satisfied since x0 satisfies it.
+        else:
+            self.C = None
+            self.d = None
+            self.nullC = torch.eye(
+                self.A.size(-1), dtype=self.A.dtype, device=self.A.device
+            )
+
+        self.new_A = self.A @ self.nullC  # doesn't depend on the initial point
+
+        # initial point for the original, not transformed, problem
+        if initial_point is not None:
+            if self.feasible(initial_point):
+                self.x0 = initial_point
+            else:
+                raise ValueError("The given input point is not feasible.")
+        else:
+            self.x0 = self.find_initial_point()
+
+    def feasible(self, x: Tensor) -> bool:
+        ineq = (self.A @ x - self.b <= 0).all()
+        if self.equality_constraints is not None:
+            eq = (self.C @ x - self.d == 0).all()
+            return ineq & eq
+        return ineq
+
+    def find_initial_point(self):
+        r"""
+        Finds a feasible point of the original problem.
+        Details: Solves the following LP:
+        min -s such that Ax<=b-2*s, s>=0, plus equality constraints.
+        The number of inequality constrains in LP: nrow(A) + 1.
+        LP solution dimension: dim(x) + dim(s) = dim(x) + 1.
+        """
+        # inequality constraints: A_ub * (x, s) <= b_ub
+        ncon = self.A.size(0) + 1
+        dim = self.A.size(-1) + 1
+        c = np.zeros(dim)
+        c[-1] = -1
+        b_ub = np.zeros(ncon)
+        b_ub[:-1] = self.b.cpu().squeeze(-1).numpy()
+        # b_ub[: (ncon - 1)] = self.b.numpy().squeeze(-1)
+        A_ub = np.zeros((ncon, dim))
+        A_ub[:-1, :-1] = self.A.cpu().numpy()
+        A_ub[:, -1] = 2.0
+        A_ub[-1, -1] = -1.0
+        # A_ub[: (ncon - 1), : (dim - 1)] = self.A.numpy()
+        # A_ub[:, dim - 1] = 2.0
+        # A_ub[ncon - 1, dim - 1] = -1.0
+
+        if self.equality_constraints:
+            # equality constraints: A_eq * (x, s) = b_eq
+            A_eq = np.zeros((self.C.size(0), self.C.size(-1) + 1))
+            A_eq[:, :-1] = self.C.cpu().numpy()
+            # A_eq[:, : self.C.size(-1)] = self.C.numpy()
+            b_eq = self.d.cpu().numpy()
+            # b_eq = self.d.numpy()
+        else:
+            A_eq = None
+            b_eq = None
+
+        result = scipy.optimize.linprog(c=c, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq)
+
+        if result.status == 2:
+            raise ValueError(
+                "No feasible point found. Constraint polytope appears empty. "
+                + "Check your constraints."
+            )
+        elif result.status > 0:
+            raise ValueError(
+                "Problem checking constraint specification. "
+                + "linprog status: {}".format(result.message)
+            )
+
+        x0 = (
+            torch.from_numpy(result.x[:-1])
+            .to(dtype=self.A.dtype, device=self.A.device)
+            .unsqueeze(-1)
+        )
+
+        return x0
+
+    def draw(self, n: int = 1, seed: Optional[int] = None) -> Tensor:
+
+        transformed_samples = sample_polytope(
+            A=self.new_A,
+            b=self.b - self.A @ self.x0,
+            x0=torch.zeros(
+                (self.nullC.size(1), 1), dtype=self.A.dtype, device=self.A.device
+            ),
+            n=n,
+            n0=self.n_burnin,
+            seed=seed,
+        )
+
+        init_shift = self.x0.transpose(-1, -2)
+        samples = init_shift + transformed_samples @ self.nullC.transpose(-1, -2)
+
+        # keep the last element of the resulting chain as the beginning of the next chain
+        self.x0 = samples[samples.size(-1)]
+        # next time the sampling is called there won't be any burn-in
+        self.n_burnin = 0
+        return samples
+
+
+def sample_polytope(
+    A: Tensor,
+    b: Tensor,
+    x0: Tensor,
+    n: int = 10000,
+    n0: int = 100,
+    seed: Optional[int] = None,
+) -> Tensor:
+    r"""
+    Hit and run sampler from uniform sampling points from a polytope,
+    described via inequality constraints A*x<=b.
+
+    Args:
+        A: A Tensor describing inequality constraints
+            so that all samples satisfy Ax<=b.
+        b: A Tensor describing the inequality constraints
+            so that all samples satisfy Ax<=b.
+        x0: d dim Tensor representing a starting point of the chain
+            satisfying the constraints.
+        n: The number of resulting samples kept in the output.
+        n0: The number of burn-in samples. The chain will produce
+            n+n0 samples but the first n0 samples are not saved.
+        seed: The seed for the sampler. If omitted, use a random seed.
+
+    Returns:
+        (n, d) dim Tensor containing the resulting samples.
+    """
+    n_tot = n + n0
+    seed = seed if seed is not None else torch.randint(0, 1000000, (1,)).item()
+    with manual_seed(seed=seed):
+        rands = torch.rand(n_tot, dtype=A.dtype, device=A.device)
+
+    # pre-sample samples from hypersphere
+    d = x0.size(0)
+    # uniform samples from unit ball in d dims
+    Rs = sample_hypersphere(d=d, n=n_tot, dtype=A.dtype, device=A.device).unsqueeze(-1)
+
+    # compute matprods in batch
+    ARs = (A @ Rs).squeeze(-1)
+    out = torch.empty(n, A.size(-1), dtype=A.dtype, device=A.device)
+    x = x0.clone()
+    for i, (ar, r, rnd) in enumerate(zip(ARs, Rs, rands)):
+        # given x, the next point in the chain is x+alpha*r
+        # it also satisfies A(x+alpha*r)<=b which implies A*alpha*r<=b-Ax
+        # so alpha<=(b-Ax)/ar for ar>0, and alpha>=(b-Ax)/ar for ar<0.
+        w = (b - A @ x).squeeze() / ar  # b - A @ x is always >= 0
+        pos = w >= 0
+        alpha_max = w[pos].min()
+        # important to include equality here in cases x is at the boundary of the polytope
+        neg = w <= 0
+        alpha_min = w[neg].max()
+        # alpha~Unif[alpha_min, alpha_max]
+        alpha = alpha_min + rnd * (alpha_max - alpha_min)
+        x = x + alpha * r
+        if i >= n0:  # save samples after burn-in period
+            out[i - n0] = x.squeeze()
+    return out
