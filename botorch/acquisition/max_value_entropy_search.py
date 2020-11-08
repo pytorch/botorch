@@ -90,7 +90,7 @@ class qMaxValueEntropy(MCAcquisitionFunction):
             X_pending: A `m x d`-dim Tensor of `m` design points that have been
                 submitted for function evaluation but have not yet been evaluated.
             maximize: If True, consider the problem a maximization problem.
-            train_inputs: A `n_train x d` Tensor that the model has been fitted on, 
+            train_inputs: A `n_train x d` Tensor that the model has been fitted on,
                 optional if model is an exact GP model.
         """
         sampler = SobolQMCNormalSampler(num_y_samples)
