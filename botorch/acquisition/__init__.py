@@ -23,7 +23,10 @@ from botorch.acquisition.cost_aware import (
     InverseCostWeightedUtility,
 )
 from botorch.acquisition.fixed_feature import FixedFeatureAcquisitionFunction
-from botorch.acquisition.knowledge_gradient import qKnowledgeGradient
+from botorch.acquisition.knowledge_gradient import (
+    qKnowledgeGradient,
+    qMultiFidelityKnowledgeGradient,
+)
 from botorch.acquisition.max_value_entropy_search import (
     qMaxValueEntropy,
     qMultiFidelityMaxValueEntropy,
@@ -62,6 +65,7 @@ __all__ = [
     "UpperConfidenceBound",
     "qExpectedImprovement",
     "qKnowledgeGradient",
+    "qMultiFidelityKnowledgeGradient",
     "qMaxValueEntropy",
     "qMultiFidelityMaxValueEntropy",
     "qNoisyExpectedImprovement",

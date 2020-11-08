@@ -189,12 +189,12 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
 
     @concatenate_pending_points
     @t_batch_mode_transform()
-    def evaluate(self, X_actual: Tensor, bounds: Tensor, **kwargs: Any) -> Tensor:
+    def evaluate(self, X: Tensor, bounds: Tensor, **kwargs: Any) -> Tensor:
         r"""Evaluate qKnowledgeGradient on the candidate set `X_actual` by
         solving the inner optimization problem.
 
         Args:
-            X_actual: A `b x q x d` Tensor with `b` t-batches of `q` design points
+            X: A `b x q x d` Tensor with `b` t-batches of `q` design points
                 each. Unlike `forward()`, this does not include solutions of the
                 inner optimization problem.
             bounds: A `2 x d` tensor of lower and upper bounds for each column of
@@ -206,18 +206,26 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
 
         Returns:
             A Tensor of shape `b`. For t-batch b, the q-KG value of the design
-                `X_actual[b]` is averaged across the fantasy models.
+                `X[b]` is averaged across the fantasy models.
                 NOTE: If `current_value` is not provided, then this is not the
-                true KG value of `X_actual[b]`.
+                true KG value of `X[b]`.
         """
+        if self.X_pending is not None:
+            X = torch.cat([X, match_batch_shape(self.X_pending, X)], dim=-2)
+        if hasattr(self, "expand"):
+            X = self.expand(X)
+
         # construct the fantasy model of shape `num_fantasies x b`
         fantasy_model = self.model.fantasize(
-            X=X_actual, sampler=self.sampler, observation_noise=True
+            X=X, sampler=self.sampler, observation_noise=True
         )
 
         # get the value function
         value_function = _get_value_function(
-            model=fantasy_model, objective=self.objective, sampler=self.inner_sampler
+            model=fantasy_model,
+            objective=self.objective,
+            sampler=self.inner_sampler,
+            project=getattr(self, "project", None),
         )
 
         # optimize the inner problem
@@ -245,6 +253,10 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
         if self.current_value is not None:
             values = values - self.current_value
 
+        if getattr(self, "cost_aware_utility", None) is not None:
+            values = self.cost_aware_utility(
+                X=X, deltas=values, sampler=self.cost_sampler
+            )
         # return average over the fantasy samples
         return values.mean(dim=0)
 
@@ -408,13 +420,16 @@ class qMultiFidelityKnowledgeGradient(qKnowledgeGradient):
 
         # get the value function
         value_function = _get_value_function(
-            model=fantasy_model, objective=self.objective, sampler=self.inner_sampler
+            model=fantasy_model,
+            objective=self.objective,
+            sampler=self.inner_sampler,
+            project=self.project,
         )
 
         # make sure to propagate gradients to the fantasy model train inputs
         # project the fantasy points
         with settings.propagate_grads(True):
-            values = value_function(X=self.project(X_fantasies))  # num_fantasies x b
+            values = value_function(X=X_fantasies)  # num_fantasies x b
 
         if self.current_value is not None:
             values = values - self.current_value
@@ -428,16 +443,44 @@ class qMultiFidelityKnowledgeGradient(qKnowledgeGradient):
         return values.mean(dim=0)
 
 
+class ProjectedValueFunction(AcquisitionFunction):
+    r"""
+    Defines a wrapper around the value function that incorporates the project
+    operator.
+    """
+
+    def __init__(
+        self,
+        base_value_function: AcquisitionFunction,
+        project: Callable[[Tensor], Tensor],
+    ):
+        super().__init__(base_value_function.model)
+        self.base_value_function = base_value_function
+        self.project = project
+        self.objective = base_value_function.objective
+        self.sampler = getattr(base_value_function, "sampler", None)
+
+    def forward(self, X: Tensor) -> Tensor:
+        return self.base_value_function(self.project(X))
+
+
 def _get_value_function(
     model: Model,
     objective: Optional[Union[MCAcquisitionObjective, ScalarizedObjective]] = None,
     sampler: Optional[MCSampler] = None,
+    project: Optional[Callable[[Tensor], Tensor]] = None,
 ) -> AcquisitionFunction:
     r"""Construct value function (i.e. inner acquisition function)."""
     if isinstance(objective, MCAcquisitionObjective):
-        return qSimpleRegret(model=model, sampler=sampler, objective=objective)
+        base_value_function = qSimpleRegret(
+            model=model, sampler=sampler, objective=objective
+        )
     else:
-        return PosteriorMean(model=model, objective=objective)
+        base_value_function = PosteriorMean(model=model, objective=objective)
+    if project is None:
+        return base_value_function
+    else:
+        return ProjectedValueFunction(base_value_function, project)
 
 
 def _split_fantasy_points(X: Tensor, n_f: int) -> Tuple[Tensor, Tensor]:

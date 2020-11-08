@@ -16,7 +16,6 @@ from botorch.acquisition.knowledge_gradient import (
     _get_value_function,
     qKnowledgeGradient,
 )
-from botorch.acquisition.monte_carlo import MCAcquisitionFunction
 from botorch.acquisition.utils import is_nonnegative
 from botorch.exceptions.warnings import BadInitialCandidatesWarning, SamplingWarning
 from botorch.models.model import Model
@@ -210,6 +209,7 @@ def gen_one_shot_kg_initial_conditions(
         model=acq_function.model,
         objective=acq_function.objective,
         sampler=acq_function.inner_sampler,
+        project=getattr(acq_function, "project", None),
     )
     from botorch.optim.optimize import optimize_acqf
 
@@ -304,9 +304,8 @@ def gen_value_function_initial_conditions(
     value_function = _get_value_function(
         model=current_model,
         objective=acq_function.objective,
-        sampler=acq_function.sampler
-        if isinstance(acq_function, MCAcquisitionFunction)
-        else None,
+        sampler=getattr(acq_function, "sampler", None),
+        project=getattr(acq_function, "project", None),
     )
     from botorch.optim.optimize import optimize_acqf
 

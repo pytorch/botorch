@@ -14,6 +14,7 @@ from botorch.acquisition.knowledge_gradient import (
     _split_fantasy_points,
     qKnowledgeGradient,
     qMultiFidelityKnowledgeGradient,
+    ProjectedValueFunction,
 )
 from botorch.acquisition.monte_carlo import qSimpleRegret
 from botorch.acquisition.objective import GenericMCObjective, ScalarizedObjective
@@ -399,6 +400,61 @@ class TestQMultiFidelityKnowledgeGradient(BotorchTestCase):
             self.assertTrue(torch.allclose(val, val_exp, atol=1e-4))
             self.assertTrue(torch.equal(qMFKG.extract_candidates(X), X[..., :-n_f, :]))
 
+    def test_evaluate_qMFKG(self):
+        # mock test qMFKG.evaluate() with expand, project & cost aware utility
+        for dtype in (torch.float, torch.double):
+            mean = torch.zeros(1, 1, 1, device=self.device, dtype=dtype)
+            mm = MockModel(MockPosterior(mean=mean))
+            mm._input_batch_shape = torch.Size([1])
+            cau = GenericCostAwareUtility(mock_util)
+            n_f = 4
+            mean = torch.rand(n_f, 2, 1, 1, device=self.device, dtype=dtype)
+            variance = torch.rand(n_f, 2, 1, 1, device=self.device, dtype=dtype)
+            mfm = MockModel(MockPosterior(mean=mean, variance=variance))
+            mfm._input_batch_shape = torch.Size([n_f, 2])
+            with mock.patch.object(MockModel, "fantasize", return_value=mfm) as patch_f:
+                with mock.patch(NO, new_callable=mock.PropertyMock) as mock_num_outputs:
+                    mock_num_outputs.return_value = 1
+                    qMFKG = qMultiFidelityKnowledgeGradient(
+                        model=mm,
+                        num_fantasies=n_f,
+                        X_pending=torch.rand(1, 1, 1, device=self.device, dtype=dtype),
+                        current_value=torch.zeros(1, device=self.device, dtype=dtype),
+                        cost_aware_utility=cau,
+                        project=lambda X: torch.zeros_like(X),
+                        expand=lambda X: torch.ones_like(X),
+                    )
+                    with mock.patch(
+                        "botorch.optim.optimize.optimize_acqf",
+                        return_value=(
+                            torch.ones(1, 1, 1, device=self.device, dtype=dtype),
+                            torch.ones(1, device=self.device, dtype=dtype),
+                        ),
+                    ):
+                        with mock.patch(
+                            "botorch.generation.gen.gen_candidates_scipy",
+                            return_value=(
+                                torch.ones(1, 1, 1, device=self.device, dtype=dtype),
+                                torch.ones(1, device=self.device, dtype=dtype),
+                            ),
+                        ):
+                            val = qMFKG.evaluate(
+                                X=torch.zeros(1, 1, 1, device=self.device, dtype=dtype),
+                                bounds=torch.tensor([[0.0], [1.0]]),
+                                num_restarts=1,
+                                raw_samples=1,
+                            )
+                    patch_f.asset_called_once()
+                    self.assertTrue(
+                        (
+                            patch_f.call_args.kwargs["X"]
+                            == torch.ones(2, 1, 1, device=self.device, dtype=dtype)
+                        ).all()
+                    )
+            self.assertEqual(
+                val, cau(None, torch.ones(1, device=self.device, dtype=dtype))
+            )
+
 
 class TestKGUtils(BotorchTestCase):
     def test_get_value_function(self):
@@ -416,6 +472,29 @@ class TestKGUtils(BotorchTestCase):
             self.assertIsInstance(vf, qSimpleRegret)
             self.assertEqual(vf.objective, obj)
             self.assertEqual(vf.sampler, sampler)
+            # test with project
+            mock_project = mock.Mock(
+                return_value=torch.ones(1, 1, 1, device=self.device)
+            )
+            vf = _get_value_function(
+                model=mm,
+                objective=obj,
+                sampler=sampler,
+                project=mock_project,
+            )
+            self.assertIsInstance(vf, ProjectedValueFunction)
+            self.assertEqual(vf.objective, obj)
+            self.assertEqual(vf.sampler, sampler)
+            self.assertEqual(vf.project, mock_project)
+            test_X = torch.rand(1, 1, 1, device=self.device)
+            with mock.patch.object(
+                vf, "base_value_function", __class__=torch.nn.Module, return_value=None
+            ) as patch_bvf:
+                vf(test_X)
+                mock_project.assert_called_once_with(test_X)
+                patch_bvf.assert_called_once_with(
+                    torch.ones(1, 1, 1, device=self.device)
+                )
 
     def test_split_fantasy_points(self):
         for dtype in (torch.float, torch.double):
