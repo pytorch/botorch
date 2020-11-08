@@ -445,9 +445,10 @@ class TestQMultiFidelityKnowledgeGradient(BotorchTestCase):
                                 raw_samples=1,
                             )
                     patch_f.asset_called_once()
+                    cargs, ckwargs = patch_f.call_args
                     self.assertTrue(
                         (
-                            patch_f.call_args.kwargs["X"]
+                            ckwargs["X"]
                             == torch.ones(2, 1, 1, device=self.device, dtype=dtype)
                         ).all()
                     )
