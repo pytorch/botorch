@@ -454,6 +454,87 @@ allows a single batch dimension). The calling signature is the same as for
 </pre></div>
 </div>
 </dd></dl>
+<dl class="py class">
+<dt id="botorch.utils.sampling.PolytopeSampler">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.utils.sampling.</code><code class="sig-name descname">PolytopeSampler</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inequality_constraints</span></em>, <em class="sig-param"><span class="n">n_burnin</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">equality_constraints</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">initial_point</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#PolytopeSampler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.sampling.PolytopeSampler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Sampling points from a polytope described via a set of inequality and
+equality constraints.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inequality_constraints</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – Tensors (A, b) describing inequality
+constraints: A*x&lt;=b, where A is (n_ineq_con, d_sample)-dim Tensor
+and b is (n_ineq_con, 1)-dim Tensor with n_ineq_con
+being the number of inequalities and d_sample the dimension
+of the sample space.</p></li>
+<li><p><strong>n_burnin</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of burn in samples.</p></li>
+<li><p><strong>equality_constraints</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]]) – Tensors (C, d) describing the equality
+constraints: C*x=d, where C is (n_eq_con, d_sample)-dim Tensor and
+d is (n_eq_con-dim, 1) Tensor with n_eq_con
+being the number of equalities.</p></li>
+<li><p><strong>initial_point</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – An (d_sample, 1)-dim Tensor presenting an inital point of
+the chain satisfying all the conditions.
+Determined automatically (by solving an LP) if not provided.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="botorch.utils.sampling.PolytopeSampler.feasible">
+<code class="sig-name descname">feasible</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#PolytopeSampler.feasible"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.sampling.PolytopeSampler.feasible" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.utils.sampling.PolytopeSampler.find_initial_point">
+<code class="sig-name descname">find_initial_point</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#PolytopeSampler.find_initial_point"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.sampling.PolytopeSampler.find_initial_point" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds a feasible point of the original problem.
+Details: Solves the following LP:
+min -s such that Ax&lt;=b-2*s, s&gt;=0, plus equality constraints.
+The number of inequality constrains in LP: nrow(A) + 1.
+LP solution dimension: dim(x) + dim(s) = dim(x) + 1.</p>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.utils.sampling.PolytopeSampler.draw">
+<code class="sig-name descname">draw</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">n</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">seed</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#PolytopeSampler.draw"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.sampling.PolytopeSampler.draw" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py function">
+<dt id="botorch.utils.sampling.sample_polytope">
+<code class="sig-prename descclassname">botorch.utils.sampling.</code><code class="sig-name descname">sample_polytope</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">A</span></em>, <em class="sig-param"><span class="n">b</span></em>, <em class="sig-param"><span class="n">x0</span></em>, <em class="sig-param"><span class="n">n</span><span class="o">=</span><span class="default_value">10000</span></em>, <em class="sig-param"><span class="n">n0</span><span class="o">=</span><span class="default_value">100</span></em>, <em class="sig-param"><span class="n">seed</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#sample_polytope"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.sampling.sample_polytope" title="Permalink to this definition">¶</a></dt>
+<dd><p>Hit and run sampler from uniform sampling points from a polytope,
+described via inequality constraints A*x&lt;=b.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>A</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A Tensor describing inequality constraints
+so that all samples satisfy Ax&lt;=b.</p></li>
+<li><p><strong>b</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A Tensor describing the inequality constraints
+so that all samples satisfy Ax&lt;=b.</p></li>
+<li><p><strong>x0</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – d dim Tensor representing a starting point of the chain
+satisfying the constraints.</p></li>
+<li><p><strong>n</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of resulting samples kept in the output.</p></li>
+<li><p><strong>n0</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of burn-in samples. The chain will produce
+n+n0 samples but the first n0 samples are not saved.</p></li>
+<li><p><strong>seed</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The seed for the sampler. If omitted, use a random seed.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>(n, d) dim Tensor containing the resulting samples.</p>
+</dd>
+</dl>
+</dd></dl>
 </div>
 <div class="section" id="module-botorch.utils.testing">
 <span id="testing"></span><h2>Testing<a class="headerlink" href="#module-botorch.utils.testing" title="Permalink to this headline">¶</a></h2>
