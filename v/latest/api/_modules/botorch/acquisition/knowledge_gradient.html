@@ -246,9 +246,10 @@
             <span class="n">model</span><span class="o">=</span><span class="n">fantasy_model</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">inner_sampler</span>
         <span class="p">)</span>
 
+        <span class="kn">from</span> <span class="nn">botorch.generation.gen</span> <span class="kn">import</span> <span class="n">gen_candidates_scipy</span>
+
         <span class="c1"># optimize the inner problem</span>
         <span class="kn">from</span> <span class="nn">botorch.optim.initializers</span> <span class="kn">import</span> <span class="n">gen_value_function_initial_conditions</span>
-        <span class="kn">from</span> <span class="nn">botorch.generation.gen</span> <span class="kn">import</span> <span class="n">gen_candidates_scipy</span>
 
         <span class="n">initial_conditions</span> <span class="o">=</span> <span class="n">gen_value_function_initial_conditions</span><span class="p">(</span>
             <span class="n">acq_function</span><span class="o">=</span><span class="n">value_function</span><span class="p">,</span>
