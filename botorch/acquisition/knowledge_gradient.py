@@ -220,9 +220,10 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
             model=fantasy_model, objective=self.objective, sampler=self.inner_sampler
         )
 
+        from botorch.generation.gen import gen_candidates_scipy
+
         # optimize the inner problem
         from botorch.optim.initializers import gen_value_function_initial_conditions
-        from botorch.generation.gen import gen_candidates_scipy
 
         initial_conditions = gen_value_function_initial_conditions(
             acq_function=value_function,
