@@ -85,7 +85,7 @@ class ExpectedHypervolumeImprovement(MultiObjectiveAnalyticAcquisitionFunction):
 
         This implements the computes EHVI using the algorithm from [Yang2019]_, but
         additionally computes gradients via auto-differentiation as proposed by
-        [Daulton2020]_.
+        [Daulton2020qehvi]_.
 
         Note: this is currently inefficient in two ways due to the binary partitioning
         algorithm that we use for the box decomposition:

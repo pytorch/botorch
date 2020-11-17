@@ -24,11 +24,14 @@ For a more in-depth example using these acquisition functions, check out the [Mu
 BoTorch provides several utility functions for evaluating performance in MOBO including a method for computing the Pareto front [`is_non_dominated`](../api/utils.html#botorch.utils.multi_objective.pareto.is_non_dominated) and a class for efficiently computing of the [`Hypervolume`](../api/utils.html#botorch.utils.multi_objective.hypervolume.Hypervolume) dominated by a provided set of points using a dimension sweep algorithm [^Fonseca].
 
 
-[^qEHVI]: S. Daulton, M. Balandat, and E. Bakshy. Differentiable Expected Hypervolume Improvement for Parallel Multi-Objective Bayesian Optimization. ArXiv e-prints,
-[arXiv:2006.05078](https://arxiv.org/abs/2006.05078), Jun. 2020.
+[^qEHVI]: S. Daulton, M. Balandat, and E. Bakshy. Differentiable Expected Hypervolume
+Improvement for Parallel Multi-Objective Bayesian Optimization. Advances in Neural
+Information Processing Systems 33, 2020.
+[pdf](https://arxiv.org/abs/2006.05078)
 
 [^BoTorch]: M. Balandat, B. Karrer, D. R. Jiang, S. Daulton, B. Letham, A. G. Wilson,
-and E. Bakshy. BoTorch: Programmable Bayesian Optimization in PyTorch. arXiv e-prints,
-[arXiv:1910.06403](https://arxiv.org/abs/1910.06403), Oct. 2019.
+and E. Bakshy. BoTorch: A Framework for Efficient Monte-Carlo Bayesian Optimization.
+Advances in Neural Information Processing Systems 33, 2020.
+[pdf](https://arxiv.org/abs/1910.06403)
 
 [^Fonseca]: C. M. Fonseca, L. Paquete, and M. Lopez-Ibanez. An improved dimension-sweep algorithm for the hypervolume indicator. In IEEE Congress on Evolutionary Computation, pages 1157-1163, Vancouver, Canada, July 2006.

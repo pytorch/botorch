@@ -59,6 +59,16 @@ Pairwise GP Models
 .. automodule:: botorch.models.pairwise_gp
     :members:
 
+Contextual GP Models with Aggregate Rewards
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.contextual
+    :members:
+
+Contextual GP Models with Context Rewards
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.contextual_multioutput
+    :members:
+
 
 Model Components
 -------------------------------------------
@@ -73,6 +83,12 @@ Kernels
 
 .. automodule:: botorch.models.kernels.linear_truncated_fidelity
 .. autoclass:: LinearTruncatedFidelityKernel
+
+.. automodule:: botorch.models.kernels.contextual_lcea
+.. autoclass:: LCEAKernel
+
+.. automodule:: botorch.models.kernels.contextual_sac
+.. autoclass:: SACKernel
 
 
 Transforms

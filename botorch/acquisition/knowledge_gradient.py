@@ -6,13 +6,13 @@
 
 r"""
 Batch Knowledge Gradient (KG) via one-shot optimization as introduced in
-[Balandat2019botorch]_. For broader discussion of KG see also [Frazier2008knowledge]_
+[Balandat2020botorch]_. For broader discussion of KG see also [Frazier2008knowledge]_
 and [Wu2016parallelkg]_.
 
-.. [Balandat2019botorch]
-    M. Balandat, B. Karrer, D. R. Jiang, S. Daulton, B. Letham, A. G. Wilson,
-    and E. Bakshy. BoTorch: Programmable Bayesian Optimziation in PyTorch.
-    ArXiv 2019.
+.. [Balandat2020botorch]
+    M. Balandat, B. Karrer, D. R. Jiang, S. Daulton, B. Letham, A. G. Wilson, and
+    E. Bakshy. BoTorch: A Framework for Efficient Monte-Carlo Bayesian Optimization.
+    Advances in Neural Information Processing Systems 33, 2020.
 
 .. [Frazier2008knowledge]
     P. Frazier, W. Powell, and S. Dayanik. A Knowledge-Gradient policy for
@@ -220,9 +220,10 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
             model=fantasy_model, objective=self.objective, sampler=self.inner_sampler
         )
 
+        from botorch.generation.gen import gen_candidates_scipy
+
         # optimize the inner problem
         from botorch.optim.initializers import gen_value_function_initial_conditions
-        from botorch.generation.gen import gen_candidates_scipy
 
         initial_conditions = gen_value_function_initial_conditions(
             acq_function=value_function,
@@ -249,13 +250,13 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
         return values.mean(dim=0)
 
     def get_augmented_q_batch_size(self, q: int) -> int:
-        r"""Get augmented q batch size for one-shot optimzation.
+        r"""Get augmented q batch size for one-shot optimization.
 
         Args:
             q: The number of candidates to consider jointly.
 
         Returns:
-            The augmented size for one-shot optimzation (including variables
+            The augmented size for one-shot optimization (including variables
             parameterizing the fantasy solutions).
         """
         return q + self.num_fantasies

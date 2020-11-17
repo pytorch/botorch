@@ -102,7 +102,7 @@ commands:
     description: "Test packaging (python sdist and wheel, conda package)"
     steps:
        - run:
-          name: "Build pacakges"
+          name: "Build packages"
           command: ./scripts/test_packaging.sh
 
 
