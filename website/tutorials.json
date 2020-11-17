@@ -13,6 +13,10 @@
     {
       "id": "preference_bo",
       "title": "Bayesian optimization with pairwise comparison data"
+    },
+    {
+      "id": "turbo_1",
+      "title": "Trust Region Bayesian Optimization (TuRBO)"
     }
   ],
   "Multi-Objective Bayesian Optimization": [
