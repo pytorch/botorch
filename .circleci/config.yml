@@ -65,6 +65,8 @@ commands:
       - run:
           name: "Run tutorials"
           command: python scripts/run_tutorials.py -p "$(pwd)"
+          environment:
+            SMOKE_TEST: true
 
   configure_docusaurus_bot:
     description: "Configure Docusaurus GitHub bot"
