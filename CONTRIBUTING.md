@@ -32,6 +32,18 @@ We feel strongly that having a consistent code style is extremely important, so
 Travis will fail on your PR if it does not adhere to the black formatting style.
 
 
+#### Import Sorting
+
+BoTorch uses [usort](https://github.com/facebookexperimental/usort) for consistent
+sorting of imports across the codebase. Install via `pip install usort`, and auto-
+sort with
+```bash
+usort format .
+```
+from the repository root. You can also create a diff or just validate sorting following
+the instructions [here](https://github.com/facebookexperimental/usort#usage).
+
+
 #### Type Hints
 
 BoTorch is fully typed using python 3.7+
