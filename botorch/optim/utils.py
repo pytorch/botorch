@@ -153,7 +153,11 @@ def _expand_bounds(
             ebounds = bounds.view(1, -1)
         else:
             ebounds = bounds
-        if ebounds.shape[1] != X.shape[-1]:
+        if (
+            ebounds.shape[-1] != X.shape[-1]
+            or ebounds.shape[-2] not in [1, X.shape[-2]]
+            or (ebounds.dim() > 2 and ebounds.shape[:-2] != X.shape[:-2])
+        ):
             raise RuntimeError(
                 "Bounds must either be a single value or the same dimension as X"
             )

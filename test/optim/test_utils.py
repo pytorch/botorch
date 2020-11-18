@@ -65,6 +65,22 @@ class TestColumnWiseClamp(BotorchTestCase):
         X_clmp = columnwise_clamp(X, torch.tensor([-3, -3]), torch.tensor([3, 3]))
         self.assertTrue(torch.equal(X_clmp, X))
 
+    def test_column_wise_clamp_full_dim_tensors(self):
+        X = torch.tensor([[[-1, 2, 0.5], [0.5, 3, 1.5]], [[0.5, 1, 0], [2, -2, 3]]])
+        lower = torch.tensor([[[0, 0.5, 1], [0, 2, 2]], [[0, 2, 0], [1, -1, 0]]])
+        upper = torch.tensor([[[1, 1.5, 1], [1, 4, 3]], [[1, 3, 0.5], [3, 1, 2.5]]])
+        X_expected = torch.tensor(
+            [[[0, 1.5, 1], [0.5, 3, 2]], [[0.5, 2, 0], [2, -1, 2.5]]]
+        )
+        X_clmp = columnwise_clamp(X, lower, upper)
+        self.assertTrue(torch.equal(X_clmp, X_expected))
+        X_clmp = columnwise_clamp(X, lower - 5, upper + 5)
+        self.assertTrue(torch.equal(X_clmp, X))
+        with self.assertRaises(ValueError):
+            X_clmp = columnwise_clamp(X, torch.ones_like(X), torch.zeros_like(X))
+        with self.assertRaises(RuntimeError):
+            X_clmp = columnwise_clamp(X, lower.unsqueeze(-3), upper.unsqueeze(-3))
+
     def test_column_wise_clamp_raise_on_violation(self):
         X = self.X
         with self.assertRaises(BotorchError):
@@ -153,7 +169,7 @@ class TestGetExtraMllArgs(BotorchTestCase):
 
 class TestExpandBounds(BotorchTestCase):
     def test_expand_bounds(self):
-        X = torch.zeros(2, 3)
+        X = torch.zeros(4, 2, 3)
         expected_bounds = torch.zeros(1, 3)
         # bounds is float
         bounds = 0.0
@@ -167,10 +183,16 @@ class TestExpandBounds(BotorchTestCase):
         bounds = torch.zeros(3)
         expanded_bounds = _expand_bounds(bounds=bounds, X=X)
         self.assertTrue(torch.equal(expected_bounds, expanded_bounds))
-        # bounds is > 1-d
+        # bounds is 2-d
         bounds = torch.zeros(1, 3)
         expanded_bounds = _expand_bounds(bounds=bounds, X=X)
         self.assertTrue(torch.equal(expected_bounds, expanded_bounds))
+        # bounds is > 2-d
+        bounds = torch.zeros_like(X)
+        expanded_bounds = _expand_bounds(bounds=bounds, X=X)
+        self.assertTrue(torch.equal(expanded_bounds, bounds))
+        with self.assertRaises(RuntimeError):
+            expanded_bounds = _expand_bounds(bounds=bounds[1:], X=X)
         # bounds is None
         expanded_bounds = _expand_bounds(bounds=None, X=X)
         self.assertIsNone(expanded_bounds)
