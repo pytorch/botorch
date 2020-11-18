@@ -79,7 +79,6 @@ and [Yarn](https://yarnpkg.com/en/) >= 1.5.
 
 The following command will both build the docs and serve the site locally:
 ```bash
-cd scripts
 ./scripts/build_docs.sh
 ```
 
