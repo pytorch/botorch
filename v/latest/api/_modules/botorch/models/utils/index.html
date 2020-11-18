@@ -280,8 +280,10 @@
 <span class="k">def</span> <span class="nf">gpt_posterior_settings</span><span class="p">():</span>
     <span class="sa">r</span><span class="sd">"""Context manager for settings used for computing model posteriors."""</span>
     <span class="k">with</span> <span class="n">ExitStack</span><span class="p">()</span> <span class="k">as</span> <span class="n">es</span><span class="p">:</span>
-        <span class="n">es</span><span class="o">.</span><span class="n">enter_context</span><span class="p">(</span><span class="n">gpt_settings</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="kc">False</span><span class="p">))</span>
-        <span class="n">es</span><span class="o">.</span><span class="n">enter_context</span><span class="p">(</span><span class="n">gpt_settings</span><span class="o">.</span><span class="n">fast_pred_var</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">gpt_settings</span><span class="o">.</span><span class="n">debug</span><span class="o">.</span><span class="n">is_default</span><span class="p">():</span>
+            <span class="n">es</span><span class="o">.</span><span class="n">enter_context</span><span class="p">(</span><span class="n">gpt_settings</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="kc">False</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">gpt_settings</span><span class="o">.</span><span class="n">fast_pred_var</span><span class="o">.</span><span class="n">is_default</span><span class="p">():</span>
+            <span class="n">es</span><span class="o">.</span><span class="n">enter_context</span><span class="p">(</span><span class="n">gpt_settings</span><span class="o">.</span><span class="n">fast_pred_var</span><span class="p">())</span>
         <span class="n">es</span><span class="o">.</span><span class="n">enter_context</span><span class="p">(</span>
             <span class="n">gpt_settings</span><span class="o">.</span><span class="n">detach_test_caches</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">propagate_grads</span><span class="o">.</span><span class="n">off</span><span class="p">())</span>
         <span class="p">)</span>
