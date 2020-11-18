@@ -169,8 +169,8 @@ class TestGetExtraMllArgs(BotorchTestCase):
 
 class TestExpandBounds(BotorchTestCase):
     def test_expand_bounds(self):
-        X = torch.zeros(4, 2, 3)
-        expected_bounds = torch.zeros(1, 3)
+        X = torch.zeros(2, 3)
+        expected_bounds = torch.zeros(2, 3)
         # bounds is float
         bounds = 0.0
         expanded_bounds = _expand_bounds(bounds=bounds, X=X)
@@ -188,11 +188,16 @@ class TestExpandBounds(BotorchTestCase):
         expanded_bounds = _expand_bounds(bounds=bounds, X=X)
         self.assertTrue(torch.equal(expected_bounds, expanded_bounds))
         # bounds is > 2-d
-        bounds = torch.zeros_like(X)
-        expanded_bounds = _expand_bounds(bounds=bounds, X=X)
-        self.assertTrue(torch.equal(expanded_bounds, bounds))
+        bounds = torch.zeros(1, 1, 3)
         with self.assertRaises(RuntimeError):
-            expanded_bounds = _expand_bounds(bounds=bounds[1:], X=X)
+            # X does not have a t-batch
+            expanded_bounds = _expand_bounds(bounds=bounds, X=X)
+        X = torch.zeros(4, 2, 3)
+        expanded_bounds = _expand_bounds(bounds=bounds, X=X)
+        self.assertTrue(torch.equal(expanded_bounds, torch.zeros_like(X)))
+        with self.assertRaises(RuntimeError):
+            # bounds is not broadcastable to X
+            expanded_bounds = _expand_bounds(bounds=torch.zeros(2, 1, 3), X=X)
         # bounds is None
         expanded_bounds = _expand_bounds(bounds=None, X=X)
         self.assertIsNone(expanded_bounds)

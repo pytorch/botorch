@@ -147,19 +147,11 @@ def _expand_bounds(
     if bounds is not None:
         if not torch.is_tensor(bounds):
             bounds = torch.tensor(bounds)
-        if len(bounds.shape) == 0:
-            ebounds = bounds.expand(1, X.shape[-1])
-        elif len(bounds.shape) == 1:
-            ebounds = bounds.view(1, -1)
-        else:
-            ebounds = bounds
-        if (
-            ebounds.shape[-1] != X.shape[-1]
-            or ebounds.shape[-2] not in [1, X.shape[-2]]
-            or (ebounds.dim() > 2 and ebounds.shape[:-2] != X.shape[:-2])
-        ):
+        try:
+            ebounds = bounds.expand_as(X)
+        except RuntimeError:
             raise RuntimeError(
-                "Bounds must either be a single value or the same dimension as X"
+                "Bounds must be broadcastable to X!"
             )
         return ebounds.to(dtype=X.dtype, device=X.device)
     else:
