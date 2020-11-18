@@ -258,10 +258,10 @@ class PolytopeSamplerTestCase(BotorchTestCase):
                 )
 
                 samples = sampler.draw(n=10, seed=1)
-
-                inequality_satisfied = ((A @ samples.t() - b) > 0).sum().item() == 0
-
-                self.assertTrue(inequality_satisfied)
+                self.assertEqual(((A @ samples.t() - b) > 0).sum().item(), 0)
+                # make sure we can draw mulitple samples
+                more_samples = sampler.draw(n=5)
+                self.assertEqual(((A @ more_samples.t() - b) > 0).sum().item(), 0)
 
     def test_sample_polytope_with_constraints(self):
         for dtype in (torch.float, torch.double):

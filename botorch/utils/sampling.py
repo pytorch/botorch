@@ -481,7 +481,7 @@ class PolytopeSampler:
 
         # keep the last element of the resulting chain as
         # the beginning of the next chain
-        self.x0 = samples[samples.size(-1)]
+        self.x0 = samples[-1].reshape(-1, 1)
         # next time the sampling is called there won't be any burn-in
         self.n_burnin = 0
         return samples
