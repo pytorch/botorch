@@ -507,7 +507,7 @@
 
         <span class="c1"># keep the last element of the resulting chain as</span>
         <span class="c1"># the beginning of the next chain</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">x0</span> <span class="o">=</span> <span class="n">samples</span><span class="p">[</span><span class="n">samples</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x0</span> <span class="o">=</span> <span class="n">samples</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
         <span class="c1"># next time the sampling is called there won't be any burn-in</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">n_burnin</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">return</span> <span class="n">samples</span></div></div>
