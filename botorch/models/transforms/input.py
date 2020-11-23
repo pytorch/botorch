@@ -25,11 +25,13 @@ class InputTransform(Module, ABC):
             transform in train() mode.
         transform_on_eval: A boolean indicating whether to apply the
             transform in eval() mode.
+        transform_on_preprocess: A boolean indicating whether to apply
+            the transform when preprocessing inputs.
     """
 
     transform_on_eval: bool
     transform_on_train: bool
-    transform_on_set_train_data: bool
+    transform_on_preprocess: bool
 
     def forward(self, X: Tensor) -> Tensor:
         r"""Transform the inputs to a model.
@@ -96,8 +98,13 @@ class InputTransform(Module, ABC):
             )
         )
 
-    def set_train_data_transform(self, X: Tensor) -> Tensor:
-        r"""Apply transforms for setting training data.
+    def preprocess_transform(self, X: Tensor) -> Tensor:
+        r"""Apply transforms for preprocessing inputs.
+
+        The main use cases for this method are 1) to preprocess training data
+        before calling `set_train_data` and 2) preprocess `X_baseline` for noisy
+        acquisition functions so that `X_baseline` is "preprocessed" with the
+        same transformations as the cached training inputs
 
         Args:
             X: A `batch_shape x n x d`-dim tensor of inputs.
@@ -105,7 +112,7 @@ class InputTransform(Module, ABC):
         Returns:
             A `batch_shape x n x d`-dim tensor of (transformed) inputs.
         """
-        if self.transform_on_set_train_data:
+        if self.transform_on_preprocess:
             return self.transform(X)
         return X
 
@@ -134,11 +141,11 @@ class ChainedInputTransform(InputTransform, ModuleDict):
         super().__init__(OrderedDict(transforms))
         self.transform_on_train = False
         self.transform_on_eval = False
-        self.transform_on_set_train_data = False
+        self.transform_on_preprocess = False
         for tf in transforms.values():
             self.transform_on_train |= tf.transform_on_train
             self.transform_on_eval |= tf.transform_on_eval
-            self.transform_on_set_train_data |= tf.transform_on_set_train_data
+            self.transform_on_preprocess |= tf.transform_on_preprocess
 
     def transform(self, X: Tensor) -> Tensor:
         r"""Transform the inputs to a model.
@@ -183,8 +190,13 @@ class ChainedInputTransform(InputTransform, ModuleDict):
             t1 == t2 for t1, t2 in zip(self.values(), other.values())
         )
 
-    def set_train_data_transform(self, X: Tensor) -> Tensor:
-        r"""Apply transforms for setting training data.
+    def preprocess_transform(self, X: Tensor) -> Tensor:
+        r"""Apply transforms for preprocessing inputs.
+
+        The main use cases for this method are 1) to preprocess training data
+        before calling `set_train_data` and 2) preprocess `X_baseline` for noisy
+        acquisition functions so that `X_baseline` is "preprocessed" with the
+        same transformations as the cached training inputs
 
         Args:
             X: A `batch_shape x n x d`-dim tensor of inputs.
@@ -193,7 +205,7 @@ class ChainedInputTransform(InputTransform, ModuleDict):
             A `batch_shape x n x d`-dim tensor of (transformed) inputs.
         """
         for tf in self.values():
-            X = tf.set_train_data_transform(X)
+            X = tf.preprocess_transform(X)
         return X
 
 
@@ -280,7 +292,7 @@ class Normalize(ReversibleInputTransform):
         batch_shape: torch.Size = torch.Size(),  # noqa: B008
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
-        transform_on_set_train_data: bool = False,
+        transform_on_preprocess: bool = False,
         reverse: bool = False,
     ) -> None:
         r"""Normalize the inputs to the unit cube.
@@ -296,8 +308,8 @@ class Normalize(ReversibleInputTransform):
                 transforms in train() mode. Default: True
             transform_on_eval: A boolean indicating whether to apply the
                 transform in eval() mode. Default: True
-            transform_on_set_train_data: A boolean indicating whether to apply the
-                transform when setting training inputs on the mode. Default: False
+            transform_on_preprocess: A boolean indicating whether to apply the
+                transform when preprocessing inputs. Default: False
             reverse: A boolean indicating whether the forward pass should untransform
                 the inputs.
         """
@@ -319,7 +331,7 @@ class Normalize(ReversibleInputTransform):
         self._d = d
         self.transform_on_train = transform_on_train
         self.transform_on_eval = transform_on_eval
-        self.transform_on_set_train_data = transform_on_set_train_data
+        self.transform_on_preprocess = transform_on_preprocess
         self.reverse = reverse
         self.batch_shape = batch_shape
 
@@ -423,7 +435,7 @@ class Round(InputTransform):
         indices: List[int],
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
-        transform_on_set_train_data: bool = False,
+        transform_on_preprocess: bool = False,
         approximate: bool = True,
         tau: float = 1e-3,
     ) -> None:
@@ -435,8 +447,8 @@ class Round(InputTransform):
                 transforms in train() mode. Default: True
             transform_on_eval: A boolean indicating whether to apply the
                 transform in eval() mode. Default: True
-            transform_on_set_train_data: A boolean indicating whether to apply the
-                transform when setting training inputs on the mode. Default: False
+            transform_on_preprocess: A boolean indicating whether to apply the
+                transform when preprocessing inputs. Default: False
             approximate: A boolean indicating whether approximate or exact
                 rounding should be used. Default: approximate
             tau: The temperature parameter for approximate rounding
@@ -444,7 +456,7 @@ class Round(InputTransform):
         super().__init__()
         self.transform_on_train = transform_on_train
         self.transform_on_eval = transform_on_eval
-        self.transform_on_set_train_data = transform_on_set_train_data
+        self.transform_on_preprocess = transform_on_preprocess
         self.register_buffer("indices", torch.tensor(indices, dtype=torch.long))
         self.approximate = approximate
         self.tau = tau
@@ -489,7 +501,7 @@ class Log10(ReversibleInputTransform):
         indices: List[int],
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
-        transform_on_set_train_data: bool = False,
+        transform_on_preprocess: bool = False,
         reverse: bool = False,
     ) -> None:
         """
@@ -499,8 +511,8 @@ class Log10(ReversibleInputTransform):
                 transforms in train() mode. Default: True
             transform_on_eval: A boolean indicating whether to apply the
                 transform in eval() mode. Default: True
-            transform_on_set_train_data: A boolean indicating whether to apply the
-                transform when setting training inputs on the mode. Default: False
+            transform_on_preprocess: A boolean indicating whether to apply the
+                transform when preprocessing inputs. Default: False
             reverse: A boolean indicating whether the forward pass should untransform
                 the inputs.
         """
@@ -508,7 +520,7 @@ class Log10(ReversibleInputTransform):
         self.register_buffer("indices", torch.tensor(indices, dtype=torch.long))
         self.transform_on_train = transform_on_train
         self.transform_on_eval = transform_on_eval
-        self.transform_on_set_train_data = transform_on_set_train_data
+        self.transform_on_preprocess = transform_on_preprocess
         self.reverse = reverse
 
     def _transform(self, X: Tensor) -> Tensor:
