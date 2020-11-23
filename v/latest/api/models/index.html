@@ -2503,6 +2503,8 @@ observation noises associated with the training targets
 </dd>
 <dt>transform_on_eval: A boolean indicating whether to apply the</dt><dd><p>transform in eval() mode.</p>
 </dd>
+<dt>transform_on_preprocess: A boolean indicating whether to apply</dt><dd><p>the transform when preprocessing inputs.</p>
+</dd>
 </dl>
 </dd>
 </dl>
@@ -2516,8 +2518,8 @@ observation noises associated with the training targets
 <code class="sig-name descname">transform_on_train</code><em class="property">: bool</em><a class="headerlink" href="#botorch.models.transforms.input.InputTransform.transform_on_train" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
-<dt id="botorch.models.transforms.input.InputTransform.transform_on_set_train_data">
-<code class="sig-name descname">transform_on_set_train_data</code><em class="property">: bool</em><a class="headerlink" href="#botorch.models.transforms.input.InputTransform.transform_on_set_train_data" title="Permalink to this definition">¶</a></dt>
+<dt id="botorch.models.transforms.input.InputTransform.transform_on_preprocess">
+<code class="sig-name descname">transform_on_preprocess</code><em class="property">: bool</em><a class="headerlink" href="#botorch.models.transforms.input.InputTransform.transform_on_preprocess" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py method">
 <dt id="botorch.models.transforms.input.InputTransform.forward">
@@ -2588,9 +2590,13 @@ pytorch. See <a class="reference external" href="https://github.com/pytorch/pyto
 </dl>
 </dd></dl>
 <dl class="py method">
-<dt id="botorch.models.transforms.input.InputTransform.set_train_data_transform">
-<code class="sig-name descname">set_train_data_transform</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#InputTransform.set_train_data_transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.InputTransform.set_train_data_transform" title="Permalink to this definition">¶</a></dt>
-<dd><p>Apply transforms for setting training data.</p>
+<dt id="botorch.models.transforms.input.InputTransform.preprocess_transform">
+<code class="sig-name descname">preprocess_transform</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#InputTransform.preprocess_transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.InputTransform.preprocess_transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply transforms for preprocessing inputs.</p>
+<p>The main use cases for this method are 1) to preprocess training data
+before calling <cite>set_train_data</cite> and 2) preprocess <cite>X_baseline</cite> for noisy
+acquisition functions so that <cite>X_baseline</cite> is “preprocessed” with the
+same transformations as the cached training inputs</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x d</cite>-dim tensor of inputs.</p>
@@ -2636,8 +2642,8 @@ transforms on the module.</p>
 <code class="sig-name descname">transform_on_eval</code><em class="property">: bool</em><a class="headerlink" href="#botorch.models.transforms.input.ChainedInputTransform.transform_on_eval" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
-<dt id="botorch.models.transforms.input.ChainedInputTransform.transform_on_set_train_data">
-<code class="sig-name descname">transform_on_set_train_data</code><em class="property">: bool</em><a class="headerlink" href="#botorch.models.transforms.input.ChainedInputTransform.transform_on_set_train_data" title="Permalink to this definition">¶</a></dt>
+<dt id="botorch.models.transforms.input.ChainedInputTransform.transform_on_preprocess">
+<code class="sig-name descname">transform_on_preprocess</code><em class="property">: bool</em><a class="headerlink" href="#botorch.models.transforms.input.ChainedInputTransform.transform_on_preprocess" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py method">
 <dt id="botorch.models.transforms.input.ChainedInputTransform.transform">
@@ -2690,9 +2696,13 @@ transforms on the module.</p>
 </dl>
 </dd></dl>
 <dl class="py method">
-<dt id="botorch.models.transforms.input.ChainedInputTransform.set_train_data_transform">
-<code class="sig-name descname">set_train_data_transform</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#ChainedInputTransform.set_train_data_transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.ChainedInputTransform.set_train_data_transform" title="Permalink to this definition">¶</a></dt>
-<dd><p>Apply transforms for setting training data.</p>
+<dt id="botorch.models.transforms.input.ChainedInputTransform.preprocess_transform">
+<code class="sig-name descname">preprocess_transform</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#ChainedInputTransform.preprocess_transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.ChainedInputTransform.preprocess_transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply transforms for preprocessing inputs.</p>
+<p>The main use cases for this method are 1) to preprocess training data
+before calling <cite>set_train_data</cite> and 2) preprocess <cite>X_baseline</cite> for noisy
+acquisition functions so that <cite>X_baseline</cite> is “preprocessed” with the
+same transformations as the cached training inputs</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x d</cite>-dim tensor of inputs.</p>
@@ -2774,7 +2784,7 @@ transforms on the module.</p>
 </dd></dl>
 <dl class="py class">
 <dt id="botorch.models.transforms.input.Normalize">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.models.transforms.input.</code><code class="sig-name descname">Normalize</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">d</span></em>, <em class="sig-param"><span class="n">bounds</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">batch_shape</span><span class="o">=</span><span class="default_value">torch.Size([])</span></em>, <em class="sig-param"><span class="n">transform_on_train</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">transform_on_eval</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">transform_on_set_train_data</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">reverse</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#Normalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.Normalize" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.transforms.input.</code><code class="sig-name descname">Normalize</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">d</span></em>, <em class="sig-param"><span class="n">bounds</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">batch_shape</span><span class="o">=</span><span class="default_value">torch.Size([])</span></em>, <em class="sig-param"><span class="n">transform_on_train</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">transform_on_eval</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">transform_on_preprocess</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">reverse</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#Normalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.Normalize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.input.ReversibleInputTransform" title="botorch.models.transforms.input.ReversibleInputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.transforms.input.ReversibleInputTransform</span></code></a></p>
 <p>Normalize the inputs to the unit cube.</p>
 <p>If no explicit bounds are provided this module is stateful: If in train mode,
@@ -2795,8 +2805,8 @@ normalization per batch, otherwise uses a single normalization.</p></li>
 transforms in train() mode. Default: True</p></li>
 <li><p><strong>transform_on_eval</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – A boolean indicating whether to apply the
 transform in eval() mode. Default: True</p></li>
-<li><p><strong>transform_on_set_train_data</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – A boolean indicating whether to apply the
-transform when setting training inputs on the mode. Default: False</p></li>
+<li><p><strong>transform_on_preprocess</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – A boolean indicating whether to apply the
+transform when preprocessing inputs. Default: False</p></li>
 <li><p><strong>reverse</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – A boolean indicating whether the forward pass should untransform
 the inputs.</p></li>
 </ul>
@@ -2835,7 +2845,7 @@ the inputs.</p></li>
 </dd></dl>
 <dl class="py class">
 <dt id="botorch.models.transforms.input.Round">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.models.transforms.input.</code><code class="sig-name descname">Round</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">indices</span></em>, <em class="sig-param"><span class="n">transform_on_train</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">transform_on_eval</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">transform_on_set_train_data</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">approximate</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">tau</span><span class="o">=</span><span class="default_value">0.001</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#Round"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.Round" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.transforms.input.</code><code class="sig-name descname">Round</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">indices</span></em>, <em class="sig-param"><span class="n">transform_on_train</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">transform_on_eval</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">transform_on_preprocess</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">approximate</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">tau</span><span class="o">=</span><span class="default_value">0.001</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#Round"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.Round" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.transforms.input.InputTransform</span></code></a></p>
 <p>A rounding transformation for integer inputs.</p>
 <p>This will typically be used in conjunction with normalization as
@@ -2878,8 +2888,8 @@ each piece is a hyperbolic tangent function.</p>
 transforms in train() mode. Default: True</p></li>
 <li><p><strong>transform_on_eval</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – A boolean indicating whether to apply the
 transform in eval() mode. Default: True</p></li>
-<li><p><strong>transform_on_set_train_data</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – A boolean indicating whether to apply the
-transform when setting training inputs on the mode. Default: False</p></li>
+<li><p><strong>transform_on_preprocess</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – A boolean indicating whether to apply the
+transform when preprocessing inputs. Default: False</p></li>
 <li><p><strong>approximate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – A boolean indicating whether approximate or exact
 rounding should be used. Default: approximate</p></li>
 <li><p><strong>tau</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – The temperature parameter for approximate rounding</p></li>
@@ -2895,8 +2905,8 @@ rounding should be used. Default: approximate</p></li>
 <code class="sig-name descname">transform_on_eval</code><em class="property">: bool</em><a class="headerlink" href="#botorch.models.transforms.input.Round.transform_on_eval" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py attribute">
-<dt id="botorch.models.transforms.input.Round.transform_on_set_train_data">
-<code class="sig-name descname">transform_on_set_train_data</code><em class="property">: bool</em><a class="headerlink" href="#botorch.models.transforms.input.Round.transform_on_set_train_data" title="Permalink to this definition">¶</a></dt>
+<dt id="botorch.models.transforms.input.Round.transform_on_preprocess">
+<code class="sig-name descname">transform_on_preprocess</code><em class="property">: bool</em><a class="headerlink" href="#botorch.models.transforms.input.Round.transform_on_preprocess" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py method">
 <dt id="botorch.models.transforms.input.Round.transform">
@@ -2933,7 +2943,7 @@ rounding should be used. Default: approximate</p></li>
 </dd></dl>
 <dl class="py class">
 <dt id="botorch.models.transforms.input.Log10">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.models.transforms.input.</code><code class="sig-name descname">Log10</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">indices</span></em>, <em class="sig-param"><span class="n">transform_on_train</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">transform_on_eval</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">transform_on_set_train_data</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">reverse</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#Log10"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.Log10" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.transforms.input.</code><code class="sig-name descname">Log10</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">indices</span></em>, <em class="sig-param"><span class="n">transform_on_train</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">transform_on_eval</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">transform_on_preprocess</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">reverse</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#Log10"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.Log10" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.input.ReversibleInputTransform" title="botorch.models.transforms.input.ReversibleInputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.transforms.input.ReversibleInputTransform</span></code></a></p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -2943,8 +2953,8 @@ rounding should be used. Default: approximate</p></li>
 transforms in train() mode. Default: True</p></li>
 <li><p><strong>transform_on_eval</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – A boolean indicating whether to apply the
 transform in eval() mode. Default: True</p></li>
-<li><p><strong>transform_on_set_train_data</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – A boolean indicating whether to apply the
-transform when setting training inputs on the mode. Default: False</p></li>
+<li><p><strong>transform_on_preprocess</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – A boolean indicating whether to apply the
+transform when preprocessing inputs. Default: False</p></li>
 <li><p><strong>reverse</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – A boolean indicating whether the forward pass should untransform
 the inputs.</p></li>
 </ul>
@@ -3318,6 +3328,7 @@ attribute.</p></li>
 <li class="toctree-l1"><a class="reference internal" href="test_functions.html">botorch.test_functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="exceptions.html">botorch.exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="utils.html">botorch.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="distributions.html">botorch.distributions</a></li>
 </ul>
 <div class="relations">
 <h3>Related Topics</h3>

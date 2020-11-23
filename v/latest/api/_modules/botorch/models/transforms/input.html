@@ -51,11 +51,13 @@
 <span class="sd">            transform in train() mode.</span>
 <span class="sd">        transform_on_eval: A boolean indicating whether to apply the</span>
 <span class="sd">            transform in eval() mode.</span>
+<span class="sd">        transform_on_preprocess: A boolean indicating whether to apply</span>
+<span class="sd">            the transform when preprocessing inputs.</span>
 <span class="sd">    """</span>
 
     <span class="n">transform_on_eval</span><span class="p">:</span> <span class="nb">bool</span>
     <span class="n">transform_on_train</span><span class="p">:</span> <span class="nb">bool</span>
-    <span class="n">transform_on_set_train_data</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">transform_on_preprocess</span><span class="p">:</span> <span class="nb">bool</span>
 
 <div class="viewcode-block" id="InputTransform.forward"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.InputTransform.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Transform the inputs to a model.</span>
@@ -122,8 +124,13 @@
             <span class="p">)</span>
         <span class="p">)</span></div>
 
-<div class="viewcode-block" id="InputTransform.set_train_data_transform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.InputTransform.set_train_data_transform">[docs]</a>    <span class="k">def</span> <span class="nf">set_train_data_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Apply transforms for setting training data.</span>
+<div class="viewcode-block" id="InputTransform.preprocess_transform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.InputTransform.preprocess_transform">[docs]</a>    <span class="k">def</span> <span class="nf">preprocess_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Apply transforms for preprocessing inputs.</span>
+
+<span class="sd">        The main use cases for this method are 1) to preprocess training data</span>
+<span class="sd">        before calling `set_train_data` and 2) preprocess `X_baseline` for noisy</span>
+<span class="sd">        acquisition functions so that `X_baseline` is "preprocessed" with the</span>
+<span class="sd">        same transformations as the cached training inputs</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x n x d`-dim tensor of inputs.</span>
@@ -131,7 +138,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            A `batch_shape x n x d`-dim tensor of (transformed) inputs.</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_set_train_data</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_preprocess</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">X</span></div></div>
 
@@ -160,11 +167,11 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">OrderedDict</span><span class="p">(</span><span class="n">transforms</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_train</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_eval</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_set_train_data</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_preprocess</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">for</span> <span class="n">tf</span> <span class="ow">in</span> <span class="n">transforms</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_train</span> <span class="o">|=</span> <span class="n">tf</span><span class="o">.</span><span class="n">transform_on_train</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_eval</span> <span class="o">|=</span> <span class="n">tf</span><span class="o">.</span><span class="n">transform_on_eval</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_set_train_data</span> <span class="o">|=</span> <span class="n">tf</span><span class="o">.</span><span class="n">transform_on_set_train_data</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_preprocess</span> <span class="o">|=</span> <span class="n">tf</span><span class="o">.</span><span class="n">transform_on_preprocess</span>
 
 <div class="viewcode-block" id="ChainedInputTransform.transform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.ChainedInputTransform.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Transform the inputs to a model.</span>
@@ -209,8 +216,13 @@
             <span class="n">t1</span> <span class="o">==</span> <span class="n">t2</span> <span class="k">for</span> <span class="n">t1</span><span class="p">,</span> <span class="n">t2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="n">other</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
         <span class="p">)</span></div>
 
-<div class="viewcode-block" id="ChainedInputTransform.set_train_data_transform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.ChainedInputTransform.set_train_data_transform">[docs]</a>    <span class="k">def</span> <span class="nf">set_train_data_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Apply transforms for setting training data.</span>
+<div class="viewcode-block" id="ChainedInputTransform.preprocess_transform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.input.ChainedInputTransform.preprocess_transform">[docs]</a>    <span class="k">def</span> <span class="nf">preprocess_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Apply transforms for preprocessing inputs.</span>
+
+<span class="sd">        The main use cases for this method are 1) to preprocess training data</span>
+<span class="sd">        before calling `set_train_data` and 2) preprocess `X_baseline` for noisy</span>
+<span class="sd">        acquisition functions so that `X_baseline` is "preprocessed" with the</span>
+<span class="sd">        same transformations as the cached training inputs</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `batch_shape x n x d`-dim tensor of inputs.</span>
@@ -219,7 +231,7 @@
 <span class="sd">            A `batch_shape x n x d`-dim tensor of (transformed) inputs.</span>
 <span class="sd">        """</span>
         <span class="k">for</span> <span class="n">tf</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-            <span class="n">X</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">set_train_data_transform</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">preprocess_transform</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">X</span></div></div>
 
 
@@ -306,7 +318,7 @@
         <span class="n">batch_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">(),</span>  <span class="c1"># noqa: B008</span>
         <span class="n">transform_on_train</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">transform_on_eval</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-        <span class="n">transform_on_set_train_data</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">transform_on_preprocess</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">reverse</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Normalize the inputs to the unit cube.</span>
@@ -322,8 +334,8 @@
 <span class="sd">                transforms in train() mode. Default: True</span>
 <span class="sd">            transform_on_eval: A boolean indicating whether to apply the</span>
 <span class="sd">                transform in eval() mode. Default: True</span>
-<span class="sd">            transform_on_set_train_data: A boolean indicating whether to apply the</span>
-<span class="sd">                transform when setting training inputs on the mode. Default: False</span>
+<span class="sd">            transform_on_preprocess: A boolean indicating whether to apply the</span>
+<span class="sd">                transform when preprocessing inputs. Default: False</span>
 <span class="sd">            reverse: A boolean indicating whether the forward pass should untransform</span>
 <span class="sd">                the inputs.</span>
 <span class="sd">        """</span>
@@ -345,7 +357,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_d</span> <span class="o">=</span> <span class="n">d</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_train</span> <span class="o">=</span> <span class="n">transform_on_train</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_eval</span> <span class="o">=</span> <span class="n">transform_on_eval</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_set_train_data</span> <span class="o">=</span> <span class="n">transform_on_set_train_data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_preprocess</span> <span class="o">=</span> <span class="n">transform_on_preprocess</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">reverse</span> <span class="o">=</span> <span class="n">reverse</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span> <span class="o">=</span> <span class="n">batch_shape</span>
 
@@ -449,7 +461,7 @@
         <span class="n">indices</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
         <span class="n">transform_on_train</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">transform_on_eval</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-        <span class="n">transform_on_set_train_data</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">transform_on_preprocess</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">approximate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">tau</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -461,8 +473,8 @@
 <span class="sd">                transforms in train() mode. Default: True</span>
 <span class="sd">            transform_on_eval: A boolean indicating whether to apply the</span>
 <span class="sd">                transform in eval() mode. Default: True</span>
-<span class="sd">            transform_on_set_train_data: A boolean indicating whether to apply the</span>
-<span class="sd">                transform when setting training inputs on the mode. Default: False</span>
+<span class="sd">            transform_on_preprocess: A boolean indicating whether to apply the</span>
+<span class="sd">                transform when preprocessing inputs. Default: False</span>
 <span class="sd">            approximate: A boolean indicating whether approximate or exact</span>
 <span class="sd">                rounding should be used. Default: approximate</span>
 <span class="sd">            tau: The temperature parameter for approximate rounding</span>
@@ -470,7 +482,7 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_train</span> <span class="o">=</span> <span class="n">transform_on_train</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_eval</span> <span class="o">=</span> <span class="n">transform_on_eval</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_set_train_data</span> <span class="o">=</span> <span class="n">transform_on_set_train_data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_preprocess</span> <span class="o">=</span> <span class="n">transform_on_preprocess</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"indices"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">approximate</span> <span class="o">=</span> <span class="n">approximate</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">tau</span> <span class="o">=</span> <span class="n">tau</span>
@@ -515,7 +527,7 @@
         <span class="n">indices</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
         <span class="n">transform_on_train</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">transform_on_eval</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-        <span class="n">transform_on_set_train_data</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">transform_on_preprocess</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">reverse</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sd">"""</span>
@@ -525,8 +537,8 @@
 <span class="sd">                transforms in train() mode. Default: True</span>
 <span class="sd">            transform_on_eval: A boolean indicating whether to apply the</span>
 <span class="sd">                transform in eval() mode. Default: True</span>
-<span class="sd">            transform_on_set_train_data: A boolean indicating whether to apply the</span>
-<span class="sd">                transform when setting training inputs on the mode. Default: False</span>
+<span class="sd">            transform_on_preprocess: A boolean indicating whether to apply the</span>
+<span class="sd">                transform when preprocessing inputs. Default: False</span>
 <span class="sd">            reverse: A boolean indicating whether the forward pass should untransform</span>
 <span class="sd">                the inputs.</span>
 <span class="sd">        """</span>
@@ -534,7 +546,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"indices"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_train</span> <span class="o">=</span> <span class="n">transform_on_train</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_eval</span> <span class="o">=</span> <span class="n">transform_on_eval</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_set_train_data</span> <span class="o">=</span> <span class="n">transform_on_set_train_data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transform_on_preprocess</span> <span class="o">=</span> <span class="n">transform_on_preprocess</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">reverse</span> <span class="o">=</span> <span class="n">reverse</span>
 
     <span class="k">def</span> <span class="nf">_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
@@ -585,6 +597,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../test_functions.html">botorch.test_functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../exceptions.html">botorch.exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../utils.html">botorch.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../distributions.html">botorch.distributions</a></li>
 </ul>
 <div class="relations">
 <h3>Related Topics</h3>

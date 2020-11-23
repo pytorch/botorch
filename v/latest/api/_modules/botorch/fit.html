@@ -172,7 +172,7 @@
     <span class="p">)</span>
     <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">models</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="s2">"input_transform"</span><span class="p">):</span>
-            <span class="n">X_tf</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">input_transform</span><span class="o">.</span><span class="n">set_train_data_transform</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">X_tf</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">input_transform</span><span class="o">.</span><span class="n">preprocess_transform</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="s2">"set_train_data"</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="n">BotorchError</span><span class="p">(</span>
                     <span class="s2">"fit_gpytorch_model requires that a model has a set_train_data "</span>
@@ -206,6 +206,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../test_functions.html">botorch.test_functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../exceptions.html">botorch.exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../utils.html">botorch.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../distributions.html">botorch.distributions</a></li>
 </ul>
 <div class="relations">
 <h3>Related Topics</h3>
