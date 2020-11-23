@@ -21,12 +21,12 @@ from botorch.utils.testing import BotorchTestCase
 
 class NotSoAbstractInputTransform(InputTransform):
     def __init__(
-        self, transform_on_train, transform_on_eval, transform_on_set_train_data=False
+        self, transform_on_train, transform_on_eval, transform_on_preprocess=False
     ):
         super().__init__()
         self.transform_on_train = transform_on_train
         self.transform_on_eval = transform_on_eval
-        self.transform_on_set_train_data = transform_on_set_train_data
+        self.transform_on_preprocess = transform_on_preprocess
 
     def transform(self, X):
         return X + 1
@@ -77,15 +77,15 @@ class TestInputTransforms(BotorchTestCase):
         with self.assertRaises(NotImplementedError):
             ipt.untransform(None)
 
-        # test set_train_data_transform
+        # test preprocess_transform
         ipt4 = NotSoAbstractInputTransform(
             transform_on_train=True,
             transform_on_eval=False,
-            transform_on_set_train_data=True,
+            transform_on_preprocess=True,
         )
-        self.assertTrue(torch.equal(ipt4.set_train_data_transform(X), X + 1))
-        ipt4.transform_on_set_train_data = False
-        self.assertTrue(torch.equal(ipt4.set_train_data_transform(X), X))
+        self.assertTrue(torch.equal(ipt4.preprocess_transform(X), X + 1))
+        ipt4.transform_on_preprocess = False
+        self.assertTrue(torch.equal(ipt4.preprocess_transform(X), X))
 
     def test_normalize(self):
         for dtype in (torch.float, torch.double):
@@ -262,13 +262,11 @@ class TestInputTransforms(BotorchTestCase):
             other_tf = ChainedInputTransform(stz_learned=tf2, stz_fixed=tf1)
             self.assertFalse(tf.equals(other_tf))
 
-            # test set_train_data_transform
-            tf2.transform_on_set_train_data = False
-            tf1.transform_on_set_train_data = True
+            # test preprocess_transform
+            tf2.transform_on_preprocess = False
+            tf1.transform_on_preprocess = True
             tf = ChainedInputTransform(stz_fixed=tf1, stz_learned=tf2)
-            self.assertTrue(
-                torch.equal(tf.set_train_data_transform(X), tf1.transform(X))
-            )
+            self.assertTrue(torch.equal(tf.preprocess_transform(X), tf1.transform(X)))
 
     def test_round_transform(self):
         for dtype in (torch.float, torch.double):
@@ -346,11 +344,11 @@ class TestInputTransforms(BotorchTestCase):
                 )
                 self.assertFalse(round_tf.equals(round_tf2))
 
-                # test set_train_data_transform
-                self.assertTrue(torch.equal(round_tf.set_train_data_transform(X), X))
-                round_tf.transform_on_set_train_data = True
+                # test preprocess_transform
+                self.assertTrue(torch.equal(round_tf.preprocess_transform(X), X))
+                round_tf.transform_on_preprocess = True
                 self.assertTrue(
-                    torch.equal(round_tf.set_train_data_transform(X), X_rounded)
+                    torch.equal(round_tf.preprocess_transform(X), X_rounded)
                 )
 
     def test_log10_transform(self):
@@ -401,7 +399,7 @@ class TestInputTransforms(BotorchTestCase):
                 log_tf2 = Log10(indices=[0, 1], transform_on_train=False)
                 self.assertFalse(log_tf.equals(log_tf2))
 
-                # test set_train_data_transform
-                self.assertTrue(torch.equal(log_tf.set_train_data_transform(X), X))
-                log_tf.transform_on_set_train_data = True
-                self.assertTrue(torch.equal(log_tf.set_train_data_transform(X), X_tf))
+                # test preprocess_transform
+                self.assertTrue(torch.equal(log_tf.preprocess_transform(X), X))
+                log_tf.transform_on_preprocess = True
+                self.assertTrue(torch.equal(log_tf.preprocess_transform(X), X_tf))

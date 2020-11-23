@@ -64,7 +64,7 @@ class TestSingleTaskGP(BotorchTestCase):
             octf = Standardize(m=m, batch_shape=batch_shape) if use_octf else None
             intf = (
                 Normalize(
-                    d=1, bounds=bounds.to(**tkwargs), transform_on_set_train_data=True
+                    d=1, bounds=bounds.to(**tkwargs), transform_on_preprocess=True
                 )
                 if use_intf
                 else None
