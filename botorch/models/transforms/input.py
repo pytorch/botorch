@@ -4,20 +4,35 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+r"""
+Input Transformations.
+
+These classes implement a variety of transformations for
+input parameters including: learned input warping functions,
+rounding functions, and log transformations. The input transformation
+is typically part of a Model and applied within the model.forward()
+method.
+
+"""
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections import OrderedDict
-from typing import List, Optional
+from copy import deepcopy
+from typing import List, Optional, Union
 
 import torch
+from botorch.distributions.distributions import Kumaraswamy
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.utils.rounding import approximate_round
-from torch import Tensor
+from gpytorch import Module as GPyTorchModule
+from gpytorch.constraints import GreaterThan
+from gpytorch.priors import Prior
+from torch import Tensor, nn
 from torch.nn import Module, ModuleDict
 
 
-class InputTransform(Module, ABC):
+class InputTransform(ABC):
     r"""Abstract base class for input transforms.
 
     Properties:
@@ -276,7 +291,7 @@ class ReversibleInputTransform(InputTransform, ABC):
         return super().equals(other=other) and (self.reverse == other.reverse)
 
 
-class Normalize(ReversibleInputTransform):
+class Normalize(ReversibleInputTransform, Module):
     r"""Normalize the inputs to the unit cube.
 
     If no explicit bounds are provided this module is stateful: If in train mode,
@@ -392,7 +407,7 @@ class Normalize(ReversibleInputTransform):
         )
 
 
-class Round(InputTransform):
+class Round(InputTransform, Module):
     r"""A rounding transformation for integer inputs.
 
     This will typically be used in conjunction with normalization as
@@ -495,7 +510,9 @@ class Round(InputTransform):
         )
 
 
-class Log10(ReversibleInputTransform):
+class Log10(ReversibleInputTransform, Module):
+    r"""A base-10 log transformation."""
+
     def __init__(
         self,
         indices: List[int],
@@ -504,7 +521,8 @@ class Log10(ReversibleInputTransform):
         transform_on_preprocess: bool = False,
         reverse: bool = False,
     ) -> None:
-        """
+        r"""Initialize transform.
+
         Args:
             indices: The indices of the inputs to log transform
             transform_on_train: A boolean indicating whether to apply the
@@ -548,3 +566,112 @@ class Log10(ReversibleInputTransform):
         X_new = X.clone()
         X_new[..., self.indices] = 10.0 ** X_new[..., self.indices]
         return X_new
+
+
+class Warp(ReversibleInputTransform, GPyTorchModule):
+    r"""A transform that uses learned input warping functions.
+
+    Each specified input dimension is warped using the CDF of a
+    Kumaraswamy distribution. Typically, MAP estimates of the
+    parameters of the Kumaraswamy distribution, for each input
+    dimension, are learned jointly with the GP hyperparameters.
+
+    TODO: implement support using independent warping functions
+    for each output in batched multi-output and multi-task models.
+
+    For now, ModelListGPs should be used to learn independent warping
+    functions for each output.
+    """
+
+    # TODO: make minimum value dtype-dependent
+    _min_concentration_level = 1e-4
+
+    def __init__(
+        self,
+        indices: List[int],
+        transform_on_train: bool = True,
+        transform_on_eval: bool = True,
+        transform_on_preprocess: bool = False,
+        reverse: bool = False,
+        eps: float = 1e-7,
+        concentration_prior: Optional[Prior] = None,
+    ) -> None:
+        r"""Initialize transform.
+
+        Args:
+            indices: The indices of the inputs to warp.
+            transform_on_train: A boolean indicating whether to apply the
+                transforms in train() mode. Default: True.
+            transform_on_eval: A boolean indicating whether to apply the
+                transform in eval() mode. Default: True.
+            transform_on_preprocess: A boolean indicating whether to apply the
+                transform when preprocessing. Default: False.
+            reverse: A boolean indicating whether the forward pass should untransform
+                the inputs.
+            eps: A small value used to clip values to be in the interval (0, 1).
+        """
+        super().__init__()
+        self.eps = eps
+        self.register_buffer("indices", torch.tensor(indices, dtype=torch.long))
+        self.transform_on_train = transform_on_train
+        self.transform_on_eval = transform_on_eval
+        self.transform_on_preprocess = transform_on_preprocess
+        self.reverse = reverse
+        for i in (0, 1):
+            p_name = f"concentration{i}"
+            self.register_parameter(
+                p_name, nn.Parameter(torch.full(self.indices.shape, 1.0))
+            )
+        if concentration_prior is not None:
+            self.register_prior(
+                "concentration0_prior",
+                deepcopy(concentration_prior),
+                lambda: self.concentration0,
+                lambda v: self._set_concentration(i=0, value=v),
+            )
+            self.register_prior(
+                "concentration1_prior",
+                concentration_prior,
+                lambda: self.concentration1,
+                lambda v: self._set_concentration(i=1, value=v),
+            )
+        for i in (0, 1):
+            p_name = f"concentration{i}"
+            constraint = GreaterThan(
+                self._min_concentration_level,
+                transform=None,
+                # set the initial value to be the identity transformation
+                initial_value=1.0,
+            )
+            self.register_constraint(param_name=p_name, constraint=constraint)
+
+    def _set_concentration(self, i: int, value: Union[float, Tensor]) -> None:
+        if not torch.is_tensor(value):
+            value = torch.as_tensor(value).to(self.concentration0)
+        self.initialize(**{f"concentration{i}": value})
+
+    def _transform(self, X: Tensor) -> Tensor:
+        r"""Warp the inputs through the Kumaraswamy CDF.
+
+        Args:
+            X: A `batch_shape x n x d`-dim tensor of inputs.
+
+        Returns:
+            A `batch_shape x n x d`-dim tensor of transformed inputs.
+        """
+        X_tf = X.clone()
+        k = Kumaraswamy(
+            concentration1=self.concentration1, concentration0=self.concentration0
+        )
+        X_tf[..., self.indices] = k.cdf(
+            X[..., self.indices].clamp(self.eps, 1 - self.eps)
+        )
+        return X_tf
+
+    def _untransform(self, X: Tensor) -> Tensor:
+        X_tf = X.clone()
+        k = Kumaraswamy(
+            concentration1=self.concentration1, concentration0=self.concentration0
+        )
+        X_tf[..., self.indices] = k.icdf(X[..., self.indices])
+        return X_tf
