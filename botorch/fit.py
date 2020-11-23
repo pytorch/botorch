@@ -146,7 +146,7 @@ def _set_transformed_inputs(mll: MarginalLogLikelihood) -> None:
     )
     for m in models:
         if hasattr(m, "input_transform"):
-            X_tf = m.input_transform.set_train_data_transform(m.train_inputs[0])
+            X_tf = m.input_transform.preprocess_transform(m.train_inputs[0])
             if not hasattr(m, "set_train_data"):
                 raise BotorchError(
                     "fit_gpytorch_model requires that a model has a set_train_data "
