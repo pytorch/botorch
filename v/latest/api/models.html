@@ -2492,10 +2492,16 @@ observation noises associated with the training targets
 </div>
 <div class="section" id="module-botorch.models.transforms.input">
 <span id="input-transforms"></span><h3>Input Transforms<a class="headerlink" href="#module-botorch.models.transforms.input" title="Permalink to this headline">¶</a></h3>
+<p>Input Transformations.</p>
+<p>These classes implement a variety of transformations for
+input parameters including: learned input warping functions,
+rounding functions, and log transformations. The input transformation
+is typically part of a Model and applied within the model.forward()
+method.</p>
 <dl class="py class">
 <dt id="botorch.models.transforms.input.InputTransform">
 <em class="property">class </em><code class="sig-prename descclassname">botorch.models.transforms.input.</code><code class="sig-name descname">InputTransform</code><a class="reference internal" href="_modules/botorch/models/transforms/input.html#InputTransform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.InputTransform" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
 <p>Abstract base class for input transforms.</p>
 <dl class="simple">
 <dt>Properties:</dt><dd><dl class="simple">
@@ -2508,7 +2514,6 @@ observation noises associated with the training targets
 </dl>
 </dd>
 </dl>
-<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
 <dl class="py attribute">
 <dt id="botorch.models.transforms.input.InputTransform.transform_on_eval">
 <code class="sig-name descname">transform_on_eval</code><em class="property">: bool</em><a class="headerlink" href="#botorch.models.transforms.input.InputTransform.transform_on_eval" title="Permalink to this definition">¶</a></dt>
@@ -2728,7 +2733,6 @@ same transformations as the cached training inputs</p>
 </dl>
 </dd>
 </dl>
-<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
 <dl class="py attribute">
 <dt id="botorch.models.transforms.input.ReversibleInputTransform.reverse">
 <code class="sig-name descname">reverse</code><em class="property">: bool</em><a class="headerlink" href="#botorch.models.transforms.input.ReversibleInputTransform.reverse" title="Permalink to this definition">¶</a></dt>
@@ -2785,7 +2789,7 @@ same transformations as the cached training inputs</p>
 <dl class="py class">
 <dt id="botorch.models.transforms.input.Normalize">
 <em class="property">class </em><code class="sig-prename descclassname">botorch.models.transforms.input.</code><code class="sig-name descname">Normalize</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">d</span></em>, <em class="sig-param"><span class="n">bounds</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">batch_shape</span><span class="o">=</span><span class="default_value">torch.Size([])</span></em>, <em class="sig-param"><span class="n">transform_on_train</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">transform_on_eval</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">transform_on_preprocess</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">reverse</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#Normalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.Normalize" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.input.ReversibleInputTransform" title="botorch.models.transforms.input.ReversibleInputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.transforms.input.ReversibleInputTransform</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.input.ReversibleInputTransform" title="botorch.models.transforms.input.ReversibleInputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.transforms.input.ReversibleInputTransform</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code></p>
 <p>Normalize the inputs to the unit cube.</p>
 <p>If no explicit bounds are provided this module is stateful: If in train mode,
 calling <cite>forward</cite> updates the module state (i.e. the normalizing bounds). If
@@ -2846,7 +2850,7 @@ the inputs.</p></li>
 <dl class="py class">
 <dt id="botorch.models.transforms.input.Round">
 <em class="property">class </em><code class="sig-prename descclassname">botorch.models.transforms.input.</code><code class="sig-name descname">Round</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">indices</span></em>, <em class="sig-param"><span class="n">transform_on_train</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">transform_on_eval</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">transform_on_preprocess</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">approximate</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">tau</span><span class="o">=</span><span class="default_value">0.001</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#Round"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.Round" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.transforms.input.InputTransform</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.transforms.input.InputTransform</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code></p>
 <p>A rounding transformation for integer inputs.</p>
 <p>This will typically be used in conjunction with normalization as
 follows:</p>
@@ -2944,7 +2948,9 @@ rounding should be used. Default: approximate</p></li>
 <dl class="py class">
 <dt id="botorch.models.transforms.input.Log10">
 <em class="property">class </em><code class="sig-prename descclassname">botorch.models.transforms.input.</code><code class="sig-name descname">Log10</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">indices</span></em>, <em class="sig-param"><span class="n">transform_on_train</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">transform_on_eval</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">transform_on_preprocess</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">reverse</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#Log10"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.Log10" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.input.ReversibleInputTransform" title="botorch.models.transforms.input.ReversibleInputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.transforms.input.ReversibleInputTransform</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.input.ReversibleInputTransform" title="botorch.models.transforms.input.ReversibleInputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.transforms.input.ReversibleInputTransform</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code></p>
+<p>A base-10 log transformation.</p>
+<p>Initialize transform.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -2963,6 +2969,45 @@ the inputs.</p></li>
 <dl class="py attribute">
 <dt id="botorch.models.transforms.input.Log10.reverse">
 <code class="sig-name descname">reverse</code><em class="property">: bool</em><a class="headerlink" href="#botorch.models.transforms.input.Log10.reverse" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt id="botorch.models.transforms.input.Warp">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.transforms.input.</code><code class="sig-name descname">Warp</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">indices</span></em>, <em class="sig-param"><span class="n">transform_on_train</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">transform_on_eval</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">transform_on_preprocess</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">reverse</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">eps</span><span class="o">=</span><span class="default_value">1e-07</span></em>, <em class="sig-param"><span class="n">concentration1_prior</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">concentration0_prior</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#Warp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.transforms.input.Warp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.input.ReversibleInputTransform" title="botorch.models.transforms.input.ReversibleInputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.transforms.input.ReversibleInputTransform</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">gpytorch.module.Module</span></code></p>
+<p>A transform that uses learned input warping functions.</p>
+<p>Each specified input dimension is warped using the CDF of a
+Kumaraswamy distribution. Typically, MAP estimates of the
+parameters of the Kumaraswamy distribution, for each input
+dimension, are learned jointly with the GP hyperparameters.</p>
+<p>TODO: implement support using independent warping functions
+for each output in batched multi-output and multi-task models.</p>
+<p>For now, ModelListGPs should be used to learn independent warping
+functions for each output.</p>
+<p>Initialize transform.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>indices</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The indices of the inputs to warp.</p></li>
+<li><p><strong>transform_on_train</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – A boolean indicating whether to apply the
+transforms in train() mode. Default: True.</p></li>
+<li><p><strong>transform_on_eval</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – A boolean indicating whether to apply the
+transform in eval() mode. Default: True.</p></li>
+<li><p><strong>transform_on_preprocess</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – A boolean indicating whether to apply the
+transform when preprocessing. Default: False.</p></li>
+<li><p><strong>reverse</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – A boolean indicating whether the forward pass should untransform
+the inputs.</p></li>
+<li><p><strong>eps</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – A small value used to clip values to be in the interval (0, 1).</p></li>
+<li><p><strong>concentration1_prior</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Prior</span></code>]) – A prior distribution on the concentration1 parameter
+of the Kumaraswamy distribution.</p></li>
+<li><p><strong>concentration0_prior</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Prior</span></code>]) – A prior distribution on the concentration0 parameter
+of the Kumaraswamy distribution.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt id="botorch.models.transforms.input.Warp.reverse">
+<code class="sig-name descname">reverse</code><em class="property">: bool</em><a class="headerlink" href="#botorch.models.transforms.input.Warp.reverse" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
 </div>
