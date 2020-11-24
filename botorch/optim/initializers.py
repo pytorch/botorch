@@ -279,8 +279,8 @@ def gen_value_function_initial_conditions(
 
     Returns:
         A `num_restarts x batch_shape x q x d` tensor that can be used as initial
-        conditions for `optimize_acqf()`. Here `batch_shape` is the
-        `_input_batch_shape` of value function model.
+        conditions for `optimize_acqf()`. Here `batch_shape` is the batch shape
+        of value function model.
 
     Example:
         >>> fant_X = torch.rand(5, 1, 2)
@@ -325,7 +325,7 @@ def gen_value_function_initial_conditions(
         },
     )
 
-    batch_shape = acq_function.model._input_batch_shape
+    batch_shape = acq_function.model.batch_shape
     # sampling from the optimizers
     n_value = int((1 - frac_random) * raw_samples)  # number of non-random ICs
     if n_value > 0:
