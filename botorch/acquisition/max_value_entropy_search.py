@@ -71,6 +71,7 @@ class qMaxValueEntropy(MCAcquisitionFunction):
         use_gumbel: bool = True,
         maximize: bool = True,
         X_pending: Optional[Tensor] = None,
+        train_inputs: Tensor = None,
         **kwargs: Any,
     ) -> None:
         r"""Single-outcome max-value entropy search acquisition function.
@@ -89,19 +90,23 @@ class qMaxValueEntropy(MCAcquisitionFunction):
             X_pending: A `m x d`-dim Tensor of `m` design points that have been
                 submitted for function evaluation but have not yet been evaluated.
             maximize: If True, consider the problem a maximization problem.
+            train_inputs: A `n_train x d` Tensor that the model has been fitted on,
+                optional if model is an exact GP model.
         """
         sampler = SobolQMCNormalSampler(num_y_samples)
         super().__init__(model=model, sampler=sampler)
 
         # Batch GP models (e.g. fantasized models) are not currently supported
-        if self.model.train_inputs[0].ndim > 2:
+        if train_inputs is None:
+            train_inputs = self.model.train_inputs[0]
+        if train_inputs.ndim > 2:
             raise NotImplementedError(
                 "Batch GP models (e.g. fantasized models) "
                 "are not yet supported by qMaxValueEntropy"
             )
 
         self._init_model = model  # only used for the `fantasize()` in `set_X_pending()`
-        train_inputs = match_batch_shape(model.train_inputs[0], candidate_set)
+        train_inputs = match_batch_shape(train_inputs, candidate_set)
         self.candidate_set = torch.cat([candidate_set, train_inputs], dim=0)
         self.fantasies_sampler = SobolQMCNormalSampler(num_fantasies)
         self.num_fantasies = num_fantasies

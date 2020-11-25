@@ -346,7 +346,7 @@ class HolderTable(SyntheticTestFunction):
     """
 
     dim = 2
-    _bounds = [(-10.0, 10.0)]
+    _bounds = [(-10.0, 10.0), (-10.0, 10.0)]
     _optimal_value = -19.2085
     _optimizers = [
         (8.05502, 9.66459),

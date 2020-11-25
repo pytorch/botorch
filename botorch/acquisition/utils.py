@@ -16,8 +16,8 @@ from typing import Callable, Dict, List, Optional
 
 import torch
 from botorch import settings
-from botorch.acquisition import monte_carlo  # noqa F401
 from botorch.acquisition import analytic, multi_objective
+from botorch.acquisition import monte_carlo  # noqa F401
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.multi_objective import monte_carlo as moo_monte_carlo
 from botorch.acquisition.objective import IdentityMCObjective, MCAcquisitionObjective

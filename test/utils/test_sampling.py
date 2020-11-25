@@ -6,12 +6,14 @@
 
 import itertools
 import warnings
+from unittest import mock
 
 import torch
 from botorch import settings
 from botorch.exceptions.warnings import SamplingWarning
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.utils.sampling import (
+    PolytopeSampler,
     batched_multinomial,
     construct_base_samples,
     construct_base_samples_from_posterior,
@@ -231,3 +233,96 @@ class TestSampleUtils(BotorchTestCase):
             if not replacement:
                 for s in samples.view(-1, num_samples):
                     self.assertTrue(torch.unique(s).size(0), num_samples)
+
+
+class PolytopeSamplerTestCase(BotorchTestCase):
+    def test_sample_polytope(self):
+        for dtype in (torch.float, torch.double):
+            A = torch.tensor(
+                [[0.0, -1.0, 0.0], [0.0, 0.0, -1.0], [0.0, 4.0, 1.0]],
+                device=self.device,
+                dtype=dtype,
+            )
+            b = torch.tensor([[0.0], [0.0], [1.0]], device=self.device, dtype=dtype)
+
+            x0 = torch.tensor(
+                [0.1, 0.1, 0.1], device=self.device, dtype=dtype
+            ).unsqueeze(-1)
+
+            for initial_point in [x0, None]:
+
+                sampler = PolytopeSampler(
+                    inequality_constraints=(A, b),
+                    initial_point=initial_point,
+                    n_burnin=0,
+                )
+
+                samples = sampler.draw(n=10, seed=1)
+                self.assertEqual(((A @ samples.t() - b) > 0).sum().item(), 0)
+                # make sure we can draw mulitple samples
+                more_samples = sampler.draw(n=5)
+                self.assertEqual(((A @ more_samples.t() - b) > 0).sum().item(), 0)
+
+    def test_sample_polytope_with_constraints(self):
+        for dtype in (torch.float, torch.double):
+            A = torch.tensor(
+                [[0.0, -1.0, 0.0], [0.0, 0.0, -1.0], [0.0, 4.0, 1.0]],
+                device=self.device,
+                dtype=dtype,
+            )
+            b = torch.tensor([[0.0], [0.0], [1.0]], device=self.device, dtype=dtype)
+            C = torch.tensor([1.0, -1, 0.0], device=self.device, dtype=dtype).reshape(
+                (1, 3)
+            )
+            d = torch.tensor([0.0], device=self.device, dtype=dtype).reshape((1, 1))
+
+            x0 = torch.tensor(
+                [0.1, 0.1, 0.1], device=self.device, dtype=dtype
+            ).unsqueeze(-1)
+
+            for initial_point in [x0, None]:
+                sampler = PolytopeSampler(
+                    inequality_constraints=(A, b),
+                    equality_constraints=(C, d),
+                    initial_point=initial_point,
+                    n_burnin=0,
+                )
+
+                samples = sampler.draw(n=10, seed=1)
+
+                inequality_satisfied = ((A @ samples.t() - b) > 0).sum().item() == 0
+                equality_satisfied = (C @ samples.t() - d).abs().sum().item() < 10e-6
+
+                self.assertTrue(inequality_satisfied)
+                self.assertTrue(equality_satisfied)
+
+    def test_intial_point(self):
+        for dtype in (torch.float, torch.double):
+            A = torch.tensor(
+                [[0.0, -1.0, 0.0], [0.0, -1.0, 0.0], [0.0, 4.0, 0.0]],
+                device=self.device,
+                dtype=dtype,
+            )
+            b = torch.tensor([[0.0], [-1.0], [1.0]], device=self.device, dtype=dtype)
+
+            x0 = torch.tensor(
+                [0.1, 0.1, 0.1], device=self.device, dtype=dtype
+            ).unsqueeze(-1)
+
+            # testing for infeasibility of the initial point and
+            # infeasibility of the original LP (status 2 of the linprog output).
+            for initial_point in [x0, None]:
+                with self.assertRaises(ValueError):
+                    PolytopeSampler(
+                        inequality_constraints=(A, b), initial_point=initial_point
+                    )
+
+            class Result:
+                status = 1
+                message = "mock status 1"
+
+            # testing for only status 1 of the LP
+            with mock.patch("scipy.optimize.linprog") as mock_linprog:
+                mock_linprog.return_value = Result()
+                with self.assertRaises(ValueError):
+                    PolytopeSampler(inequality_constraints=(A, b))

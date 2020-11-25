@@ -254,8 +254,10 @@ def mod_batch_shape(module: Module, names: List[str], b: int) -> None:
 def gpt_posterior_settings():
     r"""Context manager for settings used for computing model posteriors."""
     with ExitStack() as es:
-        es.enter_context(gpt_settings.debug(False))
-        es.enter_context(gpt_settings.fast_pred_var())
+        if gpt_settings.debug.is_default():
+            es.enter_context(gpt_settings.debug(False))
+        if gpt_settings.fast_pred_var.is_default():
+            es.enter_context(gpt_settings.fast_pred_var())
         es.enter_context(
             gpt_settings.detach_test_caches(settings.propagate_grads.off())
         )

@@ -79,7 +79,7 @@ class TestGetObjectiveWeightsTransform(BotorchTestCase):
         self.assertTrue(torch.equal(0.5 * Y.sum(dim=-1), Y_transformed))
 
     def test_IncompatibleNumberOfWeights(self):
-        Y = torch.ones(5, 2, 4, 1)
+        Y = torch.ones(5, 2, 4, 3)
         objective_transform = get_objective_weights_transform(torch.tensor([1.0, 2.0]))
         with self.assertRaises(RuntimeError):
             objective_transform(Y)
