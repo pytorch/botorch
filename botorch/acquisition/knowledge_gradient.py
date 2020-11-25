@@ -210,8 +210,6 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
                 NOTE: If `current_value` is not provided, then this is not the
                 true KG value of `X[b]`.
         """
-        if self.X_pending is not None:
-            X = torch.cat([X, match_batch_shape(self.X_pending, X)], dim=-2)
         if hasattr(self, "expand"):
             X = self.expand(X)
 
@@ -253,7 +251,7 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
         if self.current_value is not None:
             values = values - self.current_value
 
-        if getattr(self, "cost_aware_utility", None) is not None:
+        if hasattr(self, "cost_aware_utility"):
             values = self.cost_aware_utility(
                 X=X, deltas=values, sampler=self.cost_sampler
             )
@@ -443,17 +441,17 @@ class qMultiFidelityKnowledgeGradient(qKnowledgeGradient):
         return values.mean(dim=0)
 
 
-class ProjectedValueFunction(AcquisitionFunction):
+class ProjectedAcquisitionFunction(AcquisitionFunction):
     r"""
-    Defines a wrapper around the value function that incorporates the project
-    operator.
+    Defines a wrapper around  an `AcquisitionFunction` that incorporates the project
+    operator. Typically used to handle value functions in look-ahead methods.
     """
 
     def __init__(
         self,
         base_value_function: AcquisitionFunction,
         project: Callable[[Tensor], Tensor],
-    ):
+    ) -> None:
         super().__init__(base_value_function.model)
         self.base_value_function = base_value_function
         self.project = project
@@ -480,7 +478,10 @@ def _get_value_function(
     if project is None:
         return base_value_function
     else:
-        return ProjectedValueFunction(base_value_function, project)
+        return ProjectedAcquisitionFunction(
+            base_value_function=base_value_function,
+            project=project,
+        )
 
 
 def _split_fantasy_points(X: Tensor, n_f: int) -> Tuple[Tensor, Tensor]:

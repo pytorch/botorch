@@ -3,7 +3,7 @@
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-
+from contextlib import ExitStack
 from unittest import mock
 
 import torch
@@ -14,7 +14,7 @@ from botorch.acquisition.knowledge_gradient import (
     _split_fantasy_points,
     qKnowledgeGradient,
     qMultiFidelityKnowledgeGradient,
-    ProjectedValueFunction,
+    ProjectedAcquisitionFunction,
 )
 from botorch.acquisition.monte_carlo import qSimpleRegret
 from botorch.acquisition.objective import GenericMCObjective, ScalarizedObjective
@@ -412,46 +412,56 @@ class TestQMultiFidelityKnowledgeGradient(BotorchTestCase):
             variance = torch.rand(n_f, 2, 1, 1, device=self.device, dtype=dtype)
             mfm = MockModel(MockPosterior(mean=mean, variance=variance))
             mfm._input_batch_shape = torch.Size([n_f, 2])
-            with mock.patch.object(MockModel, "fantasize", return_value=mfm) as patch_f:
-                with mock.patch(NO, new_callable=mock.PropertyMock) as mock_num_outputs:
-                    mock_num_outputs.return_value = 1
-                    qMFKG = qMultiFidelityKnowledgeGradient(
-                        model=mm,
-                        num_fantasies=n_f,
-                        X_pending=torch.rand(1, 1, 1, device=self.device, dtype=dtype),
-                        current_value=torch.zeros(1, device=self.device, dtype=dtype),
-                        cost_aware_utility=cau,
-                        project=lambda X: torch.zeros_like(X),
-                        expand=lambda X: torch.ones_like(X),
-                    )
-                    with mock.patch(
+            with ExitStack() as es:
+                patch_f = es.enter_context(
+                    mock.patch.object(MockModel, "fantasize", return_value=mfm)
+                )
+                mock_num_outputs = es.enter_context(
+                    mock.patch(NO, new_callable=mock.PropertyMock)
+                )
+                es.enter_context(
+                    mock.patch(
                         "botorch.optim.optimize.optimize_acqf",
                         return_value=(
                             torch.ones(1, 1, 1, device=self.device, dtype=dtype),
                             torch.ones(1, device=self.device, dtype=dtype),
                         ),
-                    ):
-                        with mock.patch(
-                            "botorch.generation.gen.gen_candidates_scipy",
-                            return_value=(
-                                torch.ones(1, 1, 1, device=self.device, dtype=dtype),
-                                torch.ones(1, device=self.device, dtype=dtype),
-                            ),
-                        ):
-                            val = qMFKG.evaluate(
-                                X=torch.zeros(1, 1, 1, device=self.device, dtype=dtype),
-                                bounds=torch.tensor([[0.0], [1.0]]),
-                                num_restarts=1,
-                                raw_samples=1,
-                            )
-                    patch_f.asset_called_once()
-                    cargs, ckwargs = patch_f.call_args
-                    self.assertTrue(
-                        (
-                            ckwargs["X"]
-                            == torch.ones(2, 1, 1, device=self.device, dtype=dtype)
-                        ).all()
+                    ),
+                )
+                es.enter_context(
+                    mock.patch(
+                        "botorch.generation.gen.gen_candidates_scipy",
+                        return_value=(
+                            torch.ones(1, 1, 1, device=self.device, dtype=dtype),
+                            torch.ones(1, device=self.device, dtype=dtype),
+                        ),
+                    ),
+                )
+
+                mock_num_outputs.return_value = 1
+                qMFKG = qMultiFidelityKnowledgeGradient(
+                    model=mm,
+                    num_fantasies=n_f,
+                    X_pending=torch.rand(1, 1, 1, device=self.device, dtype=dtype),
+                    current_value=torch.zeros(1, device=self.device, dtype=dtype),
+                    cost_aware_utility=cau,
+                    project=lambda X: torch.zeros_like(X),
+                    expand=lambda X: torch.ones_like(X),
+                )
+                val = qMFKG.evaluate(
+                    X=torch.zeros(1, 1, 1, device=self.device, dtype=dtype),
+                    bounds=torch.tensor([[0.0], [1.0]]),
+                    num_restarts=1,
+                    raw_samples=1,
+                )
+                patch_f.asset_called_once()
+                cargs, ckwargs = patch_f.call_args
+                self.assertTrue(
+                    torch.equal(
+                        ckwargs["X"],
+                        torch.ones(1, 2, 1, device=self.device, dtype=dtype),
                     )
+                )
             self.assertEqual(
                 val, cau(None, torch.ones(1, device=self.device, dtype=dtype))
             )
@@ -483,7 +493,7 @@ class TestKGUtils(BotorchTestCase):
                 sampler=sampler,
                 project=mock_project,
             )
-            self.assertIsInstance(vf, ProjectedValueFunction)
+            self.assertIsInstance(vf, ProjectedAcquisitionFunction)
             self.assertEqual(vf.objective, obj)
             self.assertEqual(vf.sampler, sampler)
             self.assertEqual(vf.project, mock_project)
