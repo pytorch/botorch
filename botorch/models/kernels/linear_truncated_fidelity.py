@@ -240,6 +240,10 @@ class LinearTruncatedFidelityKernel(Kernel):
 
     def __getitem__(self, index) -> LinearTruncatedFidelityKernel:
         new_kernel = deepcopy(self)
-        new_kernel.covar_module_unbiased = self.covar_module_unbiased[index]
-        new_kernel.covar_module_biased = self.covar_module_biased[index]
+        new_kernel.covar_module_unbiased = new_kernel.covar_module_unbiased[index]
+        new_kernel.covar_module_biased = new_kernel.covar_module_biased[index]
+        new_kernel.raw_power = torch.nn.Parameter(new_kernel.raw_power[index])
+        new_kernel.batch_shape = new_kernel.batch_shape[
+            1 if isinstance(index, int) else len(index) :
+        ]
         return new_kernel
