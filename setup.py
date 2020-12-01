@@ -68,7 +68,7 @@ setup(
         "relative_to": __file__,
         "write_to": os.path.join(root_dir, "botorch", "version.py"),
     },
-    install_requires=["torch>=1.6", "gpytorch>=1.2", "scipy"],
+    install_requires=["torch>=1.7", "gpytorch>=1.3", "scipy"],
     packages=find_packages(),
     extras_require={
         "dev": DEV_REQUIRES,
