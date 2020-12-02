@@ -3,6 +3,6 @@ channels:
   - pytorch
   - gpytorch
 dependencies:
-  - pytorch>=1.6
-  - gpytorch>=1.2
+  - pytorch>=1.7
+  - gpytorch>=1.3
   - scipy
