@@ -132,31 +132,29 @@ def _expand_bounds(
 ) -> Optional[Tensor]:
     r"""Expands a tensor representing bounds.
 
-    Expand the dimension of bounds if necessary such that the last dimension of
-    bounds is the same as the last dimension of `X`.
+    Expand the dimension of bounds if necessary such that the dimension of bounds
+    is the same as the dimension of `X`.
 
     Args:
-        bounds: a bound (either upper or lower) of each column (last dimension)
-            of `X`. If this is a single float, then all columns have the same bound.
+        bounds: a bound (either upper or lower) of each entry of `X`. If this is a
+            single float, then all entries have the same bound. Different sizes of
+            tensors can be used to specify custom bounds. E.g., a `d`-dim tensor can
+            be used to specify bounds for each column (last dimension) of `X`, or a
+            tensor with same shape as `X` can be used to specify a different bound
+            for each entry of `X`.
         X: `... x d` tensor
 
     Returns:
-        A tensor of bounds expanded to be compatible with the size of `X` if
-        bounds is not None, and None if bounds is None.
+        A tensor of bounds expanded to the size of `X` if bounds is not None,
+        and None if bounds is None.
     """
     if bounds is not None:
         if not torch.is_tensor(bounds):
             bounds = torch.tensor(bounds)
-        if len(bounds.shape) == 0:
-            ebounds = bounds.expand(1, X.shape[-1])
-        elif len(bounds.shape) == 1:
-            ebounds = bounds.view(1, -1)
-        else:
-            ebounds = bounds
-        if ebounds.shape[1] != X.shape[-1]:
-            raise RuntimeError(
-                "Bounds must either be a single value or the same dimension as X"
-            )
+        try:
+            ebounds = bounds.expand_as(X)
+        except RuntimeError:
+            raise RuntimeError("Bounds must be broadcastable to X!")
         return ebounds.to(dtype=X.dtype, device=X.device)
     else:
         return None
