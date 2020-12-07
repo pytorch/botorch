@@ -17,6 +17,10 @@
     {
       "id": "turbo_1",
       "title": "Trust Region Bayesian Optimization (TuRBO)"
+    },
+    {
+      "id": "bo_with_warped_gp",
+      "title": "Bayesian optimization with input warping"
     }
   ],
   "Multi-Objective Bayesian Optimization": [
