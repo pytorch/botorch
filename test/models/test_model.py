@@ -25,6 +25,8 @@ class TestBaseModel(BotorchTestCase):
         with self.assertRaises(NotImplementedError):
             model.num_outputs
         with self.assertRaises(NotImplementedError):
+            model.batch_shape
+        with self.assertRaises(NotImplementedError):
             model.subset_output([0])
         with self.assertRaises(NotImplementedError):
             model.construct_inputs(None)

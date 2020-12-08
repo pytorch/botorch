@@ -13,6 +13,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
+import torch
 from botorch import settings
 from botorch.posteriors import Posterior
 from botorch.sampling.samplers import MCSampler
@@ -50,6 +51,19 @@ class Model(Module, ABC):
             over `q` points and `m` outputs each.
         """
         pass  # pragma: no cover
+
+    @property
+    def batch_shape(self) -> torch.Size:
+        r"""The batch shape of the model.
+
+        This is a batch shape from an I/O perspective, independent of the internal
+        representation of the model (as e.g. in BatchedMultiOutputGPyTorchModel).
+        For a model with `m` outputs, a `test_batch_shape x q x d`-shaped input `X`
+        to the `posterior` method returns a Posterior object over an output of
+        shape `broadcast(test_batch_shape, model.batch_shape) x q x m`.
+        """
+        cls_name = self.__class__.__name__
+        raise NotImplementedError(f"{cls_name} does not define batch_shape property")
 
     @property
     def num_outputs(self) -> int:
