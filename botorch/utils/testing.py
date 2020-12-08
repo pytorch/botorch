@@ -169,6 +169,11 @@ class MockModel(Model):
         event_shape = self._posterior.event_shape
         return event_shape[-1] if len(event_shape) > 0 else 0
 
+    @property
+    def batch_shape(self) -> torch.Size:
+        event_shape = self._posterior.event_shape
+        return event_shape[:-2]
+
     def state_dict(self) -> None:
         pass
 

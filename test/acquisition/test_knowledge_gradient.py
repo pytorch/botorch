@@ -406,13 +406,11 @@ class TestQMultiFidelityKnowledgeGradient(BotorchTestCase):
         for dtype in (torch.float, torch.double):
             mean = torch.zeros(1, 1, 1, device=self.device, dtype=dtype)
             mm = MockModel(MockPosterior(mean=mean))
-            mm._input_batch_shape = torch.Size([1])
             cau = GenericCostAwareUtility(mock_util)
             n_f = 4
             mean = torch.rand(n_f, 2, 1, 1, device=self.device, dtype=dtype)
             variance = torch.rand(n_f, 2, 1, 1, device=self.device, dtype=dtype)
             mfm = MockModel(MockPosterior(mean=mean, variance=variance))
-            mfm._input_batch_shape = torch.Size([n_f, 2])
             with ExitStack() as es:
                 patch_f = es.enter_context(
                     mock.patch.object(MockModel, "fantasize", return_value=mfm)
