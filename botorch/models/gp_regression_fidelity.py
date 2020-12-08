@@ -97,9 +97,10 @@ class SingleTaskMultiFidelityGP(SingleTaskGP):
             )
         if input_transform is not None:
             input_transform.to(train_X)
-        transformed_X = self.transform_inputs(
-            X=train_X, input_transform=input_transform
-        )
+        with torch.no_grad():
+            transformed_X = self.transform_inputs(
+                X=train_X, input_transform=input_transform
+            )
 
         self._set_dimensions(train_X=transformed_X, train_Y=train_Y)
         covar_module, subset_batch_dict = _setup_multifidelity_covar_module(
@@ -208,9 +209,10 @@ class FixedNoiseMultiFidelityGP(FixedNoiseGP):
             )
         if input_transform is not None:
             input_transform.to(train_X)
-        transformed_X = self.transform_inputs(
-            X=train_X, input_transform=input_transform
-        )
+        with torch.no_grad():
+            transformed_X = self.transform_inputs(
+                X=train_X, input_transform=input_transform
+            )
         self._set_dimensions(train_X=transformed_X, train_Y=train_Y)
         covar_module, subset_batch_dict = _setup_multifidelity_covar_module(
             dim=transformed_X.size(-1),

@@ -83,9 +83,10 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
         """
         if input_transform is not None:
             input_transform.to(train_X)
-        transformed_X = self.transform_inputs(
-            X=train_X, input_transform=input_transform
-        )
+        with torch.no_grad():
+            transformed_X = self.transform_inputs(
+                X=train_X, input_transform=input_transform
+            )
         self._validate_tensor_args(X=transformed_X, Y=train_Y)
         all_tasks, task_feature, d = self.get_all_tasks(
             transformed_X, task_feature, output_tasks
@@ -292,9 +293,10 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
         """
         if input_transform is not None:
             input_transform.to(train_X)
-        transformed_X = self.transform_inputs(
-            X=train_X, input_transform=input_transform
-        )
+        with torch.no_grad():
+            transformed_X = self.transform_inputs(
+                X=train_X, input_transform=input_transform
+            )
         self._validate_tensor_args(X=transformed_X, Y=train_Y, Yvar=train_Yvar)
         # We'll instatiate a MultiTaskGP and simply override the likelihood
         super().__init__(

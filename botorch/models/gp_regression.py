@@ -92,9 +92,10 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         """
         if input_transform is not None:
             input_transform.to(train_X)
-        transformed_X = self.transform_inputs(
-            X=train_X, input_transform=input_transform
-        )
+        with torch.no_grad():
+            transformed_X = self.transform_inputs(
+                X=train_X, input_transform=input_transform
+            )
         if outcome_transform is not None:
             train_Y, _ = outcome_transform(train_Y)
         self._validate_tensor_args(X=transformed_X, Y=train_Y)
@@ -206,9 +207,10 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         """
         if input_transform is not None:
             input_transform.to(train_X)
-        transformed_X = self.transform_inputs(
-            X=train_X, input_transform=input_transform
-        )
+        with torch.no_grad():
+            transformed_X = self.transform_inputs(
+                X=train_X, input_transform=input_transform
+            )
         if outcome_transform is not None:
             train_Y, train_Yvar = outcome_transform(train_Y, train_Yvar)
         self._validate_tensor_args(X=transformed_X, Y=train_Y, Yvar=train_Yvar)
