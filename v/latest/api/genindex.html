@@ -12,7 +12,7 @@
             {"zIndex":100}
           )
         });
-        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/latest/versions"><h3>latest</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/latest/versions"><h3>latest</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
 <script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/underscore.js"></script>
@@ -106,6 +106,19 @@
 </li>
 <li><a href="sampling.html#botorch.sampling.samplers.MCSampler.batch_range">batch_range() (botorch.sampling.samplers.MCSampler property)</a>
 </li>
+<li><a href="models.html#botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel.batch_shape">batch_shape() (botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel property)</a>
+<ul>
+<li><a href="models.html#botorch.models.gpytorch.GPyTorchModel.batch_shape">(botorch.models.gpytorch.GPyTorchModel property)</a>
+</li>
+<li><a href="models.html#botorch.models.gpytorch.ModelListGPyTorchModel.batch_shape">(botorch.models.gpytorch.ModelListGPyTorchModel property)</a>
+</li>
+<li><a href="models.html#botorch.models.model.Model.batch_shape">(botorch.models.model.Model property)</a>
+</li>
+<li><a href="models.html#botorch.models.pairwise_gp.PairwiseGP.batch_shape">(botorch.models.pairwise_gp.PairwiseGP property)</a>
+</li>
+<li><a href="utils.html#botorch.utils.testing.MockModel.batch_shape">(botorch.utils.testing.MockModel property)</a>
+</li>
+</ul></li>
 <li><a href="utils.html#botorch.utils.sampling.batched_multinomial">batched_multinomial() (in module botorch.utils.sampling)</a>
 </li>
 <li><a href="models.html#botorch.models.converter.batched_to_model_list">batched_to_model_list() (in module botorch.models.converter)</a>
@@ -407,6 +420,8 @@
 <li><a href="models.html#module-botorch.models.kernels.linear_truncated_fidelity">module</a>
 </li>
 </ul></li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li>
     botorch.models.model
 
@@ -421,8 +436,6 @@
 <li><a href="models.html#module-botorch.models.model_list_gp_regression">module</a>
 </li>
 </ul></li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li>
     botorch.models.multitask
 
@@ -1156,6 +1169,8 @@
 <li><a href="acquisition.html#botorch.acquisition.cost_aware.InverseCostWeightedUtility.forward">(botorch.acquisition.cost_aware.InverseCostWeightedUtility method)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.fixed_feature.FixedFeatureAcquisitionFunction.forward">(botorch.acquisition.fixed_feature.FixedFeatureAcquisitionFunction method)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.knowledge_gradient.ProjectedAcquisitionFunction.forward">(botorch.acquisition.knowledge_gradient.ProjectedAcquisitionFunction method)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient.forward">(botorch.acquisition.knowledge_gradient.qKnowledgeGradient method)</a>
 </li>
@@ -1895,6 +1910,8 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.utils.project_to_target_fidelity">project_to_target_fidelity() (in module botorch.acquisition.utils)</a>
 </li>
+<li><a href="acquisition.html#botorch.acquisition.knowledge_gradient.ProjectedAcquisitionFunction">ProjectedAcquisitionFunction (class in botorch.acquisition.knowledge_gradient)</a>
+</li>
 <li><a href="settings.html#botorch.settings.propagate_grads">propagate_grads (class in botorch.settings)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.utils.prune_inferior_points">prune_inferior_points() (in module botorch.acquisition.utils)</a>
@@ -2147,6 +2164,8 @@
 <li><a href="acquisition.html#botorch.acquisition.cost_aware.InverseCostWeightedUtility.training">(botorch.acquisition.cost_aware.InverseCostWeightedUtility attribute)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.fixed_feature.FixedFeatureAcquisitionFunction.training">(botorch.acquisition.fixed_feature.FixedFeatureAcquisitionFunction attribute)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.knowledge_gradient.ProjectedAcquisitionFunction.training">(botorch.acquisition.knowledge_gradient.ProjectedAcquisitionFunction attribute)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient.training">(botorch.acquisition.knowledge_gradient.qKnowledgeGradient attribute)</a>
 </li>

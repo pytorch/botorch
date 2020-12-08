@@ -12,7 +12,7 @@
             {"zIndex":100}
           )
         });
-        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/latest/versions"><h3>latest</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/latest/versions"><h3>latest</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
 <script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/underscore.js"></script>
@@ -60,6 +60,21 @@ computes the posterior over all model outputs.</p></li>
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p>A <cite>Posterior</cite> object, representing a batch of <cite>b</cite> joint distributions
 over <cite>q</cite> points and <cite>m</cite> outputs each.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.models.model.Model.batch_shape">
+<em class="property">property </em><code class="sig-name descname">batch_shape</code><a class="headerlink" href="#botorch.models.model.Model.batch_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>The batch shape of the model.</p>
+<p>This is a batch shape from an I/O perspective, independent of the internal
+representation of the model (as e.g. in BatchedMultiOutputGPyTorchModel).
+For a model with <cite>m</cite> outputs, a <cite>test_batch_shape x q x d</cite>-shaped input <cite>X</cite>
+to the <cite>posterior</cite> method returns a Posterior object over an output of
+shape <cite>broadcast(test_batch_shape, model.batch_shape) x q x m</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code></p>
 </dd>
 </dl>
 </dd></dl>
@@ -198,6 +213,21 @@ GPyTorch Model class such as an ExactGP.</p>
 class (e.g. an <cite>ExactGP</cite>) and this <cite>GPyTorchModel</cite>. See e.g. <cite>SingleTaskGP</cite>.</p>
 <p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
 <dl class="py method">
+<dt id="botorch.models.gpytorch.GPyTorchModel.batch_shape">
+<em class="property">property </em><code class="sig-name descname">batch_shape</code><a class="headerlink" href="#botorch.models.gpytorch.GPyTorchModel.batch_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>The batch shape of the model.</p>
+<p>This is a batch shape from an I/O perspective, independent of the internal
+representation of the model (as e.g. in BatchedMultiOutputGPyTorchModel).
+For a model with <cite>m</cite> outputs, a <cite>test_batch_shape x q x d</cite>-shaped input <cite>X</cite>
+to the <cite>posterior</cite> method returns a Posterior object over an output of
+shape <cite>broadcast(test_batch_shape, model.batch_shape) x q x m</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
 <dt id="botorch.models.gpytorch.GPyTorchModel.num_outputs">
 <em class="property">property </em><code class="sig-name descname">num_outputs</code><a class="headerlink" href="#botorch.models.gpytorch.GPyTorchModel.num_outputs" title="Permalink to this definition">¶</a></dt>
 <dd><p>The number of outputs of the model.</p>
@@ -311,6 +341,21 @@ training observations.</p></li>
 </dl>
 </dd></dl>
 <dl class="py method">
+<dt id="botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel.batch_shape">
+<em class="property">property </em><code class="sig-name descname">batch_shape</code><a class="headerlink" href="#botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel.batch_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>The batch shape of the model.</p>
+<p>This is a batch shape from an I/O perspective, independent of the internal
+representation of the model (as e.g. in BatchedMultiOutputGPyTorchModel).
+For a model with <cite>m</cite> outputs, a <cite>test_batch_shape x q x d</cite>-shaped input <cite>X</cite>
+to the <cite>posterior</cite> method returns a Posterior object over an output of
+shape <cite>broadcast(test_batch_shape, model.batch_shape) x q x m</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
 <dt id="botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel.posterior">
 <code class="sig-name descname">posterior</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="n">output_indices</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">observation_noise</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gpytorch.html#BatchedMultiOutputGPyTorchModel.posterior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel.posterior" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes the posterior over model outputs at the provided points.</p>
@@ -407,6 +452,21 @@ observations passed in via kwargs).</p>
 <p>This is meant to be used with a gpytorch ModelList wrapper for independent
 evaluation of submodels.</p>
 <p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="py method">
+<dt id="botorch.models.gpytorch.ModelListGPyTorchModel.batch_shape">
+<em class="property">property </em><code class="sig-name descname">batch_shape</code><a class="headerlink" href="#botorch.models.gpytorch.ModelListGPyTorchModel.batch_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>The batch shape of the model.</p>
+<p>This is a batch shape from an I/O perspective, independent of the internal
+representation of the model (as e.g. in BatchedMultiOutputGPyTorchModel).
+For a model with <cite>m</cite> outputs, a <cite>test_batch_shape x q x d</cite>-shaped input <cite>X</cite>
+to the <cite>posterior</cite> method returns a Posterior object over an output of
+shape <cite>broadcast(test_batch_shape, model.batch_shape) x q x m</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 <dl class="py method">
 <dt id="botorch.models.gpytorch.ModelListGPyTorchModel.posterior">
 <code class="sig-name descname">posterior</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="n">output_indices</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">observation_noise</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gpytorch.html#ModelListGPyTorchModel.posterior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.gpytorch.ModelListGPyTorchModel.posterior" title="Permalink to this definition">¶</a></dt>
@@ -1535,6 +1595,21 @@ elsewhere in botorch, we instead do not include <span class="math notranslate no
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.models.pairwise_gp.PairwiseGP.batch_shape">
+<em class="property">property </em><code class="sig-name descname">batch_shape</code><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseGP.batch_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>The batch shape of the model.</p>
+<p>This is a batch shape from an I/O perspective, independent of the internal
+representation of the model (as e.g. in BatchedMultiOutputGPyTorchModel).
+For a model with <cite>m</cite> outputs, a <cite>test_batch_shape x q x d</cite>-shaped input <cite>X</cite>
+to the <cite>posterior</cite> method returns a Posterior object over an output of
+shape <cite>broadcast(test_batch_shape, model.batch_shape) x q x m</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code></p>
 </dd>
 </dl>
 </dd></dl>

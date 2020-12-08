@@ -145,7 +145,7 @@ def optimize_qparego_and_get_observation(model, train_obj, sampler):
         acq_func = qExpectedImprovement(  # pyre-ignore: [28]
             model=model,
             objective=objective,
-            best_f=objective(train_obj).max().item(),
+            best_f=objective(train_obj).max(),
             sampler=sampler,
         )
         acq_func_list.append(acq_func)
