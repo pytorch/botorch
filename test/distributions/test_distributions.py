@@ -136,10 +136,10 @@ class TestCase(unittest.TestCase):
 
 class TestKumaraswamy(BotorchTestCase, TestCase):
     def test_kumaraswamy_shape(self):
-        concentration1 = torch.tensor(torch.randn(2, 3).abs(), requires_grad=True)
-        concentration0 = torch.tensor(torch.randn(2, 3).abs(), requires_grad=True)
-        concentration1_1d = torch.tensor(torch.randn(1).abs(), requires_grad=True)
-        concentration0_1d = torch.tensor(torch.randn(1).abs(), requires_grad=True)
+        concentration1 = torch.randn(2, 3).abs().requires_grad_(True)
+        concentration0 = torch.randn(2, 3).abs().requires_grad_(True)
+        concentration1_1d = torch.randn(1).abs().requires_grad_(True)
+        concentration0_1d = torch.randn(1).abs().requires_grad_(True)
         self.assertEqual(
             Kumaraswamy(concentration1, concentration0).sample().size(), (2, 3)
         )
@@ -159,10 +159,10 @@ class TestKumaraswamy(BotorchTestCase, TestCase):
     # Kumaraswamy distribution is not implemented in SciPy
     # Hence these tests are explicit
     def test_kumaraswamy_mean_variance(self):
-        c1_1 = torch.tensor(torch.randn(2, 3).abs(), requires_grad=True)
-        c0_1 = torch.tensor(torch.randn(2, 3).abs(), requires_grad=True)
-        c1_2 = torch.tensor(torch.randn(4).abs(), requires_grad=True)
-        c0_2 = torch.tensor(torch.randn(4).abs(), requires_grad=True)
+        c1_1 = torch.randn(2, 3).abs().requires_grad_(True)
+        c0_1 = torch.randn(2, 3).abs().requires_grad_(True)
+        c1_2 = torch.randn(4).abs().requires_grad_(True)
+        c0_2 = torch.randn(4).abs().requires_grad_(True)
         cases = [(c1_1, c0_1), (c1_2, c0_2)]
         for i, (a, b) in enumerate(cases):
             m = Kumaraswamy(a, b)
@@ -472,7 +472,7 @@ class TestKumaraswamy(BotorchTestCase, TestCase):
         for Dist, params in EXAMPLES:
             for i, param in enumerate(params):
                 dist = Dist(**param)
-                samples = torch.tensor(dist.sample())
+                samples = dist.sample().clone().detach()
                 if samples.dtype.is_floating_point:
                     samples.requires_grad_()
                 try:
