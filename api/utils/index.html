@@ -12,7 +12,7 @@
             {"zIndex":100}
           )
         });
-        </script><script src="/js/scrollSpy.js"></script><link rel="stylesheet" href="/css/main.css"/><script src="/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/"><img class="logo" src="/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/versions"><h3>stable</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/api/" target="_self">API Reference</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+        </script><script src="/js/scrollSpy.js"></script><link rel="stylesheet" href="/css/main.css"/><script src="/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/"><img class="logo" src="/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/versions"><h3>stable</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/api/" target="_self">API Reference</a></li><li class=""><a href="/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div>
 <script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/underscore.js"></script>
@@ -66,19 +66,19 @@ Negative values imply feasibility. The callables support broadcasting
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></p>
 <p>Standardized struct of model training data for a single outcome.</p>
 <p>Create new instance of TrainingData(X, Y, Yvar)</p>
-<dl class="py method">
+<dl class="py attribute">
 <dt id="botorch.utils.containers.TrainingData.X">
-<em class="property">property </em><code class="sig-name descname">X</code><a class="headerlink" href="#botorch.utils.containers.TrainingData.X" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">X</code><em class="property">: torch.Tensor</em><a class="headerlink" href="#botorch.utils.containers.TrainingData.X" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 0</p>
 </dd></dl>
-<dl class="py method">
+<dl class="py attribute">
 <dt id="botorch.utils.containers.TrainingData.Y">
-<em class="property">property </em><code class="sig-name descname">Y</code><a class="headerlink" href="#botorch.utils.containers.TrainingData.Y" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">Y</code><em class="property">: torch.Tensor</em><a class="headerlink" href="#botorch.utils.containers.TrainingData.Y" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 1</p>
 </dd></dl>
-<dl class="py method">
+<dl class="py attribute">
 <dt id="botorch.utils.containers.TrainingData.Yvar">
-<em class="property">property </em><code class="sig-name descname">Yvar</code><a class="headerlink" href="#botorch.utils.containers.TrainingData.Yvar" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">Yvar</code><em class="property">: Optional<span class="p">[</span>torch.Tensor<span class="p">]</span></em><a class="headerlink" href="#botorch.utils.containers.TrainingData.Yvar" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 2</p>
 </dd></dl>
 </dd></dl>
@@ -454,6 +454,87 @@ allows a single batch dimension). The calling signature is the same as for
 </pre></div>
 </div>
 </dd></dl>
+<dl class="py class">
+<dt id="botorch.utils.sampling.PolytopeSampler">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.utils.sampling.</code><code class="sig-name descname">PolytopeSampler</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inequality_constraints</span></em>, <em class="sig-param"><span class="n">n_burnin</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">equality_constraints</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">initial_point</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#PolytopeSampler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.sampling.PolytopeSampler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Sampling points from a polytope described via a set of inequality and
+equality constraints.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inequality_constraints</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – Tensors (A, b) describing inequality
+constraints: A*x&lt;=b, where A is (n_ineq_con, d_sample)-dim Tensor
+and b is (n_ineq_con, 1)-dim Tensor with n_ineq_con
+being the number of inequalities and d_sample the dimension
+of the sample space.</p></li>
+<li><p><strong>n_burnin</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of burn in samples.</p></li>
+<li><p><strong>equality_constraints</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]]) – Tensors (C, d) describing the equality
+constraints: C*x=d, where C is (n_eq_con, d_sample)-dim Tensor and
+d is (n_eq_con-dim, 1) Tensor with n_eq_con
+being the number of equalities.</p></li>
+<li><p><strong>initial_point</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – An (d_sample, 1)-dim Tensor presenting an inital point of
+the chain satisfying all the conditions.
+Determined automatically (by solving an LP) if not provided.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="botorch.utils.sampling.PolytopeSampler.feasible">
+<code class="sig-name descname">feasible</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#PolytopeSampler.feasible"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.sampling.PolytopeSampler.feasible" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.utils.sampling.PolytopeSampler.find_initial_point">
+<code class="sig-name descname">find_initial_point</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#PolytopeSampler.find_initial_point"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.sampling.PolytopeSampler.find_initial_point" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds a feasible point of the original problem.
+Details: Solves the following LP:
+min -s such that Ax&lt;=b-2*s, s&gt;=0, plus equality constraints.
+The number of inequality constrains in LP: nrow(A) + 1.
+LP solution dimension: dim(x) + dim(s) = dim(x) + 1.</p>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.utils.sampling.PolytopeSampler.draw">
+<code class="sig-name descname">draw</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">n</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">seed</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#PolytopeSampler.draw"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.sampling.PolytopeSampler.draw" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py function">
+<dt id="botorch.utils.sampling.sample_polytope">
+<code class="sig-prename descclassname">botorch.utils.sampling.</code><code class="sig-name descname">sample_polytope</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">A</span></em>, <em class="sig-param"><span class="n">b</span></em>, <em class="sig-param"><span class="n">x0</span></em>, <em class="sig-param"><span class="n">n</span><span class="o">=</span><span class="default_value">10000</span></em>, <em class="sig-param"><span class="n">n0</span><span class="o">=</span><span class="default_value">100</span></em>, <em class="sig-param"><span class="n">seed</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#sample_polytope"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.sampling.sample_polytope" title="Permalink to this definition">¶</a></dt>
+<dd><p>Hit and run sampler from uniform sampling points from a polytope,
+described via inequality constraints A*x&lt;=b.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>A</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A Tensor describing inequality constraints
+so that all samples satisfy Ax&lt;=b.</p></li>
+<li><p><strong>b</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A Tensor describing the inequality constraints
+so that all samples satisfy Ax&lt;=b.</p></li>
+<li><p><strong>x0</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – d dim Tensor representing a starting point of the chain
+satisfying the constraints.</p></li>
+<li><p><strong>n</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of resulting samples kept in the output.</p></li>
+<li><p><strong>n0</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of burn-in samples. The chain will produce
+n+n0 samples but the first n0 samples are not saved.</p></li>
+<li><p><strong>seed</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The seed for the sampler. If omitted, use a random seed.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>(n, d) dim Tensor containing the resulting samples.</p>
+</dd>
+</dl>
+</dd></dl>
 </div>
 <div class="section" id="module-botorch.utils.testing">
 <span id="testing"></span><h2>Testing<a class="headerlink" href="#module-botorch.utils.testing" title="Permalink to this headline">¶</a></h2>
@@ -609,6 +690,21 @@ over <cite>q</cite> points and <cite>m</cite> outputs each.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.utils.testing.MockModel.batch_shape">
+<em class="property">property </em><code class="sig-name descname">batch_shape</code><a class="headerlink" href="#botorch.utils.testing.MockModel.batch_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>The batch shape of the model.</p>
+<p>This is a batch shape from an I/O perspective, independent of the internal
+representation of the model (as e.g. in BatchedMultiOutputGPyTorchModel).
+For a model with <cite>m</cite> outputs, a <cite>test_batch_shape x q x d</cite>-shaped input <cite>X</cite>
+to the <cite>posterior</cite> method returns a Posterior object over an output of
+shape <cite>broadcast(test_batch_shape, model.batch_shape) x q x m</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code></p>
 </dd>
 </dl>
 </dd></dl>
@@ -809,7 +905,7 @@ key-value pairs of type (string, <code class="xref py py-class docutils literal 
 <dt id="botorch.utils.torch.BufferDict.extra_repr">
 <code class="sig-name descname">extra_repr</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/torch.html#BufferDict.extra_repr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.torch.BufferDict.extra_repr" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set the extra representation of the module</p>
-<p>To print customized extra information, you should reimplement
+<p>To print customized extra information, you should re-implement
 this method in your own modules. Both single-line and multi-line
 strings are acceptable.</p>
 </dd></dl>
@@ -1570,12 +1666,14 @@ default value comes from <a class="reference internal" href="#knowles2005" id="i
 <li class="toctree-l1"><a class="reference internal" href="test_functions.html">botorch.test_functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="exceptions.html">botorch.exceptions</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">botorch.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="distributions.html">botorch.distributions</a></li>
 </ul>
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
 <li><a href="index.html">Documentation overview</a><ul>
 <li>Previous: <a href="exceptions.html" title="previous chapter">botorch.exceptions</a></li>
+<li>Next: <a href="distributions.html" title="next chapter">botorch.distributions</a></li>
 </ul></li>
 </ul>
 </div>

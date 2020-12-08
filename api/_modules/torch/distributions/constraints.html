@@ -1,0 +1,468 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/img/botorch.png"/><link rel="shortcut icon" href="/img/botorch.ico"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+              })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+              ga('create', 'UA-139570076-2', 'auto');
+              ga('send', 'pageview');
+            </script><link rel="stylesheet" href="/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/js/scrollSpy.js"></script><link rel="stylesheet" href="/css/main.css"/><script src="/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/"><img class="logo" src="/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/versions"><h3>stable</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/api/" target="_self">API Reference</a></li><li class=""><a href="/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+<script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/underscore.js"></script>
+<script type="text/javascript" src="/js/doctools.js"></script>
+<script type="text/javascript" src="/js/language_data.js"></script>
+<script type="text/javascript" src="/js/searchtools.js"></script>
+<div class="sphinx"><div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body" role="main">
+<h1>Source code for torch.distributions.constraints</h1><div class="highlight"><pre>
+<span></span><span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">The following constraints are implemented:</span>
+
+<span class="sd">- ``constraints.boolean``</span>
+<span class="sd">- ``constraints.cat``</span>
+<span class="sd">- ``constraints.dependent``</span>
+<span class="sd">- ``constraints.greater_than(lower_bound)``</span>
+<span class="sd">- ``constraints.integer_interval(lower_bound, upper_bound)``</span>
+<span class="sd">- ``constraints.interval(lower_bound, upper_bound)``</span>
+<span class="sd">- ``constraints.lower_cholesky``</span>
+<span class="sd">- ``constraints.lower_triangular``</span>
+<span class="sd">- ``constraints.nonnegative_integer``</span>
+<span class="sd">- ``constraints.positive``</span>
+<span class="sd">- ``constraints.positive_definite``</span>
+<span class="sd">- ``constraints.positive_integer``</span>
+<span class="sd">- ``constraints.real``</span>
+<span class="sd">- ``constraints.real_vector``</span>
+<span class="sd">- ``constraints.simplex``</span>
+<span class="sd">- ``constraints.stack``</span>
+<span class="sd">- ``constraints.unit_interval``</span>
+<span class="sd">"""</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">'Constraint'</span><span class="p">,</span>
+    <span class="s1">'boolean'</span><span class="p">,</span>
+    <span class="s1">'cat'</span><span class="p">,</span>
+    <span class="s1">'dependent'</span><span class="p">,</span>
+    <span class="s1">'dependent_property'</span><span class="p">,</span>
+    <span class="s1">'greater_than'</span><span class="p">,</span>
+    <span class="s1">'greater_than_eq'</span><span class="p">,</span>
+    <span class="s1">'integer_interval'</span><span class="p">,</span>
+    <span class="s1">'interval'</span><span class="p">,</span>
+    <span class="s1">'half_open_interval'</span><span class="p">,</span>
+    <span class="s1">'is_dependent'</span><span class="p">,</span>
+    <span class="s1">'less_than'</span><span class="p">,</span>
+    <span class="s1">'lower_cholesky'</span><span class="p">,</span>
+    <span class="s1">'lower_triangular'</span><span class="p">,</span>
+    <span class="s1">'nonnegative_integer'</span><span class="p">,</span>
+    <span class="s1">'positive'</span><span class="p">,</span>
+    <span class="s1">'positive_definite'</span><span class="p">,</span>
+    <span class="s1">'positive_integer'</span><span class="p">,</span>
+    <span class="s1">'real'</span><span class="p">,</span>
+    <span class="s1">'real_vector'</span><span class="p">,</span>
+    <span class="s1">'simplex'</span><span class="p">,</span>
+    <span class="s1">'stack'</span><span class="p">,</span>
+    <span class="s1">'unit_interval'</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<span class="k">class</span> <span class="nc">Constraint</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Abstract base class for constraints.</span>
+
+<span class="sd">    A constraint object represents a region over which a variable is valid,</span>
+<span class="sd">    e.g. within which a variable can be optimized.</span>
+<span class="sd">    """</span>
+    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">"""</span>
+<span class="sd">        Returns a byte tensor of `sample_shape + batch_shape` indicating</span>
+<span class="sd">        whether each event in value satisfies this constraint.</span>
+<span class="sd">        """</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">+</span> <span class="s1">'()'</span>
+
+
+<span class="k">class</span> <span class="nc">_Dependent</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Placeholder for variables whose support depends on other variables.</span>
+<span class="sd">    These variables obey no simple coordinate-wise constraints.</span>
+<span class="sd">    """</span>
+    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">'Cannot determine validity of dependent constraint'</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">is_dependent</span><span class="p">(</span><span class="n">constraint</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">constraint</span><span class="p">,</span> <span class="n">_Dependent</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">_DependentProperty</span><span class="p">(</span><span class="nb">property</span><span class="p">,</span> <span class="n">_Dependent</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Decorator that extends @property to act like a `Dependent` constraint when</span>
+<span class="sd">    called on a class and act like a property when called on an object.</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        class Uniform(Distribution):</span>
+<span class="sd">            def __init__(self, low, high):</span>
+<span class="sd">                self.low = low</span>
+<span class="sd">                self.high = high</span>
+<span class="sd">            @constraints.dependent_property</span>
+<span class="sd">            def support(self):</span>
+<span class="sd">                return constraints.interval(self.low, self.high)</span>
+<span class="sd">    """</span>
+    <span class="k">pass</span>
+
+
+<span class="k">class</span> <span class="nc">_Boolean</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Constrain to the two values `{0, 1}`.</span>
+<span class="sd">    """</span>
+    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">value</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">value</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">_IntegerInterval</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Constrain to an integer interval `[lower_bound, upper_bound]`.</span>
+<span class="sd">    """</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lower_bound</span><span class="p">,</span> <span class="n">upper_bound</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span> <span class="o">=</span> <span class="n">lower_bound</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span> <span class="o">=</span> <span class="n">upper_bound</span>
+
+    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">value</span> <span class="o">%</span> <span class="mi">1</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span> <span class="o">&lt;=</span> <span class="n">value</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">value</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">fmt_string</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="n">fmt_string</span> <span class="o">+=</span> <span class="s1">'(lower_bound=</span><span class="si">{}</span><span class="s1">, upper_bound=</span><span class="si">{}</span><span class="s1">)'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">fmt_string</span>
+
+
+<span class="k">class</span> <span class="nc">_IntegerLessThan</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Constrain to an integer interval `(-inf, upper_bound]`.</span>
+<span class="sd">    """</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">upper_bound</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span> <span class="o">=</span> <span class="n">upper_bound</span>
+
+    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">value</span> <span class="o">%</span> <span class="mi">1</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">value</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">fmt_string</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="n">fmt_string</span> <span class="o">+=</span> <span class="s1">'(upper_bound=</span><span class="si">{}</span><span class="s1">)'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">fmt_string</span>
+
+
+<span class="k">class</span> <span class="nc">_IntegerGreaterThan</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Constrain to an integer interval `[lower_bound, inf)`.</span>
+<span class="sd">    """</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lower_bound</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span> <span class="o">=</span> <span class="n">lower_bound</span>
+
+    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">value</span> <span class="o">%</span> <span class="mi">1</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">value</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">fmt_string</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="n">fmt_string</span> <span class="o">+=</span> <span class="s1">'(lower_bound=</span><span class="si">{}</span><span class="s1">)'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">fmt_string</span>
+
+
+<span class="k">class</span> <span class="nc">_Real</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Trivially constrain to the extended real line `[-inf, inf]`.</span>
+<span class="sd">    """</span>
+    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">value</span> <span class="o">==</span> <span class="n">value</span>  <span class="c1"># False for NANs.</span>
+
+
+<span class="k">class</span> <span class="nc">_GreaterThan</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Constrain to a real half line `(lower_bound, inf]`.</span>
+<span class="sd">    """</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lower_bound</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span> <span class="o">=</span> <span class="n">lower_bound</span>
+
+    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span> <span class="o">&lt;</span> <span class="n">value</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">fmt_string</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="n">fmt_string</span> <span class="o">+=</span> <span class="s1">'(lower_bound=</span><span class="si">{}</span><span class="s1">)'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">fmt_string</span>
+
+
+<span class="k">class</span> <span class="nc">_GreaterThanEq</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Constrain to a real half line `[lower_bound, inf)`.</span>
+<span class="sd">    """</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lower_bound</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span> <span class="o">=</span> <span class="n">lower_bound</span>
+
+    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span> <span class="o">&lt;=</span> <span class="n">value</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">fmt_string</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="n">fmt_string</span> <span class="o">+=</span> <span class="s1">'(lower_bound=</span><span class="si">{}</span><span class="s1">)'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">fmt_string</span>
+
+
+<span class="k">class</span> <span class="nc">_LessThan</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Constrain to a real half line `[-inf, upper_bound)`.</span>
+<span class="sd">    """</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">upper_bound</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span> <span class="o">=</span> <span class="n">upper_bound</span>
+
+    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">fmt_string</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="n">fmt_string</span> <span class="o">+=</span> <span class="s1">'(upper_bound=</span><span class="si">{}</span><span class="s1">)'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">fmt_string</span>
+
+
+<span class="k">class</span> <span class="nc">_Interval</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Constrain to a real interval `[lower_bound, upper_bound]`.</span>
+<span class="sd">    """</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lower_bound</span><span class="p">,</span> <span class="n">upper_bound</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span> <span class="o">=</span> <span class="n">lower_bound</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span> <span class="o">=</span> <span class="n">upper_bound</span>
+
+    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span> <span class="o">&lt;=</span> <span class="n">value</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">value</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">fmt_string</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="n">fmt_string</span> <span class="o">+=</span> <span class="s1">'(lower_bound=</span><span class="si">{}</span><span class="s1">, upper_bound=</span><span class="si">{}</span><span class="s1">)'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">fmt_string</span>
+
+
+<span class="k">class</span> <span class="nc">_HalfOpenInterval</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Constrain to a real interval `[lower_bound, upper_bound)`.</span>
+<span class="sd">    """</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lower_bound</span><span class="p">,</span> <span class="n">upper_bound</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span> <span class="o">=</span> <span class="n">lower_bound</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span> <span class="o">=</span> <span class="n">upper_bound</span>
+
+    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span> <span class="o">&lt;=</span> <span class="n">value</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">value</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">fmt_string</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="n">fmt_string</span> <span class="o">+=</span> <span class="s1">'(lower_bound=</span><span class="si">{}</span><span class="s1">, upper_bound=</span><span class="si">{}</span><span class="s1">)'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">fmt_string</span>
+
+
+<span class="k">class</span> <span class="nc">_Simplex</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Constrain to the unit simplex in the innermost (rightmost) dimension.</span>
+<span class="sd">    Specifically: `x &gt;= 0` and `x.sum(-1) == 1`.</span>
+<span class="sd">    """</span>
+    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">value</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">((</span><span class="n">value</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mf">1e-6</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">_LowerTriangular</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Constrain to lower-triangular square matrices.</span>
+<span class="sd">    """</span>
+    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="n">value_tril</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">tril</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">value_tril</span> <span class="o">==</span> <span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,))</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+
+<span class="k">class</span> <span class="nc">_LowerCholesky</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Constrain to lower-triangular square matrices with positive diagonals.</span>
+<span class="sd">    """</span>
+    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="n">value_tril</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">tril</span><span class="p">()</span>
+        <span class="n">lower_triangular</span> <span class="o">=</span> <span class="p">(</span><span class="n">value_tril</span> <span class="o">==</span> <span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,))</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">positive_diagonal</span> <span class="o">=</span> <span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">diagonal</span><span class="p">(</span><span class="n">dim1</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span> <span class="n">dim2</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">lower_triangular</span> <span class="o">&amp;</span> <span class="n">positive_diagonal</span>
+
+
+<span class="k">class</span> <span class="nc">_PositiveDefinite</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Constrain to positive-definite matrices.</span>
+<span class="sd">    """</span>
+    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="n">matrix_shape</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>
+        <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+        <span class="c1"># TODO: replace with batched linear algebra routine when one becomes available</span>
+        <span class="c1"># note that `symeig()` returns eigenvalues in ascending order</span>
+        <span class="n">flattened_value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,)</span> <span class="o">+</span> <span class="n">matrix_shape</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">v</span><span class="o">.</span><span class="n">symeig</span><span class="p">(</span><span class="n">eigenvectors</span><span class="o">=</span><span class="kc">False</span><span class="p">)[</span><span class="mi">0</span><span class="p">][:</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.0</span>
+                            <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">flattened_value</span><span class="p">])</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">batch_shape</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">_RealVector</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Constrain to real-valued vectors. This is the same as `constraints.real`,</span>
+<span class="sd">    but additionally reduces across the `event_shape` dimension.</span>
+<span class="sd">    """</span>
+    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">value</span> <span class="o">==</span> <span class="n">value</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># False for NANs.</span>
+
+
+<span class="k">class</span> <span class="nc">_Cat</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Constraint functor that applies a sequence of constraints</span>
+<span class="sd">    `cseq` at the submatrices at dimension `dim`,</span>
+<span class="sd">    each of size `lengths[dim]`, in a way compatible with :func:`torch.cat`.</span>
+<span class="sd">    """</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cseq</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">lengths</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">Constraint</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cseq</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cseq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">cseq</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">lengths</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">lengths</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cseq</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lengths</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">lengths</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lengths</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cseq</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dim</span> <span class="o">=</span> <span class="n">dim</span>
+
+    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="o">-</span><span class="n">value</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dim</span> <span class="o">&lt;</span> <span class="n">value</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span>
+        <span class="n">checks</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">constr</span><span class="p">,</span> <span class="n">length</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cseq</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lengths</span><span class="p">):</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">narrow</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">length</span><span class="p">)</span>
+            <span class="n">checks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">constr</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="n">length</span>  <span class="c1"># avoid += for jit compat</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">checks</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">_Stack</span><span class="p">(</span><span class="n">Constraint</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Constraint functor that applies a sequence of constraints</span>
+<span class="sd">    `cseq` at the submatrices at dimension `dim`,</span>
+<span class="sd">    in a way compatible with :func:`torch.stack`.</span>
+<span class="sd">    """</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cseq</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">Constraint</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cseq</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cseq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">cseq</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dim</span> <span class="o">=</span> <span class="n">dim</span>
+
+    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="o">-</span><span class="n">value</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dim</span> <span class="o">&lt;</span> <span class="n">value</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span>
+        <span class="n">vs</span> <span class="o">=</span> <span class="p">[</span><span class="n">value</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">))]</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">constr</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+                            <span class="k">for</span> <span class="n">v</span><span class="p">,</span> <span class="n">constr</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">vs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cseq</span><span class="p">)],</span> <span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">)</span>
+
+<span class="c1"># Public interface.</span>
+<span class="n">dependent</span> <span class="o">=</span> <span class="n">_Dependent</span><span class="p">()</span>
+<span class="n">dependent_property</span> <span class="o">=</span> <span class="n">_DependentProperty</span>
+<span class="n">boolean</span> <span class="o">=</span> <span class="n">_Boolean</span><span class="p">()</span>
+<span class="n">nonnegative_integer</span> <span class="o">=</span> <span class="n">_IntegerGreaterThan</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">positive_integer</span> <span class="o">=</span> <span class="n">_IntegerGreaterThan</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">integer_interval</span> <span class="o">=</span> <span class="n">_IntegerInterval</span>
+<span class="n">real</span> <span class="o">=</span> <span class="n">_Real</span><span class="p">()</span>
+<span class="n">real_vector</span> <span class="o">=</span> <span class="n">_RealVector</span><span class="p">()</span>
+<span class="n">positive</span> <span class="o">=</span> <span class="n">_GreaterThan</span><span class="p">(</span><span class="mf">0.</span><span class="p">)</span>
+<span class="n">greater_than</span> <span class="o">=</span> <span class="n">_GreaterThan</span>
+<span class="n">greater_than_eq</span> <span class="o">=</span> <span class="n">_GreaterThanEq</span>
+<span class="n">less_than</span> <span class="o">=</span> <span class="n">_LessThan</span>
+<span class="n">unit_interval</span> <span class="o">=</span> <span class="n">_Interval</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">)</span>
+<span class="n">interval</span> <span class="o">=</span> <span class="n">_Interval</span>
+<span class="n">half_open_interval</span> <span class="o">=</span> <span class="n">_HalfOpenInterval</span>
+<span class="n">simplex</span> <span class="o">=</span> <span class="n">_Simplex</span><span class="p">()</span>
+<span class="n">lower_triangular</span> <span class="o">=</span> <span class="n">_LowerTriangular</span><span class="p">()</span>
+<span class="n">lower_cholesky</span> <span class="o">=</span> <span class="n">_LowerCholesky</span><span class="p">()</span>
+<span class="n">positive_definite</span> <span class="o">=</span> <span class="n">_PositiveDefinite</span><span class="p">()</span>
+<span class="n">cat</span> <span class="o">=</span> <span class="n">_Cat</span>
+<span class="n">stack</span> <span class="o">=</span> <span class="n">_Stack</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div aria-label="main navigation" class="sphinxsidebar" role="navigation">
+<div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">BoTorch</a></h1>
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../acquisition.html">botorch.acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../models.html">botorch.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generation.html">botorch.generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../posteriors.html">botorch.posteriors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../optim.html">botorch.optim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fit.html">botorch.fit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sampling.html">botorch.sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cross_validation.html">botorch.cross_validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../settings.html">botorch.settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../logging.html">botorch.logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">botorch.exceptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils.html">botorch.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../distributions.html">botorch.distributions</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+<li><a href="../../../index.html">Documentation overview</a><ul>
+<li><a href="../../index.html">Module code</a><ul>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+<div id="searchbox" role="search" style="display: none">
+<h3 id="searchlabel">Quick search</h3>
+<div class="searchformwrapper">
+<form action="../../../search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" name="q" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</div>
+<script>$('#searchbox').show(0);</script>
+</div>
+</div>
+<div class="clearer"></div>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2020 Facebook Inc.</section><script>
+            (function() {
+              var BAD_BASE = '/botorch/';
+              if (window.location.origin !== 'https://botorch.org') {
+                var pathname = window.location.pathname;
+                var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);
+                var newLocation = 'https://botorch.org/' + newPathname;
+                console.log('redirecting to ' + newLocation);
+                window.location.href = newLocation;
+              }
+            })();
+          </script></footer></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+                document.addEventListener('keyup', function(e) {
+                  if (e.target !== document.body) {
+                    return;
+                  }
+                  // keyCode for '/' (slash)
+                  if (e.keyCode === 191) {
+                    const search = document.getElementById('search_input_react');
+                    search && search.focus();
+                  }
+                });
+              </script><script>
+              var search = docsearch({
+                
+                apiKey: '207c27d819f967749142d8611de7cb19',
+                indexName: 'botorch',
+                inputSelector: '#search_input_react'
+              });
+            </script></body></html>

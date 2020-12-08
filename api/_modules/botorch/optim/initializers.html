@@ -12,7 +12,7 @@
             {"zIndex":100}
           )
         });
-        </script><script src="/js/scrollSpy.js"></script><link rel="stylesheet" href="/css/main.css"/><script src="/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/"><img class="logo" src="/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/versions"><h3>stable</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/api/" target="_self">API Reference</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+        </script><script src="/js/scrollSpy.js"></script><link rel="stylesheet" href="/css/main.css"/><script src="/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/"><img class="logo" src="/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/versions"><h3>stable</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/api/" target="_self">API Reference</a></li><li class=""><a href="/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div>
 <script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/underscore.js"></script>
@@ -42,7 +42,6 @@
     <span class="n">_get_value_function</span><span class="p">,</span>
     <span class="n">qKnowledgeGradient</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.monte_carlo</span> <span class="kn">import</span> <span class="n">MCAcquisitionFunction</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.utils</span> <span class="kn">import</span> <span class="n">is_nonnegative</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">BadInitialCandidatesWarning</span><span class="p">,</span> <span class="n">SamplingWarning</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
@@ -236,6 +235,7 @@
         <span class="n">model</span><span class="o">=</span><span class="n">acq_function</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
         <span class="n">objective</span><span class="o">=</span><span class="n">acq_function</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span>
         <span class="n">sampler</span><span class="o">=</span><span class="n">acq_function</span><span class="o">.</span><span class="n">inner_sampler</span><span class="p">,</span>
+        <span class="n">project</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">acq_function</span><span class="p">,</span> <span class="s2">"project"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
     <span class="p">)</span>
     <span class="kn">from</span> <span class="nn">botorch.optim.optimize</span> <span class="kn">import</span> <span class="n">optimize_acqf</span>
 
@@ -305,8 +305,8 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A `num_restarts x batch_shape x q x d` tensor that can be used as initial</span>
-<span class="sd">        conditions for `optimize_acqf()`. Here `batch_shape` is the</span>
-<span class="sd">        `_input_batch_shape` of value function model.</span>
+<span class="sd">        conditions for `optimize_acqf()`. Here `batch_shape` is the batch shape</span>
+<span class="sd">        of value function model.</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; fant_X = torch.rand(5, 1, 2)</span>
@@ -330,9 +330,8 @@
     <span class="n">value_function</span> <span class="o">=</span> <span class="n">_get_value_function</span><span class="p">(</span>
         <span class="n">model</span><span class="o">=</span><span class="n">current_model</span><span class="p">,</span>
         <span class="n">objective</span><span class="o">=</span><span class="n">acq_function</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span>
-        <span class="n">sampler</span><span class="o">=</span><span class="n">acq_function</span><span class="o">.</span><span class="n">sampler</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">acq_function</span><span class="p">,</span> <span class="n">MCAcquisitionFunction</span><span class="p">)</span>
-        <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">sampler</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">acq_function</span><span class="p">,</span> <span class="s2">"sampler"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="n">project</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">acq_function</span><span class="p">,</span> <span class="s2">"project"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
     <span class="p">)</span>
     <span class="kn">from</span> <span class="nn">botorch.optim.optimize</span> <span class="kn">import</span> <span class="n">optimize_acqf</span>
 
@@ -351,7 +350,7 @@
         <span class="p">},</span>
     <span class="p">)</span>
 
-    <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">acq_function</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_input_batch_shape</span>
+    <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">acq_function</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">batch_shape</span>
     <span class="c1"># sampling from the optimizers</span>
     <span class="n">n_value</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="mi">1</span> <span class="o">-</span> <span class="n">frac_random</span><span class="p">)</span> <span class="o">*</span> <span class="n">raw_samples</span><span class="p">)</span>  <span class="c1"># number of non-random ICs</span>
     <span class="k">if</span> <span class="n">n_value</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
@@ -552,6 +551,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../test_functions.html">botorch.test_functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">botorch.exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../utils.html">botorch.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../distributions.html">botorch.distributions</a></li>
 </ul>
 <div class="relations">
 <h3>Related Topics</h3>

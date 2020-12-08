@@ -12,7 +12,7 @@
             {"zIndex":100}
           )
         });
-        </script><script src="/js/scrollSpy.js"></script><link rel="stylesheet" href="/css/main.css"/><script src="/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/"><img class="logo" src="/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/versions"><h3>stable</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/api/" target="_self">API Reference</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+        </script><script src="/js/scrollSpy.js"></script><link rel="stylesheet" href="/css/main.css"/><script src="/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/"><img class="logo" src="/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/versions"><h3>stable</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/api/" target="_self">API Reference</a></li><li class=""><a href="/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li><li class="navSearchWrapper reactNavSearchWrapper"><input type="text" id="search_input_react" placeholder="Search" title="Search"/></li></ul></nav></div></header></div></div><div class="navPusher"><div>
 <script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/underscore.js"></script>
@@ -37,7 +37,8 @@
 <span class="sd">    class that has a metaclass derived from ABCMeta cannot be</span>
 <span class="sd">    instantiated unless all of its abstract methods are overridden.</span>
 <span class="sd">    The abstract methods can be called using any of the normal</span>
-<span class="sd">    'super' call mechanisms.</span>
+<span class="sd">    'super' call mechanisms.  abstractmethod() may be used to declare</span>
+<span class="sd">    abstract methods for properties and descriptors.</span>
 
 <span class="sd">    Usage:</span>
 
@@ -53,17 +54,7 @@
 <span class="k">class</span> <span class="nc">abstractclassmethod</span><span class="p">(</span><span class="nb">classmethod</span><span class="p">):</span>
     <span class="sd">"""A decorator indicating abstract classmethods.</span>
 
-<span class="sd">    Similar to abstractmethod.</span>
-
-<span class="sd">    Usage:</span>
-
-<span class="sd">        class C(metaclass=ABCMeta):</span>
-<span class="sd">            @abstractclassmethod</span>
-<span class="sd">            def my_abstract_classmethod(cls, ...):</span>
-<span class="sd">                ...</span>
-
-<span class="sd">    'abstractclassmethod' is deprecated. Use 'classmethod' with</span>
-<span class="sd">    'abstractmethod' instead.</span>
+<span class="sd">    Deprecated, use 'classmethod' with 'abstractmethod' instead.</span>
 <span class="sd">    """</span>
 
     <span class="n">__isabstractmethod__</span> <span class="o">=</span> <span class="kc">True</span>
@@ -76,17 +67,7 @@
 <span class="k">class</span> <span class="nc">abstractstaticmethod</span><span class="p">(</span><span class="nb">staticmethod</span><span class="p">):</span>
     <span class="sd">"""A decorator indicating abstract staticmethods.</span>
 
-<span class="sd">    Similar to abstractmethod.</span>
-
-<span class="sd">    Usage:</span>
-
-<span class="sd">        class C(metaclass=ABCMeta):</span>
-<span class="sd">            @abstractstaticmethod</span>
-<span class="sd">            def my_abstract_staticmethod(...):</span>
-<span class="sd">                ...</span>
-
-<span class="sd">    'abstractstaticmethod' is deprecated. Use 'staticmethod' with</span>
-<span class="sd">    'abstractmethod' instead.</span>
+<span class="sd">    Deprecated, use 'staticmethod' with 'abstractmethod' instead.</span>
 <span class="sd">    """</span>
 
     <span class="n">__isabstractmethod__</span> <span class="o">=</span> <span class="kc">True</span>
@@ -99,29 +80,7 @@
 <span class="k">class</span> <span class="nc">abstractproperty</span><span class="p">(</span><span class="nb">property</span><span class="p">):</span>
     <span class="sd">"""A decorator indicating abstract properties.</span>
 
-<span class="sd">    Requires that the metaclass is ABCMeta or derived from it.  A</span>
-<span class="sd">    class that has a metaclass derived from ABCMeta cannot be</span>
-<span class="sd">    instantiated unless all of its abstract properties are overridden.</span>
-<span class="sd">    The abstract properties can be called using any of the normal</span>
-<span class="sd">    'super' call mechanisms.</span>
-
-<span class="sd">    Usage:</span>
-
-<span class="sd">        class C(metaclass=ABCMeta):</span>
-<span class="sd">            @abstractproperty</span>
-<span class="sd">            def my_abstract_property(self):</span>
-<span class="sd">                ...</span>
-
-<span class="sd">    This defines a read-only property; you can also define a read-write</span>
-<span class="sd">    abstract property using the 'long' form of property declaration:</span>
-
-<span class="sd">        class C(metaclass=ABCMeta):</span>
-<span class="sd">            def getx(self): ...</span>
-<span class="sd">            def setx(self, value): ...</span>
-<span class="sd">            x = abstractproperty(getx, setx)</span>
-
-<span class="sd">    'abstractproperty' is deprecated. Use 'property' with 'abstractmethod'</span>
-<span class="sd">    instead.</span>
+<span class="sd">    Deprecated, use 'property' with 'abstractmethod' instead.</span>
 <span class="sd">    """</span>
 
     <span class="n">__isabstractmethod__</span> <span class="o">=</span> <span class="kc">True</span>
@@ -217,6 +176,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../test_functions.html">botorch.test_functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../exceptions.html">botorch.exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../utils.html">botorch.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../distributions.html">botorch.distributions</a></li>
 </ul>
 <div class="relations">
 <h3>Related Topics</h3>
