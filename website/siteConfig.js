@@ -40,6 +40,7 @@ const siteConfig = {
     {doc: 'introduction', label: 'Docs'},
     {href: `${baseUrl}tutorials/`, label: 'Tutorials'},
     {href: `${baseUrl}api/`, label: 'API Reference'},
+    {href: `${baseUrl}docs/papers`, label: 'Papers'},
     {href: 'https://github.com/pytorch/botorch', label: 'GitHub'},
   ],
 

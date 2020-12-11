@@ -16,13 +16,21 @@ class TestDownsamplingKernel(BotorchTestCase, BaseKernelTestCase):
         return DownsamplingKernel(**kwargs)
 
     def create_data_no_batch(self):
-        return torch.rand(50, 10)
+        return torch.rand(50, 1)
 
     def create_data_single_batch(self):
-        return torch.rand(2, 50, 2)
+        return torch.rand(2, 3, 1)
 
     def create_data_double_batch(self):
-        return torch.rand(3, 2, 50, 2)
+        return torch.rand(3, 2, 50, 1)
+
+    def test_active_dims_list(self):
+        # this makes no sense for this kernel since d=1
+        pass
+
+    def test_active_dims_range(self):
+        # this makes no sense for this kernel since d=1
+        pass
 
     def test_subset_active_compute_downsampling_function(self):
         a = torch.tensor([0.1, 0.2]).view(2, 1)

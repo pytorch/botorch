@@ -118,7 +118,7 @@ class TestMultiTaskGP(BotorchTestCase):
             tkwargs = {"device": self.device, "dtype": dtype}
             intf = (
                 Normalize(
-                    d=2, bounds=bounds.to(**tkwargs), transform_on_set_train_data=True
+                    d=2, bounds=bounds.to(**tkwargs), transform_on_preprocess=True
                 )
                 if use_intf
                 else None
@@ -260,7 +260,7 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
             tkwargs = {"device": self.device, "dtype": dtype}
             intf = (
                 Normalize(
-                    d=2, bounds=bounds.to(**tkwargs), transform_on_set_train_data=True
+                    d=2, bounds=bounds.to(**tkwargs), transform_on_preprocess=True
                 )
                 if use_intf
                 else None

@@ -133,7 +133,9 @@ def get_acquisition_function(
             feas = torch.stack([c(Y) <= 0 for c in constraints], dim=-1).all(dim=-1)
             Y = Y[feas]
         obj = objective(Y)
-        partitioning = NondominatedPartitioning(num_outcomes=obj.shape[-1], Y=obj)
+        partitioning = NondominatedPartitioning(
+            num_outcomes=obj.shape[-1], Y=obj, alpha=kwargs.get("alpha", 0.0)
+        )
         return moo_monte_carlo.qExpectedHypervolumeImprovement(
             model=model,
             ref_point=ref_point,

@@ -1,6 +1,6 @@
 {
   "docs": {
-    "About": ["introduction", "design_philosophy", "botorch_and_ax"],
+    "About": ["introduction", "design_philosophy", "botorch_and_ax", "papers"],
     "General": ["getting_started"],
     "Basic Concepts": ["overview", "models", "posteriors", "acquisition", "optimization"],
     "Advanced Topics": ["batching", "objectives", "samplers"],

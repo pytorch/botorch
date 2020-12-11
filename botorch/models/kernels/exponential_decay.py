@@ -112,8 +112,11 @@ class ExponentialDecayKernel(Kernel):
         self.initialize(raw_offset=self.raw_offset_constraint.inverse_transform(value))
 
     def forward(self, x1: Tensor, x2: Tensor, **params) -> Tensor:
-        offset = self.offset.unsqueeze(-1)  # unsqueeze enables batch evaluation
-        power = self.power.unsqueeze(-1)  # unsqueeze enables batch evaluation
+        offset = self.offset
+        power = self.power
+        if not params.get("diag", False):
+            offset = offset.unsqueeze(-1)  # unsqueeze enables batch evaluation
+            power = power.unsqueeze(-1)  # unsqueeze enables batch evaluation
         x1_ = x1.div(self.lengthscale)
         x2_ = x2.div(self.lengthscale)
         diff = self.covar_dist(x1_, -x2_, **params)

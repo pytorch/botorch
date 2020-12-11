@@ -90,6 +90,7 @@ class TestPairwiseGP(BotorchTestCase):
                 model.covar_module.outputscale_prior, SmoothedBoxPrior
             )
             self.assertEqual(model.num_outputs, 1)
+            self.assertEqual(model.batch_shape, batch_shape)
 
             # test custom models
             custom_m = PairwiseGP(**model_kwargs, covar_module=LinearKernel())

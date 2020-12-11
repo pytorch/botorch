@@ -16,7 +16,6 @@ from botorch.acquisition.knowledge_gradient import (
     _get_value_function,
     qKnowledgeGradient,
 )
-from botorch.acquisition.monte_carlo import MCAcquisitionFunction
 from botorch.acquisition.utils import is_nonnegative
 from botorch.exceptions.warnings import BadInitialCandidatesWarning, SamplingWarning
 from botorch.models.model import Model
@@ -210,6 +209,7 @@ def gen_one_shot_kg_initial_conditions(
         model=acq_function.model,
         objective=acq_function.objective,
         sampler=acq_function.inner_sampler,
+        project=getattr(acq_function, "project", None),
     )
     from botorch.optim.optimize import optimize_acqf
 
@@ -279,8 +279,8 @@ def gen_value_function_initial_conditions(
 
     Returns:
         A `num_restarts x batch_shape x q x d` tensor that can be used as initial
-        conditions for `optimize_acqf()`. Here `batch_shape` is the
-        `_input_batch_shape` of value function model.
+        conditions for `optimize_acqf()`. Here `batch_shape` is the batch shape
+        of value function model.
 
     Example:
         >>> fant_X = torch.rand(5, 1, 2)
@@ -304,9 +304,8 @@ def gen_value_function_initial_conditions(
     value_function = _get_value_function(
         model=current_model,
         objective=acq_function.objective,
-        sampler=acq_function.sampler
-        if isinstance(acq_function, MCAcquisitionFunction)
-        else None,
+        sampler=getattr(acq_function, "sampler", None),
+        project=getattr(acq_function, "project", None),
     )
     from botorch.optim.optimize import optimize_acqf
 
@@ -325,7 +324,7 @@ def gen_value_function_initial_conditions(
         },
     )
 
-    batch_shape = acq_function.model._input_batch_shape
+    batch_shape = acq_function.model.batch_shape
     # sampling from the optimizers
     n_value = int((1 - frac_random) * raw_samples)  # number of non-random ICs
     if n_value > 0:

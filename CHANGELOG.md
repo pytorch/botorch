@@ -2,6 +2,45 @@
 
 The release log for BoTorch.
 
+
+## [0.3.3] - Dec 8, 2020
+
+Contextual Bayesian Optimization, Input Warping, TuRBO, sampling from polytopes.
+
+#### Compatibility
+* Require PyTorch >=1.7 (#614).
+* Require GPyTorch >=1.3 (#614).
+
+#### New Features
+* Models (LCE-A, LCE-M and SAC ) for Contextual Bayesian Optimziation (#581).
+   * Implements core models from:
+     [High-Dimensional Contextual Policy Search with Unknown Context Rewards using Bayesian Optimization](https://proceedings.neurips.cc/paper/2020/hash/faff959d885ec0ecf70741a846c34d1d-Abstract.html).
+      Q. Feng, B. Letham, H. Mao, E. Bakshy. NeurIPS 2020.
+    * See Ax for usage of these models.
+* Hit and run sampler for uniform sampling from a polytope (#592).
+* Input warping:
+  * Core functionality (#607).
+  * Kumaraswamy Distribution (#606).
+  * Tutorial (8f34871652042219c57b799669a679aab5eed7e3).
+* TuRBO-1 tutorial (#598).
+  * Implements the method from [Scalable Global Optimization via
+Local Bayesian Optimization](https://proceedings.neurips.cc/paper/2019/file/6c990b7aca7bc7058f5e98ea909e924b-Paper.pdf).
+    D. Eriksson, M. Pearce, J. Gardner, R. D. Turner, M. Poloczek. NeurIPS 2019.
+
+#### Bug fixes
+* Fix bounds of `HolderTable` synthetic function (#596).
+* Fix `device` issue in MOO tutorial (#621).
+
+#### Other changes
+* Add `train_inputs` option to `qMaxValueEntropy` (#593).
+* Enable gpytorch settings to override BoTorch defaults for `fast_pred_var` and `debug` (#595).
+* Rename `set_train_data_transform` -> `preprocess_transform` (#575).
+* Modify `_expand_bounds()` shape checks to work with >2-dim bounds (#604).
+* Add `batch_shape` property to models (#588).
+* Modify `qMultiFidelityKnowledgeGradient.evaluate()` to work with `project`, `expand` and `cost_aware_utility` (#594).
+* Add list of papers using BoTorch to website docs (#617).
+
+
 ## [0.3.2] - Oct 23, 2020
 
 Maintenance Release

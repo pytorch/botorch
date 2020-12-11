@@ -86,6 +86,7 @@ class TestGPyTorchModel(BotorchTestCase):
             # basic test
             model = SimpleGPyTorchModel(train_X, train_Y, octf)
             self.assertEqual(model.num_outputs, 1)
+            self.assertEqual(model.batch_shape, torch.Size())
             test_X = torch.rand(2, 1, **tkwargs)
             posterior = model.posterior(test_X)
             self.assertIsInstance(posterior, GPyTorchPosterior)
@@ -181,6 +182,7 @@ class TestBatchedMultiOutputGPyTorchModel(BotorchTestCase):
             # basic test
             model = SimpleBatchedMultiOutputGPyTorchModel(train_X, train_Y)
             self.assertEqual(model.num_outputs, 2)
+            self.assertEqual(model.batch_shape, torch.Size())
             test_X = torch.rand(2, 1, **tkwargs)
             posterior = model.posterior(test_X)
             self.assertIsInstance(posterior, GPyTorchPosterior)
@@ -257,6 +259,8 @@ class TestModelListGPyTorchModel(BotorchTestCase):
             m2 = SimpleGPyTorchModel(train_X2, train_Y2)
             model = SimpleModelListGPyTorchModel(m1, m2)
             self.assertEqual(model.num_outputs, 2)
+            with self.assertRaises(NotImplementedError):
+                model.batch_shape
             test_X = torch.rand(2, 1, **tkwargs)
             posterior = model.posterior(test_X)
             self.assertIsInstance(posterior, GPyTorchPosterior)

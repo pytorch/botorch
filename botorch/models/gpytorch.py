@@ -98,6 +98,18 @@ class GPyTorchModel(Model, ABC):
             )
 
     @property
+    def batch_shape(self) -> torch.Size:
+        r"""The batch shape of the model.
+
+        This is a batch shape from an I/O perspective, independent of the internal
+        representation of the model (as e.g. in BatchedMultiOutputGPyTorchModel).
+        For a model with `m` outputs, a `test_batch_shape x q x d`-shaped input `X`
+        to the `posterior` method returns a Posterior object over an output of
+        shape `broadcast(test_batch_shape, model.batch_shape) x q x m`.
+        """
+        return self.train_inputs[0].shape[:-2]
+
+    @property
     def num_outputs(self) -> int:
         r"""The number of outputs of the model."""
         return self._num_outputs
@@ -233,6 +245,18 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
         self._input_batch_shape, self._aug_batch_shape = self.get_batch_dimensions(
             train_X=train_X, train_Y=train_Y
         )
+
+    @property
+    def batch_shape(self) -> torch.Size:
+        r"""The batch shape of the model.
+
+        This is a batch shape from an I/O perspective, independent of the internal
+        representation of the model (as e.g. in BatchedMultiOutputGPyTorchModel).
+        For a model with `m` outputs, a `test_batch_shape x q x d`-shaped input `X`
+        to the `posterior` method returns a Posterior object over an output of
+        shape `broadcast(test_batch_shape, model.batch_shape) x q x m`.
+        """
+        return self._input_batch_shape
 
     def _transform_tensor_args(
         self, X: Tensor, Y: Tensor, Yvar: Optional[Tensor] = None
@@ -441,6 +465,19 @@ class ModelListGPyTorchModel(GPyTorchModel, ABC):
     This is meant to be used with a gpytorch ModelList wrapper for independent
     evaluation of submodels.
     """
+
+    @property
+    def batch_shape(self) -> torch.Size:
+        r"""The batch shape of the model.
+
+        This is a batch shape from an I/O perspective, independent of the internal
+        representation of the model (as e.g. in BatchedMultiOutputGPyTorchModel).
+        For a model with `m` outputs, a `test_batch_shape x q x d`-shaped input `X`
+        to the `posterior` method returns a Posterior object over an output of
+        shape `broadcast(test_batch_shape, model.batch_shape) x q x m`.
+        """
+        # TODO: Either check that batch shapes match across models, or broadcast them
+        raise NotImplementedError
 
     def posterior(
         self,

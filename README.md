@@ -50,8 +50,8 @@ Optimization simply use Ax.
 
 **Installation Requirements**
 - Python >= 3.7
-- PyTorch >= 1.6
-- gpytorch >= 1.2
+- PyTorch >= 1.7
+- gpytorch >= 1.3
 - scipy
 
 
@@ -161,18 +161,7 @@ If you use BoTorch, please cite the following paper:
 }
 ```
 
-If you use q-Expected Hypervolume Improvement, q-ParEGO, or analytic Expected Hypervolume Improvement with auto-differentiation, please also cite the following paper:
-> [S. Daulton, M. Balandat, and E. Bakshy. Differentiable Expected Hypervolume Improvement for Parallel Multi-Objective Bayesian Optimization. Advances in Neural Information Processing Systems 33, 2020.](https://arxiv.org/abs/2006.05078)
-
-```
-@inproceedings{daulton2020ehvi,
-  title={{Differentiable Expected Hypervolume Improvement for Parallel Multi-Objective Bayesian Optimization}},
-  author={Daulton, Samuel and Balandat, Maximilian and Bakshy, Eytan},
-  booktitle={Advances in Neural Information Processing Systems 33},
-  year={2020},
-  url = {https://arxiv.org/abs/2006.05078}
-}
-```
+See [here](https://botorch.org/docs/papers) for an incomplete selection of peer-reviewed papers that build off of BoTorch.
 
 
 ## Contributing

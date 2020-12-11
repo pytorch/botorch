@@ -190,11 +190,6 @@ class PairwiseGP(Model, GP):
             self.__deepcopy__ = dcp
             return new_model
 
-    @property
-    def num_outputs(self) -> int:
-        r"""The number of outputs of the model."""
-        return self._num_outputs
-
     def _has_no_data(self):
         r"""Return true if the model does not have both datapoints and comparisons"""
         return (
@@ -645,6 +640,23 @@ class PairwiseGP(Model, GP):
         return x
 
     # ============== public APIs ==============
+
+    @property
+    def num_outputs(self) -> int:
+        r"""The number of outputs of the model."""
+        return self._num_outputs
+
+    @property
+    def batch_shape(self) -> torch.Size:
+        r"""The batch shape of the model.
+
+        This is a batch shape from an I/O perspective, independent of the internal
+        representation of the model (as e.g. in BatchedMultiOutputGPyTorchModel).
+        For a model with `m` outputs, a `test_batch_shape x q x d`-shaped input `X`
+        to the `posterior` method returns a Posterior object over an output of
+        shape `broadcast(test_batch_shape, model.batch_shape) x q x m`.
+        """
+        return self.datapoints.shape[:-2]
 
     def set_train_data(
         self, datapoints: Tensor, comparisons: Tensor, update_model: bool = True

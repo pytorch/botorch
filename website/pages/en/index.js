@@ -153,16 +153,6 @@ candidate  # tensor([0.4887, 0.5063])
   url = {http://arxiv.org/abs/1910.06403}
 }
   `;
-  const ehvi_papertitle = `Differentiable Expected Hypervolume Improvement for Parallel Multi-Objective Bayesian Optimization`
-  const ehvi_paper_bibtex = `${pre}plaintext
-  @inproceedings{daulton2020ehvi,
-    title = {{Differentiable Expected Hypervolume Improvement for Parallel Multi-Objective Bayesian Optimization}},
-    author = {Daulton, Samuel and Balandat, Maximilian and Bakshy, Eytan},
-    booktitle = {Advances in Neural Information Processing Systems 33},
-    year = 2020,
-    url = {https://arxiv.org/abs/2006.05078}
-  }
-  `;
     //
     const QuickStart = () => (
       <div
@@ -236,8 +226,7 @@ candidate  # tensor([0.4887, 0.5063])
         <Container>
           <a href={`https://arxiv.org/abs/1910.06403`}>{papertitle}</a>
           <MarkdownBlock>{paper_bibtex}</MarkdownBlock>
-          <a href={`https://arxiv.org/abs/2006.05078`}>{ehvi_papertitle}</a>
-          <MarkdownBlock>{ehvi_paper_bibtex}</MarkdownBlock>
+          Check out some <a href={`${baseUrl}docs/papers`}>other papers using BoTorch</a>.
         </Container>
       </div>
     );
