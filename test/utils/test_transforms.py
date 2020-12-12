@@ -17,9 +17,10 @@ from botorch.utils.transforms import (
     standardize,
     t_batch_mode_transform,
     unnormalize,
+    _verify_output_shape,
 )
-from botorch.acquisition import AcquisitionFunction
-from botorch.utils.testing import MockModel
+from botorch.models.model import Model
+from botorch.utils.testing import MockModel, MockPosterior
 from torch import Tensor
 
 
@@ -74,24 +75,7 @@ class TestNormalizeAndUnnormalize(BotorchTestCase):
             self.assertTrue(torch.equal(X2, unnormalize(X2_normalized, bounds=bounds2)))
 
 
-class DummyAcqf(AcquisitionFunction):
-    def forward(self, X: Tensor) -> Tensor:
-        raise NotImplementedError
-
-    @t_batch_mode_transform(assert_output_shape=True)
-    def wrong_batch_shape_method(self, X: Tensor):
-        self.model._input_batch_shape = X.shape[:-2]
-        return X.mean(dim=(-1, -2)).repeat(2, *[1] * (X.dim() - 2))
-
-    @t_batch_mode_transform(assert_output_shape=True)
-    def correct_batch_shape_method(self, X: Tensor):
-        self.model._input_batch_shape = torch.Size([2]) + X.shape[:-2]
-        return X.mean(dim=(-1, -2)).repeat(2, *[1] * (X.dim() - 2))
-
-
 class BMIMTestClass(BotorchTestCase):
-    model = None
-
     @t_batch_mode_transform(assert_output_shape=False)
     def q_method(self, X: Tensor) -> None:
         return X
@@ -117,8 +101,32 @@ class BMIMTestClass(BotorchTestCase):
     def dummy_method(self, X: Tensor) -> Tensor:
         return X
 
+    @t_batch_mode_transform(assert_output_shape=True)
+    def broadcast_batch_shape_method(self, X: Tensor):
+        return X.mean(dim=(-1, -2)).repeat(2, *[1] * (X.dim() - 2))
+
+
+class NotSoAbstractBaseModel(Model):
+    def posterior(self, X, output_indices, observation_noise, **kwargs):
+        pass
+
 
 class TestBatchModeTransform(BotorchTestCase):
+    def test_verify_output_shape(self):
+        # output shape matching t-batch shape of X
+        self.assertTrue(
+            _verify_output_shape(cls=None, X=torch.ones(3, 2, 1), output=torch.ones(3))
+        )
+        # output shape is [], t-batch shape of X is [1]
+        X = torch.ones(1, 1, 1)
+        self.assertTrue(_verify_output_shape(cls=None, X=X, output=torch.tensor(1)))
+        # shape mismatch and cls does not have model attribute
+        cls = BMIMTestClass()
+        self.assertFalse(_verify_output_shape(cls=cls, X=X, output=X))
+        # shape mismatch and cls.model does not define batch shape
+        cls.model = NotSoAbstractBaseModel()
+        self.assertFalse(_verify_output_shape(cls=cls, X=X, output=X))
+
     def test_t_batch_mode_transform(self):
         c = BMIMTestClass()
         # test with q != 1
@@ -174,11 +182,12 @@ class TestBatchModeTransform(BotorchTestCase):
         Xout = c.correct_shape_method(torch.rand(1, 2))
         self.assertEqual(Xout.shape, torch.Size())
         # test with model batch shape
-        acqf = DummyAcqf(model=MockModel(None))
+        c.model = MockModel(MockPosterior(mean=X))
         with self.assertRaises(AssertionError):
-            acqf.wrong_batch_shape_method(X)
-        Xout = acqf.correct_batch_shape_method(X)
-        self.assertEqual(Xout.shape, acqf.model._input_batch_shape)
+            c.broadcast_batch_shape_method(X)
+        c.model = MockModel(MockPosterior(mean=X.repeat(2, *[1] * X.dim())))
+        Xout = c.broadcast_batch_shape_method(X)
+        self.assertEqual(Xout.shape, c.model.batch_shape)
 
 
 class TestConcatenatePendingPoints(BotorchTestCase):

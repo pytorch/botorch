@@ -124,6 +124,34 @@ def normalize_indices(indices: Optional[List[int]], d: int) -> Optional[List[int
     return normalized_indices
 
 
+def _verify_output_shape(cls: Any, X: Tensor, output: Tensor) -> bool:
+    r"""
+    Performs the output shape checks for `t_batch_mode_transform`. Output shape checks
+    help in catching the errors due to AcquisitionFunction arguments with erroneous
+    return shapes before these errors propagate further down the line.
+
+    This method checks that the `output` shape matches either the t-batch shape of X
+    or the `batch_shape` of `cls.model`.
+
+    Args:
+        cls: The AcquisitionFunction object being evaluated.
+        X: The `... x q x d`-dim input tensor with an explicit t-batch.
+        output: The return value of `cls.method(X, ...)`.
+
+    Returns:
+        True if `output` has the correct shape, False otherwise.
+    """
+    try:
+        return (
+            output.shape == X.shape[:-2]
+            or (output.shape == torch.Size() and X.shape[:-2] == torch.Size([1]))
+            or output.shape == cls.model.batch_shape
+        )
+    except (AttributeError, NotImplementedError):
+        # cls does not have model or cls.model does not define `batch_shape`
+        return False
+
+
 def t_batch_mode_transform(
     expected_q: Optional[int] = None,
     assert_output_shape: bool = True,
@@ -172,16 +200,8 @@ def t_batch_mode_transform(
                 )
             X = X if X.dim() > 2 else X.unsqueeze(0)
             output = method(cls, X, *args, **kwargs)
-            if (
-                assert_output_shape
-                and output.shape != X.shape[:-2]
-                and not (
-                    output.shape == torch.Size() and X.shape[:-2] == torch.Size([1])
-                )  # output of size 1 is typically squeezed
-                and (
-                    not hasattr(cls.model, "_input_batch_shape")
-                    or output.shape != cls.model._input_batch_shape
-                )  # in case of a batch model with broadcastable X
+            if assert_output_shape and not _verify_output_shape(
+                cls=cls, X=X, output=output
             ):
                 raise AssertionError(
                     "Expected the output shape to match either the batch shape of "
