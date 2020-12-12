@@ -7,8 +7,10 @@
 from typing import Any
 
 import torch
-from botorch.utils.testing import BotorchTestCase
+from botorch.models.model import Model
+from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 from botorch.utils.transforms import (
+    _verify_output_shape,
     concatenate_pending_points,
     match_batch_shape,
     normalize,
@@ -17,10 +19,7 @@ from botorch.utils.transforms import (
     standardize,
     t_batch_mode_transform,
     unnormalize,
-    _verify_output_shape,
 )
-from botorch.models.model import Model
-from botorch.utils.testing import MockModel, MockPosterior
 from torch import Tensor
 
 
@@ -115,17 +114,19 @@ class TestBatchModeTransform(BotorchTestCase):
     def test_verify_output_shape(self):
         # output shape matching t-batch shape of X
         self.assertTrue(
-            _verify_output_shape(cls=None, X=torch.ones(3, 2, 1), output=torch.ones(3))
+            _verify_output_shape(acqf=None, X=torch.ones(3, 2, 1), output=torch.ones(3))
         )
         # output shape is [], t-batch shape of X is [1]
         X = torch.ones(1, 1, 1)
-        self.assertTrue(_verify_output_shape(cls=None, X=X, output=torch.tensor(1)))
+        self.assertTrue(_verify_output_shape(acqf=None, X=X, output=torch.tensor(1)))
         # shape mismatch and cls does not have model attribute
         cls = BMIMTestClass()
-        self.assertFalse(_verify_output_shape(cls=cls, X=X, output=X))
+        with self.assertWarns(RuntimeWarning):
+            self.assertTrue(_verify_output_shape(acqf=cls, X=X, output=X))
         # shape mismatch and cls.model does not define batch shape
         cls.model = NotSoAbstractBaseModel()
-        self.assertFalse(_verify_output_shape(cls=cls, X=X, output=X))
+        with self.assertWarns(RuntimeWarning):
+            self.assertTrue(_verify_output_shape(acqf=cls, X=X, output=X))
 
     def test_t_batch_mode_transform(self):
         c = BMIMTestClass()
@@ -174,7 +175,7 @@ class TestBatchModeTransform(BotorchTestCase):
 
         # test assert_output_shape
         X = torch.rand(5, 1, 2)
-        with self.assertRaises(AssertionError):
+        with self.assertWarns(RuntimeWarning):
             c.wrong_shape_method(X)
         Xout = c.correct_shape_method(X)
         self.assertEqual(Xout.shape, X.shape[:-2])

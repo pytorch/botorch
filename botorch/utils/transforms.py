@@ -10,6 +10,7 @@ Some basic data transformation helpers.
 
 from __future__ import annotations
 
+import warnings
 from functools import wraps
 from typing import Any, Callable, List, Optional
 
@@ -124,19 +125,19 @@ def normalize_indices(indices: Optional[List[int]], d: int) -> Optional[List[int
     return normalized_indices
 
 
-def _verify_output_shape(cls: Any, X: Tensor, output: Tensor) -> bool:
+def _verify_output_shape(acqf: Any, X: Tensor, output: Tensor) -> bool:
     r"""
     Performs the output shape checks for `t_batch_mode_transform`. Output shape checks
     help in catching the errors due to AcquisitionFunction arguments with erroneous
     return shapes before these errors propagate further down the line.
 
     This method checks that the `output` shape matches either the t-batch shape of X
-    or the `batch_shape` of `cls.model`.
+    or the `batch_shape` of `acqf.model`.
 
     Args:
-        cls: The AcquisitionFunction object being evaluated.
+        acqf: The AcquisitionFunction object being evaluated.
         X: The `... x q x d`-dim input tensor with an explicit t-batch.
-        output: The return value of `cls.method(X, ...)`.
+        output: The return value of `acqf.method(X, ...)`.
 
     Returns:
         True if `output` has the correct shape, False otherwise.
@@ -145,11 +146,17 @@ def _verify_output_shape(cls: Any, X: Tensor, output: Tensor) -> bool:
         return (
             output.shape == X.shape[:-2]
             or (output.shape == torch.Size() and X.shape[:-2] == torch.Size([1]))
-            or output.shape == cls.model.batch_shape
+            or output.shape == acqf.model.batch_shape
         )
     except (AttributeError, NotImplementedError):
-        # cls does not have model or cls.model does not define `batch_shape`
-        return False
+        # acqf does not have model or acqf.model does not define `batch_shape`
+        warnings.warn(
+            "Output shape checks failed! Expected output shape to match t-batch shape"
+            f"of X, but got output with shape {output.shape} for X with shape {X.shape}."
+            "Make sure that this is the intended behavior!",
+            RuntimeWarning
+        )
+        return True
 
 
 def t_batch_mode_transform(
@@ -168,7 +175,7 @@ def t_batch_mode_transform(
             AssertionError if X's q-batch size does not equal expected_q.
         assert_output_shape: If `True`, this will raise an AssertionError if the
             output shape does not match either the t-batch shape of X,
-            or the `cls.model._input_batch_shape` for acquisition functions using
+            or the `acqf.model.batch_shape` for acquisition functions using
             batched models.
 
     Returns:
@@ -187,10 +194,12 @@ def t_batch_mode_transform(
 
     def decorator(method: Callable[[Any, Tensor], Any]) -> Callable[[Any, Tensor], Any]:
         @wraps(method)
-        def decorated(cls: Any, X: Tensor, *args: Any, **kwargs: Any) -> Any:
+        def decorated(
+            acqf: Any, X: Tensor, *args: Any, **kwargs: Any
+        ) -> Any:
             if X.dim() < 2:
                 raise ValueError(
-                    f"{type(cls).__name__} requires X to have at least 2 dimensions,"
+                    f"{type(acqf).__name__} requires X to have at least 2 dimensions,"
                     f" but received X with only {X.dim()} dimensions."
                 )
             elif expected_q is not None and X.shape[-2] != expected_q:
@@ -199,15 +208,17 @@ def t_batch_mode_transform(
                     f" got X with shape {X.shape}."
                 )
             X = X if X.dim() > 2 else X.unsqueeze(0)
-            output = method(cls, X, *args, **kwargs)
+            output = method(acqf, X, *args, **kwargs)
             if assert_output_shape and not _verify_output_shape(
-                cls=cls, X=X, output=output
+                acqf=acqf,
+                X=X,
+                output=output,
             ):
                 raise AssertionError(
-                    "Expected the output shape to match either the batch shape of "
-                    "X, or the `model._input_batch_shape` in the case of "
-                    "acquisition functions using batch models; but got output "
-                    f"with shape {output.shape} for X with shape {X.shape}."
+                    "Expected the output shape to match either the t-batch shape of "
+                    "X, or the `model.batch_shape` in the case of acquisition functions"
+                    f"using batch models; but got output with shape {output.shape}"
+                    f"for X with shape {X.shape}."
                 )
             return output
 

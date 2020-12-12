@@ -349,7 +349,7 @@ class TestQMultiFidelityKnowledgeGradient(BotorchTestCase):
                     patch_f.assert_called_once()
                     cargs, ckwargs = patch_f.call_args
                     self.assertEqual(ckwargs["X"].shape, torch.Size([b, 1, 1]))
-            val_exp = mock_util(X, mean.squeeze(-1).squeeze(-1) - current_value).mean(
+            val_exp = mock_util(X, mean.view(mean.shape[:-2]) - current_value).mean(
                 dim=0
             )
             self.assertTrue(torch.allclose(val, val_exp, atol=1e-4))

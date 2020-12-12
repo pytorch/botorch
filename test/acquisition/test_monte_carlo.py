@@ -761,7 +761,7 @@ class TestQUpperConfidenceBound(BotorchTestCase):
             acqf.set_X_pending(None)
             self.assertIsNone(acqf.X_pending)
             acqf.set_X_pending(X)
-            self.assertTrue((acqf.X_pending == X).all())
+            self.assertTrue(torch.equal(acqf.X_pending, X))
             res = acqf(X)
             X2 = torch.zeros(
                 1, 1, 1, device=self.device, dtype=dtype, requires_grad=True
