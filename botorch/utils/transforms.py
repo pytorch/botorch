@@ -152,9 +152,9 @@ def _verify_output_shape(acqf: Any, X: Tensor, output: Tensor) -> bool:
         # acqf does not have model or acqf.model does not define `batch_shape`
         warnings.warn(
             "Output shape checks failed! Expected output shape to match t-batch shape"
-            f"of X, but got output with shape {output.shape} for X with shape {X.shape}."
-            "Make sure that this is the intended behavior!",
-            RuntimeWarning
+            f"of X, but got output with shape {output.shape} for X with shape"
+            "{X.shape}. Make sure that this is the intended behavior!",
+            RuntimeWarning,
         )
         return True
 
@@ -194,9 +194,7 @@ def t_batch_mode_transform(
 
     def decorator(method: Callable[[Any, Tensor], Any]) -> Callable[[Any, Tensor], Any]:
         @wraps(method)
-        def decorated(
-            acqf: Any, X: Tensor, *args: Any, **kwargs: Any
-        ) -> Any:
+        def decorated(acqf: Any, X: Tensor, *args: Any, **kwargs: Any) -> Any:
             if X.dim() < 2:
                 raise ValueError(
                     f"{type(acqf).__name__} requires X to have at least 2 dimensions,"
