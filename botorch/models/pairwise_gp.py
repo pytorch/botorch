@@ -113,8 +113,8 @@ class PairwiseGP(Model, GP):
         self.dim = None
 
         # See set_train_data for additional compatibility variables.
-        # Not that the datapoints here are not transformed even if input_transform is not None
-        # to avoid double transformation during model fitting.
+        # Not that the datapoints here are not transformed even if input_transform
+        # is not None to avoid double transformation during model fitting.
         # self.transform_inputs is called in `forward`
         self.set_train_data(datapoints, comparisons, update_model=False)
 
@@ -716,7 +716,10 @@ class PairwiseGP(Model, GP):
                         expected_attr = getattr(t_input, attr, None)
                         found_attr = getattr(input_, attr, None)
                         if expected_attr != found_attr:
-                            msg = "Cannot modify {attr} of inputs (expected {e_attr}, found {f_attr})."
+                            msg = (
+                                "Cannot modify {attr} of inputs "
+                                "(expected {e_attr}, found {f_attr})."
+                            )
                             msg = msg.format(
                                 attr=attr, e_attr=expected_attr, f_attr=found_attr
                             )
@@ -732,12 +735,16 @@ class PairwiseGP(Model, GP):
                     expected_attr = getattr(self.train_targets, attr, None)
                     found_attr = getattr(comparisons, attr, None)
                     if expected_attr != found_attr:
-                        msg = "Cannot modify {attr} of targets (expected {e_attr}, found {f_attr})."
+                        msg = (
+                            "Cannot modify {attr} of targets "
+                            "(expected {e_attr}, found {f_attr})."
+                        )
                         msg = msg.format(
                             attr=attr, e_attr=expected_attr, f_attr=found_attr
                         )
                         raise RuntimeError(msg)
-            # convert to long so that it can be used as index and work with Tensor.scatter_
+            # convert to long so that it can be used as index and
+            # compatible with Tensor.scatter_
             self.comparisons = comparisons.long()
             # Compatibility variables with fit_gpytorch_*
             # alias for comparisons ("train_targets" here)
@@ -806,8 +813,9 @@ class PairwiseGP(Model, GP):
 
             transformed_dp = self.transform_inputs(datapoints)
 
-            # input_transform will be applied before calling `_update` inside set_train_data
+            # We pass in the untransformed datapoints into set_train_data
             # as we will be setting self.datapoints as the untransformed datapoints
+            # self.transform_inputs will be called inside before calling _update()
             self.set_train_data(datapoints, self.comparisons, update_model=True)
 
             # Take a newton step on the posterior MAP point to fill

@@ -148,7 +148,7 @@ class TestPairwiseGP(BotorchTestCase):
             self.assertEqual(posterior.mean.shape, expected_shape)
 
             # test input_transform
-            # even with transformation, the stored datapoints should be the untransformed one
+            # the untransfomed one should be stored
             normalize_tf = Normalize(d=2, bounds=torch.tensor([[0, 0], [0.5, 1.5]]))
             model = PairwiseGP(**model_kwargs, input_transform=normalize_tf)
             self.assertTrue(torch.all(model.datapoints == train_X))
