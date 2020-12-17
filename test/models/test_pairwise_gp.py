@@ -156,10 +156,14 @@ class TestPairwiseGP(BotorchTestCase):
             # test set_train_data strict mode
             model = PairwiseGP(**model_kwargs)
             changed_train_X = train_X.unsqueeze(0)
-            changed_train_comp = train_X.unsqueeze(0)
+            changed_train_comp = train_comp.unsqueeze(0)
             # expect to raise error when set data to something different
             with self.assertRaises(RuntimeError):
                 model.set_train_data(changed_train_X, changed_train_comp, strict=True)
+
+            # the same datapoints but changed comparison will also raise error
+            with self.assertRaises(RuntimeError):
+                model.set_train_data(train_X, changed_train_comp, strict=True)
 
     def test_condition_on_observations(self):
         for batch_shape, dtype in itertools.product(
