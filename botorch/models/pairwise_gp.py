@@ -966,7 +966,7 @@ class PairwiseLaplaceMarginalLogLikelihood(MarginalLogLikelihood):
         evidence = evidence.sum()
 
         # Add log probs of priors on the (functions of) parameters
-        for _, prior, closure, _ in self.named_priors():
-            evidence = evidence.add(prior.log_prob(closure()).sum())
+        for _, module, prior, closure, _ in self.named_priors():
+            evidence = evidence.add(prior.log_prob(closure(module)).sum())
 
         return evidence

@@ -139,8 +139,8 @@ class LinearTruncatedFidelityKernel(Kernel):
             self.register_prior(
                 "power_prior",
                 power_prior,
-                lambda: self.power,
-                lambda v: self._set_power(v),
+                lambda m: m.power,
+                lambda m, v: m._set_power(v),
             )
 
         if self.active_dims is not None:

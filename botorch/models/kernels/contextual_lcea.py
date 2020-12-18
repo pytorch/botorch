@@ -118,8 +118,8 @@ class LCEAKernel(Kernel):
         self.register_prior(
             "outputscale_list_prior",
             GammaPrior(2.0, 15.0),
-            lambda: self.outputscale_list,
-            lambda v: self._set_outputscale_list(v),
+            lambda m: m.outputscale_list,
+            lambda m, v: m._set_outputscale_list(v),
         )
         self.register_constraint("raw_outputscale_list", Positive())
 
