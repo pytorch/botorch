@@ -54,6 +54,11 @@ Multitask GP Models
 .. automodule:: botorch.models.multitask
     :members:
 
+Higher Order GP Models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.higher_order_gp
+    :members:
+
 Pairwise GP Models
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.models.pairwise_gp

@@ -15,10 +15,10 @@ from botorch.models.gp_regression import (
     SingleTaskGP,
 )
 from botorch.models.gp_regression_fidelity import SingleTaskMultiFidelityGP
+from botorch.models.higher_order_gp import HigherOrderGP
 from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.models.multitask import FixedNoiseMultiTaskGP, MultiTaskGP
 from botorch.models.pairwise_gp import PairwiseGP, PairwiseLaplaceMarginalLogLikelihood
-
 
 __all__ = [
     "AffineDeterministicModel",
@@ -27,6 +27,7 @@ __all__ = [
     "FixedNoiseMultiTaskGP",
     "GenericDeterministicModel",
     "HeteroskedasticSingleTaskGP",
+    "HigherOrderGP",
     "ModelListGP",
     "MultiTaskGP",
     "PairwiseGP",
