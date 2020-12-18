@@ -632,15 +632,15 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
             self.register_prior(
                 "concentration0_prior",
                 concentration0_prior,
-                lambda: self.concentration0,
-                lambda v: self._set_concentration(i=0, value=v),
+                lambda m: m.concentration0,
+                lambda m, v: m._set_concentration(i=0, value=v),
             )
         if concentration1_prior is not None:
             self.register_prior(
                 "concentration1_prior",
                 concentration1_prior,
-                lambda: self.concentration1,
-                lambda v: self._set_concentration(i=1, value=v),
+                lambda m: m.concentration1,
+                lambda m, v: m._set_concentration(i=1, value=v),
             )
         for i in (0, 1):
             p_name = f"concentration{i}"

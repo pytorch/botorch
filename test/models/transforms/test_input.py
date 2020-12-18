@@ -490,7 +490,7 @@ class TestInputTransforms(BotorchTestCase):
                         concentration0_prior=prior0,
                         concentration1_prior=prior1,
                     )
-                    for i, (name, p, _, _) in enumerate(warp_tf.named_priors()):
+                    for i, (name, module, p, _, _) in enumerate(warp_tf.named_priors()):
                         self.assertEqual(name, f"concentration{i}_prior")
                         self.assertIsInstance(p, LogNormalPrior)
                         self.assertEqual(p.base_dist.scale, 0.75 if i == 0 else 0.5)
