@@ -27,6 +27,7 @@ from copy import deepcopy
 from math import log
 from typing import Any, Callable, Optional
 
+import numpy as np
 import torch
 from botorch.acquisition.cost_aware import CostAwareUtility, InverseCostWeightedUtility
 from botorch.acquisition.monte_carlo import MCAcquisitionFunction
@@ -37,6 +38,7 @@ from botorch.sampling.samplers import SobolQMCNormalSampler
 from botorch.utils.transforms import match_batch_shape, t_batch_mode_transform
 from gpytorch.utils.cholesky import psd_safe_cholesky
 from scipy.optimize import brentq
+from scipy.stats import norm
 from torch import Tensor
 
 
@@ -518,10 +520,10 @@ def _sample_max_value_Gumbel(
     quantiles = torch.zeros(num_fantasies, 3, device=device, dtype=dtype)
     for i in range(num_fantasies):
         lo_, hi_ = lo[i], hi[i]
-        normal = torch.distributions.normal.Normal(mu[:, i], sigma[:, i])
+        N = norm(mu[:, i].cpu().numpy(), sigma[:, i].cpu().numpy())
         quantiles[i, :] = torch.tensor(
             [
-                brentq(lambda y: normal.cdf(y).log().sum().exp() - p, lo_, hi_)
+                brentq(lambda y: np.exp(np.sum(N.logcdf(y))) - p, lo_, hi_)
                 for p in [0.25, 0.50, 0.75]
             ]
         )
