@@ -1560,15 +1560,332 @@ float),</p></li>
 <dd></dd></dl>
 </dd></dl>
 </div>
+<div class="section" id="module-botorch.models.higher_order_gp">
+<span id="higher-order-gp-models"></span><h3>Higher Order GP Models<a class="headerlink" href="#module-botorch.models.higher_order_gp" title="Permalink to this headline">¶</a></h3>
+<p>References</p>
+<dl class="citation">
+<dt class="label" id="zhe2019hogp"><span class="brackets"><a class="fn-backref" href="#id4">Zhe2019hogp</a></span></dt>
+<dd><p>S. Zhe, W. Xing, and R. M. Kirby. Scalable high-order gaussian process regression.
+Proceedings of Machine Learning Research, volume 89, Apr 2019.</p>
+</dd>
+<dt class="label" id="doucet2010sampl"><span class="brackets"><a class="fn-backref" href="#id3">Doucet2010sampl</a></span></dt>
+<dd><p>A. Doucet. A Note on Efficient Conditional Simulation of Gaussian Distributions.
+<a class="reference external" href="http://www.stats.ox.ac.uk/~doucet/doucet_simulationconditionalgaussian.pdf">http://www.stats.ox.ac.uk/~doucet/doucet_simulationconditionalgaussian.pdf</a>,
+Apr 2010.</p>
+</dd>
+</dl>
+<dl class="py class">
+<dt id="botorch.models.higher_order_gp.FlattenedStandardize">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.higher_order_gp.</code><code class="sig-name descname">FlattenedStandardize</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">output_shape</span></em>, <em class="sig-param"><span class="n">batch_shape</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">min_stdv</span><span class="o">=</span><span class="default_value">1e-08</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/higher_order_gp.html#FlattenedStandardize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.higher_order_gp.FlattenedStandardize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.outcome.Standardize" title="botorch.models.transforms.outcome.Standardize"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.transforms.outcome.Standardize</span></code></a></p>
+<p>Standardize outcomes in a structured multi-output settings by reshaping the
+batched output dimensions to be a vector. Specificially, an output dimension
+of [a x b x c] will be squeezed to be a vector of [a * b * c].</p>
+<p>Standardize outcomes (zero mean, unit variance).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>m</strong> – The output dimension.</p></li>
+<li><p><strong>outputs</strong> – Which of the outputs to standardize. If omitted, all
+outputs will be standardized.</p></li>
+<li><p><strong>batch_shape</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code>]) – The batch_shape of the training targets.</p></li>
+<li><p><strong>min_stddv</strong> – The minimum standard deviation for which to perform
+standardization (if lower, only de-mean the data).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="botorch.models.higher_order_gp.FlattenedStandardize.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">Y</span></em>, <em class="sig-param"><span class="n">Yvar</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/higher_order_gp.html#FlattenedStandardize.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.higher_order_gp.FlattenedStandardize.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Standardize outcomes.</p>
+<p>If the module is in train mode, this updates the module state (i.e. the
+mean/std normalizing constants). If the module is in eval mode, simply
+applies the normalization using the module state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x m</cite>-dim tensor of training targets.</p></li>
+<li><p><strong>Yvar</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>batch_shape x n x m</cite>-dim tensor of observation noises
+associated with the training targets (if applicable).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>The transformed outcome observations.</p></li>
+<li><p>The transformed observation noise (if applicable).</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>A two-tuple with the transformed outcomes</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.models.higher_order_gp.FlattenedStandardize.untransform">
+<code class="sig-name descname">untransform</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">Y</span></em>, <em class="sig-param"><span class="n">Yvar</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/higher_order_gp.html#FlattenedStandardize.untransform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.higher_order_gp.FlattenedStandardize.untransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Un-standardize outcomes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x m</cite>-dim tensor of standardized targets.</p></li>
+<li><p><strong>Yvar</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>batch_shape x n x m</cite>-dim tensor of standardized observation
+noises associated with the targets (if applicable).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>The un-standardized outcome observations.</p></li>
+<li><p>The un-standardized observation noise (if applicable).</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>A two-tuple with the un-standardized outcomes</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.models.higher_order_gp.FlattenedStandardize.untransform_posterior">
+<code class="sig-name descname">untransform_posterior</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">posterior</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/higher_order_gp.html#FlattenedStandardize.untransform_posterior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.higher_order_gp.FlattenedStandardize.untransform_posterior" title="Permalink to this definition">¶</a></dt>
+<dd><p>Un-standardize the posterior.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>posterior</strong> (<a class="reference internal" href="#botorch.models.higher_order_gp.HigherOrderGPPosterior" title="botorch.models.higher_order_gp.HigherOrderGPPosterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">HigherOrderGPPosterior</span></code></a>) – A posterior in the standardized space.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="posteriors.html#botorch.posteriors.transformed.TransformedPosterior" title="botorch.posteriors.transformed.TransformedPosterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransformedPosterior</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The un-standardized posterior. If the input posterior is a MVN,
+the transformed posterior is again an MVN.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt id="botorch.models.higher_order_gp.FlattenedStandardize.training">
+<code class="sig-name descname">training</code><em class="property">: bool</em><a class="headerlink" href="#botorch.models.higher_order_gp.FlattenedStandardize.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt id="botorch.models.higher_order_gp.HigherOrderGPPosterior">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.higher_order_gp.</code><code class="sig-name descname">HigherOrderGPPosterior</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mvn</span></em>, <em class="sig-param"><span class="n">joint_covariance_matrix</span></em>, <em class="sig-param"><span class="n">train_train_covar</span></em>, <em class="sig-param"><span class="n">test_train_covar</span></em>, <em class="sig-param"><span class="n">train_targets</span></em>, <em class="sig-param"><span class="n">output_shape</span></em>, <em class="sig-param"><span class="n">num_outputs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/higher_order_gp.html#HigherOrderGPPosterior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.higher_order_gp.HigherOrderGPPosterior" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.posteriors.gpytorch.GPyTorchPosterior</span></code></a></p>
+<p>Posterior class for a Higher order Gaussian process model [Zhe2019hogp]. Extends the
+standard GPyTorch posterior class by overwriting the rsample method. The posterior
+variance is handled internally by the HigherOrderGP model.
+HOGP is a tensorized GP model so the posterior covariance grows to be extremely
+large, but is highly structured, which means that we can exploit Kronecker
+identities to sample from the posterior using Matheron’s rule as described in
+<a class="reference internal" href="#doucet2010sampl" id="id3"><span>[Doucet2010sampl]</span></a>. In general, this posterior should ONLY be used for HOGP models
+that have highly structured covariances. It should also only be used internally when
+called from the HigherOrderGP.posterior(…) method.</p>
+<p>A Posterior for HigherOrderGP models.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mvn</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">MultivariateNormal</span></code>) – Posterior multivariate normal distribution</p></li>
+<li><p><strong>joint_covariance_matrix</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">LazyTensor</span></code>) – Joint test train covariance matrix over the entire
+tensor</p></li>
+<li><p><strong>train_train_covar</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">LazyTensor</span></code>) – covariance matrix of train points in the data space</p></li>
+<li><p><strong>test_train_covar</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">LazyTensor</span></code>) – covariance matrix of test x train points in the data space</p></li>
+<li><p><strong>train_targets</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – training responses vectorized</p></li>
+<li><p><strong>output_shape</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code>) – shape output training responses</p></li>
+<li><p><strong>num_outputs</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – batch shaping of model</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="botorch.models.higher_order_gp.HigherOrderGPPosterior.event_shape">
+<em class="property">property </em><code class="sig-name descname">event_shape</code><a class="headerlink" href="#botorch.models.higher_order_gp.HigherOrderGPPosterior.event_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>The event shape (i.e. the shape of a single sample) of the posterior.</p>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.models.higher_order_gp.HigherOrderGPPosterior.rsample">
+<code class="sig-name descname">rsample</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sample_shape</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">base_samples</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/higher_order_gp.html#HigherOrderGPPosterior.rsample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.higher_order_gp.HigherOrderGPPosterior.rsample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sample from the posterior (with gradients).</p>
+<p>As the posterior covariance is difficult to draw from in this model,
+we implement Matheron’s rule as described in [Doucet2010sampl]. This may not
+work entirely correctly for deterministic base samples unless base samples
+are provided that are of shape <cite>n + 2 * n_train</cite> because the sampling method
+draws <cite>2 * n_train</cite> samples as well as the standard <cite>n</cite>.
+samples.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sample_shape</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code>]) – A <cite>torch.Size</cite> object specifying the sample shape. To
+draw <cite>n</cite> samples, set to <cite>torch.Size([n])</cite>. To draw <cite>b</cite> batches
+of <cite>n</cite> samples each, set to <cite>torch.Size([b, n])</cite>.</p></li>
+<li><p><strong>base_samples</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – An (optional) Tensor of <cite>N(0, I)</cite> base samples of
+appropriate dimension, typically obtained from a <cite>Sampler</cite>.
+This is used for deterministic optimization.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>sample_shape x event_shape</cite>-dim Tensor of samples from the posterior.</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt id="botorch.models.higher_order_gp.HigherOrderGP">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.models.higher_order_gp.</code><code class="sig-name descname">HigherOrderGP</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">train_X</span></em>, <em class="sig-param"><span class="n">train_Y</span></em>, <em class="sig-param"><span class="n">likelihood</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">covar_modules</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">num_latent_dims</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">learn_latent_pars</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">first_dim_is_batch</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">latent_init</span><span class="o">=</span><span class="default_value">'default'</span></em>, <em class="sig-param"><span class="n">outcome_transform</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">input_transform</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/higher_order_gp.html#HigherOrderGP"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.higher_order_gp.HigherOrderGP" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel" title="botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">gpytorch.models.exact_gp.ExactGP</span></code></p>
+<p>A Higher order Gaussian process model (HOGP) (predictions are matrices/tensors) as
+described in <a class="reference internal" href="#zhe2019hogp" id="id4"><span>[Zhe2019hogp]</span></a>.</p>
+<p>A HigherOrderGP model for high-dim output regression.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>train_X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – Training inputs</p></li>
+<li><p><strong>train_Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – Training targets</p></li>
+<li><p><strong>likelihood</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Likelihood</span></code>]) – Gaussian likelihood for the model.</p></li>
+<li><p><strong>covar_modules</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Kernel</span></code>]]) – List of kernels for each output structure.</p></li>
+<li><p><strong>num_latent_dims</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]) – Sizes for the latent dimensions.</p></li>
+<li><p><strong>learn_latent_pars</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If true, learn the latent parameters.</p></li>
+<li><p><strong>first_dim_is_batch</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If true, the first dimension of train_Y should be
+regarded as a batch dimension (e.g. predicting batches of tensors).</p></li>
+<li><p><strong>latent_init</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – [default or gp] how to initialize the latent parameters.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="botorch.models.higher_order_gp.HigherOrderGP.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/higher_order_gp.html#HigherOrderGP.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.higher_order_gp.HigherOrderGP.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">MultivariateNormal</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.models.higher_order_gp.HigherOrderGP.get_fantasy_model">
+<code class="sig-name descname">get_fantasy_model</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inputs</span></em>, <em class="sig-param"><span class="n">targets</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/higher_order_gp.html#HigherOrderGP.get_fantasy_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.higher_order_gp.HigherOrderGP.get_fantasy_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a new GP model that incorporates the specified inputs and targets as new training data.</p>
+<p>Using this method is more efficient than updating with <cite>set_train_data</cite> when the number of inputs is relatively
+small, because any computed test-time caches will be updated in linear time rather than computed from scratch.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If <cite>targets</cite> is a batch (e.g. <cite>b x m</cite>), then the GP returned from this method will be a batch mode GP.
+If <cite>inputs</cite> is of the same (or lesser) dimension as <cite>targets</cite>, then it is assumed that the fantasy points
+are the same for each target batch.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inputs</strong> (<em>torch.Tensor</em>) – (<cite>b1 x … x bk x m x d</cite> or <cite>f x b1 x … x bk x m x d</cite>) Locations of fantasy
+observations.</p></li>
+<li><p><strong>targets</strong> (<em>torch.Tensor</em>) – (<cite>b1 x … x bk x m</cite> or <cite>f x b1 x … x bk x m</cite>) Labels of fantasy observations.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>An <cite>ExactGP</cite> model with <cite>n + m</cite> training examples, where the <cite>m</cite> fantasy examples have been added
+and all test-time caches have been updated.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>ExactGP</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.models.higher_order_gp.HigherOrderGP.condition_on_observations">
+<code class="sig-name descname">condition_on_observations</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="n">Y</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/higher_order_gp.html#HigherOrderGP.condition_on_observations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.higher_order_gp.HigherOrderGP.condition_on_observations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Condition the model on new observations.
+:type X: <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>
+:param X: A <cite>batch_shape x n’ x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of
+:param the feature space:
+:param <cite>m</cite> is the number of points per batch:
+:param and:
+:param <cite>batch_shape</cite> is the batch shape (must be compatible with the:
+:param batch shape of the model).:
+:type Y: <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>
+:param Y: A <cite>batch_shape’ x n’ x m_d</cite>-dim Tensor, where <cite>m_d</cite> is the shaping
+:param of the model outputs:
+:param <cite>n’</cite> is the number of points per batch:
+:param and:
+:param <cite>batch_shape’</cite> is the batch shape of the observations.:
+:param <cite>batch_shape’</cite> must be broadcastable to <cite>batch_shape</cite> using:
+:param standard broadcasting semantics. If <cite>Y</cite> has fewer batch dimensions:
+:param than <cite>X</cite>:
+:param its is assumed that the missing batch dimensions are:
+:param the same for all <cite>Y</cite>.:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#botorch.models.higher_order_gp.HigherOrderGP" title="botorch.models.higher_order_gp.HigherOrderGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">HigherOrderGP</span></code></a></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>BatchedMultiOutputGPyTorchModel</cite> object of the same type with
+<cite>n + n’</cite> training examples, representing the original model
+conditioned on the new observations <cite>(X, Y)</cite> (and possibly noise
+observations passed in via kwargs).</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.models.higher_order_gp.HigherOrderGP.posterior">
+<code class="sig-name descname">posterior</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="n">output_indices</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">observation_noise</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/higher_order_gp.html#HigherOrderGP.posterior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.higher_order_gp.HigherOrderGP.posterior" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the posterior over model outputs at the provided points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>(batch_shape) x q x d</cite>-dim Tensor, where <cite>d</cite> is the dimension
+of the feature space and <cite>q</cite> is the number of points considered
+jointly.</p></li>
+<li><p><strong>output_indices</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]) – A list of indices, corresponding to the outputs over
+which to compute the posterior (if the model is multi-output).
+Can be used to speed up computation if only a subset of the
+model’s outputs are required for optimization. If omitted,
+computes the posterior over all model outputs.</p></li>
+<li><p><strong>observation_noise</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – If True, add the observation noise from the
+likelihood to the posterior. If a Tensor, use it directly as the
+observation noise (must be of shape <cite>(batch_shape) x q x m</cite>).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">GPyTorchPosterior</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>GPyTorchPosterior</cite> object, representing <cite>batch_shape</cite> joint
+distributions over <cite>q</cite> points and the outputs selected by
+<cite>output_indices</cite> each. Includes observation noise if specified.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.models.higher_order_gp.HigherOrderGP.make_posterior_variances">
+<code class="sig-name descname">make_posterior_variances</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">joint_covariance_matrix</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/higher_order_gp.html#HigherOrderGP.make_posterior_variances"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.higher_order_gp.HigherOrderGP.make_posterior_variances" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the posterior variances given the data points X. As currently
+implemented, it computes another forwards call with the stacked data to get out
+the joint covariance across all data points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+</div>
 <div class="section" id="module-botorch.models.pairwise_gp">
 <span id="pairwise-gp-models"></span><h3>Pairwise GP Models<a class="headerlink" href="#module-botorch.models.pairwise_gp" title="Permalink to this headline">¶</a></h3>
 <p>Preference Learning with Gaussian Process</p>
 <dl class="citation">
-<dt class="label" id="chu2005preference"><span class="brackets">Chu2005preference</span><span class="fn-backref">(<a href="#id3">1</a>,<a href="#id5">2</a>,<a href="#id6">3</a>)</span></dt>
+<dt class="label" id="chu2005preference"><span class="brackets">Chu2005preference</span><span class="fn-backref">(<a href="#id5">1</a>,<a href="#id7">2</a>,<a href="#id8">3</a>)</span></dt>
 <dd><p>Wei Chu, and Zoubin Ghahramani. Preference learning with Gaussian processes.
 Proceedings of the 22nd international conference on Machine learning. 2005.</p>
 </dd>
-<dt class="label" id="brochu2010tutorial"><span class="brackets"><a class="fn-backref" href="#id4">Brochu2010tutorial</a></span></dt>
+<dt class="label" id="brochu2010tutorial"><span class="brackets"><a class="fn-backref" href="#id6">Brochu2010tutorial</a></span></dt>
 <dd><p>Eric Brochu, Vlad M. Cora, and Nando De Freitas.
 A tutorial on Bayesian optimization of expensive cost functions,
 with application to active user modeling and hierarchical reinforcement learning.
@@ -1580,9 +1897,9 @@ arXiv preprint arXiv:1012.2599 (2010).</p>
 <em class="property">class </em><code class="sig-prename descclassname">botorch.models.pairwise_gp.</code><code class="sig-name descname">PairwiseGP</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">datapoints</span></em>, <em class="sig-param"><span class="n">comparisons</span></em>, <em class="sig-param"><span class="n">covar_module</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/pairwise_gp.html#PairwiseGP"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseGP" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.model.Model</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">gpytorch.models.gp.GP</span></code></p>
 <p>Probit GP for preference learning with Laplace approximation</p>
-<p>Implementation is based on <a class="reference internal" href="#chu2005preference" id="id3"><span>[Chu2005preference]</span></a>.
-Also see <a class="reference internal" href="#brochu2010tutorial" id="id4"><span>[Brochu2010tutorial]</span></a> for additional reference.</p>
-<p>Note that in <a class="reference internal" href="#chu2005preference" id="id5"><span>[Chu2005preference]</span></a> the likelihood of a pairwise comparison
+<p>Implementation is based on <a class="reference internal" href="#chu2005preference" id="id5"><span>[Chu2005preference]</span></a>.
+Also see <a class="reference internal" href="#brochu2010tutorial" id="id6"><span>[Brochu2010tutorial]</span></a> for additional reference.</p>
+<p>Note that in <a class="reference internal" href="#chu2005preference" id="id7"><span>[Chu2005preference]</span></a> the likelihood of a pairwise comparison
 is <span class="math notranslate nohighlight">\(\left(\frac{f(x_1) - f(x_2)}{\sqrt{2}\sigma}\right)\)</span>, i.e. a scale is
 used in the denominator. To maintain consistency with usage of kernels
 elsewhere in botorch, we instead do not include <span class="math notranslate nohighlight">\(\sigma\)</span> in the code
@@ -1720,7 +2037,7 @@ original model conditioned on the new observations <cite>(X, Y)</cite>.</p>
 <em class="property">class </em><code class="sig-prename descclassname">botorch.models.pairwise_gp.</code><code class="sig-name descname">PairwiseLaplaceMarginalLogLikelihood</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/pairwise_gp.html#PairwiseLaplaceMarginalLogLikelihood"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseLaplaceMarginalLogLikelihood" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">gpytorch.mlls.marginal_log_likelihood.MarginalLogLikelihood</span></code></p>
 <p>Laplace-approximated marginal log likelihood/evidence for PairwiseGP</p>
-<p>See (12) from <a class="reference internal" href="#chu2005preference" id="id6"><span>[Chu2005preference]</span></a>.</p>
+<p>See (12) from <a class="reference internal" href="#chu2005preference" id="id8"><span>[Chu2005preference]</span></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>model</strong> (<a class="reference internal" href="#botorch.models.pairwise_gp.PairwiseGP" title="botorch.models.pairwise_gp.PairwiseGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">PairwiseGP</span></code></a>) – A model using laplace approximation (currently only supports

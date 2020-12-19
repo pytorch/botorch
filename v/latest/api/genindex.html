@@ -386,6 +386,13 @@
 </li>
 </ul></li>
 <li>
+    botorch.models.higher_order_gp
+
+      <ul>
+<li><a href="models.html#module-botorch.models.higher_order_gp">module</a>
+</li>
+</ul></li>
+<li>
     botorch.models.kernels.contextual_lcea
 
       <ul>
@@ -796,6 +803,8 @@
 </li>
 <li><a href="models.html#botorch.models.gpytorch.ModelListGPyTorchModel.condition_on_observations">(botorch.models.gpytorch.ModelListGPyTorchModel method)</a>
 </li>
+<li><a href="models.html#botorch.models.higher_order_gp.HigherOrderGP.condition_on_observations">(botorch.models.higher_order_gp.HigherOrderGP method)</a>
+</li>
 <li><a href="models.html#botorch.models.model.Model.condition_on_observations">(botorch.models.model.Model method)</a>
 </li>
 <li><a href="models.html#botorch.models.model_list_gp_regression.ModelListGP.condition_on_observations">(botorch.models.model_list_gp_regression.ModelListGP method)</a>
@@ -1079,8 +1088,10 @@
 </ul></li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
-<li><a href="posteriors.html#botorch.posteriors.deterministic.DeterministicPosterior.event_shape">event_shape() (botorch.posteriors.deterministic.DeterministicPosterior property)</a>
+<li><a href="models.html#botorch.models.higher_order_gp.HigherOrderGPPosterior.event_shape">event_shape() (botorch.models.higher_order_gp.HigherOrderGPPosterior property)</a>
 <ul>
+<li><a href="posteriors.html#botorch.posteriors.deterministic.DeterministicPosterior.event_shape">(botorch.posteriors.deterministic.DeterministicPosterior property)</a>
+</li>
 <li><a href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior.event_shape">(botorch.posteriors.gpytorch.GPyTorchPosterior property)</a>
 </li>
 <li><a href="posteriors.html#botorch.posteriors.posterior.Posterior.event_shape">(botorch.posteriors.posterior.Posterior property)</a>
@@ -1145,6 +1156,8 @@
 <li><a href="models.html#botorch.models.gp_regression_fidelity.FixedNoiseMultiFidelityGP">FixedNoiseMultiFidelityGP (class in botorch.models.gp_regression_fidelity)</a>
 </li>
 <li><a href="models.html#botorch.models.multitask.FixedNoiseMultiTaskGP">FixedNoiseMultiTaskGP (class in botorch.models.multitask)</a>
+</li>
+<li><a href="models.html#botorch.models.higher_order_gp.FlattenedStandardize">FlattenedStandardize (class in botorch.models.higher_order_gp)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction.forward">forward() (botorch.acquisition.acquisition.AcquisitionFunction method)</a>
 <ul>
@@ -1254,6 +1267,10 @@
 </li>
 <li><a href="models.html#botorch.models.gp_regression.SingleTaskGP.forward">(botorch.models.gp_regression.SingleTaskGP method)</a>
 </li>
+<li><a href="models.html#botorch.models.higher_order_gp.FlattenedStandardize.forward">(botorch.models.higher_order_gp.FlattenedStandardize method)</a>
+</li>
+<li><a href="models.html#botorch.models.higher_order_gp.HigherOrderGP.forward">(botorch.models.higher_order_gp.HigherOrderGP method)</a>
+</li>
 <li><a href="models.html#botorch.models.multitask.MultiTaskGP.forward">(botorch.models.multitask.MultiTaskGP method)</a>
 </li>
 <li><a href="models.html#botorch.models.pairwise_gp.PairwiseGP.forward">(botorch.models.pairwise_gp.PairwiseGP method)</a>
@@ -1328,10 +1345,10 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.utils.get_acquisition_function">get_acquisition_function() (in module botorch.acquisition.utils)</a>
 </li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="models.html#botorch.models.multitask.MultiTaskGP.get_all_tasks">get_all_tasks() (botorch.models.multitask.MultiTaskGP class method)</a>
 </li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="acquisition.html#botorch.acquisition.acquisition.OneShotAcquisitionFunction.get_augmented_q_batch_size">get_augmented_q_batch_size() (botorch.acquisition.acquisition.OneShotAcquisitionFunction method)</a>
 <ul>
 <li><a href="acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient.get_augmented_q_batch_size">(botorch.acquisition.knowledge_gradient.qKnowledgeGradient method)</a>
@@ -1342,6 +1359,8 @@
 <li><a href="generation.html#botorch.generation.gen.get_best_candidates">get_best_candidates() (in module botorch.generation.gen)</a>
 </li>
 <li><a href="utils.html#botorch.utils.multi_objective.scalarization.get_chebyshev_scalarization">get_chebyshev_scalarization() (in module botorch.utils.multi_objective.scalarization)</a>
+</li>
+<li><a href="models.html#botorch.models.higher_order_gp.HigherOrderGP.get_fantasy_model">get_fantasy_model() (botorch.models.higher_order_gp.HigherOrderGP method)</a>
 </li>
 <li><a href="utils.html#botorch.utils.feasible_volume.get_feasible_samples">get_feasible_samples() (in module botorch.utils.feasible_volume)</a>
 </li>
@@ -1379,9 +1398,13 @@
 <li><a href="distributions.html#botorch.distributions.Kumaraswamy.has_rsample">(botorch.distributions.Kumaraswamy attribute)</a>
 </li>
 </ul></li>
+<li><a href="models.html#botorch.models.gp_regression.HeteroskedasticSingleTaskGP">HeteroskedasticSingleTaskGP (class in botorch.models.gp_regression)</a>
+</li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
-<li><a href="models.html#botorch.models.gp_regression.HeteroskedasticSingleTaskGP">HeteroskedasticSingleTaskGP (class in botorch.models.gp_regression)</a>
+<li><a href="models.html#botorch.models.higher_order_gp.HigherOrderGP">HigherOrderGP (class in botorch.models.higher_order_gp)</a>
+</li>
+<li><a href="models.html#botorch.models.higher_order_gp.HigherOrderGPPosterior">HigherOrderGPPosterior (class in botorch.models.higher_order_gp)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.HolderTable">HolderTable (class in botorch.test_functions.synthetic)</a>
 </li>
@@ -1476,6 +1499,8 @@
 <h2 id="M">M</h2>
 <table class="indextable genindextable" style="width: 100%"><tr>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="models.html#botorch.models.higher_order_gp.HigherOrderGP.make_posterior_variances">make_posterior_variances() (botorch.models.higher_order_gp.HigherOrderGP method)</a>
+</li>
 <li><a href="optim.html#botorch.optim.parameter_constraints.make_scipy_bounds">make_scipy_bounds() (in module botorch.optim.parameter_constraints)</a>
 </li>
 <li><a href="optim.html#botorch.optim.parameter_constraints.make_scipy_linear_constraints">make_scipy_linear_constraints() (in module botorch.optim.parameter_constraints)</a>
@@ -1606,6 +1631,8 @@
 <li><a href="models.html#module-botorch.models.gp_regression_fidelity">botorch.models.gp_regression_fidelity</a>
 </li>
 <li><a href="models.html#module-botorch.models.gpytorch">botorch.models.gpytorch</a>
+</li>
+<li><a href="models.html#module-botorch.models.higher_order_gp">botorch.models.higher_order_gp</a>
 </li>
 <li><a href="models.html#module-botorch.models.kernels.contextual_lcea">botorch.models.kernels.contextual_lcea</a>
 </li>
@@ -1888,6 +1915,8 @@
 </li>
 <li><a href="models.html#botorch.models.gpytorch.MultiTaskGPyTorchModel.posterior">(botorch.models.gpytorch.MultiTaskGPyTorchModel method)</a>
 </li>
+<li><a href="models.html#botorch.models.higher_order_gp.HigherOrderGP.posterior">(botorch.models.higher_order_gp.HigherOrderGP method)</a>
+</li>
 <li><a href="models.html#botorch.models.model.Model.posterior">(botorch.models.model.Model method)</a>
 </li>
 <li><a href="models.html#botorch.models.pairwise_gp.PairwiseGP.posterior">(botorch.models.pairwise_gp.PairwiseGP method)</a>
@@ -1979,8 +2008,10 @@
 </li>
 <li><a href="models.html#botorch.models.transforms.input.Round">Round (class in botorch.models.transforms.input)</a>
 </li>
-<li><a href="posteriors.html#botorch.posteriors.deterministic.DeterministicPosterior.rsample">rsample() (botorch.posteriors.deterministic.DeterministicPosterior method)</a>
+<li><a href="models.html#botorch.models.higher_order_gp.HigherOrderGPPosterior.rsample">rsample() (botorch.models.higher_order_gp.HigherOrderGPPosterior method)</a>
 <ul>
+<li><a href="posteriors.html#botorch.posteriors.deterministic.DeterministicPosterior.rsample">(botorch.posteriors.deterministic.DeterministicPosterior method)</a>
+</li>
 <li><a href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior.rsample">(botorch.posteriors.gpytorch.GPyTorchPosterior method)</a>
 </li>
 <li><a href="posteriors.html#botorch.posteriors.posterior.Posterior.rsample">(botorch.posteriors.posterior.Posterior method)</a>
@@ -2255,6 +2286,8 @@
 </li>
 <li><a href="models.html#botorch.models.gpytorch.MultiTaskGPyTorchModel.training">(botorch.models.gpytorch.MultiTaskGPyTorchModel attribute)</a>
 </li>
+<li><a href="models.html#botorch.models.higher_order_gp.FlattenedStandardize.training">(botorch.models.higher_order_gp.FlattenedStandardize attribute)</a>
+</li>
 <li><a href="models.html#botorch.models.model.Model.training">(botorch.models.model.Model attribute)</a>
 </li>
 <li><a href="models.html#botorch.models.model_list_gp_regression.ModelListGP.training">(botorch.models.model_list_gp_regression.ModelListGP attribute)</a>
@@ -2345,8 +2378,10 @@
 </li>
 <li><a href="exceptions.html#botorch.exceptions.errors.UnsupportedError">UnsupportedError</a>
 </li>
-<li><a href="models.html#botorch.models.transforms.input.ChainedInputTransform.untransform">untransform() (botorch.models.transforms.input.ChainedInputTransform method)</a>
+<li><a href="models.html#botorch.models.higher_order_gp.FlattenedStandardize.untransform">untransform() (botorch.models.higher_order_gp.FlattenedStandardize method)</a>
 <ul>
+<li><a href="models.html#botorch.models.transforms.input.ChainedInputTransform.untransform">(botorch.models.transforms.input.ChainedInputTransform method)</a>
+</li>
 <li><a href="models.html#botorch.models.transforms.input.InputTransform.untransform">(botorch.models.transforms.input.InputTransform method)</a>
 </li>
 <li><a href="models.html#botorch.models.transforms.input.ReversibleInputTransform.untransform">(botorch.models.transforms.input.ReversibleInputTransform method)</a>
@@ -2362,8 +2397,10 @@
 </ul></li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
-<li><a href="models.html#botorch.models.transforms.outcome.ChainedOutcomeTransform.untransform_posterior">untransform_posterior() (botorch.models.transforms.outcome.ChainedOutcomeTransform method)</a>
+<li><a href="models.html#botorch.models.higher_order_gp.FlattenedStandardize.untransform_posterior">untransform_posterior() (botorch.models.higher_order_gp.FlattenedStandardize method)</a>
 <ul>
+<li><a href="models.html#botorch.models.transforms.outcome.ChainedOutcomeTransform.untransform_posterior">(botorch.models.transforms.outcome.ChainedOutcomeTransform method)</a>
+</li>
 <li><a href="models.html#botorch.models.transforms.outcome.Log.untransform_posterior">(botorch.models.transforms.outcome.Log method)</a>
 </li>
 <li><a href="models.html#botorch.models.transforms.outcome.OutcomeTransform.untransform_posterior">(botorch.models.transforms.outcome.OutcomeTransform method)</a>

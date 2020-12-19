@@ -992,8 +992,8 @@
         <span class="n">evidence</span> <span class="o">=</span> <span class="n">evidence</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
 
         <span class="c1"># Add log probs of priors on the (functions of) parameters</span>
-        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">prior</span><span class="p">,</span> <span class="n">closure</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">named_priors</span><span class="p">():</span>
-            <span class="n">evidence</span> <span class="o">=</span> <span class="n">evidence</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">prior</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">closure</span><span class="p">())</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">prior</span><span class="p">,</span> <span class="n">closure</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">named_priors</span><span class="p">():</span>
+            <span class="n">evidence</span> <span class="o">=</span> <span class="n">evidence</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">prior</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">closure</span><span class="p">(</span><span class="n">module</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
 
         <span class="k">return</span> <span class="n">evidence</span></div></div>
 </pre></div>

@@ -96,8 +96,8 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">register_prior</span><span class="p">(</span>
                 <span class="s2">"power_prior"</span><span class="p">,</span>
                 <span class="n">power_prior</span><span class="p">,</span>
-                <span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">power</span><span class="p">,</span>
-                <span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_set_power</span><span class="p">(</span><span class="n">v</span><span class="p">),</span>
+                <span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">power</span><span class="p">,</span>
+                <span class="k">lambda</span> <span class="n">m</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">_set_power</span><span class="p">(</span><span class="n">v</span><span class="p">),</span>
             <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_constraint</span><span class="p">(</span><span class="s2">"raw_power"</span><span class="p">,</span> <span class="n">offset_constraint</span><span class="p">)</span>
 
@@ -105,8 +105,8 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">register_prior</span><span class="p">(</span>
                 <span class="s2">"offset_prior"</span><span class="p">,</span>
                 <span class="n">offset_prior</span><span class="p">,</span>
-                <span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset</span><span class="p">,</span>
-                <span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_set_offset</span><span class="p">(</span><span class="n">v</span><span class="p">),</span>
+                <span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">offset</span><span class="p">,</span>
+                <span class="k">lambda</span> <span class="n">m</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">_set_offset</span><span class="p">(</span><span class="n">v</span><span class="p">),</span>
             <span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">register_constraint</span><span class="p">(</span><span class="s2">"raw_offset"</span><span class="p">,</span> <span class="n">offset_constraint</span><span class="p">)</span>
