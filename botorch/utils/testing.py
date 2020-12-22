@@ -305,6 +305,9 @@ class ConstrainedMultiObjectiveTestProblemBaseTestCase(
         for dtype in (torch.float, torch.double):
             for f in self.functions:
                 f.to(device=self.device, dtype=dtype)
-                X = unnormalize(torch.rand(1, f.dim), bounds=f.bounds)
+                X = unnormalize(
+                    torch.rand(1, f.dim, device=self.device, dtype=dtype),
+                    bounds=f.bounds,
+                )
                 slack = f.evaluate_slack_true(X)
                 self.assertEqual(slack.shape, torch.Size([1, f.num_constraints]))

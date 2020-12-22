@@ -51,7 +51,7 @@ class TestWeightedMCMultiOutputObjective(BotorchTestCase):
         for batch_shape, m, dtype in itertools.product(
             ([], [3]), (2, 3), (torch.float, torch.double)
         ):
-            weights = torch.rand(m)
+            weights = torch.rand(m, device=self.device, dtype=dtype)
             objective = WeightedMCMultiOutputObjective(weights=weights)
             samples = torch.rand(*batch_shape, 2, m, device=self.device, dtype=dtype)
             self.assertTrue(torch.equal(objective(samples), samples * weights))
@@ -86,8 +86,10 @@ class TestUnstandardizeMultiOutputObjective(BotorchTestCase):
                 if objective_class == UnstandardizeAnalyticMultiOutputObjective:
                     if outcomes is None:
                         # passing outcomes is not currently supported
-                        mean = torch.rand(2, m)
-                        variance = variance = torch.rand(2, m)
+                        mean = torch.rand(2, m, dtype=dtype, device=self.device)
+                        variance = variance = torch.rand(
+                            2, m, dtype=dtype, device=self.device
+                        )
                         mock_posterior = MockPosterior(mean=mean, variance=variance)
                         tf_posterior = objective(mock_posterior)
                         tf = Standardize(m=m)

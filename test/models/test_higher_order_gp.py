@@ -5,6 +5,8 @@
 # LICENSE file in the root directory of this source tree.
 
 
+import itertools
+
 from botorch.models import HigherOrderGP
 from botorch.models.higher_order_gp import FlattenedStandardize
 from botorch.models.transforms.input import Normalize
@@ -45,7 +47,7 @@ class TestHigherOrderGP(BotorchTestCase):
 
         for m in [self.model, model_2]:
             mll = ExactMarginalLogLikelihood(m.likelihood, m)
-            fit_gpytorch_torch(mll, options={"maxiter": 1})
+            fit_gpytorch_torch(mll, options={"maxiter": 1, "disp": False})
 
     def test_posterior(self):
         manual_seed(0)
@@ -76,7 +78,7 @@ class TestHigherOrderGP(BotorchTestCase):
             outcome_transform=FlattenedStandardize(train_y.shape[1:]),
         )
         mll = ExactMarginalLogLikelihood(model.likelihood, model)
-        fit_gpytorch_torch(mll, options={"maxiter": 1})
+        fit_gpytorch_torch(mll, options={"maxiter": 1, "disp": False})
 
         test_x = rand(2, 5, 3, device=self.device)
         test_y = randn(2, 5, 4, 5, device=self.device)
@@ -141,22 +143,24 @@ class TestHigherOrderGP(BotorchTestCase):
         train_x = rand(10, 1, device=self.device)
         train_y = randn(10, 3, 5, device=self.device)
 
-        for latent_dim_sizes in [[1, 1], [2, 3]]:
-            for latent_init in ["gp", "default"]:
-                self.model = HigherOrderGP(
-                    train_x,
-                    train_y,
-                    num_latent_dims=latent_dim_sizes,
-                    latent_init=latent_init,
-                )
-                self.assertEqual(
-                    self.model.latent_parameters[0].shape,
-                    Size((3, latent_dim_sizes[0])),
-                )
-                self.assertEqual(
-                    self.model.latent_parameters[1].shape,
-                    Size((5, latent_dim_sizes[1])),
-                )
+        for latent_dim_sizes, latent_init in itertools.product(
+            [[1, 1], [2, 3]],
+            ["gp", "default"],
+        ):
+            self.model = HigherOrderGP(
+                train_x,
+                train_y,
+                num_latent_dims=latent_dim_sizes,
+                latent_init=latent_init,
+            )
+            self.assertEqual(
+                self.model.latent_parameters[0].shape,
+                Size((3, latent_dim_sizes[0])),
+            )
+            self.assertEqual(
+                self.model.latent_parameters[1].shape,
+                Size((5, latent_dim_sizes[1])),
+            )
 
 
 class TestHigherOrderGPPosterior(BotorchTestCase):
@@ -164,17 +168,14 @@ class TestHigherOrderGPPosterior(BotorchTestCase):
         super().setUp()
         manual_seed(0)
 
-        train_x = rand(2, 10, 1)
-        train_y = randn(2, 10, 3, 5)
-
-        train_x = train_x.to(device=self.device)
-        train_y = train_y.to(device=self.device)
+        train_x = rand(2, 10, 1, device=self.device)
+        train_y = randn(2, 10, 3, 5, device=self.device)
 
         m1 = HigherOrderGP(train_x, train_y, first_dim_is_batch=True)
         m2 = HigherOrderGP(train_x[0], train_y[0])
 
         manual_seed(0)
-        test_x = rand(2, 5, 1).to(device=self.device)
+        test_x = rand(2, 5, 1, device=self.device)
 
         posterior1 = m1.posterior(test_x)
         posterior2 = m2.posterior(test_x[0])
@@ -204,9 +205,9 @@ class TestHigherOrderGPPosterior(BotorchTestCase):
 
             # test that providing all base samples produces non-random results
             if test_x.shape[0] == 2:
-                base_samples = randn(8, 2, (5 + 10 + 10) * 3 * 5)
+                base_samples = randn(8, 2, (5 + 10 + 10) * 3 * 5, device=self.device)
             else:
-                base_samples = randn(8, (5 + 10 + 10) * 3 * 5)
+                base_samples = randn(8, (5 + 10 + 10) * 3 * 5, device=self.device)
 
             samples_1 = posterior.rsample(
                 base_samples=base_samples, sample_shape=Size((8,))
@@ -222,21 +223,21 @@ class TestHigherOrderGPPosterior(BotorchTestCase):
             self.assertEqual(samples_det_shape, Size([5, *correct_shape]))
 
             # test that providing only some base samples is okay
-            base_samples = randn(8, prod(correct_shape))
+            base_samples = randn(8, prod(correct_shape), device=self.device)
             samples_3 = posterior.rsample(
                 base_samples=base_samples, sample_shape=Size((8,))
             )
             self.assertEqual(samples_3.shape, Size([8, *correct_shape]))
 
             # test that providing the wrong number base samples is okay
-            base_samples = randn(8, 50 * 2 * 3 * 5)
+            base_samples = randn(8, 50 * 2 * 3 * 5, device=self.device)
             samples_4 = posterior.rsample(
                 base_samples=base_samples, sample_shape=Size((8,))
             )
             self.assertEqual(samples_4.shape, Size([8, *correct_shape]))
 
             # test that providing the wrong shapes of base samples fails
-            base_samples = randn(8, 5 * 2 * 3 * 5)
+            base_samples = randn(8, 5 * 2 * 3 * 5, device=self.device)
             with self.assertRaises(RuntimeError):
                 samples_4 = posterior.rsample(
                     base_samples=base_samples, sample_shape=Size((4,))

@@ -122,7 +122,7 @@ class WeightedMCMultiOutputObjective(IdentityMCMultiOutputObjective):
 
     def forward(self, samples: Tensor) -> Tensor:
         samples = super().forward(samples=samples)
-        return samples * self.weights
+        return samples * self.weights.to(samples)
 
 
 class UnstandardizeMCMultiOutputObjective(IdentityMCMultiOutputObjective):
@@ -160,8 +160,8 @@ class UnstandardizeMCMultiOutputObjective(IdentityMCMultiOutputObjective):
             )
         super().__init__(outcomes=outcomes, num_outcomes=Y_mean.shape[-1])
         if outcomes is not None:
-            Y_mean = Y_mean.index_select(-1, self.outcomes)
-            Y_std = Y_std.index_select(-1, self.outcomes)
+            Y_mean = Y_mean.index_select(-1, self.outcomes.to(Y_mean.device))
+            Y_std = Y_std.index_select(-1, self.outcomes.to(Y_mean.device))
 
         self.register_buffer("Y_mean", Y_mean)
         self.register_buffer("Y_std", Y_std)
