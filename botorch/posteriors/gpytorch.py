@@ -149,7 +149,7 @@ def scalarize_posterior(
     new_mean = offset + (mean @ weights).view(*batch_shape, q)
 
     if q == 1:
-        new_cov = ((cov @ weights) @ weights).view(*batch_shape, q, q)
+        new_cov = weights.unsqueeze(-2) @ (cov @ weights.unsqueeze(-1))
     else:
         # we need to handle potentially different representations of the multi-task mvn
         if mvn._interleaved:
