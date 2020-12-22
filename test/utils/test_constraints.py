@@ -30,8 +30,6 @@ class TestGetOutcomeConstraintTransform(BotorchTestCase):
             self.assertEqual(len(ocs), 2)
             for i in (0, 1):
                 for j in (0, 1):
-                    print(f"Actual: {ocs[j](Ys[:,i])}")
-                    print(f"Expected: {results[:, i, j]}")
                     self.assertTrue(torch.equal(ocs[j](Ys[:, i]), results[:, i, j]))
 
     def test_BroadcastEvaluation(self):

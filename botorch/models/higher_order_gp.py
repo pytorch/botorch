@@ -219,9 +219,11 @@ class HigherOrderGPPosterior(GPyTorchPosterior):
                         base_samples = base_samples.squeeze(-1)
 
                     new_base_samples = torch.randn(
-                        sample_shape
-                        + batch_shape
-                        + Size((appended_shape - base_samples.shape[-1],))
+                        *sample_shape,
+                        *batch_shape,
+                        appended_shape - base_samples.shape[-1],
+                        device=base_samples.device,
+                        dtype=base_samples.dtype,
                     )
                     base_samples = torch.cat((base_samples, new_base_samples), dim=-1)
 

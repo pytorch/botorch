@@ -57,7 +57,7 @@ class TestPairwiseGP(BotorchTestCase):
                 warnings.filterwarnings("ignore", category=OptimizationWarning)
                 fit_gpytorch_model(mll, options={"maxiter": 2}, max_retries=1)
             # prior training
-            prior_m = PairwiseGP(None, None)
+            prior_m = PairwiseGP(None, None).to(**tkwargs)
             with self.assertRaises(RuntimeError):
                 prior_m(train_X)
             # forward in training mode with non-training data
@@ -96,7 +96,7 @@ class TestPairwiseGP(BotorchTestCase):
             custom_m = PairwiseGP(**model_kwargs, covar_module=LinearKernel())
             self.assertIsInstance(custom_m.covar_module, LinearKernel)
             # prior prediction
-            prior_m = PairwiseGP(None, None)
+            prior_m = PairwiseGP(None, None).to(**tkwargs)
             prior_m.eval()
             post = prior_m.posterior(train_X)
             self.assertIsInstance(post, GPyTorchPosterior)
@@ -163,7 +163,7 @@ class TestPairwiseGP(BotorchTestCase):
             # test condition_on_observations
 
             # test condition_on_observations with prior mode
-            prior_m = PairwiseGP(None, None)
+            prior_m = PairwiseGP(None, None).to(**tkwargs)
             cond_m = prior_m.condition_on_observations(train_X, train_comp)
             self.assertTrue(cond_m.datapoints is train_X)
             self.assertTrue(cond_m.comparisons is train_comp)
