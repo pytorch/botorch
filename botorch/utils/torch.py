@@ -33,7 +33,7 @@ class BufferDict(Module):
     types (e.g., Python's plain ``dict``) does not preserve the order of the
     merged mapping.
 
-    Arguments:
+    Args:
         buffers (iterable, optional): a mapping (dictionary) of
             (string : :class:`~torch.Tensor`) or an iterable of key-value pairs
             of type (string, :class:`~torch.Tensor`)
@@ -83,7 +83,7 @@ class BufferDict(Module):
     def pop(self, key):
         r"""Remove key from the BufferDict and return its buffer.
 
-        Arguments:
+        Args:
             key (string): key to pop from the BufferDict
         """
         v = self[key]
@@ -111,7 +111,7 @@ class BufferDict(Module):
             or an iterable of key-value pairs, the order of new elements in it is
             preserved.
 
-        Arguments:
+        Args:
             buffers (iterable): a mapping (dictionary) from string to
                 :class:`~torch.Tensor`, or an iterable of
                 key-value pairs of type (string, :class:`~torch.Tensor`)
