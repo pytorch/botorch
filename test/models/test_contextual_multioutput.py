@@ -18,7 +18,6 @@ from torch import Tensor
 
 class ContextualMultiOutputTest(BotorchTestCase):
     def testLCEMGP(self):
-        torch.manual_seed(2)
         d = 1
         train_x = torch.rand(10, d)
         train_y = torch.cos(train_x)
@@ -36,7 +35,7 @@ class ContextualMultiOutputTest(BotorchTestCase):
         self.assertEqual(model.emb_dims, [(2, 1)])
 
         mll = ExactMarginalLogLikelihood(model.likelihood, model)
-        fit_gpytorch_model(mll, options={"maxiter": 4})
+        fit_gpytorch_model(mll, options={"maxiter": 1})
 
         context_covar = model._eval_context_covar()
         self.assertIsInstance(context_covar, LazyTensor)

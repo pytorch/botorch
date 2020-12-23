@@ -8,6 +8,7 @@ from typing import List, Optional
 
 import torch
 from botorch.models.multitask import MultiTaskGP
+from gpytorch.constraints import Interval
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels.rbf_kernel import RBFKernel
 from gpytorch.lazy import InterpolatedLazyTensor, LazyTensor
@@ -81,13 +82,10 @@ class LCEMGP(MultiTaskGP):
                 for x, y in self.emb_dims
             ]
         )
-        # TODO: Ideally, the transform should be applied automatically within
-        # gpytorch.priors
-        unif = Uniform(0.0, 2.0)
         self.task_covar_module = RBFKernel(
             ard_num_dims=n_embs,
-            lengthscale_prior=UniformPrior(
-                unif.low, unif.high, transform=biject_to(unif.support)
+            lengthscale_constraint=Interval(
+                0.0, 2.0, transform=None, initial_value=1.0
             ),
         )
         self.to(train_X)
