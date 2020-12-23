@@ -5,7 +5,6 @@
 # LICENSE file in the root directory of this source tree.
 
 import torch
-from torch.distributions import Distribution
 from botorch import fit_gpytorch_model
 from botorch.models.contextual_multioutput import LCEMGP, FixedNoiseLCEMGP
 from botorch.models.multitask import MultiTaskGP
@@ -15,9 +14,6 @@ from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNorm
 from gpytorch.lazy import LazyTensor
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from torch import Tensor
-
-
-Distribution.set_default_validate_args(True)
 
 
 class ContextualMultiOutputTest(BotorchTestCase):
