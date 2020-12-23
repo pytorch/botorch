@@ -28,7 +28,7 @@ class BaseTestProblem(Module, ABC):
     def __init__(self, noise_std: Optional[float] = None, negate: bool = False) -> None:
         r"""Base constructor for test functions.
 
-        Arguments:
+        Args:
             noise_std: Standard deviation of the observation noise.
             negate: If True, negate the function.
         """
@@ -144,7 +144,7 @@ class MultiObjectiveTestProblem(BaseTestProblem):
     def __init__(self, noise_std: Optional[float] = None, negate: bool = False) -> None:
         r"""Base constructor for multi-objective test functions.
 
-        Arguments:
+        Args:
             noise_std: Standard deviation of the observation noise.
             negate: If True, negate the objectives.
         """

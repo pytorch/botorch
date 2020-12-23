@@ -86,7 +86,7 @@ class BraninCurrin(MultiObjectiveTestProblem):
     def __init__(self, noise_std: Optional[float] = None, negate: bool = False) -> None:
         r"""Constructor for Branin-Currin.
 
-        Arguments:
+        Args:
             noise_std: Standard deviation of the observation noise.
             negate: If True, negate the objectives.
         """
