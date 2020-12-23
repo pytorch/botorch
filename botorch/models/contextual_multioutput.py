@@ -86,8 +86,9 @@ class LCEMGP(MultiTaskGP):
         unif = Uniform(0.0, 2.0)
         self.task_covar_module = RBFKernel(
             ard_num_dims=n_embs,
-            lengthscale_prior=UniformPrior(unif.low, unif.high,
-                                           transform=biject_to(unif.support)),
+            lengthscale_prior=UniformPrior(
+                unif.low, unif.high, transform=biject_to(unif.support)
+            ),
         )
         self.to(train_X)
 
