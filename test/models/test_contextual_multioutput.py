@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import torch
+from torch.distributions import Distribution
 from botorch import fit_gpytorch_model
 from botorch.models.contextual_multioutput import LCEMGP, FixedNoiseLCEMGP
 from botorch.models.multitask import MultiTaskGP
@@ -16,8 +17,12 @@ from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikeliho
 from torch import Tensor
 
 
+Distribution.set_default_validate_args(True)
+
+
 class ContextualMultiOutputTest(BotorchTestCase):
     def testLCEMGP(self):
+        torch.manual_seed(2)
         d = 1
         train_x = torch.rand(10, d)
         train_y = torch.cos(train_x)
@@ -35,7 +40,7 @@ class ContextualMultiOutputTest(BotorchTestCase):
         self.assertEqual(model.emb_dims, [(2, 1)])
 
         mll = ExactMarginalLogLikelihood(model.likelihood, model)
-        fit_gpytorch_model(mll, options={"maxiter": 1})
+        fit_gpytorch_model(mll, options={"maxiter": 4})
 
         context_covar = model._eval_context_covar()
         self.assertIsInstance(context_covar, LazyTensor)

@@ -14,6 +14,7 @@ from gpytorch.lazy import InterpolatedLazyTensor, LazyTensor
 from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
 from gpytorch.priors.torch_priors import UniformPrior
 from torch import Tensor
+from torch.distributions import Uniform, biject_to
 from torch.nn import ModuleList
 
 
@@ -80,8 +81,13 @@ class LCEMGP(MultiTaskGP):
                 for x, y in self.emb_dims
             ]
         )
+        # TODO: Ideally, the transform should be applied automatically within
+        # gpytorch.priors
+        unif = Uniform(0.0, 2.0)
         self.task_covar_module = RBFKernel(
-            ard_num_dims=n_embs, lengthscale_prior=UniformPrior(0.0, 2.0)
+            ard_num_dims=n_embs,
+            lengthscale_prior=UniformPrior(unif.low, unif.high,
+                                           transform=biject_to(unif.support)),
         )
         self.to(train_X)
 
