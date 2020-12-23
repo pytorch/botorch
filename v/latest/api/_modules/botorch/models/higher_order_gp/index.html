@@ -245,9 +245,11 @@
                         <span class="n">base_samples</span> <span class="o">=</span> <span class="n">base_samples</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
 
                     <span class="n">new_base_samples</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span>
-                        <span class="n">sample_shape</span>
-                        <span class="o">+</span> <span class="n">batch_shape</span>
-                        <span class="o">+</span> <span class="n">Size</span><span class="p">((</span><span class="n">appended_shape</span> <span class="o">-</span> <span class="n">base_samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],))</span>
+                        <span class="o">*</span><span class="n">sample_shape</span><span class="p">,</span>
+                        <span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span>
+                        <span class="n">appended_shape</span> <span class="o">-</span> <span class="n">base_samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+                        <span class="n">device</span><span class="o">=</span><span class="n">base_samples</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+                        <span class="n">dtype</span><span class="o">=</span><span class="n">base_samples</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
                     <span class="p">)</span>
                     <span class="n">base_samples</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">base_samples</span><span class="p">,</span> <span class="n">new_base_samples</span><span class="p">),</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
 
