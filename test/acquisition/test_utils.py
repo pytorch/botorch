@@ -21,6 +21,7 @@ from botorch.acquisition.utils import (
     expand_trace_observations,
     get_acquisition_function,
     get_infeasible_cost,
+    project_to_sample_points,
     project_to_target_fidelity,
     prune_inferior_points,
 )
@@ -572,3 +573,21 @@ class TestFidelityUtils(BotorchTestCase):
                 (i + 1) / (num_tr + 1) for i in range(num_tr)
             )
             self.assertTrue(torch.allclose(X.grad, grad_exp))
+
+    def test_project_to_sample_points(self):
+        for batch_shape, dtype in itertools.product(
+            ([], [2]), (torch.float, torch.double)
+        ):
+            q, d, p, d_prime = 1, 12, 7, 4
+            X = torch.rand(*batch_shape, q, d, device=self.device, dtype=dtype)
+            sample_points = torch.rand(p, d_prime, device=self.device, dtype=dtype)
+            X_augmented = project_to_sample_points(X=X, sample_points=sample_points)
+            self.assertEqual(X_augmented.shape, torch.Size(batch_shape + [p, d]))
+            if batch_shape == [2]:
+                self.assertTrue(
+                    torch.allclose(X_augmented[0, :, -d_prime:], sample_points)
+                )
+            else:
+                self.assertTrue(
+                    torch.allclose(X_augmented[:, -d_prime:], sample_points)
+                )
