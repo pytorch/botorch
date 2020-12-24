@@ -59,7 +59,7 @@
 <span class="sd">    types (e.g., Python's plain ``dict``) does not preserve the order of the</span>
 <span class="sd">    merged mapping.</span>
 
-<span class="sd">    Arguments:</span>
+<span class="sd">    Args:</span>
 <span class="sd">        buffers (iterable, optional): a mapping (dictionary) of</span>
 <span class="sd">            (string : :class:`~torch.Tensor`) or an iterable of key-value pairs</span>
 <span class="sd">            of type (string, :class:`~torch.Tensor`)</span>
@@ -109,7 +109,7 @@
 <div class="viewcode-block" id="BufferDict.pop"><a class="viewcode-back" href="../../../utils.html#botorch.utils.torch.BufferDict.pop">[docs]</a>    <span class="k">def</span> <span class="nf">pop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
         <span class="sa">r</span><span class="sd">"""Remove key from the BufferDict and return its buffer.</span>
 
-<span class="sd">        Arguments:</span>
+<span class="sd">        Args:</span>
 <span class="sd">            key (string): key to pop from the BufferDict</span>
 <span class="sd">        """</span>
         <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
@@ -137,7 +137,7 @@
 <span class="sd">            or an iterable of key-value pairs, the order of new elements in it is</span>
 <span class="sd">            preserved.</span>
 
-<span class="sd">        Arguments:</span>
+<span class="sd">        Args:</span>
 <span class="sd">            buffers (iterable): a mapping (dictionary) from string to</span>
 <span class="sd">                :class:`~torch.Tensor`, or an iterable of</span>
 <span class="sd">                key-value pairs of type (string, :class:`~torch.Tensor`)</span>
