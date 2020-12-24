@@ -13,9 +13,7 @@ from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels.rbf_kernel import RBFKernel
 from gpytorch.lazy import InterpolatedLazyTensor, LazyTensor
 from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
-from gpytorch.priors.torch_priors import UniformPrior
 from torch import Tensor
-from torch.distributions import Uniform, biject_to
 from torch.nn import ModuleList
 
 
