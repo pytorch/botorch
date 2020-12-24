@@ -370,13 +370,16 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         r"""A HigherOrderGP model for high-dim output regression.
 
         Args:
-            train_X: Training inputs
-            train_Y: Training targets
+            train_X: An `n x d`-dim tensor of training inputs.
+            train_Y: A `batch_shape x n x output_shape`-dim tensor of training targets.
+                `batch_shape` is at most one dimensional and should be specified by
+                setting `first_dim_is_batch=True`. `output_shape` can be
+                multi-dimensional and is inferred by the model.
             likelihood: Gaussian likelihood for the model.
             covar_modules: List of kernels for each output structure.
             num_latent_dims: Sizes for the latent dimensions.
             learn_latent_pars: If true, learn the latent parameters.
-            first_dim_is_batch: If true, the first dimension of train_Y should be
+            first_dim_is_batch: If true, the first dimension of `train_Y` should be
                 regarded as a batch dimension (e.g. predicting batches of tensors).
             latent_init: [default or gp] how to initialize the latent parameters.
         """
@@ -391,12 +394,13 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
                 warnings.warn(
                     "HigherOrderGP does not support the outcome_transform "
                     "`Standardize`! Using `FlattenedStandardize` with `output_shape="
-                    f"{train_Y.shape[-2:]} instead.",
+                    f"{train_Y.shape[first_dim_is_batch + 1:]} and batch_shape="
+                    f"{train_Y.shape[:first_dim_is_batch]} instead.",
                     RuntimeWarning,
                 )
                 outcome_transform = FlattenedStandardize(
-                    output_shape=train_Y.shape[-2:],
-                    batch_shape=outcome_transform._batch_shape,
+                    output_shape=train_Y.shape[first_dim_is_batch + 1 :],
+                    batch_shape=train_Y.shape[:first_dim_is_batch],
                 )
             train_Y, _ = outcome_transform(train_Y)
 
