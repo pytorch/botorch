@@ -10,6 +10,7 @@ import itertools
 from botorch.models import HigherOrderGP
 from botorch.models.higher_order_gp import FlattenedStandardize
 from botorch.models.transforms.input import Normalize
+from botorch.models.transforms.outcome import Standardize
 from botorch.optim.fit import fit_gpytorch_torch
 from botorch.posteriors import GPyTorchPosterior, TransformedPosterior
 from botorch.sampling import IIDNormalSampler
@@ -71,9 +72,18 @@ class TestHigherOrderGP(BotorchTestCase):
     def test_transforms(self):
         train_x = rand(10, 3, device=self.device)
         train_y = randn(10, 4, 5, device=self.device)
+
+        # test handling of Standardize
+        with self.assertWarns(RuntimeWarning):
+            model = HigherOrderGP(
+                train_X=train_x, train_Y=train_y, outcome_transform=Standardize(m=5)
+            )
+            self.assertIsInstance(model.outcome_transform, FlattenedStandardize)
+            self.assertEqual(model.outcome_transform.output_shape, train_y.shape[-2:])
+
         model = HigherOrderGP(
-            train_x,
-            train_y,
+            train_X=train_x,
+            train_Y=train_y,
             input_transform=Normalize(d=3),
             outcome_transform=FlattenedStandardize(train_y.shape[1:]),
         )

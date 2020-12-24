@@ -19,6 +19,7 @@ References
 
 from __future__ import annotations
 
+import warnings
 from contextlib import ExitStack
 from typing import Any, List, Optional, Union, Tuple
 
@@ -55,7 +56,7 @@ MIN_INFERRED_NOISE_LEVEL = 1e-4
 class FlattenedStandardize(Standardize):
     r"""
     Standardize outcomes in a structured multi-output settings by reshaping the
-    batched output dimensions to be a vector. Specificially, an output dimension
+    batched output dimensions to be a vector. Specifically, an output dimension
     of [a x b x c] will be squeezed to be a vector of [a * b * c].
     """
 
@@ -384,6 +385,19 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
             input_transform.to(train_X)
 
         if outcome_transform is not None:
+            if isinstance(outcome_transform, Standardize) and not isinstance(
+                outcome_transform, FlattenedStandardize
+            ):
+                warnings.warn(
+                    "HigherOrderGP does not support the outcome_transform "
+                    "`Standardize`! Using `FlattenedStandardize` with `output_shape="
+                    f"{train_Y.shape[-2:]} instead.",
+                    RuntimeWarning,
+                )
+                outcome_transform = FlattenedStandardize(
+                    output_shape=train_Y.shape[-2:],
+                    batch_shape=outcome_transform._batch_shape,
+                )
             train_Y, _ = outcome_transform(train_Y)
 
         if first_dim_is_batch:
