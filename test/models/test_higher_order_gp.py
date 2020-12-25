@@ -96,9 +96,9 @@ class TestHigherOrderGP(BotorchTestCase):
             model = HigherOrderGP(
                 train_X=train_x, train_Y=train_y, outcome_transform=Standardize(m=5)
             )
-            self.assertIsInstance(model.outcome_transform, FlattenedStandardize)
-            self.assertEqual(model.outcome_transform.output_shape, train_y.shape[1:])
-            self.assertEqual(model.outcome_transform.batch_shape, Size())
+        self.assertIsInstance(model.outcome_transform, FlattenedStandardize)
+        self.assertEqual(model.outcome_transform.output_shape, train_y.shape[1:])
+        self.assertEqual(model.outcome_transform.batch_shape, Size())
 
         model = HigherOrderGP(
             train_X=train_x,

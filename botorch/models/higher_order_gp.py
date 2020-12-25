@@ -383,7 +383,8 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
 
         # infer the dimension of `output_shape`.
         num_output_dims = train_Y.dim() - train_X.dim() + 1
-        if num_output_dims not in [train_Y.dim() - 1, train_Y.dim() - 2]:
+        batch_shape = train_X.shape[:-2]
+        if len(batch_shape) > 1:
             raise NotImplementedError(
                 "HigherOrderGP currently only supports 1-dim `batch_shape`."
             )
@@ -405,19 +406,11 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
                 )
             train_Y, _ = outcome_transform(train_Y)
 
-        if num_output_dims == train_Y.dim() - 2:
-            # if using a batched model (with 1-dim batch)
-            self._aug_batch_shape = train_Y.shape[:1]
-            self._num_dimensions = len(train_Y.shape) - 1
-            self._num_outputs = train_Y.shape[0]
-            self.target_shape = train_Y.shape[2:]
-        else:
-            self._aug_batch_shape = Size()
-            self._num_dimensions = len(train_Y.shape)
-            self._num_outputs = 1
-            self.target_shape = train_Y.shape[1:]
-
-        self._input_batch_shape = train_X.shape[:-2]
+        self._aug_batch_shape = batch_shape
+        self._num_dimensions = num_output_dims + 1
+        self._num_outputs = train_Y.shape[0] if batch_shape else 1
+        self.target_shape = train_Y.shape[-num_output_dims:]
+        self._input_batch_shape = batch_shape
 
         if likelihood is None:
 
