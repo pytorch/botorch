@@ -29,19 +29,15 @@ class TestHigherOrderGP(BotorchTestCase):
         super().setUp()
         manual_seed(0)
 
-        train_x = rand(2, 10, 1)
-        train_y = randn(2, 10, 3, 5)
+        train_x = rand(2, 10, 1, device=self.device)
+        train_y = randn(2, 10, 3, 5, device=self.device)
 
-        train_x = train_x.to(device=self.device)
-        train_y = train_y.to(device=self.device)
-
-        self.model = HigherOrderGP(train_x, train_y, first_dim_is_batch=True)
+        self.model = HigherOrderGP(train_x, train_y)
 
         # check that we can assign different kernels and likelihoods
         model_2 = HigherOrderGP(
-            train_x,
-            train_y,
-            first_dim_is_batch=True,
+            train_X=train_x,
+            train_Y=train_y,
             covar_modules=[RBFKernel(), RBFKernel(), RBFKernel()],
             likelihood=GaussianLikelihood(),
         )
@@ -49,6 +45,28 @@ class TestHigherOrderGP(BotorchTestCase):
         for m in [self.model, model_2]:
             mll = ExactMarginalLogLikelihood(m.likelihood, m)
             fit_gpytorch_torch(mll, options={"maxiter": 1, "disp": False})
+
+    def test_num_output_dims(self):
+        train_x = rand(2, 10, 1, device=self.device)
+        train_y = randn(2, 10, 3, 5, device=self.device)
+        model = HigherOrderGP(train_x, train_y)
+
+        # check that it correctly inferred that this is a batched model
+        self.assertEqual(model._num_outputs, 2)
+
+        train_x = rand(10, 1, device=self.device)
+        train_y = randn(10, 3, 5, 2, device=self.device)
+        model = HigherOrderGP(train_x, train_y)
+
+        # non-batched case
+        self.assertEqual(model._num_outputs, 1)
+
+        train_x = rand(3, 2, 10, 1, device=self.device)
+        train_y = randn(3, 2, 10, 3, 5, device=self.device)
+
+        # check the error when using multi-dim batch_shape
+        with self.assertRaises(NotImplementedError):
+            model = HigherOrderGP(train_x, train_y)
 
     def test_posterior(self):
         manual_seed(0)
@@ -182,7 +200,7 @@ class TestHigherOrderGPPosterior(BotorchTestCase):
         train_x = rand(2, 10, 1, device=self.device)
         train_y = randn(2, 10, 3, 5, device=self.device)
 
-        m1 = HigherOrderGP(train_x, train_y, first_dim_is_batch=True)
+        m1 = HigherOrderGP(train_x, train_y)
         m2 = HigherOrderGP(train_x[0], train_y[0])
 
         manual_seed(0)
