@@ -331,7 +331,7 @@ class HigherOrderGPPosterior(GPyTorchPosterior):
         # add samples
         test_cond_samples = test_marginal_samples + test_updated_samples
         test_cond_samples = test_cond_samples.permute(
-            test_cond_samples.ndim - 1, *range(0, test_cond_samples.ndim-1)
+            test_cond_samples.ndim - 1, *range(0, test_cond_samples.ndim - 1)
         )
 
         # reshape samples to be the actual size of the train targets
