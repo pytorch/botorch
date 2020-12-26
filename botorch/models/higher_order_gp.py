@@ -289,7 +289,7 @@ class HigherOrderGPPosterior(GPyTorchPosterior):
             ..., : self.train_train_covar.shape[-1], :
         ]
         test_marginal_samples = samples[..., self.train_train_covar.shape[-1] :, :]
-                
+        
         # we need to add noise to the train_joint_samples
         # THIS ASSUMES CONSTANT NOISE
         noise_std = self.train_train_covar.lazy_tensors[1]._diag[..., 0] ** 0.5
@@ -330,7 +330,9 @@ class HigherOrderGPPosterior(GPyTorchPosterior):
 
         # add samples
         test_cond_samples = test_marginal_samples + test_updated_samples
-        test_cond_samples = test_cond_samples.permute(test_cond_samples.ndim-1, *range(0, test_cond_samples.ndim-1))
+        test_cond_samples = test_cond_samples.permute(
+            test_cond_samples.ndim - 1, *range(0, test_cond_samples.ndim-1)
+        )
 
         # reshape samples to be the actual size of the train targets
         return test_cond_samples.reshape(*sample_shape, *self.output_shape)
