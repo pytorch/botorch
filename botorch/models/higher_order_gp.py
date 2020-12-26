@@ -289,7 +289,6 @@ class HigherOrderGPPosterior(GPyTorchPosterior):
             ..., : self.train_train_covar.shape[-1], :
         ]
         test_marginal_samples = samples[..., self.train_train_covar.shape[-1] :, :]
-        
         # we need to add noise to the train_joint_samples
         # THIS ASSUMES CONSTANT NOISE
         noise_std = self.train_train_covar.lazy_tensors[1]._diag[..., 0] ** 0.5
