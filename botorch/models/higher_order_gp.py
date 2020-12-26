@@ -301,16 +301,9 @@ class HigherOrderGPPosterior(GPyTorchPosterior):
             ntms_dims = [
                 i == noise_std.shape[0] for i in noiseless_train_marginal_samples.shape
             ]
-            print("ntms_dims", ntms_dims)
-            has_matched = False
             for matched in ntms_dims:
-                if matched:
-                    has_matched = True
-                else:
-                    # if has_matched:
+                if not matched:
                     noise_std = noise_std.unsqueeze(-1)
-                    # else:
-                    #    noise_std = noise_std.unsqueeze(0)
 
         # we need to add noise into the noiseless samples
         noise_marginal_samples = noise_std * noise_base_samples
