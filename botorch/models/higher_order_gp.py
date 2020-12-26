@@ -397,12 +397,12 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
                     "HigherOrderGP does not support the outcome_transform "
                     "`Standardize`! Using `FlattenedStandardize` with `output_shape="
                     f"{train_Y.shape[- num_output_dims:]} and batch_shape="
-                    f"{train_Y.shape[: -1 - num_output_dims]} instead.",
+                    f"{batch_shape} instead.",
                     RuntimeWarning,
                 )
                 outcome_transform = FlattenedStandardize(
                     output_shape=train_Y.shape[-num_output_dims:],
-                    batch_shape=train_Y.shape[: -1 - num_output_dims],
+                    batch_shape=batch_shape,
                 )
             train_Y, _ = outcome_transform(train_Y)
 
