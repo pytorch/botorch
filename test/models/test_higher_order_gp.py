@@ -257,19 +257,10 @@ class TestHigherOrderGPPosterior(BotorchTestCase):
 
             # and finally test that sampling with no base samples is okay
             samples_3 = posterior.rsample(sample_shape=Size((5000,)))
-            sampled_variance = (samples_3.std(dim=0) ** 2).view(-1)
+            sampled_variance = samples_3.var(dim=0).view(-1)
             posterior_variance = posterior_variance.view(-1)
             self.assertLess(
                 (posterior_variance - sampled_variance).norm()
                 / posterior_variance.norm(),
                 5e-2,
             )
-
-
-# def TestFlattenedStandardize(BotorchTestCase):
-#     def setUp(self):
-#         super().setUp()
-
-#         self.train_y = randn(2, 10, 4, 5, device=self.device)
-#         self.train_y_var = rand(2, 10, 4, 5, device=self.device)
-#         self.model = FlattenedStandardize(Size((4, 5)), Size((2,)), min_stdv=1e-4)

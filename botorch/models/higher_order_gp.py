@@ -197,12 +197,8 @@ class HigherOrderGPPosterior(GPyTorchPosterior):
             if base_samples.shape[: len(sample_shape)] != sample_shape:
                 raise RuntimeError("sample_shape disagrees with shape of base_samples.")
 
-            if base_samples.shape[-1] != 1:
-                base_samples = base_samples.unsqueeze(-1)
-            unsqueezed_dim = -2
-
             appended_shape = joint_size + self.train_train_covar.shape[-1]
-            if appended_shape != base_samples.shape[unsqueezed_dim]:
+            if appended_shape != base_samples.shape[-1]:
                 # get base_samples to the correct shape by expanding as sample shape,
                 # batch shape, then rest of dimensions. We have to add first the sample
                 # shape, then the batch shape of the model, and then finally the shape
@@ -214,10 +210,6 @@ class HigherOrderGPPosterior(GPyTorchPosterior):
                 if base_samples.nelement() == base_sample_shapes.numel():
                     base_samples = base_samples.reshape(base_sample_shapes)
 
-                    # remove output dimension in single output case
-                    if not self.num_outputs > 1:
-                        base_samples = base_samples.squeeze(-1)
-
                     new_base_samples = torch.randn(
                         *sample_shape,
                         *batch_shape,
@@ -226,9 +218,6 @@ class HigherOrderGPPosterior(GPyTorchPosterior):
                         dtype=base_samples.dtype,
                     )
                     base_samples = torch.cat((base_samples, new_base_samples), dim=-1)
-
-                    # if self.num_outputs > 1:
-                    base_samples = base_samples.unsqueeze(-1)
                 else:
                     # nuke the base samples if we cannot use them.
                     base_samples = None
@@ -239,7 +228,6 @@ class HigherOrderGPPosterior(GPyTorchPosterior):
                 *sample_shape,
                 *batch_shape,
                 joint_size,
-                1,
                 device=covariance_matrix.device,
                 dtype=covariance_matrix.dtype,
             )
@@ -248,16 +236,16 @@ class HigherOrderGPPosterior(GPyTorchPosterior):
                 *sample_shape,
                 *batch_shape,
                 self.train_train_covar.shape[-1],
-                1,
                 device=covariance_matrix.device,
                 dtype=covariance_matrix.dtype,
             )
         else:
             # finally split up the base samples
-            noise_base_samples = base_samples[..., joint_size:, :]
-            base_samples = base_samples[..., :joint_size, :]
+            noise_base_samples = base_samples[..., joint_size:]
+            base_samples = base_samples[..., :joint_size]
 
-        return base_samples, noise_base_samples
+        perm_list = [*range(1, base_samples.ndim), 0]
+        return base_samples.permute(*perm_list), noise_base_samples.permute(*perm_list)
 
     def rsample(
         self,
@@ -291,8 +279,9 @@ class HigherOrderGPPosterior(GPyTorchPosterior):
             sample_shape, base_samples
         )
 
+        # base samples now have trailing sample dimension
         covariance_matrix = self.joint_covariance_matrix
-        covar_root = covariance_matrix.root_decomposition(method="symeig").root
+        covar_root = covariance_matrix.root_decomposition().root
         samples = covar_root.matmul(base_samples)
 
         # now pluck out Y_x and X_x
@@ -300,7 +289,7 @@ class HigherOrderGPPosterior(GPyTorchPosterior):
             ..., : self.train_train_covar.shape[-1], :
         ]
         test_marginal_samples = samples[..., self.train_train_covar.shape[-1] :, :]
-
+                
         # we need to add noise to the train_joint_samples
         # THIS ASSUMES CONSTANT NOISE
         noise_std = self.train_train_covar.lazy_tensors[1]._diag[..., 0] ** 0.5
@@ -341,7 +330,7 @@ class HigherOrderGPPosterior(GPyTorchPosterior):
 
         # add samples
         test_cond_samples = test_marginal_samples + test_updated_samples
-        test_cond_samples = test_cond_samples.transpose(-1, -2)
+        test_cond_samples = test_cond_samples.permute(test_cond_samples.ndim-1, *range(0, test_cond_samples.ndim-1))
 
         # reshape samples to be the actual size of the train targets
         return test_cond_samples.reshape(*sample_shape, *self.output_shape)
