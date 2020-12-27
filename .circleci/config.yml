@@ -108,9 +108,23 @@ commands:
 
 jobs:
 
-  lint_test_py38_pip:
+  lint_test_py37_pip:
     docker:
-      - image: circleci/python:3.8
+      - image: circleci/python:3.7
+    resource_class: large
+    steps:
+      - checkout
+      - pip_install:
+          args: "-n"
+      - lint_flake8
+      - lint_black
+      - unit_tests
+      - sphinx
+      - sphinx_coverage
+
+  lint_test_py39_pip:
+    docker:
+      - image: circleci/python:3.9
     resource_class: large
     steps:
       - checkout
@@ -123,7 +137,7 @@ jobs:
       - sphinx_coverage
       - upload_coverage
 
-  lint_test_py37_conda:
+  lint_test_conda:
     docker:
       - image: continuumio/miniconda3
     resource_class: large
@@ -136,7 +150,6 @@ jobs:
       - unit_tests
       - sphinx
       - sphinx_coverage
-      - upload_coverage
 
   run_tutorials_py38_pip:
     docker:
@@ -184,9 +197,11 @@ workflows:
 
   lint_and_test:
     jobs:
-      - lint_test_py38_pip:
+      - lint_test_py37_pip:
           filters: *exclude_ghpages_fbconfig
-      - lint_test_py37_conda:
+      - lint_test_py39_pip:
+          filters: *exclude_ghpages_fbconfig
+      - lint_test_conda:
           filters: *exclude_ghpages_fbconfig
       - run_tutorials_py38_pip:
           filters: *exclude_ghpages_fbconfig
@@ -201,7 +216,7 @@ workflows:
                 - master
     jobs:
       - package
-          
+
   auto_deploy_site:
     triggers:
       - schedule:
