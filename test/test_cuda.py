@@ -34,6 +34,9 @@ def run_cuda_tests(tests: Union[unittest.TestCase, unittest.TestSuite]) -> bool:
     if isinstance(tests, BotorchTestCase):
         tests.device = torch.device("cuda")
         test_result = tests.run()
+        if test_result is None:
+            # some test runners may return None on skipped tests
+            return True
         passed = test_result.wasSuccessful()
         if not passed:
             # print test name
