@@ -6,36 +6,56 @@
 
 import itertools
 import warnings
+from contextlib import ExitStack
+from unittest import mock
 
 import torch
 from botorch.exceptions import BotorchTensorDimensionError
 from botorch.posteriors.gpytorch import GPyTorchPosterior, scalarize_posterior
 from botorch.utils.testing import BotorchTestCase, _get_test_posterior
+from gpytorch import settings as gpt_settings
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.lazy.non_lazy_tensor import lazify
+
+ROOT_DECOMP_PATH = "gpytorch.lazy.non_lazy_tensor.NonLazyTensor._root_decomposition"
 
 
 class TestGPyTorchPosterior(BotorchTestCase):
     def test_GPyTorchPosterior(self):
         for dtype in (torch.float, torch.double):
-            mean = torch.rand(3, dtype=dtype, device=self.device)
-            variance = 1 + torch.rand(3, dtype=dtype, device=self.device)
+            n = 3
+            mean = torch.rand(n, dtype=dtype, device=self.device)
+            variance = 1 + torch.rand(n, dtype=dtype, device=self.device)
             covar = variance.diag()
             mvn = MultivariateNormal(mean, lazify(covar))
             posterior = GPyTorchPosterior(mvn=mvn)
             # basics
             self.assertEqual(posterior.device.type, self.device.type)
             self.assertTrue(posterior.dtype == dtype)
-            self.assertEqual(posterior.event_shape, torch.Size([3, 1]))
+            self.assertEqual(posterior.event_shape, torch.Size([n, 1]))
             self.assertTrue(torch.equal(posterior.mean, mean.unsqueeze(-1)))
             self.assertTrue(torch.equal(posterior.variance, variance.unsqueeze(-1)))
             # rsample
             samples = posterior.rsample()
-            self.assertEqual(samples.shape, torch.Size([1, 3, 1]))
-            samples = posterior.rsample(sample_shape=torch.Size([4]))
-            self.assertEqual(samples.shape, torch.Size([4, 3, 1]))
-            samples2 = posterior.rsample(sample_shape=torch.Size([4, 2]))
-            self.assertEqual(samples2.shape, torch.Size([4, 2, 3, 1]))
+            self.assertEqual(samples.shape, torch.Size([1, n, 1]))
+            for sample_shape in ([4], [4, 2]):
+                samples = posterior.rsample(sample_shape=torch.Size(sample_shape))
+                self.assertEqual(samples.shape, torch.Size(sample_shape + [n, 1]))
+            # check enabling of approximate root decomposition
+            with ExitStack() as es:
+                mock_func = es.enter_context(
+                    mock.patch(ROOT_DECOMP_PATH, return_value=torch.cholesky(covar))
+                )
+                es.enter_context(gpt_settings.max_cholesky_size(0))
+                es.enter_context(
+                    gpt_settings.fast_computations(covar_root_decomposition=True)
+                )
+                # need to clear cache, cannot re-use previous objects
+                mvn = MultivariateNormal(mean, lazify(covar))
+                posterior = GPyTorchPosterior(mvn=mvn)
+                posterior.rsample(sample_shape=torch.Size([4]))
+                mock_func.assert_called_once()
+
             # rsample w/ base samples
             base_samples = torch.randn(4, 3, 1, device=self.device, dtype=dtype)
             # incompatible shapes
@@ -43,21 +63,18 @@ class TestGPyTorchPosterior(BotorchTestCase):
                 posterior.rsample(
                     sample_shape=torch.Size([3]), base_samples=base_samples
                 )
-            samples_b1 = posterior.rsample(
-                sample_shape=torch.Size([4]), base_samples=base_samples
-            )
-            samples_b2 = posterior.rsample(
-                sample_shape=torch.Size([4]), base_samples=base_samples
-            )
-            self.assertTrue(torch.allclose(samples_b1, samples_b2))
-            base_samples2 = torch.randn(4, 2, 3, 1, device=self.device, dtype=dtype)
-            samples2_b1 = posterior.rsample(
-                sample_shape=torch.Size([4, 2]), base_samples=base_samples2
-            )
-            samples2_b2 = posterior.rsample(
-                sample_shape=torch.Size([4, 2]), base_samples=base_samples2
-            )
-            self.assertTrue(torch.allclose(samples2_b1, samples2_b2))
+            # ensure consistent result
+            for sample_shape in ([4], [4, 2]):
+                base_samples = torch.randn(
+                    *sample_shape, 3, 1, device=self.device, dtype=dtype
+                )
+                samples = [
+                    posterior.rsample(
+                        sample_shape=torch.Size(sample_shape), base_samples=base_samples
+                    )
+                    for _ in range(2)
+                ]
+                self.assertTrue(torch.allclose(*samples))
             # collapse_batch_dims
             b_mean = torch.rand(2, 3, dtype=dtype, device=self.device)
             b_variance = 1 + torch.rand(2, 3, dtype=dtype, device=self.device)
