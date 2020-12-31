@@ -14,6 +14,7 @@ from botorch.acquisition.analytic import (
     NoisyExpectedImprovement,
     PosteriorMean,
     ProbabilityOfImprovement,
+    ScalarizedPosteriorMean,
     UpperConfidenceBound,
 )
 from botorch.acquisition.objective import IdentityMCObjective, ScalarizedObjective
@@ -469,4 +470,33 @@ class TestNoisyExpectedImprovement(BotorchTestCase):
             # Test with minimize
             nEI = NoisyExpectedImprovement(
                 model, X_observed, num_fantasies=5, maximize=False
+            )
+
+
+class TestScalarizedPosteriorMean(BotorchTestCase):
+    def test_scalarized_posterior_mean(self):
+        for dtype in (torch.float, torch.double):
+            mean = torch.tensor([[0.25], [0.5]], device=self.device, dtype=dtype)
+            mm = MockModel(MockPosterior(mean=mean))
+            weights = torch.tensor([0.5, 1.0], device=self.device, dtype=dtype)
+            module = ScalarizedPosteriorMean(model=mm, weights=weights)
+            X = torch.empty(1, 1, device=self.device, dtype=dtype)
+            pm = module(X)
+            self.assertTrue(
+                torch.allclose(pm, (mean.squeeze(-1) * module.weights).sum(dim=-1))
+            )
+
+    def test_scalarized_posterior_mean_batch(self):
+        for dtype in (torch.float, torch.double):
+            mean = torch.tensor(
+                [[-0.5, 1.0], [0.0, 1.0], [0.5, 1.0]], device=self.device, dtype=dtype
+            ).view(3, 2, 1)
+            mm = MockModel(MockPosterior(mean=mean))
+            weights = torch.tensor([0.5, 1.0], device=self.device, dtype=dtype)
+
+            module = ScalarizedPosteriorMean(model=mm, weights=weights)
+            X = torch.empty(3, 1, 1, device=self.device, dtype=dtype)
+            pm = module(X)
+            self.assertTrue(
+                torch.allclose(pm, (mean.squeeze(-1) * module.weights).sum(dim=-1))
             )
