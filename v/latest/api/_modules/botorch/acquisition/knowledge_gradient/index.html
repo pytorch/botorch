@@ -53,7 +53,7 @@
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">settings</span>
@@ -316,6 +316,9 @@
 <span class="sd">    A version of `qKnowledgeGradient` that supports multi-fidelity optimization</span>
 <span class="sd">    via a `CostAwareUtility` and the `project` and `expand` operators. If none</span>
 <span class="sd">    of these are set, this acquisition function reduces to `qKnowledgeGradient`.</span>
+<span class="sd">    Through `valfunc_cls` and `valfunc_argfac`, this can be changed into a custom</span>
+<span class="sd">    multifidelity acquisition function (it is only KG if the terminal value is</span>
+<span class="sd">    computed using a posterior mean).</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -330,6 +333,8 @@
         <span class="n">cost_aware_utility</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">CostAwareUtility</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">project</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">X</span><span class="p">:</span> <span class="n">X</span><span class="p">,</span>
         <span class="n">expand</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">X</span><span class="p">:</span> <span class="n">X</span><span class="p">,</span>
+        <span class="n">valfunc_cls</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">AcquisitionFunction</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">valfunc_argfac</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Model</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Multi-Fidelity q-Knowledge Gradient (one-shot optimization).</span>
@@ -357,13 +362,18 @@
 <span class="sd">            cost_aware_utility: A CostAwareUtility computing the cost-transformed</span>
 <span class="sd">                utility from a candidate set and samples of increases in utility.</span>
 <span class="sd">            project: A callable mapping a `batch_shape x q x d` tensor of design</span>
-<span class="sd">                points to a tensor of the same shape projected to the desired</span>
-<span class="sd">                target set (e.g. the target fidelities in case of multi-fidelity</span>
-<span class="sd">                optimization).</span>
+<span class="sd">                points to a tensor with shape `batch_shape x q_term x d` projected</span>
+<span class="sd">                to the desired target set (e.g. the target fidelities in case of</span>
+<span class="sd">                multi-fidelity optimization). For the basic case, `q_term = q`.</span>
 <span class="sd">            expand: A callable mapping a `batch_shape x q x d` input tensor to</span>
 <span class="sd">                a `batch_shape x (q + q_e)' x d`-dim output tensor, where the</span>
 <span class="sd">                `q_e` additional points in each q-batch correspond to</span>
 <span class="sd">                additional ("trace") observations.</span>
+<span class="sd">            valfunc_cls: An acquisition function class to be used as the terminal</span>
+<span class="sd">                value function.</span>
+<span class="sd">            valfunc_argfac: An argument factory, i.e. callable that maps a `Model`</span>
+<span class="sd">                to a dictionary of kwargs for the terminal value function (e.g.</span>
+<span class="sd">                `best_f` for `ExpectedImprovement`).</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="n">current_value</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">cost_aware_utility</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
@@ -382,6 +392,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">project</span> <span class="o">=</span> <span class="n">project</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">expand</span> <span class="o">=</span> <span class="n">expand</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cost_sampler</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">valfunc_cls</span> <span class="o">=</span> <span class="n">valfunc_cls</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">valfunc_argfac</span> <span class="o">=</span> <span class="n">valfunc_argfac</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">cost_sampler</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -442,13 +454,14 @@
         <span class="n">fantasy_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">fantasize</span><span class="p">(</span>
             <span class="n">X</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">X_eval</span><span class="p">),</span> <span class="n">sampler</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="p">,</span> <span class="n">observation_noise</span><span class="o">=</span><span class="kc">True</span>
         <span class="p">)</span>
-
         <span class="c1"># get the value function</span>
         <span class="n">value_function</span> <span class="o">=</span> <span class="n">_get_value_function</span><span class="p">(</span>
             <span class="n">model</span><span class="o">=</span><span class="n">fantasy_model</span><span class="p">,</span>
             <span class="n">objective</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span>
             <span class="n">sampler</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">inner_sampler</span><span class="p">,</span>
             <span class="n">project</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">project</span><span class="p">,</span>
+            <span class="n">valfunc_cls</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">valfunc_cls</span><span class="p">,</span>
+            <span class="n">valfunc_argfac</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">valfunc_argfac</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="c1"># make sure to propagate gradients to the fantasy model train inputs</span>
@@ -494,14 +507,24 @@
     <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">MCAcquisitionObjective</span><span class="p">,</span> <span class="n">ScalarizedObjective</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">sampler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCSampler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">project</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">valfunc_cls</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">AcquisitionFunction</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">valfunc_argfac</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Model</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AcquisitionFunction</span><span class="p">:</span>
     <span class="sa">r</span><span class="sd">"""Construct value function (i.e. inner acquisition function)."""</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="n">MCAcquisitionObjective</span><span class="p">):</span>
-        <span class="n">base_value_function</span> <span class="o">=</span> <span class="n">qSimpleRegret</span><span class="p">(</span>
-            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="n">objective</span>
-        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">valfunc_cls</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">common_kwargs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"model"</span><span class="p">:</span> <span class="n">model</span><span class="p">,</span> <span class="s2">"objective"</span><span class="p">:</span> <span class="n">objective</span><span class="p">}</span>
+        <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">valfunc_cls</span><span class="p">,</span> <span class="n">MCAcquisitionFunction</span><span class="p">):</span>
+            <span class="n">common_kwargs</span><span class="p">[</span><span class="s2">"sampler"</span><span class="p">]</span> <span class="o">=</span> <span class="n">sampler</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="n">valfunc_argfac</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span> <span class="k">if</span> <span class="n">valfunc_argfac</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
+        <span class="n">base_value_function</span> <span class="o">=</span> <span class="n">valfunc_cls</span><span class="p">(</span><span class="o">**</span><span class="n">common_kwargs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">base_value_function</span> <span class="o">=</span> <span class="n">PosteriorMean</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="n">MCAcquisitionObjective</span><span class="p">):</span>
+            <span class="n">base_value_function</span> <span class="o">=</span> <span class="n">qSimpleRegret</span><span class="p">(</span>
+                <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="n">objective</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">base_value_function</span> <span class="o">=</span> <span class="n">PosteriorMean</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">)</span>
+
     <span class="k">if</span> <span class="n">project</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">base_value_function</span>
     <span class="k">else</span><span class="p">:</span>

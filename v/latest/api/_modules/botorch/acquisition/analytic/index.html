@@ -617,6 +617,46 @@
     <span class="n">state_dict</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">())</span>
     <span class="n">fantasy_model</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">state_dict</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">fantasy_model</span>
+
+
+<div class="viewcode-block" id="ScalarizedPosteriorMean"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.ScalarizedPosteriorMean">[docs]</a><span class="k">class</span> <span class="nc">ScalarizedPosteriorMean</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""Scalarized Posterior Mean.</span>
+
+<span class="sd">    This acquisition function returns a scalarized (across the q-batch)</span>
+<span class="sd">    posterior mean given a vector of weights.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+        <span class="n">weights</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ScalarizedObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Scalarized Posterior Mean.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            model: A fitted single-outcome model.</span>
+<span class="sd">            weights: A tensor of shape `q` for scalarization.</span>
+<span class="sd">            objective: A ScalarizedObjective. Required for multi-output models.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"weights"</span><span class="p">,</span> <span class="n">weights</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+
+<div class="viewcode-block" id="ScalarizedPosteriorMean.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.ScalarizedPosteriorMean.forward">[docs]</a>    <span class="nd">@t_batch_mode_transform</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Evaluate the scalarized posterior mean on the candidate set X.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `(b) x q x d`-dim Tensor of `(b)` t-batches of `d`-dim design</span>
+<span class="sd">                points each.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `(b)`-dim Tensor of Posterior Mean values at the given design</span>
+<span class="sd">            points `X`.</span>
+<span class="sd">        """</span>
+        <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_posterior</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">weighted_means</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mean</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span>
+        <span class="k">return</span> <span class="n">weighted_means</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
 </pre></div>
 </div>
 </div>

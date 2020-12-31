@@ -624,6 +624,46 @@ the given design points <cite>X</cite>.</p>
 <code class="sig-name descname">training</code><em class="property">: bool</em><a class="headerlink" href="#botorch.acquisition.analytic.NoisyExpectedImprovement.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
+<dl class="py class">
+<dt id="botorch.acquisition.analytic.ScalarizedPosteriorMean">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.acquisition.analytic.</code><code class="sig-name descname">ScalarizedPosteriorMean</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">weights</span></em>, <em class="sig-param"><span class="n">objective</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/analytic.html#ScalarizedPosteriorMean"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.analytic.ScalarizedPosteriorMean" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.analytic.AnalyticAcquisitionFunction" title="botorch.acquisition.analytic.AnalyticAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.analytic.AnalyticAcquisitionFunction</span></code></a></p>
+<p>Scalarized Posterior Mean.</p>
+<p>This acquisition function returns a scalarized (across the q-batch)
+posterior mean given a vector of weights.</p>
+<p>Scalarized Posterior Mean.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a>) – A fitted single-outcome model.</p></li>
+<li><p><strong>weights</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A tensor of shape <cite>q</cite> for scalarization.</p></li>
+<li><p><strong>objective</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="#botorch.acquisition.objective.ScalarizedObjective" title="botorch.acquisition.objective.ScalarizedObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScalarizedObjective</span></code></a>]) – A ScalarizedObjective. Required for multi-output models.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="botorch.acquisition.analytic.ScalarizedPosteriorMean.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/analytic.html#ScalarizedPosteriorMean.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.analytic.ScalarizedPosteriorMean.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the scalarized posterior mean on the candidate set X.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>(b) x q x d</cite>-dim Tensor of <cite>(b)</cite> t-batches of <cite>d</cite>-dim design
+points each.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>(b)</cite>-dim Tensor of Posterior Mean values at the given design
+points <cite>X</cite>.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt id="botorch.acquisition.analytic.ScalarizedPosteriorMean.training">
+<code class="sig-name descname">training</code><em class="property">: bool</em><a class="headerlink" href="#botorch.acquisition.analytic.ScalarizedPosteriorMean.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
 </div>
 <div class="section" id="module-botorch.acquisition.monte_carlo">
 <span id="monte-carlo-acquisition-functions"></span><h3>Monte-Carlo Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.monte_carlo" title="Permalink to this headline">¶</a></h3>
@@ -1320,45 +1360,53 @@ t-batches of <cite>q + num_fantasies</cite> design points each.</p>
 </dd></dl>
 <dl class="py class">
 <dt id="botorch.acquisition.knowledge_gradient.qMultiFidelityKnowledgeGradient">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.acquisition.knowledge_gradient.</code><code class="sig-name descname">qMultiFidelityKnowledgeGradient</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">num_fantasies=64</em>, <em class="sig-param">sampler=None</em>, <em class="sig-param">objective=None</em>, <em class="sig-param">inner_sampler=None</em>, <em class="sig-param">X_pending=None</em>, <em class="sig-param">current_value=None</em>, <em class="sig-param">cost_aware_utility=None</em>, <em class="sig-param">project=&lt;function qMultiFidelityKnowledgeGradient.&lt;lambda&gt;&gt;</em>, <em class="sig-param">expand=&lt;function qMultiFidelityKnowledgeGradient.&lt;lambda&gt;&gt;</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/knowledge_gradient.html#qMultiFidelityKnowledgeGradient"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.knowledge_gradient.qMultiFidelityKnowledgeGradient" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">botorch.acquisition.knowledge_gradient.</code><code class="sig-name descname">qMultiFidelityKnowledgeGradient</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">num_fantasies=64</em>, <em class="sig-param">sampler=None</em>, <em class="sig-param">objective=None</em>, <em class="sig-param">inner_sampler=None</em>, <em class="sig-param">X_pending=None</em>, <em class="sig-param">current_value=None</em>, <em class="sig-param">cost_aware_utility=None</em>, <em class="sig-param">project=&lt;function qMultiFidelityKnowledgeGradient.&lt;lambda&gt;&gt;</em>, <em class="sig-param">expand=&lt;function qMultiFidelityKnowledgeGradient.&lt;lambda&gt;&gt;</em>, <em class="sig-param">valfunc_cls=None</em>, <em class="sig-param">valfunc_argfac=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/knowledge_gradient.html#qMultiFidelityKnowledgeGradient"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.knowledge_gradient.qMultiFidelityKnowledgeGradient" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.knowledge_gradient.qKnowledgeGradient" title="botorch.acquisition.knowledge_gradient.qKnowledgeGradient"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.knowledge_gradient.qKnowledgeGradient</span></code></a></p>
 <p>Batch Knowledge Gradient for multi-fidelity optimization.</p>
 <p>A version of <cite>qKnowledgeGradient</cite> that supports multi-fidelity optimization
 via a <cite>CostAwareUtility</cite> and the <cite>project</cite> and <cite>expand</cite> operators. If none
-of these are set, this acquisition function reduces to <cite>qKnowledgeGradient</cite>.</p>
+of these are set, this acquisition function reduces to <cite>qKnowledgeGradient</cite>.
+Through <cite>valfunc_cls</cite> and <cite>valfunc_argfac</cite>, this can be changed into a custom
+multifidelity acquisition function (it is only KG if the terminal value is
+computed using a posterior mean).</p>
 <p>Multi-Fidelity q-Knowledge Gradient (one-shot optimization).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a>) – A fitted model. Must support fantasizing.</p></li>
-<li><p><strong>num_fantasies</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The number of fantasy points to use. More fantasy
+<li><p><strong>model</strong> – A fitted model. Must support fantasizing.</p></li>
+<li><p><strong>num_fantasies</strong> – The number of fantasy points to use. More fantasy
 points result in a better approximation, at the expense of
 memory and wall time. Unused if <cite>sampler</cite> is specified.</p></li>
-<li><p><strong>sampler</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="sampling.html#botorch.sampling.samplers.MCSampler" title="botorch.sampling.samplers.MCSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">MCSampler</span></code></a>]) – The sampler used to sample fantasy observations. Optional
+<li><p><strong>sampler</strong> – The sampler used to sample fantasy observations. Optional
 if <cite>num_fantasies</cite> is specified.</p></li>
-<li><p><strong>objective</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="#botorch.acquisition.objective.AcquisitionObjective" title="botorch.acquisition.objective.AcquisitionObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionObjective</span></code></a>]) – The objective under which the samples are evaluated. If
+<li><p><strong>objective</strong> – The objective under which the samples are evaluated. If
 <cite>None</cite> or a ScalarizedObjective, then the analytic posterior mean
 is used, otherwise the objective is MC-evaluated (using
 inner_sampler).</p></li>
-<li><p><strong>inner_sampler</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="sampling.html#botorch.sampling.samplers.MCSampler" title="botorch.sampling.samplers.MCSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">MCSampler</span></code></a>]) – The sampler used for inner sampling. Ignored if the
+<li><p><strong>inner_sampler</strong> – The sampler used for inner sampling. Ignored if the
 objective is <cite>None</cite> or a ScalarizedObjective.</p></li>
-<li><p><strong>X_pending</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>m x d</cite>-dim Tensor of <cite>m</cite> design points that have
+<li><p><strong>X_pending</strong> – A <cite>m x d</cite>-dim Tensor of <cite>m</cite> design points that have
 points that have been submitted for function evaluation
 but have not yet been evaluated.</p></li>
-<li><p><strong>current_value</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – The current value, i.e. the expected best objective
+<li><p><strong>current_value</strong> – The current value, i.e. the expected best objective
 given the observed points <cite>D</cite>. If omitted, forward will not
 return the actual KG value, but the expected best objective
 given the data set <cite>D u X</cite>.</p></li>
-<li><p><strong>cost_aware_utility</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="#botorch.acquisition.cost_aware.CostAwareUtility" title="botorch.acquisition.cost_aware.CostAwareUtility"><code class="xref py py-class docutils literal notranslate"><span class="pre">CostAwareUtility</span></code></a>]) – A CostAwareUtility computing the cost-transformed
+<li><p><strong>cost_aware_utility</strong> – A CostAwareUtility computing the cost-transformed
 utility from a candidate set and samples of increases in utility.</p></li>
-<li><p><strong>project</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A callable mapping a <cite>batch_shape x q x d</cite> tensor of design
-points to a tensor of the same shape projected to the desired
-target set (e.g. the target fidelities in case of multi-fidelity
-optimization).</p></li>
-<li><p><strong>expand</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A callable mapping a <cite>batch_shape x q x d</cite> input tensor to
+<li><p><strong>project</strong> – A callable mapping a <cite>batch_shape x q x d</cite> tensor of design
+points to a tensor with shape <cite>batch_shape x q_term x d</cite> projected
+to the desired target set (e.g. the target fidelities in case of
+multi-fidelity optimization). For the basic case, <cite>q_term = q</cite>.</p></li>
+<li><p><strong>expand</strong> – A callable mapping a <cite>batch_shape x q x d</cite> input tensor to
 a <cite>batch_shape x (q + q_e)’ x d</cite>-dim output tensor, where the
 <cite>q_e</cite> additional points in each q-batch correspond to
 additional (“trace”) observations.</p></li>
+<li><p><strong>valfunc_cls</strong> – An acquisition function class to be used as the terminal
+value function.</p></li>
+<li><p><strong>valfunc_argfac</strong> – An argument factory, i.e. callable that maps a <cite>Model</cite>
+to a dictionary of kwargs for the terminal value function (e.g.
+<cite>best_f</cite> for <cite>ExpectedImprovement</cite>).</p></li>
 </ul>
 </dd>
 </dl>
@@ -2871,6 +2919,28 @@ assumes that the last column of X contains the fidelity parameters.</p></li>
 </dd>
 </dl>
 </p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt id="botorch.acquisition.utils.project_to_sample_points">
+<code class="sig-prename descclassname">botorch.acquisition.utils.</code><code class="sig-name descname">project_to_sample_points</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="n">sample_points</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/utils.html#project_to_sample_points"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.utils.project_to_sample_points" title="Permalink to this definition">¶</a></dt>
+<dd><p>Augment <cite>X</cite> with sample points at which to take weighted average.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x 1 x d</cite>-dim Tensor of with one d`-dim design points
+for each t-batch.</p></li>
+<li><p><strong>sample_points</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – <cite>p x d’</cite>-dim Tensor (<cite>d’ &lt; d</cite>) of <cite>d’</cite>-dim sample points at
+which to compute the expectation. The <cite>d’</cite>-dims refer to the trailing
+columns of X.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>batch_shape x p x d</cite> Tensor where the q-batch includes the <cite>p</cite> sample points.</p>
 </dd>
 </dl>
 </dd></dl>

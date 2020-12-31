@@ -398,6 +398,25 @@
     <span class="c1"># change relevant entries of the scaling tensor</span>
     <span class="n">scale_fac</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">q</span><span class="p">:,</span> <span class="n">fidelity_dims</span><span class="p">]</span> <span class="o">=</span> <span class="n">sf</span>
     <span class="k">return</span> <span class="n">scale_fac</span> <span class="o">*</span> <span class="n">X_expanded</span></div>
+
+
+<div class="viewcode-block" id="project_to_sample_points"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.utils.project_to_sample_points">[docs]</a><span class="k">def</span> <span class="nf">project_to_sample_points</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">sample_points</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""Augment `X` with sample points at which to take weighted average.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        X: A `batch_shape x 1 x d`-dim Tensor of with one d`-dim design points</span>
+<span class="sd">            for each t-batch.</span>
+<span class="sd">        sample_points: `p x d'`-dim Tensor (`d' &lt; d`) of `d'`-dim sample points at</span>
+<span class="sd">            which to compute the expectation. The `d'`-dims refer to the trailing</span>
+<span class="sd">            columns of X.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        A `batch_shape x p x d` Tensor where the q-batch includes the `p` sample points.</span>
+<span class="sd">    """</span>
+    <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">p</span><span class="p">,</span> <span class="n">d_prime</span> <span class="o">=</span> <span class="n">sample_points</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">X_new</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">batch_shape</span><span class="p">),</span> <span class="n">p</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># batch_shape x p x d</span>
+    <span class="n">X_new</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">-</span><span class="n">d_prime</span><span class="p">:]</span> <span class="o">=</span> <span class="n">sample_points</span>
+    <span class="k">return</span> <span class="n">X_new</span></div>
 </pre></div>
 </div>
 </div>
