@@ -38,7 +38,7 @@ class NondominatedPartitioning(Module):
 
     The alpha parameter can be increased to obtain an approximate partitioning
     faster. The `alpha` is a fraction of the total hypervolume encapsuling the
-    entire pareto set. When a hypercell's volume divided by the total hypervolume
+    entire Pareto set. When a hypercell's volume divided by the total hypervolume
     is less than `alpha`, we discard the hypercell. See Figure 2 in
     [Couckuyt2012]_ for a visual representation.
 
@@ -61,7 +61,7 @@ class NondominatedPartitioning(Module):
 
         Args:
             num_outcomes: The number of outcomes
-            Y: A `n x m`-dim tensor
+            Y: A `(batch_shape) x n x m`-dim tensor
             alpha: a thresold fraction of total volume used in an approximate
                 decomposition.
             eps: a small value for numerical stability
@@ -86,10 +86,13 @@ class NondominatedPartitioning(Module):
     def pareto_Y(self) -> Tensor:
         r"""This returns the non-dominated set.
 
-        Note: Internally, we store the negative pareto set (minimization).
+        Note: in the batch case, this Pareto set is padded by repeating a
+        Pareto point so that all batches have the same size Pareto set.
+
+        Note: Internally, we store the negative Pareto set (minimization).
 
         Returns:
-            A `n_pareto x m`-dim tensor of outcomes.
+            A `(batch_shape) x max_n_pareto x m`-dim tensor of outcomes.
         """
         if not hasattr(self, "_pareto_Y"):
             raise BotorchError("pareto_Y has not been initialized")
@@ -98,10 +101,36 @@ class NondominatedPartitioning(Module):
     def _update_pareto_Y(self) -> bool:
         r"""Update the non-dominated front."""
         # is_non_dominated assumes maximization
-        non_dominated_mask = is_non_dominated(-self.Y)
-        pf = self.Y[non_dominated_mask]
-        # sort by first objective
-        new_pareto_Y = pf[torch.argsort(pf[:, 0])]
+        pareto_mask = is_non_dominated(-self.Y)
+
+        if len(self.batch_shape) > 0:
+            # Note: in the batch case, the Pareto frontier is padded by repeating
+            # a Pareto point. This ensures that the padded box-decomposition has
+            # the same number of points, which enables fast batch operations.
+            max_n_pareto = pareto_mask.sum(dim=-1).max().item()
+            pareto_Y = torch.empty(
+                *self.batch_shape,
+                max_n_pareto,
+                self.Y.shape[-1],
+                dtype=self.Y.dtype,
+                device=self.Y.device,
+            )
+            for i in range(self.Y.shape[0]):
+                pareto_i = self.Y[i, pareto_mask[i]]
+                n_pareto = pareto_i.shape[0]
+                pareto_Y[i, :n_pareto] = pareto_i
+                # pad pareto_Y, so that all batches have the same size Pareto set
+                pareto_Y[i, n_pareto:] = pareto_i[-1]
+            # sort by first objective
+            new_pareto_Y = pareto_Y.gather(
+                index=torch.argsort(pareto_Y[..., :1], dim=-2).expand(pareto_Y.shape),
+                dim=-2,
+            )
+        else:
+            pareto_Y = self.Y[pareto_mask]
+            # sort by first objective
+            new_pareto_Y = pareto_Y[torch.argsort(pareto_Y[:, 0])]
+
         if not hasattr(self, "_pareto_Y") or not torch.equal(
             new_pareto_Y, self._pareto_Y
         ):
@@ -113,12 +142,19 @@ class NondominatedPartitioning(Module):
         r"""Update non-dominated front and decomposition.
 
         Args:
-            Y: A `n x m`-dim tensor of outcomes.
+            Y: A `(batch_shape) x n x m`-dim tensor of outcomes.
         """
+        self.batch_shape = Y.shape[:-2]
+        if len(self.batch_shape) > 1:
+            raise NotImplementedError(
+                f"{type(self).__name__} only supports a single "
+                f"batch dimension, but got {len(self.batch_shape)} "
+                "batch dimensions."
+            )
         # multiply by -1, since internally we minimize.
         self.Y = -Y
         is_new_pareto = self._update_pareto_Y()
-        # Update decomposition if the pareto front changed
+        # Update decomposition if the Pareto front changed
         if is_new_pareto:
             if self.num_outcomes > 2:
                 self.binary_partition_non_dominated_space()
@@ -132,12 +168,17 @@ class NondominatedPartitioning(Module):
         less efficient than `partition_non_dominated_space_2d` for the
         2-outcome case.
         """
-        # Extend pareto front with the ideal and anti-ideal point
+        if len(self.batch_shape) > 0:
+            raise NotImplementedError(
+                f"{type(self).__name__} only supports a batched box "
+                f"decompositions in the 2-objective setting."
+            )
+        # Extend Pareto front with the ideal and anti-ideal point
         ideal_point = self._pareto_Y.min(dim=0, keepdim=True).values - 1
         anti_ideal_point = self._pareto_Y.max(dim=0, keepdim=True).values + 1
 
         aug_pareto_Y = torch.cat([ideal_point, self._pareto_Y, anti_ideal_point], dim=0)
-        # The binary parititoning algorithm uses indices the augmented pareto front.
+        # The binary parititoning algorithm uses indices the augmented Pareto front.
         aug_pareto_Y_idcs = self._get_augmented_pareto_front_indices()
 
         # Initialize one cell over entire pareto front
@@ -146,7 +187,7 @@ class NondominatedPartitioning(Module):
         stack = [cell]
         total_volume = (anti_ideal_point - ideal_point).prod()
 
-        # hypercells contains the indices of the (augmented) pareto front
+        # hypercells contains the indices of the (augmented) Pareto front
         # that specify that bounds of the each hypercell.
         # It is a `2 x num_cells x num_outcomes`-dim tensor
         self.register_buffer(
@@ -167,10 +208,10 @@ class NondominatedPartitioning(Module):
                 cell_bounds_pareto_idcs, outcome_idxr
             ]
             # Check cell bounds
-            # - if cell upper bound is better than pareto front on all outcomes:
+            # - if cell upper bound is better than Pareto front on all outcomes:
             #   - accept the cell
-            # - elif cell lower bound is better than pareto front on all outcomes:
-            #   - this means the cell overlaps the pareto front. Divide the cell along
+            # - elif cell lower bound is better than Pareto front on all outcomes:
+            #   - this means the cell overlaps the Pareto front. Divide the cell along
             #   - its longest edge.
             if (
                 ((cell_bounds_pareto_values[1] - self.eps) < self._pareto_Y)
@@ -234,93 +275,155 @@ class NondominatedPartitioning(Module):
                 f"but num_outcomes={self.num_outcomes}"
             )
         pf_ext_idx = self._get_augmented_pareto_front_indices()
+        n_pf_plus_1 = self._pareto_Y.shape[-2] + 1
+        view_shape = torch.Size([1] * len(self.batch_shape) + [n_pf_plus_1])
+        expand_shape = self.batch_shape + torch.Size([n_pf_plus_1])
         range_pf_plus1 = torch.arange(
-            self._pareto_Y.shape[0] + 1, dtype=torch.long, device=self._pareto_Y.device
+            n_pf_plus_1, dtype=torch.long, device=self._pareto_Y.device
         )
-        lower = torch.stack([range_pf_plus1, torch.zeros_like(range_pf_plus1)], dim=-1)
+        range_pf_plus1_expanded = range_pf_plus1.view(view_shape).expand(expand_shape)
+
+        lower = torch.stack(
+            [range_pf_plus1_expanded, torch.zeros_like(range_pf_plus1_expanded)], dim=-1
+        )
         upper = torch.stack(
-            [range_pf_plus1 + 1, pf_ext_idx[-range_pf_plus1 - 1, -1]], dim=-1
+            [1 + range_pf_plus1_expanded, pf_ext_idx[..., -range_pf_plus1 - 1, -1]],
+            dim=-1,
         )
+        # 2 x batch_shape x n_cells x 2
         self.register_buffer("hypercells", torch.stack([lower, upper], dim=0))
 
     def _get_augmented_pareto_front_indices(self) -> Tensor:
-        r"""Get indices of augmented pareto front."""
-        pf_idx = torch.argsort(self._pareto_Y, dim=0)
+        r"""Get indices of augmented Pareto front."""
+        pf_idx = torch.argsort(self._pareto_Y, dim=-2)
         return torch.cat(
             [
                 torch.zeros(
-                    1, self.num_outcomes, dtype=torch.long, device=self.Y.device
+                    *self.batch_shape,
+                    1,
+                    self.num_outcomes,
+                    dtype=torch.long,
+                    device=self.Y.device,
                 ),
                 # Add 1 because index zero is used for the ideal point
                 pf_idx + 1,
                 torch.full(
-                    torch.Size([1, self.num_outcomes]),
-                    self._pareto_Y.shape[0] + 1,
+                    torch.Size(
+                        [
+                            *self.batch_shape,
+                            1,
+                            self.num_outcomes,
+                        ]
+                    ),
+                    self._pareto_Y.shape[-2] + 1,
                     dtype=torch.long,
                     device=self.Y.device,
                 ),
             ],
-            dim=0,
+            dim=-2,
         )
+
+    def _expand_ref_point(self, ref_point: Tensor) -> Tensor:
+        r"""Expand reference point to the proper batch_shape."""
+        if ref_point.shape[:-1] != self.batch_shape:
+            if ref_point.ndim > 1:
+                raise BotorchTensorDimensionError(
+                    "Expected ref_point to be a `batch_shape x m` or `m`-dim tensor, "
+                    f"but got {ref_point.shape}."
+                )
+            ref_point = ref_point.view(
+                *(1 for _ in self.batch_shape), ref_point.shape[-1]
+            ).expand(self.batch_shape + ref_point.shape[-1:])
+        return ref_point
 
     def get_hypercell_bounds(self, ref_point: Tensor) -> Tensor:
         r"""Get the bounds of each hypercell in the decomposition.
 
         Args:
-            ref_point: A `m`-dim tensor containing the reference point.
+            ref_point: A `(batch_shape) x m`-dim tensor containing the reference point.
 
         Returns:
-            A `2 x num_cells x num_outcomes`-dim tensor containing the
+            A `2 x (batch_shape) x num_cells x num_outcomes`-dim tensor containing the
                 lower and upper vertices bounding each hypercell.
         """
+        ref_point = self._expand_ref_point(ref_point=ref_point)
         aug_pareto_Y = torch.cat(
             [
                 # -inf is the lower bound of the non-dominated space
                 torch.full(
-                    torch.Size([1, self.num_outcomes]),
+                    torch.Size(
+                        [
+                            *self.batch_shape,
+                            1,
+                            self.num_outcomes,
+                        ]
+                    ),
                     float("-inf"),
                     dtype=self._pareto_Y.dtype,
                     device=self._pareto_Y.device,
                 ),
                 self._pareto_Y,
                 # note: internally, this class minimizes, so use negative here
-                -(ref_point.unsqueeze(0)),
+                -(ref_point.unsqueeze(-2)),
             ],
-            dim=0,
+            dim=-2,
         )
         minimization_cell_bounds = self._get_hypercell_bounds(aug_pareto_Y=aug_pareto_Y)
         # swap upper and lower bounds and multiply by -1
-        return torch.cat(
-            [-minimization_cell_bounds[1:], -minimization_cell_bounds[:1]], dim=0
-        )
+        return -minimization_cell_bounds.flip(0)
 
     def _get_hypercell_bounds(self, aug_pareto_Y: Tensor) -> Tensor:
         r"""Get the bounds of each hypercell in the decomposition.
 
         Args:
             aug_pareto_Y: A `n_pareto + 2 x m`-dim tensor containing
-            the augmented pareto front.
+            the augmented Pareto front.
 
         Returns:
-            A `2 x num_cells x num_outcomes`-dim tensor containing the
+            A `2 x (batch_shape) x num_cells x num_outcomes`-dim tensor containing the
                 lower and upper vertices bounding each hypercell.
         """
-        num_cells = self.hypercells.shape[1]
-        outcome_idxr = torch.arange(
-            self.num_outcomes, dtype=torch.long, device=self.Y.device
-        ).repeat(num_cells)
-        # this tensor is 2 x (num_cells *num_outcomes) x 2
+        num_cells = self.hypercells.shape[-2]
+        cells_times_outcomes = num_cells * self.num_outcomes
+        outcome_idxr = (
+            torch.arange(self.num_outcomes, dtype=torch.long, device=self.Y.device)
+            .repeat(num_cells)
+            .view(
+                *(1 for _ in self.hypercells.shape[:-2]),
+                cells_times_outcomes,
+            )
+            .expand(*self.hypercells.shape[:-2], cells_times_outcomes)
+        )
+
+        # this tensor is 2 x (num_cells * num_outcomes) x 2
         # the batch dim corresponds to lower/upper bound
         cell_bounds_idxr = torch.stack(
-            [self.hypercells.view(2, -1), outcome_idxr.unsqueeze(0).expand(2, -1)],
+            [
+                self.hypercells.view(*self.hypercells.shape[:-2], -1),
+                outcome_idxr,
+            ],
             dim=-1,
-        )
-        cell_bounds_values = aug_pareto_Y[
-            cell_bounds_idxr.chunk(self.num_outcomes, dim=-1)
-        ].view(2, -1, self.num_outcomes)
-        return cell_bounds_values
+        ).view(2, -1, 2)
+        if len(self.batch_shape) > 0:
+            # TODO: support multiple batch dimensions here
+            batch_idxr = (
+                torch.arange(
+                    self.batch_shape[0], dtype=torch.long, device=self.Y.device
+                )
+                .unsqueeze(1)
+                .expand(-1, cells_times_outcomes)
+                .reshape(1, -1, 1)
+                .expand(2, -1, 1)
+            )
+            cell_bounds_idxr = torch.cat([batch_idxr, cell_bounds_idxr], dim=-1)
 
-    def compute_hypervolume(self, ref_point: Tensor) -> float:
+        cell_bounds_values = aug_pareto_Y[
+            cell_bounds_idxr.chunk(cell_bounds_idxr.shape[-1], dim=-1)
+        ]
+        view_shape = (2, *self.batch_shape, num_cells, self.num_outcomes)
+        return cell_bounds_values.view(view_shape)
+
+    def compute_hypervolume(self, ref_point: Tensor) -> Tensor:
         r"""Compute the hypervolume for the given reference point.
 
         Note: This assumes minimization.
@@ -335,23 +438,23 @@ class NondominatedPartitioning(Module):
         is quite fast.
 
         Args:
-            ref_point: A `m`-dim tensor containing the reference point.
+            ref_point: A `(batch_shape) x m`-dim tensor containing the reference point.
 
         Returns:
-            The dominated hypervolume.
+            `(batch_shape)`-dim tensor containing the dominated hypervolume.
         """
+        ref_point = self._expand_ref_point(ref_point=ref_point)
         # internally we minimize
-        ref_point = -ref_point
+        ref_point = -ref_point.unsqueeze(-2)
         if (self._pareto_Y >= ref_point).any():
             raise ValueError(
                 "The reference point must be greater than all pareto_Y values."
             )
-        ideal_point = self._pareto_Y.min(dim=0, keepdim=True).values
-        ref_point = ref_point.unsqueeze(0)
-        aug_pareto_Y = torch.cat([ideal_point, self._pareto_Y, ref_point], dim=0)
+        ideal_point = self._pareto_Y.min(dim=-2, keepdim=True).values
+        aug_pareto_Y = torch.cat([ideal_point, self._pareto_Y, ref_point], dim=-2)
         cell_bounds_values = self._get_hypercell_bounds(aug_pareto_Y=aug_pareto_Y)
-        total_volume = (ref_point - ideal_point).prod()
+        total_volume = (ref_point - ideal_point).squeeze(-2).prod(dim=-1)
         non_dom_volume = (
-            (cell_bounds_values[1] - cell_bounds_values[0]).prod(dim=-1).sum()
+            (cell_bounds_values[1] - cell_bounds_values[0]).prod(dim=-1).sum(dim=-1)
         )
-        return (total_volume - non_dom_volume).item()
+        return total_volume - non_dom_volume
