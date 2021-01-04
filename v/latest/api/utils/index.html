@@ -1270,7 +1270,7 @@ the decomposition under minimization. TODO: use maximization internally as well.
 decomposition of the non-dominated space for <cite>m&lt;5</cite> objectives (alpha=0.0).</p>
 <p>The alpha parameter can be increased to obtain an approximate partitioning
 faster. The <cite>alpha</cite> is a fraction of the total hypervolume encapsuling the
-entire pareto set. When a hypercell’s volume divided by the total hypervolume
+entire Pareto set. When a hypercell’s volume divided by the total hypervolume
 is less than <cite>alpha</cite>, we discard the hypercell. See Figure 2 in
 <a class="reference internal" href="#couckuyt2012" id="id1"><span>[Couckuyt2012]</span></a> for a visual representation.</p>
 <p>This PyTorch implementation of the binary partitioning algorithm (<a class="reference internal" href="#couckuyt2012" id="id2"><span>[Couckuyt2012]</span></a>)
@@ -1283,7 +1283,7 @@ is adapted from numpy/tensorflow implementation at:
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>num_outcomes</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of outcomes</p></li>
-<li><p><strong>Y</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>n x m</cite>-dim tensor</p></li>
+<li><p><strong>Y</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>(batch_shape) x n x m</cite>-dim tensor</p></li>
 <li><p><strong>alpha</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – a thresold fraction of total volume used in an approximate
 decomposition.</p></li>
 <li><p><strong>eps</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – a small value for numerical stability</p></li>
@@ -1303,13 +1303,15 @@ decomposition.</p></li>
 <dt id="botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.pareto_Y">
 <em class="property">property </em><code class="sig-name descname">pareto_Y</code><a class="headerlink" href="#botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.pareto_Y" title="Permalink to this definition">¶</a></dt>
 <dd><p>This returns the non-dominated set.</p>
-<p>Note: Internally, we store the negative pareto set (minimization).</p>
+<p>Note: in the batch case, this Pareto set is padded by repeating a
+Pareto point so that all batches have the same size Pareto set.</p>
+<p>Note: Internally, we store the negative Pareto set (minimization).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A <cite>n_pareto x m</cite>-dim tensor of outcomes.</p>
+<dd class="field-even"><p>A <cite>(batch_shape) x max_n_pareto x m</cite>-dim tensor of outcomes.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1319,7 +1321,7 @@ decomposition.</p></li>
 <dd><p>Update non-dominated front and decomposition.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>n x m</cite>-dim tensor of outcomes.</p>
+<dd class="field-odd"><p><strong>Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>(batch_shape) x n x m</cite>-dim tensor of outcomes.</p>
 </dd>
 <dt class="field-even">Return type</dt>
 <dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
@@ -1351,14 +1353,14 @@ less efficient than <cite>partition_non_dominated_space_2d</cite> for the
 <dd><p>Get the bounds of each hypercell in the decomposition.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>ref_point</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>m</cite>-dim tensor containing the reference point.</p>
+<dd class="field-odd"><p><strong>ref_point</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>(batch_shape) x m</cite>-dim tensor containing the reference point.</p>
 </dd>
 <dt class="field-even">Return type</dt>
 <dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
 </dd>
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p><dl class="simple">
-<dt>A <cite>2 x num_cells x num_outcomes</cite>-dim tensor containing the</dt><dd><p>lower and upper vertices bounding each hypercell.</p>
+<dt>A <cite>2 x (batch_shape) x num_cells x num_outcomes</cite>-dim tensor containing the</dt><dd><p>lower and upper vertices bounding each hypercell.</p>
 </dd>
 </dl>
 </p>
@@ -1379,13 +1381,13 @@ non-dominated space). Given such a partitioning, this method
 is quite fast.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>ref_point</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>m</cite>-dim tensor containing the reference point.</p>
+<dd class="field-odd"><p><strong>ref_point</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>(batch_shape) x m</cite>-dim tensor containing the reference point.</p>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
 </dd>
 <dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>The dominated hypervolume.</p>
+<dd class="field-odd"><p><cite>(batch_shape)</cite>-dim tensor containing the dominated hypervolume.</p>
 </dd>
 </dl>
 </dd></dl>
