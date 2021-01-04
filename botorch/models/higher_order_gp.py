@@ -506,7 +506,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
                     MultivariateNormalPrior(
                         latent_dist.loc, latent_dist.covariance_matrix.detach().clone()
                     ),
-                    lambda dim_num=dim_num: self.latent_parameters[dim_num],
+                    lambda module, dim_num=dim_num: self.latent_parameters[dim_num],
                 )
 
     def forward(self, X: Tensor) -> MultivariateNormal:
