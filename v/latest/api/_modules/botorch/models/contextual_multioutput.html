@@ -34,11 +34,11 @@
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.models.multitask</span> <span class="kn">import</span> <span class="n">MultiTaskGP</span>
+<span class="kn">from</span> <span class="nn">gpytorch.constraints</span> <span class="kn">import</span> <span class="n">Interval</span>
 <span class="kn">from</span> <span class="nn">gpytorch.distributions.multivariate_normal</span> <span class="kn">import</span> <span class="n">MultivariateNormal</span>
 <span class="kn">from</span> <span class="nn">gpytorch.kernels.rbf_kernel</span> <span class="kn">import</span> <span class="n">RBFKernel</span>
 <span class="kn">from</span> <span class="nn">gpytorch.lazy</span> <span class="kn">import</span> <span class="n">InterpolatedLazyTensor</span><span class="p">,</span> <span class="n">LazyTensor</span>
 <span class="kn">from</span> <span class="nn">gpytorch.likelihoods.gaussian_likelihood</span> <span class="kn">import</span> <span class="n">FixedNoiseGaussianLikelihood</span>
-<span class="kn">from</span> <span class="nn">gpytorch.priors.torch_priors</span> <span class="kn">import</span> <span class="n">UniformPrior</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">ModuleList</span>
 
@@ -107,7 +107,10 @@
             <span class="p">]</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">task_covar_module</span> <span class="o">=</span> <span class="n">RBFKernel</span><span class="p">(</span>
-            <span class="n">ard_num_dims</span><span class="o">=</span><span class="n">n_embs</span><span class="p">,</span> <span class="n">lengthscale_prior</span><span class="o">=</span><span class="n">UniformPrior</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">)</span>
+            <span class="n">ard_num_dims</span><span class="o">=</span><span class="n">n_embs</span><span class="p">,</span>
+            <span class="n">lengthscale_constraint</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span>
+                <span class="mf">0.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initial_value</span><span class="o">=</span><span class="mf">1.0</span>
+            <span class="p">),</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
 
