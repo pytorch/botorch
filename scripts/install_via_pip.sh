@@ -41,7 +41,7 @@ sudo pip install --progress-bar off git+https://github.com/cornellius-gp/gpytorc
 sudo pip install -e .[dev]
 
 if [[ $TUTORIAL_DEPS == true ]]; then
-  sudo pip install --progress-bar off cma matplotlib ipykernel pykeops
+  sudo pip install --progress-bar off cma matplotlib ipykernel pykeops memory_profiler
   sudo pip install --progress-bar off git+https://github.com/facebook/Ax.git
 fi
 

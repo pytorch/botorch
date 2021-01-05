@@ -31,7 +31,7 @@ TEST_REQUIRES = ["pytest", "pytest-cov"]
 
 DEV_REQUIRES = TEST_REQUIRES + ["black", "flake8", "sphinx", "sphinx-autodoc-typehints"]
 
-TUTORIALS_REQUIRES = ["jupyter", "matplotlib", "cma", "torchvision", "pykeops"]
+TUTORIALS_REQUIRES = ["jupyter", "matplotlib", "cma", "torchvision", "pykeops", "memory_profiler"]
 
 root_dir = os.path.dirname(__file__)
 
