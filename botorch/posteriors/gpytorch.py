@@ -10,12 +10,13 @@ Posterior Module to be used with GPyTorch models.
 
 from __future__ import annotations
 
+from contextlib import ExitStack
 from typing import Optional
 
-import gpytorch
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.posteriors.posterior import Posterior
+from gpytorch import settings as gpt_settings
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.lazy import BlockDiagLazyTensor, LazyTensor, SumLazyTensor
 from torch import Tensor
@@ -80,7 +81,9 @@ class GPyTorchPosterior(Posterior):
             # remove output dimension in single output case
             if not self._is_mt:
                 base_samples = base_samples.squeeze(-1)
-        with gpytorch.settings.fast_computations(covar_root_decomposition=False):
+        with ExitStack() as es:
+            if gpt_settings._fast_covar_root_decomposition.is_default():
+                es.enter_context(gpt_settings._fast_covar_root_decomposition(False))
             samples = self.mvn.rsample(
                 sample_shape=sample_shape, base_samples=base_samples
             )

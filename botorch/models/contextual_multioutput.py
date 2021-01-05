@@ -8,11 +8,11 @@ from typing import List, Optional
 
 import torch
 from botorch.models.multitask import MultiTaskGP
+from gpytorch.constraints import Interval
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels.rbf_kernel import RBFKernel
 from gpytorch.lazy import InterpolatedLazyTensor, LazyTensor
 from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
-from gpytorch.priors.torch_priors import UniformPrior
 from torch import Tensor
 from torch.nn import ModuleList
 
@@ -81,7 +81,10 @@ class LCEMGP(MultiTaskGP):
             ]
         )
         self.task_covar_module = RBFKernel(
-            ard_num_dims=n_embs, lengthscale_prior=UniformPrior(0.0, 2.0)
+            ard_num_dims=n_embs,
+            lengthscale_constraint=Interval(
+                0.0, 2.0, transform=None, initial_value=1.0
+            ),
         )
         self.to(train_X)
 

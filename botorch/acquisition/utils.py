@@ -372,3 +372,22 @@ def expand_trace_observations(
     # change relevant entries of the scaling tensor
     scale_fac[..., q:, fidelity_dims] = sf
     return scale_fac * X_expanded
+
+
+def project_to_sample_points(X: Tensor, sample_points: Tensor) -> Tensor:
+    r"""Augment `X` with sample points at which to take weighted average.
+
+    Args:
+        X: A `batch_shape x 1 x d`-dim Tensor of with one d`-dim design points
+            for each t-batch.
+        sample_points: `p x d'`-dim Tensor (`d' < d`) of `d'`-dim sample points at
+            which to compute the expectation. The `d'`-dims refer to the trailing
+            columns of X.
+    Returns:
+        A `batch_shape x p x d` Tensor where the q-batch includes the `p` sample points.
+    """
+    batch_shape = X.shape[:-2]
+    p, d_prime = sample_points.shape
+    X_new = X.repeat(*(1 for _ in batch_shape), p, 1)  # batch_shape x p x d
+    X_new[..., -d_prime:] = sample_points
+    return X_new

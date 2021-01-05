@@ -75,16 +75,68 @@ class TestNonDominatedPartitioning(BotorchTestCase):
                         [3.0, inf],
                     ],
                 ],
-                **tkwargs
+                **tkwargs,
             )
             cell_bounds = partitioning.get_hypercell_bounds(ref_point)
             self.assertTrue(torch.equal(cell_bounds, expected_cell_bounds))
             # test compute hypervolume
             hv = partitioning.compute_hypervolume(ref_point)
-            self.assertEqual(hv, 49.0)
+            self.assertEqual(hv.item(), 49.0)
             # test error when reference is not worse than all pareto_Y
             with self.assertRaises(ValueError):
                 partitioning.compute_hypervolume(pareto_Y.max(dim=0).values)
+
+            # test batched, m=2 case
+            Y = torch.rand(3, 10, 2, **tkwargs)
+            partitioning = NondominatedPartitioning(num_outcomes=2, Y=Y)
+            cell_bounds = partitioning.get_hypercell_bounds(ref_point)
+            partitionings = []
+            for i in range(Y.shape[0]):
+                partitioning_i = NondominatedPartitioning(num_outcomes=2, Y=Y[i])
+                partitionings.append(partitioning_i)
+                # check pareto_Y
+                pareto_set1 = {tuple(x) for x in partitioning_i.pareto_Y.tolist()}
+                pareto_set2 = {tuple(x) for x in partitioning.pareto_Y[i].tolist()}
+                self.assertEqual(pareto_set1, pareto_set2)
+                expected_cell_bounds_i = partitioning_i.get_hypercell_bounds(ref_point)
+                # remove padding
+                no_padding_cell_bounds_i = cell_bounds[:, i][
+                    :, ((cell_bounds[1, i] - cell_bounds[0, i]) != 0).all(dim=-1)
+                ]
+                self.assertTrue(
+                    torch.equal(expected_cell_bounds_i, no_padding_cell_bounds_i)
+                )
+
+            # test batch ref point
+            cell_bounds2 = partitioning.get_hypercell_bounds(
+                ref_point.unsqueeze(0).expand(3, 2)
+            )
+            self.assertTrue(torch.equal(cell_bounds, cell_bounds2))
+
+            # test improper batch shape
+            with self.assertRaises(BotorchTensorDimensionError):
+                partitioning.get_hypercell_bounds(ref_point.unsqueeze(0).expand(4, 2))
+
+            # test improper Y shape (too many batch dims)
+            with self.assertRaises(NotImplementedError):
+                NondominatedPartitioning(num_outcomes=2, Y=Y.unsqueeze(0))
+
+            # test batched compute_hypervolume, m=2
+            hvs = partitioning.compute_hypervolume(ref_point)
+            hvs_non_batch = torch.stack(
+                [
+                    partitioning_i.compute_hypervolume(ref_point)
+                    for partitioning_i in partitionings
+                ],
+                dim=0,
+            )
+            self.assertTrue(torch.allclose(hvs, hvs_non_batch))
+
+            # test batched m>2
+            with self.assertRaises(NotImplementedError):
+                NondominatedPartitioning(
+                    num_outcomes=3, Y=torch.cat([Y, Y[..., :1]], dim=-1)
+                )
 
             # test error with partition_non_dominated_space_2d for m=3
             partitioning = NondominatedPartitioning(
@@ -133,7 +185,7 @@ class TestNonDominatedPartitioning(BotorchTestCase):
                         [inf, inf, inf],
                     ],
                 ],
-                **tkwargs
+                **tkwargs,
             )
             cell_bounds = partitioning.get_hypercell_bounds(ref_point)
             # cell bounds can have different order
@@ -146,6 +198,6 @@ class TestNonDominatedPartitioning(BotorchTestCase):
             self.assertTrue(num_matches, 9)
             # test compute hypervolume
             hv = partitioning.compute_hypervolume(ref_point)
-            self.assertEqual(hv, 358.0)
+            self.assertEqual(hv.item(), 358.0)
 
             # TODO: test approximate decomposition

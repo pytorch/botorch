@@ -591,3 +591,43 @@ def _get_noiseless_fantasy_model(
     state_dict = deepcopy(model.state_dict())
     fantasy_model.load_state_dict(state_dict)
     return fantasy_model
+
+
+class ScalarizedPosteriorMean(AnalyticAcquisitionFunction):
+    r"""Scalarized Posterior Mean.
+
+    This acquisition function returns a scalarized (across the q-batch)
+    posterior mean given a vector of weights.
+    """
+
+    def __init__(
+        self,
+        model: Model,
+        weights: Tensor,
+        objective: Optional[ScalarizedObjective] = None,
+    ) -> None:
+        r"""Scalarized Posterior Mean.
+
+        Args:
+            model: A fitted single-outcome model.
+            weights: A tensor of shape `q` for scalarization.
+            objective: A ScalarizedObjective. Required for multi-output models.
+        """
+        super().__init__(model=model, objective=objective)
+        self.register_buffer("weights", weights.unsqueeze(dim=0))
+
+    @t_batch_mode_transform()
+    def forward(self, X: Tensor) -> Tensor:
+        r"""Evaluate the scalarized posterior mean on the candidate set X.
+
+        Args:
+            X: A `(b) x q x d`-dim Tensor of `(b)` t-batches of `d`-dim design
+                points each.
+
+        Returns:
+            A `(b)`-dim Tensor of Posterior Mean values at the given design
+            points `X`.
+        """
+        posterior = self._get_posterior(X=X)
+        weighted_means = posterior.mean.squeeze(dim=-1) * self.weights
+        return weighted_means.sum(dim=-1)
