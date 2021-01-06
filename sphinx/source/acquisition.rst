@@ -72,6 +72,11 @@ The One-Shot Knowledge Gradient
 .. automodule:: botorch.acquisition.knowledge_gradient
     :members:
 
+Multi-Step Lookahead Acquisition Functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.acquisition.multi_step_lookahead
+    :members:
+
 Entropy-Based Acquisition Functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.acquisition.max_value_entropy_search
