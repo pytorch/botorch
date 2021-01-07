@@ -39,6 +39,7 @@ from botorch.acquisition.monte_carlo import (
     qSimpleRegret,
     qUpperConfidenceBound,
 )
+from botorch.acquisition.multi_step_lookahead import qMultiStepLookahead
 from botorch.acquisition.objective import (
     ConstrainedMCObjective,
     GenericMCObjective,
@@ -68,6 +69,7 @@ __all__ = [
     "qMultiFidelityKnowledgeGradient",
     "qMaxValueEntropy",
     "qMultiFidelityMaxValueEntropy",
+    "qMultiStepLookahead",
     "qNoisyExpectedImprovement",
     "qNegIntegratedPosteriorVariance",
     "qProbabilityOfImprovement",
