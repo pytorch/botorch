@@ -345,9 +345,6 @@ def _step(
     Returns:
         A `b`-dim tensor containing the multi-step value of the design `X`.
     """
-    if len(Xs) != len(samplers) + 1:
-        raise ValueError("Must have as many samplers as look-ahead steps")
-
     X = Xs[0]
     if sample_weights is None:  # only happens in the initial step
         sample_weights = torch.ones(*X.shape[:-2], device=X.device, dtype=X.dtype)
@@ -539,11 +536,10 @@ def _construct_inner_samplers(
                     "Only objectives of type MCAcquisitionObjective are supported "
                     "for MC value functions."
                 )
-            if mcs is None:
-                # TODO: Default values for mc samples
-                raise NotImplementedError
             inner_sampler = SobolQMCNormalSampler(
-                num_samples=mcs, resample=False, collapse_batch_dims=True
+                num_samples=32 if mcs is None else mcs,
+                resample=False,
+                collapse_batch_dims=True,
             )
             inner_samplers.append(inner_sampler)
     return inner_samplers
@@ -591,7 +587,7 @@ def warmstart_multistep(
 ) -> Tensor:
     r"""Warm-start initialization for multi-step look-ahead acquisition functions.
 
-    For now uses the same q as in `full_optimizer`. TODO: allow different values of `q`
+    For now uses the same q' as in `full_optimizer`. TODO: allow different `q`.
 
     Args:
         acq_function: A qMultiStepLookahead acquisition function.
@@ -600,10 +596,13 @@ def warmstart_multistep(
             function optimization.
         raw_samples: The number of raw samples to consider in the initialization
             heuristic.
-        full_optiizer: The full tree of optimizers of the previous iteration. Typically
-            obtained by passing `return_best_only=False` and `return_full_tree=True`
-            into `optimize_acqf`.
+        full_optimizer: The full tree of optimizers of the previous iteration of shape
+            `batch_shape x q' x d`. Typically obtained by passing
+            `return_best_only=False` and `return_full_tree=True` into `optimize_acqf`.
         kwargs: Optimization kwargs.
+
+    Returns:
+        A `num_restarts x q' x d` tensor for initial points for optimization.
 
     This is a very simple initialization heuristic.
     TODO: Use the observed values to identify the fantasy sub-tree that is closest to

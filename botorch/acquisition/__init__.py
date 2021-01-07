@@ -50,7 +50,6 @@ from botorch.acquisition.objective import (
 )
 from botorch.acquisition.utils import get_acquisition_function
 
-
 __all__ = [
     "AcquisitionFunction",
     "AnalyticAcquisitionFunction",
