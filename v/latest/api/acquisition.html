@@ -1492,18 +1492,230 @@ design points <cite>X</cite>.</p>
 <dd></dd></dl>
 </dd></dl>
 </div>
+<div class="section" id="module-botorch.acquisition.multi_step_lookahead">
+<span id="multi-step-lookahead-acquisition-functions"></span><h3>Multi-Step Lookahead Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.multi_step_lookahead" title="Permalink to this headline">¶</a></h3>
+<p>A general implementation of multi-step look-ahead acquistion function with configurable
+value functions. See <a class="reference internal" href="#jiang2020multistep" id="id14"><span>[Jiang2020multistep]</span></a>.</p>
+<dl class="citation">
+<dt class="label" id="jiang2020multistep"><span class="brackets"><a class="fn-backref" href="#id14">Jiang2020multistep</a></span></dt>
+<dd><p>S. Jiang, D. R. Jiang, M. Balandat, B. Karrer, J. Gardner, and R. Garnett.
+Efficient Nonmyopic Bayesian Optimization via One-Shot Multi-Step Trees.
+In Advances in Neural Information Processing Systems 33, 2020.</p>
+</dd>
+</dl>
+<dl class="py class">
+<dt id="botorch.acquisition.multi_step_lookahead.qMultiStepLookahead">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.acquisition.multi_step_lookahead.</code><code class="sig-name descname">qMultiStepLookahead</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">batch_sizes</span></em>, <em class="sig-param"><span class="n">num_fantasies</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">samplers</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">valfunc_cls</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">valfunc_argfacs</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">objective</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">inner_mc_samples</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">X_pending</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">collapse_fantasy_base_samples</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_step_lookahead.html#qMultiStepLookahead"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.monte_carlo.MCAcquisitionFunction" title="botorch.acquisition.monte_carlo.MCAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.monte_carlo.MCAcquisitionFunction</span></code></a>, <a class="reference internal" href="#botorch.acquisition.acquisition.OneShotAcquisitionFunction" title="botorch.acquisition.acquisition.OneShotAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.acquisition.OneShotAcquisitionFunction</span></code></a></p>
+<p>MC-based batch Multi-Step Look-Ahead (one-shot optimization).</p>
+<p>q-Multi-Step Look-Ahead (one-shot optimization).</p>
+<p>Performs a <cite>k</cite>-step lookahead by means of repeated fantasizing.</p>
+<p>Allows to specify the stage value functions by passing the respective class
+objects via the <cite>valfunc_cls</cite> list. Optionally, <cite>valfunc_argfacs</cite> takes a list
+of callables that generate additional kwargs for these constructors. By default,
+<cite>valfunc_cls</cite> will be chosen as <cite>[None, …, None, PosteriorMean]</cite>, which
+corresponds to the (parallel) multi-step KnowledgeGradient. If, in addition,
+<cite>k=1</cite> and <cite>q_1 = 1</cite>, this reduces to the classic Knowledge Gradient.</p>
+<p>WARNING: The complexity of evaluating this function is exponential in the number
+of lookahead steps!</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a>) – A fitted model.</p></li>
+<li><p><strong>batch_sizes</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – A list <cite>[q_1, …, q_k]</cite> containing the batch sizes for the
+<cite>k</cite> look-ahead steps.</p></li>
+<li><p><strong>num_fantasies</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]) – A list <cite>[f_1, …, f_k]</cite> containing the number of fantasy
+points to use for the <cite>k</cite> look-ahead steps.</p></li>
+<li><p><strong>samplers</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference internal" href="sampling.html#botorch.sampling.samplers.MCSampler" title="botorch.sampling.samplers.MCSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">MCSampler</span></code></a>]]) – A list of MCSampler objects to be used for sampling fantasies in
+each stage.</p></li>
+<li><p><strong>valfunc_cls</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Type</span></code>[<a class="reference internal" href="#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code></a>]]]]) – A list of <cite>k + 1</cite> acquisition function classes to be used as
+the (stage + terminal) value functions. Each element (except for the
+last one) can be <cite>None</cite>, in which case a zero stage value is assumed for
+the respective stage. If <cite>None</cite>, this defaults to
+<cite>[None, …, None, PosteriorMean]</cite></p></li>
+<li><p><strong>valfunc_argfacs</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]]]]) – A list of <cite>k + 1</cite> “argument factories”, i.e. callables that
+map a <cite>Model</cite> and input tensor <cite>X</cite> to a dictionary of kwargs for the
+respective stage value function constructor (e.g. <cite>best_f</cite> for
+<cite>ExpectedImprovement</cite>). If None, only the standard (<cite>model</cite>, <cite>sampler</cite>
+and <cite>objective</cite>) kwargs will be used.</p></li>
+<li><p><strong>objective</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="#botorch.acquisition.objective.AcquisitionObjective" title="botorch.acquisition.objective.AcquisitionObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionObjective</span></code></a>]) – The objective under which the output is evaluated. If <cite>None</cite>, use
+the model output (requires a single-output model). If a
+<cite>ScalarizedObjective</cite> and <cite>value_function_cls</cite> is a subclass of
+<cite>AnalyticAcquisitonFunction</cite>, then the analytic posterior mean is used.
+Otherwise the objective is MC-evaluated (using <cite>inner_sampler</cite>).</p></li>
+<li><p><strong>inner_mc_samples</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]) – A list <cite>[n_0, …, n_k]</cite> containing the number of MC
+samples to be used for evaluating the stage value function. Ignored if
+the objective is <cite>None</cite> or a <cite>ScalarizedObjective</cite>.</p></li>
+<li><p><strong>X_pending</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>m x d</cite>-dim Tensor of <cite>m</cite> design points that have points that
+have been submitted for function evaluation but have not yet been
+evaluated. Concatenated into <cite>X</cite> upon forward call. Copied and set to
+have no gradient.</p></li>
+<li><p><strong>collapse_fantasy_base_samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, collapse_batch_dims of the Samplers
+will be applied on fantasy batch dimensions as well, meaning that base
+samples are the same in all subtrees starting from the same level.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_step_lookahead.html#qMultiStepLookahead.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate qMultiStepLookahead on the candidate set X.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x q’ x d</cite>-dim Tensor with <cite>q’</cite> design points for each
+batch, where <cite>q’ = q_0 + f_1 q_1 + f_2 f_1 q_2 + …</cite>. Here <cite>q_i</cite>
+is the number of candidates jointly considered in look-ahead step
+<cite>i</cite>, and <cite>f_i</cite> is respective number of fantasies.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The acquisition value for each batch as a tensor of shape <cite>batch_shape</cite>.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.get_augmented_q_batch_size">
+<code class="sig-name descname">get_augmented_q_batch_size</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">q</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_step_lookahead.html#qMultiStepLookahead.get_augmented_q_batch_size"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.get_augmented_q_batch_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get augmented q batch size for one-shot optimzation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>q</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of candidates to consider jointly.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The augmented size for one-shot optimzation (including variables
+parameterizing the fantasy solutions): <cite>q_0 + f_1 q_1 + f_2 f_1 q_2 + …</cite></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.get_split_shapes">
+<code class="sig-name descname">get_split_shapes</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_step_lookahead.html#qMultiStepLookahead.get_split_shapes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.get_split_shapes" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.get_multi_step_tree_input_representation">
+<code class="sig-name descname">get_multi_step_tree_input_representation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_step_lookahead.html#qMultiStepLookahead.get_multi_step_tree_input_representation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.get_multi_step_tree_input_representation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the multi-step tree representation of X.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x q’ x d</cite>-dim Tensor with <cite>q’</cite> design points for each
+batch, where <cite>q’ = q_0 + f_1 q_1 + f_2 f_1 q_2 + …</cite>. Here <cite>q_i</cite>
+is the number of candidates jointly considered in look-ahead step
+<cite>i</cite>, and <cite>f_i</cite> is respective number of fantasies.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A list <cite>[X_j, …, X_k]</cite> of tensors, where <cite>X_i</cite> has shape
+<cite>f_i x …. x f_1 x batch_shape x q_i x d</cite>.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.extract_candidates">
+<code class="sig-name descname">extract_candidates</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X_full</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_step_lookahead.html#qMultiStepLookahead.extract_candidates"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.extract_candidates" title="Permalink to this definition">¶</a></dt>
+<dd><p>We only return X as the set of candidates post-optimization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X_full</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x q’ x d</cite>-dim Tensor with <cite>q’</cite> design points for
+each batch, where <cite>q’ = q + f_1 q_1 + f_2 f_1 q_2 + …</cite>.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>batch_shape x q x d</cite>-dim Tensor with <cite>q</cite> design points for each batch.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.get_induced_fantasy_model">
+<code class="sig-name descname">get_induced_fantasy_model</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_step_lookahead.html#qMultiStepLookahead.get_induced_fantasy_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.get_induced_fantasy_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fantasy model induced by X.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x q’ x d</cite>-dim Tensor with <cite>q’</cite> design points for each
+batch, where <cite>q’ = q_0 + f_1 q_1 + f_2 f_1 q_2 + …</cite>. Here <cite>q_i</cite>
+is the number of candidates jointly considered in look-ahead step
+<cite>i</cite>, and <cite>f_i</cite> is respective number of fantasies.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The fantasy model induced by X.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt id="botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.training">
+<code class="sig-name descname">training</code><em class="property">: bool</em><a class="headerlink" href="#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py function">
+<dt id="botorch.acquisition.multi_step_lookahead.warmstart_multistep">
+<code class="sig-prename descclassname">botorch.acquisition.multi_step_lookahead.</code><code class="sig-name descname">warmstart_multistep</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">acq_function</span></em>, <em class="sig-param"><span class="n">bounds</span></em>, <em class="sig-param"><span class="n">num_restarts</span></em>, <em class="sig-param"><span class="n">raw_samples</span></em>, <em class="sig-param"><span class="n">full_optimizer</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_step_lookahead.html#warmstart_multistep"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_step_lookahead.warmstart_multistep" title="Permalink to this definition">¶</a></dt>
+<dd><p>Warm-start initialization for multi-step look-ahead acquisition functions.</p>
+<p>For now uses the same q’ as in <cite>full_optimizer</cite>. TODO: allow different <cite>q</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>acq_function</strong> (<a class="reference internal" href="#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead" title="botorch.acquisition.multi_step_lookahead.qMultiStepLookahead"><code class="xref py py-class docutils literal notranslate"><span class="pre">qMultiStepLookahead</span></code></a>) – A qMultiStepLookahead acquisition function.</p></li>
+<li><p><strong>bounds</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of features.</p></li>
+<li><p><strong>num_restarts</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of starting points for multistart acquisition
+function optimization.</p></li>
+<li><p><strong>raw_samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of raw samples to consider in the initialization
+heuristic.</p></li>
+<li><p><strong>full_optimizer</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – The full tree of optimizers of the previous iteration of shape
+<cite>batch_shape x q’ x d</cite>. Typically obtained by passing
+<cite>return_best_only=False</cite> and <cite>return_full_tree=True</cite> into <cite>optimize_acqf</cite>.</p></li>
+<li><p><strong>kwargs</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>) – Optimization kwargs.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>num_restarts x q’ x d</cite> tensor for initial points for optimization.</p>
+</dd>
+</dl>
+<p>This is a very simple initialization heuristic.
+TODO: Use the observed values to identify the fantasy sub-tree that is closest to
+the observed value.</p>
+</dd></dl>
+<dl class="py function">
+<dt id="botorch.acquisition.multi_step_lookahead.make_best_f">
+<code class="sig-prename descclassname">botorch.acquisition.multi_step_lookahead.</code><code class="sig-name descname">make_best_f</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_step_lookahead.html#make_best_f"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_step_lookahead.make_best_f" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract the best observed training input from the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+</div>
 <div class="section" id="module-botorch.acquisition.max_value_entropy_search">
 <span id="entropy-based-acquisition-functions"></span><h3>Entropy-Based Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.max_value_entropy_search" title="Permalink to this headline">¶</a></h3>
 <p>Acquisition functions for max-value entropy search (MES) and
 multi-fidelity MES with noisy observation and trace observations.</p>
 <p>References</p>
 <dl class="citation">
-<dt class="label" id="wang2018mves"><span class="brackets"><a class="fn-backref" href="#id14">Wang2018mves</a></span></dt>
+<dt class="label" id="wang2018mves"><span class="brackets"><a class="fn-backref" href="#id15">Wang2018mves</a></span></dt>
 <dd><p>Wang, Z., Jegelka, S.,
 Max-value Entropy Search for Efficient Bayesian Optimization.
 arXiv:1703.01968v3, 2018</p>
 </dd>
-<dt class="label" id="takeno2019mfmves"><span class="brackets"><a class="fn-backref" href="#id15">Takeno2019mfmves</a></span></dt>
+<dt class="label" id="takeno2019mfmves"><span class="brackets"><a class="fn-backref" href="#id16">Takeno2019mfmves</a></span></dt>
 <dd><p>Takeno, S., et al.,
 Multi-fidelity Bayesian Optimization with Max-value Entropy Search.
 arXiv:1901.08275v1, 2019</p>
@@ -1515,7 +1727,7 @@ arXiv:1901.08275v1, 2019</p>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.monte_carlo.MCAcquisitionFunction" title="botorch.acquisition.monte_carlo.MCAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.monte_carlo.MCAcquisitionFunction</span></code></a></p>
 <p>The acquisition function for Max-value Entropy Search.</p>
 <p>This acquisition function computes the mutual information of
-max values and a candidate point X. See <a class="reference internal" href="#wang2018mves" id="id14"><span>[Wang2018mves]</span></a> for
+max values and a candidate point X. See <a class="reference internal" href="#wang2018mves" id="id15"><span>[Wang2018mves]</span></a> for
 a detailed discussion.</p>
 <p>The model must be single-outcome.
 q &gt; 1 is supported through cyclic optimization and fantasies.</p>
@@ -1594,7 +1806,7 @@ with <cite>1</cite> <cite>d</cite>-dim design points each.</p>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.max_value_entropy_search.qMaxValueEntropy" title="botorch.acquisition.max_value_entropy_search.qMaxValueEntropy"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.max_value_entropy_search.qMaxValueEntropy</span></code></a></p>
 <p>Multi-fidelity max-value entropy.</p>
 <p>The acquisition function for multi-fidelity max-value entropy search
-with support for trace observations. See <a class="reference internal" href="#takeno2019mfmves" id="id15"><span>[Takeno2019mfmves]</span></a> for a
+with support for trace observations. See <a class="reference internal" href="#takeno2019mfmves" id="id16"><span>[Takeno2019mfmves]</span></a> for a
 detailed discussion of the basic ideas on multi-fidelity MES
 (note that this implementation is somewhat different).</p>
 <p>The model must be single-outcome.
@@ -1671,15 +1883,15 @@ with <cite>1</cite> <cite>d</cite>-dim design point each.</p>
 <span id="active-learning-acquisition-functions"></span><h3>Active Learning Acquisition Functions<a class="headerlink" href="#module-botorch.acquisition.active_learning" title="Permalink to this headline">¶</a></h3>
 <p>Active learning acquisition functions.</p>
 <dl class="citation">
-<dt class="label" id="seo2014activedata"><span class="brackets"><a class="fn-backref" href="#id16">Seo2014activedata</a></span></dt>
+<dt class="label" id="seo2014activedata"><span class="brackets"><a class="fn-backref" href="#id17">Seo2014activedata</a></span></dt>
 <dd><p>S. Seo, M. Wallat, T. Graepel, and K. Obermayer. Gaussian process regression:
 Active data selection and test point rejection. IJCNN 2000.</p>
 </dd>
-<dt class="label" id="chen2014seqexpdesign"><span class="brackets"><a class="fn-backref" href="#id17">Chen2014seqexpdesign</a></span></dt>
+<dt class="label" id="chen2014seqexpdesign"><span class="brackets"><a class="fn-backref" href="#id18">Chen2014seqexpdesign</a></span></dt>
 <dd><p>X. Chen and Q. Zhou. Sequential experimental designs for stochastic kriging.
 Winter Simulation Conference 2014.</p>
 </dd>
-<dt class="label" id="binois2017repexp"><span class="brackets"><a class="fn-backref" href="#id18">Binois2017repexp</a></span></dt>
+<dt class="label" id="binois2017repexp"><span class="brackets"><a class="fn-backref" href="#id19">Binois2017repexp</a></span></dt>
 <dd><p>M. Binois, J. Huang, R. B. Gramacy, and M. Ludkovski. Replication or
 exploration? Sequential design for stochastic simulation experiments.
 ArXiv 2017.</p>
@@ -1695,7 +1907,7 @@ ArXiv 2017.</p>
 In that, it is a proxy for global model uncertainty, and thus purely focused on
 “exploration”, rather the “exploitation” of many of the classic Bayesian
 Optimization acquisition functions.</p>
-<p>See <a class="reference internal" href="#seo2014activedata" id="id16"><span>[Seo2014activedata]</span></a>, <a class="reference internal" href="#chen2014seqexpdesign" id="id17"><span>[Chen2014seqexpdesign]</span></a>, and <a class="reference internal" href="#binois2017repexp" id="id18"><span>[Binois2017repexp]</span></a>.</p>
+<p>See <a class="reference internal" href="#seo2014activedata" id="id17"><span>[Seo2014activedata]</span></a>, <a class="reference internal" href="#chen2014seqexpdesign" id="id18"><span>[Chen2014seqexpdesign]</span></a>, and <a class="reference internal" href="#binois2017repexp" id="id19"><span>[Binois2017repexp]</span></a>.</p>
 <p>q-Integrated Negative Posterior Variance.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>

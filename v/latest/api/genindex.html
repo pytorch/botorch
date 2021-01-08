@@ -218,6 +218,13 @@
 </li>
 </ul></li>
 <li>
+    botorch.acquisition.multi_step_lookahead
+
+      <ul>
+<li><a href="acquisition.html#module-botorch.acquisition.multi_step_lookahead">module</a>
+</li>
+</ul></li>
+<li>
     botorch.acquisition.objective
 
       <ul>
@@ -420,6 +427,8 @@
 <li><a href="models.html#module-botorch.models.kernels.exponential_decay">module</a>
 </li>
 </ul></li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li>
     botorch.models.kernels.linear_truncated_fidelity
 
@@ -427,8 +436,6 @@
 <li><a href="models.html#module-botorch.models.kernels.linear_truncated_fidelity">module</a>
 </li>
 </ul></li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li>
     botorch.models.model
 
@@ -1160,6 +1167,8 @@
 <ul>
 <li><a href="acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient.extract_candidates">(botorch.acquisition.knowledge_gradient.qKnowledgeGradient method)</a>
 </li>
+<li><a href="acquisition.html#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.extract_candidates">(botorch.acquisition.multi_step_lookahead.qMultiStepLookahead method)</a>
+</li>
 </ul></li>
 </ul></td>
 </tr></table>
@@ -1264,6 +1273,8 @@
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.objective.UnstandardizeMCMultiOutputObjective.forward">(botorch.acquisition.multi_objective.objective.UnstandardizeMCMultiOutputObjective method)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.objective.WeightedMCMultiOutputObjective.forward">(botorch.acquisition.multi_objective.objective.WeightedMCMultiOutputObjective method)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.forward">(botorch.acquisition.multi_step_lookahead.qMultiStepLookahead method)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.objective.ConstrainedMCObjective.forward">(botorch.acquisition.objective.ConstrainedMCObjective method)</a>
 </li>
@@ -1385,13 +1396,15 @@
 </li>
 <li><a href="models.html#botorch.models.multitask.MultiTaskGP.get_all_tasks">get_all_tasks() (botorch.models.multitask.MultiTaskGP class method)</a>
 </li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="acquisition.html#botorch.acquisition.acquisition.OneShotAcquisitionFunction.get_augmented_q_batch_size">get_augmented_q_batch_size() (botorch.acquisition.acquisition.OneShotAcquisitionFunction method)</a>
 <ul>
 <li><a href="acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient.get_augmented_q_batch_size">(botorch.acquisition.knowledge_gradient.qKnowledgeGradient method)</a>
 </li>
+<li><a href="acquisition.html#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.get_augmented_q_batch_size">(botorch.acquisition.multi_step_lookahead.qMultiStepLookahead method)</a>
+</li>
 </ul></li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="models.html#botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel.get_batch_dimensions">get_batch_dimensions() (botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel static method)</a>
 </li>
 <li><a href="generation.html#botorch.generation.gen.get_best_candidates">get_best_candidates() (in module botorch.generation.gen)</a>
@@ -1404,13 +1417,19 @@
 </li>
 <li><a href="utils.html#botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.get_hypercell_bounds">get_hypercell_bounds() (botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning method)</a>
 </li>
+<li><a href="acquisition.html#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.get_induced_fantasy_model">get_induced_fantasy_model() (botorch.acquisition.multi_step_lookahead.qMultiStepLookahead method)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.utils.get_infeasible_cost">get_infeasible_cost() (in module botorch.acquisition.utils)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.get_multi_step_tree_input_representation">get_multi_step_tree_input_representation() (botorch.acquisition.multi_step_lookahead.qMultiStepLookahead method)</a>
 </li>
 <li><a href="utils.html#botorch.utils.objective.get_objective_weights_transform">get_objective_weights_transform() (in module botorch.utils.objective)</a>
 </li>
 <li><a href="utils.html#botorch.utils.constraints.get_outcome_constraint_transforms">get_outcome_constraint_transforms() (in module botorch.utils.constraints)</a>
 </li>
 <li><a href="utils.html#botorch.utils.feasible_volume.get_outcome_feasibility_probability">get_outcome_feasibility_probability() (in module botorch.utils.feasible_volume)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.get_split_shapes">get_split_shapes() (botorch.acquisition.multi_step_lookahead.qMultiStepLookahead method)</a>
 </li>
 <li><a href="models.html#botorch.models.utils.gpt_posterior_settings">gpt_posterior_settings() (in module botorch.models.utils)</a>
 </li>
@@ -1537,6 +1556,8 @@
 <h2 id="M">M</h2>
 <table class="indextable genindextable" style="width: 100%"><tr>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="acquisition.html#botorch.acquisition.multi_step_lookahead.make_best_f">make_best_f() (in module botorch.acquisition.multi_step_lookahead)</a>
+</li>
 <li><a href="models.html#botorch.models.higher_order_gp.HigherOrderGP.make_posterior_variances">make_posterior_variances() (botorch.models.higher_order_gp.HigherOrderGP method)</a>
 </li>
 <li><a href="optim.html#botorch.optim.parameter_constraints.make_scipy_bounds">make_scipy_bounds() (in module botorch.optim.parameter_constraints)</a>
@@ -1621,6 +1642,8 @@
 <li><a href="acquisition.html#module-botorch.acquisition.multi_objective.monte_carlo">botorch.acquisition.multi_objective.monte_carlo</a>
 </li>
 <li><a href="acquisition.html#module-botorch.acquisition.multi_objective.objective">botorch.acquisition.multi_objective.objective</a>
+</li>
+<li><a href="acquisition.html#module-botorch.acquisition.multi_step_lookahead">botorch.acquisition.multi_step_lookahead</a>
 </li>
 <li><a href="acquisition.html#module-botorch.acquisition.objective">botorch.acquisition.objective</a>
 </li>
@@ -2002,9 +2025,11 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.knowledge_gradient.qMultiFidelityKnowledgeGradient">qMultiFidelityKnowledgeGradient (class in botorch.acquisition.knowledge_gradient)</a>
 </li>
+<li><a href="acquisition.html#botorch.acquisition.max_value_entropy_search.qMultiFidelityMaxValueEntropy">qMultiFidelityMaxValueEntropy (class in botorch.acquisition.max_value_entropy_search)</a>
+</li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
-<li><a href="acquisition.html#botorch.acquisition.max_value_entropy_search.qMultiFidelityMaxValueEntropy">qMultiFidelityMaxValueEntropy (class in botorch.acquisition.max_value_entropy_search)</a>
+<li><a href="acquisition.html#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead">qMultiStepLookahead (class in botorch.acquisition.multi_step_lookahead)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.active_learning.qNegIntegratedPosteriorVariance">qNegIntegratedPosteriorVariance (class in botorch.acquisition.active_learning)</a>
 </li>
@@ -2283,6 +2308,8 @@
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.objective.UnstandardizeMCMultiOutputObjective.training">(botorch.acquisition.multi_objective.objective.UnstandardizeMCMultiOutputObjective attribute)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.objective.WeightedMCMultiOutputObjective.training">(botorch.acquisition.multi_objective.objective.WeightedMCMultiOutputObjective attribute)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.training">(botorch.acquisition.multi_step_lookahead.qMultiStepLookahead attribute)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.objective.AcquisitionObjective.training">(botorch.acquisition.objective.AcquisitionObjective attribute)</a>
 </li>
@@ -2580,10 +2607,12 @@
 <h2 id="W">W</h2>
 <table class="indextable genindextable" style="width: 100%"><tr>
 <td style="width: 33%; vertical-align: top;"><ul>
-<li><a href="models.html#botorch.models.transforms.input.Warp">Warp (class in botorch.models.transforms.input)</a>
+<li><a href="acquisition.html#botorch.acquisition.multi_step_lookahead.warmstart_multistep">warmstart_multistep() (in module botorch.acquisition.multi_step_lookahead)</a>
 </li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="models.html#botorch.models.transforms.input.Warp">Warp (class in botorch.models.transforms.input)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.objective.WeightedMCMultiOutputObjective">WeightedMCMultiOutputObjective (class in botorch.acquisition.multi_objective.objective)</a>
 </li>
 </ul></td>
