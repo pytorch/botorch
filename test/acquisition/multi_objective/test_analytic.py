@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
-
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+# Copyright (c) Facebook, Inc. and its affiliates.
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
 
 
 import torch
@@ -14,7 +16,9 @@ from botorch.acquisition.multi_objective.objective import (
     IdentityMCMultiOutputObjective,
 )
 from botorch.exceptions.errors import BotorchError, UnsupportedError
-from botorch.utils.multi_objective.box_decomposition import NondominatedPartitioning
+from botorch.utils.multi_objective.box_decompositions.non_dominated import (
+    NondominatedPartitioning,
+)
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 
 
@@ -66,7 +70,9 @@ class TestExpectedHypervolumeImprovement(BotorchTestCase):
             pareto_Y = torch.tensor(
                 [[4.0, 5.0], [5.0, 5.0], [8.5, 3.5], [8.5, 3.0], [9.0, 1.0]], **tkwargs
             )
-            partitioning = NondominatedPartitioning(num_outcomes=2)
+            partitioning = NondominatedPartitioning(
+                ref_point=torch.tensor(ref_point, **tkwargs)
+            )
             # the event shape is `b x q x m` = 1 x 1 x 1
             mean = torch.zeros(1, 1, 2, **tkwargs)
             variance = torch.zeros(1, 1, 2, **tkwargs)

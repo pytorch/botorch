@@ -28,7 +28,9 @@ from botorch.acquisition.utils import (
 from botorch.exceptions.errors import UnsupportedError
 from botorch.exceptions.warnings import SamplingWarning
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
-from botorch.utils.multi_objective.box_decomposition import NondominatedPartitioning
+from botorch.utils.multi_objective.box_decompositions.non_dominated import (
+    NondominatedPartitioning,
+)
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 from torch import Tensor
 
@@ -390,7 +392,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         )
         _, kwargs = mock_acqf.call_args
         partitioning = kwargs["partitioning"]
-        self.assertEqual(partitioning._pareto_Y.shape[0], 0)
+        self.assertEqual(partitioning.pareto_Y.shape[0], 0)
 
     def test_GetUnknownAcquisitionFunction(self):
         with self.assertRaises(NotImplementedError):
