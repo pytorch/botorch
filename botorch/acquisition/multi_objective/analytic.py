@@ -31,7 +31,9 @@ from botorch.acquisition.multi_objective.objective import (
 )
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.model import Model
-from botorch.utils.multi_objective.box_decomposition import NondominatedPartitioning
+from botorch.utils.multi_objective.box_decompositions.non_dominated import (
+    NondominatedPartitioning,
+)
 from botorch.utils.transforms import t_batch_mode_transform
 from torch import Tensor
 from torch.distributions import Normal
@@ -139,7 +141,7 @@ class ExpectedHypervolumeImprovement(MultiObjectiveAnalyticAcquisitionFunction):
         super().__init__(model=model, objective=objective)
         self.register_buffer("ref_point", ref_point)
         self.partitioning = partitioning
-        cell_bounds = self.partitioning.get_hypercell_bounds(ref_point=self.ref_point)
+        cell_bounds = self.partitioning.get_hypercell_bounds()
         self.register_buffer("cell_lower_bounds", cell_bounds[0])
         self.register_buffer("cell_upper_bounds", cell_bounds[1])
         # create indexing tensor of shape `2^m x m`

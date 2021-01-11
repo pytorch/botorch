@@ -25,7 +25,9 @@ from botorch.exceptions.errors import UnsupportedError
 from botorch.exceptions.warnings import SamplingWarning
 from botorch.models.model import Model
 from botorch.sampling.samplers import IIDNormalSampler, MCSampler, SobolQMCNormalSampler
-from botorch.utils.multi_objective.box_decomposition import NondominatedPartitioning
+from botorch.utils.multi_objective.box_decompositions.non_dominated import (
+    NondominatedPartitioning,
+)
 from botorch.utils.transforms import squeeze_last_dim
 from torch import Tensor
 from torch.quasirandom import SobolEngine
@@ -122,19 +124,23 @@ def get_acquisition_function(
         )
     elif acquisition_function_name == "qEHVI":
         # pyre-fixme [16]: `Model` has no attribute `train_targets`
-        if "ref_point" not in kwargs:
+        try:
+            ref_point = kwargs["ref_point"]
+        except KeyError:
             raise ValueError("`ref_point` must be specified in kwargs for qEHVI")
-        if "Y" not in kwargs:
+        try:
+            Y = kwargs["Y"]
+        except KeyError:
             raise ValueError("`Y` must be specified in kwargs for qEHVI")
-        ref_point = kwargs["ref_point"]
-        Y = kwargs.get("Y")
         # get feasible points
         if constraints is not None:
             feas = torch.stack([c(Y) <= 0 for c in constraints], dim=-1).all(dim=-1)
             Y = Y[feas]
         obj = objective(Y)
         partitioning = NondominatedPartitioning(
-            num_outcomes=obj.shape[-1], Y=obj, alpha=kwargs.get("alpha", 0.0)
+            ref_point=torch.as_tensor(ref_point, dtype=Y.dtype, device=Y.device),
+            Y=obj,
+            alpha=kwargs.get("alpha", 0.0),
         )
         return moo_monte_carlo.qExpectedHypervolumeImprovement(
             model=model,
