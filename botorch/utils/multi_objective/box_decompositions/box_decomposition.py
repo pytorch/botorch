@@ -13,7 +13,10 @@ from typing import Optional
 
 import torch
 from botorch.exceptions.errors import BotorchError, BotorchTensorDimensionError
-from botorch.utils.multi_objective.pareto import is_non_dominated
+from botorch.utils.multi_objective.box_decompositions.utils import (
+    _expand_ref_point,
+    _pad_batch_pareto_frontier,
+)
 from torch import Tensor
 from torch.nn import Module
 
@@ -81,37 +84,23 @@ class BoxDecomposition(Module, ABC):
         if self._neg_Y.shape[-2] == 0:
             pareto_Y = self._neg_Y
         else:
-            pareto_mask = is_non_dominated(self.Y)
-            if len(self.batch_shape) > 0:
-                # Note: in the batch case, the Pareto frontier is padded by repeating
-                # a Pareto point. This ensures that the padded box-decomposition has
-                # the same number of points, which enables fast batch operations.
-                max_n_pareto = pareto_mask.sum(dim=-1).max().item()
-                pareto_Y = torch.empty(
-                    *self.batch_shape,
-                    max_n_pareto,
-                    self._neg_Y.shape[-1],
-                    dtype=self._neg_Y.dtype,
-                    device=self._neg_Y.device,
-                )
-                for i in range(self._neg_Y.shape[0]):
-                    pareto_i = self._neg_Y[i, pareto_mask[i]]
-                    n_pareto = pareto_i.shape[0]
-                    pareto_Y[i, :n_pareto] = pareto_i
-                    # pad pareto_Y, so that all batches have the same size Pareto set
-                    pareto_Y[i, n_pareto:] = pareto_i[-1]
-                if self.sort:
-                    # sort by first objective
+            # assumes maximization
+            pareto_Y = -_pad_batch_pareto_frontier(
+                Y=self.Y,
+                ref_point=_expand_ref_point(
+                    ref_point=self.ref_point, batch_shape=self.batch_shape
+                ),
+            )
+            if self.sort:
+                # sort by first objective
+                if len(self.batch_shape) > 0:
                     pareto_Y = pareto_Y.gather(
                         index=torch.argsort(pareto_Y[..., :1], dim=-2).expand(
                             pareto_Y.shape
                         ),
                         dim=-2,
                     )
-            else:
-                pareto_Y = self._neg_Y[pareto_mask]
-                if self.sort:
-                    # sort by first objective
+                else:
                     pareto_Y = pareto_Y[torch.argsort(pareto_Y[:, 0])]
 
         if not hasattr(self, "_neg_pareto_Y") or not torch.equal(
