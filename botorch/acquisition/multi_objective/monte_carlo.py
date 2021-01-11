@@ -31,7 +31,9 @@ from botorch.acquisition.multi_objective.objective import (
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.model import Model
 from botorch.sampling.samplers import MCSampler, SobolQMCNormalSampler
-from botorch.utils.multi_objective.box_decomposition import NondominatedPartitioning
+from botorch.utils.multi_objective.box_decompositions.non_dominated import (
+    NondominatedPartitioning,
+)
 from botorch.utils.objective import apply_constraints_nonnegative_soft
 from botorch.utils.torch import BufferDict
 from botorch.utils.transforms import concatenate_pending_points, t_batch_mode_transform
@@ -150,7 +152,7 @@ class qExpectedHypervolumeImprovement(MultiObjectiveMCAcquisitionFunction):
         self.constraints = constraints
         self.eta = eta
         self.register_buffer("ref_point", ref_point)
-        cell_bounds = partitioning.get_hypercell_bounds(ref_point=self.ref_point)
+        cell_bounds = partitioning.get_hypercell_bounds()
         self.register_buffer("cell_lower_bounds", cell_bounds[0])
         self.register_buffer("cell_upper_bounds", cell_bounds[1])
         self.q = -1
