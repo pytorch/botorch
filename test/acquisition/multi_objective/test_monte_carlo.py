@@ -20,7 +20,9 @@ from botorch.acquisition.objective import IdentityMCObjective
 from botorch.exceptions.errors import BotorchError, UnsupportedError
 from botorch.exceptions.warnings import BotorchWarning
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
-from botorch.utils.multi_objective.box_decomposition import NondominatedPartitioning
+from botorch.utils.multi_objective.box_decompositions.non_dominated import (
+    NondominatedPartitioning,
+)
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 
 
@@ -72,12 +74,13 @@ class TestQExpectedHypervolumeImprovement(BotorchTestCase):
     def test_q_expected_hypervolume_improvement(self):
         tkwargs = {"device": self.device}
         for dtype in (torch.float, torch.double):
-            ref_point = [0.0, 0.0]
             tkwargs["dtype"] = dtype
+            ref_point = [0.0, 0.0]
+            t_ref_point = torch.tensor(ref_point, **tkwargs)
             pareto_Y = torch.tensor(
                 [[4.0, 5.0], [5.0, 5.0], [8.5, 3.5], [8.5, 3.0], [9.0, 1.0]], **tkwargs
             )
-            partitioning = NondominatedPartitioning(num_outcomes=2)
+            partitioning = NondominatedPartitioning(ref_point=t_ref_point)
             # the event shape is `b x q x m` = 1 x 1 x 2
             samples = torch.zeros(1, 1, 2, **tkwargs)
             mm = MockModel(MockPosterior(samples=samples))
@@ -337,10 +340,12 @@ class TestQExpectedHypervolumeImprovement(BotorchTestCase):
                 [[4.0, 2.0, 3.0], [3.0, 5.0, 1.0], [2.0, 4.0, 2.0], [1.0, 3.0, 4.0]],
                 **tkwargs,
             )
-            partitioning = NondominatedPartitioning(num_outcomes=3, Y=pareto_Y)
+            ref_point = [-1.0] * 3
+            t_ref_point = torch.tensor(ref_point, **tkwargs)
+            partitioning = NondominatedPartitioning(ref_point=t_ref_point, Y=pareto_Y)
             samples = torch.tensor([[1.0, 2.0, 6.0]], **tkwargs).unsqueeze(0)
             mm = MockModel(MockPosterior(samples=samples))
-            ref_point = [-1.0] * 3
+
             acqf = qExpectedHypervolumeImprovement(
                 model=mm,
                 ref_point=ref_point,
@@ -353,6 +358,8 @@ class TestQExpectedHypervolumeImprovement(BotorchTestCase):
 
             # change reference point
             ref_point = [0.0] * 3
+            t_ref_point = torch.tensor(ref_point, **tkwargs)
+            partitioning = NondominatedPartitioning(ref_point=t_ref_point, Y=pareto_Y)
             acqf = qExpectedHypervolumeImprovement(
                 model=mm,
                 ref_point=ref_point,
@@ -364,6 +371,8 @@ class TestQExpectedHypervolumeImprovement(BotorchTestCase):
 
             # test m = 3, no contribution
             ref_point = [1.0] * 3
+            t_ref_point = torch.tensor(ref_point, **tkwargs)
+            partitioning = NondominatedPartitioning(ref_point=t_ref_point, Y=pareto_Y)
             acqf = qExpectedHypervolumeImprovement(
                 model=mm,
                 ref_point=ref_point,
@@ -382,7 +391,8 @@ class TestQExpectedHypervolumeImprovement(BotorchTestCase):
             ).unsqueeze(0)
             mm = MockModel(MockPosterior(samples=samples))
             ref_point = [-1.0] * 3
-            partitioning = NondominatedPartitioning(num_outcomes=3, Y=pareto_Y)
+            t_ref_point = torch.tensor(ref_point, **tkwargs)
+            partitioning = NondominatedPartitioning(ref_point=t_ref_point, Y=pareto_Y)
             acqf = qExpectedHypervolumeImprovement(
                 model=mm,
                 ref_point=ref_point,
@@ -397,10 +407,11 @@ class TestQExpectedHypervolumeImprovement(BotorchTestCase):
         for dtype in (torch.float, torch.double):
             tkwargs = {"device": self.device, "dtype": dtype}
             ref_point = [0.0, 0.0]
+            t_ref_point = torch.tensor(ref_point, **tkwargs)
             pareto_Y = torch.tensor(
                 [[4.0, 5.0], [5.0, 5.0], [8.5, 3.5], [8.5, 3.0], [9.0, 1.0]], **tkwargs
             )
-            partitioning = NondominatedPartitioning(num_outcomes=2)
+            partitioning = NondominatedPartitioning(ref_point=t_ref_point)
             partitioning.update(Y=pareto_Y)
 
             # test q=1
