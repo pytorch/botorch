@@ -54,6 +54,7 @@ class TestPadBatchParetoFrontier(BotorchTestCase):
                     [8.5, 3.5],
                     [8.5, 3.0],
                     [9.0, 1.0],
+                    [8.0, 1.0],
                 ],
                 dtype=dtype,
                 device=self.device,
@@ -70,6 +71,7 @@ class TestPadBatchParetoFrontier(BotorchTestCase):
                     [8.5, 3.5],
                     [8.5, 3.0],
                     [9.0, 5.0],
+                    [9.0, 4.0],
                 ],
                 dtype=dtype,
                 device=self.device,
@@ -95,6 +97,26 @@ class TestPadBatchParetoFrontier(BotorchTestCase):
             )
             expected_padded_pareto = torch.stack(
                 [expected_nondom_Y1, expected_padded_nondom_Y2], dim=0
+            )
+            self.assertTrue(torch.equal(padded_pareto, expected_padded_pareto))
+
+            # test feasibility mask
+            feas = (Y >= 9.0).any(dim=-1)
+            expected_nondom_Y1 = torch.tensor(
+                [[10.0, 3.0], [10.0, 3.0]],
+                dtype=dtype,
+                device=self.device,
+            )
+            expected_padded_nondom_Y2 = torch.tensor(
+                [[10.0, 3.0], [9.0, 5.0]],
+                dtype=dtype,
+                device=self.device,
+            )
+            expected_padded_pareto = torch.stack(
+                [expected_nondom_Y1, expected_padded_nondom_Y2], dim=0
+            )
+            padded_pareto = _pad_batch_pareto_frontier(
+                Y=Y, ref_point=ref_point, feasibility_mask=feas, is_pareto=False
             )
             self.assertTrue(torch.equal(padded_pareto, expected_padded_pareto))
 

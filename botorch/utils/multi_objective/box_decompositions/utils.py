@@ -6,6 +6,8 @@
 
 r"""Utilities for box decomposition algorithms."""
 
+from typing import Optional
+
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError, UnsupportedError
 from botorch.utils.multi_objective.pareto import is_non_dominated
@@ -36,7 +38,10 @@ def _expand_ref_point(ref_point: Tensor, batch_shape: Size) -> Tensor:
 
 
 def _pad_batch_pareto_frontier(
-    Y: Tensor, ref_point: Tensor, is_pareto: bool = False
+    Y: Tensor,
+    ref_point: Tensor,
+    is_pareto: bool = False,
+    feasibility_mask: Optional[Tensor] = None,
 ) -> Tensor:
     r"""Get a batch Pareto frontier by padding the pareto frontier with repeated points.
 
@@ -47,11 +52,14 @@ def _pad_batch_pareto_frontier(
         ref_point: a `(batch_shape) x m`-dim tensor containing the reference point
         is_pareto: a boolean indicating whether the points in Y are already
             non-dominated.
+        feasibility_mask: A `(batch_shape) x n`-dim tensor of booleans indicating
+            whether each point is feasible.
 
     Returns:
         A `(batch_shape) x max_num_pareto x m`-dim tensor of padded Pareto
             frontiers.
     """
+    tkwargs = {"dtype": Y.dtype, "device": Y.device}
     ref_point = ref_point.unsqueeze(-2)
     batch_shape = Y.shape[:-2]
     if len(batch_shape) > 1:
@@ -60,6 +68,9 @@ def _pad_batch_pareto_frontier(
             f"batch dimension, but got {len(batch_shape)} "
             "batch dimensions."
         )
+    if feasibility_mask is not None:
+        # set infeasible points to be the reference point (corresponding to the batch)
+        Y = torch.where(feasibility_mask.unsqueeze(-1), Y, ref_point)
     if not is_pareto:
         pareto_mask = is_non_dominated(Y)
     else:
@@ -74,13 +85,7 @@ def _pad_batch_pareto_frontier(
     # a Pareto point. This ensures that the padded box-decomposition has
     # the same number of points, which enables fast batch operations.
     max_n_pareto = pareto_mask.sum(dim=-1).max().item()
-    pareto_Y = torch.empty(
-        *batch_shape,
-        max_n_pareto,
-        Y.shape[-1],
-        dtype=Y.dtype,
-        device=Y.device,
-    )
+    pareto_Y = torch.empty(*batch_shape, max_n_pareto, Y.shape[-1], **tkwargs)
     for i, pareto_i in enumerate(pareto_mask):
         pareto_i = Y[i, pareto_mask[i]]
         n_pareto = pareto_i.shape[0]
