@@ -24,20 +24,13 @@ class TestNonDominatedPartitioning(BotorchTestCase):
             # assert error is raised if pareto_Y has not been computed
             with self.assertRaises(BotorchError):
                 partitioning.pareto_Y
-            # test eps
-            # no pareto_Y
-            self.assertEqual(partitioning.eps, 1e-6)
-            partitioning = NondominatedPartitioning(ref_point=ref_point, eps=1.0)
-            # eps set
-            self.assertEqual(partitioning.eps, 1.0)
-            # set pareto_Y
             partitioning = NondominatedPartitioning(ref_point=ref_point)
-            Y = torch.zeros(1, 2, **tkwargs)
-            partitioning.update(Y=Y)
-            self.assertEqual(partitioning.eps, 1e-6 if dtype == torch.float else 1e-8)
-
             # test _update_pareto_Y
+            Y = torch.ones(1, 2, **tkwargs)
+            partitioning.update(Y=Y)
+
             partitioning._neg_Y = -Y
+            partitioning.batch_shape = torch.Size([])
             self.assertFalse(partitioning._update_pareto_Y())
 
             # test m=2
@@ -84,15 +77,26 @@ class TestNonDominatedPartitioning(BotorchTestCase):
             # test compute hypervolume
             hv = partitioning.compute_hypervolume()
             self.assertEqual(hv.item(), 49.0)
-            # test error when reference is not worse than all pareto_Y
+            # test no pareto points better than the reference point
             partitioning = NondominatedPartitioning(
-                ref_point=pareto_Y.max(dim=0).values, Y=Y
+                ref_point=pareto_Y.max(dim=-2).values + 1, Y=Y
             )
-            with self.assertRaises(ValueError):
-                partitioning.compute_hypervolume()
+            self.assertTrue(torch.equal(partitioning.pareto_Y, Y[:0]))
+            self.assertEqual(partitioning.compute_hypervolume().item(), 0)
 
-            # test batched, m=2 case
             Y = torch.rand(3, 10, 2, **tkwargs)
+            # test batched m=2, no pareto points better than the reference point
+            partitioning = NondominatedPartitioning(
+                ref_point=Y.max(dim=-2).values + 1, Y=Y
+            )
+            self.assertTrue(torch.equal(partitioning.pareto_Y, Y[:, :0]))
+            self.assertTrue(
+                torch.equal(
+                    partitioning.compute_hypervolume(),
+                    torch.zeros(3, dtype=Y.dtype, device=Y.device),
+                )
+            )
+            # test batched, m=2 basic
             partitioning = NondominatedPartitioning(ref_point=ref_point, Y=Y)
             cell_bounds = partitioning.get_hypercell_bounds()
             partitionings = []
@@ -136,7 +140,7 @@ class TestNonDominatedPartitioning(BotorchTestCase):
 
             # test error with partition_space_2d for m=3
             partitioning = NondominatedPartitioning(
-                ref_point=ref_point, Y=torch.zeros(1, 3, **tkwargs)
+                ref_point=ref_point, Y=torch.ones(1, 3, **tkwargs)
             )
             with self.assertRaises(BotorchTensorDimensionError):
                 partitioning.partition_space_2d()
@@ -196,5 +200,12 @@ class TestNonDominatedPartitioning(BotorchTestCase):
             # test compute hypervolume
             hv = partitioning.compute_hypervolume()
             self.assertEqual(hv.item(), 358.0)
+
+            # test no pareto points better than the reference point
+            partitioning = NondominatedPartitioning(
+                ref_point=pareto_Y.max(dim=-2).values + 1, Y=pareto_Y
+            )
+            self.assertTrue(torch.equal(partitioning.pareto_Y, pareto_Y[:0]))
+            self.assertEqual(partitioning.compute_hypervolume().item(), 0)
 
             # TODO: test approximate decomposition

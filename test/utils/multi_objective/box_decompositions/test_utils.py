@@ -7,8 +7,11 @@
 from __future__ import annotations
 
 import torch
-from botorch.exceptions.errors import BotorchTensorDimensionError
-from botorch.utils.multi_objective.box_decompositions.utils import _expand_ref_point
+from botorch.exceptions.errors import BotorchTensorDimensionError, UnsupportedError
+from botorch.utils.multi_objective.box_decompositions.utils import (
+    _expand_ref_point,
+    _pad_batch_pareto_frontier,
+)
 from botorch.utils.testing import BotorchTestCase
 
 
@@ -35,3 +38,98 @@ class TestExpandRefPoint(BotorchTestCase):
                 _expand_ref_point(ref_point.unsqueeze(0), batch_shape=torch.Size([]))
             with self.assertRaises(BotorchTensorDimensionError):
                 _expand_ref_point(ref_point.unsqueeze(0).expand(3, -1), torch.Size([2]))
+
+
+class TestPadBatchParetoFrontier(BotorchTestCase):
+    def test_pad_batch_pareto_frontier(self):
+        for dtype in (torch.float, torch.double):
+            Y1 = torch.tensor(
+                [
+                    [1.0, 5.0],
+                    [10.0, 3.0],
+                    [4.0, 5.0],
+                    [4.0, 5.0],
+                    [5.0, 5.0],
+                    [8.5, 3.5],
+                    [8.5, 3.5],
+                    [8.5, 3.0],
+                    [9.0, 1.0],
+                ],
+                dtype=dtype,
+                device=self.device,
+            )
+
+            Y2 = torch.tensor(
+                [
+                    [1.0, 9.0],
+                    [10.0, 3.0],
+                    [4.0, 5.0],
+                    [4.0, 5.0],
+                    [5.0, 5.0],
+                    [8.5, 3.5],
+                    [8.5, 3.5],
+                    [8.5, 3.0],
+                    [9.0, 5.0],
+                ],
+                dtype=dtype,
+                device=self.device,
+            )
+            Y = torch.stack([Y1, Y2], dim=0)
+            ref_point = torch.full((2, 2), 2.0, dtype=dtype, device=self.device)
+            padded_pareto = _pad_batch_pareto_frontier(
+                Y=Y, ref_point=ref_point, is_pareto=False
+            )
+            expected_nondom_Y1 = torch.tensor(
+                [[10.0, 3.0], [5.0, 5.0], [8.5, 3.5]],
+                dtype=dtype,
+                device=self.device,
+            )
+            expected_padded_nondom_Y2 = torch.tensor(
+                [
+                    [10.0, 3.0],
+                    [9.0, 5.0],
+                    [9.0, 5.0],
+                ],
+                dtype=dtype,
+                device=self.device,
+            )
+            expected_padded_pareto = torch.stack(
+                [expected_nondom_Y1, expected_padded_nondom_Y2], dim=0
+            )
+            self.assertTrue(torch.equal(padded_pareto, expected_padded_pareto))
+
+            # test is_pareto=True
+            # one row of Y2 should be dropped because it is not better than the
+            # reference point
+            Y1 = torch.tensor(
+                [[10.0, 3.0], [5.0, 5.0], [8.5, 3.5]],
+                dtype=dtype,
+                device=self.device,
+            )
+            Y2 = torch.tensor(
+                [
+                    [1.0, 9.0],
+                    [10.0, 3.0],
+                    [9.0, 5.0],
+                ],
+                dtype=dtype,
+                device=self.device,
+            )
+            Y = torch.stack([Y1, Y2], dim=0)
+            expected_padded_pareto = torch.stack(
+                [
+                    Y1,
+                    torch.cat([Y2[1:], Y2[-1:]], dim=0),
+                ],
+                dim=0,
+            )
+            padded_pareto = _pad_batch_pareto_frontier(
+                Y=Y, ref_point=ref_point, is_pareto=True
+            )
+            self.assertTrue(torch.equal(padded_pareto, expected_padded_pareto))
+
+        # test multiple batch dims
+        with self.assertRaises(UnsupportedError):
+            _pad_batch_pareto_frontier(
+                Y=Y.unsqueeze(0), ref_point=ref_point, is_pareto=False
+            )

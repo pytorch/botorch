@@ -38,16 +38,16 @@ class TestBoxDecomposition(BotorchTestCase):
         ref_point_raw = torch.zeros(3, device=self.device)
         Y_raw = torch.tensor(
             [
-                [1.0, 2.0, 0.0],
-                [1.0, 1.0, 0.0],
-                [2.0, 0.5, 0.0],
+                [1.0, 2.0, 1.0],
+                [1.0, 1.0, 1.0],
+                [2.0, 0.5, 1.0],
             ],
             device=self.device,
         )
         pareto_Y_raw = torch.tensor(
             [
-                [1.0, 2.0, 0.0],
-                [2.0, 0.5, 0.0],
+                [1.0, 2.0, 1.0],
+                [2.0, 0.5, 1.0],
             ],
             device=self.device,
         )
@@ -118,6 +118,23 @@ class TestBoxDecomposition(BotorchTestCase):
                     self.assertTrue(
                         torch.equal(bd.pareto_Y, batch_expected_pareto_Y[:, :0])
                     )
+
+                    # test padded pareto frontiers with different numbers of
+                    # points
+                    batch_Y[1, 1] = batch_Y[1, 0] - 1
+                    batch_Y[1, 2] = batch_Y[1, 0] - 2
+                    bd = DummyBoxDecomposition(
+                        ref_point=ref_point, sort=sort, Y=batch_Y
+                    )
+                    batch_expected_pareto_Y = torch.stack(
+                        [
+                            expected_pareto_Y,
+                            batch_Y[1, :1].expand(expected_pareto_Y.shape),
+                        ],
+                        dim=0,
+                    )
+                    self.assertTrue(torch.equal(bd.pareto_Y, batch_expected_pareto_Y))
+                    self.assertTrue(torch.equal(bd.Y, batch_Y))
 
                 else:
                     with self.assertRaises(NotImplementedError):
