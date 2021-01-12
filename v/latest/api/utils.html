@@ -536,6 +536,67 @@ n+n0 samples but the first n0 samples are not saved.</p></li>
 </dl>
 </dd></dl>
 </div>
+<div class="section" id="module-botorch.utils.gp_sampling">
+<span id="sampling-from-gp-priors"></span><h2>Sampling from GP priors<a class="headerlink" href="#module-botorch.utils.gp_sampling" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="botorch.utils.gp_sampling.GPDraw">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.utils.gp_sampling.</code><code class="sig-name descname">GPDraw</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">seed</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/gp_sampling.html#GPDraw"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.gp_sampling.GPDraw" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code></p>
+<p>Convenience wrapper for sampling a function from a GP prior.</p>
+<p>This wrapper implicitly defines the GP sample as a self-updating function by keeping
+track of the evaluated points and respective base samples used during the
+evaluation.</p>
+<p>This does not yet support multi-output models.</p>
+<p>Construct a GP function sampler.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a>) – The Model defining the GP prior.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="botorch.utils.gp_sampling.GPDraw.Xs">
+<em class="property">property </em><code class="sig-name descname">Xs</code><a class="headerlink" href="#botorch.utils.gp_sampling.GPDraw.Xs" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <cite>(batch_shape) x n_eval x d</cite>-dim tensor of locations at which the GP was
+evaluated (or <cite>None</cite> if the sample has never been evaluated).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.utils.gp_sampling.GPDraw.Ys">
+<em class="property">property </em><code class="sig-name descname">Ys</code><a class="headerlink" href="#botorch.utils.gp_sampling.GPDraw.Ys" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <cite>(batch_shape) x n_eval x d</cite>-dim tensor of associated function values (or
+<cite>None</cite> if the sample has never been evaluated).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.utils.gp_sampling.GPDraw.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/gp_sampling.html#GPDraw.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.gp_sampling.GPDraw.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the GP sample function at a set of points X.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x d</cite>-dim tensor of points</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The value of the GP sample at the <cite>n</cite> points.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt id="botorch.utils.gp_sampling.GPDraw.training">
+<code class="sig-name descname">training</code><em class="property">: bool</em><a class="headerlink" href="#botorch.utils.gp_sampling.GPDraw.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+</div>
 <div class="section" id="module-botorch.utils.testing">
 <span id="testing"></span><h2>Testing<a class="headerlink" href="#module-botorch.utils.testing" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
@@ -1247,77 +1308,104 @@ with probability above the given threshold.</p>
 <h3>Multi-Objective Utilities<a class="headerlink" href="#multi-objective-utilities" title="Permalink to this headline">¶</a></h3>
 </div>
 </div>
-<div class="section" id="module-botorch.utils.multi_objective.box_decomposition">
-<span id="box-decompositions"></span><h2>Box Decompositions<a class="headerlink" href="#module-botorch.utils.multi_objective.box_decomposition" title="Permalink to this headline">¶</a></h2>
-<p>Algorithms for partitioning the non-dominated space into rectangles.</p>
-<p>References</p>
-<dl class="citation">
-<dt class="label" id="couckuyt2012"><span class="brackets">Couckuyt2012</span><span class="fn-backref">(<a href="#id1">1</a>,<a href="#id2">2</a>)</span></dt>
-<dd><p>I. Couckuyt, D. Deschrijver and T. Dhaene, “Towards Efficient
-Multiobjective Optimization: Multiobjective statistical criterions,”
-2012 IEEE Congress on Evolutionary Computation, Brisbane, QLD, 2012,
-pp. 1-8.</p>
-</dd>
-</dl>
+<div class="section" id="module-botorch.utils.multi_objective.box_decompositions.box_decomposition">
+<span id="abstract-box-decompositions"></span><h2>Abstract Box Decompositions<a class="headerlink" href="#module-botorch.utils.multi_objective.box_decompositions.box_decomposition" title="Permalink to this headline">¶</a></h2>
+<p>Box decomposition algorithms.</p>
 <dl class="py class">
-<dt id="botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.utils.multi_objective.box_decomposition.</code><code class="sig-name descname">NondominatedPartitioning</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">num_outcomes</span></em>, <em class="sig-param"><span class="n">Y</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">alpha</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">eps</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decomposition.html#NondominatedPartitioning"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code></p>
-<p>A class for partitioning the non-dominated space into hyper-cells.</p>
-<p>Note: this assumes maximization. Internally, it multiplies by -1 and performs
-the decomposition under minimization. TODO: use maximization internally as well.</p>
-<p>Note: it is only feasible to use this algorithm to compute an exact
-decomposition of the non-dominated space for <cite>m&lt;5</cite> objectives (alpha=0.0).</p>
-<p>The alpha parameter can be increased to obtain an approximate partitioning
-faster. The <cite>alpha</cite> is a fraction of the total hypervolume encapsuling the
-entire Pareto set. When a hypercell’s volume divided by the total hypervolume
-is less than <cite>alpha</cite>, we discard the hypercell. See Figure 2 in
-<a class="reference internal" href="#couckuyt2012" id="id1"><span>[Couckuyt2012]</span></a> for a visual representation.</p>
-<p>This PyTorch implementation of the binary partitioning algorithm (<a class="reference internal" href="#couckuyt2012" id="id2"><span>[Couckuyt2012]</span></a>)
-is adapted from numpy/tensorflow implementation at:
-<a class="reference external" href="https://github.com/GPflow/GPflowOpt/blob/master/gpflowopt/pareto.py">https://github.com/GPflow/GPflowOpt/blob/master/gpflowopt/pareto.py</a>.</p>
-<p>TODO: replace this with a more efficient decomposition. E.g.
-<a class="reference external" href="https://link.springer.com/content/pdf/10.1007/s10898-019-00798-7.pdf">https://link.springer.com/content/pdf/10.1007/s10898-019-00798-7.pdf</a></p>
-<p>Initialize NondominatedPartitioning.</p>
+<dt id="botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.utils.multi_objective.box_decompositions.box_decomposition.</code><code class="sig-name descname">BoxDecomposition</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ref_point</span></em>, <em class="sig-param"><span class="n">sort</span></em>, <em class="sig-param"><span class="n">Y</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/box_decomposition.html#BoxDecomposition"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>An abstract class for box decompositions.</p>
+<p>Note: Internally, we store the negative reference point (minimization).</p>
+<p>Initialize BoxDecomposition.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>num_outcomes</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of outcomes</p></li>
-<li><p><strong>Y</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>(batch_shape) x n x m</cite>-dim tensor</p></li>
-<li><p><strong>alpha</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – a thresold fraction of total volume used in an approximate
-decomposition.</p></li>
-<li><p><strong>eps</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – a small value for numerical stability</p></li>
+<li><p><strong>ref_point</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>m</cite>-dim tensor containing the reference point.</p></li>
+<li><p><strong>sort</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – A boolean indicating whether to sort the Pareto frontier.</p></li>
+<li><p><strong>Y</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>(batch_shape) x n x m</cite>-dim tensor of outcomes.</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py method">
-<dt id="botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.eps">
-<em class="property">property </em><code class="sig-name descname">eps</code><a class="headerlink" href="#botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.eps" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py method">
-<dt id="botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.pareto_Y">
-<em class="property">property </em><code class="sig-name descname">pareto_Y</code><a class="headerlink" href="#botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.pareto_Y" title="Permalink to this definition">¶</a></dt>
+<dt id="botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition.pareto_Y">
+<em class="property">property </em><code class="sig-name descname">pareto_Y</code><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition.pareto_Y" title="Permalink to this definition">¶</a></dt>
 <dd><p>This returns the non-dominated set.</p>
-<p>Note: in the batch case, this Pareto set is padded by repeating a
-Pareto point so that all batches have the same size Pareto set.</p>
-<p>Note: Internally, we store the negative Pareto set (minimization).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A <cite>(batch_shape) x max_n_pareto x m</cite>-dim tensor of outcomes.</p>
+<dd class="field-even"><p>A <cite>n_pareto x m</cite>-dim tensor of outcomes.</p>
 </dd>
 </dl>
 </dd></dl>
 <dl class="py method">
-<dt id="botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.update">
-<code class="sig-name descname">update</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">Y</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decomposition.html#NondominatedPartitioning.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.update" title="Permalink to this definition">¶</a></dt>
+<dt id="botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition.ref_point">
+<em class="property">property </em><code class="sig-name descname">ref_point</code><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition.ref_point" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the reference point.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>m</cite>-dim tensor of outcomes.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition.Y">
+<em class="property">property </em><code class="sig-name descname">Y</code><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition.Y" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the raw outcomes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>n x m</cite>-dim tensor of outcomes.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition.partition_space">
+<code class="sig-name descname">partition_space</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/box_decomposition.html#BoxDecomposition.partition_space"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition.partition_space" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute box decomposition.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition.partition_space_2d">
+<em class="property">abstract </em><code class="sig-name descname">partition_space_2d</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/box_decomposition.html#BoxDecomposition.partition_space_2d"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition.partition_space_2d" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute box decomposition for 2 objectives.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition.get_hypercell_bounds">
+<em class="property">abstract </em><code class="sig-name descname">get_hypercell_bounds</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/box_decomposition.html#BoxDecomposition.get_hypercell_bounds"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition.get_hypercell_bounds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the bounds of each hypercell in the decomposition.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>A <cite>2 x num_cells x num_outcomes</cite>-dim tensor containing the</dt><dd><p>lower and upper vertices bounding each hypercell.</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition.update">
+<code class="sig-name descname">update</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">Y</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/box_decomposition.html#BoxDecomposition.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition.update" title="Permalink to this definition">¶</a></dt>
 <dd><p>Update non-dominated front and decomposition.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1328,81 +1416,27 @@ Pareto point so that all batches have the same size Pareto set.</p>
 </dd>
 </dl>
 </dd></dl>
-<dl class="py method">
-<dt id="botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.binary_partition_non_dominated_space">
-<code class="sig-name descname">binary_partition_non_dominated_space</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decomposition.html#NondominatedPartitioning.binary_partition_non_dominated_space"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.binary_partition_non_dominated_space" title="Permalink to this definition">¶</a></dt>
-<dd><p>Partition the non-dominated space into disjoint hypercells.</p>
-<p>This method works for an arbitrary number of outcomes, but is
-less efficient than <cite>partition_non_dominated_space_2d</cite> for the
-2-outcome case.</p>
-</dd></dl>
-<dl class="py method">
-<dt id="botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.partition_non_dominated_space_2d">
-<code class="sig-name descname">partition_non_dominated_space_2d</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decomposition.html#NondominatedPartitioning.partition_non_dominated_space_2d"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.partition_non_dominated_space_2d" title="Permalink to this definition">¶</a></dt>
-<dd><p>Partition the non-dominated space into disjoint hypercells.</p>
-<p>This direct method works for <cite>m=2</cite> outcomes.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py method">
-<dt id="botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.get_hypercell_bounds">
-<code class="sig-name descname">get_hypercell_bounds</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ref_point</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decomposition.html#NondominatedPartitioning.get_hypercell_bounds"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.get_hypercell_bounds" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the bounds of each hypercell in the decomposition.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>ref_point</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>(batch_shape) x m</cite>-dim tensor containing the reference point.</p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><dl class="simple">
-<dt>A <cite>2 x (batch_shape) x num_cells x num_outcomes</cite>-dim tensor containing the</dt><dd><p>lower and upper vertices bounding each hypercell.</p>
-</dd>
-</dl>
-</p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py method">
-<dt id="botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.compute_hypervolume">
-<code class="sig-name descname">compute_hypervolume</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ref_point</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decomposition.html#NondominatedPartitioning.compute_hypervolume"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.compute_hypervolume" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute the hypervolume for the given reference point.</p>
-<p>Note: This assumes minimization.</p>
-<p>This method computes the hypervolume of the non-dominated space
-and computes the difference between the hypervolume between the
-ideal point and hypervolume of the non-dominated space.</p>
-<p>Note there are much more efficient alternatives for computing
-hypervolume when m &gt; 2 (which do not require partitioning the
-non-dominated space). Given such a partitioning, this method
-is quite fast.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>ref_point</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>(batch_shape) x m</cite>-dim tensor containing the reference point.</p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><cite>(batch_shape)</cite>-dim tensor containing the dominated hypervolume.</p>
-</dd>
-</dl>
-</dd></dl>
 <dl class="py attribute">
-<dt id="botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.training">
-<code class="sig-name descname">training</code><em class="property">: bool</em><a class="headerlink" href="#botorch.utils.multi_objective.box_decomposition.NondominatedPartitioning.training" title="Permalink to this definition">¶</a></dt>
+<dt id="botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition.training">
+<code class="sig-name descname">training</code><em class="property">: bool</em><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
+</div>
+<div class="section" id="module-botorch.utils.multi_objective.box_decompositions.utils">
+<span id="box-decomposition-utilities"></span><h2>Box Decomposition Utilities<a class="headerlink" href="#module-botorch.utils.multi_objective.box_decompositions.utils" title="Permalink to this headline">¶</a></h2>
+<p>Utilities for box decomposition algorithms.</p>
+</div>
+<div class="section" id="module-botorch.utils.multi_objective.box_decomposition">
+<span id="box-decompositions-deprecated-use-botorch-utils-multi-objective-box-decompositions"></span><h2>Box Decompositions [DEPRECATED - use botorch..utils.multi_objective.box_decompositions]<a class="headerlink" href="#module-botorch.utils.multi_objective.box_decomposition" title="Permalink to this headline">¶</a></h2>
+<p>DEPRECATED - Box decomposition algorithms.
+Use the botorch.utils.multi_objective.box_decompositions instead.</p>
 </div>
 <div class="section" id="module-botorch.utils.multi_objective.hypervolume">
 <span id="hypervolume"></span><h2>Hypervolume<a class="headerlink" href="#module-botorch.utils.multi_objective.hypervolume" title="Permalink to this headline">¶</a></h2>
 <p>Hypervolume Utilities.</p>
 <p>References</p>
 <dl class="citation">
-<dt class="label" id="fonseca2006"><span class="brackets">Fonseca2006</span><span class="fn-backref">(<a href="#id3">1</a>,<a href="#id4">2</a>)</span></dt>
+<dt class="label" id="fonseca2006"><span class="brackets">Fonseca2006</span><span class="fn-backref">(<a href="#id1">1</a>,<a href="#id2">2</a>)</span></dt>
 <dd><p>C. M. Fonseca, L. Paquete, and M. Lopez-Ibanez. An improved dimension-sweep
 algorithm for the hypervolume indicator. In IEEE Congress on Evolutionary
 Computation, pages 1157-1163, Vancouver, Canada, July 2006.</p>
@@ -1412,9 +1446,9 @@ Computation, pages 1157-1163, Vancouver, Canada, July 2006.</p>
 <dt id="botorch.utils.multi_objective.hypervolume.Hypervolume">
 <em class="property">class </em><code class="sig-prename descclassname">botorch.utils.multi_objective.hypervolume.</code><code class="sig-name descname">Hypervolume</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ref_point</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/hypervolume.html#Hypervolume"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.hypervolume.Hypervolume" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Hypervolume computation dimension sweep algorithm from <a class="reference internal" href="#fonseca2006" id="id3"><span>[Fonseca2006]</span></a>.</p>
+<p>Hypervolume computation dimension sweep algorithm from <a class="reference internal" href="#fonseca2006" id="id1"><span>[Fonseca2006]</span></a>.</p>
 <p>Adapted from Simon Wessing’s implementation of the algorithm
-(Variant 3, Version 1.2) in <a class="reference internal" href="#fonseca2006" id="id4"><span>[Fonseca2006]</span></a> in PyMOO:
+(Variant 3, Version 1.2) in <a class="reference internal" href="#fonseca2006" id="id2"><span>[Fonseca2006]</span></a> in PyMOO:
 <a class="reference external" href="https://github.com/msu-coinlab/pymoo/blob/master/pymoo/vendor/hv.py">https://github.com/msu-coinlab/pymoo/blob/master/pymoo/vendor/hv.py</a></p>
 <p>Maximization is assumed.</p>
 <p>TODO: write this in C++ for faster looping.</p>
@@ -1575,16 +1609,120 @@ nodes of the node that is reinserted are in the list.</p>
 </dd></dl>
 </dd></dl>
 </div>
+<div class="section" id="module-botorch.utils.multi_objective.box_decompositions.non_dominated">
+<span id="non-dominated-partitionings"></span><h2>Non-dominated Partitionings<a class="headerlink" href="#module-botorch.utils.multi_objective.box_decompositions.non_dominated" title="Permalink to this headline">¶</a></h2>
+<p>Algorithms for partitioning the non-dominated space into rectangles.</p>
+<p>References</p>
+<dl class="citation">
+<dt class="label" id="couckuyt2012"><span class="brackets">Couckuyt2012</span><span class="fn-backref">(<a href="#id3">1</a>,<a href="#id4">2</a>)</span></dt>
+<dd><p>I. Couckuyt, D. Deschrijver and T. Dhaene, “Towards Efficient
+Multiobjective Optimization: Multiobjective statistical criterions,”
+2012 IEEE Congress on Evolutionary Computation, Brisbane, QLD, 2012,
+pp. 1-8.</p>
+</dd>
+</dl>
+<dl class="py class">
+<dt id="botorch.utils.multi_objective.box_decompositions.non_dominated.NondominatedPartitioning">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.utils.multi_objective.box_decompositions.non_dominated.</code><code class="sig-name descname">NondominatedPartitioning</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ref_point</span></em>, <em class="sig-param"><span class="n">Y</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">alpha</span><span class="o">=</span><span class="default_value">0.0</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/non_dominated.html#NondominatedPartitioning"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.non_dominated.NondominatedPartitioning" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition" title="botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition</span></code></a></p>
+<p>A class for partitioning the non-dominated space into hyper-cells.</p>
+<p>Note: this assumes maximization. Internally, it multiplies by -1 and performs
+the decomposition under minimization. TODO: use maximization internally as well.</p>
+<p>Note: it is only feasible to use this algorithm to compute an exact
+decomposition of the non-dominated space for <cite>m&lt;5</cite> objectives (alpha=0.0).</p>
+<p>The alpha parameter can be increased to obtain an approximate partitioning
+faster. The <cite>alpha</cite> is a fraction of the total hypervolume encapsuling the
+entire Pareto set. When a hypercell’s volume divided by the total hypervolume
+is less than <cite>alpha</cite>, we discard the hypercell. See Figure 2 in
+<a class="reference internal" href="#couckuyt2012" id="id3"><span>[Couckuyt2012]</span></a> for a visual representation.</p>
+<p>This PyTorch implementation of the binary partitioning algorithm (<a class="reference internal" href="#couckuyt2012" id="id4"><span>[Couckuyt2012]</span></a>)
+is adapted from numpy/tensorflow implementation at:
+<a class="reference external" href="https://github.com/GPflow/GPflowOpt/blob/master/gpflowopt/pareto.py">https://github.com/GPflow/GPflowOpt/blob/master/gpflowopt/pareto.py</a>.</p>
+<p>TODO: replace this with a more efficient decomposition. E.g.
+<a class="reference external" href="https://link.springer.com/content/pdf/10.1007/s10898-019-00798-7.pdf">https://link.springer.com/content/pdf/10.1007/s10898-019-00798-7.pdf</a></p>
+<p>Initialize NondominatedPartitioning.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ref_point</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>m</cite>-dim tensor containing the reference point.</p></li>
+<li><p><strong>Y</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>(batch_shape) x n x m</cite>-dim tensor.</p></li>
+<li><p><strong>alpha</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – A thresold fraction of total volume used in an approximate
+decomposition.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="botorch.utils.multi_objective.box_decompositions.non_dominated.NondominatedPartitioning.partition_space_2d">
+<code class="sig-name descname">partition_space_2d</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/non_dominated.html#NondominatedPartitioning.partition_space_2d"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.non_dominated.NondominatedPartitioning.partition_space_2d" title="Permalink to this definition">¶</a></dt>
+<dd><p>Partition the non-dominated space into disjoint hypercells.</p>
+<p>This direct method works for <cite>m=2</cite> outcomes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.utils.multi_objective.box_decompositions.non_dominated.NondominatedPartitioning.get_hypercell_bounds">
+<code class="sig-name descname">get_hypercell_bounds</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/non_dominated.html#NondominatedPartitioning.get_hypercell_bounds"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.non_dominated.NondominatedPartitioning.get_hypercell_bounds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the bounds of each hypercell in the decomposition.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>ref_point</strong> – A <cite>(batch_shape) x m</cite>-dim tensor containing the reference point.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>A <cite>2 x num_cells x num_outcomes</cite>-dim tensor containing the</dt><dd><p>lower and upper vertices bounding each hypercell.</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.utils.multi_objective.box_decompositions.non_dominated.NondominatedPartitioning.compute_hypervolume">
+<code class="sig-name descname">compute_hypervolume</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/non_dominated.html#NondominatedPartitioning.compute_hypervolume"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.non_dominated.NondominatedPartitioning.compute_hypervolume" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the hypervolume for the given reference point.</p>
+<p>Note: This assumes minimization.</p>
+<p>This method computes the hypervolume of the non-dominated space
+and computes the difference between the hypervolume between the
+ideal point and hypervolume of the non-dominated space.</p>
+<p>Note there are much more efficient alternatives for computing
+hypervolume when m &gt; 2 (which do not require partitioning the
+non-dominated space). Given such a partitioning, this method
+is quite fast.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><cite>(batch_shape)</cite>-dim tensor containing the dominated hypervolume.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt id="botorch.utils.multi_objective.box_decompositions.non_dominated.NondominatedPartitioning.training">
+<code class="sig-name descname">training</code><em class="property">: bool</em><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.non_dominated.NondominatedPartitioning.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+</div>
 <div class="section" id="module-botorch.utils.multi_objective.pareto">
 <span id="pareto"></span><h2>Pareto<a class="headerlink" href="#module-botorch.utils.multi_objective.pareto" title="Permalink to this headline">¶</a></h2>
 <dl class="py function">
 <dt id="botorch.utils.multi_objective.pareto.is_non_dominated">
-<code class="sig-prename descclassname">botorch.utils.multi_objective.pareto.</code><code class="sig-name descname">is_non_dominated</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">Y</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/pareto.html#is_non_dominated"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.pareto.is_non_dominated" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.utils.multi_objective.pareto.</code><code class="sig-name descname">is_non_dominated</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">Y</span></em>, <em class="sig-param"><span class="n">deduplicate</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/pareto.html#is_non_dominated"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.multi_objective.pareto.is_non_dominated" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes the non-dominated front.</p>
 <p>Note: this assumes maximization.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – a <cite>(batch_shape) x n x m</cite>-dim tensor of outcomes.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>(batch_shape) x n x m</cite>-dim tensor of outcomes.</p></li>
+<li><p><strong>deduplicate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – A boolean indicating whether to only return
+unique points on the pareto frontier.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Return type</dt>
 <dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>

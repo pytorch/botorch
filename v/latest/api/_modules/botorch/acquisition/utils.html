@@ -51,7 +51,9 @@
 <span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">SamplingWarning</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.samplers</span> <span class="kn">import</span> <span class="n">IIDNormalSampler</span><span class="p">,</span> <span class="n">MCSampler</span><span class="p">,</span> <span class="n">SobolQMCNormalSampler</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decomposition</span> <span class="kn">import</span> <span class="n">NondominatedPartitioning</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decompositions.non_dominated</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">NondominatedPartitioning</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">squeeze_last_dim</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.quasirandom</span> <span class="kn">import</span> <span class="n">SobolEngine</span>
@@ -148,19 +150,23 @@
         <span class="p">)</span>
     <span class="k">elif</span> <span class="n">acquisition_function_name</span> <span class="o">==</span> <span class="s2">"qEHVI"</span><span class="p">:</span>
         <span class="c1"># pyre-fixme [16]: `Model` has no attribute `train_targets`</span>
-        <span class="k">if</span> <span class="s2">"ref_point"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">ref_point</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">"ref_point"</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"`ref_point` must be specified in kwargs for qEHVI"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="s2">"Y"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">Y</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">"Y"</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"`Y` must be specified in kwargs for qEHVI"</span><span class="p">)</span>
-        <span class="n">ref_point</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">"ref_point"</span><span class="p">]</span>
-        <span class="n">Y</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"Y"</span><span class="p">)</span>
         <span class="c1"># get feasible points</span>
         <span class="k">if</span> <span class="n">constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">feas</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">c</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">constraints</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
             <span class="n">Y</span> <span class="o">=</span> <span class="n">Y</span><span class="p">[</span><span class="n">feas</span><span class="p">]</span>
         <span class="n">obj</span> <span class="o">=</span> <span class="n">objective</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>
         <span class="n">partitioning</span> <span class="o">=</span> <span class="n">NondominatedPartitioning</span><span class="p">(</span>
-            <span class="n">num_outcomes</span><span class="o">=</span><span class="n">obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">Y</span><span class="o">=</span><span class="n">obj</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"alpha"</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+            <span class="n">ref_point</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">ref_point</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">Y</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">Y</span><span class="o">.</span><span class="n">device</span><span class="p">),</span>
+            <span class="n">Y</span><span class="o">=</span><span class="n">obj</span><span class="p">,</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"alpha"</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">moo_monte_carlo</span><span class="o">.</span><span class="n">qExpectedHypervolumeImprovement</span><span class="p">(</span>
             <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
