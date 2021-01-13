@@ -344,6 +344,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             ref_point=self.ref_point,
             partitioning=mock.ANY,
             sampler=mock.ANY,
+            X_pending=self.X_pending,
         )
         args, kwargs = mock_acqf.call_args
         self.assertEqual(args, ())

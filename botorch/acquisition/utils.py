@@ -149,6 +149,7 @@ def get_acquisition_function(
             sampler=sampler,
             objective=objective,
             constraints=constraints,
+            X_pending=X_pending,
         )
     raise NotImplementedError(
         f"Unknown acquisition function {acquisition_function_name}"
