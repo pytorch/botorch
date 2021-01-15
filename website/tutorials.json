@@ -21,6 +21,10 @@
     {
       "id": "bo_with_warped_gp",
       "title": "Bayesian optimization with input warping"
+    },
+    {
+      "id": "thompson_sampling",
+      "title": "Bayesian optimization with large-scale Thompson sampling"
     }
   ],
   "Multi-Objective Bayesian Optimization": [

@@ -27,7 +27,7 @@ and [Wu2016parallelkg]_.
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import Any, Callable, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Optional, Tuple, Type, Union
 
 import torch
 from botorch import settings
@@ -290,6 +290,9 @@ class qMultiFidelityKnowledgeGradient(qKnowledgeGradient):
     A version of `qKnowledgeGradient` that supports multi-fidelity optimization
     via a `CostAwareUtility` and the `project` and `expand` operators. If none
     of these are set, this acquisition function reduces to `qKnowledgeGradient`.
+    Through `valfunc_cls` and `valfunc_argfac`, this can be changed into a custom
+    multifidelity acquisition function (it is only KG if the terminal value is
+    computed using a posterior mean).
     """
 
     def __init__(
@@ -304,6 +307,8 @@ class qMultiFidelityKnowledgeGradient(qKnowledgeGradient):
         cost_aware_utility: Optional[CostAwareUtility] = None,
         project: Callable[[Tensor], Tensor] = lambda X: X,
         expand: Callable[[Tensor], Tensor] = lambda X: X,
+        valfunc_cls: Optional[Type[AcquisitionFunction]] = None,
+        valfunc_argfac: Optional[Callable[[Model, Dict[str, Any]]]] = None,
         **kwargs: Any,
     ) -> None:
         r"""Multi-Fidelity q-Knowledge Gradient (one-shot optimization).
@@ -331,13 +336,18 @@ class qMultiFidelityKnowledgeGradient(qKnowledgeGradient):
             cost_aware_utility: A CostAwareUtility computing the cost-transformed
                 utility from a candidate set and samples of increases in utility.
             project: A callable mapping a `batch_shape x q x d` tensor of design
-                points to a tensor of the same shape projected to the desired
-                target set (e.g. the target fidelities in case of multi-fidelity
-                optimization).
+                points to a tensor with shape `batch_shape x q_term x d` projected
+                to the desired target set (e.g. the target fidelities in case of
+                multi-fidelity optimization). For the basic case, `q_term = q`.
             expand: A callable mapping a `batch_shape x q x d` input tensor to
                 a `batch_shape x (q + q_e)' x d`-dim output tensor, where the
                 `q_e` additional points in each q-batch correspond to
                 additional ("trace") observations.
+            valfunc_cls: An acquisition function class to be used as the terminal
+                value function.
+            valfunc_argfac: An argument factory, i.e. callable that maps a `Model`
+                to a dictionary of kwargs for the terminal value function (e.g.
+                `best_f` for `ExpectedImprovement`).
         """
         if current_value is None and cost_aware_utility is not None:
             raise UnsupportedError(
@@ -356,6 +366,8 @@ class qMultiFidelityKnowledgeGradient(qKnowledgeGradient):
         self.project = project
         self.expand = expand
         self._cost_sampler = None
+        self.valfunc_cls = valfunc_cls
+        self.valfunc_argfac = valfunc_argfac
 
     @property
     def cost_sampler(self):
@@ -416,13 +428,14 @@ class qMultiFidelityKnowledgeGradient(qKnowledgeGradient):
         fantasy_model = self.model.fantasize(
             X=self.expand(X_eval), sampler=self.sampler, observation_noise=True
         )
-
         # get the value function
         value_function = _get_value_function(
             model=fantasy_model,
             objective=self.objective,
             sampler=self.inner_sampler,
             project=self.project,
+            valfunc_cls=self.valfunc_cls,
+            valfunc_argfac=self.valfunc_argfac,
         )
 
         # make sure to propagate gradients to the fantasy model train inputs
@@ -468,14 +481,24 @@ def _get_value_function(
     objective: Optional[Union[MCAcquisitionObjective, ScalarizedObjective]] = None,
     sampler: Optional[MCSampler] = None,
     project: Optional[Callable[[Tensor], Tensor]] = None,
+    valfunc_cls: Optional[Type[AcquisitionFunction]] = None,
+    valfunc_argfac: Optional[Callable[[Model, Dict[str, Any]]]] = None,
 ) -> AcquisitionFunction:
     r"""Construct value function (i.e. inner acquisition function)."""
-    if isinstance(objective, MCAcquisitionObjective):
-        base_value_function = qSimpleRegret(
-            model=model, sampler=sampler, objective=objective
-        )
+    if valfunc_cls is not None:
+        common_kwargs: Dict[str, Any] = {"model": model, "objective": objective}
+        if issubclass(valfunc_cls, MCAcquisitionFunction):
+            common_kwargs["sampler"] = sampler
+        kwargs = valfunc_argfac(model=model) if valfunc_argfac is not None else {}
+        base_value_function = valfunc_cls(**common_kwargs, **kwargs)
     else:
-        base_value_function = PosteriorMean(model=model, objective=objective)
+        if isinstance(objective, MCAcquisitionObjective):
+            base_value_function = qSimpleRegret(
+                model=model, sampler=sampler, objective=objective
+            )
+        else:
+            base_value_function = PosteriorMean(model=model, objective=objective)
+
     if project is None:
         return base_value_function
     else:
