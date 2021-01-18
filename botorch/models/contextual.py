@@ -33,7 +33,9 @@ class SACGP(FixedNoiseGP):
     ) -> None:
         super().__init__(train_X=train_X, train_Y=train_Y, train_Yvar=train_Yvar)
         self.covar_module = SACKernel(
-            decomposition=decomposition, batch_shape=self._aug_batch_shape
+            decomposition=decomposition,
+            batch_shape=self._aug_batch_shape,
+            device=train_X.device,
         )
         self.decomposition = decomposition
         self.to(train_X)
@@ -83,6 +85,7 @@ class LCEAGP(FixedNoiseGP):
             embs_feature_dict=embs_feature_dict,
             embs_dim_list=embs_dim_list,
             context_weight_dict=context_weight_dict,
+            device=train_X.device,
         )
         self.decomposition = decomposition
         self.to(train_X)

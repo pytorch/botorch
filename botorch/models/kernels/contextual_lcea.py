@@ -53,12 +53,14 @@ class LCEAKernel(Kernel):
         embs_feature_dict: Optional[Dict] = None,
         embs_dim_list: Optional[List[int]] = None,
         context_weight_dict: Optional[Dict] = None,
+        device: Optional[torch.device] = None,
     ) -> None:
 
         super().__init__(batch_shape=batch_shape)
         self.decomposition = decomposition
         self.batch_shape = batch_shape
         self.train_embedding = train_embedding
+        self.device = device
 
         num_param = len(next(iter(decomposition.values())))
         self.context_list = list(decomposition.keys())
@@ -72,7 +74,7 @@ class LCEAKernel(Kernel):
                     "num of parameters needs to be same across all contexts"
                 )
         self._indexers = {
-            context: torch.tensor(active_params)
+            context: torch.tensor(active_params, device=self.device)
             for context, active_params in self.decomposition.items()
         }
         # get context features and set emb dim
@@ -106,11 +108,13 @@ class LCEAKernel(Kernel):
         # outputscales for each context (note this is like sqrt of outputscale)
         self.context_weight = None
         if context_weight_dict is None:
-            outputscale_list = torch.zeros(*batch_shape, self.num_contexts)
+            outputscale_list = torch.zeros(
+                *batch_shape, self.num_contexts, device=self.device
+            )
         else:
-            outputscale_list = torch.zeros(*batch_shape, 1)
+            outputscale_list = torch.zeros(*batch_shape, 1, device=self.device)
             self.context_weight = torch.tensor(
-                [context_weight_dict[c] for c in self.context_list]
+                [context_weight_dict[c] for c in self.context_list], device=self.device
             )
         self.register_parameter(
             name="raw_outputscale_list", parameter=torch.nn.Parameter(outputscale_list)
@@ -152,7 +156,9 @@ class LCEAKernel(Kernel):
         """
         # get context categorical features
         if cat_feature_dict is None:
-            self.context_cat_feature = torch.arange(self.num_contexts).unsqueeze(-1)
+            self.context_cat_feature = torch.arange(
+                self.num_contexts, device=self.device
+            ).unsqueeze(-1)
         else:
             self.context_cat_feature = torch.tensor(
                 [cat_feature_dict[c] for c in self.context_list]
@@ -170,7 +176,7 @@ class LCEAKernel(Kernel):
         # get context embedding features
         if embs_feature_dict is not None:
             self.context_emb_feature = torch.tensor(
-                [embs_feature_dict[c] for c in self.context_list]
+                [embs_feature_dict[c] for c in self.context_list], device=self.device
             )
             self.n_embs += self.context_emb_feature.size(1)
 
@@ -192,7 +198,10 @@ class LCEAKernel(Kernel):
             self.emb_weight_matrix_list = torch.nn.ParameterList(
                 [
                     torch.nn.Parameter(
-                        torch.zeros(self.batch_shape + emb_layer.weight.shape)
+                        torch.zeros(
+                            self.batch_shape + emb_layer.weight.shape,
+                            device=self.device,
+                        )
                     )
                     for emb_layer in self.emb_layers
                 ]
@@ -235,7 +244,7 @@ class LCEAKernel(Kernel):
             [self.context_cat_feature[i, :] for i in range(self.num_contexts)], dim=0
         )
         embeddings = [
-            emb_layer(context_features[:, i].to(dtype=torch.long))
+            emb_layer(context_features[:, i].to(device=self.device, dtype=torch.long))
             for i, emb_layer in enumerate(self.emb_layers)
         ]
         embeddings = torch.cat(embeddings, dim=1)
@@ -266,7 +275,9 @@ class LCEAKernel(Kernel):
                     torch.cat(
                         [
                             torch.nn.functional.embedding(
-                                context_features[:, 0].to(dtype=torch.long),
+                                context_features[:, 0].to(
+                                    dtype=torch.long, device=self.device
+                                ),
                                 self.emb_weight_matrix_list[i][b, :],
                             ).unsqueeze(0)
                         ],
@@ -315,9 +326,9 @@ class LCEAKernel(Kernel):
                 covars.append(
                     (
                         context_covar.index_select(  # pyre-ignore
-                            -1, torch.tensor([j])
+                            -1, torch.tensor([j], device=self.device)
                         ).index_select(
-                            -2, torch.tensor([i])
+                            -2, torch.tensor([i], device=self.device)
                         )  # b x ns x 1 x 1
                     )
                     * self.base_kernel(

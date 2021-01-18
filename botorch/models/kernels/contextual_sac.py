@@ -4,7 +4,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import torch
 from gpytorch.kernels.kernel import Kernel
@@ -47,10 +47,14 @@ class SACKernel(Kernel):
     """
 
     def __init__(
-        self, decomposition: Dict[str, List[int]], batch_shape: torch.Size
+        self,
+        decomposition: Dict[str, List[int]],
+        batch_shape: torch.Size,
+        device: Optional[torch.device] = None,
     ) -> None:
         super().__init__(batch_shape=batch_shape)
         self.decomposition = decomposition
+        self.device = device
 
         num_param = len(next(iter(decomposition.values())))
         for active_parameters in decomposition.values():
@@ -61,7 +65,7 @@ class SACKernel(Kernel):
                 )
 
         self._indexers = {
-            context: torch.tensor(active_params)
+            context: torch.tensor(active_params, device=self.device)
             for context, active_params in self.decomposition.items()
         }
 
