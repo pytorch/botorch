@@ -80,13 +80,14 @@
             <span class="n">task_feature</span><span class="o">=</span><span class="n">task_feature</span><span class="p">,</span>
             <span class="n">output_tasks</span><span class="o">=</span><span class="n">output_tasks</span><span class="p">,</span>
         <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">train_X</span><span class="o">.</span><span class="n">device</span>
         <span class="c1">#  context indices</span>
         <span class="n">all_tasks</span> <span class="o">=</span> <span class="n">train_X</span><span class="p">[:,</span> <span class="n">task_feature</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">all_tasks</span> <span class="o">=</span> <span class="n">all_tasks</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">all_tasks</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>  <span class="c1"># unique in python does automatic sort; add for safety</span>
 
         <span class="k">if</span> <span class="n">context_cat_feature</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">context_cat_feature</span> <span class="o">=</span> <span class="n">all_tasks</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">context_cat_feature</span> <span class="o">=</span> <span class="n">all_tasks</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">context_cat_feature</span> <span class="o">=</span> <span class="n">context_cat_feature</span>  <span class="c1"># row indices = context indices</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">context_emb_feature</span> <span class="o">=</span> <span class="n">context_emb_feature</span>
 
@@ -123,7 +124,9 @@
         <span class="sd">"""generate embedding features for all contexts."""</span>
         <span class="n">embeddings</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">emb_layer</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">context_cat_feature</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span>  <span class="c1"># pyre-ignore</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">context_cat_feature</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span>
+                    <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span>
+                <span class="p">)</span>  <span class="c1"># pyre-ignore</span>
             <span class="p">)</span>
             <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">emb_layer</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">emb_layers</span><span class="p">)</span>
         <span class="p">]</span>
@@ -132,7 +135,8 @@
         <span class="c1"># add given embeddings if any</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">context_emb_feature</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">embeddings</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
-                <span class="p">[</span><span class="n">embeddings</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">context_emb_feature</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span>  <span class="c1"># pyre-ignore</span>
+                <span class="p">[</span><span class="n">embeddings</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">context_emb_feature</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)],</span>
+                <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>  <span class="c1"># pyre-ignore</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">embeddings</span>
 
