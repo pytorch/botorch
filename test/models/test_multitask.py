@@ -14,6 +14,7 @@ from botorch.fit import fit_gpytorch_model
 from botorch.models.multitask import FixedNoiseMultiTaskGP, MultiTaskGP
 from botorch.models.transforms.input import Normalize
 from botorch.posteriors import GPyTorchPosterior
+from botorch.sampling.samplers import IIDNormalSampler
 from botorch.utils.containers import TrainingData
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
@@ -203,6 +204,55 @@ class TestMultiTaskGP(BotorchTestCase):
             model.outcome_transform = None
             with self.assertRaises(NotImplementedError):
                 model.posterior(test_x)
+
+    def test_MultiTasKGP_fantasize(self):
+        for dtype in (torch.float, torch.double):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            # test fantasize
+            model, train_X, _ = _get_model_and_training_data(
+                input_transform=None, **tkwargs
+            )
+            test_x = torch.rand(2, 1, **tkwargs)
+            # test with a single task index
+            test_X = torch.cat([test_x, torch.ones_like(test_x)], dim=-1)
+            fm = model.fantasize(test_X, IIDNormalSampler(2), observation_noise=False)
+            self.assertEqual(fm.train_inputs[0].shape, torch.Size([2, 22, 2]))
+            self.assertEqual(fm.train_targets.shape, torch.Size([2, 22]))
+
+            # test with multiple task indices
+            test_X[1, 1] = 0.0
+            fm = model.fantasize(test_X, IIDNormalSampler(3), observation_noise=False)
+            self.assertEqual(fm.train_inputs[0].shape, torch.Size([3, 22, 2]))
+            self.assertEqual(fm.train_targets.shape, torch.Size([3, 22]))
+
+            # test with batch inputs
+            test_x = torch.rand(3, 2, 1, **tkwargs)
+            test_X = torch.cat([test_x, torch.ones_like(test_x)], dim=-1)
+            fm = model.fantasize(test_X, IIDNormalSampler(4), observation_noise=False)
+            self.assertEqual(fm.train_inputs[0].shape, torch.Size([4, 3, 22, 2]))
+            self.assertEqual(fm.train_targets.shape, torch.Size([4, 3, 22]))
+
+            # test with multiple task indices
+            test_X[1, 1, 1] = 0.0
+            fm = model.fantasize(test_X, IIDNormalSampler(4), observation_noise=False)
+            self.assertEqual(fm.train_inputs[0].shape, torch.Size([4, 3, 22, 2]))
+            self.assertEqual(fm.train_targets.shape, torch.Size([4, 3, 22]))
+
+            # explicitly test the indexing behavior
+            def mock_sampler(*args, **kwargs):
+                return torch.cat(
+                    (
+                        torch.zeros(4, 3, 2, 1, **tkwargs),
+                        torch.ones(4, 3, 2, 1, **tkwargs),
+                    ),
+                    dim=-1,
+                )
+
+            fm = model.fantasize(test_X, mock_sampler, observation_noise=False)
+            new_targets = fm.train_targets[..., -2:]
+            expected_targets = torch.ones(4, 3, 2, **tkwargs)
+            expected_targets[:, 1, 1] = 0.0
+            self.assertTrue(torch.equal(new_targets, expected_targets))
 
     def test_MultiTaskGP_single_output(self):
         for dtype in (torch.float, torch.double):

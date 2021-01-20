@@ -20,6 +20,7 @@ from copy import deepcopy
 from typing import Any, Iterator, List, Optional, Tuple, Union
 
 import torch
+from botorch import settings
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.exceptions.warnings import BotorchTensorDimensionWarning
 from botorch.models.model import Model
@@ -31,6 +32,7 @@ from botorch.models.utils import (
     multioutput_to_batch_mode_transform,
 )
 from botorch.posteriors.gpytorch import GPyTorchPosterior
+from botorch.sampling.samplers import MCSampler
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.lazy import lazify
 from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
@@ -572,8 +574,8 @@ class ModelListGPyTorchModel(GPyTorchModel, ABC):
 class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
     r"""Abstract base class for multi-task models baed on GPyTorch models.
 
-    This class provides the `posterior` method to models that implement a
-    "long-format" multi-task GP in the style of `MultiTaskGP`.
+    This class provides the `posterior` and `fantasize` methods to models that
+    implement a "long-format" multi-task GP in the style of `MultiTaskGP`.
     """
 
     def posterior(
@@ -635,3 +637,51 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
             interleaved=False,
         )
         return GPyTorchPosterior(mvn=mtmvn)
+
+    def fantasize(
+        self,
+        X: Tensor,
+        sampler: MCSampler,
+        observation_noise: bool = True,
+        **kwargs: Any,
+    ) -> Model:
+        r"""Construct a fantasy model.
+
+        Constructs a fantasy model in the following fashion:
+        (1) compute the model posterior at `X` (including observation noise if
+        `observation_noise=True`).
+        (2) sample from this posterior (using `sampler`) to generate "fake"
+        observations.
+        (3) condition the model on the new fake observations.
+
+        Args:
+            X: A `batch_shape x n' x (d + 1)`-dim Tensor, where `d` is the dimension of
+                the feature space, `n'` is the number of points per batch, and
+                `batch_shape` is the batch shape (must be compatible with the
+                batch shape of the model). One of the columns should contain the task
+                indices (see `task_feature` argument).
+            sampler: The sampler used for sampling from the posterior at `X`.
+            observation_noise: If True, include observation noise.
+                # TODO: Observation noise is not supported at `posterior`.
+
+        Returns:
+            The constructed fantasy model.
+        """
+        x_basic, task_idcs = self._split_inputs(x=X)
+        unique_tasks = task_idcs.unique()
+        propagate_grads = kwargs.pop("propagate_grads", False)
+        with settings.propagate_grads(propagate_grads):
+            post_X = self.posterior(
+                X=x_basic,
+                output_indices=unique_tasks,
+                observation_noise=observation_noise,
+            )
+        Y_fantasized = sampler(post_X)  # num_fantasies x batch_shape x n' x m
+        if len(unique_tasks) > 1:
+            # extract the samples corresponding to task_idcs from MT output.
+            # selecting only the entries that are `True` in `task_idcs == unique_tasks`
+            extract_idcs = (task_idcs == unique_tasks).nonzero(as_tuple=True)
+            Y_fantasized = Y_fantasized[(slice(None),) + extract_idcs].reshape(
+                *Y_fantasized.shape[:-1], 1
+            )
+        return self.condition_on_observations(X=X, Y=Y_fantasized, **kwargs)
