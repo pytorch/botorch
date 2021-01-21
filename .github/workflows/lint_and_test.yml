@@ -1,0 +1,91 @@
+name: Lint and Test Workflow
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  tests-and-coverage:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.7, 3.8]
+      fail-fast: false
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      # TODO: Run tests on miniconda
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        pip install git+https://github.com/cornellius-gp/gpytorch.git
+        pip install -q -e .[test]
+    - name: Unit tests and coverage
+      run: |
+        pytest -ra --cov=. --cov-report term-missing
+    - name: Upload coverage
+      run: |
+        bash <(curl -s https://codecov.io/bash)
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+    - name: Install dependencies
+      run: |
+        pip install black
+        pip install flake8
+    - name: Black
+      run: |
+        black --check --diff .
+    - name: Flake8
+      # run even if previous step (Black) failed
+      if: ${{ always() }}
+      run: |
+        flake8
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+    - name: Install dependencies
+      run: |
+        pip install git+https://github.com/cornellius-gp/gpytorch.git
+        pip install -q -e .[dev]
+    - name: Validate Sphinx
+      run: |
+        python scripts/validate_sphinx.py -p "$(pwd)"
+    - name: Run sphinx
+      # run even if previous step (validate Sphinx) failed
+      if: ${{ always() }}
+      run: |
+        # warnings treated as errors
+        sphinx-build -WT --keep-going sphinx/source sphinx/build
+
+  tutorials:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+    - name: Install dependencies
+      run: |
+        pip install git+https://github.com/cornellius-gp/gpytorch.git
+        pip install -q -e .[tutorials]
+    - name: Run tutorials
+      run: |
+        python scripts/run_tutorials.py -p "$(pwd)"
