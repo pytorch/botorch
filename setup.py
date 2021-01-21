@@ -32,6 +32,7 @@ TEST_REQUIRES = ["pytest", "pytest-cov"]
 DEV_REQUIRES = TEST_REQUIRES + ["black", "flake8", "sphinx", "sphinx-autodoc-typehints"]
 
 TUTORIALS_REQUIRES = [
+    "ax-platform",
     "jupyter",
     "matplotlib",
     "cma",

@@ -23,7 +23,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install git+https://github.com/cornellius-gp/gpytorch.git
-        pip install -q -e .[test]
+        pip install -e .[test]
     - name: Unit tests and coverage
       run: |
         pytest -ra --cov=. --cov-report term-missing
@@ -63,7 +63,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install git+https://github.com/cornellius-gp/gpytorch.git
-        pip install -q -e .[dev]
+        pip install -e .[dev]
     - name: Validate Sphinx
       run: |
         python scripts/validate_sphinx.py -p "$(pwd)"
@@ -83,9 +83,12 @@ jobs:
       with:
         python-version: 3.7
     - name: Install dependencies
+      # Installing Ax master after installing w/o tutorial deps ensures
+      # that we have both BoTorch and Ax master installed
       run: |
+        pip install git+https://github.com/facebook/Ax.git
         pip install git+https://github.com/cornellius-gp/gpytorch.git
-        pip install -q -e .[tutorials]
+        pip install -e .[tutorials]
     - name: Run tutorials
       run: |
         python scripts/run_tutorials.py -p "$(pwd)"
