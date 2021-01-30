@@ -486,7 +486,9 @@ class TestPruneInferiorPoints(BotorchTestCase):
                         new_callable=mock.PropertyMock,
                     )
                 )
-                mock_event_shape.return_value = torch.Size([1, 1, 1112])
+                mock_event_shape.return_value = torch.Size(
+                    [1, 1, torch.quasirandom.SobolEngine.MAXDIM + 1]
+                )
                 es.enter_context(
                     mock.patch.object(MockPosterior, "rsample", return_value=samples)
                 )
