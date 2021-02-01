@@ -420,10 +420,11 @@ class TestSobolQMCNormalSampler(BotorchTestCase):
 
     def test_unsupported_dimension(self):
         sampler = SobolQMCNormalSampler(num_samples=2)
-        mean = torch.zeros(1112)
-        cov = DiagLazyTensor(torch.ones(1112))
+        maxdim = torch.quasirandom.SobolEngine.MAXDIM + 1
+        mean = torch.zeros(maxdim)
+        cov = DiagLazyTensor(torch.ones(maxdim))
         mvn = MultivariateNormal(mean, cov)
         posterior = GPyTorchPosterior(mvn)
         with self.assertRaises(UnsupportedError) as e:
             sampler(posterior)
-            self.assertIn("Requested: 1112", str(e.exception))
+            self.assertIn(f"Requested: {maxdim}", str(e.exception))
