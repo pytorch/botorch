@@ -10,6 +10,7 @@ import itertools
 from botorch.models import HigherOrderGP
 from botorch.models.higher_order_gp import FlattenedStandardize
 from botorch.models.transforms.input import Normalize
+from botorch.models.transforms.outcome import Standardize
 from botorch.optim.fit import fit_gpytorch_torch
 from botorch.posteriors import GPyTorchPosterior, TransformedPosterior
 from botorch.sampling import IIDNormalSampler
@@ -28,19 +29,15 @@ class TestHigherOrderGP(BotorchTestCase):
         super().setUp()
         manual_seed(0)
 
-        train_x = rand(2, 10, 1)
-        train_y = randn(2, 10, 3, 5)
+        train_x = rand(2, 10, 1, device=self.device)
+        train_y = randn(2, 10, 3, 5, device=self.device)
 
-        train_x = train_x.to(device=self.device)
-        train_y = train_y.to(device=self.device)
-
-        self.model = HigherOrderGP(train_x, train_y, first_dim_is_batch=True)
+        self.model = HigherOrderGP(train_x, train_y)
 
         # check that we can assign different kernels and likelihoods
         model_2 = HigherOrderGP(
-            train_x,
-            train_y,
-            first_dim_is_batch=True,
+            train_X=train_x,
+            train_Y=train_y,
             covar_modules=[RBFKernel(), RBFKernel(), RBFKernel()],
             likelihood=GaussianLikelihood(),
         )
@@ -48,6 +45,28 @@ class TestHigherOrderGP(BotorchTestCase):
         for m in [self.model, model_2]:
             mll = ExactMarginalLogLikelihood(m.likelihood, m)
             fit_gpytorch_torch(mll, options={"maxiter": 1, "disp": False})
+
+    def test_num_output_dims(self):
+        train_x = rand(2, 10, 1, device=self.device)
+        train_y = randn(2, 10, 3, 5, device=self.device)
+        model = HigherOrderGP(train_x, train_y)
+
+        # check that it correctly inferred that this is a batched model
+        self.assertEqual(model._num_outputs, 2)
+
+        train_x = rand(10, 1, device=self.device)
+        train_y = randn(10, 3, 5, 2, device=self.device)
+        model = HigherOrderGP(train_x, train_y)
+
+        # non-batched case
+        self.assertEqual(model._num_outputs, 1)
+
+        train_x = rand(3, 2, 10, 1, device=self.device)
+        train_y = randn(3, 2, 10, 3, 5, device=self.device)
+
+        # check the error when using multi-dim batch_shape
+        with self.assertRaises(NotImplementedError):
+            model = HigherOrderGP(train_x, train_y)
 
     def test_posterior(self):
         manual_seed(0)
@@ -71,9 +90,19 @@ class TestHigherOrderGP(BotorchTestCase):
     def test_transforms(self):
         train_x = rand(10, 3, device=self.device)
         train_y = randn(10, 4, 5, device=self.device)
+
+        # test handling of Standardize
+        with self.assertWarns(RuntimeWarning):
+            model = HigherOrderGP(
+                train_X=train_x, train_Y=train_y, outcome_transform=Standardize(m=5)
+            )
+        self.assertIsInstance(model.outcome_transform, FlattenedStandardize)
+        self.assertEqual(model.outcome_transform.output_shape, train_y.shape[1:])
+        self.assertEqual(model.outcome_transform.batch_shape, Size())
+
         model = HigherOrderGP(
-            train_x,
-            train_y,
+            train_X=train_x,
+            train_Y=train_y,
             input_transform=Normalize(d=3),
             outcome_transform=FlattenedStandardize(train_y.shape[1:]),
         )
@@ -171,7 +200,7 @@ class TestHigherOrderGPPosterior(BotorchTestCase):
         train_x = rand(2, 10, 1, device=self.device)
         train_y = randn(2, 10, 3, 5, device=self.device)
 
-        m1 = HigherOrderGP(train_x, train_y, first_dim_is_batch=True)
+        m1 = HigherOrderGP(train_x, train_y)
         m2 = HigherOrderGP(train_x[0], train_y[0])
 
         manual_seed(0)

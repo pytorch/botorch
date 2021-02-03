@@ -19,6 +19,7 @@ References
 
 from __future__ import annotations
 
+import warnings
 from contextlib import ExitStack
 from typing import Any, List, Optional, Union, Tuple
 
@@ -55,7 +56,7 @@ MIN_INFERRED_NOISE_LEVEL = 1e-4
 class FlattenedStandardize(Standardize):
     r"""
     Standardize outcomes in a structured multi-output settings by reshaping the
-    batched output dimensions to be a vector. Specificially, an output dimension
+    batched output dimensions to be a vector. Specifically, an output dimension
     of [a x b x c] will be squeezed to be a vector of [a * b * c].
     """
 
@@ -345,7 +346,6 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         covar_modules: Optional[List[Kernel]] = None,
         num_latent_dims: Optional[List[int]] = None,
         learn_latent_pars: bool = True,
-        first_dim_is_batch: bool = False,
         latent_init: str = "default",
         outcome_transform: Optional[OutcomeTransform] = None,
         input_transform: Optional[InputTransform] = None,
@@ -353,33 +353,48 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         r"""A HigherOrderGP model for high-dim output regression.
 
         Args:
-            train_X: Training inputs
-            train_Y: Training targets
+            train_X: A `batch_shape x n x d`-dim tensor of training inputs.
+            train_Y: A `batch_shape x n x output_shape`-dim tensor of training targets.
             likelihood: Gaussian likelihood for the model.
             covar_modules: List of kernels for each output structure.
             num_latent_dims: Sizes for the latent dimensions.
             learn_latent_pars: If true, learn the latent parameters.
-            first_dim_is_batch: If true, the first dimension of train_Y should be
-                regarded as a batch dimension (e.g. predicting batches of tensors).
             latent_init: [default or gp] how to initialize the latent parameters.
         """
 
         if input_transform is not None:
             input_transform.to(train_X)
 
+        # infer the dimension of `output_shape`.
+        num_output_dims = train_Y.dim() - train_X.dim() + 1
+        batch_shape = train_X.shape[:-2]
+        if len(batch_shape) > 1:
+            raise NotImplementedError(
+                "HigherOrderGP currently only supports 1-dim `batch_shape`."
+            )
+
         if outcome_transform is not None:
+            if isinstance(outcome_transform, Standardize) and not isinstance(
+                outcome_transform, FlattenedStandardize
+            ):
+                warnings.warn(
+                    "HigherOrderGP does not support the outcome_transform "
+                    "`Standardize`! Using `FlattenedStandardize` with `output_shape="
+                    f"{train_Y.shape[- num_output_dims:]} and batch_shape="
+                    f"{batch_shape} instead.",
+                    RuntimeWarning,
+                )
+                outcome_transform = FlattenedStandardize(
+                    output_shape=train_Y.shape[-num_output_dims:],
+                    batch_shape=batch_shape,
+                )
             train_Y, _ = outcome_transform(train_Y)
 
-        if first_dim_is_batch:
-            self._aug_batch_shape = train_Y.shape[:1]
-            self._num_dimensions = len(train_Y.shape) - 1
-            self._num_outputs = train_Y.shape[0]
-        else:
-            self._aug_batch_shape = Size()
-            self._num_dimensions = len(train_Y.shape)
-            self._num_outputs = 1
-
-        self._input_batch_shape = train_X.shape[:-2]
+        self._aug_batch_shape = batch_shape
+        self._num_dimensions = num_output_dims + 1
+        self._num_outputs = train_Y.shape[0] if batch_shape else 1
+        self.target_shape = train_Y.shape[-num_output_dims:]
+        self._input_batch_shape = batch_shape
 
         if likelihood is None:
 
@@ -420,11 +435,6 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
 
         if num_latent_dims is None:
             num_latent_dims = [1] * (self._num_dimensions - 1)
-
-        if first_dim_is_batch:
-            self.target_shape = train_Y.shape[2:]
-        else:
-            self.target_shape = train_Y.shape[1:]
 
         self.to(train_X.device)
 
