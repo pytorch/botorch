@@ -45,6 +45,7 @@
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">ExitStack</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Tuple</span>
 
@@ -81,7 +82,7 @@
 <div class="viewcode-block" id="FlattenedStandardize"><a class="viewcode-back" href="../../../models.html#botorch.models.higher_order_gp.FlattenedStandardize">[docs]</a><span class="k">class</span> <span class="nc">FlattenedStandardize</span><span class="p">(</span><span class="n">Standardize</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Standardize outcomes in a structured multi-output settings by reshaping the</span>
-<span class="sd">    batched output dimensions to be a vector. Specificially, an output dimension</span>
+<span class="sd">    batched output dimensions to be a vector. Specifically, an output dimension</span>
 <span class="sd">    of [a x b x c] will be squeezed to be a vector of [a * b * c].</span>
 <span class="sd">    """</span>
 
@@ -371,7 +372,6 @@
         <span class="n">covar_modules</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Kernel</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">num_latent_dims</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">learn_latent_pars</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-        <span class="n">first_dim_is_batch</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">latent_init</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"default"</span><span class="p">,</span>
         <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -379,33 +379,48 @@
         <span class="sa">r</span><span class="sd">"""A HigherOrderGP model for high-dim output regression.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            train_X: Training inputs</span>
-<span class="sd">            train_Y: Training targets</span>
+<span class="sd">            train_X: A `batch_shape x n x d`-dim tensor of training inputs.</span>
+<span class="sd">            train_Y: A `batch_shape x n x output_shape`-dim tensor of training targets.</span>
 <span class="sd">            likelihood: Gaussian likelihood for the model.</span>
 <span class="sd">            covar_modules: List of kernels for each output structure.</span>
 <span class="sd">            num_latent_dims: Sizes for the latent dimensions.</span>
 <span class="sd">            learn_latent_pars: If true, learn the latent parameters.</span>
-<span class="sd">            first_dim_is_batch: If true, the first dimension of train_Y should be</span>
-<span class="sd">                regarded as a batch dimension (e.g. predicting batches of tensors).</span>
 <span class="sd">            latent_init: [default or gp] how to initialize the latent parameters.</span>
 <span class="sd">        """</span>
 
         <span class="k">if</span> <span class="n">input_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">input_transform</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
 
+        <span class="c1"># infer the dimension of `output_shape`.</span>
+        <span class="n">num_output_dims</span> <span class="o">=</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">-</span> <span class="n">train_X</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch_shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="s2">"HigherOrderGP currently only supports 1-dim `batch_shape`."</span>
+            <span class="p">)</span>
+
         <span class="k">if</span> <span class="n">outcome_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">outcome_transform</span><span class="p">,</span> <span class="n">Standardize</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span>
+                <span class="n">outcome_transform</span><span class="p">,</span> <span class="n">FlattenedStandardize</span>
+            <span class="p">):</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                    <span class="s2">"HigherOrderGP does not support the outcome_transform "</span>
+                    <span class="s2">"`Standardize`! Using `FlattenedStandardize` with `output_shape="</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">train_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span> <span class="n">num_output_dims</span><span class="p">:]</span><span class="si">}</span><span class="s2"> and batch_shape="</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">batch_shape</span><span class="si">}</span><span class="s2"> instead."</span><span class="p">,</span>
+                    <span class="ne">RuntimeWarning</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">outcome_transform</span> <span class="o">=</span> <span class="n">FlattenedStandardize</span><span class="p">(</span>
+                    <span class="n">output_shape</span><span class="o">=</span><span class="n">train_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="n">num_output_dims</span><span class="p">:],</span>
+                    <span class="n">batch_shape</span><span class="o">=</span><span class="n">batch_shape</span><span class="p">,</span>
+                <span class="p">)</span>
             <span class="n">train_Y</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">outcome_transform</span><span class="p">(</span><span class="n">train_Y</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">first_dim_is_batch</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span> <span class="o">=</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">1</span><span class="p">]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_num_dimensions</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_num_outputs</span> <span class="o">=</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span> <span class="o">=</span> <span class="n">Size</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_num_dimensions</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_num_outputs</span> <span class="o">=</span> <span class="mi">1</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">_input_batch_shape</span> <span class="o">=</span> <span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_aug_batch_shape</span> <span class="o">=</span> <span class="n">batch_shape</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_num_dimensions</span> <span class="o">=</span> <span class="n">num_output_dims</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_num_outputs</span> <span class="o">=</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">batch_shape</span> <span class="k">else</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target_shape</span> <span class="o">=</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="n">num_output_dims</span><span class="p">:]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_input_batch_shape</span> <span class="o">=</span> <span class="n">batch_shape</span>
 
         <span class="k">if</span> <span class="n">likelihood</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
 
@@ -446,11 +461,6 @@
 
         <span class="k">if</span> <span class="n">num_latent_dims</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">num_latent_dims</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_num_dimensions</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">first_dim_is_batch</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">target_shape</span> <span class="o">=</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">target_shape</span> <span class="o">=</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
 
