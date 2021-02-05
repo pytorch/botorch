@@ -10,6 +10,7 @@ Some basic data transformation helpers.
 
 from __future__ import annotations
 
+import warnings
 from functools import wraps
 from typing import Any, Callable, List, Optional
 
@@ -30,6 +31,11 @@ def squeeze_last_dim(Y: Tensor) -> Tensor:
         >>> Y = torch.rand(4, 3)
         >>> Y_squeezed = squeeze_last_dim(Y)
     """
+    warnings.warn(
+        "`botorch.utils.transforms.squeeze_last_dim` is deprecated. "
+        "Simply use `.squeeze(-1)1 instead.",
+        DeprecationWarning,
+    )
     return Y.squeeze(-1)
 
 

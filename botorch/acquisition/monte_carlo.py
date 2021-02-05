@@ -137,9 +137,7 @@ class qExpectedImprovement(MCAcquisitionFunction):
         super().__init__(
             model=model, sampler=sampler, objective=objective, X_pending=X_pending
         )
-        if not torch.is_tensor(best_f):
-            best_f = torch.tensor(float(best_f))
-        self.register_buffer("best_f", best_f)
+        self.register_buffer("best_f", torch.as_tensor(best_f, dtype=float))
 
     @concatenate_pending_points
     @t_batch_mode_transform()
@@ -157,7 +155,7 @@ class qExpectedImprovement(MCAcquisitionFunction):
         """
         posterior = self.model.posterior(X)
         samples = self.sampler(posterior)
-        obj = self.objective(samples)
+        obj = self.objective(samples, X=X)
         obj = (obj - self.best_f.unsqueeze(-1).to(obj)).clamp_min(0)
         q_ei = obj.max(dim=-1)[0].mean(dim=0)
         return q_ei
@@ -242,7 +240,7 @@ class qNoisyExpectedImprovement(MCAcquisitionFunction):
         # over both training and test points in GPyTorch
         posterior = self.model.posterior(X_full)
         samples = self.sampler(posterior)
-        obj = self.objective(samples)
+        obj = self.objective(samples, X=X_full)
         diffs = obj[:, :, :q].max(dim=-1)[0] - obj[:, :, q:].max(dim=-1)[0]
         return diffs.clamp_min(0).mean(dim=0)
 
@@ -298,12 +296,8 @@ class qProbabilityOfImprovement(MCAcquisitionFunction):
         super().__init__(
             model=model, sampler=sampler, objective=objective, X_pending=X_pending
         )
-        if not torch.is_tensor(best_f):
-            best_f = torch.tensor(float(best_f))
-        self.register_buffer("best_f", best_f)
-        if not torch.is_tensor(tau):
-            tau = torch.tensor(float(tau))
-        self.register_buffer("tau", tau)
+        self.register_buffer("best_f", torch.as_tensor(best_f, dtype=float))
+        self.register_buffer("tau", torch.as_tensor(tau, dtype=float))
 
     @concatenate_pending_points
     @t_batch_mode_transform()
@@ -321,7 +315,7 @@ class qProbabilityOfImprovement(MCAcquisitionFunction):
         """
         posterior = self.model.posterior(X)
         samples = self.sampler(posterior)
-        obj = self.objective(samples)
+        obj = self.objective(samples, X=X)
         max_obj = obj.max(dim=-1)[0]
         impr = max_obj - self.best_f.unsqueeze(-1).to(max_obj)
         val = torch.sigmoid(impr / self.tau).mean(dim=0)
@@ -358,7 +352,7 @@ class qSimpleRegret(MCAcquisitionFunction):
         """
         posterior = self.model.posterior(X)
         samples = self.sampler(posterior)
-        obj = self.objective(samples)
+        obj = self.objective(samples, X=X)
         val = obj.max(dim=-1)[0].mean(dim=0)
         return val
 
@@ -422,7 +416,7 @@ class qUpperConfidenceBound(MCAcquisitionFunction):
         """
         posterior = self.model.posterior(X)
         samples = self.sampler(posterior)
-        obj = self.objective(samples)
+        obj = self.objective(samples, X=X)
         mean = obj.mean(dim=0)
         ucb_samples = mean + self.beta_prime * (obj - mean).abs()
         return ucb_samples.max(dim=-1)[0].mean(dim=0)

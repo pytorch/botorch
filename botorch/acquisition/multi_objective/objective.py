@@ -22,12 +22,13 @@ class MCMultiOutputObjective(AcquisitionObjective):
     r"""Abstract base class for MC multi-output objectives."""
 
     @abstractmethod
-    def forward(self, samples: Tensor, **kwargs) -> Tensor:
+    def forward(self, samples: Tensor, X: Optional[Tensor] = None, **kwargs) -> Tensor:
         r"""Evaluate the multi-output objective on the samples.
 
         Args:
             samples: A `sample_shape x batch_shape x q x m`-dim Tensors of samples from
                 a model posterior.
+            X: A `batch_shape x q x d`-dim Tensors of inputs.
 
         Returns:
             A `sample_shape x batch_shape x q x m'`-dim Tensor of objective values with
@@ -78,7 +79,7 @@ class IdentityMCMultiOutputObjective(MCMultiOutputObjective):
                 outcomes = normalize_indices(outcomes, num_outcomes)
             self.register_buffer("outcomes", torch.tensor(outcomes, dtype=torch.long))
 
-    def forward(self, samples: Tensor) -> Tensor:
+    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
         if hasattr(self, "outcomes"):
             return samples.index_select(-1, self.outcomes.to(device=samples.device))
         return samples
@@ -120,7 +121,7 @@ class WeightedMCMultiOutputObjective(IdentityMCMultiOutputObjective):
             )
         self.register_buffer("weights", weights)
 
-    def forward(self, samples: Tensor) -> Tensor:
+    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
         samples = super().forward(samples=samples)
         return samples * self.weights.to(samples)
 
@@ -166,7 +167,7 @@ class UnstandardizeMCMultiOutputObjective(IdentityMCMultiOutputObjective):
         self.register_buffer("Y_mean", Y_mean)
         self.register_buffer("Y_std", Y_std)
 
-    def forward(self, samples: Tensor) -> Tensor:
+    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
         samples = super().forward(samples=samples)
         return samples * self.Y_std + self.Y_mean
 

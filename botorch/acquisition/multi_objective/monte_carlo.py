@@ -184,11 +184,12 @@ class qExpectedHypervolumeImprovement(MultiObjectiveMCAcquisitionFunction):
             )
             self.q = q
 
-    def _compute_qehvi(self, samples: Tensor) -> Tensor:
+    def _compute_qehvi(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
         r"""Compute the expected (feasible) hypervolume improvement given MC samples.
 
         Args:
             samples: A `n_samples x batch_shape x q x m`-dim tensor of samples.
+            X: A `batch_shape x q x d`-dim tensor of inputs.
 
         Returns:
             A `batch_shape`-dim tensor of expected hypervolume improvement for each
@@ -197,7 +198,7 @@ class qExpectedHypervolumeImprovement(MultiObjectiveMCAcquisitionFunction):
         q = samples.shape[-2]
         # Note that the objective may subset the outcomes (e.g. this will usually happen
         # if there are constraints present).
-        obj = self.objective(samples)
+        obj = self.objective(samples, X=X)
         if self.constraints is not None:
             feas_weights = torch.ones(
                 obj.shape[:-1], device=obj.device, dtype=obj.dtype
