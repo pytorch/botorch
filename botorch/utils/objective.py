@@ -18,14 +18,15 @@ from torch import Tensor
 
 def get_objective_weights_transform(
     weights: Optional[Tensor],
-) -> Callable[[Tensor], Tensor]:
+) -> Callable[[Tensor, Optional[Tensor]], Tensor]:
     r"""Create a linear objective callable from a set of weights.
 
-    Create a callable mapping a Tensor of size `b x q x m` to a Tensor of size
-    `b x q`, where `m` is the number of outputs of the model using scalarization
-    via the objective weights. This callable supports broadcasting (e.g. for
-    calling on a tensor of shape `mc_samples x b x q x m`). For `m = 1`, the
-    objective weight is used to determine the optimization direction.
+    Create a callable mapping a Tensor of size `b x q x m` and an (optional)
+    Tensor of size `b x q x d` to a Tensor of size `b x q`, where `m` is the
+    number of outputs of the model using scalarization via the objective weights.
+    This callable supports broadcasting (e.g. for calling on a tensor of shape
+    `mc_samples x b x q x m`). For `m = 1`, the objective weight is used to
+    determine the optimization direction.
 
     Args:
         weights: a 1-dimensional Tensor containing a weight for each task.
@@ -42,7 +43,7 @@ def get_objective_weights_transform(
     if weights is None:
         return lambda Y: Y.squeeze(-1)
 
-    def _objective(Y):
+    def _objective(Y: Tensor, X: Optional[Tensor] = None):
         r"""Evaluate objective.
 
         Note: einsum multiples Y by weights and sums over the `m`-dimension.

@@ -57,7 +57,7 @@ class TestQKnowledgeGradient(BotorchTestCase):
             self.assertIsNone(qKG.current_value)
             self.assertEqual(qKG.get_augmented_q_batch_size(q=3), 32 + 3)
             # test custom construction
-            obj = GenericMCObjective(lambda Y: Y.mean(dim=-1))
+            obj = GenericMCObjective(lambda Y, X: Y.mean(dim=-1))
             sampler = IIDNormalSampler(num_samples=16)
             X_pending = torch.zeros(2, 2, device=self.device, dtype=dtype)
             qKG = qKnowledgeGradient(
@@ -174,7 +174,7 @@ class TestQKnowledgeGradient(BotorchTestCase):
             self.assertTrue(torch.allclose(val, mean.mean() - current_value, atol=1e-4))
             self.assertTrue(torch.equal(qKG.extract_candidates(X), X[..., :-n_f, :]))
             # test objective (inner MC sampling)
-            objective = GenericMCObjective(objective=lambda Y: Y.norm(dim=-1))
+            objective = GenericMCObjective(objective=lambda Y, X: Y.norm(dim=-1))
             samples = torch.randn(3, 1, 1, device=self.device, dtype=dtype)
             mfm = MockModel(MockPosterior(samples=samples))
             X = torch.rand(n_f + 1, 1, device=self.device, dtype=dtype)
@@ -251,7 +251,7 @@ class TestQKnowledgeGradient(BotorchTestCase):
         qKG = qKnowledgeGradient(
             model=model,
             num_fantasies=1,
-            objective=GenericMCObjective(objective=lambda Y: Y.norm(dim=-1)),
+            objective=GenericMCObjective(objective=lambda Y, X: Y.norm(dim=-1)),
         )
         X = torch.rand(1, 1, device=self.device, dtype=dtype)
         options = {"num_inner_restarts": 1, "raw_inner_samples": 1}
@@ -380,7 +380,7 @@ class TestQMultiFidelityKnowledgeGradient(BotorchTestCase):
             self.assertTrue(torch.allclose(val, val_exp, atol=1e-4))
             self.assertTrue(torch.equal(qMFKG.extract_candidates(X), X[..., :-n_f, :]))
             # test objective (inner MC sampling)
-            objective = GenericMCObjective(objective=lambda Y: Y.norm(dim=-1))
+            objective = GenericMCObjective(objective=lambda Y, X: Y.norm(dim=-1))
             samples = torch.randn(3, 1, 1, device=self.device, dtype=dtype)
             mfm = MockModel(MockPosterior(samples=samples))
             X = torch.rand(n_f + 1, 1, device=self.device, dtype=dtype)
@@ -520,7 +520,7 @@ class TestKGUtils(BotorchTestCase):
             self.assertIsInstance(vf, PosteriorMean)
             self.assertIsNone(vf.objective)
             # test SimpleRegret
-            obj = GenericMCObjective(lambda Y: Y.sum(dim=-1))
+            obj = GenericMCObjective(lambda Y, X: Y.sum(dim=-1))
             sampler = IIDNormalSampler(num_samples=2)
             vf = _get_value_function(model=mm, objective=obj, sampler=sampler)
             self.assertIsInstance(vf, qSimpleRegret)

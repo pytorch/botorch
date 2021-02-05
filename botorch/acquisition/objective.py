@@ -10,8 +10,10 @@ Objective Modules to be used with acquisition functions.
 
 from __future__ import annotations
 
+import inspect
+import warnings
 from abc import ABC, abstractmethod
-from typing import Callable, List
+from typing import Callable, List, Optional
 
 import torch
 from botorch.posteriors.gpytorch import GPyTorchPosterior, scalarize_posterior
@@ -74,12 +76,14 @@ class MCAcquisitionObjective(AcquisitionObjective):
     r"""Abstract base class for MC-based objectives."""
 
     @abstractmethod
-    def forward(self, samples: Tensor) -> Tensor:
+    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
         r"""Evaluate the objective on the samples.
 
         Args:
             samples: A `sample_shape x batch_shape x q x m`-dim Tensors of
                 samples from a model posterior.
+            X: A `batch_shape x q x d`-dim tensor of inputs. Relevant only if
+                the objective depends on the inputs explicitly.
 
         Returns:
             Tensor: A `sample_shape x batch_shape x q`-dim Tensor of objective
@@ -104,7 +108,7 @@ class IdentityMCObjective(MCAcquisitionObjective):
         >>> objective = identity_objective(samples)
     """
 
-    def forward(self, samples: Tensor) -> Tensor:
+    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
         return samples.squeeze(-1)
 
 
@@ -135,12 +139,14 @@ class LinearMCObjective(MCAcquisitionObjective):
             raise ValueError("weights must be a one-dimensional tensor.")
         self.register_buffer("weights", weights)
 
-    def forward(self, samples: Tensor) -> Tensor:
+    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
         r"""Evaluate the linear objective on the samples.
 
         Args:
             samples: A `sample_shape x batch_shape x q x m`-dim tensors of
                 samples from a model posterior.
+            X: A `batch_shape x q x d`-dim tensor of inputs. Relevant only if
+                the objective depends on the inputs explicitly.
 
         Returns:
             A `sample_shape x batch_shape x q`-dim tensor of objective values.
@@ -158,34 +164,52 @@ class GenericMCObjective(MCAcquisitionObjective):
     optimization it should be possible to backpropagate through the callable.
 
     Example:
-        >>> generic_objective = GenericMCObjective(lambda Y: torch.sqrt(Y).sum(dim=-1))
+        >>> generic_objective = GenericMCObjective(
+                lambda Y, X: torch.sqrt(Y).sum(dim=-1),
+            )
         >>> samples = sampler(posterior)
         >>> objective = generic_objective(samples)
     """
 
-    def __init__(self, objective: Callable[[Tensor], Tensor]) -> None:
+    def __init__(self, objective: Callable[[Tensor, Optional[Tensor]], Tensor]) -> None:
         r"""Objective generated from a generic callable.
 
         Args:
-            objective: A callable mapping a `sample_shape x batch-shape x q x m`-
-                dim Tensor to a `sample_shape x batch-shape x q`-dim Tensor of
-                objective values.
+            objective: A callable `f(samples, X)` mapping a
+                `sample_shape x batch-shape x q x m`-dim Tensor `samples` and
+                an optional `batch-shape x q x d`-dim Tensor `X` to a
+                `sample_shape x batch-shape x q`-dim Tensor of objective values.
         """
         super().__init__()
-        self.objective = objective
+        if len(inspect.signature(objective).parameters) == 1:
+            warnings.warn(
+                "The `objective` callable of `GenericMCObjective` is expected to "
+                "take two arguments. Passing a callable that expects a single "
+                "argument will result in an error in future versions.",
+                DeprecationWarning,
+            )
 
-    def forward(self, samples: Tensor) -> Tensor:
+            def obj(samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+                return objective(samples)
+
+            self.objective = obj
+        else:
+            self.objective = objective
+
+    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
         r"""Evaluate the feasibility-weigthed objective on the samples.
 
         Args:
             samples: A `sample_shape x batch_shape x q x m`-dim Tensors of
                 samples from a model posterior.
+            X: A `batch_shape x q x d`-dim tensor of inputs. Relevant only if
+                the objective depends on the inputs explicitly.
 
         Returns:
             A `sample_shape x batch_shape x q`-dim Tensor of objective values
             weighted by feasibility (assuming maximization).
         """
-        return self.objective(samples)
+        return self.objective(samples, X=X)
 
 
 class ConstrainedMCObjective(GenericMCObjective):
@@ -213,7 +237,7 @@ class ConstrainedMCObjective(GenericMCObjective):
 
     def __init__(
         self,
-        objective: Callable[[Tensor], Tensor],
+        objective: Callable[[Tensor, Optional[Tensor]], Tensor],
         constraints: List[Callable[[Tensor], Tensor]],
         infeasible_cost: float = 0.0,
         eta: float = 1e-3,
@@ -221,9 +245,10 @@ class ConstrainedMCObjective(GenericMCObjective):
         r"""Feasibility-weighted objective.
 
         Args:
-            objective: A callable mapping a `sample_shape x batch-shape x q x m`-
-                dim Tensor to a `sample_shape x batch-shape x q`-dim Tensor of
-                objective values.
+            objective: A callable `f(samples, X)` mapping a
+                `sample_shape x batch-shape x q x m`-dim Tensor `samples` and
+                an optional `batch-shape x q x d`-dim Tensor `X` to a
+                `sample_shape x batch-shape x q`-dim Tensor of objective values.
             constraints: A list of callables, each mapping a Tensor of dimension
                 `sample_shape x batch-shape x q x m` to a Tensor of dimension
                 `sample_shape x batch-shape x q`, where negative values imply
@@ -236,14 +261,16 @@ class ConstrainedMCObjective(GenericMCObjective):
         super().__init__(objective=objective)
         self.constraints = constraints
         self.eta = eta
-        self.register_buffer("infeasible_cost", torch.tensor(infeasible_cost))
+        self.register_buffer("infeasible_cost", torch.as_tensor(infeasible_cost))
 
-    def forward(self, samples: Tensor) -> Tensor:
+    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
         r"""Evaluate the feasibility-weighted objective on the samples.
 
         Args:
             samples: A `sample_shape x batch_shape x q x m`-dim Tensors of
                 samples from a model posterior.
+            X: A `batch_shape x q x d`-dim tensor of inputs. Relevant only if
+                the objective depends on the inputs explicitly.
 
         Returns:
             A `sample_shape x batch_shape x q`-dim Tensor of objective values

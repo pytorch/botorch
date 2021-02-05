@@ -140,7 +140,7 @@ class TestMultiStepLookahead(BotorchTestCase):
                 raw_samples=10,
                 full_optimizer=eval_X,
             )
-            self.assertEquals(warmstarted_X.shape, torch.Size([5, q_prime, d]))
+            self.assertEqual(warmstarted_X.shape, torch.Size([5, q_prime, d]))
 
     def test_qMS(self):
         d = 2

@@ -425,6 +425,9 @@ class TestGetInfeasibleCost(BotorchTestCase):
                 X=X, model=mm, objective=lambda Y: Y.squeeze(-1) - 5.0
             )
             self.assertEqual(M, 6.0)
+            # test default objective (squeeze last dim)
+            M2 = get_infeasible_cost(X=X, model=mm)
+            self.assertEqual(M2, 1.0)
 
 
 class TestPruneInferiorPoints(BotorchTestCase):
@@ -450,7 +453,7 @@ class TestPruneInferiorPoints(BotorchTestCase):
             X_pruned = prune_inferior_points(model=mm, X=X)
             self.assertTrue(torch.equal(X_pruned, X[[-1]]))
             # test custom objective
-            neg_id_obj = GenericMCObjective(lambda X: -(X.squeeze(-1)))
+            neg_id_obj = GenericMCObjective(lambda Y, X: -(Y.squeeze(-1)))
             X_pruned = prune_inferior_points(model=mm, X=X, objective=neg_id_obj)
             self.assertTrue(torch.equal(X_pruned, X[[0]]))
             # test non-repeated samples (requires mocking out MockPosterior's rsample)

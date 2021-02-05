@@ -28,7 +28,6 @@ from botorch.sampling.samplers import IIDNormalSampler, MCSampler, SobolQMCNorma
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     NondominatedPartitioning,
 )
-from botorch.utils.transforms import squeeze_last_dim
 from torch import Tensor
 from torch.quasirandom import SobolEngine
 
@@ -157,7 +156,9 @@ def get_acquisition_function(
 
 
 def get_infeasible_cost(
-    X: Tensor, model: Model, objective: Callable[[Tensor], Tensor] = squeeze_last_dim
+    X: Tensor,
+    model: Model,
+    objective: Optional[Callable[[Tensor, Optional[Tensor]], Tensor]] = None,
 ) -> float:
     r"""Get infeasible cost for a model and objective.
 
@@ -179,6 +180,11 @@ def get_infeasible_cost(
         >>> objective = lambda Y: Y[..., -1] ** 2
         >>> M = get_infeasible_cost(train_X, model, obj)
     """
+    if objective is None:
+
+        def objective(Y: Tensor, X: Optional[Tensor] = None):
+            return Y.squeeze(-1)
+
     posterior = model.posterior(X)
     lb = objective(posterior.mean - 6 * posterior.variance.clamp_min(0).sqrt()).min()
     M = -(lb.clamp_max(0.0))
@@ -277,7 +283,7 @@ def prune_inferior_points(
     samples = sampler(posterior)
     if objective is None:
         objective = IdentityMCObjective()
-    obj_vals = objective(samples)
+    obj_vals = objective(samples, X=X)
     if obj_vals.ndim > 2:
         # TODO: support batched inputs (req. dealing with ragged tensors)
         raise UnsupportedError(

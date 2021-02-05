@@ -16,7 +16,7 @@ References
 """
 from __future__ import annotations
 
-from typing import Callable
+from typing import Callable, Optional
 
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
@@ -26,7 +26,7 @@ from torch import Tensor
 
 def get_chebyshev_scalarization(
     weights: Tensor, Y: Tensor, alpha: float = 0.05
-) -> Callable[[Tensor], Tensor]:
+) -> Callable[[Tensor, Optional[Tensor]], Tensor]:
     r"""Construct an augmented Chebyshev scalarization.
 
     Outcomes are first normalized to [0,1] and then an augmented
@@ -65,7 +65,7 @@ def get_chebyshev_scalarization(
         raise NotImplementedError("Batched Y is not currently supported.")
     Y_bounds = torch.stack([Y.min(dim=-2).values, Y.max(dim=-2).values])
 
-    def obj(Y: Tensor) -> Tensor:
+    def obj(Y: Tensor, X: Optional[Tensor] = None) -> Tensor:
         # scale to [0,1]
         Y_normalized = normalize(Y, bounds=Y_bounds)
         product = weights * Y_normalized

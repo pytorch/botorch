@@ -5,8 +5,10 @@
 # LICENSE file in the root directory of this source tree.
 
 import itertools
+import warnings
 
 import torch
+from botorch import settings
 from botorch.acquisition.objective import (
     ConstrainedMCObjective,
     GenericMCObjective,
@@ -20,8 +22,12 @@ from botorch.utils.testing import BotorchTestCase, _get_test_posterior
 from torch import Tensor
 
 
-def generic_obj(samples: Tensor) -> Tensor:
+def generic_obj_deprecated(samples: Tensor) -> Tensor:
     return torch.log(torch.sum(samples ** 2, dim=-1))
+
+
+def generic_obj(samples: Tensor, X=None) -> Tensor:
+    return generic_obj_deprecated(samples)
 
 
 def infeasible_con(samples: Tensor) -> Tensor:
@@ -71,6 +77,28 @@ class TestGenericMCObjective(BotorchTestCase):
     def test_generic_mc_objective(self):
         for dtype in (torch.float, torch.double):
             obj = GenericMCObjective(generic_obj)
+            samples = torch.randn(1, device=self.device, dtype=dtype)
+            self.assertTrue(torch.equal(obj(samples), generic_obj(samples)))
+            samples = torch.randn(2, device=self.device, dtype=dtype)
+            self.assertTrue(torch.equal(obj(samples), generic_obj(samples)))
+            samples = torch.randn(3, 1, device=self.device, dtype=dtype)
+            self.assertTrue(torch.equal(obj(samples), generic_obj(samples)))
+            samples = torch.randn(3, 2, device=self.device, dtype=dtype)
+            self.assertTrue(torch.equal(obj(samples), generic_obj(samples)))
+
+    def test_generic_mc_objective_deprecated(self):
+        for dtype in (torch.float, torch.double):
+            with warnings.catch_warnings(record=True) as ws, settings.debug(True):
+                obj = GenericMCObjective(generic_obj_deprecated)
+                warning_msg = (
+                    "The `objective` callable of `GenericMCObjective` is expected to "
+                    "take two arguments. Passing a callable that expects a single "
+                    "argument will result in an error in future versions."
+                )
+                self.assertTrue(
+                    any(issubclass(w.category, DeprecationWarning) for w in ws)
+                )
+                self.assertTrue(any(warning_msg in str(w.message) for w in ws))
             samples = torch.randn(1, device=self.device, dtype=dtype)
             self.assertTrue(torch.equal(obj(samples), generic_obj(samples)))
             samples = torch.randn(2, device=self.device, dtype=dtype)
