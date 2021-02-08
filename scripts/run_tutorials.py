@@ -24,6 +24,8 @@ IGNORE = {
     "bo_with_warped_gp.ipynb",
     "closed_loop_botorch_only.ipynb",
     "constrained_multi_objective_bo.ipynb",
+    # this tutorial has an ax dependency
+    "custom_botorch_model_in_ax.ipynb",
     "multi_fidelity_bo.ipynb",
     "meta_learning_with_rgpe.ipynb",
     "multi_objective_bo.ipynb",
