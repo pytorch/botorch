@@ -2023,12 +2023,16 @@ elements in <cite>self.weights</cite>.</p>
 <p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
 <dl class="py method">
 <dt id="botorch.acquisition.objective.MCAcquisitionObjective.forward">
-<em class="property">abstract </em><code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">samples</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/objective.html#MCAcquisitionObjective.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.objective.MCAcquisitionObjective.forward" title="Permalink to this definition">¶</a></dt>
+<em class="property">abstract </em><code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">samples</span></em>, <em class="sig-param"><span class="n">X</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/objective.html#MCAcquisitionObjective.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.objective.MCAcquisitionObjective.forward" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the objective on the samples.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>sample_shape x batch_shape x q x m</cite>-dim Tensors of
-samples from a model posterior.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>sample_shape x batch_shape x q x m</cite>-dim Tensors of
+samples from a model posterior.</p></li>
+<li><p><strong>X</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>batch_shape x q x d</cite>-dim tensor of inputs. Relevant only if
+the objective depends on the inputs explicitly.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>A <cite>sample_shape x batch_shape x q</cite>-dim Tensor of objective
@@ -2065,12 +2069,16 @@ values (assuming maximization).</p>
 <p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
 <dl class="py method">
 <dt id="botorch.acquisition.objective.IdentityMCObjective.forward">
-<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">samples</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/objective.html#IdentityMCObjective.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.objective.IdentityMCObjective.forward" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">samples</span></em>, <em class="sig-param"><span class="n">X</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/objective.html#IdentityMCObjective.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.objective.IdentityMCObjective.forward" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the objective on the samples.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>sample_shape x batch_shape x q x m</cite>-dim Tensors of
-samples from a model posterior.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>sample_shape x batch_shape x q x m</cite>-dim Tensors of
+samples from a model posterior.</p></li>
+<li><p><strong>X</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>batch_shape x q x d</cite>-dim tensor of inputs. Relevant only if
+the objective depends on the inputs explicitly.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>A <cite>sample_shape x batch_shape x q</cite>-dim Tensor of objective
@@ -2117,12 +2125,16 @@ linear weights on the outputs.</p>
 </dl>
 <dl class="py method">
 <dt id="botorch.acquisition.objective.LinearMCObjective.forward">
-<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">samples</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/objective.html#LinearMCObjective.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.objective.LinearMCObjective.forward" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">samples</span></em>, <em class="sig-param"><span class="n">X</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/objective.html#LinearMCObjective.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.objective.LinearMCObjective.forward" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the linear objective on the samples.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>sample_shape x batch_shape x q x m</cite>-dim tensors of
-samples from a model posterior.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>sample_shape x batch_shape x q x m</cite>-dim tensors of
+samples from a model posterior.</p></li>
+<li><p><strong>X</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>batch_shape x q x d</cite>-dim tensor of inputs. Relevant only if
+the objective depends on the inputs explicitly.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Return type</dt>
 <dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
@@ -2146,7 +2158,9 @@ samples from a model posterior.</p>
 callable. In order to be able to use gradient-based acquisition function
 optimization it should be possible to backpropagate through the callable.</p>
 <p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">generic_objective</span> <span class="o">=</span> <span class="n">GenericMCObjective</span><span class="p">(</span><span class="k">lambda</span> <span class="n">Y</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">))</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">generic_objective</span> <span class="o">=</span> <span class="n">GenericMCObjective</span><span class="p">(</span>
+<span class="go">        lambda Y, X: torch.sqrt(Y).sum(dim=-1),</span>
+<span class="go">    )</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">objective</span> <span class="o">=</span> <span class="n">generic_objective</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
 </pre></div>
@@ -2154,19 +2168,24 @@ optimization it should be possible to backpropagate through the callable.</p>
 <p>Objective generated from a generic callable.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>objective</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A callable mapping a <cite>sample_shape x batch-shape x q x m</cite>-
-dim Tensor to a <cite>sample_shape x batch-shape x q</cite>-dim Tensor of
-objective values.</p>
+<dd class="field-odd"><p><strong>objective</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A callable <cite>f(samples, X)</cite> mapping a
+<cite>sample_shape x batch-shape x q x m</cite>-dim Tensor <cite>samples</cite> and
+an optional <cite>batch-shape x q x d</cite>-dim Tensor <cite>X</cite> to a
+<cite>sample_shape x batch-shape x q</cite>-dim Tensor of objective values.</p>
 </dd>
 </dl>
 <dl class="py method">
 <dt id="botorch.acquisition.objective.GenericMCObjective.forward">
-<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">samples</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/objective.html#GenericMCObjective.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.objective.GenericMCObjective.forward" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">samples</span></em>, <em class="sig-param"><span class="n">X</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/objective.html#GenericMCObjective.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.objective.GenericMCObjective.forward" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the feasibility-weigthed objective on the samples.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>sample_shape x batch_shape x q x m</cite>-dim Tensors of
-samples from a model posterior.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>sample_shape x batch_shape x q x m</cite>-dim Tensors of
+samples from a model posterior.</p></li>
+<li><p><strong>X</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>batch_shape x q x d</cite>-dim tensor of inputs. Relevant only if
+the objective depends on the inputs explicitly.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Return type</dt>
 <dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
@@ -2208,9 +2227,10 @@ handling.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>objective</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A callable mapping a <cite>sample_shape x batch-shape x q x m</cite>-
-dim Tensor to a <cite>sample_shape x batch-shape x q</cite>-dim Tensor of
-objective values.</p></li>
+<li><p><strong>objective</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A callable <cite>f(samples, X)</cite> mapping a
+<cite>sample_shape x batch-shape x q x m</cite>-dim Tensor <cite>samples</cite> and
+an optional <cite>batch-shape x q x d</cite>-dim Tensor <cite>X</cite> to a
+<cite>sample_shape x batch-shape x q</cite>-dim Tensor of objective values.</p></li>
 <li><p><strong>constraints</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]]) – A list of callables, each mapping a Tensor of dimension
 <cite>sample_shape x batch-shape x q x m</cite> to a Tensor of dimension
 <cite>sample_shape x batch-shape x q</cite>, where negative values imply
@@ -2224,12 +2244,16 @@ the constraint.</p></li>
 </dl>
 <dl class="py method">
 <dt id="botorch.acquisition.objective.ConstrainedMCObjective.forward">
-<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">samples</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/objective.html#ConstrainedMCObjective.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.objective.ConstrainedMCObjective.forward" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">samples</span></em>, <em class="sig-param"><span class="n">X</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/objective.html#ConstrainedMCObjective.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.objective.ConstrainedMCObjective.forward" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the feasibility-weighted objective on the samples.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>sample_shape x batch_shape x q x m</cite>-dim Tensors of
-samples from a model posterior.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>sample_shape x batch_shape x q x m</cite>-dim Tensors of
+samples from a model posterior.</p></li>
+<li><p><strong>X</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>batch_shape x q x d</cite>-dim tensor of inputs. Relevant only if
+the objective depends on the inputs explicitly.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Return type</dt>
 <dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
@@ -2256,12 +2280,15 @@ weighted by feasibility (assuming maximization).</p>
 <p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
 <dl class="py method">
 <dt id="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective.forward">
-<em class="property">abstract </em><code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">samples</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#MCMultiOutputObjective.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective.forward" title="Permalink to this definition">¶</a></dt>
+<em class="property">abstract </em><code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">samples</span></em>, <em class="sig-param"><span class="n">X</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#MCMultiOutputObjective.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective.forward" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the multi-output objective on the samples.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>sample_shape x batch_shape x q x m</cite>-dim Tensors of samples from
-a model posterior.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>sample_shape x batch_shape x q x m</cite>-dim Tensors of samples from
+a model posterior.</p></li>
+<li><p><strong>X</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>batch_shape x q x d</cite>-dim Tensors of inputs.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Return type</dt>
 <dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
@@ -2309,12 +2336,15 @@ applied to.</p></li>
 </dl>
 <dl class="py method">
 <dt id="botorch.acquisition.multi_objective.objective.IdentityMCMultiOutputObjective.forward">
-<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">samples</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#IdentityMCMultiOutputObjective.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.IdentityMCMultiOutputObjective.forward" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">samples</span></em>, <em class="sig-param"><span class="n">X</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#IdentityMCMultiOutputObjective.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.IdentityMCMultiOutputObjective.forward" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the multi-output objective on the samples.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>sample_shape x batch_shape x q x m</cite>-dim Tensors of samples from
-a model posterior.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>sample_shape x batch_shape x q x m</cite>-dim Tensors of samples from
+a model posterior.</p></li>
+<li><p><strong>X</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>batch_shape x q x d</cite>-dim Tensors of inputs.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Return type</dt>
 <dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
@@ -2363,12 +2393,15 @@ applied to.</p></li>
 </dl>
 <dl class="py method">
 <dt id="botorch.acquisition.multi_objective.objective.WeightedMCMultiOutputObjective.forward">
-<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">samples</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#WeightedMCMultiOutputObjective.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.WeightedMCMultiOutputObjective.forward" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">samples</span></em>, <em class="sig-param"><span class="n">X</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#WeightedMCMultiOutputObjective.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.WeightedMCMultiOutputObjective.forward" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the multi-output objective on the samples.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>sample_shape x batch_shape x q x m</cite>-dim Tensors of samples from
-a model posterior.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>sample_shape x batch_shape x q x m</cite>-dim Tensors of samples from
+a model posterior.</p></li>
+<li><p><strong>X</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>batch_shape x q x d</cite>-dim Tensors of inputs.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Return type</dt>
 <dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
@@ -2418,12 +2451,15 @@ all model outcomes. Typically used for constrained optimization.</p></li>
 </dl>
 <dl class="py method">
 <dt id="botorch.acquisition.multi_objective.objective.UnstandardizeMCMultiOutputObjective.forward">
-<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">samples</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#UnstandardizeMCMultiOutputObjective.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.UnstandardizeMCMultiOutputObjective.forward" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">samples</span></em>, <em class="sig-param"><span class="n">X</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#UnstandardizeMCMultiOutputObjective.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.UnstandardizeMCMultiOutputObjective.forward" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the multi-output objective on the samples.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>sample_shape x batch_shape x q x m</cite>-dim Tensors of samples from
-a model posterior.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>sample_shape x batch_shape x q x m</cite>-dim Tensors of samples from
+a model posterior.</p></li>
+<li><p><strong>X</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>batch_shape x q x d</cite>-dim Tensors of inputs.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Return type</dt>
 <dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
@@ -2976,7 +3012,7 @@ function to optimize is fixed and not stochastic).</p></li>
 </dd></dl>
 <dl class="py function">
 <dt id="botorch.acquisition.utils.get_infeasible_cost">
-<code class="sig-prename descclassname">botorch.acquisition.utils.</code><code class="sig-name descname">get_infeasible_cost</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">model</em>, <em class="sig-param">objective=&lt;function squeeze_last_dim&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/utils.html#get_infeasible_cost"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.utils.get_infeasible_cost" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">botorch.acquisition.utils.</code><code class="sig-name descname">get_infeasible_cost</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em>, <em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">objective</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/utils.html#get_infeasible_cost"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.acquisition.utils.get_infeasible_cost" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get infeasible cost for a model and objective.</p>
 <dl class="simple">
 <dt>Computes an infeasible cost <cite>M</cite> such that <cite>-M &lt; min_x f(x)</cite> almost always,</dt><dd><p>so that feasible points are preferred.</p>
@@ -2989,7 +3025,7 @@ function to optimize is fixed and not stochastic).</p></li>
 minimum. These points should cover the design space well. The more
 points the better the estimate, at the expense of added computation.</p></li>
 <li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a>) – A fitted botorch model.</p></li>
-<li><p><strong>objective</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – The objective with which to evaluate the model output.</p></li>
+<li><p><strong>objective</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]]) – The objective with which to evaluate the model output.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>

@@ -90,18 +90,19 @@ Negative values imply feasibility. The callables support broadcasting
 <dt id="botorch.utils.objective.get_objective_weights_transform">
 <code class="sig-prename descclassname">botorch.utils.objective.</code><code class="sig-name descname">get_objective_weights_transform</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">weights</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/objective.html#get_objective_weights_transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.utils.objective.get_objective_weights_transform" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a linear objective callable from a set of weights.</p>
-<p>Create a callable mapping a Tensor of size <cite>b x q x m</cite> to a Tensor of size
-<cite>b x q</cite>, where <cite>m</cite> is the number of outputs of the model using scalarization
-via the objective weights. This callable supports broadcasting (e.g. for
-calling on a tensor of shape <cite>mc_samples x b x q x m</cite>). For <cite>m = 1</cite>, the
-objective weight is used to determine the optimization direction.</p>
+<p>Create a callable mapping a Tensor of size <cite>b x q x m</cite> and an (optional)
+Tensor of size <cite>b x q x d</cite> to a Tensor of size <cite>b x q</cite>, where <cite>m</cite> is the
+number of outputs of the model using scalarization via the objective weights.
+This callable supports broadcasting (e.g. for calling on a tensor of shape
+<cite>mc_samples x b x q x m</cite>). For <cite>m = 1</cite>, the objective weight is used to
+determine the optimization direction.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>weights</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – a 1-dimensional Tensor containing a weight for each task.
 If not provided, the identity mapping is used.</p>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</p>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</p>
 </dd>
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p>Transform function using the objective weights.</p>
@@ -1770,7 +1771,7 @@ default value comes from <a class="reference internal" href="#knowles2005" id="i
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</p>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</p>
 </dd>
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p>Transform function using the objective weights.</p>
