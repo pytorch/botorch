@@ -413,8 +413,8 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
             self._is_custom_likelihood = True
 
         super().__init__(
-            train_X, 
-            train_Y.view(*self._aug_batch_shape, -1), 
+            train_X,
+            train_Y.view(*self._aug_batch_shape, -1),
             likelihood=likelihood,
         )
 
@@ -487,15 +487,15 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
                 ).add_jitter(1e-4)
                 latent_dist = MultivariateNormal(
                     torch.zeros(
-                        self.target_shape[dim_num], 
-                        device=device, 
+                        self.target_shape[dim_num],
+                        device=device,
                         dtype=dtype,
                     ),
                     latent_covar,
                 )
                 sample_shape = torch.Size(
                     (
-                        *self._aug_batch_shape, 
+                        *self._aug_batch_shape,
                         num_latent_dims[dim_num],
                     )
                 )
@@ -507,7 +507,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
                 )
                 self.latent_parameters.append(
                     Parameter(
-                        latent_sample, 
+                        latent_sample,
                         requires_grad=learn_latent_pars,
                     )
                 )
@@ -690,7 +690,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
                 joint_covariance_matrix=full_covar.clone(),
                 output_shape=Size(
                     (
-                        *X.shape[:-1], 
+                        *X.shape[:-1],
                         *self.target_shape,
                     )
                 ),
