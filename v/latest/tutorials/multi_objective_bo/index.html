@@ -181,7 +181,7 @@ $$f^{(1)}(x_1\text{'}, x_2\text{'}) = (x_2\text{'} - \frac{5.1}{4 \pi^ 2} (x_1\t
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch.optim.optimize</span> <span class="kn">import</span> <span class="n">optimize_acqf</span><span class="p">,</span> <span class="n">optimize_acqf_list</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">GenericMCObjective</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.scalarization</span> <span class="kn">import</span> <span class="n">get_chebyshev_scalarization</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decomposition</span> <span class="kn">import</span> <span class="n">NondominatedPartitioning</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decompositions.non_dominated</span> <span class="kn">import</span> <span class="n">NondominatedPartitioning</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective.monte_carlo</span> <span class="kn">import</span> <span class="n">qExpectedHypervolumeImprovement</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.sampling</span> <span class="kn">import</span> <span class="n">sample_simplex</span>
 
@@ -193,7 +193,7 @@ $$f^{(1)}(x_1\text{'}, x_2\text{'}) = (x_2\text{'} - \frac{5.1}{4 \pi^ 2} (x_1\t
 <span class="k">def</span> <span class="nf">optimize_qehvi_and_get_observation</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">train_obj</span><span class="p">,</span> <span class="n">sampler</span><span class="p">):</span>
     <span class="sd">"""Optimizes the qEHVI acquisition function, and returns a new candidate and observation."""</span>
     <span class="c1"># partition non-dominated space into disjoint rectangles</span>
-    <span class="n">partitioning</span> <span class="o">=</span> <span class="n">NondominatedPartitioning</span><span class="p">(</span><span class="n">num_outcomes</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">num_objectives</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">train_obj</span><span class="p">)</span>
+    <span class="n">partitioning</span> <span class="o">=</span> <span class="n">NondominatedPartitioning</span><span class="p">(</span><span class="n">ref_point</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">ref_point</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">train_obj</span><span class="p">)</span>
     <span class="n">acq_func</span> <span class="o">=</span> <span class="n">qExpectedHypervolumeImprovement</span><span class="p">(</span>
         <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
         <span class="n">ref_point</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">ref_point</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>  <span class="c1"># use known reference point </span>
@@ -280,7 +280,7 @@ $$f^{(1)}(x_1\text{'}, x_2\text{'}) = (x_2\text{'} - \frac{5.1}{4 \pi^ 2} (x_1\t
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In [6]:</div>
+<div class="prompt input_prompt">In [ ]:</div>
 <div class="inner_cell">
 <div class="input_area">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">fit_gpytorch_model</span>
@@ -398,19 +398,6 @@ $$f^{(1)}(x_1\text{'}, x_2\text{'}) = (x_2\text{'} - \frac{5.1}{4 \pi^ 2} (x_1\t
     <span class="n">hvs_qehvi_all</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hvs_qehvi</span><span class="p">)</span>
     <span class="n">hvs_random_all</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hvs_random</span><span class="p">)</span>
 </pre></div>
-</div>
-</div>
-</div>
-<div class="output_wrapper">
-<div class="output">
-<div class="output_area">
-<div class="prompt"></div>
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>
-Trial  1 of 3 .........................
-Trial  2 of 3 .........................
-Trial  3 of 3 .........................</pre>
-</div>
 </div>
 </div>
 </div>

@@ -90,7 +90,7 @@ def initialize_model(train_x, train_obj):
 from botorch.optim.optimize import optimize_acqf, optimize_acqf_list
 from botorch.acquisition.objective import GenericMCObjective
 from botorch.utils.multi_objective.scalarization import get_chebyshev_scalarization
-from botorch.utils.multi_objective.box_decomposition import NondominatedPartitioning
+from botorch.utils.multi_objective.box_decompositions.non_dominated import NondominatedPartitioning
 from botorch.acquisition.multi_objective.monte_carlo import qExpectedHypervolumeImprovement
 from botorch.utils.sampling import sample_simplex
 
@@ -102,7 +102,7 @@ standard_bounds[1] = 1
 def optimize_qehvi_and_get_observation(model, train_obj, sampler):
     """Optimizes the qEHVI acquisition function, and returns a new candidate and observation."""
     # partition non-dominated space into disjoint rectangles
-    partitioning = NondominatedPartitioning(num_outcomes=problem.num_objectives, Y=train_obj)
+    partitioning = NondominatedPartitioning(ref_point=problem.ref_point, Y=train_obj)
     acq_func = qExpectedHypervolumeImprovement(
         model=model,
         ref_point=problem.ref_point.tolist(),  # use known reference point 
@@ -174,7 +174,7 @@ def optimize_qparego_and_get_observation(model, train_obj, sampler):
 # 
 # *Note*: Running this may take a little while.
 
-# In[6]:
+# In[ ]:
 
 
 from botorch import fit_gpytorch_model

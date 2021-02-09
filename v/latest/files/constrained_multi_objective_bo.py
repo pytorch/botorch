@@ -89,14 +89,14 @@ def initialize_model(train_x, train_obj, train_con):
 # 
 # *Note:* `NondominatedPartitioning` *will be very slow when 1) there are a lot of points on the pareto frontier and 2) there are >3 objectives.*
 
-# In[6]:
+# In[4]:
 
 
 from botorch.optim.optimize import optimize_acqf, optimize_acqf_list
 from botorch.acquisition.objective import GenericMCObjective
 from botorch.acquisition.multi_objective.objective import IdentityMCMultiOutputObjective
 from botorch.utils.multi_objective.scalarization import get_chebyshev_scalarization
-from botorch.utils.multi_objective.box_decomposition import NondominatedPartitioning
+from botorch.utils.multi_objective.box_decompositions.non_dominated import NondominatedPartitioning
 from botorch.acquisition.multi_objective.monte_carlo import qExpectedHypervolumeImprovement
 from botorch.utils.sampling import sample_simplex
 
@@ -113,7 +113,7 @@ def optimize_qehvi_and_get_observation(model, train_obj, train_con, sampler):
     better_than_ref = (train_obj > problem.ref_point).all(dim=-1)
     # partition non-dominated space into disjoint rectangles
     partitioning = NondominatedPartitioning(
-        num_outcomes=problem.num_objectives, 
+        ref_point=problem.ref_point,
         # use observations that are better than the specified reference point and feasible
         Y=train_obj[better_than_ref & is_feas],  
     )
@@ -149,7 +149,7 @@ def optimize_qehvi_and_get_observation(model, train_obj, train_con, sampler):
 # The helper function below initializes a ConstrainedMCObjective for $q$ParEGO. It creates the `objective` which fetches the outcomes required for the scalarized objective and applies the scalarization and the constraints, which are modeled outcomes.
 # 
 
-# In[7]:
+# In[5]:
 
 
 from botorch.acquisition.objective import ConstrainedMCObjective
@@ -175,7 +175,7 @@ def get_constrained_mc_objective(train_obj,train_con,scalarization):
 # 
 # To do this, we create a list of `qExpectedImprovement` acquisition functions, each with different random scalarization weights. The `optimize_acqf_list` method sequentially generates one candidate per acquisition function and conditions the next candidate (and acquisition function) on the previously selected pending candidates.
 
-# In[8]:
+# In[6]:
 
 
 def optimize_qparego_and_get_observation(model, train_obj, train_con, sampler):
@@ -224,7 +224,7 @@ def optimize_qparego_and_get_observation(model, train_obj, train_con, sampler):
 # 
 # *Note*: Running this may take a little while.
 
-# In[9]:
+# In[ ]:
 
 
 from botorch import fit_gpytorch_model
@@ -268,11 +268,13 @@ for trial in range(1, N_TRIALS + 1):
     # compute pareto front
     is_feas = (train_con_qparego <= 0).all(dim=-1)
     feas_train_obj = train_obj_qparego[is_feas]
-    pareto_mask = is_non_dominated(feas_train_obj)
-    pareto_y = feas_train_obj[pareto_mask]
-    # compute hypervolume
-    
-    volume = hv.compute(pareto_y)
+    if feas_train_obj.shape[0] > 0:
+        pareto_mask = is_non_dominated(feas_train_obj)
+        pareto_y = feas_train_obj[pareto_mask]
+        # compute hypervolume
+        volume = hv.compute(pareto_y)
+    else:
+        volume = 0.0
     
     hvs_qparego.append(volume)
     hvs_qehvi.append(volume)
@@ -323,10 +325,13 @@ for trial in range(1, N_TRIALS + 1):
             # compute pareto front
             is_feas = (train_con <= 0).all(dim=-1)
             feas_train_obj = train_obj[is_feas]
-            pareto_mask = is_non_dominated(feas_train_obj)
-            pareto_y = feas_train_obj[pareto_mask]
-            # compute feasible hypervolume
-            volume = hv.compute(pareto_y)
+            if feas_train_obj.shape[0] > 0:
+                pareto_mask = is_non_dominated(feas_train_obj)
+                pareto_y = feas_train_obj[pareto_mask]
+                # compute feasible hypervolume
+                volume = hv.compute(pareto_y)
+            else:
+                volume = 0.0
             hvs_list.append(volume)
 
         # reinitialize the models so they are ready for fitting on next iteration
