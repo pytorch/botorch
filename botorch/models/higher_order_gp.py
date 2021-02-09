@@ -526,7 +526,11 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         covariance_list.append(self.covar_modules[0](X))
 
         for cm, param in zip(self.covar_modules[1:], self.latent_parameters):
-            covariance_list.append(cm(param))
+            if not self.training:
+                with torch.no_grad():
+                    covariance_list.append(cm(param))
+            else:
+                covariance_list.append(cm(param))
 
         # check batch_shapes
         if covariance_list[0].batch_shape != covariance_list[1].batch_shape:
@@ -650,7 +654,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
                 pred_variance = self.make_posterior_variances(joint_covar)
 
                 full_covar = KroneckerProductLazyTensor(
-                    full_covar, *joint_covar.lazy_tensors[1:]
+                    full_covar, *[x.detach() for x in joint_covar.lazy_tensors[1:]]
                 )
 
             joint_covar_list = [self.covar_modules[0](X, train_inputs)]
@@ -659,7 +663,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
                 covar = cm(param)
                 if covar.batch_shape != batch_shape:
                     covar = BatchRepeatLazyTensor(covar, batch_shape)
-                joint_covar_list.append(covar)
+                joint_covar_list.append(covar.detach())
 
             test_train_covar = KroneckerProductLazyTensor(*joint_covar_list)
 
@@ -679,9 +683,9 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
             posterior = HigherOrderGPPosterior(
                 mvn=mvn,
                 train_targets=self.train_targets.unsqueeze(-1),
-                train_train_covar=self.prediction_strategy.lik_train_train_covar,
+                train_train_covar=self.prediction_strategy.lik_train_train_covar.detach(),
                 test_train_covar=test_train_covar,
-                joint_covariance_matrix=full_covar,
+                joint_covariance_matrix=full_covar.clone(),
                 output_shape=Size(
                     (
                         *X.shape[:-1],
