@@ -413,9 +413,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
             self._is_custom_likelihood = True
 
         super().__init__(
-            train_X,
-            train_Y.view(*self._aug_batch_shape, -1),
-            likelihood=likelihood,
+            train_X, train_Y.view(*self._aug_batch_shape, -1), likelihood=likelihood,
         )
 
         if covar_modules is not None:
@@ -487,17 +485,12 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
                 ).add_jitter(1e-4)
                 latent_dist = MultivariateNormal(
                     torch.zeros(
-                        self.target_shape[dim_num],
-                        device=device,
-                        dtype=dtype,
+                        self.target_shape[dim_num], device=device, dtype=dtype,
                     ),
                     latent_covar,
                 )
                 sample_shape = torch.Size(
-                    (
-                        *self._aug_batch_shape,
-                        num_latent_dims[dim_num],
-                    )
+                    (*self._aug_batch_shape, num_latent_dims[dim_num],)
                 )
                 latent_sample = latent_dist.sample(sample_shape=sample_shape)
                 latent_sample = latent_sample.reshape(
@@ -506,10 +499,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
                     num_latent_dims[dim_num],
                 )
                 self.latent_parameters.append(
-                    Parameter(
-                        latent_sample,
-                        requires_grad=learn_latent_pars,
-                    )
+                    Parameter(latent_sample, requires_grad=learn_latent_pars,)
                 )
                 self.register_prior(
                     "latent_parameters_" + str(dim_num),
@@ -679,19 +669,16 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
 
             mvn = MultivariateNormal(new_mean, new_variance)
 
+            train_train_covar = self.prediction_strategy.lik_train_train_covar.detach()
+            
             # return a specialized Posterior to allow for sampling
             posterior = HigherOrderGPPosterior(
                 mvn=mvn,
                 train_targets=self.train_targets.unsqueeze(-1),
-                train_train_covar=self.prediction_strategy.lik_train_train_covar.detach(),
+                train_train_covar=train_train_covar,
                 test_train_covar=test_train_covar,
                 joint_covariance_matrix=full_covar.clone(),
-                output_shape=Size(
-                    (
-                        *X.shape[:-1],
-                        *self.target_shape,
-                    )
-                ),
+                output_shape=Size((*X.shape[:-1], *self.target_shape,)),
                 num_outputs=self._num_outputs,
             )
             if hasattr(self, "outcome_transform"):
