@@ -670,7 +670,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
             mvn = MultivariateNormal(new_mean, new_variance)
 
             train_train_covar = self.prediction_strategy.lik_train_train_covar.detach()
-            
+
             # return a specialized Posterior to allow for sampling
             posterior = HigherOrderGPPosterior(
                 mvn=mvn,
