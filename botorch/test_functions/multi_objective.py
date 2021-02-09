@@ -27,7 +27,7 @@ References
     AUAI Press, Arlington, Virginia, USA, 250–259.
 
 .. [Oszycka1995]
-    A. Osyczka, S. Kundu. 1995. A new method to solve generalized multicriteria 
+    A. Osyczka, S. Kundu. 1995. A new method to solve generalized multicriteria
     optimization problems using the simple genetic algorithm. In Structural
     Optimization 10. 94–99.
 
@@ -609,9 +609,9 @@ class C2DTLZ2(DTLZ2, ConstrainedBaseTestProblem):
 
 
 class OSY(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
-    r""" 
-    The OSY test problem from [Oszycka1995]_. 
-    Implementation from 
+    r"""
+    The OSY test problem from [Oszycka1995]_.
+    Implementation from
     https://github.com/msu-coinlab/pymoo/blob/master/pymoo/problems/multi/osy.py
     Note that this implementation assumes minimization, so please choose negate=True.
     """
