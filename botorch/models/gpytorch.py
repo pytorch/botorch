@@ -610,10 +610,10 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
         if any(i not in self._output_tasks for i in output_indices):
             raise ValueError("Too many output indices")
         cls_name = self.__class__.__name__
-        if hasattr(self, "outcome_transform"):
-            raise NotImplementedError(
-                f"Outcome transforms currently not supported by {cls_name}"
-            )
+        #if hasattr(self, "outcome_transform"):
+        #    raise NotImplementedError(
+        #        f"Outcome transforms currently not supported by {cls_name}"
+        #    )
 
         # construct evaluation X
         X_full = _make_X_full(X=X, output_indices=output_indices, tf=self._task_feature)
@@ -634,4 +634,7 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
             covariance_matrix=mvn.lazy_covariance_matrix,
             interleaved=False,
         )
-        return GPyTorchPosterior(mvn=mtmvn)
+        posterior = GPyTorchPosterior(mvn=mtmvn)
+        if hasattr(self, "outcome_transform"):
+            posterior = self.outcome_transform.untransform_posterior(posterior)
+        return posterior

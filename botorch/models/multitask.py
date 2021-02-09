@@ -54,6 +54,7 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
         output_tasks: Optional[List[int]] = None,
         rank: Optional[int] = None,
         input_transform: Optional[InputTransform] = None,
+        outcome_transform: Optional[OutcomeTransform] = None,
     ) -> None:
         r"""Multi-Task GP model using an ICM kernel, inferring observation noise.
 
@@ -91,6 +92,9 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
         all_tasks, task_feature, d = self.get_all_tasks(
             transformed_X, task_feature, output_tasks
         )
+        if outcome_transform is not None:
+            train_Y, _  = outcome_transform(train_Y)
+
         # squeeze output dim
         train_Y = train_Y.squeeze(-1)
         if output_tasks is None:
@@ -127,6 +131,8 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
         )
         if input_transform is not None:
             self.input_transform = input_transform
+        if outcome_transform is not None:
+            self.outcome_transform = outcome_transform
         self.to(train_X)
 
     def _split_inputs(self, x: Tensor) -> Tuple[Tensor, Tensor]:
