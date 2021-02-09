@@ -612,7 +612,7 @@ class OSY(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
     The OSY test problem from [Oszycka1995]. 
     Implementation from https://github.com/msu-coinlab/pymoo/blob/master/pymoo/problems/multi/osy.py
     
-    This implementation assumes minimization.
+    Note that this implementation assumes minimization, so please choose negate=True.
     """
     
     dim = 6
@@ -626,7 +626,7 @@ class OSY(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
         dim: int = 6,
         num_objectives: int = 2,
         noise_std: Optional[float] = None,
-        negate: bool = True,
+        negate: bool = False,
     ) -> None:
         super().__init__(noise_std=noise_std, negate=negate)
         
