@@ -498,7 +498,6 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
                         *self._aug_batch_shape,
                         num_latent_dims[dim_num],
                     )
-                )
                 latent_sample = latent_dist.sample(sample_shape=sample_shape)
                 latent_sample = latent_sample.reshape(
                     *self._aug_batch_shape,
@@ -510,7 +509,6 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
                         latent_sample,
                         requires_grad=learn_latent_pars,
                     )
-                )
                 self.register_prior(
                     "latent_parameters_" + str(dim_num),
                     MultivariateNormalPrior(
@@ -650,6 +648,10 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
             if no_pred_variance:
                 pred_variance = mvn.variance
             else:
+                # we detach all of the latent dimension posteriors which precludes
+                # computing quantities computed on the posterior wrt latents as
+                # this reduces the memory overhead somewhat
+                # TODO: add these back in if necessary
                 joint_covar = self._get_joint_covariance([X])
                 pred_variance = self.make_posterior_variances(joint_covar)
 
@@ -660,10 +662,10 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
             joint_covar_list = [self.covar_modules[0](X, train_inputs)]
             batch_shape = joint_covar_list[0].batch_shape
             for cm, param in zip(self.covar_modules[1:], self.latent_parameters):
-                covar = cm(param)
+                covar = cm(param).detach()
                 if covar.batch_shape != batch_shape:
                     covar = BatchRepeatLazyTensor(covar, batch_shape)
-                joint_covar_list.append(covar.detach())
+                joint_covar_list.append(covar)
 
             test_train_covar = KroneckerProductLazyTensor(*joint_covar_list)
 
@@ -682,6 +684,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
             train_train_covar = self.prediction_strategy.lik_train_train_covar.detach()
 
             # return a specialized Posterior to allow for sampling
+            # cloning the full covar allows backpropagation through it
             posterior = HigherOrderGPPosterior(
                 mvn=mvn,
                 train_targets=self.train_targets.unsqueeze(-1),
