@@ -629,15 +629,6 @@ class OSY(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
     ]
     _ref_point = [-75.0, 75.0]
 
-    def __init__(
-        self,
-        dim: int = 6,
-        num_objectives: int = 2,
-        noise_std: Optional[float] = None,
-        negate: bool = False,
-    ) -> None:
-        super().__init__(noise_std=noise_std, negate=negate)
-
     def evaluate_true(self, X: Tensor) -> Tensor:
         f1 = -(
             25 * (X[..., 0] - 2) ** 2
