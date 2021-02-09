@@ -510,6 +510,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
                         latent_sample,
                         requires_grad=learn_latent_pars,
                     )
+                )
                 self.register_prior(
                     "latent_parameters_" + str(dim_num),
                     MultivariateNormalPrior(
