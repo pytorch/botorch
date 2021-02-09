@@ -615,15 +615,20 @@ class OSY(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
     https://github.com/msu-coinlab/pymoo/blob/master/pymoo/problems/multi/osy.py
     Note that this implementation assumes minimization, so please choose negate=True.
     """
-    
+
     dim = 6
     num_constraints = 6
     num_objectives = 2
     _bounds = [
-        (0.0, 10.0), (0.0, 10.0), (1.0, 5.0), (0.0, 6.0), (1.0, 5.0), (0.0, 10.0)
+        (0.0, 10.0),
+        (0.0, 10.0),
+        (1.0, 5.0),
+        (0.0, 6.0),
+        (1.0, 5.0),
+        (0.0, 10.0),
     ]
     _ref_point = [-75.0, 75.0]
-    
+
     def __init__(
         self,
         dim: int = 6,
@@ -632,18 +637,23 @@ class OSY(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
         negate: bool = False,
     ) -> None:
         super().__init__(noise_std=noise_std, negate=negate)
-        
+
     def evaluate_true(self, X: Tensor) -> Tensor:
-        f1 = - (25 * (X[..., 0] - 2) ** 2 + (X[..., 1] - 2) ** 2 + (X[..., 2] - 1) ** 2 + \
-            (X[..., 3] - 4) ** 2 + (X[..., 4] - 1) ** 2)
-        f2 = (X**2).sum(-1)
+        f1 = -(
+            25 * (X[..., 0] - 2) ** 2
+            + (X[..., 1] - 2) ** 2
+            + (X[..., 2] - 1) ** 2
+            + (X[..., 3] - 4) ** 2
+            + (X[..., 4] - 1) ** 2
+        )
+        f2 = (X ** 2).sum(-1)
         return torch.stack([f1, f2], dim=-1)
-        
+
     def evaluate_slack_true(self, X: Tensor) -> Tensor:
-        g1 = (X[..., 0] + X[..., 1] - 2.0)
-        g2 = (6.0 - X[..., 0] - X[..., 1])
-        g3 = (2.0 - X[..., 1] + X[..., 0])
-        g4 = (2.0 - X[..., 0] + 3.0 * X[..., 1])
-        g5 = (4.0 - (X[..., 2] - 3.0) ** 2 - X[..., 3])
-        g6 = ((X[..., 4] - 3.0) ** 2 + X[..., 5] - 4.0)
+        g1 = X[..., 0] + X[..., 1] - 2.0
+        g2 = 6.0 - X[..., 0] - X[..., 1]
+        g3 = 2.0 - X[..., 1] + X[..., 0]
+        g4 = 2.0 - X[..., 0] + 3.0 * X[..., 1]
+        g5 = 4.0 - (X[..., 2] - 3.0) ** 2 - X[..., 3]
+        g6 = (X[..., 4] - 3.0) ** 2 + X[..., 5] - 4.0
         return torch.stack([g1, g2, g3, g4, g5, g6], dim=-1)
