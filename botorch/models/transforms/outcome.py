@@ -256,7 +256,7 @@ class Standardize(OutcomeTransform):
                 "Standardize does not yet support output selection for "
                 "untransform_posterior"
             )
-        # TODO: add a check for event shapes that is not 
+        # TODO: add a check for event shapes that is not
         # self._m == posterior.event_shape[-1]
         if not isinstance(posterior, GPyTorchPosterior):
             # fall back to TransformedPosterior
