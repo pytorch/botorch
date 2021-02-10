@@ -93,7 +93,7 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
             transformed_X, task_feature, output_tasks
         )
         if outcome_transform is not None:
-            train_Y, _  = outcome_transform(train_Y)
+            train_Y, _ = outcome_transform(train_Y)
 
         # squeeze output dim
         train_Y = train_Y.squeeze(-1)
