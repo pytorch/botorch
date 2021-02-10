@@ -13,6 +13,7 @@ from botorch.exceptions.warnings import OptimizationWarning
 from botorch.fit import fit_gpytorch_model
 from botorch.models.multitask import FixedNoiseMultiTaskGP, MultiTaskGP
 from botorch.models.transforms.input import Normalize
+from botorch.models.transforms.outcome import Standardize
 from botorch.posteriors import GPyTorchPosterior
 from botorch.utils.containers import TrainingData
 from botorch.utils.testing import BotorchTestCase
@@ -43,10 +44,16 @@ def _get_model(input_transform=None, **tkwargs):
     return _get_model_and_training_data(input_transform=input_transform, **tkwargs)[0]
 
 
-def _get_model_and_training_data(input_transform=None, **tkwargs):
+def _get_model_and_training_data(
+    input_transform=None, outcome_transform=None, **tkwargs
+):
     train_X, train_Y = _get_random_mt_data(**tkwargs)
     model = MultiTaskGP(
-        train_X, train_Y, task_feature=1, input_transform=input_transform
+        train_X,
+        train_Y,
+        task_feature=1,
+        input_transform=input_transform,
+        outcome_transform=outcome_transform,
     )
     return model.to(**tkwargs), train_X, train_Y
 
@@ -112,10 +119,12 @@ def _get_fixed_noise_and_prior_model(**tkwargs):
 class TestMultiTaskGP(BotorchTestCase):
     def test_MultiTaskGP(self):
         bounds = torch.tensor([[-1.0, 0.0], [1.0, 1.0]])
-        for dtype, use_intf in itertools.product(
-            (torch.float, torch.double), (False, True)
+        for dtype, use_intf, use_octf in itertools.product(
+            (torch.float, torch.double), (False, True), (False, True)
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
+            octf = Standardize(m=1) if use_octf else None
+
             intf = (
                 Normalize(
                     d=2, bounds=bounds.to(**tkwargs), transform_on_preprocess=True
@@ -124,7 +133,7 @@ class TestMultiTaskGP(BotorchTestCase):
                 else None
             )
             model, train_X, _ = _get_model_and_training_data(
-                input_transform=intf, **tkwargs
+                input_transform=intf, outcome_transform=octf, **tkwargs
             )
             self.assertIsInstance(model, MultiTaskGP)
             self.assertEqual(model.num_outputs, 2)
@@ -199,7 +208,16 @@ class TestMultiTaskGP(BotorchTestCase):
             with self.assertRaises(RuntimeError):
                 MultiTaskGP(train_X, train_Y, 0, output_tasks=[2])
 
-            # no need to test that outcome transform error is raised
+            # test outcome transform
+            if use_octf:
+                # ensure un-transformation is applied
+                tmp_tf = model.outcome_transform
+                del model.outcome_transform
+                p_tf = model.posterior(test_x)
+                model.outcome_transform = tmp_tf
+                expected_var = tmp_tf.untransform_posterior(p_tf).variance
+                print(posterior_f.variance, expected_var)
+                self.assertTrue(torch.allclose(posterior_f.variance, expected_var))
 
     def test_MultiTaskGP_single_output(self):
         for dtype in (torch.float, torch.double):
