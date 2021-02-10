@@ -15,6 +15,7 @@ from botorch.test_functions.multi_objective import (
     CONSTR,
     DTLZ1,
     DTLZ2,
+    OSY,
     SRN,
     ZDT1,
     ZDT2,
