@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import torch
 from botorch.models.gpytorch import MultiTaskGPyTorchModel
 from botorch.models.transforms.input import InputTransform
+from botorch.models.transforms.outcome import OutcomeTransform
 from botorch.utils.containers import TrainingData
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels.index_kernel import IndexKernel
