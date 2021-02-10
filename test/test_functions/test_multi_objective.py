@@ -21,6 +21,7 @@ from botorch.test_functions.multi_objective import (
     ConstrainedBraninCurrin,
     MultiObjectiveTestProblem,
     VehicleSafety,
+    OSY,
 )
 from botorch.utils.testing import (
     BotorchTestCase,
@@ -195,6 +196,7 @@ class TestConstrainedMultiObjectiveProblems(
         CONSTR(),
         ConstrainedBraninCurrin(),
         C2DTLZ2(dim=3, num_objectives=2),
+        OSY(),
     ]
 
     def test_c2dtlz2_batch_exception(self):
