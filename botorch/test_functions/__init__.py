@@ -73,6 +73,7 @@ __all__ = [
     "HolderTable",
     "Levy",
     "Michalewicz",
+    "OSY",
     "Powell",
     "Rastrigin",
     "Rosenbrock",
