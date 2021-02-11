@@ -1149,6 +1149,11 @@ optimization with unknown constraints. In Proceedings of the Thirtieth
 Conference on Uncertainty in Artificial Intelligence (UAI’14).
 AUAI Press, Arlington, Virginia, USA, 250–259.</p>
 </dd>
+<dt class="label" id="oszycka1995"><span class="brackets"><a class="fn-backref" href="#id14">Oszycka1995</a></span></dt>
+<dd><p>A. Osyczka, S. Kundu. 1995. A new method to solve generalized multicriteria
+optimization problems using the simple genetic algorithm. In Structural
+Optimization 10. 94–99.</p>
+</dd>
 <dt class="label" id="tanabe2020"><span class="brackets">Tanabe2020</span><span class="fn-backref">(<a href="#id3">1</a>,<a href="#id4">2</a>,<a href="#id5">3</a>)</span></dt>
 <dd><p>Ryoji Tanabe, Hisao Ishibuchi, An easy-to-use real-world multi-objective
 optimization problem suite, Applied Soft Computing,Volume 89, 2020.</p>
@@ -1889,6 +1894,71 @@ constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 <dl class="py attribute">
 <dt id="botorch.test_functions.multi_objective.C2DTLZ2.training">
 <code class="sig-name descname">training</code><em class="property">: bool</em><a class="headerlink" href="#botorch.test_functions.multi_objective.C2DTLZ2.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt id="botorch.test_functions.multi_objective.OSY">
+<em class="property">class </em><code class="sig-prename descclassname">botorch.test_functions.multi_objective.</code><code class="sig-name descname">OSY</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">noise_std</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">negate</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#OSY"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.OSY" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.MultiObjectiveTestProblem" title="botorch.test_functions.base.MultiObjectiveTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.base.MultiObjectiveTestProblem</span></code></a>, <a class="reference internal" href="#botorch.test_functions.base.ConstrainedBaseTestProblem" title="botorch.test_functions.base.ConstrainedBaseTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.base.ConstrainedBaseTestProblem</span></code></a></p>
+<p>The OSY test problem from <a class="reference internal" href="#oszycka1995" id="id14"><span>[Oszycka1995]</span></a>.
+Implementation from
+<a class="reference external" href="https://github.com/msu-coinlab/pymoo/blob/master/pymoo/problems/multi/osy.py">https://github.com/msu-coinlab/pymoo/blob/master/pymoo/problems/multi/osy.py</a>
+Note that this implementation assumes minimization, so please choose negate=True.</p>
+<p>Base constructor for multi-objective test functions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the objectives.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt id="botorch.test_functions.multi_objective.OSY.dim">
+<code class="sig-name descname">dim</code><em class="property">: int</em><em class="property"> = 6</em><a class="headerlink" href="#botorch.test_functions.multi_objective.OSY.dim" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt id="botorch.test_functions.multi_objective.OSY.num_constraints">
+<code class="sig-name descname">num_constraints</code><em class="property">: int</em><em class="property"> = 6</em><a class="headerlink" href="#botorch.test_functions.multi_objective.OSY.num_constraints" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt id="botorch.test_functions.multi_objective.OSY.num_objectives">
+<code class="sig-name descname">num_objectives</code><em class="property">: int</em><em class="property"> = 2</em><a class="headerlink" href="#botorch.test_functions.multi_objective.OSY.num_objectives" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py method">
+<dt id="botorch.test_functions.multi_objective.OSY.evaluate_true">
+<code class="sig-name descname">evaluate_true</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#OSY.evaluate_true"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.OSY.evaluate_true" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.test_functions.multi_objective.OSY.evaluate_slack_true">
+<code class="sig-name descname">evaluate_slack_true</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">X</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#OSY.evaluate_slack_true"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.OSY.evaluate_slack_true" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the constraint slack (w/o observation noise) on a set of points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x d</cite>-dim tensor of point(s) at which to evaluate the
+constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>A <cite>batch_shape x n_c</cite>-dim tensor of constraint slack (where positive slack</dt><dd><p>corresponds to the constraint being feasible).</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt id="botorch.test_functions.multi_objective.OSY.training">
+<code class="sig-name descname">training</code><em class="property">: bool</em><a class="headerlink" href="#botorch.test_functions.multi_objective.OSY.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
 </div>
