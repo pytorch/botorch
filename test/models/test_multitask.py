@@ -213,10 +213,9 @@ class TestMultiTaskGP(BotorchTestCase):
                 # ensure un-transformation is applied
                 tmp_tf = model.outcome_transform
                 del model.outcome_transform
-                p_tf = model.posterior(test_x)
+                p_utf = model.posterior(test_x)
                 model.outcome_transform = tmp_tf
-                expected_var = tmp_tf.untransform_posterior(p_tf).variance
-                print(posterior_f.variance, expected_var)
+                expected_var = tmp_tf.untransform_posterior(p_utf).variance
                 self.assertTrue(torch.allclose(posterior_f.variance, expected_var))
 
     def test_MultiTaskGP_single_output(self):
