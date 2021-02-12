@@ -11,6 +11,7 @@ import torch
 from botorch import fit_gpytorch_model
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.models.pairwise_gp import PairwiseGP, PairwiseLaplaceMarginalLogLikelihood
+from botorch.models.transforms.input import Normalize
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling.pairwise_samplers import PairwiseSobolQMCNormalSampler
 from botorch.utils.testing import BotorchTestCase
@@ -95,6 +96,7 @@ class TestPairwiseGP(BotorchTestCase):
             # test custom models
             custom_m = PairwiseGP(**model_kwargs, covar_module=LinearKernel())
             self.assertIsInstance(custom_m.covar_module, LinearKernel)
+
             # prior prediction
             prior_m = PairwiseGP(None, None).to(**tkwargs)
             prior_m.eval()
@@ -144,6 +146,24 @@ class TestPairwiseGP(BotorchTestCase):
             posterior = model.posterior(X)
             self.assertIsInstance(posterior, GPyTorchPosterior)
             self.assertEqual(posterior.mean.shape, expected_shape)
+
+            # test input_transform
+            # the untransfomed one should be stored
+            normalize_tf = Normalize(d=2, bounds=torch.tensor([[0, 0], [0.5, 1.5]]))
+            model = PairwiseGP(**model_kwargs, input_transform=normalize_tf)
+            self.assertTrue(torch.all(model.datapoints == train_X))
+
+            # test set_train_data strict mode
+            model = PairwiseGP(**model_kwargs)
+            changed_train_X = train_X.unsqueeze(0)
+            changed_train_comp = train_comp.unsqueeze(0)
+            # expect to raise error when set data to something different
+            with self.assertRaises(RuntimeError):
+                model.set_train_data(changed_train_X, changed_train_comp, strict=True)
+
+            # the same datapoints but changed comparison will also raise error
+            with self.assertRaises(RuntimeError):
+                model.set_train_data(train_X, changed_train_comp, strict=True)
 
     def test_condition_on_observations(self):
         for batch_shape, dtype in itertools.product(
