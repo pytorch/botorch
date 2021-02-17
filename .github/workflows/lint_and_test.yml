@@ -25,7 +25,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install git+https://github.com/cornellius-gp/gpytorch.git
-        pip install -e .[test]
+        pip install .[test]
     - name: Unit tests and coverage
       run: |
         pytest -ra --cov=. --cov-report term-missing
@@ -55,7 +55,7 @@ jobs:
         conda install -y -c pytorch-nightly pytorch cpuonly
         conda install -y pip scipy sphinx pytest flake8
         pip install git+https://github.com/cornellius-gp/gpytorch.git
-        pip install -e .[test]
+        pip install .[test]
     - name: Unit tests
       shell: bash -l {0}
       run: |
@@ -97,7 +97,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install git+https://github.com/cornellius-gp/gpytorch.git
-        pip install -e .[dev]
+        pip install .[dev]
     - name: Validate Sphinx
       run: |
         python scripts/validate_sphinx.py -p "$(pwd)"
@@ -115,6 +115,9 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.7
+    - name: Fetch all history for all tags and branches
+      # we need to do this so setuptools_scm knows how to set the botorch version
+      run: git fetch --prune --unshallow
     - name: Install dependencies
       # we install in this order so Ax doesn't install a different BoTorch version
       run: |

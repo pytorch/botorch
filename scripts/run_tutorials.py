@@ -42,7 +42,9 @@ def run_script(script: str, env: Dict[str, str] = None) -> None:
             tmp_script.write(script)
     if env is not None:
         env = {**os.environ, **env}
-    run_out = subprocess.run(["ipython", tf_name], capture_output=True, text=True, env=env)
+    run_out = subprocess.run(
+        ["ipython", tf_name], capture_output=True, text=True, env=env
+    )
     os.remove(tf_name)
     return run_out
 
