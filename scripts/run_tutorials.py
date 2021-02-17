@@ -13,7 +13,7 @@ import tempfile
 import time
 from pathlib import Path
 from subprocess import CalledProcessError
-from typing import Optional
+from typing import Dict, Optional
 
 import nbformat
 from nbconvert import PythonExporter
@@ -77,7 +77,7 @@ def run_tutorials(
 ) -> None:
     print(f"Running tutorials in {'smoke test' if smoke_test else 'standard'} mode.")
     if not smoke_test:
-        print(f"This may take a long time...")
+        print("This may take a long time...")
     tutorial_dir = Path(repo_dir).joinpath("tutorials")
     num_runs = 0
     num_errors = 0
