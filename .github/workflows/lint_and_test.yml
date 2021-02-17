@@ -124,4 +124,4 @@ jobs:
         pip install .[tutorials]
     - name: Run tutorials
       run: |
-        python scripts/run_tutorials.py -p "$(pwd)"
+        python scripts/run_tutorials.py -p "$(pwd)" -s

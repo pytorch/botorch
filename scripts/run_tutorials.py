@@ -21,6 +21,7 @@ from nbconvert import PythonExporter
 
 IGNORE = {
     "vae_mnist.ipynb",  # requires setting paths to local data
+    "thompson_sampling.ipynb",  # TODO: add SMOKE_TEST handling
 }
 
 
@@ -33,22 +34,24 @@ def parse_ipynb(file: Path) -> str:
     return script
 
 
-def run_script(script: str) -> None:
+def run_script(script: str, env: Dict[str, str] = None) -> None:
     # need to keep the file around & close it so subprocess does not run into I/O issues
     with tempfile.NamedTemporaryFile(delete=False) as tf:
         tf_name = tf.name
         with open(tf_name, "w") as tmp_script:
             tmp_script.write(script)
-    run_out = subprocess.run(["ipython", tf_name], capture_output=True, text=True)
+    if env is not None:
+        env = {**os.environ, **env}
+    run_out = subprocess.run(["ipython", tf_name], capture_output=True, text=True, env=env)
     os.remove(tf_name)
     return run_out
 
 
-def run_tutorial(tutorial: Path) -> Optional[str]:
+def run_tutorial(tutorial: Path, smoke_test: bool = False) -> Optional[str]:
     script = parse_ipynb(tutorial)
     tic = time.time()
     print(f"Running tutorial {tutorial.name}.")
-    run_out = run_script(script)
+    run_out = run_script(script, env={"SMOKE_TEST": "true"})
     try:
         run_out.check_returncode()
     except CalledProcessError:
@@ -65,7 +68,14 @@ def run_tutorial(tutorial: Path) -> Optional[str]:
     print(f"Running tutorial {tutorial.name} took {runtime:.2f} seconds.")
 
 
-def run_tutorials(repo_dir: str, include_ignored: bool = False) -> None:
+def run_tutorials(
+    repo_dir: str,
+    include_ignored: bool = False,
+    smoke_test: bool = False,
+) -> None:
+    print(f"Running tutorials in {'smoke test' if smoke_test else 'standard'} mode.")
+    if not smoke_test:
+        print(f"This may take a long time...")
     tutorial_dir = Path(repo_dir).joinpath("tutorials")
     num_runs = 0
     num_errors = 0
@@ -76,7 +86,7 @@ def run_tutorials(repo_dir: str, include_ignored: bool = False) -> None:
             print(f"Ignoring tutorial {tutorial.name}.")
             continue
         num_runs += 1
-        error = run_tutorial(tutorial)
+        error = run_tutorial(tutorial, smoke_test=smoke_test)
         if error is not None:
             num_errors += 1
             print(error)
@@ -92,9 +102,16 @@ if __name__ == "__main__":
         "-p", "--path", metavar="path", required=True, help="botorch repo directory."
     )
     parser.add_argument(
+        "-s", "--smoke", action="store_true", help="Run in smoke test mode."
+    )
+    parser.add_argument(
         "--include-ignored",
         action="store_true",
         help="Run all tutorials (incl. ignored).",
     )
     args = parser.parse_args()
-    run_tutorials(repo_dir=args.path, include_ignored=args.include_ignored)
+    run_tutorials(
+        repo_dir=args.path,
+        include_ignored=args.include_ignored,
+        smoke_test=args.smoke,
+    )
