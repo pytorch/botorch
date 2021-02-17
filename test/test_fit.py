@@ -233,7 +233,7 @@ class TestFitGPyTorchModel(BotorchTestCase):
     def test_fit_gpytorch_model_singular(self):
         options = {"disp": False, "maxiter": 5}
         for dtype in (torch.float, torch.double):
-            X_train = torch.rand(2, 2, device=self.device, dtype=dtype)
+            X_train = torch.ones(2, 2, device=self.device, dtype=dtype)
             Y_train = torch.zeros(2, 1, device=self.device, dtype=dtype)
             test_likelihood = GaussianLikelihood(
                 noise_constraint=GreaterThan(-1.0, transform=None, initial_value=0.0)
