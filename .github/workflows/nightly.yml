@@ -55,10 +55,13 @@ jobs:
         pip install .[test]
         pip install --upgrade setuptools wheel
     - name: Build packages (wheel and source distribution)
+      env:
+        SCM_NO_LOCAL_VERSION: true
       run: |
-        export SCM_NO_LOCAL_VERSION=true
         python setup.py sdist bdist_wheel
     - name: Verify packages
+      env:
+        SCM_NO_LOCAL_VERSION: true
       run: |
         ./scripts/build_and_verify_py_packages.sh
     - name: Deploy to Test PyPI
