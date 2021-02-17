@@ -112,6 +112,8 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.7
+    - name: Fetch all history for all tags and branches
+      run: git fetch --prune --unshallow
     - name: Install dependencies
       run: |
         pip install git+https://github.com/cornellius-gp/gpytorch.git
@@ -122,5 +124,7 @@ jobs:
       run: |
         pytest -ra
     - name: Publish latest website
+      env:
+        DOCUSAURUS_PUBLISH_TOKEN: ${{ secrets.DOCUSAURUS_PUBLISH_TOKEN }}
       run: |
         ./scripts/publish_site.sh -d
