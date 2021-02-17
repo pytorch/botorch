@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
+import numpy as np
 import torch
 from botorch.optim.parameter_constraints import (
     _arrayify,
@@ -98,6 +99,10 @@ def gen_candidates_scipy(
     )
 
     def f(x):
+        if np.isnan(x).any():
+            raise RuntimeError(
+                f"{np.isnan(x).sum()} elements of the {x.shape} tensor `x` are NaN."
+            )
         X = (
             torch.from_numpy(x)
             .to(initial_conditions)
@@ -109,6 +114,16 @@ def gen_candidates_scipy(
         loss = -acquisition_function(X_fix).sum()
         # compute gradient w.r.t. the inputs (does not accumulate in leaves)
         gradf = _arrayify(torch.autograd.grad(loss, X)[0].contiguous().view(-1))
+        if np.isnan(gradf).any():
+            raise RuntimeError(
+                f"{np.isnan(gradf).sum()} elements of the {x.shape} gradient tensor "
+                "`gradf` are NaN."
+                + (
+                    "Consider using `dtype=torch.double`."
+                    if initial_conditions.dtype != torch.double
+                    else ""
+                )
+            )
         fval = loss.item()
         return fval, gradf
 
