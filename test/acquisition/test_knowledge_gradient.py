@@ -407,7 +407,7 @@ class TestQMultiFidelityKnowledgeGradient(BotorchTestCase):
             samples = torch.ones(3, 1, 1, device=self.device, dtype=dtype)
             mean = torch.tensor(
                 [[0.25], [0.5], [0.75]], device=self.device, dtype=dtype
-            )
+            ).expand(n_f, 1, -1, -1)
             weights = torch.tensor([0.5, 1.0, 1.0], device=self.device, dtype=dtype)
             mfm = MockModel(MockPosterior(mean=mean, samples=samples))
             X = torch.rand(n_f * d + d, d, device=self.device, dtype=dtype)
