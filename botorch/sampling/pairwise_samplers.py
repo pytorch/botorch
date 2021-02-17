@@ -63,7 +63,7 @@ class PairwiseMCSampler(MCSampler):
         s_v = samples.view(-1, s_n)
 
         idx1, idx2 = comp_pairs[:, 0], comp_pairs[:, 1]
-        prefs = (s_v[:, idx1] > s_v[:, idx2]).long()
+        prefs = (s_v[:, idx1] > s_v[:, idx2]).long().cpu()
         cpt = comp_pairs.T
         c1 = np.choose(prefs, cpt)
         c2 = np.choose(1 - prefs, cpt)

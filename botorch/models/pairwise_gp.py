@@ -28,6 +28,7 @@ from typing import Any, List, Optional, Tuple, Union
 import numpy as np
 import torch
 from botorch.models.model import Model
+from botorch.models.transforms.input import InputTransform
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.posteriors.posterior import Posterior
 from gpytorch import settings
@@ -65,9 +66,9 @@ class PairwiseGP(Model, GP):
         datapoints: Tensor,
         comparisons: Tensor,
         covar_module: Optional[Module] = None,
+        input_transform: Optional[InputTransform] = None,
         **kwargs,
     ) -> None:
-        super().__init__()
         r"""A probit-likelihood GP with Laplace approximation model that learns via
             pairwise comparison data. By default it uses a scaled RBF kernel.
 
@@ -76,8 +77,16 @@ class PairwiseGP(Model, GP):
             comparisons: A `batch_shape x m x 2` training comparisons;
                 comparisons[i] is a noisy indicator suggesting the utility value
                 of comparisons[i, 0]-th is greater than comparisons[i, 1]-th.
-            covar_module: Covariance module
+            covar_module: Covariance module.
+            input_transform: An input transform that is applied in the model's
+                forward pass.
         """
+        super().__init__()
+
+        if input_transform is not None:
+            input_transform.to(datapoints)
+            # input transformation is applied in set_train_data
+            self.input_transform = input_transform
 
         # Compatibility variables with fit_gpytorch_*: Dummy likelihood
         # Likelihood is tightly tied with this model and
@@ -88,6 +97,8 @@ class PairwiseGP(Model, GP):
         #       `load_state_dict()`, only the hyperparameters are copied over
         self.register_buffer("datapoints", None)
         self.register_buffer("comparisons", None)
+        self.register_buffer("D", None)
+        self.register_buffer("DT", None)
         self.register_buffer("utility", None)
         self.register_buffer("covar_chol", None)
         self.register_buffer("likelihood_hess", None)
@@ -99,14 +110,12 @@ class PairwiseGP(Model, GP):
         self.train_targets = None
 
         self.pred_cov_fac_need_update = True
-        self._input_batch_shape = torch.Size()
         self.dim = None
-        # will be set to match datapoints' dtype and device
-        # since scipy.optimize.fsolve only works on cpu, it'd be the
-        # fastest to fit the model on cpu and take samples on gpu to avoid
-        # overhead of moving data back and forth during fitting time
-        self.tkwargs = {}
-        # See set_train_data for additional compatibility variables
+
+        # See set_train_data for additional compatibility variables.
+        # Not that the datapoints here are not transformed even if input_transform
+        # is not None to avoid double transformation during model fitting.
+        # self.transform_inputs is called in `forward`
         self.set_train_data(datapoints, comparisons, update_model=False)
 
         # Set optional parameters
@@ -141,7 +150,7 @@ class PairwiseGP(Model, GP):
             ls_prior_mode = (ls_prior.concentration - 1) / ls_prior.rate
             covar_module = ScaleKernel(
                 RBFKernel(
-                    batch_shape=self._input_batch_shape,
+                    batch_shape=self.batch_shape,
                     ard_num_dims=self.dim,
                     lengthscale_prior=ls_prior,
                     lengthscale_constraint=Positive(
@@ -156,7 +165,9 @@ class PairwiseGP(Model, GP):
         self._x0 = None  # will store temporary results for warm-starting
         if self.datapoints is not None and self.comparisons is not None:
             self.to(dtype=self.datapoints.dtype, device=self.datapoints.device)
-            self._update()  # Find f_map for initial parameters
+            # Find f_map for initial parameters with transformed datapoints
+            transformed_dp = self.transform_inputs(datapoints)
+            self._update(transformed_dp)
 
         self.to(self.datapoints)
 
@@ -221,12 +232,15 @@ class PairwiseGP(Model, GP):
 
         return mat_inv
 
-    def _update_covar(self) -> None:
+    def _update_covar(self, datapoints: Tensor) -> None:
         r"""Update values derived from the data and hyperparameters
 
         covar, covar_chol, and covar_inv will be of shape batch_shape x n x n
+
+        Args:
+            datapoints: (Transformed) datapoints for finding f_max
         """
-        self.covar = self._calc_covar(self.datapoints, self.datapoints)
+        self.covar = self._calc_covar(datapoints, datapoints)
         self.covar_chol = psd_safe_cholesky(self.covar)
         self.covar_inv = self._batch_chol_inv(self.covar_chol)
 
@@ -468,7 +482,7 @@ class PairwiseGP(Model, GP):
 
         self.pred_cov_fac_need_update = False
 
-    def _update(self, **kwargs) -> None:
+    def _update(self, datapoints: Tensor, **kwargs) -> None:
         r"""Update the model by updating the covar matrix and MAP utility values
 
         Update the model by
@@ -480,28 +494,31 @@ class PairwiseGP(Model, GP):
 
         self._xtol and self._maxfev are passed to fsolve as xtol and maxfev
         to control stopping criteria
+
+        Args:
+            datapoints: (transformed) datapoints for finding f_max
         """
 
         xtol = 1e-6 if self._xtol is None else self._xtol
         maxfev = 100 if self._maxfev is None else self._maxfev
 
         # Using the latest param for covariance before calculating f_map
-        self._update_covar()
+        self._update_covar(datapoints)
 
         # scipy newton raphson
         with torch.no_grad():
             # warm start
-            init_x0_size = self._input_batch_shape + torch.Size([self.n])
+            init_x0_size = self.batch_shape + torch.Size([self.n])
             if self._x0 is None or torch.Size(self._x0.shape) != init_x0_size:
                 x0 = np.random.rand(*init_x0_size)
             else:
                 x0 = self._x0
 
-            if len(self._input_batch_shape) > 0:
+            if len(self.batch_shape) > 0:
                 # batch mode, do optimize.fsolve sequentially on CPU
                 # TODO: enable vectorization/parallelization here
                 x0 = x0.reshape(-1, self.n)
-                dp_v = self.datapoints.view(-1, self.n, self.dim).cpu()
+                dp_v = datapoints.view(-1, self.n, self.dim).cpu()
                 D_v = self.D.view(-1, self.m, self.n).cpu()
                 DT_v = self.DT.view(-1, self.n, self.m).cpu()
                 ch_v = self.covar_chol.view(-1, self.n, self.n).cpu()
@@ -524,7 +541,7 @@ class PairwiseGP(Model, GP):
             else:
                 # fsolve only works on CPU
                 fsolve_args = (
-                    self.datapoints.cpu(),
+                    datapoints.cpu(),
                     self.D.cpu(),
                     self.DT.cpu(),
                     self.covar_chol.cpu(),
@@ -544,9 +561,7 @@ class PairwiseGP(Model, GP):
                     )
 
             self._x0 = x.copy()  # save for warm-starting
-            f = torch.tensor(
-                x, dtype=self.datapoints.dtype, device=self.datapoints.device
-            )
+            f = torch.tensor(x, dtype=datapoints.dtype, device=datapoints.device)
 
         # To perform hyperparameter optimization, this need to be recalculated
         # when calling forward() in order to obtain correct gradients
@@ -593,7 +608,7 @@ class PairwiseGP(Model, GP):
             # if X has fewer dimension, try to expand it to X_new's shape
             return X.expand(X_new_bs + X.shape[-2:]), X_new
 
-    def _util_newton_updates(self, x0, max_iter=1, xtol=None) -> Tensor:
+    def _util_newton_updates(self, dp, x0, max_iter=1, xtol=None) -> Tensor:
         r"""Make `max_iter` newton updates on utility.
 
         This is used in `forward` to calculate and fill in gradient into tensors.
@@ -602,14 +617,14 @@ class PairwiseGP(Model, GP):
         By default only need to run one iteration just to fill the the gradients.
 
         Args:
-            x0: A `batch_size x n` dimension tensor, initial values
-            max_iter: Max number of iterations
+            dp: (Transformed) datapoints.
+            x0: A `batch_size x n` dimension tensor, initial values.
+            max_iter: Max number of iterations.
             xtol: Stop creteria. If `None`, do not stop until
-                finishing `max_iter` updates
+                finishing `max_iter` updates.
         """
         xtol = float("-Inf") if xtol is None else xtol
-        dp, D, DT, ch, ci = (
-            self.datapoints,
+        D, DT, ch, ci = (
             self.D,
             self.DT,
             self.covar_chol,
@@ -626,8 +641,8 @@ class PairwiseGP(Model, GP):
             if eye is None:
                 eye = torch.eye(
                     cov_hl.size(-1),
-                    dtype=self.datapoints.dtype,
-                    device=self.datapoints.device,
+                    dtype=dp.dtype,
+                    device=dp.device,
                 ).expand(cov_hl.shape)
             cov_hl = cov_hl + eye  # add 1 to cov_hl
             g = self._grad_posterior_f(x, dp, D, DT, ch, ci)
@@ -656,44 +671,89 @@ class PairwiseGP(Model, GP):
         to the `posterior` method returns a Posterior object over an output of
         shape `broadcast(test_batch_shape, model.batch_shape) x q x m`.
         """
-        return self.datapoints.shape[:-2]
+        if self.datapoints is None:
+            # this could happen in prior mode
+            return torch.Size()
+        else:
+            return self.datapoints.shape[:-2]
 
     def set_train_data(
-        self, datapoints: Tensor, comparisons: Tensor, update_model: bool = True
+        self,
+        datapoints: Tensor = None,
+        comparisons: Tensor = None,
+        strict: bool = False,
+        update_model: bool = True,
     ) -> None:
         r"""Set datapoints and comparisons and update model properties if needed
 
         Args:
-            datapoints: A `batch_shape x n x d` dimension tensor X
+            datapoints: A `batch_shape x n x d` dimension tensor X. If there are input
+                transformations, assume the datapoints are not transformed
             comparisons: A tensor of size `batch_shape x m x 2`. (i, j) means
-                f_i is preferred over f_j
+                f_i is preferred over f_j.
+            strict: `strict` argument as in gpytorch.models.exact_gp for compatibility
+                when using fit_gpytorch_model with input_transform.
             update_model: True if we want to refit the model (see _update) after
-                re-setting the data
+                re-setting the data.
         """
         # When datapoints and/or comparisons are None, we are constructing
         # a prior-only model
         if datapoints is None or comparisons is None:
             return
 
-        # store datapoints and other quantities as double for better numerical stability
-        self.datapoints = datapoints
-        # convert to long so that it can be used as index and work with Tensor.scatter_
-        self.comparisons = comparisons.long()
+        # following gpytorch.models.exact_gp.set_train_data
+        if datapoints is not None:
+            if torch.is_tensor(datapoints):
+                inputs = (datapoints,)
 
-        self.tkwargs = {
-            "dtype": self.datapoints.dtype,
-            "device": self.datapoints.device,
-        }
+            inputs = tuple(
+                input_.unsqueeze(-1) if input_.ndimension() == 1 else input_
+                for input_ in inputs
+            )
+            if strict:
+                for input_, t_input in zip(inputs, self.train_inputs or (None,)):
+                    for attr in {"shape", "dtype", "device"}:
+                        expected_attr = getattr(t_input, attr, None)
+                        found_attr = getattr(input_, attr, None)
+                        if expected_attr != found_attr:
+                            msg = (
+                                "Cannot modify {attr} of inputs "
+                                "(expected {e_attr}, found {f_attr})."
+                            )
+                            msg = msg.format(
+                                attr=attr, e_attr=expected_attr, f_attr=found_attr
+                            )
+                            raise RuntimeError(msg)
+            self.datapoints = inputs[0]
+            # Compatibility variables with fit_gpytorch_*
+            # alias for datapoints ("train_inputs")
+            self.train_inputs = inputs
 
-        # Compatibility variables with fit_gpytorch_*
-        # alias for datapoints (train_inputs) and comparisons ("train_targets" here)
-        self.train_inputs = [self.datapoints]
-        self.train_targets = self.comparisons
+        if comparisons is not None:
+            if strict:
+                for attr in {"shape", "dtype", "device"}:
+                    expected_attr = getattr(self.train_targets, attr, None)
+                    found_attr = getattr(comparisons, attr, None)
+                    if expected_attr != found_attr:
+                        msg = (
+                            "Cannot modify {attr} of targets "
+                            "(expected {e_attr}, found {f_attr})."
+                        )
+                        msg = msg.format(
+                            attr=attr, e_attr=expected_attr, f_attr=found_attr
+                        )
+                        raise RuntimeError(msg)
+            # convert to long so that it can be used as index and
+            # compatible with Tensor.scatter_
+            self.comparisons = comparisons.long()
+            # Compatibility variables with fit_gpytorch_*
+            # alias for comparisons ("train_targets" here)
+            self.train_targets = self.comparisons
+
         # Compatibility variables with optimize_acqf
         self._dtype = self.datapoints.dtype
         self._num_outputs = 1  # 1 latent value output per observation
 
-        self._input_batch_shape = self.datapoints.shape[:-2]
         self.dim = self.datapoints.shape[-1]  # feature dimensions
         self.n = self.datapoints.shape[-2]  # num datapoints
         self.m = self.comparisons.shape[-2]  # num pairwise comparisons
@@ -704,7 +764,7 @@ class PairwiseGP(Model, GP):
         # TODO swap out scatter_ so that comparisons could be int instead of long
         # TODO: make D a sparse matrix once pytorch has better support for
         #       sparse tensors
-        D_size = torch.Size((*(self._input_batch_shape), self.m, self.n))
+        D_size = torch.Size((*(self.batch_shape), self.m, self.n))
         self.D = torch.zeros(
             D_size, dtype=self.datapoints.dtype, device=self.datapoints.device
         )
@@ -713,8 +773,10 @@ class PairwiseGP(Model, GP):
             sub_D.scatter_(1, comp_view[i, :, [0]], 1)
             sub_D.scatter_(1, comp_view[i, :, [1]], -1)
         self.DT = self.D.transpose(-1, -2)
+
         if update_model:
-            self._update()
+            transformed_dp = self.transform_inputs(datapoints)
+            self._update(transformed_dp)
 
         self.to(self.datapoints)
 
@@ -725,13 +787,10 @@ class PairwiseGP(Model, GP):
         hyperparam opt. Essentially what it does is to re-calculate the utility
         f using its analytical form at f_map so that we are able to obtain
         gradients of the hyperparameters.
-        We only take in one parameter datapoints without the comparisons for the
-        compatibility with other gpytorch/botorch APIs. It assumes `datapoints` is
-        the same as `self.datapoints`. That's what "Must train on training data" means.
 
         Args:
             datapoints: A `batch_shape x n x d` Tensor,
-                should be the same as self.datapoints
+                should be the same as self.datapoints during training
 
         Returns:
             A MultivariateNormal object, being one of the followings:
@@ -748,14 +807,22 @@ class PairwiseGP(Model, GP):
                     "Call .eval() for prior predictions, "
                     "or call .set_train_data() to add training data."
                 )
+
             if datapoints is not self.datapoints:
                 raise RuntimeError("Must train on training data")
 
+            transformed_dp = self.transform_inputs(datapoints)
+
+            # We pass in the untransformed datapoints into set_train_data
+            # as we will be setting self.datapoints as the untransformed datapoints
+            # self.transform_inputs will be called inside before calling _update()
             self.set_train_data(datapoints, self.comparisons, update_model=True)
 
             # Take a newton step on the posterior MAP point to fill
             # in gradients for pytorch
-            self.utility = self._util_newton_updates(self.utility, max_iter=1)
+            self.utility = self._util_newton_updates(
+                transformed_dp, self.utility, max_iter=1
+            )
 
             hl = self.likelihood_hess = self._hess_likelihood_f_sum(
                 self.utility, self.D, self.DT
@@ -776,22 +843,25 @@ class PairwiseGP(Model, GP):
 
         # Prior mode
         elif settings.prior_mode.on() or self._has_no_data():
-            X_new = datapoints
+            transformed_new_dp = self.transform_inputs(datapoints)
             # if we don't have any data yet, use prior GP to make predictions
-            output_mean, output_covar = self._prior_predict(X_new)
+            output_mean, output_covar = self._prior_predict(transformed_new_dp)
 
         # Posterior mode
         else:
+            transformed_dp = self.transform_inputs(self.datapoints)
+            transformed_new_dp = self.transform_inputs(datapoints).to(transformed_dp)
+
             # self.utility might be None if exception was raised and _update
             # was failed to be called during hyperparameter optimization
             # procedures (e.g., fit_gpytorch_scipy)
             if self.utility is None:
-                self._update()
+                self._update(transformed_dp)
 
             if self.pred_cov_fac_need_update:
                 self._update_utility_derived_values()
-            datapoints = datapoints.to(self.datapoints)
-            X, X_new = self._transform_batch_shape(self.datapoints, datapoints)
+
+            X, X_new = self._transform_batch_shape(transformed_dp, transformed_new_dp)
             covar_chol, _ = self._transform_batch_shape(self.covar_chol, X_new)
             hl, _ = self._transform_batch_shape(self.likelihood_hess, X_new)
             hlcov_eye, _ = self._transform_batch_shape(self.hlcov_eye, X_new)
@@ -887,6 +957,7 @@ class PairwiseGP(Model, GP):
             original model conditioned on the new observations `(X, Y)`.
         """
         new_model = deepcopy(self)
+
         if self._has_no_data():
             # If the model previously has no data, set X and Y as the data directly
             new_model.set_train_data(X, Y, update_model=True)
@@ -966,7 +1037,7 @@ class PairwiseLaplaceMarginalLogLikelihood(MarginalLogLikelihood):
         evidence = evidence.sum()
 
         # Add log probs of priors on the (functions of) parameters
-        for _, prior, closure, _ in self.named_priors():
-            evidence = evidence.add(prior.log_prob(closure()).sum())
+        for _, module, prior, closure, _ in self.named_priors():
+            evidence = evidence.add(prior.log_prob(closure(module)).sum())
 
         return evidence

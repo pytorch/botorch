@@ -32,6 +32,11 @@ Sampling
 .. automodule:: botorch.utils.sampling
 		:members:
 
+Sampling from GP priors
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.utils.gp_sampling
+		:members:
+
 Testing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.utils.testing
@@ -55,14 +60,29 @@ Feasible Volume
 Multi-Objective Utilities
 -------------------------------------------
 
-Box Decompositions
+Abstract Box Decompositions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.utils.multi_objective.box_decompositions.box_decomposition
+    	:members:
+
+Box Decomposition Utilities
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.utils.multi_objective.box_decompositions.utils
+    	:members:
+
+Box Decompositions [DEPRECATED - use botorch..utils.multi_objective.box_decompositions]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.utils.multi_objective.box_decomposition
 		:members:
 
 Hypervolume
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.utils.multi_objective.hypervolume
+		:members:
+
+Non-dominated Partitionings
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.utils.multi_objective.box_decompositions.non_dominated
 		:members:
 
 Pareto

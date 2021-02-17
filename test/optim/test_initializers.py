@@ -159,7 +159,7 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                             self.assertEqual(raw_samps.shape, expected_raw_samps_shape)
 
     def test_gen_batch_initial_conditions_highdim(self):
-        d = 120
+        d = 2200  # 2200 * 10 (q) > 21201 (sobol max dim)
         bounds = torch.stack([torch.zeros(d), torch.ones(d)])
         for dtype in (torch.float, torch.double):
             bounds = bounds.to(device=self.device, dtype=dtype)

@@ -21,13 +21,16 @@ from botorch.acquisition.utils import (
     expand_trace_observations,
     get_acquisition_function,
     get_infeasible_cost,
+    project_to_sample_points,
     project_to_target_fidelity,
     prune_inferior_points,
 )
 from botorch.exceptions.errors import UnsupportedError
 from botorch.exceptions.warnings import SamplingWarning
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
-from botorch.utils.multi_objective.box_decomposition import NondominatedPartitioning
+from botorch.utils.multi_objective.box_decompositions.non_dominated import (
+    NondominatedPartitioning,
+)
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
 from torch import Tensor
 
@@ -341,6 +344,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             ref_point=self.ref_point,
             partitioning=mock.ANY,
             sampler=mock.ANY,
+            X_pending=self.X_pending,
         )
         args, kwargs = mock_acqf.call_args
         self.assertEqual(args, ())
@@ -389,7 +393,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         )
         _, kwargs = mock_acqf.call_args
         partitioning = kwargs["partitioning"]
-        self.assertEqual(partitioning._pareto_Y.shape[0], 0)
+        self.assertEqual(partitioning.pareto_Y.shape[0], 0)
 
     def test_GetUnknownAcquisitionFunction(self):
         with self.assertRaises(NotImplementedError):
@@ -421,6 +425,9 @@ class TestGetInfeasibleCost(BotorchTestCase):
                 X=X, model=mm, objective=lambda Y: Y.squeeze(-1) - 5.0
             )
             self.assertEqual(M, 6.0)
+            # test default objective (squeeze last dim)
+            M2 = get_infeasible_cost(X=X, model=mm)
+            self.assertEqual(M2, 1.0)
 
 
 class TestPruneInferiorPoints(BotorchTestCase):
@@ -446,7 +453,7 @@ class TestPruneInferiorPoints(BotorchTestCase):
             X_pruned = prune_inferior_points(model=mm, X=X)
             self.assertTrue(torch.equal(X_pruned, X[[-1]]))
             # test custom objective
-            neg_id_obj = GenericMCObjective(lambda X: -(X.squeeze(-1)))
+            neg_id_obj = GenericMCObjective(lambda Y, X: -(Y.squeeze(-1)))
             X_pruned = prune_inferior_points(model=mm, X=X, objective=neg_id_obj)
             self.assertTrue(torch.equal(X_pruned, X[[0]]))
             # test non-repeated samples (requires mocking out MockPosterior's rsample)
@@ -482,7 +489,9 @@ class TestPruneInferiorPoints(BotorchTestCase):
                         new_callable=mock.PropertyMock,
                     )
                 )
-                mock_event_shape.return_value = torch.Size([1, 1, 1112])
+                mock_event_shape.return_value = torch.Size(
+                    [1, 1, torch.quasirandom.SobolEngine.MAXDIM + 1]
+                )
                 es.enter_context(
                     mock.patch.object(MockPosterior, "rsample", return_value=samples)
                 )
@@ -572,3 +581,21 @@ class TestFidelityUtils(BotorchTestCase):
                 (i + 1) / (num_tr + 1) for i in range(num_tr)
             )
             self.assertTrue(torch.allclose(X.grad, grad_exp))
+
+    def test_project_to_sample_points(self):
+        for batch_shape, dtype in itertools.product(
+            ([], [2]), (torch.float, torch.double)
+        ):
+            q, d, p, d_prime = 1, 12, 7, 4
+            X = torch.rand(*batch_shape, q, d, device=self.device, dtype=dtype)
+            sample_points = torch.rand(p, d_prime, device=self.device, dtype=dtype)
+            X_augmented = project_to_sample_points(X=X, sample_points=sample_points)
+            self.assertEqual(X_augmented.shape, torch.Size(batch_shape + [p, d]))
+            if batch_shape == [2]:
+                self.assertTrue(
+                    torch.allclose(X_augmented[0, :, -d_prime:], sample_points)
+                )
+            else:
+                self.assertTrue(
+                    torch.allclose(X_augmented[:, -d_prime:], sample_points)
+                )

@@ -25,8 +25,9 @@ from botorch.exceptions.errors import UnsupportedError
 from botorch.exceptions.warnings import SamplingWarning
 from botorch.models.model import Model
 from botorch.sampling.samplers import IIDNormalSampler, MCSampler, SobolQMCNormalSampler
-from botorch.utils.multi_objective.box_decomposition import NondominatedPartitioning
-from botorch.utils.transforms import squeeze_last_dim
+from botorch.utils.multi_objective.box_decompositions.non_dominated import (
+    NondominatedPartitioning,
+)
 from torch import Tensor
 from torch.quasirandom import SobolEngine
 
@@ -122,19 +123,23 @@ def get_acquisition_function(
         )
     elif acquisition_function_name == "qEHVI":
         # pyre-fixme [16]: `Model` has no attribute `train_targets`
-        if "ref_point" not in kwargs:
+        try:
+            ref_point = kwargs["ref_point"]
+        except KeyError:
             raise ValueError("`ref_point` must be specified in kwargs for qEHVI")
-        if "Y" not in kwargs:
+        try:
+            Y = kwargs["Y"]
+        except KeyError:
             raise ValueError("`Y` must be specified in kwargs for qEHVI")
-        ref_point = kwargs["ref_point"]
-        Y = kwargs.get("Y")
         # get feasible points
         if constraints is not None:
             feas = torch.stack([c(Y) <= 0 for c in constraints], dim=-1).all(dim=-1)
             Y = Y[feas]
         obj = objective(Y)
         partitioning = NondominatedPartitioning(
-            num_outcomes=obj.shape[-1], Y=obj, alpha=kwargs.get("alpha", 0.0)
+            ref_point=torch.as_tensor(ref_point, dtype=Y.dtype, device=Y.device),
+            Y=obj,
+            alpha=kwargs.get("alpha", 0.0),
         )
         return moo_monte_carlo.qExpectedHypervolumeImprovement(
             model=model,
@@ -143,6 +148,7 @@ def get_acquisition_function(
             sampler=sampler,
             objective=objective,
             constraints=constraints,
+            X_pending=X_pending,
         )
     raise NotImplementedError(
         f"Unknown acquisition function {acquisition_function_name}"
@@ -150,7 +156,9 @@ def get_acquisition_function(
 
 
 def get_infeasible_cost(
-    X: Tensor, model: Model, objective: Callable[[Tensor], Tensor] = squeeze_last_dim
+    X: Tensor,
+    model: Model,
+    objective: Optional[Callable[[Tensor, Optional[Tensor]], Tensor]] = None,
 ) -> float:
     r"""Get infeasible cost for a model and objective.
 
@@ -172,6 +180,11 @@ def get_infeasible_cost(
         >>> objective = lambda Y: Y[..., -1] ** 2
         >>> M = get_infeasible_cost(train_X, model, obj)
     """
+    if objective is None:
+
+        def objective(Y: Tensor, X: Optional[Tensor] = None):
+            return Y.squeeze(-1)
+
     posterior = model.posterior(X)
     lb = objective(posterior.mean - 6 * posterior.variance.clamp_min(0).sqrt()).min()
     M = -(lb.clamp_max(0.0))
@@ -270,7 +283,7 @@ def prune_inferior_points(
     samples = sampler(posterior)
     if objective is None:
         objective = IdentityMCObjective()
-    obj_vals = objective(samples)
+    obj_vals = objective(samples, X=X)
     if obj_vals.ndim > 2:
         # TODO: support batched inputs (req. dealing with ragged tensors)
         raise UnsupportedError(
@@ -372,3 +385,22 @@ def expand_trace_observations(
     # change relevant entries of the scaling tensor
     scale_fac[..., q:, fidelity_dims] = sf
     return scale_fac * X_expanded
+
+
+def project_to_sample_points(X: Tensor, sample_points: Tensor) -> Tensor:
+    r"""Augment `X` with sample points at which to take weighted average.
+
+    Args:
+        X: A `batch_shape x 1 x d`-dim Tensor of with one d`-dim design points
+            for each t-batch.
+        sample_points: `p x d'`-dim Tensor (`d' < d`) of `d'`-dim sample points at
+            which to compute the expectation. The `d'`-dims refer to the trailing
+            columns of X.
+    Returns:
+        A `batch_shape x p x d` Tensor where the q-batch includes the `p` sample points.
+    """
+    batch_shape = X.shape[:-2]
+    p, d_prime = sample_points.shape
+    X_new = X.repeat(*(1 for _ in batch_shape), p, 1)  # batch_shape x p x d
+    X_new[..., -d_prime:] = sample_points
+    return X_new

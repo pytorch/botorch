@@ -338,12 +338,17 @@ def gen_value_function_initial_conditions(
         resampled = fantasy_cands[idx]
     else:
         resampled = torch.empty(
-            0, *batch_shape, 1, bounds.shape[-1], dtype=bounds.dtype
+            0,
+            *batch_shape,
+            1,
+            bounds.shape[-1],
+            dtype=fantasy_cands.dtype,
+            device=fantasy_cands.device,
         )
     # add qMC samples
     randomized = draw_sobol_samples(
         bounds=bounds, n=raw_samples - n_value, q=1, batch_shape=batch_shape, seed=seed
-    )
+    ).to(resampled)
     # full set of raw samples
     X_rnd = torch.cat([resampled, randomized], dim=0)
 

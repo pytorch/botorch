@@ -8,10 +8,10 @@
 
 from __future__ import annotations
 
+import collections
 from collections import OrderedDict
 
 import torch
-from torch._six import container_abcs
 from torch.nn import Module
 
 
@@ -33,7 +33,7 @@ class BufferDict(Module):
     types (e.g., Python's plain ``dict``) does not preserve the order of the
     merged mapping.
 
-    Arguments:
+    Args:
         buffers (iterable, optional): a mapping (dictionary) of
             (string : :class:`~torch.Tensor`) or an iterable of key-value pairs
             of type (string, :class:`~torch.Tensor`)
@@ -83,7 +83,7 @@ class BufferDict(Module):
     def pop(self, key):
         r"""Remove key from the BufferDict and return its buffer.
 
-        Arguments:
+        Args:
             key (string): key to pop from the BufferDict
         """
         v = self[key]
@@ -111,18 +111,18 @@ class BufferDict(Module):
             or an iterable of key-value pairs, the order of new elements in it is
             preserved.
 
-        Arguments:
+        Args:
             buffers (iterable): a mapping (dictionary) from string to
                 :class:`~torch.Tensor`, or an iterable of
                 key-value pairs of type (string, :class:`~torch.Tensor`)
         """
-        if not isinstance(buffers, container_abcs.Iterable):
+        if not isinstance(buffers, collections.abc.Iterable):
             raise TypeError(
                 "BuffersDict.update should be called with an "
                 "iterable of key/value pairs, but got " + type(buffers).__name__
             )
 
-        if isinstance(buffers, container_abcs.Mapping):
+        if isinstance(buffers, collections.abc.Mapping):
             if isinstance(buffers, (OrderedDict, BufferDict)):
                 for key, buffer in buffers.items():
                     self[key] = buffer
@@ -131,7 +131,7 @@ class BufferDict(Module):
                     self[key] = buffer
         else:
             for j, p in enumerate(buffers):
-                if not isinstance(p, container_abcs.Iterable):
+                if not isinstance(p, collections.abc.Iterable):
                     raise TypeError(
                         "BufferDict update sequence element "
                         "#" + str(j) + " should be Iterable; is" + type(p).__name__

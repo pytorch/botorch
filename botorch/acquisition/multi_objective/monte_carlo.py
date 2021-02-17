@@ -31,7 +31,9 @@ from botorch.acquisition.multi_objective.objective import (
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.model import Model
 from botorch.sampling.samplers import MCSampler, SobolQMCNormalSampler
-from botorch.utils.multi_objective.box_decomposition import NondominatedPartitioning
+from botorch.utils.multi_objective.box_decompositions.non_dominated import (
+    NondominatedPartitioning,
+)
 from botorch.utils.objective import apply_constraints_nonnegative_soft
 from botorch.utils.torch import BufferDict
 from botorch.utils.transforms import concatenate_pending_points, t_batch_mode_transform
@@ -150,7 +152,7 @@ class qExpectedHypervolumeImprovement(MultiObjectiveMCAcquisitionFunction):
         self.constraints = constraints
         self.eta = eta
         self.register_buffer("ref_point", ref_point)
-        cell_bounds = partitioning.get_hypercell_bounds(ref_point=self.ref_point)
+        cell_bounds = partitioning.get_hypercell_bounds()
         self.register_buffer("cell_lower_bounds", cell_bounds[0])
         self.register_buffer("cell_upper_bounds", cell_bounds[1])
         self.q = -1
@@ -182,11 +184,12 @@ class qExpectedHypervolumeImprovement(MultiObjectiveMCAcquisitionFunction):
             )
             self.q = q
 
-    def _compute_qehvi(self, samples: Tensor) -> Tensor:
+    def _compute_qehvi(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
         r"""Compute the expected (feasible) hypervolume improvement given MC samples.
 
         Args:
             samples: A `n_samples x batch_shape x q x m`-dim tensor of samples.
+            X: A `batch_shape x q x d`-dim tensor of inputs.
 
         Returns:
             A `batch_shape`-dim tensor of expected hypervolume improvement for each
@@ -195,7 +198,7 @@ class qExpectedHypervolumeImprovement(MultiObjectiveMCAcquisitionFunction):
         q = samples.shape[-2]
         # Note that the objective may subset the outcomes (e.g. this will usually happen
         # if there are constraints present).
-        obj = self.objective(samples)
+        obj = self.objective(samples, X=X)
         if self.constraints is not None:
             feas_weights = torch.ones(
                 obj.shape[:-1], device=obj.device, dtype=obj.dtype

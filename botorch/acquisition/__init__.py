@@ -39,6 +39,7 @@ from botorch.acquisition.monte_carlo import (
     qSimpleRegret,
     qUpperConfidenceBound,
 )
+from botorch.acquisition.multi_step_lookahead import qMultiStepLookahead
 from botorch.acquisition.objective import (
     ConstrainedMCObjective,
     GenericMCObjective,
@@ -48,7 +49,6 @@ from botorch.acquisition.objective import (
     ScalarizedObjective,
 )
 from botorch.acquisition.utils import get_acquisition_function
-
 
 __all__ = [
     "AcquisitionFunction",
@@ -68,6 +68,7 @@ __all__ = [
     "qMultiFidelityKnowledgeGradient",
     "qMaxValueEntropy",
     "qMultiFidelityMaxValueEntropy",
+    "qMultiStepLookahead",
     "qNoisyExpectedImprovement",
     "qNegIntegratedPosteriorVariance",
     "qProbabilityOfImprovement",

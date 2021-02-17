@@ -8,11 +8,11 @@ from typing import List, Optional
 
 import torch
 from botorch.models.multitask import MultiTaskGP
+from gpytorch.constraints import Interval
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels.rbf_kernel import RBFKernel
 from gpytorch.lazy import InterpolatedLazyTensor, LazyTensor
 from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
-from gpytorch.priors.torch_priors import UniformPrior
 from torch import Tensor
 from torch.nn import ModuleList
 
@@ -54,13 +54,14 @@ class LCEMGP(MultiTaskGP):
             task_feature=task_feature,
             output_tasks=output_tasks,
         )
+        self.device = train_X.device
         #  context indices
         all_tasks = train_X[:, task_feature].unique()
         self.all_tasks = all_tasks.to(dtype=torch.long).tolist()
         self.all_tasks.sort()  # unique in python does automatic sort; add for safety
 
         if context_cat_feature is None:
-            context_cat_feature = all_tasks.unsqueeze(-1)
+            context_cat_feature = all_tasks.unsqueeze(-1).to(device=self.device)
         self.context_cat_feature = context_cat_feature  # row indices = context indices
         self.context_emb_feature = context_emb_feature
 
@@ -81,7 +82,10 @@ class LCEMGP(MultiTaskGP):
             ]
         )
         self.task_covar_module = RBFKernel(
-            ard_num_dims=n_embs, lengthscale_prior=UniformPrior(0.0, 2.0)
+            ard_num_dims=n_embs,
+            lengthscale_constraint=Interval(
+                0.0, 2.0, transform=None, initial_value=1.0
+            ),
         )
         self.to(train_X)
 
@@ -94,7 +98,9 @@ class LCEMGP(MultiTaskGP):
         """generate embedding features for all contexts."""
         embeddings = [
             emb_layer(
-                self.context_cat_feature[:, i].to(dtype=torch.long)  # pyre-ignore
+                self.context_cat_feature[:, i].to(
+                    dtype=torch.long, device=self.device
+                )  # pyre-ignore
             )
             for i, emb_layer in enumerate(self.emb_layers)
         ]
@@ -103,7 +109,8 @@ class LCEMGP(MultiTaskGP):
         # add given embeddings if any
         if self.context_emb_feature is not None:
             embeddings = torch.cat(
-                [embeddings, self.context_emb_feature], dim=1  # pyre-ignore
+                [embeddings, self.context_emb_feature.to(self.device)],
+                dim=1,  # pyre-ignore
             )
         return embeddings
 

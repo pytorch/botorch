@@ -38,14 +38,16 @@ constrained objectives (using a sigmoid approximation for the constraints).
 The [`GenericMCObjective`](../api/acquisition.html#genericmcobjective) allows
 simply using a generic callable to implement an ad-hoc objective. The callable
 is expected to map a `sample_shape x batch_shape x q x o`-dimensional tensor of
-posterior samples to a `sample_shape x batch_shape x q`-dimensional tensor of
-sampled objective values.
+posterior samples and an (optional) `batch_shape x q x d`-dimensional tensor of
+inputs to a `sample_shape x batch_shape x q`-dimensional tensor of sampled
+objective values.
 
 For instance, say you have a multi-output model with $o=2$ outputs, and you want
 to optimize a $obj(y) = 1 - \\|y - y_0\\|_2$, where $y_0 \in \mathbb{R}^2$.
-For this you would use the following custom objective:
+For this you would use the following custom objective (here we can ignore the
+ninputs $X$ as the objective does not depend on it):
 ```python
-obj = lambda xi: 1 - torch.norm(xi - y_0, dim=-1)
+obj = lambda xi, X: 1 - torch.norm(xi - y_0, dim=-1)
 mc_objective = GenericMCObjective(obj)
 ```
 
@@ -63,7 +65,7 @@ A custom objective module of the above example would be
 ```python
 class MyCustomObjective(MCAcquisitionObjective):
 
-    def forward(self, samples):
+    def forward(self, samples, X=None):
       return 1 - torch.norm(samples - y_0, dim=-1)
 ```
 

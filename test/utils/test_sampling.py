@@ -67,7 +67,7 @@ class TestConstructBaseSamples(BotorchTestCase):
         with warnings.catch_warnings(record=True) as w, settings.debug(True):
             construct_base_samples(
                 batch_shape=torch.Size(),
-                output_shape=torch.Size([200, 6]),
+                output_shape=torch.Size([2000, 11]),  # 200 * 11 = 22000 > 21201
                 sample_shape=torch.Size([1]),
                 qmc=True,
             )

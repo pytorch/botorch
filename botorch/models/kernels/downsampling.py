@@ -65,8 +65,8 @@ class DownsamplingKernel(Kernel):
             self.register_prior(
                 "power_prior",
                 power_prior,
-                lambda: self.power,
-                lambda v: self._set_power(v),
+                lambda m: m.power,
+                lambda m, v: m._set_power(v),
             )
         self.register_constraint("raw_power", power_constraint)
 
@@ -74,8 +74,8 @@ class DownsamplingKernel(Kernel):
             self.register_prior(
                 "offset_prior",
                 offset_prior,
-                lambda: self.offset,
-                lambda v: self._set_offset(v),
+                lambda m: m.offset,
+                lambda m, v: m._set_offset(v),
             )
         self.register_constraint("raw_offset", offset_constraint)
 

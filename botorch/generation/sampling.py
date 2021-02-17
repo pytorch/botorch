@@ -113,7 +113,7 @@ class MaxPosteriorSampling(SamplingStrategy):
         if isinstance(self.objective, ScalarizedObjective):
             obj = samples.squeeze(-1)  # num_samples x batch_shape x N
         else:
-            obj = self.objective(samples)  # num_samples x batch_shape x N
+            obj = self.objective(samples, X=X)  # num_samples x batch_shape x N
         if self.replacement:
             # if we allow replacement then things are simple(r)
             idcs = torch.argmax(obj, dim=-1)

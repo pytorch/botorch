@@ -26,6 +26,11 @@ References
     Conference on Uncertainty in Artificial Intelligence (UAI’14).
     AUAI Press, Arlington, Virginia, USA, 250–259.
 
+.. [Oszycka1995]
+    A. Osyczka, S. Kundu. 1995. A new method to solve generalized multicriteria
+    optimization problems using the simple genetic algorithm. In Structural
+    Optimization 10. 94–99.
+
 .. [Tanabe2020]
     Ryoji Tanabe, Hisao Ishibuchi, An easy-to-use real-world multi-objective
     optimization problem suite, Applied Soft Computing,Volume 89, 2020.
@@ -86,7 +91,7 @@ class BraninCurrin(MultiObjectiveTestProblem):
     def __init__(self, noise_std: Optional[float] = None, negate: bool = False) -> None:
         r"""Constructor for Branin-Currin.
 
-        Arguments:
+        Args:
             noise_std: Standard deviation of the observation noise.
             negate: If True, negate the objectives.
         """
@@ -601,3 +606,45 @@ class C2DTLZ2(DTLZ2, ConstrainedBaseTestProblem):
         min1 = (term1 + term2).min(dim=-1).values
         min2 = ((f_X - 1 / math.sqrt(f_X.shape[-1])).pow(2) - self._r ** 2).sum(dim=-1)
         return -torch.min(min1, min2).unsqueeze(-1)
+
+
+class OSY(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
+    r"""
+    The OSY test problem from [Oszycka1995]_.
+    Implementation from
+    https://github.com/msu-coinlab/pymoo/blob/master/pymoo/problems/multi/osy.py
+    Note that this implementation assumes minimization, so please choose negate=True.
+    """
+
+    dim = 6
+    num_constraints = 6
+    num_objectives = 2
+    _bounds = [
+        (0.0, 10.0),
+        (0.0, 10.0),
+        (1.0, 5.0),
+        (0.0, 6.0),
+        (1.0, 5.0),
+        (0.0, 10.0),
+    ]
+    _ref_point = [-75.0, 75.0]
+
+    def evaluate_true(self, X: Tensor) -> Tensor:
+        f1 = -(
+            25 * (X[..., 0] - 2) ** 2
+            + (X[..., 1] - 2) ** 2
+            + (X[..., 2] - 1) ** 2
+            + (X[..., 3] - 4) ** 2
+            + (X[..., 4] - 1) ** 2
+        )
+        f2 = (X ** 2).sum(-1)
+        return torch.stack([f1, f2], dim=-1)
+
+    def evaluate_slack_true(self, X: Tensor) -> Tensor:
+        g1 = X[..., 0] + X[..., 1] - 2.0
+        g2 = 6.0 - X[..., 0] - X[..., 1]
+        g3 = 2.0 - X[..., 1] + X[..., 0]
+        g4 = 2.0 - X[..., 0] + 3.0 * X[..., 1]
+        g5 = 4.0 - (X[..., 2] - 3.0) ** 2 - X[..., 3]
+        g6 = (X[..., 4] - 3.0) ** 2 + X[..., 5] - 4.0
+        return torch.stack([g1, g2, g3, g4, g5, g6], dim=-1)
