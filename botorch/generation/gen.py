@@ -101,7 +101,8 @@ def gen_candidates_scipy(
     def f(x):
         if np.isnan(x).any():
             raise RuntimeError(
-                f"{np.isnan(x).sum()} elements of the {x.shape} tensor `x` are NaN."
+                f"{np.isnan(x).sum()} elements of the {x.size} element array "
+                f"`x` are NaN."
             )
         X = (
             torch.from_numpy(x)
@@ -116,8 +117,8 @@ def gen_candidates_scipy(
         gradf = _arrayify(torch.autograd.grad(loss, X)[0].contiguous().view(-1))
         if np.isnan(gradf).any():
             msg = (
-                f"{np.isnan(gradf).sum()} elements of the {x.shape} gradient tensor "
-                "`gradf` are NaN. This often indicates numerical issues."
+                f"{np.isnan(gradf).sum()} elements of the {x.size} element "
+                "gradient array `gradf` are NaN. This often indicates numerical issues."
             )
             if initial_conditions.dtype != torch.double:
                 msg += " Consider using `dtype=torch.double`."

@@ -142,7 +142,7 @@ class TestGenCandidates(TestBaseCandidateGeneration):
     def test_gen_candidates_scipy_nan_handling(self):
         for dtype, expected_regex in [
             (torch.float, "Consider using"),
-            (torch.double, "gradient tensor"),
+            (torch.double, "gradient array"),
         ]:
             ckwargs = {"dtype": dtype, "device": self.device}
 
@@ -158,7 +158,7 @@ class TestGenCandidates(TestBaseCandidateGeneration):
 
             # test NaN in `x`
             test_ics = torch.tensor([0.0, 0.0, float("nan")], **ckwargs)
-            with self.assertRaisesRegex(RuntimeError, "tensor `x` are NaN."):
+            with self.assertRaisesRegex(RuntimeError, "array `x` are NaN."):
                 gen_candidates_scipy(
                     initial_conditions=test_ics,
                     acquisition_function=mock.Mock(),
