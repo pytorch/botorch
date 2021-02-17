@@ -27,7 +27,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install git+https://github.com/cornellius-gp/gpytorch.git
-        pip install -e .[test]
+        pip install .[test]
     - name: Unit tests and coverage
       run: |
         pytest -ra --cov=. --cov-report term-missing
@@ -115,7 +115,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install git+https://github.com/cornellius-gp/gpytorch.git
-        pip install -e .[dev]
+        pip install .[dev]
         pip install git+https://github.com/facebook/Ax.git
         pip install beautifulsoup4 ipython "nbconvert<6.0"
     - name: Unit tests
