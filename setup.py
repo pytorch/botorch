@@ -76,7 +76,8 @@ setup(
         "relative_to": __file__,
         "write_to": os.path.join(root_dir, "botorch", "version.py"),
         "local_scheme": (
-            "no-local-version" if os.environ.get("SCM_NO_LOCAL_VERSION", False)
+            "no-local-version"
+            if os.environ.get("SCM_NO_LOCAL_VERSION", False)
             else "node-and-date"
         ),
     },
