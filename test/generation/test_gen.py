@@ -157,7 +157,7 @@ class TestGenCandidates(TestBaseCandidateGeneration):
                     )
 
             # test NaN in `x`
-            test_ics[-1] = torch.tensor(float("nan"))
+            test_ics = torch.tensor([0.0, 0.0, float("nan")], **ckwargs)
             with self.assertRaisesRegex(RuntimeError, "tensor `x` are NaN."):
                 _ = gen_candidates_scipy(
                     initial_conditions=test_ics,
