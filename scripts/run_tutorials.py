@@ -20,7 +20,7 @@ from nbconvert import PythonExporter
 
 
 IGNORE = {
-    "vae_mnist.ipynb",  #  require setting paths to local data
+    "vae_mnist.ipynb",  # requires setting paths to local data
 }
 
 
