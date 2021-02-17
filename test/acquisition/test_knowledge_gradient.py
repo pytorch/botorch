@@ -427,7 +427,7 @@ class TestQMultiFidelityKnowledgeGradient(BotorchTestCase):
                     patch_f.assert_called_once()
                     cargs, ckwargs = patch_f.call_args
                     self.assertEqual(ckwargs["X"].shape, torch.Size([1, 16, 4]))
-                    val_exp = torch.tensor([1.375], dtype=dtype)
+                    val_exp = torch.tensor([1.375], device=self.device, dtype=dtype)
                     self.assertTrue(torch.allclose(val, val_exp, atol=1e-4))
 
                     patch_f.reset_mock()
@@ -442,7 +442,7 @@ class TestQMultiFidelityKnowledgeGradient(BotorchTestCase):
                     patch_f.assert_called_once()
                     cargs, ckwargs = patch_f.call_args
                     self.assertEqual(ckwargs["X"].shape, torch.Size([1, 16, 4]))
-                    val_exp = torch.tensor([1.0], dtype=dtype)
+                    val_exp = torch.tensor([1.0], device=self.device, dtype=dtype)
                     self.assertTrue(torch.allclose(val, val_exp, atol=1e-4))
 
     def test_fixed_evaluation_qMFKG(self):
@@ -493,7 +493,9 @@ class TestQMultiFidelityKnowledgeGradient(BotorchTestCase):
                 )
                 val = qMFKG.evaluate(
                     X=torch.zeros(1, 1, 1, device=self.device, dtype=dtype),
-                    bounds=torch.tensor([[0.0], [1.0]]),
+                    bounds=torch.tensor(
+                        [[0.0], [1.0]], device=self.device, dtype=dtype
+                    ),
                     num_restarts=1,
                     raw_samples=1,
                 )
