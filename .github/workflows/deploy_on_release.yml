@@ -23,7 +23,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install git+https://github.com/cornellius-gp/gpytorch.git
-        pip install -e .[test]
+        pip install .[test]
     - name: Unit tests and coverage
       run: |
         pytest -ra --cov=. --cov-report term-missing
@@ -111,7 +111,7 @@ jobs:
         pip install -e .[dev]
         pip install git+https://github.com/facebook/Ax.git
         pip install -e .[tutorials]
-        pip install jupyter nbconvert<6.0
+        pip install beautifulsoup4 ipython "nbconvert<6.0"
     - name: Publish latest website
       run: |
         ./scripts/publish_site.sh -d -v ${{ github.event.release.tag_name }}
