@@ -115,15 +115,13 @@ def gen_candidates_scipy(
         # compute gradient w.r.t. the inputs (does not accumulate in leaves)
         gradf = _arrayify(torch.autograd.grad(loss, X)[0].contiguous().view(-1))
         if np.isnan(gradf).any():
-            raise RuntimeError(
+            msg = (
                 f"{np.isnan(gradf).sum()} elements of the {x.shape} gradient tensor "
-                "`gradf` are NaN."
-                + (
-                    "Consider using `dtype=torch.double`."
-                    if initial_conditions.dtype != torch.double
-                    else ""
-                )
+                "`gradf` are NaN. This often indicates numerical issues."
             )
+            if initial_conditions.dtype != torch.double:
+                msg += " Consider using `dtype=torch.double`."
+            raise RuntimeError(msg)
         fval = loss.item()
         return fval, gradf
 
