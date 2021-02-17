@@ -36,7 +36,6 @@ jobs:
       run: |
         bash <(curl -s https://codecov.io/bash)
 
-
   package-test-deploy-pypi:
     name: Package and test deployment to test.pypi.org
     runs-on: ubuntu-latest
@@ -57,6 +56,7 @@ jobs:
         pip install --upgrade setuptools wheel
     - name: Build packages (wheel and source distribution)
       run: |
+        export SCM_NO_LOCAL_VERSION=true
         python setup.py sdist bdist_wheel
     - name: Verify packages
       run: |
@@ -68,7 +68,7 @@ jobs:
         password: ${{ secrets.TEST_PYPI_PASSWORD }}
         repository_url: https://test.pypi.org/legacy/
         skip_existing: true
-
+        verbose: true
 
   package-conda:
     name: Test conda build
@@ -96,7 +96,6 @@ jobs:
       shell: bash -l {0}
       run: |
         ./scripts/build_and_verify_conda_package.sh
-
 
   publish-latest-website:
     name: Publish latest website
