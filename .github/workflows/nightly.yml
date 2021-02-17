@@ -117,7 +117,7 @@ jobs:
         pip install git+https://github.com/cornellius-gp/gpytorch.git
         pip install -e .[dev]
         pip install git+https://github.com/facebook/Ax.git
-        pip install jupyter nbconvert<6.0
+        pip install beautifulsoup4 ipython "nbconvert<6.0"
     - name: Unit tests
       run: |
         pytest -ra
