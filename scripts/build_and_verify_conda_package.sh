@@ -24,7 +24,7 @@ path="${build_dir}/noarch/botorch-${BOTORCH_VERSION}-0.tar.bz2"
 conda install --offline "${path}"
 
 # verify import works and version is correct
-conda_version=$(python -c "import botorch; print(botorch.__version__)")
+conda_version=$(python -c "import botorch; print(botorch.__version__)" | tail -n 1)
 if [[ $conda_version != "$BOTORCH_VERSION" ]]; then
   echo "Incorrect version. Expected: ${BOTORCH_VERSION}, Actual: ${conda_version}"
   exit 1
