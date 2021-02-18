@@ -3,6 +3,45 @@
 The release log for BoTorch.
 
 
+## [0.4.0] - Feb 22, 2021
+
+#### Compatibility
+* Require PyTorch >=1.7.1 (#714).
+* Require GPyTorch >=1.4 (#714).
+
+#### New Features
+* `HigherOrderGP` - High-Order Gaussian Process (HOGP) model for
+  high-dimensional output regression (#631, #646, #648, #680).
+* `qMultiStepLookahead` acquisition function for general look-ahead
+  optimization approaches (#611, #659).
+* `ScalarizedPosteriorMean` and `project_to_sample_points` for more
+  advanced MFKG functionality (#645).
+* Large-scale Thompson sampling tutorial (#654).
+* `GPDraw` utility for sampling from (exact) GP priors (#655).
+* Add `X` as optional arg to call signature of `MCAcqusitionObjective` (#487).
+* Add Add `OSY` synthetic test problem (#679).
+
+#### Bug Fixes
+* Fix matrix multiplication in `scalarize_posterior` (#638).
+* Set `X_pending` in `get_acquisition_function` in `qEHVI` (#662).
+* Make contextual kernel device-aware (#666).
+* Do not use an `MCSampler` in `MaxPosteriorSampling` (#701).
+* Add ability to subset outcome transforms (#711).
+
+#### Performance Improvements
+* Batchify box decomposition for 2d case (#642).
+
+#### Other Changes
+* Use scipy distribution in MES quantile bisect (#633).
+* Use new closure definition for GPyTorch priors (#634).
+* Allow enabling of approximate root decomposition in `posterior` calls (#652).
+* Support for upcoming 21201-dimensional PyTorch `SobolEngine` (#672, #674).
+* Refactored various MOO utilities to allow future additions (#656, #657, #658, #661).
+* Support input_transform in PairwiseGP (#632).
+* Output shape checks for t_batch_mode_transform (#577).
+* Check for NaN in `gen_candidates_scipy` (#688).
+
+
 ## [0.3.3] - Dec 8, 2020
 
 Contextual Bayesian Optimization, Input Warping, TuRBO, sampling from polytopes.
