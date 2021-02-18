@@ -22,7 +22,6 @@ jobs:
     - name: Install dependencies
       run: |
         pip install black
-        pip install flake8
     - name: Black
       run: |
         black --check --diff .
