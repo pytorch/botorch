@@ -66,19 +66,19 @@ Negative values imply feasibility. The callables support broadcasting
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></p>
 <p>Standardized struct of model training data for a single outcome.</p>
 <p>Create new instance of TrainingData(X, Y, Yvar)</p>
-<dl class="py attribute">
+<dl class="py method">
 <dt id="botorch.utils.containers.TrainingData.X">
-<code class="sig-name descname"><span class="pre">X</span></code><em class="property"><span class="pre">:</span> <span class="pre">torch.Tensor</span></em><a class="headerlink" href="#botorch.utils.containers.TrainingData.X" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">X</span></code><a class="headerlink" href="#botorch.utils.containers.TrainingData.X" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 0</p>
 </dd></dl>
-<dl class="py attribute">
+<dl class="py method">
 <dt id="botorch.utils.containers.TrainingData.Y">
-<code class="sig-name descname"><span class="pre">Y</span></code><em class="property"><span class="pre">:</span> <span class="pre">torch.Tensor</span></em><a class="headerlink" href="#botorch.utils.containers.TrainingData.Y" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">Y</span></code><a class="headerlink" href="#botorch.utils.containers.TrainingData.Y" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 1</p>
 </dd></dl>
-<dl class="py attribute">
+<dl class="py method">
 <dt id="botorch.utils.containers.TrainingData.Yvar">
-<code class="sig-name descname"><span class="pre">Yvar</span></code><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.utils.containers.TrainingData.Yvar" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">Yvar</span></code><a class="headerlink" href="#botorch.utils.containers.TrainingData.Yvar" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 2</p>
 </dd></dl>
 </dd></dl>
@@ -1112,16 +1112,22 @@ contained within <cite>bounds</cite>.</p>
 </dd></dl>
 <dl class="py function">
 <dt id="botorch.utils.transforms.t_batch_mode_transform">
-<code class="sig-prename descclassname"><span class="pre">botorch.utils.transforms.</span></code><code class="sig-name descname"><span class="pre">t_batch_mode_transform</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">expected_q</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/transforms.html#t_batch_mode_transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.transforms.t_batch_mode_transform" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname"><span class="pre">botorch.utils.transforms.</span></code><code class="sig-name descname"><span class="pre">t_batch_mode_transform</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">expected_q</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">assert_output_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/transforms.html#t_batch_mode_transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.transforms.t_batch_mode_transform" title="Permalink to this definition">¶</a></dt>
 <dd><p>Factory for decorators taking a t-batched <cite>X</cite> tensor.</p>
 <p>This method creates decorators for instance methods to transform an input tensor
 <cite>X</cite> to t-batch mode (i.e. with at least 3 dimensions). This assumes the tensor
 has a q-batch dimension. The decorator also checks the q-batch size if <cite>expected_q</cite>
-is provided.</p>
+is provided, and the output shape if <cite>assert_output_shape</cite> is <cite>True</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>expected_q</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The expected q-batch size of X. If specified, this will raise an
-AssertitionError if X’s q-batch size does not equal expected_q.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>expected_q</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The expected q-batch size of X. If specified, this will raise an
+AssertionError if X’s q-batch size does not equal expected_q.</p></li>
+<li><p><strong>assert_output_shape</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If <cite>True</cite>, this will raise an AssertionError if the
+output shape does not match either the t-batch shape of X,
+or the <cite>acqf.model.batch_shape</cite> for acquisition functions using
+batched models.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Return type</dt>
 <dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]], <code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]</p>

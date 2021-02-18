@@ -18,6 +18,7 @@ from torchvision import datasets # transforms
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 dtype = torch.double
+SMOKE_TEST = os.environ.get("SMOKE_TEST")
 
 
 # ### Problem setup
@@ -97,6 +98,7 @@ class VAE(nn.Module):
         z = self.reparameterize(mu, logvar)
         return self.decode(z), mu, logvar
 
+    
 vae_model = VAE().to(dtype=dtype, device=device)
 vae_state_dict = torch.load(os.path.join(PRETRAINED_LOCATION, "mnist_vae.pt"), map_location=device)
 vae_model.load_state_dict(vae_state_dict);
@@ -162,6 +164,7 @@ def gen_initial_data(n=5):
     best_observed_value = train_obj.max().item()
     return train_x, train_obj, best_observed_value
 
+
 def get_fitted_model(train_x, train_obj, state_dict=None):
     # initialize and fit model
     model = SingleTaskGP(train_X=train_x, train_Y=train_obj)
@@ -176,13 +179,15 @@ def get_fitted_model(train_x, train_obj, state_dict=None):
 # #### Define a helper function that performs the essential BO step
 # The helper function below takes an acquisition function as an argument, optimizes it, and returns the batch $\{x_1, x_2, \ldots x_q\}$ along with the observed function values. For this example, we'll use a small batch of $q=3$.
 
-# In[11]:
+# In[9]:
 
 
 from botorch.optim import optimize_acqf
 
 
-BATCH_SIZE = 3
+BATCH_SIZE = 3 if not SMOKE_TEST else 2
+NUM_RESTARTS = 10 if not SMOKE_TEST else 2
+RAW_SAMPLES = 256 if not SMOKE_TEST else 4
 
 
 def optimize_acqf_and_get_observation(acq_func):
@@ -196,8 +201,8 @@ def optimize_acqf_and_get_observation(acq_func):
             torch.ones(d, dtype=dtype, device=device),
         ]),
         q=BATCH_SIZE,
-        num_restarts=10,
-        raw_samples=200,
+        num_restarts=NUM_RESTARTS,
+        raw_samples=RAW_SAMPLES,
     )
 
     # observe new values 
@@ -207,9 +212,9 @@ def optimize_acqf_and_get_observation(acq_func):
 
 
 # ### Perform Bayesian Optimization loop with qEI
-# The Bayesian optimization "loop" for a batch size of $q$ simply iterates the following steps: (1) given a surrogate model, choose a batch of points $\{x_1, x_2, \ldots x_q\}$, (2) observe $f(x)$ for each $x$ in the batch, and (3) update the surrogate model. We run `N_BATCH=75` iterations. The acquisition function is approximated using `MC_SAMPLES=2000` samples. We also initialize the model with 5 randomly drawn points.
+# The Bayesian optimization "loop" for a batch size of $q$ simply iterates the following steps: (1) given a surrogate model, choose a batch of points $\{x_1, x_2, \ldots x_q\}$, (2) observe $f(x)$ for each $x$ in the batch, and (3) update the surrogate model. We run `N_BATCH=75` iterations. The acquisition function is approximated using `MC_SAMPLES=2048` samples. We also initialize the model with 5 randomly drawn points.
 
-# In[12]:
+# In[10]:
 
 
 from botorch import fit_gpytorch_model
@@ -219,8 +224,8 @@ from botorch.sampling.samplers import SobolQMCNormalSampler
 seed=1
 torch.manual_seed(seed)
 
-N_BATCH = 50
-MC_SAMPLES = 2000
+N_BATCH = 50 if not SMOKE_TEST else 3
+MC_SAMPLES = 2048 if not SMOKE_TEST else 32
 best_observed = []
 
 # call helper function to initialize model
@@ -230,15 +235,16 @@ best_observed.append(best_value)
 
 # We are now ready to run the BO loop (this make take a few minutes, depending on your machine).
 
-# In[13]:
-
+# In[11]:
 
 
 import warnings
+from matplotlib import pyplot as plt
+
 warnings.filterwarnings("ignore")
 
+
 print(f"\nRunning BO ", end='')
-from matplotlib import pyplot as plt
 
 state_dict = None
 # run N_BATCH rounds of BayesOpt after the initial random batch
@@ -273,7 +279,7 @@ for iteration in range(N_BATCH):
 
 # EI recommends the best point observed so far. We can visualize what the images corresponding to recommended points *would have* been if the BO process ended at various times. Here, we show the progress of the algorithm by examining the images at 0%, 10%, 25%, 50%, 75%, and 100% completion. The first image is the best image found through the initial random batch.
 
-# In[14]:
+# In[12]:
 
 
 import numpy as np
@@ -290,10 +296,4 @@ for i, ax in enumerate(ax.flat):
     b = torch.argmax(score_image_recognition(decode(train_x[:inds[i],:])), dim=0)
     img = decode(train_x[b].view(1, -1)).squeeze().cpu()
     ax.imshow(img, alpha=0.8, cmap='gray')
-
-
-# In[ ]:
-
-
-
 

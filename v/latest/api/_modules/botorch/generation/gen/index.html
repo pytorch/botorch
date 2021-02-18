@@ -38,6 +38,7 @@
 
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">Union</span>
 
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.optim.parameter_constraints</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">_arrayify</span><span class="p">,</span>
@@ -124,6 +125,11 @@
     <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s2"> elements of the </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> element array "</span>
+                <span class="sa">f</span><span class="s2">"`x` are NaN."</span>
+            <span class="p">)</span>
         <span class="n">X</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
             <span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">initial_conditions</span><span class="p">)</span>
@@ -135,6 +141,14 @@
         <span class="n">loss</span> <span class="o">=</span> <span class="o">-</span><span class="n">acquisition_function</span><span class="p">(</span><span class="n">X_fix</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
         <span class="c1"># compute gradient w.r.t. the inputs (does not accumulate in leaves)</span>
         <span class="n">gradf</span> <span class="o">=</span> <span class="n">_arrayify</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">loss</span><span class="p">,</span> <span class="n">X</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">gradf</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">gradf</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s2"> elements of the </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> element "</span>
+                <span class="s2">"gradient array `gradf` are NaN. This often indicates numerical issues."</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">initial_conditions</span><span class="o">.</span><span class="n">dtype</span> <span class="o">!=</span> <span class="n">torch</span><span class="o">.</span><span class="n">double</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">+=</span> <span class="s2">" Consider using `dtype=torch.double`."</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="n">fval</span> <span class="o">=</span> <span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">fval</span><span class="p">,</span> <span class="n">gradf</span>
 

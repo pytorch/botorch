@@ -23,10 +23,12 @@
 # In[1]:
 
 
+import os
 import torch
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 dtype = torch.double
+SMOKE_TEST = os.environ.get("SMOKE_TEST")
 
 
 # ### Problem setup
@@ -38,7 +40,9 @@ dtype = torch.double
 
 from botorch.test_functions import Hartmann
 
+
 neg_hartmann6 = Hartmann(negate=True)
+
 
 def outcome_constraint(X):
     """L1 constraint; feasible if less than or equal to zero."""
@@ -97,11 +101,14 @@ def initialize_model(train_x, train_obj, train_con, state_dict=None):
 
 from botorch.acquisition.objective import ConstrainedMCObjective
 
+
 def obj_callable(Z):
     return Z[..., 0]
 
+
 def constraint_callable(Z):
     return Z[..., 1]
+
 
 # define a feasibility-weighted objective for optimization
 constrained_obj = ConstrainedMCObjective(
@@ -118,8 +125,12 @@ constrained_obj = ConstrainedMCObjective(
 
 from botorch.optim import optimize_acqf
 
-BATCH_SIZE = 3
+
 bounds = torch.tensor([[0.0] * 6, [1.0] * 6], device=device, dtype=dtype)
+
+BATCH_SIZE = 3 if not SMOKE_TEST else 2
+NUM_RESTARTS = 10 if not SMOKE_TEST else 2
+RAW_SAMPLES = 512 if not SMOKE_TEST else 32
 
 
 def optimize_acqf_and_get_observation(acq_func):
@@ -129,8 +140,8 @@ def optimize_acqf_and_get_observation(acq_func):
         acq_function=acq_func,
         bounds=bounds,
         q=BATCH_SIZE,
-        num_restarts=10,
-        raw_samples=512,  # used for intialization heuristic
+        num_restarts=NUM_RESTARTS,
+        raw_samples=RAW_SAMPLES,  # used for intialization heuristic
         options={"batch_limit": 5, "maxiter": 200},
     )
     # observe new values 
@@ -159,7 +170,7 @@ def update_random_observations(best_random):
 # 3. update the surrogate model. 
 # 
 # 
-# Just for illustration purposes, we run three trials each of which do `N_BATCH=20` rounds of optimization. The acquisition function is approximated using `MC_SAMPLES=500` samples.
+# Just for illustration purposes, we run three trials each of which do `N_BATCH=20` rounds of optimization. The acquisition function is approximated using `MC_SAMPLES=256` samples.
 # 
 # *Note*: Running this may take a little while.
 
@@ -170,19 +181,23 @@ from botorch import fit_gpytorch_model
 from botorch.acquisition.monte_carlo import qExpectedImprovement, qNoisyExpectedImprovement
 from botorch.sampling.samplers import SobolQMCNormalSampler
 from botorch.exceptions import BadInitialCandidatesWarning
-import time
 
+import time
 import warnings
+
+
 warnings.filterwarnings('ignore', category=BadInitialCandidatesWarning)
 warnings.filterwarnings('ignore', category=RuntimeWarning)
 
-N_TRIALS = 3
-N_BATCH = 20
-MC_SAMPLES = 256
+
+N_TRIALS = 3 if not SMOKE_TEST else 2
+N_BATCH = 20 if not SMOKE_TEST else 2
+MC_SAMPLES = 256 if not SMOKE_TEST else 32
 
 verbose = False
 
 best_observed_all_ei, best_observed_all_nei, best_random_all = [], [], []
+
 
 # average over multiple trials
 for trial in range(1, N_TRIALS + 1):
@@ -290,8 +305,10 @@ import numpy as np
 from matplotlib import pyplot as plt
 get_ipython().run_line_magic('matplotlib', 'inline')
 
+
 def ci(y):
     return 1.96 * y.std(axis=0) / np.sqrt(N_TRIALS)
+
 
 GLOBAL_MAXIMUM = neg_hartmann6.optimal_value
 

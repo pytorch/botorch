@@ -42,6 +42,7 @@
 # In[1]:
 
 
+import os
 import math
 import torch
 
@@ -49,6 +50,9 @@ from botorch.fit import fit_gpytorch_model
 from botorch.models import SingleTaskGP
 from botorch.utils import standardize
 from gpytorch.mlls import ExactMarginalLogLikelihood
+
+
+SMOKE_TEST = os.environ.get("SMOKE_TEST")
 
 
 # In[2]:
@@ -77,7 +81,9 @@ fit_gpytorch_model(mll);
 
 from botorch.acquisition import qKnowledgeGradient
 
-qKG = qKnowledgeGradient(model, num_fantasies=128)
+
+NUM_FANTASIES = 128 if not SMOKE_TEST else 4
+qKG = qKnowledgeGradient(model, num_fantasies=NUM_FANTASIES)
 
 
 # ### Optimizing qKG
@@ -95,13 +101,17 @@ qKG = qKnowledgeGradient(model, num_fantasies=128)
 from botorch.optim import optimize_acqf
 from botorch.utils.sampling import manual_seed
 
+NUM_RESTARTS = 10 if not SMOKE_TEST else 2
+RAW_SAMPLES = 512 if not SMOKE_TEST else 4
+
+
 with manual_seed(1234):
     candidates, acq_value = optimize_acqf(
         acq_function=qKG, 
         bounds=bounds,
         q=2,
-        num_restarts=10,
-        raw_samples=512,
+        num_restarts=NUM_RESTARTS,
+        raw_samples=RAW_SAMPLES,
     )
 
 
@@ -126,12 +136,16 @@ acq_value
 
 from botorch.acquisition import PosteriorMean
 
+NUM_RESTARTS = 20 if not SMOKE_TEST else 2
+RAW_SAMPLES = 2048 if not SMOKE_TEST else 4
+
+
 argmax_pmean, max_pmean = optimize_acqf(
     acq_function=PosteriorMean(model), 
     bounds=bounds,
     q=1,
-    num_restarts=20,
-    raw_samples=2048,
+    num_restarts=20 if not SMOKE_TEST else 2,
+    raw_samples=2048 if not SMOKE_TEST else 4,
 )
 
 
@@ -142,7 +156,7 @@ argmax_pmean, max_pmean = optimize_acqf(
 
 qKG_proper = qKnowledgeGradient(
     model,
-    num_fantasies=128,
+    num_fantasies=NUM_FANTASIES,
     sampler=qKG.sampler,
     current_value=max_pmean,
 )
@@ -152,8 +166,8 @@ with manual_seed(1234):
         acq_function=qKG_proper, 
         bounds=bounds,
         q=2,
-        num_restarts=10,
-        raw_samples=512,
+        num_restarts=NUM_RESTARTS,
+        raw_samples=RAW_SAMPLES,
     )
 
 

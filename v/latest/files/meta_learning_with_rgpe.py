@@ -10,12 +10,15 @@
 # In[1]:
 
 
+import os
 import torch
 import math
+
 
 torch.manual_seed(29)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 dtype = torch.double
+SMOKE_TEST = os.environ.get("SMOKE_TEST")
 
 
 # ### Toy Problem
@@ -36,7 +39,8 @@ dtype = torch.double
 # In[2]:
 
 
-NUM_BASE_TASKS = 5
+NUM_BASE_TASKS = 5 if not SMOKE_TEST else 2
+
 
 def task_shift(task):
     """
@@ -54,6 +58,7 @@ TARGET_SHIFT = 0.0
 
 
 BOUNDS = torch.tensor([[-10.0], [10.0]], dtype=dtype, device=device)
+
 
 def f(X, shift=TARGET_SHIFT):
     """
@@ -73,6 +78,7 @@ def f(X, shift=TARGET_SHIFT):
 from botorch.utils.sampling import draw_sobol_samples
 from botorch.utils.transforms import normalize, unnormalize
 
+
 noise_std = 0.05 
 
 # Sample data for each base task
@@ -80,7 +86,9 @@ data_by_task = {}
 for task in range(NUM_BASE_TASKS):
     num_training_points = 20
     # draw points from a sobol sequence
-    raw_x = draw_sobol_samples(bounds=BOUNDS, n=num_training_points, q=1, seed=task+5397923).squeeze(1)    
+    raw_x = draw_sobol_samples(
+        bounds=BOUNDS, n=num_training_points, q=1, seed=task+5397923,
+    ).squeeze(1)    
     # get observed values
     f_x = f(raw_x, task_shift(task+1))
     train_y = f_x + noise_std*torch.randn_like(f_x)
@@ -100,6 +108,7 @@ for task in range(NUM_BASE_TASKS):
 
 
 from matplotlib import pyplot as plt
+
 get_ipython().run_line_magic('matplotlib', 'inline')
 
 
@@ -231,12 +240,17 @@ def compute_ranking_loss(f_samps, target_y):
         ).view(n, n, 2)
         # the diagonal of f_samps are the out-of-sample predictions
         # for each LOO model, compare the out of sample predictions to each in-sample prediction
-        rank_loss = ((f_samps.diagonal(dim1=1, dim2=2).unsqueeze(-1) < f_samps) ^ (cartesian_y[..., 0] < cartesian_y[..., 1])).sum(dim=-1).sum(dim=-1)
+        rank_loss = (
+            (f_samps.diagonal(dim1=1, dim2=2).unsqueeze(-1) < f_samps) ^
+            (cartesian_y[..., 0] < cartesian_y[..., 1])
+        ).sum(dim=-1).sum(dim=-1)
     else:
         rank_loss = torch.zeros(f_samps.shape[0], dtype=torch.long, device=target_y.device)
         y_stack = target_y.squeeze(-1).expand(f_samps.shape)
         for i in range(1,target_y.shape[0]):
-            rank_loss += ((roll_col(f_samps, i) < f_samps) ^ (roll_col(y_stack, i) < y_stack)).sum(dim=-1) 
+            rank_loss += (
+                (roll_col(f_samps, i) < f_samps) ^ (roll_col(y_stack, i) < y_stack)
+            ).sum(dim=-1) 
     return rank_loss
 
 
@@ -267,7 +281,10 @@ def get_target_model_loocv_sample_preds(train_x, train_y, train_yvar, target_mod
     train_yvar_cv = torch.stack([train_yvar[~m] for m in masks])
     state_dict = target_model.state_dict()
     # expand to batch size of batch_mode LOOCV model
-    state_dict_expanded = {name: t.expand(batch_size, *[-1 for _ in range(t.ndim)]) for name, t in state_dict.items()}
+    state_dict_expanded = {
+        name: t.expand(batch_size, *[-1 for _ in range(t.ndim)])
+        for name, t in state_dict.items()
+    }
     model = get_fitted_model(train_x_cv, train_y_cv, train_yvar_cv, state_dict=state_dict_expanded)
     with torch.no_grad():
         posterior = model.posterior(train_x)
@@ -276,7 +293,6 @@ def get_target_model_loocv_sample_preds(train_x, train_y, train_yvar, target_mod
         # the last dimension.
         sampler = SobolQMCNormalSampler(num_samples=num_samples)
         return sampler(posterior).squeeze(-1)
-    
 
 
 # In[11]:
@@ -310,13 +326,15 @@ def compute_rank_weights(train_x,train_y, base_models, target_model, num_samples
         ranking_losses.append(compute_ranking_loss(base_f_samps, train_y))
     # compute ranking loss for target model using LOOCV
     # f_samps
-    target_f_samps = get_target_model_loocv_sample_preds(train_x, train_y, train_yvar, target_model, num_samples)
+    target_f_samps = get_target_model_loocv_sample_preds(
+        train_x, train_y, train_yvar, target_model, num_samples,
+    )
     ranking_losses.append(compute_ranking_loss(target_f_samps, train_y))
     ranking_loss_tensor = torch.stack(ranking_losses)
     # compute best model (minimum ranking loss) for each sample
     best_models = torch.argmin(ranking_loss_tensor, dim=0)
     # compute proportion of samples for which each model is best
-    rank_weights = best_models.bincount(minlength=len(ranking_losses)).type_as(train_x)/num_samples
+    rank_weights = best_models.bincount(minlength=len(ranking_losses)).type_as(train_x) / num_samples
     return rank_weights
 
 
@@ -390,20 +408,23 @@ from botorch.optim.optimize import optimize_acqf
 
 # suppress GPyTorch warnings about adding jitter
 import warnings
+
+
 warnings.filterwarnings("ignore", "^.*jitter.*", category=RuntimeWarning)
 
     
 best_rgpe_all = []
 best_random_all = []
 best_vanilla_nei_all = []
-N_BATCH = 10
-NUM_POSTERIOR_SAMPLES = 256
+N_BATCH = 10 if not SMOKE_TEST else 2
+NUM_POSTERIOR_SAMPLES = 256 if not SMOKE_TEST else 16
 RANDOM_INITIALIZATION_SIZE = 3
-N_TRIALS = 10
-MC_SAMPLES = 512
-N_RESTART_CANDIDATES = 512
-N_RESTARTS = 10
+N_TRIALS = 10 if not SMOKE_TEST else 2
+MC_SAMPLES = 512 if not SMOKE_TEST else 32
+N_RESTART_CANDIDATES = 512 if not SMOKE_TEST else 8
+N_RESTARTS = 10 if not SMOKE_TEST else 2
 Q_BATCH_SIZE = 1
+
 
 # Average over multiple trials
 for trial in range(N_TRIALS):
@@ -522,6 +543,7 @@ for trial in range(N_TRIALS):
 
 
 import numpy as np
+
 
 best_rgpe_all = np.array(best_rgpe_all)
 best_random_all = np.array(best_random_all)

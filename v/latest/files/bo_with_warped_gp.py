@@ -27,28 +27,32 @@
 # In[1]:
 
 
+import os
 import torch
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 dtype = torch.double
+SMOKE_TEST = os.environ.get("SMOKE_TEST")
 
 
 # ### Problem setup
 # 
 # First, we define the sample parameters for the sigmoid functions that transform the respective inputs.
 
-# In[16]:
+# In[2]:
 
 
 from botorch.distributions import Kumaraswamy
 import matplotlib.pyplot as plt
+
 get_ipython().run_line_magic('matplotlib', 'inline')
+
 
 fontdict = {"fontsize": 15}
 torch.manual_seed(1234567890)
-c1 = torch.rand(6, dtype=dtype, device=device)*3 + 0.1
-c0 = torch.rand(6, dtype=dtype, device=device)*3 + 0.1
+c1 = torch.rand(6, dtype=dtype, device=device) * 3 + 0.1
+c0 = torch.rand(6, dtype=dtype, device=device) * 3 + 0.1
 x = torch.linspace(0,1,101, dtype=dtype, device=device)
 k = Kumaraswamy(concentration1=c1, concentration0=c0)
 k_icdfs = k.icdf(x.unsqueeze(1).expand(101, 6))
@@ -60,7 +64,7 @@ ax.set_xlabel("Raw Value", **fontdict)
 ax.set_ylabel("Transformed Value", **fontdict)
 
 
-# In[17]:
+# In[3]:
 
 
 from botorch.test_functions import Hartmann
@@ -79,7 +83,7 @@ def obj(X):
 # 
 # We add observe the objectives with additive Gaussian noise with a standard deviation of 0.05.
 
-# In[18]:
+# In[4]:
 
 
 from botorch.models import FixedNoiseGP
@@ -91,6 +95,7 @@ train_yvar = torch.tensor(NOISE_SE**2, device=device, dtype=dtype)
 
 bounds = torch.tensor([[0.0] * 6, [1.0] * 6], device=device, dtype=dtype)
 
+
 def generate_initial_data(n=14):
     # generate training data
     train_x = draw_sobol_samples(bounds=bounds, n=n, q=1, seed=torch.randint(0,10000,(1,)).item()).squeeze(1)
@@ -99,19 +104,18 @@ def generate_initial_data(n=14):
     best_observed_value = exact_obj.max().item()
     train_obj = exact_obj +  NOISE_SE * torch.randn_like(exact_obj)
     return train_x, train_obj, best_observed_value
-    
-    
 
 
 # #### Input warping and model initialization
 # We initialize the `Warp` input transformation and pass it a `FixedNoiseGP` to model the noiseless objective. The `Warp` object is a `torch.nn.Module` that contains the concentration parameters and applies the warping function in the `Model`'s `forward` pass.
 
-# In[19]:
+# In[5]:
 
 
 from botorch.utils.transforms import standardize
 from botorch.models.transforms.input import Warp
 from gpytorch.priors.torch_priors import LogNormalPrior
+
 
 def initialize_model(train_x, train_obj, use_input_warping):
     if use_input_warping:
@@ -126,7 +130,12 @@ def initialize_model(train_x, train_obj, use_input_warping):
     else:
         warp_tf = None
     # define the model for objective 
-    model = FixedNoiseGP(train_x, standardize(train_obj), train_yvar.expand_as(train_obj), input_transform=warp_tf).to(train_x)
+    model = FixedNoiseGP(
+        train_x,
+        standardize(train_obj),
+        train_yvar.expand_as(train_obj),
+        input_transform=warp_tf
+    ).to(train_x)
     mll = ExactMarginalLogLikelihood(model.likelihood, model)
     return mll, model
 
@@ -134,10 +143,14 @@ def initialize_model(train_x, train_obj, use_input_warping):
 # #### Define a helper function that performs the essential BO step
 # The helper function below takes an acquisition function as an argument, optimizes it, and returns the batch $\{x_1, x_2, \ldots x_q\}$ along with the observed function values. For this example, we'll use sequential $q=1$ optimization. A simple initialization heuristic is used to select the 20 restart initial locations from a set of 512 random points. 
 
-# In[20]:
+# In[6]:
 
 
 from botorch.optim import optimize_acqf
+
+
+num_restarts = 20 if not SMOKE_TEST else 2
+raw_samples = 512 if not SMOKE_TEST else 32
 
 
 def optimize_acqf_and_get_observation(acq_func):
@@ -147,8 +160,8 @@ def optimize_acqf_and_get_observation(acq_func):
         acq_function=acq_func,
         bounds=bounds,
         q=1,
-        num_restarts=20,
-        raw_samples=512,  # used for intialization heuristic
+        num_restarts=num_restarts,
+        raw_samples=raw_samples,  # used for intialization heuristic
         options={"batch_limit": 5, "maxiter": 200},
     )
     # observe new values 
@@ -168,26 +181,30 @@ def update_random_observations(best_random):
     return best_random
 
 
-# In[21]:
+# In[7]:
 
 
 from botorch import fit_gpytorch_model
 from botorch.acquisition.monte_carlo import qNoisyExpectedImprovement
 from botorch.exceptions import BadInitialCandidatesWarning
-import time
 
+import time
 import warnings
+
+
 warnings.filterwarnings('ignore', category=BadInitialCandidatesWarning)
 warnings.filterwarnings('ignore', category=RuntimeWarning)
 
-N_TRIALS = 3
-N_BATCH = 50
+
+N_TRIALS = 3 if not SMOKE_TEST else 2
+N_BATCH = 50 if not SMOKE_TEST else 5
 
 verbose = False
 
 best_observed_all_ei, best_observed_all_warp, best_random_all = [], [], []
 
 torch.manual_seed(0)
+
 
 # average over multiple trials
 for trial in range(1, N_TRIALS + 1):
@@ -278,15 +295,18 @@ for trial in range(1, N_TRIALS + 1):
 # #### Plot the results
 # The plot below shows the log regret at each step of the optimization for each of the algorithms. The confidence intervals represent the variance at that step in the optimization across the trial runs. In order to get a better estimate of the average performance early on, one would have to run a much larger number of trials `N_TRIALS` (we avoid this here to limit the runtime of this tutorial). 
 
-# In[32]:
+# In[8]:
 
 
 import numpy as np
 from matplotlib import pyplot as plt
+
 get_ipython().run_line_magic('matplotlib', 'inline')
+
 
 def ci(y):
     return 1.96 * y.std(axis=0) / np.sqrt(N_TRIALS)
+
 
 GLOBAL_MAXIMUM = neg_hartmann6.optimal_value
 
@@ -297,9 +317,16 @@ y_ei_warp =  np.log10(GLOBAL_MAXIMUM - np.asarray(best_observed_all_warp))
 y_rnd =  np.log10(GLOBAL_MAXIMUM - np.asarray(best_random_all))
 
 fig, ax = plt.subplots(1, 1, figsize=(8, 6))
-ax.errorbar(iters, y_rnd.mean(axis=0), yerr=ci(y_rnd), label="Sobol", linewidth=1.5, capsize=3, alpha=0.6)
-ax.errorbar(iters, y_ei.mean(axis=0), yerr=ci(y_ei), label="NEI", linewidth=1.5, capsize=3, alpha=0.6)
-ax.errorbar(iters, y_ei_warp.mean(axis=0), yerr=ci(y_ei_warp), label="NEI + Input Warping", linewidth=1.5, capsize=3, alpha=0.6)
+ax.errorbar(
+    iters, y_rnd.mean(axis=0), yerr=ci(y_rnd), label="Sobol", linewidth=1.5, capsize=3, alpha=0.6
+)
+ax.errorbar(
+    iters, y_ei.mean(axis=0), yerr=ci(y_ei), label="NEI", linewidth=1.5, capsize=3, alpha=0.6,
+)
+ax.errorbar(
+    iters, y_ei_warp.mean(axis=0), yerr=ci(y_ei_warp), label="NEI + Input Warping",
+    linewidth=1.5, capsize=3, alpha=0.6,
+)
 ax.set(xlabel='number of observations (beyond initial points)', ylabel='Log10 Regret')
 ax.legend(loc="lower left")
 

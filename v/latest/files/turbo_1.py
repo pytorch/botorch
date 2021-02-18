@@ -15,6 +15,7 @@
 # In[1]:
 
 
+import os
 import math
 from dataclasses import dataclass
 
@@ -34,8 +35,10 @@ from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls import ExactMarginalLogLikelihood
 from gpytorch.priors import HorseshoePrior
 
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 dtype = torch.double
+SMOKE_TEST = os.environ.get("SMOKE_TEST")
 
 
 # ## Optimize the 10-dimensional Ackley function
@@ -229,6 +232,11 @@ Y_turbo = torch.tensor(
 
 state = TurboState(dim, batch_size=batch_size)
 
+NUM_RESTARTS = 10 if not SMOKE_TEST else 2
+RAW_SAMPLES = 512 if not SMOKE_TEST else 4
+N_CANDIDATES = min(5000, max(2000, 200 * dim)) if not SMOKE_TEST else 4
+
+
 while not state.restart_triggered:  # Run until TuRBO converges
     # Fit a GP model
     train_Y = (Y_turbo - Y_turbo.mean()) / Y_turbo.std()
@@ -244,9 +252,9 @@ while not state.restart_triggered:  # Run until TuRBO converges
         X=X_turbo,
         Y=train_Y,
         batch_size=batch_size,
-        n_candidates=min(5000, max(2000, 200 * dim)),
-        num_restarts=10,
-        raw_samples=512,
+        n_candidates=N_CANDIDATES,
+        num_restarts=NUM_RESTARTS,
+        raw_samples=RAW_SAMPLES,
         acqf="ts",
     )
     Y_next = torch.tensor(
@@ -295,8 +303,8 @@ while len(Y_ei) < len(Y_turbo):
             ]
         ),
         q=batch_size,
-        num_restarts=10,
-        raw_samples=512,
+        num_restarts=NUM_RESTARTS,
+        raw_samples=RAW_SAMPLES,
     )
     Y_next = torch.tensor(
         [eval_objective(x) for x in candidate], dtype=dtype, device=device
@@ -315,7 +323,7 @@ while len(Y_ei) < len(Y_turbo):
 # In[10]:
 
 
-X_Sobol = (SobolEngine(dim, scramble=True).draw(len(X_turbo)).to(dtype=dtype, device=device))
+X_Sobol = SobolEngine(dim, scramble=True).draw(len(X_turbo)).to(dtype=dtype, device=device)
 Y_Sobol = torch.tensor([eval_objective(x) for x in X_Sobol], dtype=dtype, device=device).unsqueeze(-1)
 
 

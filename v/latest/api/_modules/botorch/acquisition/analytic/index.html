@@ -146,7 +146,7 @@
             <span class="n">best_f</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">best_f</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"best_f"</span><span class="p">,</span> <span class="n">best_f</span><span class="p">)</span>
 
-<div class="viewcode-block" id="ExpectedImprovement.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.ExpectedImprovement.forward">[docs]</a>    <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<div class="viewcode-block" id="ExpectedImprovement.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.ExpectedImprovement.forward">[docs]</a>    <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">assert_output_shape</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Evaluate Expected Improvement on the candidate set X.</span>
 

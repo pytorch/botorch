@@ -29,13 +29,23 @@
 # In[1]:
 
 
+import os
 import warnings
+
+from itertools import combinations
+
+import numpy as np
+import torch
+
+
+SMOKE_TEST = os.environ.get("SMOKE_TEST")
+
 # suppress warnings from potential numerical issues
 warnings.filterwarnings("ignore")
 
-from itertools import combinations
-import numpy as np
-import torch
+
+# In[2]:
+
 
 # data generating helper functions
 def utility(X):
@@ -46,6 +56,7 @@ def utility(X):
     y = torch.sum(weighted_X, dim=-1)
     return y
 
+
 def generate_data(n, dim=2):
     """ Generate data X and y """
     # X is randomly sampled from dim-dimentional unit cube
@@ -54,6 +65,7 @@ def generate_data(n, dim=2):
     X = torch.rand(n, dim, dtype=torch.float64)
     y = utility(X)
     return X, y
+
 
 def generate_comparisons(y, n_comp, noise=0.1, replace=False):
     """  Create pairwise comparisons with noise """
@@ -70,8 +82,9 @@ def generate_comparisons(y, n_comp, noise=0.1, replace=False):
     
     return comp_pairs
 
-n = 50
-m = 100
+
+n = 50 if not SMOKE_TEST else 5
+m = 100 if not SMOKE_TEST else 10
 dim = 2
 noise = 0.1
 train_X, train_y = generate_data(n, dim=dim)
@@ -95,11 +108,12 @@ train_comp = generate_comparisons(train_y, m, noise=noise)
 # `PairwiseGP` from BoTorch is designed to work with such pairwise comparison input.
 # We use `PairwiseLaplaceMarginalLogLikelihood` as the marginal log likelihood that we aim to maximize for optimizing the hyperparameters.
 
-# In[2]:
+# In[3]:
 
 
 from botorch.models.pairwise_gp import PairwiseGP, PairwiseLaplaceMarginalLogLikelihood
 from botorch.fit import fit_gpytorch_model
+
 
 model = PairwiseGP(train_X, train_comp)
 mll = PairwiseLaplaceMarginalLogLikelihood(model)
@@ -109,17 +123,20 @@ mll = fit_gpytorch_model(mll)
 # Because the we never observe the latent function value, output values from the model are only meaningful on a relative scale.
 # Hence, given a test pair (`test_X`, `test_y`), we can evaluate the model using Kendall-Tau rank correlation.
 
-# In[3]:
+# In[4]:
 
 
 from scipy.stats import kendalltau
+
 
 # Kendall-Tau rank correlation
 def eval_kt_cor(model, test_X, test_y):
     pred_y = model.posterior(test_X).mean.squeeze().detach().numpy()
     return kendalltau(pred_y, test_y).correlation
 
-test_X, test_y = generate_data(1000, dim=dim)
+n_kendall = 1000 if not SMOKE_TEST else 10
+
+test_X, test_y = generate_data(n_kendall, dim=dim)
 kt_correlation = eval_kt_cor(model, test_X, test_y)
 
 print(f"Test Kendall-Tau rank correlation: {kt_correlation:.4f}")
@@ -136,19 +153,20 @@ print(f"Test Kendall-Tau rank correlation: {kt_correlation:.4f}")
 # 
 # We start off by defining a few helper functions.
 
-# In[4]:
+# In[5]:
 
 
 from botorch.acquisition.monte_carlo import qNoisyExpectedImprovement
 from botorch.optim import optimize_acqf
+
 
 def init_and_fit_model(X, comp, state_dict=None):
     """ Model fitting helper function """
     model = PairwiseGP(X, comp)
     mll = PairwiseLaplaceMarginalLogLikelihood(model)
     fit_gpytorch_model(mll)
-        
     return mll, model
+
 
 def make_new_data(X, next_X, comps, q_comp):
     """ Given X and next_X, 
@@ -161,21 +179,22 @@ def make_new_data(X, next_X, comps, q_comp):
     next_comps = generate_comparisons(next_y, n_comp=q_comp, noise=noise)
     comps = torch.cat([comps, next_comps + X.shape[-2]])
     X = torch.cat([X, next_X])
-
     return X, comps
 
 
 # The Bayesian optimization loop is as follows (running the code may take a while).
 
-# In[5]:
+# In[6]:
 
 
 algos = ["qNEI", "rand"]
-NUM_TRIALS = 5
-NUM_BATCHES = 10
+
+NUM_TRIALS = 5 if not SMOKE_TEST else 2
+NUM_BATCHES = 10 if not SMOKE_TEST else 2
+
 dim = 5
-num_restarts = 3
-num_raw_samples = 128
+NUM_RESTARTS = 3
+RAW_SAMPLES = 128 if not SMOKE_TEST else 8
 q = 3  # number of points per query
 q_comp = 3  # number of comparisons per query
 
@@ -183,7 +202,7 @@ q_comp = 3  # number of comparisons per query
 best_vals = {}  # best observed values
 for algo in algos:
     best_vals[algo] = []
-        
+
 # average over multiple trials
 for i in range(NUM_TRIALS):
     data = {}
@@ -219,8 +238,8 @@ for i in range(NUM_TRIALS):
                     acq_function=acq_func,
                     bounds=bounds,
                     q=q,
-                    num_restarts=num_restarts,
-                    raw_samples=num_raw_samples,
+                    num_restarts=NUM_RESTARTS,
+                    raw_samples=RAW_SAMPLES,
                 )
             else:
                 # randomly sample data
@@ -257,8 +276,10 @@ algo_labels = {
     "qNEI": "Noisy Expected Improvement",
 }
 
+
 def ci(y):
     return 1.96 * y.std(axis=0) / np.sqrt(y.shape[0])
+
 
 # the utility function is maximized at the full vector of 1
 optimal_val = utility(torch.tensor([[1] * dim])).item()

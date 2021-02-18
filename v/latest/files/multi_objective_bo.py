@@ -23,11 +23,15 @@
 # In[1]:
 
 
+import os
 import torch
+
+
 tkwargs = {
     "dtype": torch.double,
     "device": torch.device("cuda" if torch.cuda.is_available() else "cpu"),
 }
+SMOKE_TEST = os.environ.get("SMOKE_TEST")
 
 
 # ### Problem setup
@@ -37,6 +41,7 @@ tkwargs = {
 
 
 from botorch.test_functions.multi_objective import BraninCurrin
+
 
 problem = BraninCurrin(negate=True).to(**tkwargs)
 
@@ -56,12 +61,16 @@ from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikeliho
 from botorch.utils.transforms import unnormalize
 from botorch.utils.sampling import draw_sobol_samples
 
+
 def generate_initial_data(n=6):
     # generate training data
-    train_x = draw_sobol_samples(bounds=problem.bounds,n=1, q=n, seed=torch.randint(1000000, (1,)).item()).squeeze(0)
+    train_x = draw_sobol_samples(
+        bounds=problem.bounds,n=1, q=n, seed=torch.randint(1000000, (1,)).item()
+    ).squeeze(0)
     train_obj = problem(train_x)
     return train_x, train_obj
-    
+
+
 def initialize_model(train_x, train_obj):
     # define models for objective and constraint
     model = SingleTaskGP(train_x, train_obj, outcome_transform=Standardize(m=train_obj.shape[-1]))
@@ -94,7 +103,11 @@ from botorch.utils.multi_objective.box_decompositions.non_dominated import Nondo
 from botorch.acquisition.multi_objective.monte_carlo import qExpectedHypervolumeImprovement
 from botorch.utils.sampling import sample_simplex
 
-BATCH_SIZE = 4
+
+BATCH_SIZE = 4 if not SMOKE_TEST else 2
+NUM_RESTARTS = 20 if not SMOKE_TEST else 2
+RAW_SAMPLES = 1024 if not SMOKE_TEST else 4
+
 standard_bounds = torch.zeros(2, problem.dim, **tkwargs)
 standard_bounds[1] = 1
 
@@ -114,8 +127,8 @@ def optimize_qehvi_and_get_observation(model, train_obj, sampler):
         acq_function=acq_func,
         bounds=standard_bounds,
         q=BATCH_SIZE,
-        num_restarts=20,
-        raw_samples=1024,  # used for intialization heuristic
+        num_restarts=NUM_RESTARTS,
+        raw_samples=RAW_SAMPLES,  # used for intialization heuristic
         options={"batch_limit": 5, "maxiter": 200, "nonnegative": True},
         sequential=True,
     )
@@ -153,8 +166,8 @@ def optimize_qparego_and_get_observation(model, train_obj, sampler):
     candidates, _ = optimize_acqf_list(
         acq_function_list=acq_func_list,
         bounds=standard_bounds,
-        num_restarts=20,
-        raw_samples=1024,  # used for intialization heuristic
+        num_restarts=NUM_RESTARTS,
+        raw_samples=RAW_SAMPLES,  # used for intialization heuristic
         options={"batch_limit": 5, "maxiter": 200},
     )
     # observe new values 
@@ -174,7 +187,7 @@ def optimize_qparego_and_get_observation(model, train_obj, sampler):
 # 
 # *Note*: Running this may take a little while.
 
-# In[ ]:
+# In[6]:
 
 
 from botorch import fit_gpytorch_model
@@ -183,21 +196,24 @@ from botorch.sampling.samplers import SobolQMCNormalSampler
 from botorch.exceptions import BadInitialCandidatesWarning
 from botorch.utils.multi_objective.pareto import is_non_dominated
 from botorch.utils.multi_objective.hypervolume import Hypervolume
-import time
 
+import time
 import warnings
+
+
 warnings.filterwarnings('ignore', category=BadInitialCandidatesWarning)
 warnings.filterwarnings('ignore', category=RuntimeWarning)
 
-N_TRIALS = 3
-N_BATCH = 25
-MC_SAMPLES = 128
+N_TRIALS = 3 if not SMOKE_TEST else 2
+N_BATCH = 25 if not SMOKE_TEST else 3
+MC_SAMPLES = 128  if not SMOKE_TEST else 16
 
 verbose = False
 
 hvs_qparego_all, hvs_qehvi_all, hvs_random_all = [], [], []
 
 hv = Hypervolume(ref_point=problem.ref_point)
+
 
 # average over multiple trials
 for trial in range(1, N_TRIALS + 1):
@@ -298,12 +314,14 @@ for trial in range(1, N_TRIALS + 1):
 # 
 # The plot show that $q$EHVI vastly outperforms the $q$ParEGO and Sobol baselines and has very low variance.
 
-# In[9]:
+# In[7]:
 
 
 import numpy as np
 from matplotlib import pyplot as plt
+
 get_ipython().run_line_magic('matplotlib', 'inline')
+
 
 def ci(y):
     return 1.96 * y.std(axis=0) / np.sqrt(N_TRIALS)
@@ -315,9 +333,18 @@ log_hv_difference_qehvi = np.log10(problem.max_hv - np.asarray(hvs_qehvi_all))
 log_hv_difference_rnd = np.log10(problem.max_hv - np.asarray(hvs_random_all))
 
 fig, ax = plt.subplots(1, 1, figsize=(8, 6))
-ax.errorbar(iters, log_hv_difference_rnd.mean(axis=0), yerr=ci(log_hv_difference_rnd), label="Sobol", linewidth=1.5)
-ax.errorbar(iters, log_hv_difference_qparego.mean(axis=0), yerr=ci(log_hv_difference_qparego), label="qParEGO", linewidth=1.5)
-ax.errorbar(iters, log_hv_difference_qehvi.mean(axis=0), yerr=ci(log_hv_difference_qehvi), label="qEHVI", linewidth=1.5)
+ax.errorbar(
+    iters, log_hv_difference_rnd.mean(axis=0), yerr=ci(log_hv_difference_rnd),
+    label="Sobol", linewidth=1.5,
+)
+ax.errorbar(
+    iters, log_hv_difference_qparego.mean(axis=0), yerr=ci(log_hv_difference_qparego),
+    label="qParEGO", linewidth=1.5,
+)
+ax.errorbar(
+    iters, log_hv_difference_qehvi.mean(axis=0), yerr=ci(log_hv_difference_qehvi),
+    label="qEHVI", linewidth=1.5,
+)
 ax.set(xlabel='number of observations (beyond initial points)', ylabel='Log Hypervolume Difference')
 ax.legend(loc="lower right")
 
@@ -326,17 +353,23 @@ ax.legend(loc="lower right")
 # 
 # To examine optimization process from another perspective, we plot the collected observations under each algorithm where the color corresponds to the BO iteration at which the point was collected. The plot on the right for $q$EHVI shows that the $q$EHVI quickly identifies the pareto front and most of its evaluations are very close to the pareto front. $q$ParEGO also identifies has many observations close to the pareto front, but relies on optimizing random scalarizations, which is a less principled way of optimizing the pareto front compared to $q$EHVI, which explicitly attempts focuses on improving the pareto front. Sobol generates random points and has few points close to the pareto front
 
-# In[10]:
+# In[8]:
 
 
 from matplotlib.cm import ScalarMappable
+
+
 fig, axes = plt.subplots(1, 3, figsize=(17, 5))
 algos = ["Sobol", "qParEGO", "qEHVI"]
 cm = plt.cm.get_cmap('viridis')
 
-batch_number = torch.cat([torch.zeros(6), torch.arange(1, N_BATCH+1).repeat(BATCH_SIZE, 1).t().reshape(-1)]).numpy()
+batch_number = torch.cat(
+    [torch.zeros(6), torch.arange(1, N_BATCH+1).repeat(BATCH_SIZE, 1).t().reshape(-1)]
+).numpy()
 for i, train_obj in enumerate((train_obj_random, train_obj_qparego, train_obj_qehvi)):
-    sc = axes[i].scatter(train_obj[:, 0].cpu().numpy(), train_obj[:,1].cpu().numpy(), c=batch_number, alpha=0.8)
+    sc = axes[i].scatter(
+        train_obj[:, 0].cpu().numpy(), train_obj[:,1].cpu().numpy(), c=batch_number, alpha=0.8,
+    )
     axes[i].set_title(algos[i])
     axes[i].set_xlabel("Objective 1")
     axes[i].set_xlim(-260, 5)

@@ -13,11 +13,15 @@
 # In[1]:
 
 
+import os
 import torch
+
+
 tkwargs = {
     "dtype": torch.double,
     "device": torch.device("cuda" if torch.cuda.is_available() else "cpu"),
 }
+SMOKE_TEST = os.environ.get("SMOKE_TEST")
 
 
 # ### Problem setup
@@ -28,6 +32,7 @@ tkwargs = {
 
 
 from botorch.test_functions.multi_fidelity import AugmentedHartmann
+
 
 problem = AugmentedHartmann(negate=True).to(**tkwargs)
 
@@ -45,12 +50,14 @@ from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikeliho
 from botorch.utils.transforms import unnormalize
 from botorch.utils.sampling import draw_sobol_samples
 
+
 def generate_initial_data(n=16):
     # generate training data
     train_x = torch.rand(n, 7, **tkwargs)
     train_obj = problem(train_x).unsqueeze(-1) # add output dimension
     return train_x, train_obj
-    
+
+
 def initialize_model(train_x, train_obj):
     # define a surrogate model suited for a "training data"-like fidelity parameter
     # in dimension 6, as in [2]
@@ -83,6 +90,7 @@ from botorch.acquisition.fixed_feature import FixedFeatureAcquisitionFunction
 from botorch.optim.optimize import optimize_acqf
 from botorch.acquisition.utils import project_to_target_fidelity
 
+
 bounds = torch.tensor([[0.0] * problem.dim, [1.0] * problem.dim], **tkwargs)
 target_fidelities = {6: 1.0}
 
@@ -92,6 +100,7 @@ cost_aware_utility = InverseCostWeightedUtility(cost_model=cost_model)
 
 def project(X):
     return project_to_target_fidelity(X=X, target_fidelities=target_fidelities)
+
 
 def get_mfkg(model):
     
@@ -106,14 +115,14 @@ def get_mfkg(model):
         acq_function=curr_val_acqf,
         bounds=bounds[:,:-1],
         q=1,
-        num_restarts=10,
-        raw_samples=1024,
+        num_restarts=10 if not SMOKE_TEST else 2,
+        raw_samples=1024 if not SMOKE_TEST else 4,
         options={"batch_limit": 10, "maxiter": 200},
     )
         
     return qMultiFidelityKnowledgeGradient(
         model=model,
-        num_fantasies=128,
+        num_fantasies=128 if not SMOKE_TEST else 2,
         current_value=current_value,
         cost_aware_utility=cost_aware_utility,
         project=project,
@@ -129,6 +138,10 @@ def get_mfkg(model):
 from botorch.optim.initializers import gen_one_shot_kg_initial_conditions
 torch.set_printoptions(precision=3, sci_mode=False)
 
+NUM_RESTARTS = 10 if not SMOKE_TEST else 2
+RAW_SAMPLES = 512 if not SMOKE_TEST else 4
+
+
 def optimize_mfkg_and_get_observation(mfkg_acqf):
     """Optimizes MFKG and returns a new candidate, observation, and cost."""
     
@@ -136,15 +149,15 @@ def optimize_mfkg_and_get_observation(mfkg_acqf):
         acq_function = mfkg_acqf,
         bounds=bounds,
         q=4,
-        num_restarts=10,
-        raw_samples=512,
+        num_restarts=NUM_RESTARTS,
+        raw_samples=RAW_SAMPLES,
     )
     candidates, _ = optimize_acqf(
         acq_function=mfkg_acqf,
         bounds=bounds,
         q=4,
-        num_restarts=10,
-        raw_samples=512,
+        num_restarts=NUM_RESTARTS,
+        raw_samples=RAW_SAMPLES,
         batch_initial_conditions=X_init,
         options={"batch_limit": 5, "maxiter": 200},
     )
@@ -172,8 +185,10 @@ train_x, train_obj = generate_initial_data(n=16)
 
 
 cumulative_cost = 0.0
+N_ITER = 6 if not SMOKE_TEST else 2
 
-for _ in range(6):
+
+for _ in range(N_ITER):
     mll, model = initialize_model(train_x, train_obj)
     fit_gpytorch_model(mll)
     mfkg_acqf = get_mfkg(model)
@@ -201,8 +216,8 @@ def get_recommendation(model):
         acq_function=rec_acqf,
         bounds=bounds[:,:-1],
         q=1,
-        num_restarts=10,
-        raw_samples=512,
+        num_restarts=NUM_RESTARTS,
+        raw_samples=RAW_SAMPLES,
         options={"batch_limit": 5, "maxiter": 200},
     )
     
@@ -228,6 +243,7 @@ print(f"\ntotal cost: {cumulative_cost}\n")
 
 from botorch.acquisition import qExpectedImprovement
 
+
 def get_ei(model, best_f):
            
     return FixedFeatureAcquisitionFunction(
@@ -237,6 +253,7 @@ def get_ei(model, best_f):
         values=[1],
     ) 
 
+
 def optimize_ei_and_get_observation(ei_acqf):
     """Optimizes EI and returns a new candidate, observation, and cost."""
     
@@ -244,8 +261,8 @@ def optimize_ei_and_get_observation(ei_acqf):
         acq_function=ei_acqf,
         bounds=bounds[:,:-1],
         q=4,
-        num_restarts=10,
-        raw_samples=512,
+        num_restarts=NUM_RESTARTS,
+        raw_samples=RAW_SAMPLES,
         options={"batch_limit": 5, "maxiter": 200},
     )
     
@@ -268,7 +285,7 @@ cumulative_cost = 0.0
 
 train_x, train_obj = generate_initial_data(n=16)
 
-for _ in range(6):
+for _ in range(N_ITER):
     mll, model = initialize_model(train_x, train_obj)
     fit_gpytorch_model(mll)
     ei_acqf = get_ei(model, best_f=train_obj.max())
