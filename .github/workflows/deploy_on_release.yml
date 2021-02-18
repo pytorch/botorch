@@ -1,0 +1,122 @@
+name: Deploy On Release
+
+on:
+  release:
+    types: [created]
+
+jobs:
+
+  tests-and-coverage-pip:
+    name: Tests and coverage (pip, Python ${{ matrix.python-version }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-latest", "macos-latest", "windows-latest"]
+        python-version: [3.7, 3.8]
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        pip install git+https://github.com/cornellius-gp/gpytorch.git
+        pip install .[test]
+    - name: Unit tests and coverage
+      run: |
+        pytest -ra --cov=. --cov-report term-missing
+    - name: Upload coverage
+      if: ${{ runner.os == 'Linux' && matrix.python-version == 3.7 }}
+      run: |
+        bash <(curl -s https://codecov.io/bash)
+
+  package-deploy-pypi:
+    name: Package and deploy to pypi.org
+    runs-on: ubuntu-latest
+    needs: tests-and-coverage-pip
+    strategy:
+      fail-fast: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Fetch all history for all tags and branches
+      run: git fetch --prune --unshallow
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+    - name: Install dependencies
+      run: |
+        pip install git+https://github.com/cornellius-gp/gpytorch.git
+        pip install .[test]
+        pip install --upgrade setuptools wheel
+    - name: Build packages (wheel and source distribution)
+      run: |
+        python setup.py sdist bdist_wheel
+    - name: Verify packages
+      run: |
+        ./scripts/build_and_verify_py_packages.sh
+    - name: Deploy to PyPI
+      uses: pypa/gh-action-pypi-publish@master
+      with:
+        user: mbalandat
+        password: ${{ secrets.PYPI_PASSWORD }}
+        verbose: true
+
+  package-deploy-conda:
+    name: Package conda and deploy to anaconda.org
+    runs-on: ubuntu-latest
+    needs: tests-and-coverage-pip
+    strategy:
+      fail-fast: true
+    steps:
+    - uses: actions/checkout@v2
+    - uses: conda-incubator/setup-miniconda@v2
+      with:
+        miniconda-version: "latest"
+        activate-environment: test
+        python-version: "3.7"
+    - name: Fetch all history for all tags and branches
+      run: git fetch --prune --unshallow
+    - name: Install dependencies
+      shell: bash -l {0}
+      run: |
+        conda install -y -c pytorch-nightly pytorch cpuonly
+        conda install -y scipy sphinx pytest flake8
+        conda install -y -c gpytorch gpytorch
+        conda install -y conda-build anaconda-client
+        conda config --set anaconda_upload no
+    - name: Build and verify conda package
+      shell: bash -l {0}
+      run: |
+        ./scripts/build_and_verify_conda_package.sh
+    - name: Deploy to anaconda.org
+      run: |
+        botorch_version=$(python setup.py --version)
+        build_dir="$(pwd)/.conda/conda_build/noarch"
+        pkg_file="${build_dir}/botorch-${botorch_version}-0.tar.bz2"
+        anaconda -t ${{ secrets.ANACONDA_UPLOAD_TOKEN }} upload -u pytorch $pkg_file
+
+  publish-versioned-website:
+    name: Publish versioned website
+    runs-on: ubuntu-latest
+    needs: [package-deploy-pypi, package-deploy-conda]
+    strategy:
+      fail-fast: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+    - name: Install dependencies
+      run: |
+        pip install git+https://github.com/cornellius-gp/gpytorch.git
+        pip install -e .[dev]
+        pip install git+https://github.com/facebook/Ax.git
+        pip install -e .[tutorials]
+        pip install beautifulsoup4 ipython "nbconvert<6.0"
+    - name: Publish latest website
+      run: |
+        ./scripts/publish_site.sh -d -v ${{ github.event.release.tag_name }}

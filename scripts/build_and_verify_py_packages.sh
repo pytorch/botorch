@@ -18,7 +18,7 @@ path="${cur_dir}/dist/botorch-${version}"
 # install wheel and verify import works and version is correct
 pip uninstall -y botorch
 pip install "${path}-py3-none-any.whl"
-wheel_version=$(python -c "import botorch; print(botorch.__version__)")
+wheel_version=$(python -c "import botorch; print(botorch.__version__)" | tail -n 1)
 if [[ $wheel_version != "$version" ]]; then
   echo "Incorrect wheel version. Expected: ${version}, Actual: ${wheel_version}"
   exit 1
@@ -27,7 +27,7 @@ fi
 # do the same for the source dist
 pip uninstall -y botorch
 pip install "${path}.tar.gz"
-src_version=$(python -c "import botorch; print(botorch.__version__)")
+src_version=$(python -c "import botorch; print(botorch.__version__)" | tail -n 1)
 if [[ $src_version != "$version" ]]; then
   echo "Incorrect source dist version. Expected: ${version}, Actual: ${src_version}"
   exit 1
