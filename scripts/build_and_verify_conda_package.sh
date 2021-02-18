@@ -8,6 +8,7 @@ cd .conda || exit
 
 # Get version number (created dynamically via setuptools-scm)
 BOTORCH_VERSION=$(python ../setup.py --version)
+# Export env var (this is used in .conda/meta.yaml)
 export BOTORCH_VERSION
 
 # build package
@@ -22,11 +23,11 @@ path="${build_dir}/noarch/botorch-${BOTORCH_VERSION}-0.tar.bz2"
 # verify that package installs correctly
 conda install --offline "${path}"
 
-# # verify import works and version is correct
-# conda_version=$(python -c "import botorch; print(botorch.__version__)")
-# if [[ $conda_version != $BOTORCH_VERSION ]]; then
-#   echo "Incorrect version. Expected: ${version}, Actual: ${conda_version}"
-#   exit 1
-# fi
+# verify import works and version is correct
+conda_version=$(python -c "import botorch; print(botorch.__version__)")
+if [[ $conda_version != "$BOTORCH_VERSION" ]]; then
+  echo "Incorrect version. Expected: ${BOTORCH_VERSION}, Actual: ${conda_version}"
+  exit 1
+fi
 
 cd .. || exit

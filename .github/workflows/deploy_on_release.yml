@@ -1,4 +1,4 @@
-name: Deploy On Release Workflow
+name: Deploy On Release
 
 on:
   release:
@@ -62,6 +62,7 @@ jobs:
       with:
         user: mbalandat
         password: ${{ secrets.PYPI_PASSWORD }}
+        verbose: true
 
   package-deploy-conda:
     name: Package conda and deploy to anaconda.org
@@ -79,6 +80,7 @@ jobs:
     - name: Fetch all history for all tags and branches
       run: git fetch --prune --unshallow
     - name: Install dependencies
+      shell: bash -l {0}
       run: |
         conda install -y -c pytorch-nightly pytorch cpuonly
         conda install -y scipy sphinx pytest flake8
@@ -86,12 +88,15 @@ jobs:
         conda install -y conda-build anaconda-client
         conda config --set anaconda_upload no
     - name: Build and verify conda package
+      shell: bash -l {0}
       run: |
         ./scripts/build_and_verify_conda_package.sh
     - name: Deploy to anaconda.org
       run: |
+        botorch_version=$(python setup.py --version)
         build_dir="$(pwd)/conda_build/noarch"
-        anaconda -t ${{ secrets.ANACONDA_UPLOAD_TOKEN }} upload -u pytorch "${build_dir}/botorch-`date +%Y.%m.%d`-0.tar.bz2"
+        pkg_file="${build_dir}/botorch-${botorch_version}-0.tar.bz2"
+        anaconda -t ${{ secrets.ANACONDA_UPLOAD_TOKEN }} upload -u pytorch "${pkg_file}"
 
   publish-versioned-website:
     name: Publish versioned website
