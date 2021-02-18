@@ -125,7 +125,7 @@ class TestQExpectedImprovement(BotorchTestCase):
             mm = MockModel(MockPosterior(samples=samples))
 
             # X is a dummy and unused b/c of mocking
-            X = torch.zeros(1, 1, 1, device=self.device, dtype=dtype)
+            X = torch.zeros(2, 1, 1, device=self.device, dtype=dtype)
 
             # test batch mode
             sampler = IIDNormalSampler(num_samples=2)
@@ -281,7 +281,7 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
             samples_noisy[0, 0, 0] = 1.0
             mm_noisy = MockModel(MockPosterior(samples=samples_noisy))
             # X is `q x d` = 1 x 1
-            X = torch.zeros(1, 1, 1, device=self.device, dtype=dtype)
+            X = torch.zeros(2, 1, 1, device=self.device, dtype=dtype)
             X_baseline = torch.zeros(1, 1, device=self.device, dtype=dtype)
 
             # test batch mode
@@ -437,7 +437,7 @@ class TestQProbabilityOfImprovement(BotorchTestCase):
             mm = MockModel(MockPosterior(samples=samples))
 
             # X is a dummy and unused b/c of mocking
-            X = torch.zeros(1, 1, 1, device=self.device, dtype=dtype)
+            X = torch.zeros(2, 1, 1, device=self.device, dtype=dtype)
 
             # test batch mode
             sampler = IIDNormalSampler(num_samples=2)
@@ -567,7 +567,7 @@ class TestQSimpleRegret(BotorchTestCase):
             samples[0, 0, 0] = 1.0
             mm = MockModel(MockPosterior(samples=samples))
             # X is a dummy and unused b/c of mocking
-            X = torch.zeros(1, 1, 1, device=self.device, dtype=dtype)
+            X = torch.zeros(2, 1, 1, device=self.device, dtype=dtype)
 
             # test batch mode
             sampler = IIDNormalSampler(num_samples=2)
@@ -697,7 +697,7 @@ class TestQUpperConfidenceBound(BotorchTestCase):
             samples[0, 0, 0] = 1.0
             mm = MockModel(MockPosterior(samples=samples))
             # X is a dummy and unused b/c of mocking
-            X = torch.zeros(1, 1, 1, device=self.device, dtype=dtype)
+            X = torch.zeros(2, 1, 1, device=self.device, dtype=dtype)
 
             # test batch mode
             sampler = IIDNormalSampler(num_samples=2)
@@ -761,7 +761,7 @@ class TestQUpperConfidenceBound(BotorchTestCase):
             acqf.set_X_pending(None)
             self.assertIsNone(acqf.X_pending)
             acqf.set_X_pending(X)
-            self.assertEqual(acqf.X_pending, X)
+            self.assertTrue(torch.equal(acqf.X_pending, X))
             res = acqf(X)
             X2 = torch.zeros(
                 1, 1, 1, device=self.device, dtype=dtype, requires_grad=True

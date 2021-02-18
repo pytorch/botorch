@@ -1,0 +1,126 @@
+name: Nightly Cron
+
+on:
+  schedule:
+    # 2:30 PST
+    - cron:  '30 10 * * *'
+  # allow this to be scheduled manually in addition to cron
+  workflow_dispatch:
+
+
+jobs:
+
+  tests-and-coverage-pip:
+    name: Tests and coverage (pip, Python ${{ matrix.python-version }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-latest", "macos-latest", "windows-latest"]
+        python-version: [3.7, 3.8]
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        pip install git+https://github.com/cornellius-gp/gpytorch.git
+        pip install .[test]
+    - name: Unit tests and coverage
+      run: |
+        pytest -ra --cov=. --cov-report term-missing
+    - name: Upload coverage
+      if: ${{ runner.os == 'Linux' && matrix.python-version == 3.7 }}
+      run: |
+        bash <(curl -s https://codecov.io/bash)
+
+  package-test-deploy-pypi:
+    name: Package and test deployment to test.pypi.org
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Fetch all history for all tags and branches
+      run: git fetch --prune --unshallow
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+    - name: Install dependencies
+      run: |
+        pip install git+https://github.com/cornellius-gp/gpytorch.git
+        pip install .[test]
+        pip install --upgrade setuptools wheel
+    - name: Build packages (wheel and source distribution)
+      env:
+        SCM_NO_LOCAL_VERSION: true
+      run: |
+        python setup.py sdist bdist_wheel
+    - name: Verify packages
+      env:
+        SCM_NO_LOCAL_VERSION: true
+      run: |
+        ./scripts/build_and_verify_py_packages.sh
+    - name: Deploy to Test PyPI
+      uses: pypa/gh-action-pypi-publish@master
+      with:
+        user: mbalandat
+        password: ${{ secrets.TEST_PYPI_PASSWORD }}
+        repository_url: https://test.pypi.org/legacy/
+        skip_existing: true
+        verbose: true
+
+  package-conda:
+    name: Test conda build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+    steps:
+    - uses: actions/checkout@v2
+    - uses: conda-incubator/setup-miniconda@v2
+      with:
+        miniconda-version: "latest"
+        activate-environment: test
+        python-version: "3.7"
+    - name: Fetch all history for all tags and branches
+      run: git fetch --prune --unshallow
+    - name: Install dependencies
+      shell: bash -l {0}
+      run: |
+        conda install -y -c pytorch-nightly pytorch cpuonly
+        conda install -y scipy sphinx pytest flake8
+        conda install -y -c gpytorch gpytorch
+        conda install -y conda-build
+        conda config --set anaconda_upload no
+    - name: Build and verify conda package
+      shell: bash -l {0}
+      run: |
+        ./scripts/build_and_verify_conda_package.sh
+
+  publish-latest-website:
+    name: Publish latest website
+    runs-on: ubuntu-latest
+    needs: [tests-and-coverage-pip, package-test-deploy-pypi, package-conda]
+    strategy:
+      fail-fast: true
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+    - name: Install dependencies
+      run: |
+        pip install git+https://github.com/cornellius-gp/gpytorch.git
+        pip install .[dev]
+        pip install git+https://github.com/facebook/Ax.git
+        pip install beautifulsoup4 ipython "nbconvert<6.0"
+    - name: Unit tests
+      run: |
+        pytest -ra
+    - name: Publish latest website
+      run: |
+        ./scripts/publish_site.sh -d

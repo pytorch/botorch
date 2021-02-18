@@ -32,12 +32,13 @@ TEST_REQUIRES = ["pytest", "pytest-cov"]
 DEV_REQUIRES = TEST_REQUIRES + ["black", "flake8", "sphinx", "sphinx-autodoc-typehints"]
 
 TUTORIALS_REQUIRES = [
+    "ax-platform",
+    "cma",
     "jupyter",
     "matplotlib",
-    "cma",
-    "torchvision",
-    "pykeops",
     "memory_profiler",
+    "pykeops",
+    "torchvision",
 ]
 
 root_dir = os.path.dirname(__file__)
@@ -74,8 +75,13 @@ setup(
         "root": ".",
         "relative_to": __file__,
         "write_to": os.path.join(root_dir, "botorch", "version.py"),
+        "local_scheme": (
+            "no-local-version"
+            if os.environ.get("SCM_NO_LOCAL_VERSION", False)
+            else "node-and-date"
+        ),
     },
-    install_requires=["torch>=1.7", "gpytorch>=1.3", "scipy"],
+    install_requires=["torch>=1.7.1", "gpytorch>=1.3", "scipy"],
     packages=find_packages(),
     extras_require={
         "dev": DEV_REQUIRES,

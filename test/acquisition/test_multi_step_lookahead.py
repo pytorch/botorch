@@ -117,7 +117,9 @@ class TestMultiStepLookahead(BotorchTestCase):
             with self.assertRaises(UnsupportedError):
                 qMultiStepLookahead(
                     model=model,
-                    objective=ScalarizedObjective(weights=torch.tensor([1.0])),
+                    objective=ScalarizedObjective(
+                        weights=torch.tensor([1.0], device=self.device, dtype=dtype)
+                    ),
                     batch_sizes=[2, 2, 2],
                     valfunc_cls=[qExpectedImprovement] * 4,
                     valfunc_argfacs=[make_best_f] * 4,
@@ -132,7 +134,9 @@ class TestMultiStepLookahead(BotorchTestCase):
                 samplers=samplers,
             )
             q_prime = qMS.get_augmented_q_batch_size(q)
-            eval_X = torch.rand(t_batch_size + [q_prime, d])
+            eval_X = torch.rand(
+                t_batch_size + [q_prime, d], device=self.device, dtype=dtype
+            )
             warmstarted_X = warmstart_multistep(
                 acq_function=qMS,
                 bounds=bounds,
@@ -156,14 +160,16 @@ class TestMultiStepLookahead(BotorchTestCase):
             train_Y = torch.rand(num_data, 1, device=self.device, dtype=dtype)
             model = SingleTaskGP(train_X, train_Y)
 
-            # default evaluation tests
+            # default evaluation testsÎ
             qMS = qMultiStepLookahead(
                 model=model,
                 batch_sizes=[1, 1, 1],
                 num_fantasies=num_fantasies,
             )
             q_prime = qMS.get_augmented_q_batch_size(q)
-            eval_X = torch.rand(t_batch_size + [q_prime, d])
+            eval_X = torch.rand(
+                t_batch_size + [q_prime, d], device=self.device, dtype=dtype
+            )
             result = qMS(eval_X)
             self.assertEqual(result.shape, torch.Size(t_batch_size))
 
@@ -200,7 +206,9 @@ class TestMultiStepLookahead(BotorchTestCase):
                 collapse_fantasy_base_samples=False,
             )
             q_prime = qMS.get_augmented_q_batch_size(q)
-            eval_X = torch.rand(t_batch_size + [q_prime, d])
+            eval_X = torch.rand(
+                t_batch_size + [q_prime, d], device=self.device, dtype=dtype
+            )
             result = qMS(eval_X)
             self.assertEqual(result.shape, torch.Size(t_batch_size))
             self.assertEqual(qMS.samplers[0].batch_range, (-3, -2))
@@ -217,7 +225,7 @@ class TestMultiStepLookahead(BotorchTestCase):
             )
 
             # X_pending
-            X_pending = torch.rand(5, d)
+            X_pending = torch.rand(5, d, device=self.device, dtype=dtype)
             qMS = qMultiStepLookahead(
                 model=model,
                 batch_sizes=q_batch_sizes,
@@ -228,7 +236,9 @@ class TestMultiStepLookahead(BotorchTestCase):
                 X_pending=X_pending,
             )
             q_prime = qMS.get_augmented_q_batch_size(q)
-            eval_X = torch.rand(t_batch_size + [q_prime, d])
+            eval_X = torch.rand(
+                t_batch_size + [q_prime, d], device=self.device, dtype=dtype
+            )
             result = qMS(eval_X)
             self.assertEqual(result.shape, torch.Size(t_batch_size))
 
@@ -250,7 +260,9 @@ class TestMultiStepLookahead(BotorchTestCase):
                 samplers=samplers,
             )
             q_prime = qMS.get_augmented_q_batch_size(q)
-            eval_X = torch.rand(t_batch_size + [q_prime, d])
+            eval_X = torch.rand(
+                t_batch_size + [q_prime, d], device=self.device, dtype=dtype
+            )
             result = qMS(eval_X)
             self.assertEqual(result.shape, torch.Size(t_batch_size))
 

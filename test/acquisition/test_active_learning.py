@@ -68,7 +68,7 @@ class TestQNegIntegratedPosteriorVariance(BotorchTestCase):
                         model=mm, mc_points=mc_points
                     )
                     # TODO: Allow broadcasting for batch evaluation
-                    X = torch.empty(1, 1, device=self.device, dtype=dtype)  # dummy
+                    X = torch.empty(2, 1, 1, device=self.device, dtype=dtype)  # dummy
                     val = qNIPV(X)
                     val_exp = -variance.mean(dim=-2).squeeze(-1)
                     self.assertTrue(torch.allclose(val, val_exp, atol=1e-4))
@@ -120,7 +120,7 @@ class TestQNegIntegratedPosteriorVariance(BotorchTestCase):
                         mc_points=mc_points,
                         objective=ScalarizedObjective(weights=weights),
                     )
-                    X = torch.empty(1, 1, device=self.device, dtype=dtype)  # dummy
+                    X = torch.empty(3, 1, 1, device=self.device, dtype=dtype)  # dummy
                     val = qNIPV(X)
                     val_exp = -0.5 * variance.mean(dim=0).view(3, -1).mean(dim=-1)
                     self.assertTrue(torch.allclose(val, val_exp, atol=1e-4))

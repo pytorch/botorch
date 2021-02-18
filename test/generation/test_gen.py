@@ -6,6 +6,7 @@
 
 import math
 import warnings
+from unittest import mock
 
 import torch
 from botorch.acquisition import qExpectedImprovement
@@ -137,6 +138,31 @@ class TestGenCandidates(TestBaseCandidateGeneration):
         self.test_gen_candidates_with_fixed_features(
             gen_candidates=gen_candidates_torch, options={"disp": False}
         )
+
+    def test_gen_candidates_scipy_nan_handling(self):
+        for dtype, expected_regex in [
+            (torch.float, "Consider using"),
+            (torch.double, "gradient array"),
+        ]:
+            ckwargs = {"dtype": dtype, "device": self.device}
+
+            test_ics = torch.rand(3, 1, **ckwargs)
+            test_grad = torch.tensor([0.5, 0.2, float("nan")], **ckwargs)
+            # test NaN in grad
+            with mock.patch("torch.autograd.grad", return_value=[test_grad]):
+                with self.assertRaisesRegex(RuntimeError, expected_regex):
+                    gen_candidates_scipy(
+                        initial_conditions=test_ics,
+                        acquisition_function=mock.Mock(return_value=test_ics),
+                    )
+
+            # test NaN in `x`
+            test_ics = torch.tensor([0.0, 0.0, float("nan")], **ckwargs)
+            with self.assertRaisesRegex(RuntimeError, "array `x` are NaN."):
+                gen_candidates_scipy(
+                    initial_conditions=test_ics,
+                    acquisition_function=mock.Mock(),
+                )
 
 
 class TestRandomRestartOptimization(TestBaseCandidateGeneration):
