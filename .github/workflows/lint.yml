@@ -59,8 +59,7 @@ jobs:
         python-version: 3.7
     - name: Install dependencies
       run: |
-        pip install musort
+        pip install usort
     - name: usort
       run: |
-        usort diff botorch
-        usort diff test
+        usort check .
