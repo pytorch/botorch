@@ -106,10 +106,8 @@ class MaxPosteriorSampling(SamplingStrategy):
         if isinstance(self.objective, ScalarizedObjective):
             posterior = self.objective(posterior)
 
-        sampler = IIDNormalSampler(
-            num_samples=num_samples, collapse_batch_dims=False, resample=True
-        )
-        samples = sampler(posterior)  # num_samples x batch_shape x N x m
+        # num_samples x batch_shape x N x m
+        samples = posterior.rsample(sample_shape=torch.Size([num_samples]))
         if isinstance(self.objective, ScalarizedObjective):
             obj = samples.squeeze(-1)  # num_samples x batch_shape x N
         else:
