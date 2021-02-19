@@ -51,12 +51,12 @@ class TestSingleTaskGP(BotorchTestCase):
         model = SingleTaskGP(**model_kwargs)
         return model, model_kwargs
 
-    def test_gp(self):
+    def test_gp(self, double_only: bool = False):
         bounds = torch.tensor([[-1.0], [1.0]])
         for batch_shape, m, dtype, use_octf, use_intf in itertools.product(
             (torch.Size(), torch.Size([2])),
             (1, 2),
-            (torch.float, torch.double),
+            (torch.double,) if double_only else (torch.float, torch.double),
             (False, True),
             (False, True),
         ):
@@ -393,6 +393,9 @@ class TestHeteroskedasticSingleTaskGP(TestSingleTaskGP):
         }
         model = HeteroskedasticSingleTaskGP(**model_kwargs)
         return model, model_kwargs
+
+    def test_gp(self):
+        super().test_gp(double_only=True)
 
     def test_heteroskedastic_likelihood(self):
         for batch_shape, m, dtype in itertools.product(
