@@ -4,7 +4,6 @@ on:
   schedule:
     # 2:30 PST
     - cron:  '30 10 * * *'
-  # allow this to be scheduled manually in addition to cron
   workflow_dispatch:
 
 
