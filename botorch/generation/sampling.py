@@ -28,7 +28,6 @@ from botorch.acquisition.objective import (
 )
 from botorch.generation.utils import _flip_sub_unique
 from botorch.models.model import Model
-from botorch.sampling.samplers import IIDNormalSampler
 from botorch.utils.sampling import batched_multinomial
 from botorch.utils.transforms import standardize
 from torch import Tensor
