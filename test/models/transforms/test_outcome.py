@@ -351,7 +351,6 @@ class TestOutcomeTransforms(BotorchTestCase):
             self.assertTrue(torch.equal(Y_tf_subset, Y_tf[..., [0]]))
             self.assertIsNone(Yvar_tf_subset)
 
-
     def test_chained_outcome_transform(self):
 
         ms = (1, 2)
