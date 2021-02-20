@@ -138,7 +138,9 @@ class ChainedOutcomeTransform(OutcomeTransform, ModuleDict):
         Returns:
             The current outcome transform, subset to the specified output indices.
         """
-        return self.__class__(*(tf.subset_output(idcs=idcs) for tf in self.values()))
+        return self.__class__(
+            **{name: tf.subset_output(idcs=idcs) for name, tf in self.items()}
+        )
 
     def untransform(
         self, Y: Tensor, Yvar: Optional[Tensor] = None
@@ -258,22 +260,27 @@ class Standardize(OutcomeTransform):
         Returns:
             The current outcome transform, subset to the specified output indices.
         """
-        nlzd_idcs = normalize_indices(idcs, d=self._m)
-        new_m = len(nlzd_idcs)
+        new_m = len(idcs)
         if new_m > self._m:
             raise RuntimeError(
                 "Trying to subset a transform have more outputs than "
                 " the original transform."
             )
+        nlzd_idcs = normalize_indices(idcs, d=self._m)
+        new_outputs = None
+        if self._outputs is not None:
+            new_outputs = [i for i in self._outputs if i in nlzd_idcs]
         new_tf = self.__class__(
             m=new_m,
-            outputs=None if self._outputs is None else self._outputs[nlzd_idcs],
+            outputs=new_outputs,
             batch_shape=self._batch_shape,
             min_stdv=self._min_stdv,
         )
         new_tf.means = self.means[..., nlzd_idcs]
         new_tf.stdvs = self.stdvs[..., nlzd_idcs]
         new_tf._stdvs_sq = self._stdvs_sq[..., nlzd_idcs]
+        if not self.training:
+            new_tf.eval()
         return new_tf
 
     def untransform(
@@ -385,10 +392,18 @@ class Log(OutcomeTransform):
         Returns:
             The current outcome transform, subset to the specified output indices.
         """
-        nlzd_idcs = normalize_indices(idcs, d=self._m)
-        return self.__class__(
-            outputs=None if self._outputs is None else self._outputs[nlzd_idcs],
-        )
+        new_outputs = None
+        if self._outputs is not None:
+            if min(self._outputs + idcs) < 0:
+                raise NotImplementedError(
+                    f"Negative indexing not supported for {self.__class__.__name__} "
+                    "when subsetting outputs and only transforming some outputs."
+                )
+            new_outputs = [i for i in self._outputs if i in idcs]
+        new_tf = self.__class__(outputs=new_outputs)
+        if not self.training:
+            new_tf.eval()
+        return new_tf
 
     def forward(
         self, Y: Tensor, Yvar: Optional[Tensor] = None

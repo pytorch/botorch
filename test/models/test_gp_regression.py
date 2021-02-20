@@ -278,12 +278,13 @@ class TestSingleTaskGP(BotorchTestCase):
             self.assertIsInstance(fm, model.__class__)
 
     def test_subset_model(self):
-        for batch_shape, dtype in itertools.product(
-            (torch.Size(), torch.Size([2])), (torch.float, torch.double)
+        for batch_shape, dtype, use_octf in itertools.product(
+            (torch.Size(), torch.Size([2])), (torch.float, torch.double), (True, False)
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
+            octf = Standardize(m=2, batch_shape=batch_shape) if use_octf else None
             model, model_kwargs = self._get_model_and_data(
-                batch_shape=batch_shape, m=2, **tkwargs
+                batch_shape=batch_shape, m=2, outcome_transform=octf, **tkwargs
             )
             subset_model = model.subset_output([0])
             X = torch.rand(torch.Size(batch_shape + torch.Size([3, 1])), **tkwargs)
