@@ -51,6 +51,8 @@ class TestOutcomeTransforms(BotorchTestCase):
             OutcomeTransform()
         oct = NotSoAbstractOutcomeTransform()
         with self.assertRaises(NotImplementedError):
+            oct.subset_output(None)
+        with self.assertRaises(NotImplementedError):
             oct.untransform(None, None)
         with self.assertRaises(NotImplementedError):
             oct.untransform_posterior(None)
@@ -164,7 +166,7 @@ class TestOutcomeTransforms(BotorchTestCase):
                 tf_big.untransform_posterior(posterior2)
                 self.assertTrue("Incompatible output dimensions" in str(e))
 
-        # test subset outcomes
+        # test transforming a subset of outcomes
         for batch_shape, dtype in itertools.product(batch_shapes, dtypes):
 
             m = 2
@@ -278,7 +280,7 @@ class TestOutcomeTransforms(BotorchTestCase):
             samples2 = p_utf.rsample(sample_shape=torch.Size([4, 2]))
             self.assertEqual(samples2.shape, torch.Size([4, 2]) + shape)
 
-        # test subset outcomes
+        # test transforming a subset of outcomes
         for batch_shape, dtype in itertools.product(batch_shapes, dtypes):
 
             m = 2
@@ -377,7 +379,7 @@ class TestOutcomeTransforms(BotorchTestCase):
             samples2 = p_utf.rsample(sample_shape=torch.Size([4, 2]))
             self.assertEqual(samples2.shape, torch.Size([4, 2]) + shape)
 
-        # test subset outcomes
+        # test transforming a subset of outcomes
         for batch_shape, dtype in itertools.product(batch_shapes, dtypes):
 
             m = 2

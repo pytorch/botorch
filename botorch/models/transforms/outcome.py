@@ -44,6 +44,23 @@ class OutcomeTransform(Module, ABC):
         """
         pass  # pragma: no cover
 
+    def subset_output(self, idcs: List[int]) -> OutcomeTransform:
+        r"""Subset the transform along the output dimension.
+
+        This functionality is used tpo properly treat outcome transfomrations
+        in the `subset_model` functionality.
+
+        Args:
+            idcs: The output indices to subset the transform to.
+
+        Returns:
+            The current outcome transform, subset to the specified output indices.
+        """
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not implement the "
+            "`subset_output` method"
+        )
+
     def untransform(
         self, Y: Tensor, Yvar: Optional[Tensor] = None
     ) -> Tuple[Tensor, Optional[Tensor]]:
@@ -111,6 +128,17 @@ class ChainedOutcomeTransform(OutcomeTransform, ModuleDict):
         for tf in self.values():
             Y, Yvar = tf.forward(Y, Yvar)
         return Y, Yvar
+
+    def subset_output(self, idcs: List[int]) -> OutcomeTransform:
+        r"""Subset the transform along the output dimension.
+
+        Args:
+            idcs: The output indices to subset the transform to.
+
+        Returns:
+            The current outcome transform, subset to the specified output indices.
+        """
+        return self.__class__(*(tf.subset_output(idcs=idcs) for tf in self.values()))
 
     def untransform(
         self, Y: Tensor, Yvar: Optional[Tensor] = None
@@ -221,6 +249,33 @@ class Standardize(OutcomeTransform):
         Yvar_tf = Yvar / self._stdvs_sq if Yvar is not None else None
         return Y_tf, Yvar_tf
 
+    def subset_output(self, idcs: List[int]) -> OutcomeTransform:
+        r"""Subset the transform along the output dimension.
+
+        Args:
+            idcs: The output indices to subset the transform to.
+
+        Returns:
+            The current outcome transform, subset to the specified output indices.
+        """
+        nlzd_idcs = normalize_indices(idcs, d=self._m)
+        new_m = len(nlzd_idcs)
+        if new_m > self._m:
+            raise RuntimeError(
+                "Trying to subset a transform have more outputs than "
+                " the original transform."
+            )
+        new_tf = self.__class__(
+            m=new_m,
+            outputs=None if self._outputs is None else self._outputs[nlzd_idcs],
+            batch_shape=self._batch_shape,
+            min_stdv=self._min_stdv,
+        )
+        new_tf.means = self.means[..., nlzd_idcs]
+        new_tf.stdvs = self.stdvs[..., nlzd_idcs]
+        new_tf._stdvs_sq = self._stdvs_sq[..., nlzd_idcs]
+        return new_tf
+
     def untransform(
         self, Y: Tensor, Yvar: Optional[Tensor] = None
     ) -> Tuple[Tensor, Optional[Tensor]]:
@@ -320,6 +375,20 @@ class Log(OutcomeTransform):
         """
         super().__init__()
         self._outputs = outputs
+
+    def subset_output(self, idcs: List[int]) -> OutcomeTransform:
+        r"""Subset the transform along the output dimension.
+
+        Args:
+            idcs: The output indices to subset the transform to.
+
+        Returns:
+            The current outcome transform, subset to the specified output indices.
+        """
+        nlzd_idcs = normalize_indices(idcs, d=self._m)
+        return self.__class__(
+            outputs=None if self._outputs is None else self._outputs[nlzd_idcs],
+        )
 
     def forward(
         self, Y: Tensor, Yvar: Optional[Tensor] = None
