@@ -21,7 +21,6 @@ from nbconvert import PythonExporter
 
 IGNORE = {
     "vae_mnist.ipynb",  # requires setting paths to local data
-    "thompson_sampling.ipynb",  # TODO: add SMOKE_TEST handling
 }
 
 
