@@ -3,6 +3,8 @@ name: Test against stable
 on:
   workflow_dispatch:
 
+jobs:
+
   tests-and-coverage:
     name: Tests and coverage (pip, Python ${{ matrix.python-version }}, ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
