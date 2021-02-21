@@ -51,6 +51,8 @@ class TestOutcomeTransforms(BotorchTestCase):
             OutcomeTransform()
         oct = NotSoAbstractOutcomeTransform()
         with self.assertRaises(NotImplementedError):
+            oct.subset_output(None)
+        with self.assertRaises(NotImplementedError):
             oct.untransform(None, None)
         with self.assertRaises(NotImplementedError):
             oct.untransform_posterior(None)
@@ -91,6 +93,14 @@ class TestOutcomeTransforms(BotorchTestCase):
             Y_utf, Yvar_utf = tf.untransform(Y_tf, Yvar_tf)
             torch.allclose(Y_utf, Y)
             self.assertIsNone(Yvar_utf)
+
+            # subset_output
+            tf_subset = tf.subset_output(idcs=[0])
+            Y_tf_subset, Yvar_tf_subset = tf_subset(Y[..., [0]])
+            self.assertTrue(torch.equal(Y_tf[..., [0]], Y_tf_subset))
+            self.assertIsNone(Yvar_tf_subset)
+            with self.assertRaises(RuntimeError):
+                tf.subset_output(idcs=[0, 1, 2])
 
             # with observation noise
             tf = Standardize(m=m, batch_shape=batch_shape)
@@ -160,11 +170,10 @@ class TestOutcomeTransforms(BotorchTestCase):
 
             # test error on incompatible output dimension
             tf_big = Standardize(m=4).eval()
-            with self.assertRaises(RuntimeError) as e:
+            with self.assertRaises(RuntimeError):
                 tf_big.untransform_posterior(posterior2)
-                self.assertTrue("Incompatible output dimensions" in str(e))
 
-        # test subset outcomes
+        # test transforming a subset of outcomes
         for batch_shape, dtype in itertools.product(batch_shapes, dtypes):
 
             m = 2
@@ -191,6 +200,14 @@ class TestOutcomeTransforms(BotorchTestCase):
             Y_utf, Yvar_utf = tf.untransform(Y_tf, Yvar_tf)
             torch.allclose(Y_utf, Y)
             self.assertIsNone(Yvar_utf)
+
+            # subset_output
+            tf_subset = tf.subset_output(idcs=[0])
+            Y_tf_subset, Yvar_tf_subset = tf_subset(Y[..., [0]])
+            self.assertTrue(torch.equal(Y_tf[..., [0]], Y_tf_subset))
+            self.assertIsNone(Yvar_tf_subset)
+            with self.assertRaises(RuntimeError):
+                tf.subset_output(idcs=[0, 1, 2])
 
             # with observation noise
             tf = Standardize(m=m, outputs=outputs, batch_shape=batch_shape)
@@ -242,6 +259,12 @@ class TestOutcomeTransforms(BotorchTestCase):
             torch.allclose(Y_utf, Y)
             self.assertIsNone(Yvar_utf)
 
+            # subset_output
+            tf_subset = tf.subset_output(idcs=[0])
+            Y_tf_subset, Yvar_tf_subset = tf_subset(Y[..., [0]])
+            self.assertTrue(torch.equal(Y_tf[..., [0]], Y_tf_subset))
+            self.assertIsNone(Yvar_tf_subset)
+
             # test error if observation noise present
             tf = Log()
             Y = torch.rand(*batch_shape, 3, m, device=self.device, dtype=dtype)
@@ -278,7 +301,7 @@ class TestOutcomeTransforms(BotorchTestCase):
             samples2 = p_utf.rsample(sample_shape=torch.Size([4, 2]))
             self.assertEqual(samples2.shape, torch.Size([4, 2]) + shape)
 
-        # test subset outcomes
+        # test transforming a subset of outcomes
         for batch_shape, dtype in itertools.product(batch_shapes, dtypes):
 
             m = 2
@@ -303,6 +326,10 @@ class TestOutcomeTransforms(BotorchTestCase):
             torch.allclose(Y_utf, Y)
             self.assertIsNone(Yvar_utf)
 
+            # subset_output
+            with self.assertRaises(NotImplementedError):
+                tf_subset = tf.subset_output(idcs=[0])
+
             # with observation noise
             tf = Log(outputs=outputs)
             Y = torch.rand(*batch_shape, 3, m, device=self.device, dtype=dtype)
@@ -315,6 +342,14 @@ class TestOutcomeTransforms(BotorchTestCase):
             # error on untransform_posterior
             with self.assertRaises(NotImplementedError):
                 tf.untransform_posterior(None)
+
+            # test subset_output with positive on subset of outcomes (pos. index)
+            tf = Log(outputs=[0])
+            Y_tf, Yvar_tf = tf(Y, None)
+            tf_subset = tf.subset_output(idcs=[0])
+            Y_tf_subset, Yvar_tf_subset = tf_subset(Y[..., [0]], None)
+            self.assertTrue(torch.equal(Y_tf_subset, Y_tf[..., [0]]))
+            self.assertIsNone(Yvar_tf_subset)
 
     def test_chained_outcome_transform(self):
 
@@ -350,6 +385,14 @@ class TestOutcomeTransforms(BotorchTestCase):
             torch.allclose(Y_utf, Y)
             self.assertIsNone(Yvar_utf)
 
+            # subset_output
+            tf_subset = tf.subset_output(idcs=[0])
+            Y_tf_subset, Yvar_tf_subset = tf_subset(Y[..., [0]])
+            self.assertTrue(torch.equal(Y_tf[..., [0]], Y_tf_subset))
+            self.assertIsNone(Yvar_tf_subset)
+            with self.assertRaises(RuntimeError):
+                tf.subset_output(idcs=[0, 1, 2])
+
             # test error if observation noise present
             Y = torch.rand(*batch_shape, 3, m, device=self.device, dtype=dtype)
             Yvar = 1e-8 + torch.rand(
@@ -377,7 +420,7 @@ class TestOutcomeTransforms(BotorchTestCase):
             samples2 = p_utf.rsample(sample_shape=torch.Size([4, 2]))
             self.assertEqual(samples2.shape, torch.Size([4, 2]) + shape)
 
-        # test subset outcomes
+        # test transforming a subset of outcomes
         for batch_shape, dtype in itertools.product(batch_shapes, dtypes):
 
             m = 2
