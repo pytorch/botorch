@@ -3,7 +3,7 @@
 The release log for BoTorch.
 
 
-## [0.4.0] - Feb 22, 2021
+## [0.4.0] - Feb 23, 2021
 
 #### Compatibility
 * Require PyTorch >=1.7.1 (#714).
@@ -16,7 +16,9 @@ The release log for BoTorch.
   optimization approaches (#611, #659).
 * `ScalarizedPosteriorMean` and `project_to_sample_points` for more
   advanced MFKG functionality (#645).
-* Large-scale Thompson sampling tutorial (#654).
+* Large-scale Thompson sampling tutorial (#654, #713).
+* Tutorial for optimizing mixed continuous/discrete domains (application
+  to multi-fidelity KG with discrete fidelities) (#716).
 * `GPDraw` utility for sampling from (exact) GP priors (#655).
 * Add `X` as optional arg to call signature of `MCAcqusitionObjective` (#487).
 * Add Add `OSY` synthetic test problem (#679).
@@ -40,6 +42,7 @@ The release log for BoTorch.
 * Support input_transform in PairwiseGP (#632).
 * Output shape checks for t_batch_mode_transform (#577).
 * Check for NaN in `gen_candidates_scipy` (#688).
+* Introduce `base_sample_shape` property to `Posterior` objects (#718).
 
 
 ## [0.3.3] - Dec 8, 2020
