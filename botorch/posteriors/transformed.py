@@ -44,6 +44,11 @@ class TransformedPosterior(Posterior):
         self._variance_transform = variance_transform
 
     @property
+    def base_sample_shape(self) -> torch.Size:
+        r"""The shape of a base sample used for constructing posterior samples."""
+        return self._posterior.base_sample_shape
+
+    @property
     def device(self) -> torch.device:
         r"""The torch device of the posterior."""
         return self._posterior.device

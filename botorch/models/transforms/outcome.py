@@ -4,6 +4,14 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+r"""
+Outcome transformations for automatically transforming and un-transforming
+model outputs. Outcome transformations are typically part of a Model and
+applied (i) within the model constructor to transform the train observations
+to the model space, and (ii) in the `Model.posterior` call to untransform
+the model posterior back to the original space.
+"""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
