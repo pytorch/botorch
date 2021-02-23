@@ -55,8 +55,8 @@ Optimization simply use Ax.
 
 **Installation Requirements**
 - Python >= 3.7
-- PyTorch >= 1.7
-- gpytorch >= 1.3
+- PyTorch >= 1.7.1
+- gpytorch >= 1.4
 - scipy
 
 

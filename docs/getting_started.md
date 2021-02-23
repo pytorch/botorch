@@ -14,8 +14,8 @@ Before jumping the gun, we recommend you start with the high-level
 #### Installation Requirements:
 
 - Python >= 3.7
-- PyTorch >= 1.7
-- gpytorch >= 1.3
+- PyTorch >= 1.7.1
+- gpytorch >= 1.4
 - scipy
 
 BoTorch is easily installed via
