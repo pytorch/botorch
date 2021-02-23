@@ -82,7 +82,11 @@
     },
     {
       "id": "multi_fidelity_bo",
-      "title": "Multi-fidelity Bayesian optimization with KG"
+      "title": "Multi-fidelity Bayesian optimization using KG"
+    },
+    {
+      "id": "discrete_multi_fidelity_bo",
+      "title": "Multi-fidelity Bayesian optimization with discrete fidelities using KG"
     }
   ]
 }

@@ -95,7 +95,6 @@ def optimize_acqf(
         >>> candidates, acq_value_list = optimize_acqf(
         >>>     qEI, bounds, 3, 15, 256, sequential=True
         >>> )
-
     """
     if sequential and q > 1:
         if not return_best_only:
@@ -221,7 +220,7 @@ def optimize_acqf_cyclic(
         q: The number of candidates.
         num_restarts:  Number of starting points for multistart acquisition
             function optimization.
-        raw_samples: Number of samples for initialization
+        raw_samples: Number of samples for initialization.
         options: Options for candidate generation.
         inequality constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
@@ -256,7 +255,6 @@ def optimize_acqf_cyclic(
         >>> candidates, acq_value_list = optimize_acqf_cyclic(
         >>>     qEI, bounds, 3, 15, 256, cyclic_options={"maxiter": 4}
         >>> )
-
     """
     # for the first cycle, optimize the q candidates sequentially
     candidates, acq_vals = optimize_acqf(
@@ -333,7 +331,7 @@ def optimize_acqf_list(
         bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.
         num_restarts:  Number of starting points for multistart acquisition
             function optimization.
-        raw_samples: Number of samples for initialization
+        raw_samples: Number of samples for initialization.
         options: Options for candidate generation.
         inequality constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
@@ -354,7 +352,6 @@ def optimize_acqf_list(
         - a `q`-dim tensor of expected acquisition values, where the value at
             index `i` is the acquisition value conditional on having observed
             all candidates except candidate `i`.
-
     """
     if not acq_function_list:
         raise ValueError("acq_function_list must be non-empty.")
@@ -386,3 +383,76 @@ def optimize_acqf_list(
         acq_value_list.append(acq_value)
         candidates = torch.cat(candidate_list, dim=-2)
     return candidates, torch.stack(acq_value_list)
+
+
+def optimize_acqf_mixed(
+    acq_function: AcquisitionFunction,
+    bounds: Tensor,
+    q: int,
+    num_restarts: int,
+    raw_samples: int,
+    fixed_features_list: List[Dict[int, float]],
+    options: Optional[Dict[str, Union[bool, float, int, str]]] = None,
+    inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
+    equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
+    post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
+    batch_initial_conditions: Optional[Tensor] = None,
+    sequential: bool = False,
+) -> Tuple[Tensor, Tensor]:
+    r"""Optimize over a list of fixed_features and returns the best solution.
+    This is useful for optimizing over mixed continuous and discrete domains.
+
+    Args:
+        acq_function: An AcquisitionFunction
+        bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.
+        q: The number of candidates.
+        num_restarts:  Number of starting points for multistart acquisition
+            function optimization.
+        raw_samples: Number of samples for initialization.
+        fixed_features_list: A list of maps `{feature_index: value}`. The i-th
+            item represents the fixed_feature for the i-th optimization.
+        options: Options for candidate generation.
+        inequality constraints: A list of tuples (indices, coefficients, rhs),
+            with each tuple encoding an inequality constraint of the form
+            `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`
+        equality constraints: A list of tuples (indices, coefficients, rhs),
+            with each tuple encoding an inequality constraint of the form
+            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`
+        post_processing_func: A function that post-processes an optimization
+            result appropriately (i.e., according to `round-trip`
+            transformations).
+        batch_initial_conditions: A tensor to specify the initial conditions. Set
+            this if you do not want to use default initialization strategy.
+        sequential: If False, uses joint optimization, otherwise uses sequential
+            optimization.
+
+    Returns:
+        A two-element tuple containing
+
+        - a `q x d`-dim tensor of generated candidates.
+        - an associated acquisition value.
+    """
+    if not fixed_features_list:
+        raise ValueError("fixed_features_list must be non-empty.")
+    ff_candidate_list, ff_acq_value_list = [], []
+    for fixed_features in fixed_features_list:
+        candidate, acq_value = optimize_acqf(
+            acq_function=acq_function,
+            bounds=bounds,
+            q=q,
+            num_restarts=num_restarts,
+            raw_samples=raw_samples,
+            options=options or {},
+            inequality_constraints=inequality_constraints,
+            equality_constraints=equality_constraints,
+            fixed_features=fixed_features,
+            post_processing_func=post_processing_func,
+            batch_initial_conditions=batch_initial_conditions,
+            return_best_only=True,
+            sequential=False,
+        )
+        ff_candidate_list.append(candidate)
+        ff_acq_value_list.append(acq_value)
+    ff_acq_values = torch.stack(ff_acq_value_list)
+    best = torch.argmax(ff_acq_values)
+    return ff_candidate_list[best], ff_acq_values[best]

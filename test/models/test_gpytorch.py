@@ -50,7 +50,7 @@ class SimpleGPyTorchModel(GPyTorchModel, ExactGP):
 
 
 class SimpleBatchedMultiOutputGPyTorchModel(BatchedMultiOutputGPyTorchModel, ExactGP):
-    def __init__(self, train_X, train_Y):
+    def __init__(self, train_X, train_Y, outcome_transform=None):
         self._validate_tensor_args(train_X, train_Y)
         self._set_dimensions(train_X=train_X, train_Y=train_Y)
         train_X, train_Y, _ = self._transform_tensor_args(X=train_X, Y=train_Y)
@@ -61,6 +61,8 @@ class SimpleBatchedMultiOutputGPyTorchModel(BatchedMultiOutputGPyTorchModel, Exa
             RBFKernel(batch_shape=self._aug_batch_shape),
             batch_shape=self._aug_batch_shape,
         )
+        if outcome_transform is not None:
+            self.outcome_transform = outcome_transform
         self.to(train_X)
 
     def forward(self, x):
