@@ -30,20 +30,20 @@
 <p>Sampler modules to be used with MC-evaluated acquisition functions.</p>
 <dl class="py class">
 <dt id="botorch.sampling.samplers.MCSampler">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.sampling.samplers.</code><code class="sig-name descname">MCSampler</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">batch_range</span><span class="o">=</span><span class="default_value">(0, - 2)</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/samplers.html#MCSampler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.sampling.samplers.MCSampler" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">botorch.sampling.samplers.</span></code><code class="sig-name descname"><span class="pre">MCSampler</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0,</span> <span class="pre">-</span> <span class="pre">2)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/samplers.html#MCSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.samplers.MCSampler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
 <p>Abstract base class for Samplers.</p>
 <p>Subclasses must implement the <cite>_construct_base_samples</cite> method.</p>
 <dl class="py attribute">
 <dt id="botorch.sampling.samplers.MCSampler.resample">
-<code class="sig-name descname">resample</code><a class="headerlink" href="#botorch.sampling.samplers.MCSampler.resample" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">resample</span></code><a class="headerlink" href="#botorch.sampling.samplers.MCSampler.resample" title="Permalink to this definition">¶</a></dt>
 <dd><p>If <cite>True</cite>, re-draw samples in each <cite>forward</cite> evaluation -
 this results in stochastic acquisition functions (and thus should
 not be used with deterministic optimization algorithms).</p>
 </dd></dl>
 <dl class="py attribute">
 <dt id="botorch.sampling.samplers.MCSampler.collapse_batch_dims">
-<code class="sig-name descname">collapse_batch_dims</code><a class="headerlink" href="#botorch.sampling.samplers.MCSampler.collapse_batch_dims" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">collapse_batch_dims</span></code><a class="headerlink" href="#botorch.sampling.samplers.MCSampler.collapse_batch_dims" title="Permalink to this definition">¶</a></dt>
 <dd><p>If True, collapse the t-batch dimensions of the
 produced samples to size 1. This is useful for preventing sampling
 variance across t-batches.</p>
@@ -56,7 +56,7 @@ variance across t-batches.</p>
 <p>Abstract base class for Samplers.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>batch_range</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The range of t-batch dimensions in the <cite>event_shape</cite>
+<dd class="field-odd"><p><strong>batch_range</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The range of t-batch dimensions in the <cite>base_sample_shape</cite>
 used by <cite>collapse_batch_dims</cite>. The t-batch dims are
 batch_range[0]:batch_range[1]. By default, this is (0, -2),
 for the case where the non-batch dimensions are -2 (q) and
@@ -65,7 +65,7 @@ for the case where the non-batch dimensions are -2 (q) and
 </dl>
 <dl class="py method">
 <dt id="botorch.sampling.samplers.MCSampler.batch_range">
-<em class="property">property </em><code class="sig-name descname">batch_range</code><a class="headerlink" href="#botorch.sampling.samplers.MCSampler.batch_range" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">batch_range</span></code><a class="headerlink" href="#botorch.sampling.samplers.MCSampler.batch_range" title="Permalink to this definition">¶</a></dt>
 <dd><p>The t-batch range.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
@@ -75,7 +75,7 @@ for the case where the non-batch dimensions are -2 (q) and
 </dd></dl>
 <dl class="py method">
 <dt id="botorch.sampling.samplers.MCSampler.forward">
-<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">posterior</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/samplers.html#MCSampler.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.sampling.samplers.MCSampler.forward" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">forward</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/samplers.html#MCSampler.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.samplers.MCSampler.forward" title="Permalink to this definition">¶</a></dt>
 <dd><p>Draws MC samples from the posterior.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -91,8 +91,8 @@ for the case where the non-batch dimensions are -2 (q) and
 </dd></dl>
 <dl class="py method">
 <dt id="botorch.sampling.samplers.MCSampler.sample_shape">
-<em class="property">property </em><code class="sig-name descname">sample_shape</code><a class="headerlink" href="#botorch.sampling.samplers.MCSampler.sample_shape" title="Permalink to this definition">¶</a></dt>
-<dd><p>The shape of a single sample</p>
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">sample_shape</span></code><a class="headerlink" href="#botorch.sampling.samplers.MCSampler.sample_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>The shape of a single sample.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code></p>
@@ -101,12 +101,12 @@ for the case where the non-batch dimensions are -2 (q) and
 </dd></dl>
 <dl class="py attribute">
 <dt id="botorch.sampling.samplers.MCSampler.training">
-<code class="sig-name descname">training</code><em class="property">: bool</em><a class="headerlink" href="#botorch.sampling.samplers.MCSampler.training" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">training</span></code><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.samplers.MCSampler.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt id="botorch.sampling.samplers.IIDNormalSampler">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.sampling.samplers.</code><code class="sig-name descname">IIDNormalSampler</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">num_samples</span></em>, <em class="sig-param"><span class="n">resample</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">seed</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">collapse_batch_dims</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">batch_range</span><span class="o">=</span><span class="default_value">(0, - 2)</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/samplers.html#IIDNormalSampler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.sampling.samplers.IIDNormalSampler" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">botorch.sampling.samplers.</span></code><code class="sig-name descname"><span class="pre">IIDNormalSampler</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collapse_batch_dims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0,</span> <span class="pre">-</span> <span class="pre">2)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/samplers.html#IIDNormalSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.samplers.IIDNormalSampler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.sampling.samplers.MCSampler" title="botorch.sampling.samplers.MCSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.sampling.samplers.MCSampler</span></code></a></p>
 <p>Sampler for MC base samples using iid N(0,1) samples.</p>
 <p class="rubric">Example</p>
@@ -127,7 +127,7 @@ not be used with deterministic optimization algorithms).</p></li>
 <li><p><strong>collapse_batch_dims</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, collapse the t-batch dimensions to
 size 1. This is useful for preventing sampling variance across
 t-batches.</p></li>
-<li><p><strong>batch_range</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The range of t-batch dimensions in the <cite>event_shape</cite>
+<li><p><strong>batch_range</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The range of t-batch dimensions in the <cite>base_sample_shape</cite>
 used by <cite>collapse_batch_dims</cite>. The t-batch dims are
 batch_range[0]:batch_range[1]. By default, this is (0, -2),
 for the case where the non-batch dimensions are -2 (q) and
@@ -137,12 +137,12 @@ for the case where the non-batch dimensions are -2 (q) and
 </dl>
 <dl class="py attribute">
 <dt id="botorch.sampling.samplers.IIDNormalSampler.training">
-<code class="sig-name descname">training</code><em class="property">: bool</em><a class="headerlink" href="#botorch.sampling.samplers.IIDNormalSampler.training" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">training</span></code><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.samplers.IIDNormalSampler.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt id="botorch.sampling.samplers.SobolQMCNormalSampler">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.sampling.samplers.</code><code class="sig-name descname">SobolQMCNormalSampler</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">num_samples</span></em>, <em class="sig-param"><span class="n">resample</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">seed</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">collapse_batch_dims</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">batch_range</span><span class="o">=</span><span class="default_value">(0, - 2)</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/samplers.html#SobolQMCNormalSampler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.sampling.samplers.SobolQMCNormalSampler" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">botorch.sampling.samplers.</span></code><code class="sig-name descname"><span class="pre">SobolQMCNormalSampler</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collapse_batch_dims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0,</span> <span class="pre">-</span> <span class="pre">2)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/samplers.html#SobolQMCNormalSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.samplers.SobolQMCNormalSampler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.sampling.samplers.MCSampler" title="botorch.sampling.samplers.MCSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.sampling.samplers.MCSampler</span></code></a></p>
 <p>Sampler for quasi-MC base samples using Sobol sequences.</p>
 <p class="rubric">Example</p>
@@ -163,7 +163,7 @@ not be used with deterministic optimization algorithms).</p></li>
 <li><p><strong>collapse_batch_dims</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, collapse the t-batch dimensions to
 size 1. This is useful for preventing sampling variance across
 t-batches.</p></li>
-<li><p><strong>batch_range</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The range of t-batch dimensions in the <cite>event_shape</cite>
+<li><p><strong>batch_range</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The range of t-batch dimensions in the <cite>base_sample_shape</cite>
 used by <cite>collapse_batch_dims</cite>. The t-batch dims are
 batch_range[0]:batch_range[1]. By default, this is (0, -2),
 for the case where the non-batch dimensions are -2 (q) and
@@ -173,15 +173,31 @@ for the case where the non-batch dimensions are -2 (q) and
 </dl>
 <dl class="py attribute">
 <dt id="botorch.sampling.samplers.SobolQMCNormalSampler.training">
-<code class="sig-name descname">training</code><em class="property">: bool</em><a class="headerlink" href="#botorch.sampling.samplers.SobolQMCNormalSampler.training" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">training</span></code><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.samplers.SobolQMCNormalSampler.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
+</dd></dl>
+<dl class="py function">
+<dt id="botorch.sampling.samplers.split_shapes">
+<code class="sig-prename descclassname"><span class="pre">botorch.sampling.samplers.</span></code><code class="sig-name descname"><span class="pre">split_shapes</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_sample_shape</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/samplers.html#split_shapes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.samplers.split_shapes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Split a base sample shape into sample and base sample shapes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>base_sample_shape</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code>) – The base sample shape.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code>]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A tuple containing the sample and base sample shape.</p>
+</dd>
+</dl>
 </dd></dl>
 </div>
 <div class="section" id="module-botorch.sampling.pairwise_samplers">
 <span id="pairwise-monte-carlo-samplers"></span><h2>Pairwise Monte-Carlo Samplers<a class="headerlink" href="#module-botorch.sampling.pairwise_samplers" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
 <dt id="botorch.sampling.pairwise_samplers.PairwiseMCSampler">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.sampling.pairwise_samplers.</code><code class="sig-name descname">PairwiseMCSampler</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">max_num_comparisons</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">seed</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pairwise_samplers.html#PairwiseMCSampler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.sampling.pairwise_samplers.PairwiseMCSampler" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">botorch.sampling.pairwise_samplers.</span></code><code class="sig-name descname"><span class="pre">PairwiseMCSampler</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_num_comparisons</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pairwise_samplers.html#PairwiseMCSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pairwise_samplers.PairwiseMCSampler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.sampling.samplers.MCSampler" title="botorch.sampling.samplers.MCSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.sampling.samplers.MCSampler</span></code></a></p>
 <p>Abstract class for Pairwise MC Sampler.</p>
 <p>This sampler will sample pairwise comparisons. It is to be used together
@@ -198,7 +214,7 @@ May be overwritten by sibling classes or subclasses.</p></li>
 </dl>
 <dl class="py method">
 <dt id="botorch.sampling.pairwise_samplers.PairwiseMCSampler.forward">
-<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">posterior</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pairwise_samplers.html#PairwiseMCSampler.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.sampling.pairwise_samplers.PairwiseMCSampler.forward" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">forward</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pairwise_samplers.html#PairwiseMCSampler.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pairwise_samplers.PairwiseMCSampler.forward" title="Permalink to this definition">¶</a></dt>
 <dd><p>Draws MC samples from the posterior and make comparisons</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -215,12 +231,12 @@ The returned samples are expected to have output dimension of 1.</p>
 </dd></dl>
 <dl class="py attribute">
 <dt id="botorch.sampling.pairwise_samplers.PairwiseMCSampler.training">
-<code class="sig-name descname">training</code><em class="property">: bool</em><a class="headerlink" href="#botorch.sampling.pairwise_samplers.PairwiseMCSampler.training" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">training</span></code><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.pairwise_samplers.PairwiseMCSampler.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt id="botorch.sampling.pairwise_samplers.PairwiseIIDNormalSampler">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.sampling.pairwise_samplers.</code><code class="sig-name descname">PairwiseIIDNormalSampler</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">num_samples</span></em>, <em class="sig-param"><span class="n">resample</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">seed</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">collapse_batch_dims</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">max_num_comparisons</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pairwise_samplers.html#PairwiseIIDNormalSampler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.sampling.pairwise_samplers.PairwiseIIDNormalSampler" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">botorch.sampling.pairwise_samplers.</span></code><code class="sig-name descname"><span class="pre">PairwiseIIDNormalSampler</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collapse_batch_dims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_num_comparisons</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pairwise_samplers.html#PairwiseIIDNormalSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pairwise_samplers.PairwiseIIDNormalSampler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.sampling.pairwise_samplers.PairwiseMCSampler" title="botorch.sampling.pairwise_samplers.PairwiseMCSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.sampling.pairwise_samplers.PairwiseMCSampler</span></code></a>, <a class="reference internal" href="#botorch.sampling.samplers.IIDNormalSampler" title="botorch.sampling.samplers.IIDNormalSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.sampling.samplers.IIDNormalSampler</span></code></a></p>
 <p>Abstract class for Pairwise MC Sampler.</p>
 <p>This sampler will sample pairwise comparisons. It is to be used together
@@ -237,12 +253,12 @@ May be overwritten by sibling classes or subclasses.</p></li>
 </dl>
 <dl class="py attribute">
 <dt id="botorch.sampling.pairwise_samplers.PairwiseIIDNormalSampler.training">
-<code class="sig-name descname">training</code><em class="property">: bool</em><a class="headerlink" href="#botorch.sampling.pairwise_samplers.PairwiseIIDNormalSampler.training" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">training</span></code><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.pairwise_samplers.PairwiseIIDNormalSampler.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt id="botorch.sampling.pairwise_samplers.PairwiseSobolQMCNormalSampler">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.sampling.pairwise_samplers.</code><code class="sig-name descname">PairwiseSobolQMCNormalSampler</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">num_samples</span></em>, <em class="sig-param"><span class="n">resample</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">seed</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">collapse_batch_dims</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">max_num_comparisons</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pairwise_samplers.html#PairwiseSobolQMCNormalSampler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.sampling.pairwise_samplers.PairwiseSobolQMCNormalSampler" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">botorch.sampling.pairwise_samplers.</span></code><code class="sig-name descname"><span class="pre">PairwiseSobolQMCNormalSampler</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collapse_batch_dims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_num_comparisons</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/pairwise_samplers.html#PairwiseSobolQMCNormalSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.pairwise_samplers.PairwiseSobolQMCNormalSampler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.sampling.pairwise_samplers.PairwiseMCSampler" title="botorch.sampling.pairwise_samplers.PairwiseMCSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.sampling.pairwise_samplers.PairwiseMCSampler</span></code></a>, <a class="reference internal" href="#botorch.sampling.samplers.SobolQMCNormalSampler" title="botorch.sampling.samplers.SobolQMCNormalSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.sampling.samplers.SobolQMCNormalSampler</span></code></a></p>
 <p>Abstract class for Pairwise MC Sampler.</p>
 <p>This sampler will sample pairwise comparisons. It is to be used together
@@ -259,7 +275,7 @@ May be overwritten by sibling classes or subclasses.</p></li>
 </dl>
 <dl class="py attribute">
 <dt id="botorch.sampling.pairwise_samplers.PairwiseSobolQMCNormalSampler.training">
-<code class="sig-name descname">training</code><em class="property">: bool</em><a class="headerlink" href="#botorch.sampling.pairwise_samplers.PairwiseSobolQMCNormalSampler.training" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">training</span></code><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.pairwise_samplers.PairwiseSobolQMCNormalSampler.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
 </div>
@@ -275,7 +291,7 @@ Finance. Universitext. Springer International Publishing, 2018.</p>
 </dl>
 <dl class="py class">
 <dt id="botorch.sampling.qmc.NormalQMCEngine">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.sampling.qmc.</code><code class="sig-name descname">NormalQMCEngine</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">d</span></em>, <em class="sig-param"><span class="n">seed</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">inv_transform</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/qmc.html#NormalQMCEngine"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.sampling.qmc.NormalQMCEngine" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">botorch.sampling.qmc.</span></code><code class="sig-name descname"><span class="pre">NormalQMCEngine</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inv_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/qmc.html#NormalQMCEngine"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.qmc.NormalQMCEngine" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Engine for qMC sampling from a Multivariate Normal <cite>N(0, I_d)</cite>.</p>
 <p>By default, this implementation uses Box-Muller transformed Sobol samples
@@ -299,7 +315,7 @@ underlying SobolEngine.</p></li>
 </dl>
 <dl class="py method">
 <dt id="botorch.sampling.qmc.NormalQMCEngine.draw">
-<code class="sig-name descname">draw</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">n</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">out</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dtype</span><span class="o">=</span><span class="default_value">torch.float32</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/qmc.html#NormalQMCEngine.draw"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.sampling.qmc.NormalQMCEngine.draw" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">draw</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.float32</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/qmc.html#NormalQMCEngine.draw"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.qmc.NormalQMCEngine.draw" title="Permalink to this definition">¶</a></dt>
 <dd><p>Draw <cite>n</cite> qMC samples from the standard Normal.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -321,7 +337,7 @@ tensor, and the function returns None.</p></li>
 </dd></dl>
 <dl class="py class">
 <dt id="botorch.sampling.qmc.MultivariateNormalQMCEngine">
-<em class="property">class </em><code class="sig-prename descclassname">botorch.sampling.qmc.</code><code class="sig-name descname">MultivariateNormalQMCEngine</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mean</span></em>, <em class="sig-param"><span class="n">cov</span></em>, <em class="sig-param"><span class="n">seed</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">inv_transform</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/qmc.html#MultivariateNormalQMCEngine"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.sampling.qmc.MultivariateNormalQMCEngine" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">botorch.sampling.qmc.</span></code><code class="sig-name descname"><span class="pre">MultivariateNormalQMCEngine</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mean</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inv_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/qmc.html#MultivariateNormalQMCEngine"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.qmc.MultivariateNormalQMCEngine" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Engine for qMC sampling from a multivariate Normal <cite>N(mu, Sigma)</cite>.</p>
 <p>By default, this implementation uses Box-Muller transformed Sobol samples
@@ -348,7 +364,7 @@ underlying SobolEngine.</p></li>
 </dl>
 <dl class="py method">
 <dt id="botorch.sampling.qmc.MultivariateNormalQMCEngine.draw">
-<code class="sig-name descname">draw</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">n</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">out</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/qmc.html#MultivariateNormalQMCEngine.draw"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#botorch.sampling.qmc.MultivariateNormalQMCEngine.draw" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">draw</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/qmc.html#MultivariateNormalQMCEngine.draw"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.qmc.MultivariateNormalQMCEngine.draw" title="Permalink to this definition">¶</a></dt>
 <dd><p>Draw <cite>n</cite> qMC samples from the multivariate Normal.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -415,7 +431,7 @@ tensor, and the function returns None.</p></li>
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2020 Facebook Inc.</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2021 Facebook Inc.</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {

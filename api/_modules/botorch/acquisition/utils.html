@@ -51,8 +51,9 @@
 <span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">SamplingWarning</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.samplers</span> <span class="kn">import</span> <span class="n">IIDNormalSampler</span><span class="p">,</span> <span class="n">MCSampler</span><span class="p">,</span> <span class="n">SobolQMCNormalSampler</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decomposition</span> <span class="kn">import</span> <span class="n">NondominatedPartitioning</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">squeeze_last_dim</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decompositions.non_dominated</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">NondominatedPartitioning</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.quasirandom</span> <span class="kn">import</span> <span class="n">SobolEngine</span>
 
@@ -148,18 +149,24 @@
         <span class="p">)</span>
     <span class="k">elif</span> <span class="n">acquisition_function_name</span> <span class="o">==</span> <span class="s2">"qEHVI"</span><span class="p">:</span>
         <span class="c1"># pyre-fixme [16]: `Model` has no attribute `train_targets`</span>
-        <span class="k">if</span> <span class="s2">"ref_point"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">ref_point</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">"ref_point"</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"`ref_point` must be specified in kwargs for qEHVI"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="s2">"Y"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">Y</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">"Y"</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"`Y` must be specified in kwargs for qEHVI"</span><span class="p">)</span>
-        <span class="n">ref_point</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">"ref_point"</span><span class="p">]</span>
-        <span class="n">Y</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"Y"</span><span class="p">)</span>
         <span class="c1"># get feasible points</span>
         <span class="k">if</span> <span class="n">constraints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">feas</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">c</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">constraints</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
             <span class="n">Y</span> <span class="o">=</span> <span class="n">Y</span><span class="p">[</span><span class="n">feas</span><span class="p">]</span>
         <span class="n">obj</span> <span class="o">=</span> <span class="n">objective</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>
-        <span class="n">partitioning</span> <span class="o">=</span> <span class="n">NondominatedPartitioning</span><span class="p">(</span><span class="n">num_outcomes</span><span class="o">=</span><span class="n">obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">Y</span><span class="o">=</span><span class="n">obj</span><span class="p">)</span>
+        <span class="n">partitioning</span> <span class="o">=</span> <span class="n">NondominatedPartitioning</span><span class="p">(</span>
+            <span class="n">ref_point</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">ref_point</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">Y</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">Y</span><span class="o">.</span><span class="n">device</span><span class="p">),</span>
+            <span class="n">Y</span><span class="o">=</span><span class="n">obj</span><span class="p">,</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"alpha"</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
+        <span class="p">)</span>
         <span class="k">return</span> <span class="n">moo_monte_carlo</span><span class="o">.</span><span class="n">qExpectedHypervolumeImprovement</span><span class="p">(</span>
             <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
             <span class="n">ref_point</span><span class="o">=</span><span class="n">ref_point</span><span class="p">,</span>
@@ -167,6 +174,7 @@
             <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
             <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
             <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
+            <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
         <span class="sa">f</span><span class="s2">"Unknown acquisition function </span><span class="si">{</span><span class="n">acquisition_function_name</span><span class="si">}</span><span class="s2">"</span>
@@ -174,7 +182,9 @@
 
 
 <div class="viewcode-block" id="get_infeasible_cost"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.utils.get_infeasible_cost">[docs]</a><span class="k">def</span> <span class="nf">get_infeasible_cost</span><span class="p">(</span>
-    <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="n">squeeze_last_dim</span>
+    <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]],</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
     <span class="sa">r</span><span class="sd">"""Get infeasible cost for a model and objective.</span>
 
@@ -196,6 +206,11 @@
 <span class="sd">        &gt;&gt;&gt; objective = lambda Y: Y[..., -1] ** 2</span>
 <span class="sd">        &gt;&gt;&gt; M = get_infeasible_cost(train_X, model, obj)</span>
 <span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">objective</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+
+        <span class="k">def</span> <span class="nf">objective</span><span class="p">(</span><span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">Y</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
     <span class="n">posterior</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
     <span class="n">lb</span> <span class="o">=</span> <span class="n">objective</span><span class="p">(</span><span class="n">posterior</span><span class="o">.</span><span class="n">mean</span> <span class="o">-</span> <span class="mi">6</span> <span class="o">*</span> <span class="n">posterior</span><span class="o">.</span><span class="n">variance</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">sqrt</span><span class="p">())</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
     <span class="n">M</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="n">lb</span><span class="o">.</span><span class="n">clamp_max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">))</span>
@@ -280,12 +295,12 @@
     <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
         <span class="n">posterior</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">sampler</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">posterior</span><span class="o">.</span><span class="n">event_shape</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">SobolEngine</span><span class="o">.</span><span class="n">MAXDIM</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">posterior</span><span class="o">.</span><span class="n">base_sample_shape</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">SobolEngine</span><span class="o">.</span><span class="n">MAXDIM</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">settings</span><span class="o">.</span><span class="n">debug</span><span class="o">.</span><span class="n">on</span><span class="p">():</span>
                 <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"Sample dimension q*m=</span><span class="si">{</span><span class="n">posterior</span><span class="o">.</span><span class="n">event_shape</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span><span class="si">}</span><span class="s2"> exceeding "</span>
-                    <span class="sa">f</span><span class="s2">"Sobol max dimension (</span><span class="si">{</span><span class="n">SobolEngine</span><span class="o">.</span><span class="n">MAXDIM</span><span class="si">}</span><span class="s2">). Using iid samples "</span>
-                    <span class="s2">"instead."</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">"Sample dimension q*m=</span><span class="si">{</span><span class="n">posterior</span><span class="o">.</span><span class="n">base_sample_shape</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span><span class="si">}</span><span class="s2"> "</span>
+                    <span class="sa">f</span><span class="s2">"exceeding Sobol max dimension (</span><span class="si">{</span><span class="n">SobolEngine</span><span class="o">.</span><span class="n">MAXDIM</span><span class="si">}</span><span class="s2">). "</span>
+                    <span class="s2">"Using iid samples instead."</span><span class="p">,</span>
                     <span class="n">SamplingWarning</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="n">sampler</span> <span class="o">=</span> <span class="n">IIDNormalSampler</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="n">num_samples</span><span class="p">)</span>
@@ -294,7 +309,7 @@
     <span class="n">samples</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">objective</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">objective</span> <span class="o">=</span> <span class="n">IdentityMCObjective</span><span class="p">()</span>
-    <span class="n">obj_vals</span> <span class="o">=</span> <span class="n">objective</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
+    <span class="n">obj_vals</span> <span class="o">=</span> <span class="n">objective</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">obj_vals</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
         <span class="c1"># TODO: support batched inputs (req. dealing with ragged tensors)</span>
         <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
@@ -396,6 +411,25 @@
     <span class="c1"># change relevant entries of the scaling tensor</span>
     <span class="n">scale_fac</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">q</span><span class="p">:,</span> <span class="n">fidelity_dims</span><span class="p">]</span> <span class="o">=</span> <span class="n">sf</span>
     <span class="k">return</span> <span class="n">scale_fac</span> <span class="o">*</span> <span class="n">X_expanded</span></div>
+
+
+<div class="viewcode-block" id="project_to_sample_points"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.utils.project_to_sample_points">[docs]</a><span class="k">def</span> <span class="nf">project_to_sample_points</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">sample_points</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""Augment `X` with sample points at which to take weighted average.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        X: A `batch_shape x 1 x d`-dim Tensor of with one d`-dim design points</span>
+<span class="sd">            for each t-batch.</span>
+<span class="sd">        sample_points: `p x d'`-dim Tensor (`d' &lt; d`) of `d'`-dim sample points at</span>
+<span class="sd">            which to compute the expectation. The `d'`-dims refer to the trailing</span>
+<span class="sd">            columns of X.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        A `batch_shape x p x d` Tensor where the q-batch includes the `p` sample points.</span>
+<span class="sd">    """</span>
+    <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">p</span><span class="p">,</span> <span class="n">d_prime</span> <span class="o">=</span> <span class="n">sample_points</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">X_new</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">batch_shape</span><span class="p">),</span> <span class="n">p</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># batch_shape x p x d</span>
+    <span class="n">X_new</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">-</span><span class="n">d_prime</span><span class="p">:]</span> <span class="o">=</span> <span class="n">sample_points</span>
+    <span class="k">return</span> <span class="n">X_new</span></div>
 </pre></div>
 </div>
 </div>
@@ -443,7 +477,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2020 Facebook Inc.</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2021 Facebook Inc.</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {

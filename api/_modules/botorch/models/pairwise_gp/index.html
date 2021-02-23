@@ -54,6 +54,7 @@
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span> <span class="nn">botorch.models.transforms.input</span> <span class="kn">import</span> <span class="n">InputTransform</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchPosterior</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.posterior</span> <span class="kn">import</span> <span class="n">Posterior</span>
 <span class="kn">from</span> <span class="nn">gpytorch</span> <span class="kn">import</span> <span class="n">settings</span>
@@ -91,9 +92,9 @@
         <span class="n">datapoints</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">comparisons</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">covar_module</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Module</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="sa">r</span><span class="sd">"""A probit-likelihood GP with Laplace approximation model that learns via</span>
 <span class="sd">            pairwise comparison data. By default it uses a scaled RBF kernel.</span>
 
@@ -102,8 +103,16 @@
 <span class="sd">            comparisons: A `batch_shape x m x 2` training comparisons;</span>
 <span class="sd">                comparisons[i] is a noisy indicator suggesting the utility value</span>
 <span class="sd">                of comparisons[i, 0]-th is greater than comparisons[i, 1]-th.</span>
-<span class="sd">            covar_module: Covariance module</span>
+<span class="sd">            covar_module: Covariance module.</span>
+<span class="sd">            input_transform: An input transform that is applied in the model's</span>
+<span class="sd">                forward pass.</span>
 <span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">input_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">input_transform</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">datapoints</span><span class="p">)</span>
+            <span class="c1"># input transformation is applied in set_train_data</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">input_transform</span> <span class="o">=</span> <span class="n">input_transform</span>
 
         <span class="c1"># Compatibility variables with fit_gpytorch_*: Dummy likelihood</span>
         <span class="c1"># Likelihood is tightly tied with this model and</span>
@@ -114,6 +123,8 @@
         <span class="c1">#       `load_state_dict()`, only the hyperparameters are copied over</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"datapoints"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"comparisons"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"D"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"DT"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"utility"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"covar_chol"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"likelihood_hess"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
@@ -125,14 +136,12 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">train_targets</span> <span class="o">=</span> <span class="kc">None</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">pred_cov_fac_need_update</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_input_batch_shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dim</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="c1"># will be set to match datapoints' dtype and device</span>
-        <span class="c1"># since scipy.optimize.fsolve only works on cpu, it'd be the</span>
-        <span class="c1"># fastest to fit the model on cpu and take samples on gpu to avoid</span>
-        <span class="c1"># overhead of moving data back and forth during fitting time</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">tkwargs</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="c1"># See set_train_data for additional compatibility variables</span>
+
+        <span class="c1"># See set_train_data for additional compatibility variables.</span>
+        <span class="c1"># Not that the datapoints here are not transformed even if input_transform</span>
+        <span class="c1"># is not None to avoid double transformation during model fitting.</span>
+        <span class="c1"># self.transform_inputs is called in `forward`</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_train_data</span><span class="p">(</span><span class="n">datapoints</span><span class="p">,</span> <span class="n">comparisons</span><span class="p">,</span> <span class="n">update_model</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
         <span class="c1"># Set optional parameters</span>
@@ -167,7 +176,7 @@
             <span class="n">ls_prior_mode</span> <span class="o">=</span> <span class="p">(</span><span class="n">ls_prior</span><span class="o">.</span><span class="n">concentration</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">ls_prior</span><span class="o">.</span><span class="n">rate</span>
             <span class="n">covar_module</span> <span class="o">=</span> <span class="n">ScaleKernel</span><span class="p">(</span>
                 <span class="n">RBFKernel</span><span class="p">(</span>
-                    <span class="n">batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_input_batch_shape</span><span class="p">,</span>
+                    <span class="n">batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">,</span>
                     <span class="n">ard_num_dims</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span>
                     <span class="n">lengthscale_prior</span><span class="o">=</span><span class="n">ls_prior</span><span class="p">,</span>
                     <span class="n">lengthscale_constraint</span><span class="o">=</span><span class="n">Positive</span><span class="p">(</span>
@@ -182,7 +191,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_x0</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># will store temporary results for warm-starting</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">comparisons</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_update</span><span class="p">()</span>  <span class="c1"># Find f_map for initial parameters</span>
+            <span class="c1"># Find f_map for initial parameters with transformed datapoints</span>
+            <span class="n">transformed_dp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="n">datapoints</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update</span><span class="p">(</span><span class="n">transformed_dp</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="p">)</span>
 
@@ -247,12 +258,15 @@
 
         <span class="k">return</span> <span class="n">mat_inv</span>
 
-    <span class="k">def</span> <span class="nf">_update_covar</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">_update_covar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datapoints</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Update values derived from the data and hyperparameters</span>
 
 <span class="sd">        covar, covar_chol, and covar_inv will be of shape batch_shape x n x n</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            datapoints: (Transformed) datapoints for finding f_max</span>
 <span class="sd">        """</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calc_covar</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calc_covar</span><span class="p">(</span><span class="n">datapoints</span><span class="p">,</span> <span class="n">datapoints</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">covar_chol</span> <span class="o">=</span> <span class="n">psd_safe_cholesky</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">covar</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">covar_inv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_batch_chol_inv</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">covar_chol</span><span class="p">)</span>
 
@@ -494,7 +508,7 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">pred_cov_fac_need_update</span> <span class="o">=</span> <span class="kc">False</span>
 
-    <span class="k">def</span> <span class="nf">_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datapoints</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Update the model by updating the covar matrix and MAP utility values</span>
 
 <span class="sd">        Update the model by</span>
@@ -506,28 +520,31 @@
 
 <span class="sd">        self._xtol and self._maxfev are passed to fsolve as xtol and maxfev</span>
 <span class="sd">        to control stopping criteria</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            datapoints: (transformed) datapoints for finding f_max</span>
 <span class="sd">        """</span>
 
         <span class="n">xtol</span> <span class="o">=</span> <span class="mf">1e-6</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_xtol</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_xtol</span>
         <span class="n">maxfev</span> <span class="o">=</span> <span class="mi">100</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_maxfev</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_maxfev</span>
 
         <span class="c1"># Using the latest param for covariance before calculating f_map</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_update_covar</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_covar</span><span class="p">(</span><span class="n">datapoints</span><span class="p">)</span>
 
         <span class="c1"># scipy newton raphson</span>
         <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
             <span class="c1"># warm start</span>
-            <span class="n">init_x0_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_batch_shape</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">])</span>
+            <span class="n">init_x0_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">])</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x0</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_x0</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">!=</span> <span class="n">init_x0_size</span><span class="p">:</span>
                 <span class="n">x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="o">*</span><span class="n">init_x0_size</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">x0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x0</span>
 
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_input_batch_shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="c1"># batch mode, do optimize.fsolve sequentially on CPU</span>
                 <span class="c1"># TODO: enable vectorization/parallelization here</span>
                 <span class="n">x0</span> <span class="o">=</span> <span class="n">x0</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">)</span>
-                <span class="n">dp_v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">)</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
+                <span class="n">dp_v</span> <span class="o">=</span> <span class="n">datapoints</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">)</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
                 <span class="n">D_v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">m</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">)</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
                 <span class="n">DT_v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">DT</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">m</span><span class="p">)</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
                 <span class="n">ch_v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_chol</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">)</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
@@ -550,7 +567,7 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="c1"># fsolve only works on CPU</span>
                 <span class="n">fsolve_args</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">cpu</span><span class="p">(),</span>
+                    <span class="n">datapoints</span><span class="o">.</span><span class="n">cpu</span><span class="p">(),</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="o">.</span><span class="n">cpu</span><span class="p">(),</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">DT</span><span class="o">.</span><span class="n">cpu</span><span class="p">(),</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">covar_chol</span><span class="o">.</span><span class="n">cpu</span><span class="p">(),</span>
@@ -570,9 +587,7 @@
                     <span class="p">)</span>
 
             <span class="bp">self</span><span class="o">.</span><span class="n">_x0</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>  <span class="c1"># save for warm-starting</span>
-            <span class="n">f</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
-                <span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">device</span>
-            <span class="p">)</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">datapoints</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">datapoints</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
 
         <span class="c1"># To perform hyperparameter optimization, this need to be recalculated</span>
         <span class="c1"># when calling forward() in order to obtain correct gradients</span>
@@ -619,7 +634,7 @@
             <span class="c1"># if X has fewer dimension, try to expand it to X_new's shape</span>
             <span class="k">return</span> <span class="n">X</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">X_new_bs</span> <span class="o">+</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]),</span> <span class="n">X_new</span>
 
-    <span class="k">def</span> <span class="nf">_util_newton_updates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">xtol</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">_util_newton_updates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dp</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">xtol</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Make `max_iter` newton updates on utility.</span>
 
 <span class="sd">        This is used in `forward` to calculate and fill in gradient into tensors.</span>
@@ -628,14 +643,14 @@
 <span class="sd">        By default only need to run one iteration just to fill the the gradients.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            x0: A `batch_size x n` dimension tensor, initial values</span>
-<span class="sd">            max_iter: Max number of iterations</span>
+<span class="sd">            dp: (Transformed) datapoints.</span>
+<span class="sd">            x0: A `batch_size x n` dimension tensor, initial values.</span>
+<span class="sd">            max_iter: Max number of iterations.</span>
 <span class="sd">            xtol: Stop creteria. If `None`, do not stop until</span>
-<span class="sd">                finishing `max_iter` updates</span>
+<span class="sd">                finishing `max_iter` updates.</span>
 <span class="sd">        """</span>
         <span class="n">xtol</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"-Inf"</span><span class="p">)</span> <span class="k">if</span> <span class="n">xtol</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">xtol</span>
-        <span class="n">dp</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">DT</span><span class="p">,</span> <span class="n">ch</span><span class="p">,</span> <span class="n">ci</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="p">,</span>
+        <span class="n">D</span><span class="p">,</span> <span class="n">DT</span><span class="p">,</span> <span class="n">ch</span><span class="p">,</span> <span class="n">ci</span> <span class="o">=</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">DT</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">covar_chol</span><span class="p">,</span>
@@ -652,8 +667,8 @@
             <span class="k">if</span> <span class="n">eye</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">eye</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span>
                     <span class="n">cov_hl</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span>
-                    <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
-                    <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+                    <span class="n">dtype</span><span class="o">=</span><span class="n">dp</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                    <span class="n">device</span><span class="o">=</span><span class="n">dp</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
                 <span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">cov_hl</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
             <span class="n">cov_hl</span> <span class="o">=</span> <span class="n">cov_hl</span> <span class="o">+</span> <span class="n">eye</span>  <span class="c1"># add 1 to cov_hl</span>
             <span class="n">g</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_grad_posterior_f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dp</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">DT</span><span class="p">,</span> <span class="n">ch</span><span class="p">,</span> <span class="n">ci</span><span class="p">)</span>
@@ -682,44 +697,89 @@
 <span class="sd">        to the `posterior` method returns a Posterior object over an output of</span>
 <span class="sd">        shape `broadcast(test_batch_shape, model.batch_shape) x q x m`.</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># this could happen in prior mode</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
 
 <div class="viewcode-block" id="PairwiseGP.set_train_data"><a class="viewcode-back" href="../../../models.html#botorch.models.pairwise_gp.PairwiseGP.set_train_data">[docs]</a>    <span class="k">def</span> <span class="nf">set_train_data</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">datapoints</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">comparisons</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">update_model</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">datapoints</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">comparisons</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">update_model</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Set datapoints and comparisons and update model properties if needed</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            datapoints: A `batch_shape x n x d` dimension tensor X</span>
+<span class="sd">            datapoints: A `batch_shape x n x d` dimension tensor X. If there are input</span>
+<span class="sd">                transformations, assume the datapoints are not transformed</span>
 <span class="sd">            comparisons: A tensor of size `batch_shape x m x 2`. (i, j) means</span>
-<span class="sd">                f_i is preferred over f_j</span>
+<span class="sd">                f_i is preferred over f_j.</span>
+<span class="sd">            strict: `strict` argument as in gpytorch.models.exact_gp for compatibility</span>
+<span class="sd">                when using fit_gpytorch_model with input_transform.</span>
 <span class="sd">            update_model: True if we want to refit the model (see _update) after</span>
-<span class="sd">                re-setting the data</span>
+<span class="sd">                re-setting the data.</span>
 <span class="sd">        """</span>
         <span class="c1"># When datapoints and/or comparisons are None, we are constructing</span>
         <span class="c1"># a prior-only model</span>
         <span class="k">if</span> <span class="n">datapoints</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">comparisons</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span>
 
-        <span class="c1"># store datapoints and other quantities as double for better numerical stability</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span> <span class="o">=</span> <span class="n">datapoints</span>
-        <span class="c1"># convert to long so that it can be used as index and work with Tensor.scatter_</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">comparisons</span> <span class="o">=</span> <span class="n">comparisons</span><span class="o">.</span><span class="n">long</span><span class="p">()</span>
+        <span class="c1"># following gpytorch.models.exact_gp.set_train_data</span>
+        <span class="k">if</span> <span class="n">datapoints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">is_tensor</span><span class="p">(</span><span class="n">datapoints</span><span class="p">):</span>
+                <span class="n">inputs</span> <span class="o">=</span> <span class="p">(</span><span class="n">datapoints</span><span class="p">,)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">tkwargs</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">"dtype"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
-            <span class="s2">"device"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
-        <span class="p">}</span>
+            <span class="n">inputs</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+                <span class="n">input_</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="n">input_</span><span class="o">.</span><span class="n">ndimension</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">input_</span>
+                <span class="k">for</span> <span class="n">input_</span> <span class="ow">in</span> <span class="n">inputs</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">strict</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">input_</span><span class="p">,</span> <span class="n">t_input</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_inputs</span> <span class="ow">or</span> <span class="p">(</span><span class="kc">None</span><span class="p">,)):</span>
+                    <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"shape"</span><span class="p">,</span> <span class="s2">"dtype"</span><span class="p">,</span> <span class="s2">"device"</span><span class="p">}:</span>
+                        <span class="n">expected_attr</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">t_input</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                        <span class="n">found_attr</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">input_</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">expected_attr</span> <span class="o">!=</span> <span class="n">found_attr</span><span class="p">:</span>
+                            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+                                <span class="s2">"Cannot modify </span><span class="si">{attr}</span><span class="s2"> of inputs "</span>
+                                <span class="s2">"(expected </span><span class="si">{e_attr}</span><span class="s2">, found </span><span class="si">{f_attr}</span><span class="s2">)."</span>
+                            <span class="p">)</span>
+                            <span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                                <span class="n">attr</span><span class="o">=</span><span class="n">attr</span><span class="p">,</span> <span class="n">e_attr</span><span class="o">=</span><span class="n">expected_attr</span><span class="p">,</span> <span class="n">f_attr</span><span class="o">=</span><span class="n">found_attr</span>
+                            <span class="p">)</span>
+                            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="c1"># Compatibility variables with fit_gpytorch_*</span>
+            <span class="c1"># alias for datapoints ("train_inputs")</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">train_inputs</span> <span class="o">=</span> <span class="n">inputs</span>
 
-        <span class="c1"># Compatibility variables with fit_gpytorch_*</span>
-        <span class="c1"># alias for datapoints (train_inputs) and comparisons ("train_targets" here)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">train_inputs</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">train_targets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comparisons</span>
+        <span class="k">if</span> <span class="n">comparisons</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">strict</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"shape"</span><span class="p">,</span> <span class="s2">"dtype"</span><span class="p">,</span> <span class="s2">"device"</span><span class="p">}:</span>
+                    <span class="n">expected_attr</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">train_targets</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                    <span class="n">found_attr</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">comparisons</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">expected_attr</span> <span class="o">!=</span> <span class="n">found_attr</span><span class="p">:</span>
+                        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+                            <span class="s2">"Cannot modify </span><span class="si">{attr}</span><span class="s2"> of targets "</span>
+                            <span class="s2">"(expected </span><span class="si">{e_attr}</span><span class="s2">, found </span><span class="si">{f_attr}</span><span class="s2">)."</span>
+                        <span class="p">)</span>
+                        <span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                            <span class="n">attr</span><span class="o">=</span><span class="n">attr</span><span class="p">,</span> <span class="n">e_attr</span><span class="o">=</span><span class="n">expected_attr</span><span class="p">,</span> <span class="n">f_attr</span><span class="o">=</span><span class="n">found_attr</span>
+                        <span class="p">)</span>
+                        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="c1"># convert to long so that it can be used as index and</span>
+            <span class="c1"># compatible with Tensor.scatter_</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">comparisons</span> <span class="o">=</span> <span class="n">comparisons</span><span class="o">.</span><span class="n">long</span><span class="p">()</span>
+            <span class="c1"># Compatibility variables with fit_gpytorch_*</span>
+            <span class="c1"># alias for comparisons ("train_targets" here)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">train_targets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comparisons</span>
+
         <span class="c1"># Compatibility variables with optimize_acqf</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_dtype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">dtype</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_num_outputs</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># 1 latent value output per observation</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_input_batch_shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># feature dimensions</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>  <span class="c1"># num datapoints</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comparisons</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>  <span class="c1"># num pairwise comparisons</span>
@@ -730,7 +790,7 @@
         <span class="c1"># TODO swap out scatter_ so that comparisons could be int instead of long</span>
         <span class="c1"># TODO: make D a sparse matrix once pytorch has better support for</span>
         <span class="c1">#       sparse tensors</span>
-        <span class="n">D_size</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">((</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_input_batch_shape</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">m</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">))</span>
+        <span class="n">D_size</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">((</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_shape</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">m</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">D</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
             <span class="n">D_size</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="o">.</span><span class="n">device</span>
         <span class="p">)</span>
@@ -739,8 +799,10 @@
             <span class="n">sub_D</span><span class="o">.</span><span class="n">scatter_</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">comp_view</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:,</span> <span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="mi">1</span><span class="p">)</span>
             <span class="n">sub_D</span><span class="o">.</span><span class="n">scatter_</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">comp_view</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:,</span> <span class="p">[</span><span class="mi">1</span><span class="p">]],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">DT</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="n">update_model</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_update</span><span class="p">()</span>
+            <span class="n">transformed_dp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="n">datapoints</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update</span><span class="p">(</span><span class="n">transformed_dp</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="p">)</span></div>
 
@@ -751,13 +813,10 @@
 <span class="sd">        hyperparam opt. Essentially what it does is to re-calculate the utility</span>
 <span class="sd">        f using its analytical form at f_map so that we are able to obtain</span>
 <span class="sd">        gradients of the hyperparameters.</span>
-<span class="sd">        We only take in one parameter datapoints without the comparisons for the</span>
-<span class="sd">        compatibility with other gpytorch/botorch APIs. It assumes `datapoints` is</span>
-<span class="sd">        the same as `self.datapoints`. That's what "Must train on training data" means.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            datapoints: A `batch_shape x n x d` Tensor,</span>
-<span class="sd">                should be the same as self.datapoints</span>
+<span class="sd">                should be the same as self.datapoints during training</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A MultivariateNormal object, being one of the followings:</span>
@@ -774,14 +833,22 @@
                     <span class="s2">"Call .eval() for prior predictions, "</span>
                     <span class="s2">"or call .set_train_data() to add training data."</span>
                 <span class="p">)</span>
+
             <span class="k">if</span> <span class="n">datapoints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"Must train on training data"</span><span class="p">)</span>
 
+            <span class="n">transformed_dp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="n">datapoints</span><span class="p">)</span>
+
+            <span class="c1"># We pass in the untransformed datapoints into set_train_data</span>
+            <span class="c1"># as we will be setting self.datapoints as the untransformed datapoints</span>
+            <span class="c1"># self.transform_inputs will be called inside before calling _update()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set_train_data</span><span class="p">(</span><span class="n">datapoints</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">comparisons</span><span class="p">,</span> <span class="n">update_model</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
             <span class="c1"># Take a newton step on the posterior MAP point to fill</span>
             <span class="c1"># in gradients for pytorch</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">utility</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_util_newton_updates</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">utility</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">utility</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_util_newton_updates</span><span class="p">(</span>
+                <span class="n">transformed_dp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">utility</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">1</span>
+            <span class="p">)</span>
 
             <span class="n">hl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood_hess</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hess_likelihood_f_sum</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">utility</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">DT</span>
@@ -802,22 +869,25 @@
 
         <span class="c1"># Prior mode</span>
         <span class="k">elif</span> <span class="n">settings</span><span class="o">.</span><span class="n">prior_mode</span><span class="o">.</span><span class="n">on</span><span class="p">()</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_has_no_data</span><span class="p">():</span>
-            <span class="n">X_new</span> <span class="o">=</span> <span class="n">datapoints</span>
+            <span class="n">transformed_new_dp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="n">datapoints</span><span class="p">)</span>
             <span class="c1"># if we don't have any data yet, use prior GP to make predictions</span>
-            <span class="n">output_mean</span><span class="p">,</span> <span class="n">output_covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prior_predict</span><span class="p">(</span><span class="n">X_new</span><span class="p">)</span>
+            <span class="n">output_mean</span><span class="p">,</span> <span class="n">output_covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prior_predict</span><span class="p">(</span><span class="n">transformed_new_dp</span><span class="p">)</span>
 
         <span class="c1"># Posterior mode</span>
         <span class="k">else</span><span class="p">:</span>
+            <span class="n">transformed_dp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="p">)</span>
+            <span class="n">transformed_new_dp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="n">datapoints</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">transformed_dp</span><span class="p">)</span>
+
             <span class="c1"># self.utility might be None if exception was raised and _update</span>
             <span class="c1"># was failed to be called during hyperparameter optimization</span>
             <span class="c1"># procedures (e.g., fit_gpytorch_scipy)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">utility</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_update</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_update</span><span class="p">(</span><span class="n">transformed_dp</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred_cov_fac_need_update</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_update_utility_derived_values</span><span class="p">()</span>
-            <span class="n">datapoints</span> <span class="o">=</span> <span class="n">datapoints</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="p">)</span>
-            <span class="n">X</span><span class="p">,</span> <span class="n">X_new</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform_batch_shape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datapoints</span><span class="p">,</span> <span class="n">datapoints</span><span class="p">)</span>
+
+            <span class="n">X</span><span class="p">,</span> <span class="n">X_new</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform_batch_shape</span><span class="p">(</span><span class="n">transformed_dp</span><span class="p">,</span> <span class="n">transformed_new_dp</span><span class="p">)</span>
             <span class="n">covar_chol</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform_batch_shape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">covar_chol</span><span class="p">,</span> <span class="n">X_new</span><span class="p">)</span>
             <span class="n">hl</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform_batch_shape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">likelihood_hess</span><span class="p">,</span> <span class="n">X_new</span><span class="p">)</span>
             <span class="n">hlcov_eye</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform_batch_shape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hlcov_eye</span><span class="p">,</span> <span class="n">X_new</span><span class="p">)</span>
@@ -913,6 +983,7 @@
 <span class="sd">            original model conditioned on the new observations `(X, Y)`.</span>
 <span class="sd">        """</span>
         <span class="n">new_model</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_has_no_data</span><span class="p">():</span>
             <span class="c1"># If the model previously has no data, set X and Y as the data directly</span>
             <span class="n">new_model</span><span class="o">.</span><span class="n">set_train_data</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">update_model</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -992,8 +1063,8 @@
         <span class="n">evidence</span> <span class="o">=</span> <span class="n">evidence</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
 
         <span class="c1"># Add log probs of priors on the (functions of) parameters</span>
-        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">prior</span><span class="p">,</span> <span class="n">closure</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">named_priors</span><span class="p">():</span>
-            <span class="n">evidence</span> <span class="o">=</span> <span class="n">evidence</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">prior</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">closure</span><span class="p">())</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">prior</span><span class="p">,</span> <span class="n">closure</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">named_priors</span><span class="p">():</span>
+            <span class="n">evidence</span> <span class="o">=</span> <span class="n">evidence</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">prior</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">closure</span><span class="p">(</span><span class="n">module</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
 
         <span class="k">return</span> <span class="n">evidence</span></div></div>
 </pre></div>
@@ -1043,7 +1114,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2020 Facebook Inc.</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2021 Facebook Inc.</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {

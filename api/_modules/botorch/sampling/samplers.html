@@ -72,7 +72,7 @@
         <span class="sa">r</span><span class="sd">"""Abstract base class for Samplers.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            batch_range: The range of t-batch dimensions in the `event_shape`</span>
+<span class="sd">            batch_range: The range of t-batch dimensions in the `base_sample_shape`</span>
 <span class="sd">                used by `collapse_batch_dims`. The t-batch dims are</span>
 <span class="sd">                batch_range[0]:batch_range[1]. By default, this is (0, -2),</span>
 <span class="sd">                for the case where the non-batch dimensions are -2 (q) and</span>
@@ -92,7 +92,7 @@
         <span class="sa">r</span><span class="sd">"""Set the t-batch range and clear base samples.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            batch_range: The range of t-batch dimensions in the `event_shape`</span>
+<span class="sd">            batch_range: The range of t-batch dimensions in the `base_sample_shape`</span>
 <span class="sd">                used by `collapse_batch_dims`. The t-batch dims are</span>
 <span class="sd">                batch_range[0]:batch_range[1]. By default, this is (0, -2),</span>
 <span class="sd">                for the case where the non-batch dimensions are -2 (q) and</span>
@@ -133,19 +133,19 @@
 <span class="sd">            samples are collapsed to size 1. This is useful to prevent sampling</span>
 <span class="sd">            variance across t-batches.</span>
 <span class="sd">        """</span>
-        <span class="n">event_shape</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">event_shape</span>
+        <span class="n">base_sample_shape</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">base_sample_shape</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">collapse_batch_dims</span><span class="p">:</span>
             <span class="n">batch_start</span><span class="p">,</span> <span class="n">batch_end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_range</span>
-            <span class="n">event_shape</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">event_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">batch_start</span><span class="p">]</span>
-                <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">event_shape</span><span class="p">[</span><span class="n">batch_start</span><span class="p">:</span><span class="n">batch_end</span><span class="p">]])</span>
-                <span class="o">+</span> <span class="n">event_shape</span><span class="p">[</span><span class="n">batch_end</span><span class="p">:]</span>
+            <span class="n">base_sample_shape</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">base_sample_shape</span><span class="p">[:</span><span class="n">batch_start</span><span class="p">]</span>
+                <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">base_sample_shape</span><span class="p">[</span><span class="n">batch_start</span><span class="p">:</span><span class="n">batch_end</span><span class="p">]])</span>
+                <span class="o">+</span> <span class="n">base_sample_shape</span><span class="p">[</span><span class="n">batch_end</span><span class="p">:]</span>
             <span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_shape</span> <span class="o">+</span> <span class="n">event_shape</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_shape</span> <span class="o">+</span> <span class="n">base_sample_shape</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">sample_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""The shape of a single sample"""</span>
+        <span class="sa">r</span><span class="sd">"""The shape of a single sample."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample_shape</span>
 
     <span class="nd">@abstractmethod</span>
@@ -160,8 +160,8 @@
 <span class="sd">        - `shape` is different than `self.base_samples.shape` (if</span>
 <span class="sd">            `collapse_batch_dims=True`, then batch dimensions of will be</span>
 <span class="sd">            automatically broadcasted as necessary). This shape is expected to</span>
-<span class="sd">            be `sample_shape + event_shape`, where `event_shape` has been</span>
-<span class="sd">            adjusted to account for `collapse_batch_dims` (i.e., the output</span>
+<span class="sd">            be `sample_shape + base_sample_shape`, where `base_sample_shape` has</span>
+<span class="sd">            been adjusted to account for `collapse_batch_dims` (i.e., the output</span>
 <span class="sd">            of the function `_get_base_sample_shape`).</span>
 
 <span class="sd">        Args:</span>
@@ -199,7 +199,7 @@
 <span class="sd">            collapse_batch_dims: If True, collapse the t-batch dimensions to</span>
 <span class="sd">                size 1. This is useful for preventing sampling variance across</span>
 <span class="sd">                t-batches.</span>
-<span class="sd">            batch_range: The range of t-batch dimensions in the `event_shape`</span>
+<span class="sd">            batch_range: The range of t-batch dimensions in the `base_sample_shape`</span>
 <span class="sd">                used by `collapse_batch_dims`. The t-batch dims are</span>
 <span class="sd">                batch_range[0]:batch_range[1]. By default, this is (0, -2),</span>
 <span class="sd">                for the case where the non-batch dimensions are -2 (q) and</span>
@@ -222,7 +222,7 @@
 <span class="sd">        - `shape` is different than `self.base_samples.shape` (if</span>
 <span class="sd">            `collapse_batch_dims=True`, then batch dimensions of will be</span>
 <span class="sd">            automatically broadcasted as necessary). This shape is expected to</span>
-<span class="sd">            be `sample_shape + event_shape`, where `event_shape` has been</span>
+<span class="sd">            be `sample_shape + base_sample_shape`, where `base_sample_shape` has been</span>
 <span class="sd">            adjusted to account for `collapse_batch_dims` (i.e., the output</span>
 <span class="sd">            of the function `_get_base_sample_shape`).</span>
 
@@ -277,7 +277,7 @@
 <span class="sd">            collapse_batch_dims: If True, collapse the t-batch dimensions to</span>
 <span class="sd">                size 1. This is useful for preventing sampling variance across</span>
 <span class="sd">                t-batches.</span>
-<span class="sd">            batch_range: The range of t-batch dimensions in the `event_shape`</span>
+<span class="sd">            batch_range: The range of t-batch dimensions in the `base_sample_shape`</span>
 <span class="sd">                used by `collapse_batch_dims`. The t-batch dims are</span>
 <span class="sd">                batch_range[0]:batch_range[1]. By default, this is (0, -2),</span>
 <span class="sd">                for the case where the non-batch dimensions are -2 (q) and</span>
@@ -300,7 +300,7 @@
 <span class="sd">        - `shape` is different than `self.base_samples.shape` (if</span>
 <span class="sd">            `collapse_batch_dims=True`, then batch dimensions of will be</span>
 <span class="sd">            automatically broadcasted as necessary). This shape is expected to</span>
-<span class="sd">            be `sample_shape + event_shape`, where `event_shape` has been</span>
+<span class="sd">            be `sample_shape + base_sample_shape`, where `base_sample_shape` has been</span>
 <span class="sd">            adjusted to account for `collapse_batch_dims` (i.e., the output</span>
 <span class="sd">            of the function `_get_base_sample_shape`).</span>
 
@@ -314,8 +314,10 @@
             <span class="ow">or</span> <span class="p">(</span><span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">collapse_batch_dims</span> <span class="ow">and</span> <span class="n">shape</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_samples</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
         <span class="p">):</span>
             <span class="n">batch_start</span><span class="p">,</span> <span class="n">batch_end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_range</span>
-            <span class="n">sample_shape</span><span class="p">,</span> <span class="n">event_shape</span> <span class="o">=</span> <span class="n">_split_sample_event_shapes</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
-            <span class="n">output_dim</span> <span class="o">=</span> <span class="p">(</span><span class="n">event_shape</span><span class="p">[:</span><span class="n">batch_start</span><span class="p">]</span> <span class="o">+</span> <span class="n">event_shape</span><span class="p">[</span><span class="n">batch_end</span><span class="p">:])</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span>
+            <span class="n">sample_shape</span><span class="p">,</span> <span class="n">base_sample_shape</span> <span class="o">=</span> <span class="n">split_shapes</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
+            <span class="n">output_dim</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">base_sample_shape</span><span class="p">[:</span><span class="n">batch_start</span><span class="p">]</span> <span class="o">+</span> <span class="n">base_sample_shape</span><span class="p">[</span><span class="n">batch_end</span><span class="p">:]</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">output_dim</span> <span class="o">&gt;</span> <span class="n">SobolEngine</span><span class="o">.</span><span class="n">MAXDIM</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
                     <span class="s2">"SobolQMCSampler only supports dimensions "</span>
@@ -323,7 +325,7 @@
                 <span class="p">)</span>
             <span class="n">base_samples</span> <span class="o">=</span> <span class="n">draw_sobol_normal_samples</span><span class="p">(</span>
                 <span class="n">d</span><span class="o">=</span><span class="n">output_dim</span><span class="p">,</span>
-                <span class="n">n</span><span class="o">=</span><span class="p">(</span><span class="n">sample_shape</span> <span class="o">+</span> <span class="n">event_shape</span><span class="p">[</span><span class="n">batch_start</span><span class="p">:</span><span class="n">batch_end</span><span class="p">])</span><span class="o">.</span><span class="n">numel</span><span class="p">(),</span>
+                <span class="n">n</span><span class="o">=</span><span class="p">(</span><span class="n">sample_shape</span> <span class="o">+</span> <span class="n">base_sample_shape</span><span class="p">[</span><span class="n">batch_start</span><span class="p">:</span><span class="n">batch_end</span><span class="p">])</span><span class="o">.</span><span class="n">numel</span><span class="p">(),</span>
                 <span class="n">device</span><span class="o">=</span><span class="n">posterior</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
                 <span class="n">dtype</span><span class="o">=</span><span class="n">posterior</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
                 <span class="n">seed</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">seed</span><span class="p">,</span>
@@ -331,7 +333,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">seed</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="n">base_samples</span> <span class="o">=</span> <span class="n">base_samples</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"base_samples"</span><span class="p">,</span> <span class="n">base_samples</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">collapse_batch_dims</span> <span class="ow">and</span> <span class="n">shape</span> <span class="o">!=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">event_shape</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">collapse_batch_dims</span> <span class="ow">and</span> <span class="n">shape</span> <span class="o">!=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">base_sample_shape</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">base_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_samples</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_samples</span><span class="o">.</span><span class="n">device</span> <span class="o">!=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">device</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="n">posterior</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>  <span class="c1"># pragma: nocover</span>
@@ -354,29 +356,28 @@
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="n">base_samples</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">True</span>
-    <span class="n">batch_start</span> <span class="o">=</span> <span class="n">batch_range</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">batch_end</span> <span class="o">=</span> <span class="n">batch_range</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-    <span class="n">b_sample_shape</span><span class="p">,</span> <span class="n">b_event_shape</span> <span class="o">=</span> <span class="n">_split_sample_event_shapes</span><span class="p">(</span><span class="n">base_samples</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-    <span class="n">sample_shape</span><span class="p">,</span> <span class="n">event_shape</span> <span class="o">=</span> <span class="n">_split_sample_event_shapes</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">batch_start</span><span class="p">,</span> <span class="n">batch_end</span> <span class="o">=</span> <span class="n">batch_range</span>
+    <span class="n">b_sample_shape</span><span class="p">,</span> <span class="n">b_base_sample_shape</span> <span class="o">=</span> <span class="n">split_shapes</span><span class="p">(</span><span class="n">base_samples</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">sample_shape</span><span class="p">,</span> <span class="n">base_sample_shape</span> <span class="o">=</span> <span class="n">split_shapes</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
     <span class="k">return</span> <span class="p">(</span>
         <span class="n">b_sample_shape</span> <span class="o">!=</span> <span class="n">sample_shape</span>
-        <span class="ow">or</span> <span class="n">b_event_shape</span><span class="p">[</span><span class="n">batch_end</span><span class="p">:]</span> <span class="o">!=</span> <span class="n">event_shape</span><span class="p">[</span><span class="n">batch_end</span><span class="p">:]</span>
-        <span class="ow">or</span> <span class="n">b_event_shape</span><span class="p">[:</span><span class="n">batch_start</span><span class="p">]</span> <span class="o">!=</span> <span class="n">event_shape</span><span class="p">[:</span><span class="n">batch_start</span><span class="p">]</span>
+        <span class="ow">or</span> <span class="n">b_base_sample_shape</span><span class="p">[</span><span class="n">batch_end</span><span class="p">:]</span> <span class="o">!=</span> <span class="n">base_sample_shape</span><span class="p">[</span><span class="n">batch_end</span><span class="p">:]</span>
+        <span class="ow">or</span> <span class="n">b_base_sample_shape</span><span class="p">[:</span><span class="n">batch_start</span><span class="p">]</span> <span class="o">!=</span> <span class="n">base_sample_shape</span><span class="p">[:</span><span class="n">batch_start</span><span class="p">]</span>
     <span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_split_sample_event_shapes</span><span class="p">(</span>
+<div class="viewcode-block" id="split_shapes"><a class="viewcode-back" href="../../../sampling.html#botorch.sampling.samplers.split_shapes">[docs]</a><span class="k">def</span> <span class="nf">split_shapes</span><span class="p">(</span>
     <span class="n">base_sample_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">]:</span>
-    <span class="sa">r</span><span class="sd">"""Split a base sample shape into sample and event shapes.</span>
+    <span class="sa">r</span><span class="sd">"""Split a base sample shape into sample and base sample shapes.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        base_sample_shape: The base sample shape.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        A tuple containing the sample and event shape.</span>
+<span class="sd">        A tuple containing the sample and base sample shape.</span>
 <span class="sd">    """</span>
-    <span class="k">return</span> <span class="n">base_sample_shape</span><span class="p">[:</span><span class="mi">1</span><span class="p">],</span> <span class="n">base_sample_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+    <span class="k">return</span> <span class="n">base_sample_shape</span><span class="p">[:</span><span class="mi">1</span><span class="p">],</span> <span class="n">base_sample_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span></div>
 </pre></div>
 </div>
 </div>
@@ -424,7 +425,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2020 Facebook Inc.</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2021 Facebook Inc.</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {

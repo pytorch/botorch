@@ -34,11 +34,11 @@
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.models.multitask</span> <span class="kn">import</span> <span class="n">MultiTaskGP</span>
+<span class="kn">from</span> <span class="nn">gpytorch.constraints</span> <span class="kn">import</span> <span class="n">Interval</span>
 <span class="kn">from</span> <span class="nn">gpytorch.distributions.multivariate_normal</span> <span class="kn">import</span> <span class="n">MultivariateNormal</span>
 <span class="kn">from</span> <span class="nn">gpytorch.kernels.rbf_kernel</span> <span class="kn">import</span> <span class="n">RBFKernel</span>
 <span class="kn">from</span> <span class="nn">gpytorch.lazy</span> <span class="kn">import</span> <span class="n">InterpolatedLazyTensor</span><span class="p">,</span> <span class="n">LazyTensor</span>
 <span class="kn">from</span> <span class="nn">gpytorch.likelihoods.gaussian_likelihood</span> <span class="kn">import</span> <span class="n">FixedNoiseGaussianLikelihood</span>
-<span class="kn">from</span> <span class="nn">gpytorch.priors.torch_priors</span> <span class="kn">import</span> <span class="n">UniformPrior</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">ModuleList</span>
 
@@ -80,13 +80,14 @@
             <span class="n">task_feature</span><span class="o">=</span><span class="n">task_feature</span><span class="p">,</span>
             <span class="n">output_tasks</span><span class="o">=</span><span class="n">output_tasks</span><span class="p">,</span>
         <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">train_X</span><span class="o">.</span><span class="n">device</span>
         <span class="c1">#  context indices</span>
         <span class="n">all_tasks</span> <span class="o">=</span> <span class="n">train_X</span><span class="p">[:,</span> <span class="n">task_feature</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">all_tasks</span> <span class="o">=</span> <span class="n">all_tasks</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">all_tasks</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>  <span class="c1"># unique in python does automatic sort; add for safety</span>
 
         <span class="k">if</span> <span class="n">context_cat_feature</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">context_cat_feature</span> <span class="o">=</span> <span class="n">all_tasks</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">context_cat_feature</span> <span class="o">=</span> <span class="n">all_tasks</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">context_cat_feature</span> <span class="o">=</span> <span class="n">context_cat_feature</span>  <span class="c1"># row indices = context indices</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">context_emb_feature</span> <span class="o">=</span> <span class="n">context_emb_feature</span>
 
@@ -107,7 +108,10 @@
             <span class="p">]</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">task_covar_module</span> <span class="o">=</span> <span class="n">RBFKernel</span><span class="p">(</span>
-            <span class="n">ard_num_dims</span><span class="o">=</span><span class="n">n_embs</span><span class="p">,</span> <span class="n">lengthscale_prior</span><span class="o">=</span><span class="n">UniformPrior</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">)</span>
+            <span class="n">ard_num_dims</span><span class="o">=</span><span class="n">n_embs</span><span class="p">,</span>
+            <span class="n">lengthscale_constraint</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span>
+                <span class="mf">0.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initial_value</span><span class="o">=</span><span class="mf">1.0</span>
+            <span class="p">),</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
 
@@ -120,7 +124,9 @@
         <span class="sd">"""generate embedding features for all contexts."""</span>
         <span class="n">embeddings</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">emb_layer</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">context_cat_feature</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span>  <span class="c1"># pyre-ignore</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">context_cat_feature</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span>
+                    <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span>
+                <span class="p">)</span>  <span class="c1"># pyre-ignore</span>
             <span class="p">)</span>
             <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">emb_layer</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">emb_layers</span><span class="p">)</span>
         <span class="p">]</span>
@@ -129,7 +135,8 @@
         <span class="c1"># add given embeddings if any</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">context_emb_feature</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">embeddings</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
-                <span class="p">[</span><span class="n">embeddings</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">context_emb_feature</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span>  <span class="c1"># pyre-ignore</span>
+                <span class="p">[</span><span class="n">embeddings</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">context_emb_feature</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)],</span>
+                <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>  <span class="c1"># pyre-ignore</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">embeddings</span>
 
@@ -249,7 +256,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2020 Facebook Inc.</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2021 Facebook Inc.</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {

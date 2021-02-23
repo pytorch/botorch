@@ -34,10 +34,10 @@
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span> <span class="nn">collections</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">torch._six</span> <span class="kn">import</span> <span class="n">container_abcs</span>
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
 
 
@@ -59,7 +59,7 @@
 <span class="sd">    types (e.g., Python's plain ``dict``) does not preserve the order of the</span>
 <span class="sd">    merged mapping.</span>
 
-<span class="sd">    Arguments:</span>
+<span class="sd">    Args:</span>
 <span class="sd">        buffers (iterable, optional): a mapping (dictionary) of</span>
 <span class="sd">            (string : :class:`~torch.Tensor`) or an iterable of key-value pairs</span>
 <span class="sd">            of type (string, :class:`~torch.Tensor`)</span>
@@ -109,7 +109,7 @@
 <div class="viewcode-block" id="BufferDict.pop"><a class="viewcode-back" href="../../../utils.html#botorch.utils.torch.BufferDict.pop">[docs]</a>    <span class="k">def</span> <span class="nf">pop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
         <span class="sa">r</span><span class="sd">"""Remove key from the BufferDict and return its buffer.</span>
 
-<span class="sd">        Arguments:</span>
+<span class="sd">        Args:</span>
 <span class="sd">            key (string): key to pop from the BufferDict</span>
 <span class="sd">        """</span>
         <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
@@ -137,18 +137,18 @@
 <span class="sd">            or an iterable of key-value pairs, the order of new elements in it is</span>
 <span class="sd">            preserved.</span>
 
-<span class="sd">        Arguments:</span>
+<span class="sd">        Args:</span>
 <span class="sd">            buffers (iterable): a mapping (dictionary) from string to</span>
 <span class="sd">                :class:`~torch.Tensor`, or an iterable of</span>
 <span class="sd">                key-value pairs of type (string, :class:`~torch.Tensor`)</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">buffers</span><span class="p">,</span> <span class="n">container_abcs</span><span class="o">.</span><span class="n">Iterable</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">buffers</span><span class="p">,</span> <span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Iterable</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
                 <span class="s2">"BuffersDict.update should be called with an "</span>
                 <span class="s2">"iterable of key/value pairs, but got "</span> <span class="o">+</span> <span class="nb">type</span><span class="p">(</span><span class="n">buffers</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
             <span class="p">)</span>
 
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">buffers</span><span class="p">,</span> <span class="n">container_abcs</span><span class="o">.</span><span class="n">Mapping</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">buffers</span><span class="p">,</span> <span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Mapping</span><span class="p">):</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">buffers</span><span class="p">,</span> <span class="p">(</span><span class="n">OrderedDict</span><span class="p">,</span> <span class="n">BufferDict</span><span class="p">)):</span>
                 <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">buffer</span> <span class="ow">in</span> <span class="n">buffers</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                     <span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">buffer</span>
@@ -157,7 +157,7 @@
                     <span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">buffer</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">buffers</span><span class="p">):</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">container_abcs</span><span class="o">.</span><span class="n">Iterable</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Iterable</span><span class="p">):</span>
                     <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
                         <span class="s2">"BufferDict update sequence element "</span>
                         <span class="s2">"#"</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">j</span><span class="p">)</span> <span class="o">+</span> <span class="s2">" should be Iterable; is"</span> <span class="o">+</span> <span class="nb">type</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
@@ -230,7 +230,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2020 Facebook Inc.</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2021 Facebook Inc.</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {
