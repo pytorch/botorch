@@ -36,6 +36,14 @@ class GPyTorchPosterior(Posterior):
         self._is_mt = isinstance(mvn, MultitaskMultivariateNormal)
 
     @property
+    def base_sample_shape(self) -> torch.Size:
+        r"""The shape of a base sample used for constructing posterior samples."""
+        shape = self.mvn.batch_shape + self.mvn.base_sample_shape
+        if not self._is_mt:
+            shape += torch.Size([1])
+        return shape
+
+    @property
     def device(self) -> torch.device:
         r"""The torch device of the posterior."""
         return self.mvn.loc.device

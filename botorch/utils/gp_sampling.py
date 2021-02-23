@@ -73,9 +73,9 @@ class GPDraw(Module):
         else:
             X_eval = torch.cat([self.Xs, X], dim=-2)
         posterior = self._model.posterior(X=X_eval)
-        event_shape = posterior.event_shape
+        base_sample_shape = posterior.base_sample_shape
         # re-use old samples
-        bs_shape = event_shape[:-2] + X.shape[-2:-1] + event_shape[-1:]
+        bs_shape = base_sample_shape[:-2] + X.shape[-2:-1] + base_sample_shape[-1:]
         with manual_seed(seed=int(self._seed)):
             new_base_samples = torch.randn(bs_shape, device=X.device, dtype=X.dtype)
         seed = self._seed + 1

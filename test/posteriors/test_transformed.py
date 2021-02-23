@@ -36,6 +36,7 @@ class TestTransformedPosterior(BotorchTestCase):
                 self.assertEqual(p_tf.device.type, self.device.type)
                 self.assertTrue(p_tf.dtype == dtype)
                 self.assertEqual(p_tf.event_shape, shape)
+                self.assertEqual(p_tf.base_sample_shape, shape)
                 self.assertTrue(torch.equal(p_tf.mean, 2 * mean + variance))
                 self.assertTrue(torch.equal(p_tf.variance, mean + 2 * variance))
                 # rsample

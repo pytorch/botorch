@@ -20,6 +20,16 @@ from torch import Tensor
 class Posterior(ABC):
     r"""Abstract base class for botorch posteriors."""
 
+    @property
+    def base_sample_shape(self) -> torch.Size:
+        r"""The shape of a base sample used for constructing posterior samples.
+
+        This function may be overwritten by subclasses in case `base_sample_shape`
+        and `event_shape` do not agree (e.g. if the posterior is a Multivariate
+        Gaussian that is not full rank).
+        """
+        return self.event_shape
+
     @abstractproperty
     def device(self) -> torch.device:
         r"""The torch device of the posterior."""

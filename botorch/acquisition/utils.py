@@ -269,12 +269,12 @@ def prune_inferior_points(
     with torch.no_grad():
         posterior = model.posterior(X=X)
     if sampler is None:
-        if posterior.event_shape.numel() > SobolEngine.MAXDIM:
+        if posterior.base_sample_shape.numel() > SobolEngine.MAXDIM:
             if settings.debug.on():
                 warnings.warn(
-                    f"Sample dimension q*m={posterior.event_shape.numel()} exceeding "
-                    f"Sobol max dimension ({SobolEngine.MAXDIM}). Using iid samples "
-                    "instead.",
+                    f"Sample dimension q*m={posterior.base_sample_shape.numel()} "
+                    f"exceeding Sobol max dimension ({SobolEngine.MAXDIM}). "
+                    "Using iid samples instead.",
                     SamplingWarning,
                 )
             sampler = IIDNormalSampler(num_samples=num_samples)
