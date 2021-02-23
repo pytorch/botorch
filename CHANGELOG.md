@@ -21,7 +21,7 @@ The release log for BoTorch.
   to multi-fidelity KG with discrete fidelities) (#716).
 * `GPDraw` utility for sampling from (exact) GP priors (#655).
 * Add `X` as optional arg to call signature of `MCAcqusitionObjective` (#487).
-* Add Add `OSY` synthetic test problem (#679).
+* `OSY` synthetic test problem (#679).
 
 #### Bug Fixes
 * Fix matrix multiplication in `scalarize_posterior` (#638).
