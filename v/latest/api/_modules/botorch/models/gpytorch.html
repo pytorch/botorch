@@ -482,6 +482,13 @@
             <span class="n">mod_name</span> <span class="o">=</span> <span class="n">full_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
             <span class="n">mod_batch_shape</span><span class="p">(</span><span class="n">new_model</span><span class="p">,</span> <span class="n">mod_name</span><span class="p">,</span> <span class="n">m</span> <span class="k">if</span> <span class="n">m</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="mi">0</span><span class="p">)</span>
 
+        <span class="c1"># subset outcome transform if present</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">subset_octf</span> <span class="o">=</span> <span class="n">new_model</span><span class="o">.</span><span class="n">outcome_transform</span><span class="o">.</span><span class="n">subset_output</span><span class="p">(</span><span class="n">idcs</span><span class="o">=</span><span class="n">idcs</span><span class="p">)</span>
+            <span class="n">new_model</span><span class="o">.</span><span class="n">outcome_transform</span> <span class="o">=</span> <span class="n">subset_octf</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">pass</span>
+
         <span class="k">return</span> <span class="n">new_model</span></div></div>
 
 

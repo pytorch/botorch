@@ -111,7 +111,7 @@ values conditional on having observed canidates <cite>0,1,…,i-1</cite>.</p>
 <li><p><strong>q</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of candidates.</p></li>
 <li><p><strong>num_restarts</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of starting points for multistart acquisition
 function optimization.</p></li>
-<li><p><strong>raw_samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of samples for initialization</p></li>
+<li><p><strong>raw_samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of samples for initialization.</p></li>
 <li><p><strong>options</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]]) – Options for candidate generation.</p></li>
 <li><p><strong>constraints</strong> (<em>equality</em>) – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
@@ -172,7 +172,7 @@ set as <cite>X_pending</cite>. This is also known as sequential greedy optimizat
 <li><p><strong>bounds</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of <cite>X</cite>.</p></li>
 <li><p><strong>num_restarts</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of starting points for multistart acquisition
 function optimization.</p></li>
-<li><p><strong>raw_samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of samples for initialization</p></li>
+<li><p><strong>raw_samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of samples for initialization.</p></li>
 <li><p><strong>options</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]]) – Options for candidate generation.</p></li>
 <li><p><strong>constraints</strong> (<em>equality</em>) – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
@@ -200,6 +200,51 @@ all candidates except candidate <cite>i</cite>.</p>
 </dd>
 </dl>
 </li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt id="botorch.optim.optimize.optimize_acqf_mixed">
+<code class="sig-prename descclassname"><span class="pre">botorch.optim.optimize.</span></code><code class="sig-name descname"><span class="pre">optimize_acqf_mixed</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acq_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_restarts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_features_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_processing_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_initial_conditions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sequential</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/optimize.html#optimize_acqf_mixed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.optimize.optimize_acqf_mixed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Optimize over a list of fixed_features and returns the best solution.
+This is useful for optimizing over mixed continuous and discrete domains.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>acq_function</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code></a>) – An AcquisitionFunction</p></li>
+<li><p><strong>bounds</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of <cite>X</cite>.</p></li>
+<li><p><strong>q</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of candidates.</p></li>
+<li><p><strong>num_restarts</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of starting points for multistart acquisition
+function optimization.</p></li>
+<li><p><strong>raw_samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of samples for initialization.</p></li>
+<li><p><strong>fixed_features_list</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]]) – A list of maps <cite>{feature_index: value}</cite>. The i-th
+item represents the fixed_feature for the i-th optimization.</p></li>
+<li><p><strong>options</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]]) – Options for candidate generation.</p></li>
+<li><p><strong>constraints</strong> (<em>equality</em>) – A list of tuples (indices, coefficients, rhs),
+with each tuple encoding an inequality constraint of the form
+<cite>sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs</cite></p></li>
+<li><p><strong>constraints</strong> – A list of tuples (indices, coefficients, rhs),
+with each tuple encoding an inequality constraint of the form
+<cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite></p></li>
+<li><p><strong>post_processing_func</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]]) – A function that post-processes an optimization
+result appropriately (i.e., according to <cite>round-trip</cite>
+transformations).</p></li>
+<li><p><strong>batch_initial_conditions</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A tensor to specify the initial conditions. Set
+this if you do not want to use default initialization strategy.</p></li>
+<li><p><strong>sequential</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If False, uses joint optimization, otherwise uses sequential
+optimization.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><p>A two-element tuple containing</p>
+<ul class="simple">
+<li><p>a <cite>q x d</cite>-dim tensor of generated candidates.</p></li>
+<li><p>an associated acquisition value.</p></li>
 </ul>
 </p>
 </dd>

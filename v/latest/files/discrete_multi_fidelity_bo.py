@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
-# ## Continuous Multi-Fidelity BO in BoTorch with Knowledge Gradient
+# ## Multi-Fidelity BO with Discrete Fidelities using KG
 # 
-# In this tutorial, we show how to perform continuous multi-fidelity Bayesian optimization (BO) in BoTorch using the multi-fidelity Knowledge Gradient (qMFKG) acquisition function [1, 2].
+# In this tutorial, we show how to do multi-fidelity BO with discrete fidelities based on [1], where each fidelity is a different "information source." This tutorial uses the same setup as the [continuous multi-fidelity BO tutorial](https://botorch.org/tutorials/multi_fidelity_bo), except with discrete fidelity parameters that are interpreted as multiple information sources.
 # 
-# [1] [J. Wu, P.I. Frazier. Continuous-Fidelity Bayesian Optimization with Knowledge Gradient. NIPS Workshop on Bayesian Optimization, 2017.](https://bayesopt.github.io/papers/2017/20.pdf)
+# We use a GP model with a single task that models the design and fidelity parameters jointly. In some cases, where there is not a natural ordering in the fidelity space, it may be more appropriate to use a multi-task model (with, say, an ICM kernel). We will provide a tutorial once this functionality is in place.
+# 
+# [1] [M. Poloczek, J. Wang, P.I. Frazier. Multi-Information Source Optimization. NeurIPS, 2017](https://papers.nips.cc/paper/2017/file/df1f1d20ee86704251795841e6a9405a-Paper.pdf)
 # 
 # [2] [J. Wu, S. Toscano-Palmerin, P.I. Frazier, A.G. Wilson. Practical Multi-fidelity Bayesian Optimization for Hyperparameter Tuning. Conference on Uncertainty in Artificial Intelligence (UAI), 2019](https://arxiv.org/pdf/1903.04703.pdf)
 
@@ -27,7 +29,7 @@ SMOKE_TEST = os.environ.get("SMOKE_TEST")
 
 # ### Problem setup
 # 
-# We'll consider the Augmented Hartmann multi-fidelity synthetic test problem. This function is a version of the Hartmann6 test function with an additional dimension representing the fidelity parameter; details are in [2]. The function takes the form $f(x,s)$ where $x \in [0,1]^6$ and $s \in [0,1]$. The target fidelity is 1.0, which means that our goal is to solve $\max_x f(x,1.0)$ by making use of cheaper evaluations $f(x,s)$ for $s < 1.0$. In this example, we'll assume that the cost function takes the form $5.0 + s$, illustrating a situation where the fixed cost is $5.0$.
+# We'll consider the Augmented Hartmann multi-fidelity synthetic test problem. This function is a version of the Hartmann6 test function with an additional dimension representing the fidelity parameter; details are in [2]. The function takes the form $f(x,s)$ where $x \in [0,1]^6$ and $s \in \{0.5, 0.75, 1\}$. The target fidelity is 1.0, which means that our goal is to solve $\max_x f(x,1.0)$ by making use of cheaper evaluations $f(x,s)$ for $s \in \{0.5, 0.75\}$. In this example, we'll assume that the cost function takes the form $5.0 + s$, illustrating a situation where the fixed cost is $5.0$.
 
 # In[2]:
 
@@ -36,11 +38,12 @@ from botorch.test_functions.multi_fidelity import AugmentedHartmann
 
 
 problem = AugmentedHartmann(negate=True).to(**tkwargs)
+fidelities = torch.tensor([0.5, 0.75, 1.0], **tkwargs)
 
 
 # #### Model initialization
 # 
-# We use a `SingleTaskMultiFidelityGP` as the surrogate model, which uses a kernel from [2] that is well-suited for multi-fidelity applications.
+# We use a `SingleTaskMultiFidelityGP` as the surrogate model, which uses a kernel from [2] that is well-suited for multi-fidelity applications. The `SingleTaskMultiFidelityGP` models the design and fidelity parameters jointly, so its domain is $[0,1]^7$.
 
 # In[3]:
 
@@ -48,17 +51,18 @@ problem = AugmentedHartmann(negate=True).to(**tkwargs)
 from botorch.models.gp_regression_fidelity import SingleTaskMultiFidelityGP
 from botorch.models.transforms.outcome import Standardize
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
-from botorch.utils.transforms import unnormalize
+from botorch.utils.transforms import unnormalize, standardize
 from botorch.utils.sampling import draw_sobol_samples
 
 
 def generate_initial_data(n=16):
     # generate training data
-    train_x = torch.rand(n, 7, **tkwargs)
-    train_obj = problem(train_x).unsqueeze(-1) # add output dimension
-    return train_x, train_obj
-
-
+    train_x = torch.rand(n, 6, **tkwargs)
+    train_f = fidelities[torch.randint(3, (n,1))]
+    train_x_full = torch.cat((train_x, train_f), dim=1)
+    train_obj = problem(train_x_full).unsqueeze(-1) # add output dimension
+    return train_x_full, train_obj
+    
 def initialize_model(train_x, train_obj):
     # define a surrogate model suited for a "training data"-like fidelity parameter
     # in dimension 6, as in [2]
@@ -73,7 +77,7 @@ def initialize_model(train_x, train_obj):
 
 
 # #### Define a helper function to construct the MFKG acquisition function
-# The helper function illustrates how one can initialize a $q$MFKG acquisition function. In this example, we assume that the affine cost is known. We then use the notion of a `CostAwareUtility` in BoTorch to scalarize the competing objectives of information gain and cost. The MFKG acquisition function optimizes the ratio of information gain to cost, which is captured by the `InverseCostWeightedUtility`.
+# The helper function illustrates how one can initialize an $q$MFKG acquisition function. In this example, we assume that the affine cost is known. We then use the notion of a `CostAwareUtility` in BoTorch to scalarize the "competing objectives" of information gain and cost. The MFKG acquisition function optimizes the ratio of information gain to cost, which is captured by the `InverseCostWeightedUtility`.
 # 
 # In order for MFKG to evaluate the information gain, it uses the model to predict the function value at the highest fidelity after conditioning on the observation. This is handled by the `project` argument, which specifies how to transform a tensor `X` to its target fidelity. We use a default helper function called `project_to_target_fidelity` to achieve this.
 # 
@@ -91,7 +95,6 @@ from botorch.acquisition.fixed_feature import FixedFeatureAcquisitionFunction
 from botorch.optim.optimize import optimize_acqf
 from botorch.acquisition.utils import project_to_target_fidelity
 
-
 bounds = torch.tensor([[0.0] * problem.dim, [1.0] * problem.dim], **tkwargs)
 target_fidelities = {6: 1.0}
 
@@ -101,7 +104,6 @@ cost_aware_utility = InverseCostWeightedUtility(cost_model=cost_model)
 
 def project(X):
     return project_to_target_fidelity(X=X, target_fidelities=target_fidelities)
-
 
 def get_mfkg(model):
     
@@ -131,12 +133,13 @@ def get_mfkg(model):
 
 
 # #### Define a helper function that performs the essential BO step
-# This helper function optimizes the acquisition function and returns the batch $\{x_1, x_2, \ldots x_q\}$ along with the observed function values. 
+# This helper function optimizes the acquisition function and returns the batch $\{x_1, x_2, \ldots x_q\}$ along with the observed function values. The function `optimize_acqf_mixed` sequentially optimizes the acquisition function over $x$ for each value of the fidelity $s \in \{0, 0.5, 1.0\}$.
 
 # In[5]:
 
 
 from botorch.optim.initializers import gen_one_shot_kg_initial_conditions
+from botorch.optim.optimize import optimize_acqf_mixed
 torch.set_printoptions(precision=3, sci_mode=False)
 
 NUM_RESTARTS = 10 if not SMOKE_TEST else 2
@@ -150,12 +153,13 @@ def optimize_mfkg_and_get_observation(mfkg_acqf):
         acq_function = mfkg_acqf,
         bounds=bounds,
         q=4,
-        num_restarts=NUM_RESTARTS,
-        raw_samples=RAW_SAMPLES,
+        num_restarts=10,
+        raw_samples=512,
     )
-    candidates, _ = optimize_acqf(
+    candidates, _ = optimize_acqf_mixed(
         acq_function=mfkg_acqf,
         bounds=bounds,
+        fixed_features_list=[{6: 0.5}, {6: 0.75}, {6: 1.0}],
         q=4,
         num_restarts=NUM_RESTARTS,
         raw_samples=RAW_SAMPLES,
@@ -186,8 +190,7 @@ train_x, train_obj = generate_initial_data(n=16)
 
 
 cumulative_cost = 0.0
-N_ITER = 6 if not SMOKE_TEST else 2
-
+N_ITER = 3 if not SMOKE_TEST else 1
 
 for _ in range(N_ITER):
     mll, model = initialize_model(train_x, train_obj)
@@ -217,8 +220,8 @@ def get_recommendation(model):
         acq_function=rec_acqf,
         bounds=bounds[:,:-1],
         q=1,
-        num_restarts=NUM_RESTARTS,
-        raw_samples=RAW_SAMPLES,
+        num_restarts=10,
+        raw_samples=512,
         options={"batch_limit": 5, "maxiter": 200},
     )
     
@@ -244,16 +247,14 @@ print(f"\ntotal cost: {cumulative_cost}\n")
 
 from botorch.acquisition import qExpectedImprovement
 
-
 def get_ei(model, best_f):
-           
+
     return FixedFeatureAcquisitionFunction(
         acq_function=qExpectedImprovement(model=model, best_f=best_f),
         d=7,
         columns=[6],
         values=[1],
     ) 
-
 
 def optimize_ei_and_get_observation(ei_acqf):
     """Optimizes EI and returns a new candidate, observation, and cost."""
@@ -262,8 +263,8 @@ def optimize_ei_and_get_observation(ei_acqf):
         acq_function=ei_acqf,
         bounds=bounds[:,:-1],
         q=4,
-        num_restarts=NUM_RESTARTS,
-        raw_samples=RAW_SAMPLES,
+        num_restarts=10,
+        raw_samples=512,
         options={"batch_limit": 5, "maxiter": 200},
     )
     

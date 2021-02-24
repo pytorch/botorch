@@ -36,6 +36,19 @@
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
 <p>Abstract base class for botorch posteriors.</p>
 <dl class="py method">
+<dt id="botorch.posteriors.posterior.Posterior.base_sample_shape">
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">base_sample_shape</span></code><a class="headerlink" href="#botorch.posteriors.posterior.Posterior.base_sample_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>The shape of a base sample used for constructing posterior samples.</p>
+<p>This function may be overwritten by subclasses in case <cite>base_sample_shape</cite>
+and <cite>event_shape</cite> do not agree (e.g. if the posterior is a Multivariate
+Gaussian that is not full rank).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
 <dt id="botorch.posteriors.posterior.Posterior.device">
 <em class="property"><span class="pre">abstract</span> <span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">device</span></code><a class="headerlink" href="#botorch.posteriors.posterior.Posterior.device" title="Permalink to this definition">¶</a></dt>
 <dd><p>The torch device of the posterior.</p>
@@ -152,6 +165,16 @@ This is used for deterministic optimization.</p></li>
 MultitaskMultivariateNormal (multi-output case).</p>
 </dd>
 </dl>
+<dl class="py method">
+<dt id="botorch.posteriors.gpytorch.GPyTorchPosterior.base_sample_shape">
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">base_sample_shape</span></code><a class="headerlink" href="#botorch.posteriors.gpytorch.GPyTorchPosterior.base_sample_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>The shape of a base sample used for constructing posterior samples.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 <dl class="py method">
 <dt id="botorch.posteriors.gpytorch.GPyTorchPosterior.device">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">device</span></code><a class="headerlink" href="#botorch.posteriors.gpytorch.GPyTorchPosterior.device" title="Permalink to this definition">¶</a></dt>
@@ -349,6 +372,77 @@ validation).</p></li>
 </dd></dl>
 </dd></dl>
 </div>
+<div class="section" id="module-botorch.posteriors.higher_order">
+<span id="higher-order-gp-posterior"></span><h3>Higher Order GP Posterior<a class="headerlink" href="#module-botorch.posteriors.higher_order" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt id="botorch.posteriors.higher_order.HigherOrderGPPosterior">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">botorch.posteriors.higher_order.</span></code><code class="sig-name descname"><span class="pre">HigherOrderGPPosterior</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mvn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">joint_covariance_matrix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_train_covar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_train_covar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_targets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_outputs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/posteriors/higher_order.html#HigherOrderGPPosterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.posteriors.higher_order.HigherOrderGPPosterior" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.posteriors.gpytorch.GPyTorchPosterior</span></code></a></p>
+<p>Posterior class for a Higher order Gaussian process model <a class="reference internal" href="models.html#zhe2019hogp" id="id1"><span>[Zhe2019hogp]</span></a>. Extends
+the standard GPyTorch posterior class by overwriting the rsample method.
+The posterior variance is handled internally by the HigherOrderGP model.
+HOGP is a tensorized GP model so the posterior covariance grows to be extremely
+large, but is highly structured, which means that we can exploit Kronecker
+identities to sample from the posterior using Matheron’s rule as described in
+<a class="reference internal" href="models.html#doucet2010sampl" id="id2"><span>[Doucet2010sampl]</span></a>. In general, this posterior should ONLY be used for HOGP models
+that have highly structured covariances. It should also only be used internally when
+called from the HigherOrderGP.posterior(…) method.</p>
+<p>A Posterior for HigherOrderGP models.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mvn</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">MultivariateNormal</span></code>) – Posterior multivariate normal distribution</p></li>
+<li><p><strong>joint_covariance_matrix</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">LazyTensor</span></code>) – Joint test train covariance matrix over the entire
+tensor</p></li>
+<li><p><strong>train_train_covar</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">LazyTensor</span></code>) – covariance matrix of train points in the data space</p></li>
+<li><p><strong>test_train_covar</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">LazyTensor</span></code>) – covariance matrix of test x train points in the data space</p></li>
+<li><p><strong>train_targets</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – training responses vectorized</p></li>
+<li><p><strong>output_shape</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code>) – shape output training responses</p></li>
+<li><p><strong>num_outputs</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – batch shaping of model</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="botorch.posteriors.higher_order.HigherOrderGPPosterior.base_sample_shape">
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">base_sample_shape</span></code><a class="headerlink" href="#botorch.posteriors.higher_order.HigherOrderGPPosterior.base_sample_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>The shape of a base sample used for constructing posterior samples.</p>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.posteriors.higher_order.HigherOrderGPPosterior.event_shape">
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">event_shape</span></code><a class="headerlink" href="#botorch.posteriors.higher_order.HigherOrderGPPosterior.event_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>The event shape (i.e. the shape of a single sample) of the posterior.</p>
+</dd></dl>
+<dl class="py method">
+<dt id="botorch.posteriors.higher_order.HigherOrderGPPosterior.rsample">
+<code class="sig-name descname"><span class="pre">rsample</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/posteriors/higher_order.html#HigherOrderGPPosterior.rsample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.posteriors.higher_order.HigherOrderGPPosterior.rsample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sample from the posterior (with gradients).</p>
+<p>As the posterior covariance is difficult to draw from in this model,
+we implement Matheron’s rule as described in [Doucet2010sampl]-. This may not
+work entirely correctly for deterministic base samples unless base samples
+are provided that are of shape <cite>n + 2 * n_train</cite> because the sampling method
+draws <cite>2 * n_train</cite> samples as well as the standard <cite>n</cite>.
+samples.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sample_shape</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code>]) – A <cite>torch.Size</cite> object specifying the sample shape. To
+draw <cite>n</cite> samples, set to <cite>torch.Size([n])</cite>. To draw <cite>b</cite> batches
+of <cite>n</cite> samples each, set to <cite>torch.Size([b, n])</cite>.</p></li>
+<li><p><strong>base_samples</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – An (optional) Tensor of <cite>N(0, I)</cite> base samples of
+appropriate dimension, typically obtained from a <cite>Sampler</cite>.
+This is used for deterministic optimization.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>sample_shape x event_shape</cite>-dim Tensor of samples from the posterior.</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+</div>
 <div class="section" id="module-botorch.posteriors.transformed">
 <span id="transformed-posterior"></span><h3>Transformed Posterior<a class="headerlink" href="#module-botorch.posteriors.transformed" title="Permalink to this headline">¶</a></h3>
 <dl class="py class">
@@ -374,6 +468,16 @@ posterior to a variance of the transformed posterior.</p></li>
 </ul>
 </dd>
 </dl>
+<dl class="py method">
+<dt id="botorch.posteriors.transformed.TransformedPosterior.base_sample_shape">
+<em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">base_sample_shape</span></code><a class="headerlink" href="#botorch.posteriors.transformed.TransformedPosterior.base_sample_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>The shape of a base sample used for constructing posterior samples.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 <dl class="py method">
 <dt id="botorch.posteriors.transformed.TransformedPosterior.device">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">device</span></code><a class="headerlink" href="#botorch.posteriors.transformed.TransformedPosterior.device" title="Permalink to this definition">¶</a></dt>

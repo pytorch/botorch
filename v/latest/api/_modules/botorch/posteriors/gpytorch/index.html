@@ -62,6 +62,14 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_is_mt</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mvn</span><span class="p">,</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">)</span>
 
     <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">base_sample_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""The shape of a base sample used for constructing posterior samples."""</span>
+        <span class="n">shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mvn</span><span class="o">.</span><span class="n">batch_shape</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">mvn</span><span class="o">.</span><span class="n">base_sample_shape</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_mt</span><span class="p">:</span>
+            <span class="n">shape</span> <span class="o">+=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">shape</span>
+
+    <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">device</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""The torch device of the posterior."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mvn</span><span class="o">.</span><span class="n">loc</span><span class="o">.</span><span class="n">device</span>

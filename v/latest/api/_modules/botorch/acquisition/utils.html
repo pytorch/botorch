@@ -295,12 +295,12 @@
     <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
         <span class="n">posterior</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">sampler</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">posterior</span><span class="o">.</span><span class="n">event_shape</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">SobolEngine</span><span class="o">.</span><span class="n">MAXDIM</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">posterior</span><span class="o">.</span><span class="n">base_sample_shape</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">SobolEngine</span><span class="o">.</span><span class="n">MAXDIM</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">settings</span><span class="o">.</span><span class="n">debug</span><span class="o">.</span><span class="n">on</span><span class="p">():</span>
                 <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"Sample dimension q*m=</span><span class="si">{</span><span class="n">posterior</span><span class="o">.</span><span class="n">event_shape</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span><span class="si">}</span><span class="s2"> exceeding "</span>
-                    <span class="sa">f</span><span class="s2">"Sobol max dimension (</span><span class="si">{</span><span class="n">SobolEngine</span><span class="o">.</span><span class="n">MAXDIM</span><span class="si">}</span><span class="s2">). Using iid samples "</span>
-                    <span class="s2">"instead."</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">"Sample dimension q*m=</span><span class="si">{</span><span class="n">posterior</span><span class="o">.</span><span class="n">base_sample_shape</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span><span class="si">}</span><span class="s2"> "</span>
+                    <span class="sa">f</span><span class="s2">"exceeding Sobol max dimension (</span><span class="si">{</span><span class="n">SobolEngine</span><span class="o">.</span><span class="n">MAXDIM</span><span class="si">}</span><span class="s2">). "</span>
+                    <span class="s2">"Using iid samples instead."</span><span class="p">,</span>
                     <span class="n">SamplingWarning</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="n">sampler</span> <span class="o">=</span> <span class="n">IIDNormalSampler</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="n">num_samples</span><span class="p">)</span>

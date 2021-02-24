@@ -98,6 +98,15 @@
 <td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="exceptions.html#botorch.exceptions.warnings.BadInitialCandidatesWarning">BadInitialCandidatesWarning</a>
 </li>
+<li><a href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior.base_sample_shape">base_sample_shape() (botorch.posteriors.gpytorch.GPyTorchPosterior property)</a>
+<ul>
+<li><a href="posteriors.html#botorch.posteriors.higher_order.HigherOrderGPPosterior.base_sample_shape">(botorch.posteriors.higher_order.HigherOrderGPPosterior property)</a>
+</li>
+<li><a href="posteriors.html#botorch.posteriors.posterior.Posterior.base_sample_shape">(botorch.posteriors.posterior.Posterior property)</a>
+</li>
+<li><a href="posteriors.html#botorch.posteriors.transformed.TransformedPosterior.base_sample_shape">(botorch.posteriors.transformed.TransformedPosterior property)</a>
+</li>
+</ul></li>
 <li><a href="test_functions.html#botorch.test_functions.base.BaseTestProblem">BaseTestProblem (class in botorch.test_functions.base)</a>
 </li>
 <li><a href="utils.html#botorch.utils.testing.BaseTestProblemBaseTestCase">BaseTestProblemBaseTestCase (class in botorch.utils.testing)</a>
@@ -439,6 +448,8 @@
 <li><a href="models.html#module-botorch.models.model">module</a>
 </li>
 </ul></li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li>
     botorch.models.model_list_gp_regression
 
@@ -446,8 +457,6 @@
 <li><a href="models.html#module-botorch.models.model_list_gp_regression">module</a>
 </li>
 </ul></li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li>
     botorch.models.multitask
 
@@ -565,6 +574,13 @@
 
       <ul>
 <li><a href="posteriors.html#module-botorch.posteriors.gpytorch">module</a>
+</li>
+</ul></li>
+<li>
+    botorch.posteriors.higher_order
+
+      <ul>
+<li><a href="posteriors.html#module-botorch.posteriors.higher_order">module</a>
 </li>
 </ul></li>
 <li>
@@ -1162,11 +1178,11 @@
 </ul></li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
-<li><a href="models.html#botorch.models.higher_order_gp.HigherOrderGPPosterior.event_shape">event_shape() (botorch.models.higher_order_gp.HigherOrderGPPosterior property)</a>
+<li><a href="posteriors.html#botorch.posteriors.deterministic.DeterministicPosterior.event_shape">event_shape() (botorch.posteriors.deterministic.DeterministicPosterior property)</a>
 <ul>
-<li><a href="posteriors.html#botorch.posteriors.deterministic.DeterministicPosterior.event_shape">(botorch.posteriors.deterministic.DeterministicPosterior property)</a>
-</li>
 <li><a href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior.event_shape">(botorch.posteriors.gpytorch.GPyTorchPosterior property)</a>
+</li>
+<li><a href="posteriors.html#botorch.posteriors.higher_order.HigherOrderGPPosterior.event_shape">(botorch.posteriors.higher_order.HigherOrderGPPosterior property)</a>
 </li>
 <li><a href="posteriors.html#botorch.posteriors.posterior.Posterior.event_shape">(botorch.posteriors.posterior.Posterior property)</a>
 </li>
@@ -1499,7 +1515,7 @@
 <td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="models.html#botorch.models.higher_order_gp.HigherOrderGP">HigherOrderGP (class in botorch.models.higher_order_gp)</a>
 </li>
-<li><a href="models.html#botorch.models.higher_order_gp.HigherOrderGPPosterior">HigherOrderGPPosterior (class in botorch.models.higher_order_gp)</a>
+<li><a href="posteriors.html#botorch.posteriors.higher_order.HigherOrderGPPosterior">HigherOrderGPPosterior (class in botorch.posteriors.higher_order)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.HolderTable">HolderTable (class in botorch.test_functions.synthetic)</a>
 </li>
@@ -1781,6 +1797,8 @@
 </li>
 <li><a href="posteriors.html#module-botorch.posteriors.gpytorch">botorch.posteriors.gpytorch</a>
 </li>
+<li><a href="posteriors.html#module-botorch.posteriors.higher_order">botorch.posteriors.higher_order</a>
+</li>
 <li><a href="posteriors.html#module-botorch.posteriors.posterior">botorch.posteriors.posterior</a>
 </li>
 <li><a href="posteriors.html#module-botorch.posteriors.transformed">botorch.posteriors.transformed</a>
@@ -1972,13 +1990,15 @@
 </ul></li>
 <li><a href="exceptions.html#botorch.exceptions.warnings.OptimizationWarning">OptimizationWarning</a>
 </li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="optim.html#botorch.optim.optimize.optimize_acqf">optimize_acqf() (in module botorch.optim.optimize)</a>
 </li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="optim.html#botorch.optim.optimize.optimize_acqf_cyclic">optimize_acqf_cyclic() (in module botorch.optim.optimize)</a>
 </li>
 <li><a href="optim.html#botorch.optim.optimize.optimize_acqf_list">optimize_acqf_list() (in module botorch.optim.optimize)</a>
+</li>
+<li><a href="optim.html#botorch.optim.optimize.optimize_acqf_mixed">optimize_acqf_mixed() (in module botorch.optim.optimize)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Hartmann.optimizers">optimizers() (botorch.test_functions.synthetic.Hartmann property)</a>
 <ul>
@@ -2133,11 +2153,11 @@
 </li>
 <li><a href="models.html#botorch.models.transforms.input.Round">Round (class in botorch.models.transforms.input)</a>
 </li>
-<li><a href="models.html#botorch.models.higher_order_gp.HigherOrderGPPosterior.rsample">rsample() (botorch.models.higher_order_gp.HigherOrderGPPosterior method)</a>
+<li><a href="posteriors.html#botorch.posteriors.deterministic.DeterministicPosterior.rsample">rsample() (botorch.posteriors.deterministic.DeterministicPosterior method)</a>
 <ul>
-<li><a href="posteriors.html#botorch.posteriors.deterministic.DeterministicPosterior.rsample">(botorch.posteriors.deterministic.DeterministicPosterior method)</a>
-</li>
 <li><a href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior.rsample">(botorch.posteriors.gpytorch.GPyTorchPosterior method)</a>
+</li>
+<li><a href="posteriors.html#botorch.posteriors.higher_order.HigherOrderGPPosterior.rsample">(botorch.posteriors.higher_order.HigherOrderGPPosterior method)</a>
 </li>
 <li><a href="posteriors.html#botorch.posteriors.posterior.Posterior.rsample">(botorch.posteriors.posterior.Posterior method)</a>
 </li>
@@ -2200,19 +2220,21 @@
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Shekel">Shekel (class in botorch.test_functions.synthetic)</a>
 </li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="models.html#botorch.models.gp_regression.SingleTaskGP">SingleTaskGP (class in botorch.models.gp_regression)</a>
 </li>
 <li><a href="models.html#botorch.models.gp_regression_fidelity.SingleTaskMultiFidelityGP">SingleTaskMultiFidelityGP (class in botorch.models.gp_regression_fidelity)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.SixHumpCamel">SixHumpCamel (class in botorch.test_functions.synthetic)</a>
 </li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="sampling.html#botorch.sampling.samplers.SobolQMCNormalSampler">SobolQMCNormalSampler (class in botorch.sampling.samplers)</a>
 </li>
 <li><a href="utils.html#botorch.utils.objective.soft_eval_constraint">soft_eval_constraint() (in module botorch.utils.objective)</a>
 </li>
 <li><a href="utils.html#botorch.utils.multi_objective.hypervolume.sort_by_dimension">sort_by_dimension() (in module botorch.utils.multi_objective.hypervolume)</a>
+</li>
+<li><a href="sampling.html#botorch.sampling.samplers.split_shapes">split_shapes() (in module botorch.sampling.samplers)</a>
 </li>
 <li><a href="utils.html#botorch.utils.transforms.squeeze_last_dim">squeeze_last_dim() (in module botorch.utils.transforms)</a>
 </li>
@@ -2241,6 +2263,14 @@
 <li><a href="models.html#botorch.models.model.Model.subset_output">(botorch.models.model.Model method)</a>
 </li>
 <li><a href="models.html#botorch.models.model_list_gp_regression.ModelListGP.subset_output">(botorch.models.model_list_gp_regression.ModelListGP method)</a>
+</li>
+<li><a href="models.html#botorch.models.transforms.outcome.ChainedOutcomeTransform.subset_output">(botorch.models.transforms.outcome.ChainedOutcomeTransform method)</a>
+</li>
+<li><a href="models.html#botorch.models.transforms.outcome.Log.subset_output">(botorch.models.transforms.outcome.Log method)</a>
+</li>
+<li><a href="models.html#botorch.models.transforms.outcome.OutcomeTransform.subset_output">(botorch.models.transforms.outcome.OutcomeTransform method)</a>
+</li>
+<li><a href="models.html#botorch.models.transforms.outcome.Standardize.subset_output">(botorch.models.transforms.outcome.Standardize method)</a>
 </li>
 </ul></li>
 <li><a href="distributions.html#botorch.distributions.distributions.Kumaraswamy.support">support (botorch.distributions.distributions.Kumaraswamy attribute)</a>

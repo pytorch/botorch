@@ -30,6 +30,14 @@
 <span class="c1"># This source code is licensed under the MIT license found in the</span>
 <span class="c1"># LICENSE file in the root directory of this source tree.</span>
 
+<span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">Outcome transformations for automatically transforming and un-transforming</span>
+<span class="sd">model outputs. Outcome transformations are typically part of a Model and</span>
+<span class="sd">applied (i) within the model constructor to transform the train observations</span>
+<span class="sd">to the model space, and (ii) in the `Model.posterior` call to untransform</span>
+<span class="sd">the model posterior back to the original space.</span>
+<span class="sd">"""</span>
+
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
@@ -69,6 +77,23 @@
 <span class="sd">            - The transformed observation noise (if applicable).</span>
 <span class="sd">        """</span>
         <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
+
+<div class="viewcode-block" id="OutcomeTransform.subset_output"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.OutcomeTransform.subset_output">[docs]</a>    <span class="k">def</span> <span class="nf">subset_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">OutcomeTransform</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Subset the transform along the output dimension.</span>
+
+<span class="sd">        This functionality is used to properly treat outcome transformations</span>
+<span class="sd">        in the `subset_model` functionality.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            idcs: The output indices to subset the transform to.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The current outcome transform, subset to the specified output indices.</span>
+<span class="sd">        """</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> does not implement the "</span>
+            <span class="s2">"`subset_output` method"</span>
+        <span class="p">)</span></div>
 
 <div class="viewcode-block" id="OutcomeTransform.untransform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.OutcomeTransform.untransform">[docs]</a>    <span class="k">def</span> <span class="nf">untransform</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -137,6 +162,19 @@
         <span class="k">for</span> <span class="n">tf</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
             <span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">Y</span><span class="p">,</span> <span class="n">Yvar</span></div>
+
+<div class="viewcode-block" id="ChainedOutcomeTransform.subset_output"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.ChainedOutcomeTransform.subset_output">[docs]</a>    <span class="k">def</span> <span class="nf">subset_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">OutcomeTransform</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Subset the transform along the output dimension.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            idcs: The output indices to subset the transform to.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The current outcome transform, subset to the specified output indices.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span>
+            <span class="o">**</span><span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">tf</span><span class="o">.</span><span class="n">subset_output</span><span class="p">(</span><span class="n">idcs</span><span class="o">=</span><span class="n">idcs</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">tf</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="p">)</span></div>
 
 <div class="viewcode-block" id="ChainedOutcomeTransform.untransform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.ChainedOutcomeTransform.untransform">[docs]</a>    <span class="k">def</span> <span class="nf">untransform</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -247,6 +285,38 @@
         <span class="n">Yvar_tf</span> <span class="o">=</span> <span class="n">Yvar</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stdvs_sq</span> <span class="k">if</span> <span class="n">Yvar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="n">Y_tf</span><span class="p">,</span> <span class="n">Yvar_tf</span></div>
 
+<div class="viewcode-block" id="Standardize.subset_output"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Standardize.subset_output">[docs]</a>    <span class="k">def</span> <span class="nf">subset_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">OutcomeTransform</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Subset the transform along the output dimension.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            idcs: The output indices to subset the transform to.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The current outcome transform, subset to the specified output indices.</span>
+<span class="sd">        """</span>
+        <span class="n">new_m</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">idcs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">new_m</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_m</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">"Trying to subset a transform have more outputs than "</span>
+                <span class="s2">" the original transform."</span>
+            <span class="p">)</span>
+        <span class="n">nlzd_idcs</span> <span class="o">=</span> <span class="n">normalize_indices</span><span class="p">(</span><span class="n">idcs</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_m</span><span class="p">)</span>
+        <span class="n">new_outputs</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">new_outputs</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">nlzd_idcs</span><span class="p">]</span>
+        <span class="n">new_tf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span>
+            <span class="n">m</span><span class="o">=</span><span class="n">new_m</span><span class="p">,</span>
+            <span class="n">outputs</span><span class="o">=</span><span class="n">new_outputs</span><span class="p">,</span>
+            <span class="n">batch_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_batch_shape</span><span class="p">,</span>
+            <span class="n">min_stdv</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_min_stdv</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">new_tf</span><span class="o">.</span><span class="n">means</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">means</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">nlzd_idcs</span><span class="p">]</span>
+        <span class="n">new_tf</span><span class="o">.</span><span class="n">stdvs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stdvs</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">nlzd_idcs</span><span class="p">]</span>
+        <span class="n">new_tf</span><span class="o">.</span><span class="n">_stdvs_sq</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stdvs_sq</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">nlzd_idcs</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span><span class="p">:</span>
+            <span class="n">new_tf</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">new_tf</span></div>
+
 <div class="viewcode-block" id="Standardize.untransform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Standardize.untransform">[docs]</a>    <span class="k">def</span> <span class="nf">untransform</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]:</span>
@@ -346,6 +416,28 @@
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span> <span class="o">=</span> <span class="n">outputs</span>
+
+<div class="viewcode-block" id="Log.subset_output"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Log.subset_output">[docs]</a>    <span class="k">def</span> <span class="nf">subset_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">OutcomeTransform</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Subset the transform along the output dimension.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            idcs: The output indices to subset the transform to.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The current outcome transform, subset to the specified output indices.</span>
+<span class="sd">        """</span>
+        <span class="n">new_outputs</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span> <span class="o">+</span> <span class="n">idcs</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Negative indexing not supported for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> "</span>
+                    <span class="s2">"when subsetting outputs and only transforming some outputs."</span>
+                <span class="p">)</span>
+            <span class="n">new_outputs</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">idcs</span><span class="p">]</span>
+        <span class="n">new_tf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">outputs</span><span class="o">=</span><span class="n">new_outputs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span><span class="p">:</span>
+            <span class="n">new_tf</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">new_tf</span></div>
 
 <div class="viewcode-block" id="Log.forward"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Log.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>

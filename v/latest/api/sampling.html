@@ -56,7 +56,7 @@ variance across t-batches.</p>
 <p>Abstract base class for Samplers.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>batch_range</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The range of t-batch dimensions in the <cite>event_shape</cite>
+<dd class="field-odd"><p><strong>batch_range</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The range of t-batch dimensions in the <cite>base_sample_shape</cite>
 used by <cite>collapse_batch_dims</cite>. The t-batch dims are
 batch_range[0]:batch_range[1]. By default, this is (0, -2),
 for the case where the non-batch dimensions are -2 (q) and
@@ -92,7 +92,7 @@ for the case where the non-batch dimensions are -2 (q) and
 <dl class="py method">
 <dt id="botorch.sampling.samplers.MCSampler.sample_shape">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">sample_shape</span></code><a class="headerlink" href="#botorch.sampling.samplers.MCSampler.sample_shape" title="Permalink to this definition">¶</a></dt>
-<dd><p>The shape of a single sample</p>
+<dd><p>The shape of a single sample.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code></p>
@@ -127,7 +127,7 @@ not be used with deterministic optimization algorithms).</p></li>
 <li><p><strong>collapse_batch_dims</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, collapse the t-batch dimensions to
 size 1. This is useful for preventing sampling variance across
 t-batches.</p></li>
-<li><p><strong>batch_range</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The range of t-batch dimensions in the <cite>event_shape</cite>
+<li><p><strong>batch_range</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The range of t-batch dimensions in the <cite>base_sample_shape</cite>
 used by <cite>collapse_batch_dims</cite>. The t-batch dims are
 batch_range[0]:batch_range[1]. By default, this is (0, -2),
 for the case where the non-batch dimensions are -2 (q) and
@@ -163,7 +163,7 @@ not be used with deterministic optimization algorithms).</p></li>
 <li><p><strong>collapse_batch_dims</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, collapse the t-batch dimensions to
 size 1. This is useful for preventing sampling variance across
 t-batches.</p></li>
-<li><p><strong>batch_range</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The range of t-batch dimensions in the <cite>event_shape</cite>
+<li><p><strong>batch_range</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The range of t-batch dimensions in the <cite>base_sample_shape</cite>
 used by <cite>collapse_batch_dims</cite>. The t-batch dims are
 batch_range[0]:batch_range[1]. By default, this is (0, -2),
 for the case where the non-batch dimensions are -2 (q) and
@@ -175,6 +175,22 @@ for the case where the non-batch dimensions are -2 (q) and
 <dt id="botorch.sampling.samplers.SobolQMCNormalSampler.training">
 <code class="sig-name descname"><span class="pre">training</span></code><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.sampling.samplers.SobolQMCNormalSampler.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
+</dd></dl>
+<dl class="py function">
+<dt id="botorch.sampling.samplers.split_shapes">
+<code class="sig-prename descclassname"><span class="pre">botorch.sampling.samplers.</span></code><code class="sig-name descname"><span class="pre">split_shapes</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_sample_shape</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/sampling/samplers.html#split_shapes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.sampling.samplers.split_shapes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Split a base sample shape into sample and base sample shapes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>base_sample_shape</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code>) – The base sample shape.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code>]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A tuple containing the sample and base sample shape.</p>
+</dd>
+</dl>
 </dd></dl>
 </div>
 <div class="section" id="module-botorch.sampling.pairwise_samplers">

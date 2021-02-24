@@ -121,7 +121,6 @@
 <span class="sd">        &gt;&gt;&gt; candidates, acq_value_list = optimize_acqf(</span>
 <span class="sd">        &gt;&gt;&gt;     qEI, bounds, 3, 15, 256, sequential=True</span>
 <span class="sd">        &gt;&gt;&gt; )</span>
-
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="n">sequential</span> <span class="ow">and</span> <span class="n">q</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">return_best_only</span><span class="p">:</span>
@@ -247,7 +246,7 @@
 <span class="sd">        q: The number of candidates.</span>
 <span class="sd">        num_restarts:  Number of starting points for multistart acquisition</span>
 <span class="sd">            function optimization.</span>
-<span class="sd">        raw_samples: Number of samples for initialization</span>
+<span class="sd">        raw_samples: Number of samples for initialization.</span>
 <span class="sd">        options: Options for candidate generation.</span>
 <span class="sd">        inequality constraints: A list of tuples (indices, coefficients, rhs),</span>
 <span class="sd">            with each tuple encoding an inequality constraint of the form</span>
@@ -282,7 +281,6 @@
 <span class="sd">        &gt;&gt;&gt; candidates, acq_value_list = optimize_acqf_cyclic(</span>
 <span class="sd">        &gt;&gt;&gt;     qEI, bounds, 3, 15, 256, cyclic_options={"maxiter": 4}</span>
 <span class="sd">        &gt;&gt;&gt; )</span>
-
 <span class="sd">    """</span>
     <span class="c1"># for the first cycle, optimize the q candidates sequentially</span>
     <span class="n">candidates</span><span class="p">,</span> <span class="n">acq_vals</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
@@ -359,7 +357,7 @@
 <span class="sd">        bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.</span>
 <span class="sd">        num_restarts:  Number of starting points for multistart acquisition</span>
 <span class="sd">            function optimization.</span>
-<span class="sd">        raw_samples: Number of samples for initialization</span>
+<span class="sd">        raw_samples: Number of samples for initialization.</span>
 <span class="sd">        options: Options for candidate generation.</span>
 <span class="sd">        inequality constraints: A list of tuples (indices, coefficients, rhs),</span>
 <span class="sd">            with each tuple encoding an inequality constraint of the form</span>
@@ -380,7 +378,6 @@
 <span class="sd">        - a `q`-dim tensor of expected acquisition values, where the value at</span>
 <span class="sd">            index `i` is the acquisition value conditional on having observed</span>
 <span class="sd">            all candidates except candidate `i`.</span>
-
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">acq_function_list</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"acq_function_list must be non-empty."</span><span class="p">)</span>
@@ -412,6 +409,79 @@
         <span class="n">acq_value_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">acq_value</span><span class="p">)</span>
         <span class="n">candidates</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">candidate_list</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">candidates</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">acq_value_list</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="optimize_acqf_mixed"><a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize.optimize_acqf_mixed">[docs]</a><span class="k">def</span> <span class="nf">optimize_acqf_mixed</span><span class="p">(</span>
+    <span class="n">acq_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">num_restarts</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">raw_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">fixed_features_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+    <span class="n">options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">inequality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">equality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">post_processing_func</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">batch_initial_conditions</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">sequential</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+    <span class="sa">r</span><span class="sd">"""Optimize over a list of fixed_features and returns the best solution.</span>
+<span class="sd">    This is useful for optimizing over mixed continuous and discrete domains.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        acq_function: An AcquisitionFunction</span>
+<span class="sd">        bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.</span>
+<span class="sd">        q: The number of candidates.</span>
+<span class="sd">        num_restarts:  Number of starting points for multistart acquisition</span>
+<span class="sd">            function optimization.</span>
+<span class="sd">        raw_samples: Number of samples for initialization.</span>
+<span class="sd">        fixed_features_list: A list of maps `{feature_index: value}`. The i-th</span>
+<span class="sd">            item represents the fixed_feature for the i-th optimization.</span>
+<span class="sd">        options: Options for candidate generation.</span>
+<span class="sd">        inequality constraints: A list of tuples (indices, coefficients, rhs),</span>
+<span class="sd">            with each tuple encoding an inequality constraint of the form</span>
+<span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs`</span>
+<span class="sd">        equality constraints: A list of tuples (indices, coefficients, rhs),</span>
+<span class="sd">            with each tuple encoding an inequality constraint of the form</span>
+<span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`</span>
+<span class="sd">        post_processing_func: A function that post-processes an optimization</span>
+<span class="sd">            result appropriately (i.e., according to `round-trip`</span>
+<span class="sd">            transformations).</span>
+<span class="sd">        batch_initial_conditions: A tensor to specify the initial conditions. Set</span>
+<span class="sd">            this if you do not want to use default initialization strategy.</span>
+<span class="sd">        sequential: If False, uses joint optimization, otherwise uses sequential</span>
+<span class="sd">            optimization.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A two-element tuple containing</span>
+
+<span class="sd">        - a `q x d`-dim tensor of generated candidates.</span>
+<span class="sd">        - an associated acquisition value.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">fixed_features_list</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"fixed_features_list must be non-empty."</span><span class="p">)</span>
+    <span class="n">ff_candidate_list</span><span class="p">,</span> <span class="n">ff_acq_value_list</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">fixed_features</span> <span class="ow">in</span> <span class="n">fixed_features_list</span><span class="p">:</span>
+        <span class="n">candidate</span><span class="p">,</span> <span class="n">acq_value</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
+            <span class="n">acq_function</span><span class="o">=</span><span class="n">acq_function</span><span class="p">,</span>
+            <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+            <span class="n">q</span><span class="o">=</span><span class="n">q</span><span class="p">,</span>
+            <span class="n">num_restarts</span><span class="o">=</span><span class="n">num_restarts</span><span class="p">,</span>
+            <span class="n">raw_samples</span><span class="o">=</span><span class="n">raw_samples</span><span class="p">,</span>
+            <span class="n">options</span><span class="o">=</span><span class="n">options</span> <span class="ow">or</span> <span class="p">{},</span>
+            <span class="n">inequality_constraints</span><span class="o">=</span><span class="n">inequality_constraints</span><span class="p">,</span>
+            <span class="n">equality_constraints</span><span class="o">=</span><span class="n">equality_constraints</span><span class="p">,</span>
+            <span class="n">fixed_features</span><span class="o">=</span><span class="n">fixed_features</span><span class="p">,</span>
+            <span class="n">post_processing_func</span><span class="o">=</span><span class="n">post_processing_func</span><span class="p">,</span>
+            <span class="n">batch_initial_conditions</span><span class="o">=</span><span class="n">batch_initial_conditions</span><span class="p">,</span>
+            <span class="n">return_best_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">sequential</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">ff_candidate_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">candidate</span><span class="p">)</span>
+        <span class="n">ff_acq_value_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">acq_value</span><span class="p">)</span>
+    <span class="n">ff_acq_values</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">ff_acq_value_list</span><span class="p">)</span>
+    <span class="n">best</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">ff_acq_values</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ff_candidate_list</span><span class="p">[</span><span class="n">best</span><span class="p">],</span> <span class="n">ff_acq_values</span><span class="p">[</span><span class="n">best</span><span class="p">]</span></div>
 </pre></div>
 </div>
 </div>
