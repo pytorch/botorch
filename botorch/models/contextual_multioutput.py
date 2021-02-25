@@ -8,8 +8,8 @@ from typing import List, Optional
 
 import torch
 from botorch.models.multitask import MultiTaskGP
-from botorch.models.transforms.outcome import OutcomeTransform
 from botorch.models.transforms.input import InputTransform
+from botorch.models.transforms.outcome import OutcomeTransform
 from gpytorch.constraints import Interval
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels.rbf_kernel import RBFKernel
