@@ -91,6 +91,7 @@ jobs:
       run: |
         ./scripts/build_and_verify_conda_package.sh
     - name: Deploy to anaconda.org
+      shell: bash -l {0}
       run: |
         botorch_version=$(python setup.py --version)
         build_dir="$(pwd)/.conda/conda_build/noarch"
