@@ -51,12 +51,12 @@ class TestSingleTaskGP(BotorchTestCase):
         model = SingleTaskGP(**model_kwargs)
         return model, model_kwargs
 
-    def test_gp(self):
+    def test_gp(self, double_only: bool = False):
         bounds = torch.tensor([[-1.0], [1.0]])
         for batch_shape, m, dtype, use_octf, use_intf in itertools.product(
             (torch.Size(), torch.Size([2])),
             (1, 2),
-            (torch.float, torch.double),
+            (torch.double,) if double_only else (torch.float, torch.double),
             (False, True),
             (False, True),
         ):
@@ -278,12 +278,13 @@ class TestSingleTaskGP(BotorchTestCase):
             self.assertIsInstance(fm, model.__class__)
 
     def test_subset_model(self):
-        for batch_shape, dtype in itertools.product(
-            (torch.Size(), torch.Size([2])), (torch.float, torch.double)
+        for batch_shape, dtype, use_octf in itertools.product(
+            (torch.Size(), torch.Size([2])), (torch.float, torch.double), (True, False)
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
+            octf = Standardize(m=2, batch_shape=batch_shape) if use_octf else None
             model, model_kwargs = self._get_model_and_data(
-                batch_shape=batch_shape, m=2, **tkwargs
+                batch_shape=batch_shape, m=2, outcome_transform=octf, **tkwargs
             )
             subset_model = model.subset_output([0])
             X = torch.rand(torch.Size(batch_shape + torch.Size([3, 1])), **tkwargs)
@@ -393,6 +394,9 @@ class TestHeteroskedasticSingleTaskGP(TestSingleTaskGP):
         }
         model = HeteroskedasticSingleTaskGP(**model_kwargs)
         return model, model_kwargs
+
+    def test_gp(self):
+        super().test_gp(double_only=True)
 
     def test_heteroskedastic_likelihood(self):
         for batch_shape, m, dtype in itertools.product(

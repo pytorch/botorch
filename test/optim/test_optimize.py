@@ -13,6 +13,7 @@ from botorch.optim.optimize import (
     optimize_acqf,
     optimize_acqf_cyclic,
     optimize_acqf_list,
+    optimize_acqf_mixed,
 )
 from botorch.utils.testing import BotorchTestCase, MockAcquisitionFunction
 from torch import Tensor
@@ -418,6 +419,91 @@ class TestOptimizeAcqfList(BotorchTestCase):
         with self.assertRaises(ValueError):
             optimize_acqf_list(
                 acq_function_list=[],
+                bounds=torch.stack([torch.zeros(3), 4 * torch.ones(3)]),
+                num_restarts=2,
+                raw_samples=10,
+            )
+
+
+class TestOptimizeAcqfMixed(BotorchTestCase):
+    @mock.patch("botorch.optim.optimize.optimize_acqf")  # noqa: C901
+    def test_optimize_acqf_mixed(self, mock_optimize_acqf):
+        num_restarts = 2
+        raw_samples = 10
+        q = 1
+        options = {}
+        tkwargs = {"device": self.device}
+        bounds = torch.stack([torch.zeros(3), 4 * torch.ones(3)])
+        mock_acq_function = MockAcquisitionFunction()
+        for num_ff, dtype in itertools.product([1, 3], (torch.float, torch.double)):
+            tkwargs["dtype"] = dtype
+            mock_optimize_acqf.reset_mock()
+            bounds = bounds.to(**tkwargs)
+
+            candidate_rvs = []
+            acq_val_rvs = []
+            gcs_return_vals = [
+                (torch.rand(1, 3, **tkwargs), torch.rand(1, **tkwargs))
+                for _ in range(num_ff)
+            ]
+            for rv in gcs_return_vals:
+                candidate_rvs.append(rv[0])
+                acq_val_rvs.append(rv[1])
+            fixed_features_list = [{i: i * 0.1} for i in range(num_ff)]
+            side_effect = list(zip(candidate_rvs, acq_val_rvs))
+            mock_optimize_acqf.side_effect = side_effect
+
+            candidates, acq_value = optimize_acqf_mixed(
+                acq_function=mock_acq_function,
+                q=q,
+                fixed_features_list=fixed_features_list,
+                bounds=bounds,
+                num_restarts=num_restarts,
+                raw_samples=raw_samples,
+                options=options,
+                post_processing_func=rounding_func,
+            )
+            # compute expected output
+            ff_acq_values = torch.stack(acq_val_rvs)
+            best = torch.argmax(ff_acq_values)
+            expected_candidates = candidate_rvs[best]
+            expected_acq_value = ff_acq_values[best]
+            self.assertTrue(torch.equal(candidates, expected_candidates))
+            self.assertTrue(torch.equal(acq_value, expected_acq_value))
+            # check call arguments for optimize_acqf
+            call_args_list = mock_optimize_acqf.call_args_list
+            expected_call_args = {
+                "acq_function": None,
+                "bounds": bounds,
+                "q": q,
+                "num_restarts": num_restarts,
+                "raw_samples": raw_samples,
+                "options": options,
+                "inequality_constraints": None,
+                "equality_constraints": None,
+                "fixed_features": None,
+                "post_processing_func": rounding_func,
+                "batch_initial_conditions": None,
+                "return_best_only": True,
+                "sequential": False,
+            }
+            for i in range(len(call_args_list)):
+                expected_call_args["fixed_features"] = fixed_features_list[i]
+                for k, v in call_args_list[i][1].items():
+                    if torch.is_tensor(v):
+                        self.assertTrue(torch.equal(expected_call_args[k], v))
+                    elif k == "acq_function":
+                        self.assertIsInstance(v, MockAcquisitionFunction)
+                    else:
+                        self.assertEqual(expected_call_args[k], v)
+
+    def test_optimize_acqf_empty_ff(self):
+        with self.assertRaises(ValueError):
+            mock_acq_function = MockAcquisitionFunction()
+            optimize_acqf_mixed(
+                acq_function=mock_acq_function,
+                q=1,
+                fixed_features_list=[],
                 bounds=torch.stack([torch.zeros(3), 4 * torch.ones(3)]),
                 num_restarts=2,
                 raw_samples=10,

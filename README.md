@@ -4,11 +4,16 @@
 
 <hr/>
 
+[![Lint](https://github.com/pytorch/botorch/workflows/Lint/badge.svg)](https://github.com/pytorch/botorch/actions?query=workflow%3ALint)
+[![Test](https://github.com/pytorch/botorch/workflows/Test/badge.svg)](https://github.com/pytorch/botorch/actions?query=workflow%3ATest)
+[![Docs](https://github.com/pytorch/botorch/workflows/Docs/badge.svg)](https://github.com/pytorch/botorch/actions?query=workflow%3ADocs)
+[![Tutorials](https://github.com/pytorch/botorch/workflows/Tutorials/badge.svg)](https://github.com/pytorch/botorch/actions?query=workflow%3ATutorials)
+[![Codecov](https://img.shields.io/codecov/c/github/pytorch/botorch.svg)](https://codecov.io/github/pytorch/botorch)
+
 [![Conda](https://img.shields.io/conda/v/pytorch/botorch.svg)](https://anaconda.org/pytorch/botorch)
 [![PyPI](https://img.shields.io/pypi/v/botorch.svg)](https://pypi.org/project/botorch)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![CircleCI](https://circleci.com/gh/pytorch/botorch.svg?style=shield)](https://circleci.com/gh/pytorch/botorch)
-[![Codecov](https://img.shields.io/codecov/c/github/pytorch/botorch.svg)](https://codecov.io/github/pytorch/botorch)
+
 
 BoTorch is a library for Bayesian Optimization built on PyTorch.
 
@@ -50,8 +55,8 @@ Optimization simply use Ax.
 
 **Installation Requirements**
 - Python >= 3.7
-- PyTorch >= 1.7
-- gpytorch >= 1.3
+- PyTorch >= 1.7.1
+- gpytorch >= 1.4
 - scipy
 
 

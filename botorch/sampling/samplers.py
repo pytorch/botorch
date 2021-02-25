@@ -46,7 +46,7 @@ class MCSampler(Module, ABC):
         r"""Abstract base class for Samplers.
 
         Args:
-            batch_range: The range of t-batch dimensions in the `event_shape`
+            batch_range: The range of t-batch dimensions in the `base_sample_shape`
                 used by `collapse_batch_dims`. The t-batch dims are
                 batch_range[0]:batch_range[1]. By default, this is (0, -2),
                 for the case where the non-batch dimensions are -2 (q) and
@@ -66,7 +66,7 @@ class MCSampler(Module, ABC):
         r"""Set the t-batch range and clear base samples.
 
         Args:
-            batch_range: The range of t-batch dimensions in the `event_shape`
+            batch_range: The range of t-batch dimensions in the `base_sample_shape`
                 used by `collapse_batch_dims`. The t-batch dims are
                 batch_range[0]:batch_range[1]. By default, this is (0, -2),
                 for the case where the non-batch dimensions are -2 (q) and
@@ -107,19 +107,19 @@ class MCSampler(Module, ABC):
             samples are collapsed to size 1. This is useful to prevent sampling
             variance across t-batches.
         """
-        event_shape = posterior.event_shape
+        base_sample_shape = posterior.base_sample_shape
         if self.collapse_batch_dims:
             batch_start, batch_end = self.batch_range
-            event_shape = (
-                event_shape[0:batch_start]
-                + torch.Size([1 for _ in event_shape[batch_start:batch_end]])
-                + event_shape[batch_end:]
+            base_sample_shape = (
+                base_sample_shape[:batch_start]
+                + torch.Size([1 for _ in base_sample_shape[batch_start:batch_end]])
+                + base_sample_shape[batch_end:]
             )
-        return self.sample_shape + event_shape
+        return self.sample_shape + base_sample_shape
 
     @property
     def sample_shape(self) -> torch.Size:
-        r"""The shape of a single sample"""
+        r"""The shape of a single sample."""
         return self._sample_shape
 
     @abstractmethod
@@ -134,8 +134,8 @@ class MCSampler(Module, ABC):
         - `shape` is different than `self.base_samples.shape` (if
             `collapse_batch_dims=True`, then batch dimensions of will be
             automatically broadcasted as necessary). This shape is expected to
-            be `sample_shape + event_shape`, where `event_shape` has been
-            adjusted to account for `collapse_batch_dims` (i.e., the output
+            be `sample_shape + base_sample_shape`, where `base_sample_shape` has
+            been adjusted to account for `collapse_batch_dims` (i.e., the output
             of the function `_get_base_sample_shape`).
 
         Args:
@@ -173,7 +173,7 @@ class IIDNormalSampler(MCSampler):
             collapse_batch_dims: If True, collapse the t-batch dimensions to
                 size 1. This is useful for preventing sampling variance across
                 t-batches.
-            batch_range: The range of t-batch dimensions in the `event_shape`
+            batch_range: The range of t-batch dimensions in the `base_sample_shape`
                 used by `collapse_batch_dims`. The t-batch dims are
                 batch_range[0]:batch_range[1]. By default, this is (0, -2),
                 for the case where the non-batch dimensions are -2 (q) and
@@ -196,7 +196,7 @@ class IIDNormalSampler(MCSampler):
         - `shape` is different than `self.base_samples.shape` (if
             `collapse_batch_dims=True`, then batch dimensions of will be
             automatically broadcasted as necessary). This shape is expected to
-            be `sample_shape + event_shape`, where `event_shape` has been
+            be `sample_shape + base_sample_shape`, where `base_sample_shape` has been
             adjusted to account for `collapse_batch_dims` (i.e., the output
             of the function `_get_base_sample_shape`).
 
@@ -251,7 +251,7 @@ class SobolQMCNormalSampler(MCSampler):
             collapse_batch_dims: If True, collapse the t-batch dimensions to
                 size 1. This is useful for preventing sampling variance across
                 t-batches.
-            batch_range: The range of t-batch dimensions in the `event_shape`
+            batch_range: The range of t-batch dimensions in the `base_sample_shape`
                 used by `collapse_batch_dims`. The t-batch dims are
                 batch_range[0]:batch_range[1]. By default, this is (0, -2),
                 for the case where the non-batch dimensions are -2 (q) and
@@ -274,7 +274,7 @@ class SobolQMCNormalSampler(MCSampler):
         - `shape` is different than `self.base_samples.shape` (if
             `collapse_batch_dims=True`, then batch dimensions of will be
             automatically broadcasted as necessary). This shape is expected to
-            be `sample_shape + event_shape`, where `event_shape` has been
+            be `sample_shape + base_sample_shape`, where `base_sample_shape` has been
             adjusted to account for `collapse_batch_dims` (i.e., the output
             of the function `_get_base_sample_shape`).
 
@@ -288,8 +288,10 @@ class SobolQMCNormalSampler(MCSampler):
             or (not self.collapse_batch_dims and shape != self.base_samples.shape)
         ):
             batch_start, batch_end = self.batch_range
-            sample_shape, event_shape = _split_sample_event_shapes(shape)
-            output_dim = (event_shape[:batch_start] + event_shape[batch_end:]).numel()
+            sample_shape, base_sample_shape = split_shapes(shape)
+            output_dim = (
+                base_sample_shape[:batch_start] + base_sample_shape[batch_end:]
+            ).numel()
             if output_dim > SobolEngine.MAXDIM:
                 raise UnsupportedError(
                     "SobolQMCSampler only supports dimensions "
@@ -297,7 +299,7 @@ class SobolQMCNormalSampler(MCSampler):
                 )
             base_samples = draw_sobol_normal_samples(
                 d=output_dim,
-                n=(sample_shape + event_shape[batch_start:batch_end]).numel(),
+                n=(sample_shape + base_sample_shape[batch_start:batch_end]).numel(),
                 device=posterior.device,
                 dtype=posterior.dtype,
                 seed=self.seed,
@@ -305,7 +307,7 @@ class SobolQMCNormalSampler(MCSampler):
             self.seed += 1
             base_samples = base_samples.view(shape)
             self.register_buffer("base_samples", base_samples)
-        elif self.collapse_batch_dims and shape != posterior.event_shape:
+        elif self.collapse_batch_dims and shape != posterior.base_sample_shape:
             self.base_samples = self.base_samples.view(shape)
         if self.base_samples.device != posterior.device:
             self.to(device=posterior.device)  # pragma: nocover
@@ -328,26 +330,25 @@ def _check_shape_changed(
     """
     if base_samples is None:
         return True
-    batch_start = batch_range[0]
-    batch_end = batch_range[1]
-    b_sample_shape, b_event_shape = _split_sample_event_shapes(base_samples.shape)
-    sample_shape, event_shape = _split_sample_event_shapes(shape)
+    batch_start, batch_end = batch_range
+    b_sample_shape, b_base_sample_shape = split_shapes(base_samples.shape)
+    sample_shape, base_sample_shape = split_shapes(shape)
     return (
         b_sample_shape != sample_shape
-        or b_event_shape[batch_end:] != event_shape[batch_end:]
-        or b_event_shape[:batch_start] != event_shape[:batch_start]
+        or b_base_sample_shape[batch_end:] != base_sample_shape[batch_end:]
+        or b_base_sample_shape[:batch_start] != base_sample_shape[:batch_start]
     )
 
 
-def _split_sample_event_shapes(
+def split_shapes(
     base_sample_shape: torch.Size,
 ) -> Tuple[torch.Size, torch.Size]:
-    r"""Split a base sample shape into sample and event shapes.
+    r"""Split a base sample shape into sample and base sample shapes.
 
     Args:
         base_sample_shape: The base sample shape.
 
     Returns:
-        A tuple containing the sample and event shape.
+        A tuple containing the sample and base sample shape.
     """
     return base_sample_shape[:1], base_sample_shape[1:]

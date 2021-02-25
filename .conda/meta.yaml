@@ -16,8 +16,8 @@ requirements:
     - python>=3.7
     - setuptools_scm
   run:
-    - pytorch>=1.6
-    - gpytorch>=1.2
+    - pytorch>=1.7.1
+    - gpytorch>=1.4
     - scipy
 
 test:

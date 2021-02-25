@@ -456,6 +456,13 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
             mod_name = full_name.split(".")[:-1]
             mod_batch_shape(new_model, mod_name, m if m > 1 else 0)
 
+        # subset outcome transform if present
+        try:
+            subset_octf = new_model.outcome_transform.subset_output(idcs=idcs)
+            new_model.outcome_transform = subset_octf
+        except AttributeError:
+            pass
+
         return new_model
 
 

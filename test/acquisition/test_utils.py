@@ -485,7 +485,7 @@ class TestPruneInferiorPoints(BotorchTestCase):
             with ExitStack() as es:
                 mock_event_shape = es.enter_context(
                     mock.patch(
-                        "botorch.utils.testing.MockPosterior.event_shape",
+                        "botorch.utils.testing.MockPosterior.base_sample_shape",
                         new_callable=mock.PropertyMock,
                     )
                 )

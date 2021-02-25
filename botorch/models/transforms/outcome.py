@@ -4,6 +4,14 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+r"""
+Outcome transformations for automatically transforming and un-transforming
+model outputs. Outcome transformations are typically part of a Model and
+applied (i) within the model constructor to transform the train observations
+to the model space, and (ii) in the `Model.posterior` call to untransform
+the model posterior back to the original space.
+"""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -43,6 +51,23 @@ class OutcomeTransform(Module, ABC):
             - The transformed observation noise (if applicable).
         """
         pass  # pragma: no cover
+
+    def subset_output(self, idcs: List[int]) -> OutcomeTransform:
+        r"""Subset the transform along the output dimension.
+
+        This functionality is used to properly treat outcome transformations
+        in the `subset_model` functionality.
+
+        Args:
+            idcs: The output indices to subset the transform to.
+
+        Returns:
+            The current outcome transform, subset to the specified output indices.
+        """
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not implement the "
+            "`subset_output` method"
+        )
 
     def untransform(
         self, Y: Tensor, Yvar: Optional[Tensor] = None
@@ -111,6 +136,19 @@ class ChainedOutcomeTransform(OutcomeTransform, ModuleDict):
         for tf in self.values():
             Y, Yvar = tf.forward(Y, Yvar)
         return Y, Yvar
+
+    def subset_output(self, idcs: List[int]) -> OutcomeTransform:
+        r"""Subset the transform along the output dimension.
+
+        Args:
+            idcs: The output indices to subset the transform to.
+
+        Returns:
+            The current outcome transform, subset to the specified output indices.
+        """
+        return self.__class__(
+            **{name: tf.subset_output(idcs=idcs) for name, tf in self.items()}
+        )
 
     def untransform(
         self, Y: Tensor, Yvar: Optional[Tensor] = None
@@ -221,6 +259,38 @@ class Standardize(OutcomeTransform):
         Yvar_tf = Yvar / self._stdvs_sq if Yvar is not None else None
         return Y_tf, Yvar_tf
 
+    def subset_output(self, idcs: List[int]) -> OutcomeTransform:
+        r"""Subset the transform along the output dimension.
+
+        Args:
+            idcs: The output indices to subset the transform to.
+
+        Returns:
+            The current outcome transform, subset to the specified output indices.
+        """
+        new_m = len(idcs)
+        if new_m > self._m:
+            raise RuntimeError(
+                "Trying to subset a transform have more outputs than "
+                " the original transform."
+            )
+        nlzd_idcs = normalize_indices(idcs, d=self._m)
+        new_outputs = None
+        if self._outputs is not None:
+            new_outputs = [i for i in self._outputs if i in nlzd_idcs]
+        new_tf = self.__class__(
+            m=new_m,
+            outputs=new_outputs,
+            batch_shape=self._batch_shape,
+            min_stdv=self._min_stdv,
+        )
+        new_tf.means = self.means[..., nlzd_idcs]
+        new_tf.stdvs = self.stdvs[..., nlzd_idcs]
+        new_tf._stdvs_sq = self._stdvs_sq[..., nlzd_idcs]
+        if not self.training:
+            new_tf.eval()
+        return new_tf
+
     def untransform(
         self, Y: Tensor, Yvar: Optional[Tensor] = None
     ) -> Tuple[Tensor, Optional[Tensor]]:
@@ -317,6 +387,28 @@ class Log(OutcomeTransform):
         """
         super().__init__()
         self._outputs = outputs
+
+    def subset_output(self, idcs: List[int]) -> OutcomeTransform:
+        r"""Subset the transform along the output dimension.
+
+        Args:
+            idcs: The output indices to subset the transform to.
+
+        Returns:
+            The current outcome transform, subset to the specified output indices.
+        """
+        new_outputs = None
+        if self._outputs is not None:
+            if min(self._outputs + idcs) < 0:
+                raise NotImplementedError(
+                    f"Negative indexing not supported for {self.__class__.__name__} "
+                    "when subsetting outputs and only transforming some outputs."
+                )
+            new_outputs = [i for i in self._outputs if i in idcs]
+        new_tf = self.__class__(outputs=new_outputs)
+        if not self.training:
+            new_tf.eval()
+        return new_tf
 
     def forward(
         self, Y: Tensor, Yvar: Optional[Tensor] = None
