@@ -43,7 +43,7 @@ class MESMockModel(MockModel):
         return GPyTorchPosterior(mvn)
 
     def forward(self, X: Tensor) -> MultivariateNormal:
-    	return self.posterior(X).mvn
+        return self.posterior(X).mvn
 
     @property
     def num_outputs(self) -> int:
@@ -118,7 +118,7 @@ class TestMaxValueEntropySearch(BotorchTestCase):
             torch.manual_seed(7)
             mm = MESMockModel()
             with self.assertRaises(TypeError):
-            	qGIBBON(mm)
+                qGIBBON(mm)
 
             candidate_set = torch.rand(1000, 2, device=self.device, dtype=dtype)
 
@@ -149,14 +149,15 @@ class TestMaxValueEntropySearch(BotorchTestCase):
             self.assertEqual(qGibbon(X).shape, torch.Size([1]))
 
             # test with use_gumbel = False
-            qGibbon = qGIBBON(
-                mm, candidate_set, num_mv_samples=10, use_gumbel=False
-            )
+            qGibbon = qGIBBON(mm, candidate_set, num_mv_samples=10, use_gumbel=False)
             self.assertEqual(qGibbon(X).shape, torch.Size([1]))
 
             # test with X_pending is not None
             qGibbon = qGIBBON(
-                mm, candidate_set, num_mv_samples=10, use_gumbel=False,
+                mm,
+                candidate_set,
+                num_mv_samples=10,
+                use_gumbel=False,
                 X_pending=torch.rand(1, 2, device=self.device, dtype=dtype),
             )
             self.assertEqual(qGibbon(X).shape, torch.Size([1]))

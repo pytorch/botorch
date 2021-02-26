@@ -321,11 +321,11 @@ class qMaxValueEntropy(MCAcquisitionFunction):
 
 
 class qGIBBON(AnalyticAcquisitionFunction):
-    r"""The acquisition function for General-purpose Information-Based 
+    r"""The acquisition function for General-purpose Information-Based
     Bayesian Optimisation (GIBBON).
 
-    This acquisition function provides a computationally cheap approximation of 
-    the mutual information between max values and a batch of candidate points X. 
+    This acquisition function provides a computationally cheap approximation of
+    the mutual information between max values and a batch of candidate points X.
     See [Moss2021gibbon]_ for a detailed discussion.
 
     The model must be single-outcome.
@@ -397,7 +397,6 @@ class qGIBBON(AnalyticAcquisitionFunction):
         """
         self.X_pending = X_pending
 
-
     def _sample_max_values(self):
         r"""Sample max values for MC approximation of the expectation in GIBBON"""
         with torch.no_grad():
@@ -440,19 +439,21 @@ class qGIBBON(AnalyticAcquisitionFunction):
             A `batch_shape`-dim Tensor of MVE values at the given design points `X`.
         """
         # Compute the noisy and noiselss posterior
-        posterior_noisy = self.model.posterior(X, observation_noise=True) 
-        posterior_noiseless = self.model.posterior(X, observation_noise=False) 
+        posterior_noisy = self.model.posterior(X, observation_noise=True)
+        posterior_noiseless = self.model.posterior(X, observation_noise=False)
         mean = self.weight * posterior_noisy.mean.squeeze(-1)
         check_no_nans(mean)
         # batch_shape x 1
         variance_noisy = posterior_noisy.variance.clamp_min(CLAMP_LB).squeeze(-1)
         # batch_shape x 1
         check_no_nans(variance_noisy)
-        variance_noiseless = posterior_noiseless.variance.clamp_min(CLAMP_LB).squeeze(-1)
+        variance_noiseless = posterior_noiseless.variance.clamp_min(CLAMP_LB).squeeze(
+            -1
+        )
         # batch_shape x 1
         check_no_nans(variance_noisy)
         stdv = variance_noiseless.sqrt()
-        
+
         # define normal distribution to compute cdf and pdf
         normal = torch.distributions.Normal(
             torch.zeros(1, device=X.device, dtype=X.dtype),
@@ -460,42 +461,52 @@ class qGIBBON(AnalyticAcquisitionFunction):
         )
 
         # prepare max value quantities required by GIBBON
-        mvs = torch.transpose(self.posterior_max_values,0,1) 
-        # 1 x s_M 
-        normalized_mvs = (mvs - mean) / stdv 
+        mvs = torch.transpose(self.posterior_max_values, 0, 1)
+        # 1 x s_M
+        normalized_mvs = (mvs - mean) / stdv
         # batch_shape x s_M
         cdf_mvs = normal.cdf(normalized_mvs).clamp_min(CLAMP_LB)
-        pdf_mvs = torch.exp(normal.log_prob(normalized_mvs)) 
+        pdf_mvs = torch.exp(normal.log_prob(normalized_mvs))
         ratio = pdf_mvs / cdf_mvs
         check_no_nans(ratio)
 
         # prepare variance ratio
-        rhos_squared  = variance_noiseless / variance_noisy 
+        rhos_squared = variance_noiseless / variance_noisy
         # batch_shape x 1
         check_no_nans(rhos_squared)
-        
+
         # build acquisition function
-        inner_log = (1 - rhos_squared * ratio * (normalized_mvs + ratio))
-        acq = -0.5 * inner_log.clamp_min(CLAMP_LB).log() 
+        inner_log = 1 - rhos_squared * ratio * (normalized_mvs + ratio)
+        acq = -0.5 * inner_log.clamp_min(CLAMP_LB).log()
         # average over Gumbel samples
         acq = acq.mean(dim=1)
 
         if self.X_pending is not None:
-            # for q>1 require repulsion terms r_i = log |C_i| for the predictive 
-            # correlation matricies between each candidate point in X and 
+            # for q>1 require repulsion terms r_i = log |C_i| for the predictive
+            # correlation matricies between each candidate point in X and
             # the m current batch elements in X_pending.
 
-            # Each predictive covariance matrix can be expressed as 
+            # Each predictive covariance matrix can be expressed as
             # V_i = [[v_i, A_i], [A_i,B]] for a shared m x m tensor B.
             # So we can efficientely calculate |V_i| using formula for determinant of block matricies
             v = variance_noisy
-            full_covariance = self.model(torch.cat([X.squeeze(1), self.X_pending], dim=0))
+            full_covariance = self.model(
+                torch.cat([X.squeeze(1), self.X_pending], dim=0)
+            )
             # only evaluate required cross covariance elements
-            A = full_covariance.lazy_covariance_matrix[:len(X), len(X):].evaluate().unsqueeze(1)
+            A = (
+                full_covariance.lazy_covariance_matrix[: len(X), len(X) :]
+                .evaluate()
+                .unsqueeze(1)
+            )
             # batch_shape x 1
-            B = self.model.posterior(self.X_pending, observation_noise=True).mvn.covariance_matrix
+            B = self.model.posterior(
+                self.X_pending, observation_noise=True
+            ).mvn.covariance_matrix
             B_inv = torch.inverse(B)
-            covariance_determinant = v - torch.matmul(torch.matmul(A,B_inv),A.transpose(1,2)).squeeze(-1)
+            covariance_determinant = v - torch.matmul(
+                torch.matmul(A, B_inv), A.transpose(1, 2)
+            ).squeeze(-1)
             covariance_determinant = covariance_determinant * torch.det(B)
             # batch_shape x 1
 
