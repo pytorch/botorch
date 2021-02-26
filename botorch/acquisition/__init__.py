@@ -30,6 +30,7 @@ from botorch.acquisition.knowledge_gradient import (
 from botorch.acquisition.max_value_entropy_search import (
     qMaxValueEntropy,
     qMultiFidelityMaxValueEntropy,
+    qGIBBON,
 )
 from botorch.acquisition.monte_carlo import (
     MCAcquisitionFunction,
@@ -67,6 +68,7 @@ __all__ = [
     "qKnowledgeGradient",
     "qMultiFidelityKnowledgeGradient",
     "qMaxValueEntropy",
+    "qGIBBON",
     "qMultiFidelityMaxValueEntropy",
     "qMultiStepLookahead",
     "qNoisyExpectedImprovement",

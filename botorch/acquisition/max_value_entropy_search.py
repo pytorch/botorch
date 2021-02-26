@@ -5,8 +5,9 @@
 # LICENSE file in the root directory of this source tree.
 
 r"""
-Acquisition functions for max-value entropy search (MES) and
-multi-fidelity MES with noisy observation and trace observations.
+Acquisition functions for Max-value Entropy Search (MES), General 
+Information-Based Bayesian Optimization (GIBBON), and 
+multi-fidelity MES with noisy observations and trace observations.
 
 References
 
@@ -14,6 +15,11 @@ References
     Wang, Z., Jegelka, S.,
     Max-value Entropy Search for Efficient Bayesian Optimization.
     arXiv:1703.01968v3, 2018
+
+..[Moss2021gibbon]
+    Moss, H. B., et al.,
+    GIBBON: General-purpose Information-Based Bayesian OptimisatioN
+    arXiv:2102.03324, 2021
 
 .. [Takeno2019mfmves]
     Takeno, S., et al.,
@@ -31,6 +37,7 @@ import numpy as np
 import torch
 from botorch.acquisition.cost_aware import CostAwareUtility, InverseCostWeightedUtility
 from botorch.acquisition.monte_carlo import MCAcquisitionFunction
+from botorch.acquisition.analytic import AnalyticAcquisitionFunction
 from botorch.models.cost import AffineFidelityCostModel
 from botorch.models.model import Model
 from botorch.models.utils import check_no_nans
@@ -311,6 +318,195 @@ class qMaxValueEntropy(MCAcquisitionFunction):
         ig = H0 - H1_hat  # batch_shape x num_fantasies
         ig = ig.permute(-1, *range(ig.dim() - 1))  # num_fantasies x batch_shape
         return ig
+
+
+class qGIBBON(AnalyticAcquisitionFunction):
+    r"""The acquisition function for General-purpose Information-Based 
+    Bayesian Optimisation (GIBBON).
+
+    This acquisition function provides a computationally cheap approximation of 
+    the mutual information between max values and a batch of candidate points X. 
+    See [Moss2021gibbon]_ for a detailed discussion.
+
+    The model must be single-outcome.
+    q > 1 is supported through greedy batch filling.
+
+    Example:
+        >>> model = SingleTaskGP(train_X, train_Y)
+        >>> candidate_set = torch.rand(1000, bounds.size(1))
+        >>> candidate_set = bounds[0] + (bounds[1] - bounds[0]) * candidate_set
+        >>> GIBBON = qGIBBON(model, candidate_set)
+        >>> candidates, _ = optimize_acqf(qMES, bounds, q=5)
+    """
+
+    def __init__(
+        self,
+        model: Model,
+        candidate_set: Tensor,
+        num_mv_samples: int = 10,
+        use_gumbel: bool = True,
+        maximize: bool = True,
+        X_pending: Optional[Tensor] = None,
+        train_inputs: Tensor = None,
+        **kwargs: Any,
+    ) -> None:
+        r"""Single-outcome max-value entropy search acquisition function.
+
+        Args:
+            model: A fitted single-outcome model.
+            candidate_set: A `n x d` Tensor including `n` candidate points to
+                discretize the design space. Max values are sampled from the
+                (joint) model posterior over these points.
+            num_mv_samples: Number of max value samples.
+            use_gumbel: If True, use Gumbel approximation to sample the max values.
+            X_pending: A `m x d`-dim Tensor of `m` design points that have been
+                submitted for function evaluation but have not yet been evaluated.
+            maximize: If True, consider the problem a maximization problem.
+            train_inputs: A `n_train x d` Tensor that the model has been fitted on,
+                optional if model is an exact GP model.
+        """
+        super().__init__(model=model)
+
+        # Batch GP models (e.g. fantasized models) are not currently supported
+        if train_inputs is None:
+            train_inputs = self.model.train_inputs[0]
+        if train_inputs.ndim > 2:
+            raise NotImplementedError(
+                "Batch GP models (e.g. fantasized models) "
+                "are not yet supported by qMaxValueEntropy"
+            )
+
+        train_inputs = match_batch_shape(train_inputs, candidate_set)
+        self.candidate_set = torch.cat([candidate_set, train_inputs], dim=0)
+        self.use_gumbel = use_gumbel
+        self.num_mv_samples = num_mv_samples
+        self.maximize = maximize
+        self.weight = 1.0 if maximize else -1.0
+
+        self.X_pending = X_pending
+        self._sample_max_values()
+
+    def set_X_pending(self, X_pending: Optional[Tensor] = None) -> None:
+        r"""Set pending points.
+
+        Informs the acquisition function about pending design points.
+
+        Args:
+            X_pending: `m x d` Tensor with `m` `d`-dim design points that have
+                been submitted for evaluation but have not yet been evaluated.
+        """
+        self.X_pending = X_pending
+
+
+    def _sample_max_values(self):
+        r"""Sample max values for MC approximation of the expectation in GIBBON"""
+        with torch.no_grad():
+            # Append X_pending to candidate set
+            if self.X_pending is None:
+                X_pending = torch.tensor(
+                    [], dtype=self.candidate_set.dtype, device=self.candidate_set.device
+                )
+            else:
+                X_pending = self.X_pending
+            X_pending = match_batch_shape(X_pending, self.candidate_set)
+            candidate_set = torch.cat([self.candidate_set, X_pending], dim=0)
+
+            # project the candidate_set to the highest fidelity,
+            # which is needed for the multi-fidelity GIBBON
+            try:
+                candidate_set = self.project(candidate_set)
+            except AttributeError:
+                pass
+
+            # sample max values
+            if self.use_gumbel:
+                self.posterior_max_values = _sample_max_value_Gumbel(
+                    self.model, candidate_set, self.num_mv_samples, self.maximize
+                )
+            else:
+                self.posterior_max_values = _sample_max_value_Thompson(
+                    self.model, candidate_set, self.num_mv_samples, self.maximize
+                )
+
+    @t_batch_mode_transform(expected_q=1)
+    def forward(self, X: Tensor) -> Tensor:
+        r"""Compute GIBBON acquisition function at the design points `X`.
+
+        Args:
+            X: A `batch_shape x 1 x d`-dim Tensor of `batch_shape` t-batches
+                with `1` `d`-dim design points each.
+
+        Returns:
+            A `batch_shape`-dim Tensor of MVE values at the given design points `X`.
+        """
+        # Compute the noisy and noiselss posterior
+        posterior_noisy = self.model.posterior(X, observation_noise=True) 
+        posterior_noiseless = self.model.posterior(X, observation_noise=False) 
+        mean = self.weight * posterior_noisy.mean.squeeze(-1)
+        check_no_nans(mean)
+        # batch_shape x 1
+        variance_noisy = posterior_noisy.variance.clamp_min(CLAMP_LB).squeeze(-1)
+        # batch_shape x 1
+        check_no_nans(variance_noisy)
+        variance_noiseless = posterior_noiseless.variance.clamp_min(CLAMP_LB).squeeze(-1)
+        # batch_shape x 1
+        check_no_nans(variance_noisy)
+        stdv = variance_noiseless.sqrt()
+        
+        # define normal distribution to compute cdf and pdf
+        normal = torch.distributions.Normal(
+            torch.zeros(1, device=X.device, dtype=X.dtype),
+            torch.ones(1, device=X.device, dtype=X.dtype),
+        )
+
+        # prepare max value quantities required by GIBBON
+        mvs = torch.transpose(self.posterior_max_values,0,1) 
+        # 1 x s_M 
+        normalized_mvs = (mvs - mean) / stdv 
+        # batch_shape x s_M
+        cdf_mvs = normal.cdf(normalized_mvs).clamp_min(CLAMP_LB)
+        pdf_mvs = torch.exp(normal.log_prob(normalized_mvs)) 
+        ratio = pdf_mvs / cdf_mvs
+        check_no_nans(ratio)
+
+        # prepare variance ratio
+        rhos_squared  = variance_noiseless / variance_noisy 
+        # batch_shape x 1
+        check_no_nans(rhos_squared)
+        
+        # build acquisition function
+        inner_log = (1 - rhos_squared * ratio * (normalized_mvs + ratio))
+        acq = -0.5 * inner_log.clamp_min(CLAMP_LB).log() 
+        # average over Gumbel samples
+        acq = acq.mean(dim=1)
+
+        if self.X_pending is not None:
+            # for q>1 require repulsion terms r_i = log |C_i| for the predictive 
+            # correlation matricies between each candidate point in X and 
+            # the m current batch elements in X_pending.
+
+            # Each predictive covariance matrix can be expressed as 
+            # V_i = [[v_i, A_i], [A_i,B]] for a shared m x m tensor B.
+            # So we can efficientely calculate |V_i| using formula for determinant of block matricies
+            v = variance_noisy
+            full_covariance = self.model(torch.cat([X.squeeze(1), self.X_pending], dim=0))
+            # only evaluate required cross covariance elements
+            A = full_covariance.lazy_covariance_matrix[:len(X), len(X):].evaluate().unsqueeze(1)
+            # batch_shape x 1
+            B = self.model.posterior(self.X_pending, observation_noise=True).mvn.covariance_matrix
+            B_inv = torch.inverse(B)
+            covariance_determinant = v - torch.matmul(torch.matmul(A,B_inv),A.transpose(1,2)).squeeze(-1)
+            covariance_determinant = covariance_determinant * torch.det(B)
+            # batch_shape x 1
+
+            # Take logs and convert covariances to correlations.
+            r = covariance_determinant.log() - v.log() - torch.diagonal(B).log().sum()
+            r = 0.5 * r.squeeze(1)
+            return acq + r
+
+        else:
+            # for q=1, no replusion term required
+            return acq
 
 
 class qMultiFidelityMaxValueEntropy(qMaxValueEntropy):
