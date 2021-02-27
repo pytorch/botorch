@@ -21,19 +21,25 @@ from __future__ import annotations
 from typing import Optional
 
 import torch
-from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.utils.multi_objective.box_decompositions.box_decomposition import (
     BoxDecomposition,
+    FastPartitioning,
 )
-from botorch.utils.multi_objective.box_decompositions.utils import _expand_ref_point
+from botorch.utils.multi_objective.box_decompositions.utils import (
+    _expand_ref_point,
+    get_partition_bounds,
+    update_local_upper_bounds_incremental,
+    compute_non_dominated_hypercell_bounds_2d,
+)
 from torch import Tensor
 
 
 class NondominatedPartitioning(BoxDecomposition):
     r"""A class for partitioning the non-dominated space into hyper-cells.
 
-    Note: this assumes maximization. Internally, it multiplies by -1 and performs
-    the decomposition under minimization. TODO: use maximization internally as well.
+    Note: this assumes maximization. Internally, it multiplies outcomes by -1 and
+    performs the decomposition under minimization. TODO: use maximization
+    internally as well.
 
     Note: it is only feasible to use this algorithm to compute an exact
     decomposition of the non-dominated space for `m<5` objectives (alpha=0.0).
@@ -65,6 +71,9 @@ class NondominatedPartitioning(BoxDecomposition):
             Y: A `(batch_shape) x n x m`-dim tensor.
             alpha: A thresold fraction of total volume used in an approximate
                 decomposition.
+
+        Example:
+            >>> bd = NondominatedPartitioning(ref_point, Y=Y1)
         """
         self.alpha = alpha
         super().__init__(ref_point=ref_point, sort=True, Y=Y)
@@ -72,9 +81,8 @@ class NondominatedPartitioning(BoxDecomposition):
     def _partition_space(self) -> None:
         r"""Partition the non-dominated space into disjoint hypercells.
 
-        This method works for an arbitrary number of outcomes, but is
-        less efficient than `partition_non_dominated_space_2d` for the
-        2-outcome case.
+        This method supports an arbitrary number of outcomes, but is
+        less efficient than `partition_space_2d` for the 2-outcome case.
         """
         # The binary parititoning algorithm uses indices the augmented Pareto front.
         # n_pareto + 2 x m
@@ -89,7 +97,7 @@ class NondominatedPartitioning(BoxDecomposition):
 
         # hypercells contains the indices of the (augmented) Pareto front
         # that specify that bounds of the each hypercell.
-        # It is a `2 x num_cells x num_outcomes`-dim tensor
+        # It is a `2 x num_cells x m`-dim tensor
         self.register_buffer(
             "hypercells",
             torch.empty(
@@ -191,11 +199,6 @@ class NondominatedPartitioning(BoxDecomposition):
 
         This direct method works for `m=2` outcomes.
         """
-        if self.num_outcomes != 2:
-            raise BotorchTensorDimensionError(
-                "partition_non_dominated_space_2d requires 2 outputs, "
-                f"but num_outcomes={self.num_outcomes}"
-            )
         pf_ext_idx = self._get_augmented_pareto_front_indices()
         n_pf_plus_1 = self._neg_pareto_Y.shape[-2] + 1
         view_shape = torch.Size([1] * len(self.batch_shape) + [n_pf_plus_1])
@@ -252,7 +255,7 @@ class NondominatedPartitioning(BoxDecomposition):
             ref_point: A `(batch_shape) x m`-dim tensor containing the reference point.
 
         Returns:
-            A `2 x num_cells x num_outcomes`-dim tensor containing the
+            A `2 x num_cells x m`-dim tensor containing the
                 lower and upper vertices bounding each hypercell.
         """
         ref_point = _expand_ref_point(
@@ -291,7 +294,7 @@ class NondominatedPartitioning(BoxDecomposition):
             the augmented Pareto front.
 
         Returns:
-            A `2 x (batch_shape) x num_cells x num_outcomes`-dim tensor containing the
+            A `2 x (batch_shape) x num_cells x m`-dim tensor containing the
                 lower and upper vertices bounding each hypercell.
         """
         num_cells = self.hypercells.shape[-2]
@@ -306,7 +309,7 @@ class NondominatedPartitioning(BoxDecomposition):
             .expand(*self.hypercells.shape[:-2], cells_times_outcomes)
         )
 
-        # this tensor is 2 x (num_cells * num_outcomes) x 2
+        # this tensor is 2 x (num_cells * m) x 2
         # the batch dim corresponds to lower/upper bound
         cell_bounds_idxr = torch.stack(
             [
@@ -337,16 +340,9 @@ class NondominatedPartitioning(BoxDecomposition):
     def compute_hypervolume(self) -> Tensor:
         r"""Compute the hypervolume for the given reference point.
 
-        Note: This assumes minimization.
-
         This method computes the hypervolume of the non-dominated space
         and computes the difference between the hypervolume between the
         ideal point and hypervolume of the non-dominated space.
-
-        Note there are much more efficient alternatives for computing
-        hypervolume when m > 2 (which do not require partitioning the
-        non-dominated space). Given such a partitioning, this method
-        is quite fast.
 
         Returns:
             `(batch_shape)`-dim tensor containing the dominated hypervolume.
@@ -368,5 +364,124 @@ class NondominatedPartitioning(BoxDecomposition):
         total_volume = (ref_point - ideal_point).squeeze(-2).prod(dim=-1)
         non_dom_volume = (
             (cell_bounds_values[1] - cell_bounds_values[0]).prod(dim=-1).sum(dim=-1)
+        )
+        return total_volume - non_dom_volume
+
+
+class FastNondominatedPartitioning(FastPartitioning):
+    r"""A class for partitioning the non-dominated space into hyper-cells.
+
+    Note: this assumes maximization. Internally, it multiplies by -1 and performs
+    the decomposition under minimization.
+
+    This class is far more efficient than NondominatedPartitioning for exact box
+    partitionings
+
+    This class uses the two-step approach similar to that in [Yang2019]_, where:
+        a) first, Alg 1 from [Lacour17]_ is used to find the local lower bounds
+            for the maximization problem
+        b) second, the local lower bounds are used as the Pareto frontier for the
+            minimization problem, and [Lacour17]_ is applied again to partition
+            the space dominated by that Pareto frontier.
+    """
+
+    def __init__(
+        self,
+        ref_point: Tensor,
+        Y: Optional[Tensor] = None,
+    ) -> None:
+        """Initialize FastNondominatedPartitioning.
+
+        Args:
+            ref_point: A `m`-dim tensor containing the reference point.
+            Y: A `(batch_shape) x n x m`-dim tensor.
+
+        Example:
+            >>> bd = FastNondominatedPartitioning(ref_point, Y=Y1)
+        """
+        super().__init__(ref_point=ref_point, Y=Y)
+
+    def _get_single_cell(self) -> None:
+        r"""Set the partitioning to be a single cell in the case of no Pareto points."""
+        cell_bounds = torch.full(
+            (2, *self._neg_pareto_Y.shape[:-2], 1, self.num_outcomes),
+            float("inf"),
+            dtype=self._neg_pareto_Y.dtype,
+            device=self._neg_pareto_Y.device,
+        )
+        cell_bounds[0] = self.ref_point
+        self.register_buffer("hypercell_bounds", cell_bounds)
+
+    def _get_partitioning(self) -> None:
+        r"""Compute non-dominated partitioning.
+
+        Given local upper bounds for the minimization problem (self._U), this computes
+        the non-dominated partitioning for the maximization problem. Note that
+        -self.U contains the local lower bounds for the maximization problem. Following
+        [Yang2019]_, this treats -self.U as a *new* pareto frontier for a minimization
+        problem with a reference point of [infinity]^m and computes a dominated
+        partitioning for this minimization problem.
+        """
+        new_ref_point = torch.full(
+            torch.Size([1]) + self._neg_ref_point.shape,
+            float("inf"),
+            dtype=self._neg_ref_point.dtype,
+            device=self._neg_ref_point.device,
+        )
+        # initialize local upper bounds for the second minimization problem
+        self.register_buffer("_U2", new_ref_point)
+        # initialize defining points for the second minimization problem
+        # use ref point for maximization as the ideal point for minimization.
+        self._Z2 = self.ref_point.expand(
+            1, self.num_outcomes, self.num_outcomes
+        ).clone()
+        for j in range(self._neg_ref_point.shape[-1]):
+            self._Z2[0, j, j] = self._U2[0, j]
+        # incrementally update local upper bounds and defining points
+        # for each new Pareto point
+        self._U2, self._Z2 = update_local_upper_bounds_incremental(
+            new_pareto_Y=-self._U,
+            U=self._U2,
+            Z=self._Z2,
+        )
+        cell_bounds = get_partition_bounds(
+            Z=self._Z2, U=self._U2, ref_point=new_ref_point.view(-1)
+        )
+        self.register_buffer("hypercell_bounds", cell_bounds)
+
+    def partition_space_2d(self) -> None:
+        r"""Partition the non-dominated space into disjoint hypercells.
+
+        This direct method works for `m=2` outcomes.
+        """
+        cell_bounds = compute_non_dominated_hypercell_bounds_2d(
+            pareto_Y_sorted=self.pareto_Y.flip(-2),
+            ref_point=self.ref_point,
+        )
+        self.register_buffer("hypercell_bounds", cell_bounds)
+
+    def compute_hypervolume(self):
+        r"""Compute hypervolume that is dominated by the Pareto Froniter.
+
+        Returns:
+            A `(batch_shape)`-dim tensor containing the hypervolume dominated by
+                each Pareto frontier.
+        """
+        if self._neg_pareto_Y.shape[-2] == 0:
+            return torch.zeros(
+                self._neg_pareto_Y.shape[:-2],
+                dtype=self._neg_pareto_Y.dtype,
+                device=self._neg_pareto_Y.device,
+            )
+        ideal_point = self.pareto_Y.max(dim=-2, keepdim=True).values
+        total_volume = (
+            (ideal_point.squeeze(-2) - self.ref_point).clamp_min(0.0).prod(dim=-1)
+        )
+        finite_cell_bounds = torch.min(self.hypercell_bounds, ideal_point)
+        non_dom_volume = (
+            (finite_cell_bounds[1] - finite_cell_bounds[0])
+            .clamp_min(0.0)
+            .prod(dim=-1)
+            .sum(dim=-1)
         )
         return total_volume - non_dom_volume
