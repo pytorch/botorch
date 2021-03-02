@@ -194,7 +194,7 @@ class NondominatedPartitioning(BoxDecomposition):
                             new_cell[bound_idx, longest_dim] += length_delta
                             stack.append(new_cell)
 
-    def partition_space_2d(self) -> None:
+    def _partition_space_2d(self) -> None:
         r"""Partition the non-dominated space into disjoint hypercells.
 
         This direct method works for `m=2` outcomes.
@@ -449,7 +449,7 @@ class FastNondominatedPartitioning(FastPartitioning):
         )
         self.register_buffer("hypercell_bounds", cell_bounds)
 
-    def partition_space_2d(self) -> None:
+    def _partition_space_2d(self) -> None:
         r"""Partition the non-dominated space into disjoint hypercells.
 
         This direct method works for `m=2` outcomes.

@@ -189,7 +189,9 @@ def get_partition_bounds(Z: Tensor, U: Tensor, ref_point: Tensor) -> Tensor:
             bounds[0, u_idx, j] = Z[u_idx, :j, j].max()
             bounds[1, u_idx, j] = U[u_idx, j]
     # remove empty partitions
-    empty = ((bounds[1] - bounds[0]) <= 0).any(dim=-1)
+    # Note: the equality will evaluate as True if the lower and upper bound
+    # are both (-inf), which could happen if the reference point is -inf.
+    empty = (bounds[1] <= bounds[0]).any(dim=-1)
     return bounds[:, ~empty]
 
 
