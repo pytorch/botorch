@@ -49,6 +49,7 @@ from botorch.models.cost import AffineFidelityCostModel
 from botorch.models.model import Model
 from botorch.models.utils import check_no_nans
 from botorch.sampling.samplers import SobolQMCNormalSampler
+from botorch.exceptions.errors import UnsupportedError
 from botorch.utils.transforms import match_batch_shape, t_batch_mode_transform
 from gpytorch.utils.cholesky import psd_safe_cholesky
 from scipy.optimize import brentq
@@ -93,14 +94,22 @@ class MaxValueBase(AcquisitionFunction):
         """
         super().__init__(model=model)
 
+        # Multi-output GP models are not currently supported
+        if model.num_outputs != 1:
+            raise UnsupportedError(
+                "multi-output models are not yet supported by MaxValueBase."
+            )
+
         # Batch GP models (e.g. fantasized models) are not currently supported
         if train_inputs is None:
             train_inputs = self.model.train_inputs[0]
         if train_inputs.ndim > 2:
             raise NotImplementedError(
                 "Batch GP models (e.g. fantasized models) "
-                "are not yet supported by MaxValuesBase"
+                "are not yet supported by MaxValueBase"
             )
+
+
 
         train_inputs = match_batch_shape(train_inputs, candidate_set)
         self.candidate_set = torch.cat([candidate_set, train_inputs], dim=0)
@@ -151,21 +160,42 @@ class MaxValueBase(AcquisitionFunction):
         Returns:
             A `batch_shape`-dim Tensor of MVE values at the given design points `X`.
         """
-        return self._compute_information_gain(X=X)
+        # Compute the posterior, posterior mean, variance and std
+        posterior = self.model.posterior(X.unsqueeze(-3), observation_noise=False)
+        mean = self.weight * posterior.mean.squeeze(-1).squeeze(-1)
+        # batch_shape x num_fantasies
+        variance = posterior.variance.clamp_min(CLAMP_LB).view_as(mean)
+        check_no_nans(mean)
+        check_no_nans(variance)
+
+        ig = self._compute_information_gain(
+            X=X, mean_M=mean, variance_M=variance, covar_mM=variance.unsqueeze(-1)
+        )
+        return ig
 
     @abstractmethod
-    def _compute_information_gain(self, X: Tensor) -> Tensor:
+    def _compute_information_gain(
+        self, X: Tensor, mean_M: Tensor, variance_M: Tensor, covar_mM: Tensor
+    ) -> Tensor:
         r"""Computes the information gain at the design points `X`.
 
-        Args:
+         Args:
             X: A `batch_shape x 1 x d`-dim Tensor of `batch_shape` t-batches
                 with `1` `d`-dim design point each.
+            mean_M, variance_M: `batch_shape x num_fantasies`-dim Tensors of
+                `batch_shape` t-batches with `num_fantasies` fantasies.
+                `num_fantasies = 1` for non-fantasized models.
+                All are obtained without noise.
+            covar_mM: `batch_shape x num_fantasies x (1 + num_trace_observations)`
+                -dim Tensor. `num_fantasies = 1` for non-fantasized models.
+                All are obtained without noise.
+
 
         Returns:
             A `batch_shape`-dim Tensor of information gains at the
             given design points `X`.
         """
-        pass
+        pass # pragma: no cover
 
     def set_X_pending(self, X_pending: Optional[Tensor] = None) -> None:
         r"""Informs the acquisition function about pending design points.
@@ -280,7 +310,9 @@ class qMaxValueEntropy(MaxValueBase):
             except AttributeError:
                 pass
 
-    def _compute_information_gain(self, X: Tensor) -> Tensor:
+    def _compute_information_gain(
+        self, X: Tensor, mean_M: Tensor, variance_M: Tensor, covar_mM: Tensor
+    ) -> Tensor:
         r"""Computes the information gain at the design points `X`.
 
         Approximately computes the information gain at the design points `X`,
@@ -295,19 +327,19 @@ class qMaxValueEntropy(MaxValueBase):
         Args:
             X: A `batch_shape x 1 x d`-dim Tensor of `batch_shape` t-batches
                 with `1` `d`-dim design point each.
+            mean_M, variance_M: `batch_shape x num_fantasies`-dim Tensors of
+                `batch_shape` t-batches with `num_fantasies` fantasies.
+                `num_fantasies = 1` for non-fantasized models.
+                All are obtained without noise.
+            covar_mM: `batch_shape x (1 + num_trace_observations)`
+                -dim Tensor. `num_fantasies = 1` for non-fantasized models.
+                All are obtained without noise.
+
 
         Returns:
-            A `num_fantasies x batch_shape`-dim Tensor of information gains at the
+            A `batch_shape`-dim Tensor of information gains at the
             given design points `X`.
         """
-
-        # Compute the std_m, variance_m with noiseless observations
-        posterior_M = self.model.posterior(X.unsqueeze(-3), observation_noise=False)
-        mean_M = self.weight * posterior_M.mean.squeeze(-1).squeeze(-1)
-        variance_M = posterior_M.variance.clamp_min(CLAMP_LB).view_as(mean_M)
-        # batch_shape x num_fantasies
-        check_no_nans(mean_M)
-        check_no_nans(variance_M)
 
         # compute the std_m, variance_m with noisy observation
         posterior_m = self.model.posterior(X.unsqueeze(-3), observation_noise=True)
@@ -316,10 +348,6 @@ class qMaxValueEntropy(MaxValueBase):
         variance_m = posterior_m.mvn.covariance_matrix
         # batch_shape x num_fantasies x (1 + num_trace_observations)^2
         check_no_nans(variance_m)
-
-        # compute the covar_mM without noise
-        covar_mM = variance_M.unsqueeze(-1)
-        # batch_shape x num_fantasies x (1 + num_trace_observations)
 
         # compute mean and std for fM|ym, x, Dt ~ N(u, s^2)
         samples_m = self.weight * self.sampler(posterior_m).squeeze(-1)
@@ -447,15 +475,23 @@ class qLowerBoundMaxValueEntropy(MaxValueBase):
         self.X_pending = X_pending
         self._sample_max_values()
 
-    def _compute_information_gain(self, X: Tensor) -> Tensor:
+    def _compute_information_gain(
+        self, X: Tensor, mean_M: Tensor, variance_M: Tensor, covar_mM: Tensor
+    ) -> Tensor:        
         r"""Compute GIBBON's approximation of information gain at the design points `X`.
 
-        For batch optimisation (i.e q>1) we caclulate the improvlement in the information gain
+        For batch optimisation (i.e q>1) we caclulate the improvement in the information gain
         provided by adding a new candidate point to the current batch of design points (X_pending)
 
         Args:
             X: A `batch_shape x 1 x d`-dim Tensor of `batch_shape` t-batches
-                with `1` `d`-dim design points each.
+                with `1` `d`-dim design point each.
+            mean_M, variance_M: `batch_shape x 1`-dim Tensors of
+                `batch_shape` t-batches
+                All are obtained without noise.
+            covar_mM: `batch_shape x 1 x (1 + num_trace_observations)`
+                -dim Tensor.
+                All are obtained without noise.
 
         Returns:
             A `batch_shape`-dim Tensor of MVE values at the given design points `X`.
@@ -464,22 +500,19 @@ class qLowerBoundMaxValueEntropy(MaxValueBase):
         # TODO: give the Posterior API an add_observation_noise function to avoid
         # doing posterior computations twice
 
-        # Compute the noisy and noiselss posterior
-        posterior_noisy = self.model.posterior(X, observation_noise=True)
-        posterior_noiseless = self.model.posterior(X, observation_noise=False)
-        mean = self.weight * posterior_noisy.mean.squeeze(-1)
-        check_no_nans(mean)
-        # batch_shape x 1
-        variance_noisy = posterior_noisy.variance.clamp_min(CLAMP_LB).squeeze(-1)
-        # batch_shape x 1
-        check_no_nans(variance_noisy)
-        variance_noiseless = posterior_noiseless.variance.clamp_min(CLAMP_LB).squeeze(
-            -1
-        )
-        # batch_shape x 1
-        check_no_nans(variance_noisy)
-        stdv = variance_noiseless.sqrt()
 
+        # compute the mean_m, variance_m with noisy observation
+        posterior_m = self.model.posterior(X, observation_noise=True)
+        mean_m = self.weight * posterior_m.mean.squeeze(-1)
+        # batch_shape x 1
+        variance_m = posterior_m.variance.clamp_min(CLAMP_LB).squeeze(-1)
+        # batch_shape x 1
+        check_no_nans(variance_m)
+
+        # get stdv of noiseless variance
+        stdv = variance_M.sqrt()
+        # batch_shape x 1
+        
         # define normal distribution to compute cdf and pdf
         normal = torch.distributions.Normal(
             torch.zeros(1, device=X.device, dtype=X.dtype),
@@ -489,27 +522,29 @@ class qLowerBoundMaxValueEntropy(MaxValueBase):
         # prepare max value quantities required by GIBBON
         mvs = torch.transpose(self.posterior_max_values, 0, 1)
         # 1 x s_M
-        normalized_mvs = (mvs - mean) / stdv
+        normalized_mvs = (mvs - mean_m) / stdv
         # batch_shape x s_M
+
         cdf_mvs = normal.cdf(normalized_mvs).clamp_min(CLAMP_LB)
         pdf_mvs = torch.exp(normal.log_prob(normalized_mvs))
         ratio = pdf_mvs / cdf_mvs
         check_no_nans(ratio)
 
-        # prepare variance ratio
-        rhos_squared = variance_noiseless / variance_noisy
+        # prepare squared correlation between current and target fidelity
+        rhos_squared = torch.pow(covar_mM.squeeze(-1), 2) / (variance_m * variance_M)
         # batch_shape x 1
         check_no_nans(rhos_squared)
 
-        # calculate quality contribution to acqusition function
+        # calculate quality contribution to the GIBBON acqusition function
         inner_log = 1 - rhos_squared * ratio * (normalized_mvs + ratio)
         acq = -0.5 * inner_log.clamp_min(CLAMP_LB).log()
         # average over Gumbel samples
         acq = acq.mean(dim=1)
 
         if self.X_pending is not None:
-            # for q>1 require repulsion terms r_i = log |C_i| for the predictive
-            # correlation matricies between each candidate point in X and
+            # for q>1 GIBBON requires repulsion terms 
+            # r_i = log |C_i| for the predictive
+            # correlation matricies C_i between each candidate point in X and
             # the m current batch elements in X_pending.
 
             # Each predictive covariance matrix can be expressed as
