@@ -28,9 +28,10 @@ from botorch.acquisition.knowledge_gradient import (
     qMultiFidelityKnowledgeGradient,
 )
 from botorch.acquisition.max_value_entropy_search import (
+    MaxValueBase,
     qMaxValueEntropy,
     qMultiFidelityMaxValueEntropy,
-    qGIBBON,
+    qLowerBoundMaxValueEntropy,
 )
 from botorch.acquisition.monte_carlo import (
     MCAcquisitionFunction,
@@ -66,9 +67,10 @@ __all__ = [
     "UpperConfidenceBound",
     "qExpectedImprovement",
     "qKnowledgeGradient",
+    "MaxValueBase",
     "qMultiFidelityKnowledgeGradient",
     "qMaxValueEntropy",
-    "qGIBBON",
+    "qLowerBoundMaxValueEntropy",
     "qMultiFidelityMaxValueEntropy",
     "qMultiStepLookahead",
     "qNoisyExpectedImprovement",

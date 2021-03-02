@@ -14,7 +14,8 @@ from botorch.acquisition.max_value_entropy_search import (
     _sample_max_value_Thompson,
     qMaxValueEntropy,
     qMultiFidelityMaxValueEntropy,
-    qGIBBON,
+    qLowerBoundMaxValueEntropy,
+    MaxValueBase,
 )
 from botorch.exceptions.errors import UnsupportedError
 from botorch.posteriors import GPyTorchPosterior
@@ -113,12 +114,12 @@ class TestMaxValueEntropySearch(BotorchTestCase):
                 )
                 patch_f.assert_called_once()
 
-    def test_q_gibbon(self):
+    def test_q_lower_bound_max_value_entropy(self):
         for dtype in (torch.float, torch.double):
             torch.manual_seed(7)
             mm = MESMockModel()
             with self.assertRaises(TypeError):
-                qGIBBON(mm)
+                qLowerBoundMaxValueEntropy(mm)
 
             candidate_set = torch.rand(1000, 2, device=self.device, dtype=dtype)
 
@@ -126,41 +127,43 @@ class TestMaxValueEntropySearch(BotorchTestCase):
             train_inputs = torch.rand(5, 10, 2, device=self.device, dtype=dtype)
             mm.train_inputs = (train_inputs,)
             with self.assertRaises(NotImplementedError):
-                qGIBBON(mm, candidate_set, num_mv_samples=10)
+                qLowerBoundMaxValueEntropy(mm, candidate_set, num_mv_samples=10)
 
             # test error when number of outputs > 1
             mm._num_outputs = 2
             with self.assertRaises(UnsupportedError):
-                qGIBBON(mm, candidate_set, num_mv_samples=10)
+                qLowerBoundMaxValueEntropy(mm, candidate_set, num_mv_samples=10)
             mm._num_outputs = 1
 
             # test with X_pending is None
             train_inputs = torch.rand(10, 2, device=self.device, dtype=dtype)
             mm.train_inputs = (train_inputs,)
-            qGibbon = qGIBBON(mm, candidate_set, num_mv_samples=10)
+            qGIBBON = qLowerBoundMaxValueEntropy(mm, candidate_set, num_mv_samples=10)
 
             # test initialization
-            self.assertEqual(qGibbon.num_mv_samples, 10)
-            self.assertEqual(qGibbon.use_gumbel, True)
-            self.assertEqual(qGibbon.posterior_max_values.shape, torch.Size([10, 1]))
+            self.assertEqual(qGIBBON.num_mv_samples, 10)
+            self.assertEqual(qGIBBON.use_gumbel, True)
+            self.assertEqual(qGIBBON.posterior_max_values.shape, torch.Size([10, 1]))
 
             # test evaluation
             X = torch.rand(1, 2, device=self.device, dtype=dtype)
-            self.assertEqual(qGibbon(X).shape, torch.Size([1]))
+            self.assertEqual(qLowerBoundMaxValueEntropy(X).shape, torch.Size([1]))
 
             # test with use_gumbel = False
-            qGibbon = qGIBBON(mm, candidate_set, num_mv_samples=10, use_gumbel=False)
-            self.assertEqual(qGibbon(X).shape, torch.Size([1]))
+            qGIBBON = qLowerBoundMaxValueEntropy(
+                mm, candidate_set, num_mv_samples=10, use_gumbel=False
+            )
+            self.assertEqual(qGIBBON(X).shape, torch.Size([1]))
 
             # test with X_pending is not None
-            qGibbon = qGIBBON(
+            qGIBBON = qLowerBoundMaxValueEntropy(
                 mm,
                 candidate_set,
                 num_mv_samples=10,
                 use_gumbel=False,
                 X_pending=torch.rand(1, 2, device=self.device, dtype=dtype),
             )
-            self.assertEqual(qGibbon(X).shape, torch.Size([1]))
+            self.assertEqual(qGIBBON(X).shape, torch.Size([1]))
 
     def test_q_multi_fidelity_max_value_entropy(self):
         for dtype in (torch.float, torch.double):
