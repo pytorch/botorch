@@ -65,6 +65,11 @@ Abstract Box Decompositions
 .. automodule:: botorch.utils.multi_objective.box_decompositions.box_decomposition
     	:members:
 
+Box Decomposition List
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.utils.multi_objective.box_decompositions.box_decomposition_list
+    	:members:
+
 Box Decomposition Utilities
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.utils.multi_objective.box_decompositions.utils
