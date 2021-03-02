@@ -80,6 +80,11 @@ Box Decompositions [DEPRECATED - use botorch..utils.multi_objective.box_decompos
 .. automodule:: botorch.utils.multi_objective.box_decomposition
 		:members:
 
+Dominated Partitionings
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.utils.multi_objective.box_decompositions.dominated
+		:members:
+
 Hypervolume
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.utils.multi_objective.hypervolume

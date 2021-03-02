@@ -125,14 +125,16 @@ class BoxDecomposition(Module, ABC):
     def partition_space(self) -> None:
         r"""Compute box decomposition."""
         if self.num_outcomes == 2:
-            self.partition_space_2d()
+            try:
+                self._partition_space_2d()
+            except NotImplementedError:
+                self._partition_space()
         else:
             self._partition_space()
 
-    @abstractmethod
-    def partition_space_2d(self) -> None:
+    def _partition_space_2d(self) -> None:
         r"""Compute box decomposition for 2 objectives."""
-        pass  # pragma: no cover
+        raise NotImplementedError
 
     @abstractmethod
     def _partition_space(self):
@@ -292,6 +294,12 @@ class FastPartitioning(BoxDecomposition, ABC):
         This method supports an arbitrary number of outcomes, but is
         less efficient than `partition_space_2d` for the 2-outcome case.
         """
+        if len(self.batch_shape) > 0:
+            # this could be triggered when m=2 outcomes and
+            # BoxDecomposition._partition_space_2d is not overridden.
+            raise NotImplementedError(
+                "_partition_space does not support batch dimensions."
+            )
         # this assumes minimization
         # initialize local upper bounds
         self.register_buffer("_U", self._neg_ref_point.unsqueeze(-2).clone())
