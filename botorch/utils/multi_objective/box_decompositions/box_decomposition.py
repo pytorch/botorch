@@ -4,7 +4,16 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-r"""Box decomposition algorithms."""
+r"""Box decomposition algorithms.
+
+References
+
+.. [Lacour17]
+    R. Lacour, K. Klamroth, C. Fonseca. A box decomposition algorithm to
+    compute the hypervolume indicator. Computers & Operations Research,
+    Volume 79, 2017.
+
+"""
 
 from __future__ import annotations
 
@@ -12,11 +21,13 @@ from abc import ABC, abstractmethod
 from typing import Optional
 
 import torch
-from botorch.exceptions.errors import BotorchError, BotorchTensorDimensionError
+from botorch.exceptions.errors import BotorchError
 from botorch.utils.multi_objective.box_decompositions.utils import (
     _expand_ref_point,
     _pad_batch_pareto_frontier,
+    update_local_upper_bounds_incremental,
 )
+from botorch.utils.multi_objective.pareto import is_non_dominated
 from torch import Tensor
 from torch.nn import Module
 
@@ -42,7 +53,8 @@ class BoxDecomposition(Module, ABC):
         self.register_buffer("sort", torch.tensor(sort, dtype=torch.bool))
         self.num_outcomes = ref_point.shape[-1]
         if Y is not None:
-            self.update(Y=Y)
+            self._update_neg_Y(Y=Y)
+            self.reset()
 
     @property
     def pareto_Y(self) -> Tensor:
@@ -74,7 +86,7 @@ class BoxDecomposition(Module, ABC):
         """
         return -self._neg_Y
 
-    def _update_pareto_Y(self) -> bool:
+    def _reset_pareto_Y(self) -> bool:
         r"""Update the non-dominated front.
 
         Returns:
@@ -112,14 +124,23 @@ class BoxDecomposition(Module, ABC):
 
     def partition_space(self) -> None:
         r"""Compute box decomposition."""
-        try:
+        if self.num_outcomes == 2:
             self.partition_space_2d()
-        except BotorchTensorDimensionError:
+        else:
             self._partition_space()
 
     @abstractmethod
     def partition_space_2d(self) -> None:
         r"""Compute box decomposition for 2 objectives."""
+        pass  # pragma: no cover
+
+    @abstractmethod
+    def _partition_space(self):
+        r"""Partition the non-dominated space into disjoint hypercells.
+
+        This method supports an arbitrary number of outcomes, but is
+        less efficient than `partition_space_2d` for the 2-outcome case.
+        """
         pass  # pragma: no cover
 
     @abstractmethod
@@ -132,13 +153,36 @@ class BoxDecomposition(Module, ABC):
         """
         pass  # pragma: no cover
 
+    def _update_neg_Y(self, Y: Tensor) -> bool:
+        r"""Update the set of outcomes.
+
+        Returns:
+            A boolean indicating if _neg_Y was initialized.
+        """
+        # multiply by -1, since internally we minimize.
+        try:
+            self._neg_Y = torch.cat([self._neg_Y, -Y], dim=-2)
+            return False
+        except AttributeError:
+            self.register_buffer("_neg_Y", -Y)
+            return True
+
     def update(self, Y: Tensor) -> None:
         r"""Update non-dominated front and decomposition.
 
+        By default, the partitioning is recomputed. Subclasses can override
+        this functionality.
+
         Args:
-            Y: A `(batch_shape) x n x m`-dim tensor of outcomes.
+            Y: A `(batch_shape) x n x m`-dim tensor of new, incremental outcomes.
         """
-        self.batch_shape = Y.shape[:-2]
+        self._update_neg_Y(Y=Y)
+        self.reset()
+
+    def reset(self) -> None:
+        r"""Reset non-dominated front and decomposition."""
+        self.batch_shape = self.Y.shape[:-2]
+        self.num_outcomes = self.Y.shape[-1]
         if len(self.batch_shape) > 1:
             raise NotImplementedError(
                 f"{type(self).__name__} only supports a single "
@@ -150,9 +194,143 @@ class BoxDecomposition(Module, ABC):
                 f"{type(self).__name__} only supports a batched box "
                 f"decompositions in the 2-objective setting."
             )
-        # multiply by -1, since internally we minimize.
-        self._neg_Y = -Y
-        is_new_pareto = self._update_pareto_Y()
+        is_new_pareto = self._reset_pareto_Y()
         # Update decomposition if the Pareto front changed
         if is_new_pareto:
             self.partition_space()
+
+    @abstractmethod
+    def compute_hypervolume(self) -> Tensor:
+        r"""Compute hypervolume that is dominated by the Pareto Froniter.
+
+        Returns:
+            A `(batch_shape)`-dim tensor containing the hypervolume dominated by
+                each Pareto frontier.
+        """
+        pass  # pragma: no cover
+
+
+class FastPartitioning(BoxDecomposition, ABC):
+    r"""A class for partitioning the (non-)dominated space into hyper-cells.
+
+    Note: this assumes maximization. Internally, it multiplies outcomes by -1
+    and performs the decomposition under minimization.
+
+    This class is abstract to support to two applications of Alg 1 from
+    [Lacour17]_: 1) partitioning the space that is dominated by the Pareto
+    frontier and 2) partitioning the space that is not dominated by the
+    Pareto frontier.
+    """
+
+    def __init__(
+        self,
+        ref_point: Tensor,
+        Y: Optional[Tensor] = None,
+    ) -> None:
+        """Initialize FastPartitioning.
+
+        Args:
+            ref_point: A `m`-dim tensor containing the reference point.
+            Y: A `(batch_shape) x n x m`-dim tensor
+        """
+        super().__init__(ref_point=ref_point, Y=Y, sort=ref_point.shape[-1] == 2)
+
+    def update(self, Y: Tensor) -> None:
+        r"""Update non-dominated front and decomposition.
+
+        Args:
+            Y: A `(batch_shape) x n x m`-dim tensor of new, incremental outcomes.
+        """
+        if self._update_neg_Y(Y=Y):
+            self.reset()
+        else:
+            if self.num_outcomes == 2 or self._neg_pareto_Y.shape[-2] == 0:
+                # If there are two objective, recompute the box decomposition
+                # because the partitions can be computed analytically.
+                # If the current pareto set has no points, recompute the box
+                # decomposition.
+                self.reset()
+            else:
+                # only include points that are better than the reference point
+                better_than_ref = (Y > self.ref_point).all(dim=-1)
+                Y = Y[better_than_ref]
+                Y_all = torch.cat([self._neg_pareto_Y, -Y], dim=-2)
+                pareto_mask = is_non_dominated(-Y_all)
+                # determine the number of points in Y that are Pareto optimal
+                num_new_pareto = pareto_mask[-Y.shape[-2] :].sum()
+                self._neg_pareto_Y = Y_all[pareto_mask]
+                if num_new_pareto > 0:
+                    # update local upper bounds for the minimization problem
+                    self._U, self._Z = update_local_upper_bounds_incremental(
+                        # this assumes minimization
+                        new_pareto_Y=self._neg_pareto_Y[-num_new_pareto:],
+                        U=self._U,
+                        Z=self._Z,
+                    )
+                    # use the negative local upper bounds as the new pareto
+                    # frontier for the minimization problem and perform
+                    # box decomposition on dominated space.
+                    self._get_partitioning()
+
+    @abstractmethod
+    def _get_single_cell(self) -> None:
+        r"""Set the partitioning to be a single cell in the case of no Pareto points.
+
+        This method should set self.hypercell_bounds
+        """
+        pass  # pragma: no cover
+
+    def partition_space(self) -> None:
+        if self._neg_pareto_Y.shape[0] == 0:
+            self._get_single_cell()
+        else:
+            super().partition_space()
+
+    def _partition_space(self):
+        r"""Partition the non-dominated space into disjoint hypercells.
+
+        This method supports an arbitrary number of outcomes, but is
+        less efficient than `partition_space_2d` for the 2-outcome case.
+        """
+        # this assumes minimization
+        # initialize local upper bounds
+        self.register_buffer("_U", self._neg_ref_point.unsqueeze(-2).clone())
+        # initialize defining points to be the dummy points \hat{z} that are
+        # defined in Sec 2.1 in [Lacour17]_. Note that in [Lacour17]_, outcomes
+        # are assumed to be between [0,1], so they used 0 rather than -inf.
+        self._Z = torch.zeros(
+            1,
+            self.num_outcomes,
+            self.num_outcomes,
+            dtype=self.Y.dtype,
+            device=self.Y.device,
+        )
+        for j in range(self.ref_point.shape[-1]):
+            # use ref point for maximization as the ideal point for minimization.
+            self._Z[0, j] = float("-inf")
+            self._Z[0, j, j] = self._U[0, j]
+        # incrementally update local upper bounds and defining points
+        # for each new Pareto point
+        self._U, self._Z = update_local_upper_bounds_incremental(
+            new_pareto_Y=self._neg_pareto_Y,
+            U=self._U,
+            Z=self._Z,
+        )
+        self._get_partitioning()
+
+    @abstractmethod
+    def _get_partitioning(self) -> None:
+        r"""Compute partitioning given local upper bounds for the minimization problem.
+
+        This method should set self.hypercell_bounds
+        """
+        pass  # pragma: no cover
+
+    def get_hypercell_bounds(self) -> Tensor:
+        r"""Get the bounds of each hypercell in the decomposition.
+
+        Returns:
+            A `2 x (batch_shape) x num_cells x m`-dim tensor containing the
+                lower and upper vertices bounding each hypercell.
+        """
+        return self.hypercell_bounds
