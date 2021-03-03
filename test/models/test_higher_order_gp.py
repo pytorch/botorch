@@ -181,7 +181,9 @@ class TestHigherOrderGP(BotorchTestCase):
             _ = self.model.posterior(test_x)
             fantasy_model = self.model.fantasize(test_x, sampler=sampler)
             self.assertIsInstance(fantasy_model, HigherOrderGP)
-            self.assertEqual(fantasy_model.train_inputs[0].shape[:2], torch.Size((32, 2)))
+            self.assertEqual(
+                fantasy_model.train_inputs[0].shape[:2], torch.Size((32, 2))
+            )
 
     def test_initialize_latents(self):
         for dtype in [torch.float, torch.double]:
@@ -208,4 +210,3 @@ class TestHigherOrderGP(BotorchTestCase):
                     self.model.latent_parameters[1].shape,
                     torch.Size((5, latent_dim_sizes[1])),
                 )
-
