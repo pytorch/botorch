@@ -15,7 +15,6 @@ from botorch.acquisition.max_value_entropy_search import (
     qMaxValueEntropy,
     qMultiFidelityMaxValueEntropy,
     qLowerBoundMaxValueEntropy,
-    MaxValueBase,
 )
 from botorch.exceptions.errors import UnsupportedError
 from botorch.posteriors import GPyTorchPosterior

@@ -5,8 +5,8 @@
 # LICENSE file in the root directory of this source tree.
 
 r"""
-Acquisition functions for Max-value Entropy Search (MES), General 
-Information-Based Bayesian Optimization (GIBBON), and 
+Acquisition functions for Max-value Entropy Search (MES), General
+Information-Based Bayesian Optimization (GIBBON), and
 multi-fidelity MES with noisy observations and trace observations.
 
 References
@@ -35,7 +35,7 @@ References
 from __future__ import annotations
 
 from copy import deepcopy
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from math import log
 from typing import Any, Callable, Optional
 
@@ -43,8 +43,6 @@ import numpy as np
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.cost_aware import CostAwareUtility, InverseCostWeightedUtility
-from botorch.acquisition.monte_carlo import MCAcquisitionFunction
-from botorch.acquisition.analytic import AnalyticAcquisitionFunction
 from botorch.models.cost import AffineFidelityCostModel
 from botorch.models.model import Model
 from botorch.models.utils import check_no_nans
@@ -476,8 +474,9 @@ class qLowerBoundMaxValueEntropy(MaxValueBase):
     ) -> Tensor:
         r"""Compute GIBBON's approximation of information gain at the design points `X`.
 
-        For batch optimisation (i.e q>1) we caclulate the improvement in the information gain
-        provided by adding a new candidate point to the current batch of design points (X_pending)
+        For batch optimisation (i.e q>1) we caclulate the improvement in the
+        information gain provided by adding a new candidate point to the current
+        batch of design points (X_pending)
 
         Args:
             X: A `batch_shape x 1 x d`-dim Tensor of `batch_shape` t-batches
