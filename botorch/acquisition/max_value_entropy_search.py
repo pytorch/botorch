@@ -25,11 +25,6 @@ References
     Takeno, S., et al.,
     Multi-fidelity Bayesian Optimization with Max-value Entropy Search.
     arXiv:1901.08275v1, 2019
-
-.. [Moss2020mumbo]
-    Moss, H. B., et al.,
-    MUMBO: MUlti-task Max-value Bayesian Optimisation.
-    arXiv:2006.12093, 2020
 """
 
 from __future__ import annotations
@@ -314,7 +309,7 @@ class qMaxValueEntropy(MaxValueBase):
         observation and trace observations.
 
         The implementation is inspired from the papers on multi-fidelity MES by
-        Takeno et. al. [Takeno2019mfmves]_ and Moss et. al. [Moss2020mumbo]_.
+        Takeno et. al. [Takeno2019mfmves]_.
         The notations in the comments in this function follows the Appendix A
         of Takeno et. al..
 
@@ -586,7 +581,7 @@ class qMultiFidelityMaxValueEntropy(qMaxValueEntropy):
     r"""Multi-fidelity max-value entropy.
 
     The acquisition function for multi-fidelity max-value entropy search
-    with support for trace observations. See [Takeno2019mfmves]_ or [Moss202mumbo]_
+    with support for trace observations. See [Takeno2019mfmves]_ 
     for a detailed discussion of the basic ideas on multi-fidelity MES
     (note that this implementation is somewhat different).
 
