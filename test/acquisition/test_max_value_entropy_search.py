@@ -147,7 +147,7 @@ class TestMaxValueEntropySearch(BotorchTestCase):
 
             # test evaluation
             X = torch.rand(1, 2, device=self.device, dtype=dtype)
-            self.assertEqual(qLowerBoundMaxValueEntropy(X).shape, torch.Size([1]))
+            self.assertEqual(qGIBBON(X).shape, torch.Size([1]))
 
             # test with use_gumbel = False
             qGIBBON = qLowerBoundMaxValueEntropy(

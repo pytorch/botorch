@@ -108,16 +108,12 @@ class MaxValueBase(AcquisitionFunction):
                 "Batch GP models (e.g. fantasized models) "
                 "are not yet supported by MaxValueBase"
             )
-
-
-
         train_inputs = match_batch_shape(train_inputs, candidate_set)
         self.candidate_set = torch.cat([candidate_set, train_inputs], dim=0)
         self.use_gumbel = use_gumbel
         self.num_mv_samples = num_mv_samples
         self.maximize = maximize
         self.weight = 1.0 if maximize else -1.0
-        self.set_X_pending(X_pending)
 
     def _sample_max_values(self):
         r"""Sample max values for MC approximation of the expectation in MES"""
@@ -195,7 +191,7 @@ class MaxValueBase(AcquisitionFunction):
             A `batch_shape`-dim Tensor of information gains at the
             given design points `X`.
         """
-        pass # pragma: no cover
+        pass  # pragma: no cover
 
     def set_X_pending(self, X_pending: Optional[Tensor] = None) -> None:
         r"""Informs the acquisition function about pending design points.
@@ -268,7 +264,6 @@ class qMaxValueEntropy(MaxValueBase):
             X_pending=X_pending,
             train_inputs=train_inputs,
         )
-
         self._init_model = model  # only used for the `fantasize()` in `set_X_pending()`
         self.sampler = SobolQMCNormalSampler(num_y_samples)
         self.fantasies_sampler = SobolQMCNormalSampler(num_fantasies)
@@ -278,6 +273,7 @@ class qMaxValueEntropy(MaxValueBase):
         # it will throw errors when the initial `super().__init__()` is called,
         # since some members required by `_sample_max_values()` are not yet initialized.
         if X_pending is None:
+            self.X_pending = None
             self._sample_max_values()
         else:
             self.set_X_pending(X_pending)
@@ -477,7 +473,7 @@ class qLowerBoundMaxValueEntropy(MaxValueBase):
 
     def _compute_information_gain(
         self, X: Tensor, mean_M: Tensor, variance_M: Tensor, covar_mM: Tensor
-    ) -> Tensor:        
+    ) -> Tensor:
         r"""Compute GIBBON's approximation of information gain at the design points `X`.
 
         For batch optimisation (i.e q>1) we caclulate the improvement in the information gain
@@ -500,7 +496,6 @@ class qLowerBoundMaxValueEntropy(MaxValueBase):
         # TODO: give the Posterior API an add_observation_noise function to avoid
         # doing posterior computations twice
 
-
         # compute the mean_m, variance_m with noisy observation
         posterior_m = self.model.posterior(X, observation_noise=True)
         mean_m = self.weight * posterior_m.mean.squeeze(-1)
@@ -512,7 +507,7 @@ class qLowerBoundMaxValueEntropy(MaxValueBase):
         # get stdv of noiseless variance
         stdv = variance_M.sqrt()
         # batch_shape x 1
-        
+
         # define normal distribution to compute cdf and pdf
         normal = torch.distributions.Normal(
             torch.zeros(1, device=X.device, dtype=X.dtype),
@@ -542,7 +537,7 @@ class qLowerBoundMaxValueEntropy(MaxValueBase):
         acq = acq.mean(dim=1)
 
         if self.X_pending is not None:
-            # for q>1 GIBBON requires repulsion terms 
+            # for q>1 GIBBON requires repulsion terms
             # r_i = log |C_i| for the predictive
             # correlation matricies C_i between each candidate point in X and
             # the m current batch elements in X_pending.
@@ -551,7 +546,7 @@ class qLowerBoundMaxValueEntropy(MaxValueBase):
             # V_i = [[v_i, A_i], [A_i,B]] for a shared m x m tensor B.
             # So we can efficientely calculate |V_i| using the formula for
             # determinant of block matricies
-            v = variance_noisy
+            v = variance_m
             full_covariance = self.model(
                 torch.cat([X.squeeze(1), self.X_pending], dim=0)
             )
@@ -580,6 +575,7 @@ class qLowerBoundMaxValueEntropy(MaxValueBase):
             # Take logs and convert covariances to correlations.
             r = covariance_determinant.log() - v.log()
             r = 0.5 * r.squeeze(1)
+            print((acq + r).shape)
             return acq + r
 
         else:
@@ -726,7 +722,7 @@ class qMultiFidelityMaxValueEntropy(qMaxValueEntropy):
             X=X_expand, mean_M=mean_M, variance_M=variance_M, covar_mM=covar_mM
         )
         ig = self.cost_aware_utility(X=X, deltas=ig, sampler=self.cost_sampler)
-        return ig.mean(dim=0)  # average over the fantasies
+        return ig  # average over the fantasies
 
 
 def _sample_max_value_Thompson(
