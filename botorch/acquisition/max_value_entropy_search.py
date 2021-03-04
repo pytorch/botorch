@@ -182,7 +182,6 @@ class MaxValueBase(AcquisitionFunction, ABC):
                 -dim Tensor. `num_fantasies = 1` for non-fantasized models.
                 All are obtained without noise.
 
-
         Returns:
             A `batch_shape`-dim Tensor of information gains at the
             given design points `X`.
