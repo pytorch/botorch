@@ -18,7 +18,9 @@ linear (in)equality constraints, specified by the `inequality_constraints` and
 Parameter constraints are used e.g. when certain configurations are known to be
 infeasible, or would result in excessive costs. These constraints do not affect
 the model directly, only indirectly in the sense that all newly generated and
-later observed points will satisfy these constraints. In particular, you may have a model that is fit on points that do not satisfy parameter constraints, but still generate candidates subject to those constraints.
+later observed points will satisfy these constraints. In particular, you may
+have a model that is fit on points that do not satisfy parameter constraints,
+but still generate candidates subject to those constraints.
 
 
 ### Outcome Constraints
