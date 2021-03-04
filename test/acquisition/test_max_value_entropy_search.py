@@ -16,7 +16,6 @@ from botorch.acquisition.max_value_entropy_search import (
     qMultiFidelityMaxValueEntropy,
     qLowerBoundMaxValueEntropy,
 )
-from botorch.exceptions.errors import UnsupportedError
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling.samplers import SobolQMCNormalSampler
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
