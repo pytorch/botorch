@@ -22,9 +22,6 @@ from botorch.utils.testing import BotorchTestCase
 
 
 class DummyBoxDecomposition(BoxDecomposition):
-    def partition_space_2d(self):
-        pass
-
     def _partition_space(self):
         pass
 
@@ -70,7 +67,7 @@ class TestBoxDecomposition(BotorchTestCase):
         ):
             with mock.patch.object(
                 DummyBoxDecomposition,
-                "partition_space_2d" if m == 2 else "partition_space",
+                "_partition_space_2d" if m == 2 else "_partition_space",
             ) as mock_partition_space:
 
                 ref_point = self.ref_point_raw[:m].to(dtype=dtype)
@@ -222,7 +219,10 @@ class TestBoxDecomposition(BotorchTestCase):
                 DummyFastPartitioning,
                 "_get_partitioning",
                 wraps=bd._get_partitioning,
-            ) as mock_get_partitioning:
+            ) as mock_get_partitioning, mock.patch.object(
+                DummyFastPartitioning,
+                "_partition_space_2d",
+            ):
                 bd.update(Y=Y)
                 if m > 2:
                     mock_update_local_upper_bounds_incremental.assert_called_once()
@@ -235,3 +235,9 @@ class TestBoxDecomposition(BotorchTestCase):
                         len(mock_update_local_upper_bounds_incremental.call_args_list),
                         0,
                     )
+
+            # test exception is raised for m=2, batched box decomposition using
+            # _partition_space
+            if m == 2:
+                with self.assertRaises(NotImplementedError):
+                    DummyFastPartitioning(ref_point=ref_point, Y=Y.unsqueeze(0))

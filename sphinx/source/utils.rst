@@ -65,6 +65,11 @@ Abstract Box Decompositions
 .. automodule:: botorch.utils.multi_objective.box_decompositions.box_decomposition
     	:members:
 
+Box Decomposition List
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.utils.multi_objective.box_decompositions.box_decomposition_list
+    	:members:
+
 Box Decomposition Utilities
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.utils.multi_objective.box_decompositions.utils
@@ -73,6 +78,11 @@ Box Decomposition Utilities
 Box Decompositions [DEPRECATED - use botorch..utils.multi_objective.box_decompositions]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.utils.multi_objective.box_decomposition
+		:members:
+
+Dominated Partitionings
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.utils.multi_objective.box_decompositions.dominated
 		:members:
 
 Hypervolume

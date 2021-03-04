@@ -242,7 +242,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         if num_latent_dims is None:
             num_latent_dims = [1] * (self._num_dimensions - 1)
 
-        self.to(train_X.device)
+        self.to(train_X)
 
         self._initialize_latents(
             latent_init=latent_init,
