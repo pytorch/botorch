@@ -68,7 +68,7 @@ class TestMaxValueEntropySearch(BotorchTestCase):
 
             # test error when number of outputs > 1
             mm._num_outputs = 2
-            with self.assertRaises(UnsupportedError):
+            with self.assertRaises(NotImplementedError):
                 qMaxValueEntropy(mm, candidate_set, num_mv_samples=10)
             mm._num_outputs = 1
 
@@ -130,7 +130,7 @@ class TestMaxValueEntropySearch(BotorchTestCase):
 
             # test error when number of outputs > 1
             mm._num_outputs = 2
-            with self.assertRaises(UnsupportedError):
+            with self.assertRaises(NotImplementedError):
                 qLowerBoundMaxValueEntropy(mm, candidate_set, num_mv_samples=10)
             mm._num_outputs = 1
 

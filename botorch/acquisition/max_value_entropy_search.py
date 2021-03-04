@@ -30,7 +30,7 @@ References
 from __future__ import annotations
 
 from copy import deepcopy
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from math import log
 from typing import Any, Callable, Optional
 
@@ -42,9 +42,9 @@ from botorch.models.cost import AffineFidelityCostModel
 from botorch.models.model import Model
 from botorch.models.utils import check_no_nans
 from botorch.sampling.samplers import SobolQMCNormalSampler
-from botorch.exceptions.errors import UnsupportedError
 from botorch.utils.transforms import match_batch_shape, t_batch_mode_transform
 from gpytorch.utils.cholesky import psd_safe_cholesky
+from gpytorch.functions import inv_quad
 from scipy.optimize import brentq
 from scipy.stats import norm
 from torch import Tensor
@@ -53,7 +53,7 @@ from torch import Tensor
 CLAMP_LB = 1.0e-8
 
 
-class MaxValueBase(AcquisitionFunction):
+class MaxValueBase(AcquisitionFunction, ABC):
     r"""Abstract base class for acquisition functions based on Max-value Entropy Search.
 
     This class provides basic functionality for sampling posterior maximum values from
@@ -89,7 +89,7 @@ class MaxValueBase(AcquisitionFunction):
 
         # Multi-output GP models are not currently supported
         if model.num_outputs != 1:
-            raise UnsupportedError(
+            raise NotImplementedError(
                 "multi-output models are not yet supported by MaxValueBase."
             )
 
@@ -160,6 +160,9 @@ class MaxValueBase(AcquisitionFunction):
         ig = self._compute_information_gain(
             X=X, mean_M=mean, variance_M=variance, covar_mM=variance.unsqueeze(-1)
         )
+
+        ig = ig.mean(dim=0)  # average over fantasies (when used)
+
         return ig
 
     @abstractmethod
@@ -188,6 +191,7 @@ class MaxValueBase(AcquisitionFunction):
 
     def set_X_pending(self, X_pending: Optional[Tensor] = None) -> None:
         r"""Informs the acquisition function about pending design points.
+
         Args:
             X_pending: `n x d` Tensor with `n` `d`-dim design points that have
                 been submitted for evaluation but have not yet been evaluated.
@@ -311,7 +315,7 @@ class qMaxValueEntropy(MaxValueBase):
         The implementation is inspired from the papers on multi-fidelity MES by
         Takeno et. al. [Takeno2019mfmves]_.
         The notations in the comments in this function follows the Appendix A
-        of Takeno et. al..
+        of Takeno et al..
 
         Args:
             X: A `batch_shape x 1 x d`-dim Tensor of `batch_shape` t-batches
@@ -320,13 +324,12 @@ class qMaxValueEntropy(MaxValueBase):
                 `batch_shape` t-batches with `num_fantasies` fantasies.
                 `num_fantasies = 1` for non-fantasized models.
                 All are obtained without noise.
-            covar_mM: `batch_shape x (1 + num_trace_observations)`
+            covar_mM: `batch_shape x num_fantasies x (1 + num_trace_observations)`
                 -dim Tensor. `num_fantasies = 1` for non-fantasized models.
                 All are obtained without noise.
 
-
         Returns:
-            A `batch_shape`-dim Tensor of information gains at the
+            A `num_fantasies x batch_shape`-dim Tensor of information gains at the
             given design points `X`.
         """
 
@@ -403,7 +406,7 @@ class qMaxValueEntropy(MaxValueBase):
         H1_hat = H1_bar - beta * (H0_bar - H0)
         ig = H0 - H1_hat  # batch_shape x num_fantasies
         ig = ig.permute(-1, *range(ig.dim() - 1))  # num_fantasies x batch_shape
-        return ig.mean(dim=0)  # average over fantasies
+        return ig
 
 
 class qLowerBoundMaxValueEntropy(MaxValueBase):
@@ -469,9 +472,10 @@ class qLowerBoundMaxValueEntropy(MaxValueBase):
     ) -> Tensor:
         r"""Compute GIBBON's approximation of information gain at the design points `X`.
 
-        For batch optimisation (i.e q>1) we caclulate the improvement in the
-        information gain provided by adding a new candidate point to the current
-        batch of design points (X_pending)
+        When using GIBBON for batch optimisation (i.e q>1) we calculate the additional
+        information provided by adding a new candidate point to the current
+        batch of design points (X_pending) rather than calculating the information
+        provided by the whole batch. This allows a modest computationa saving.
 
         Args:
             X: A `batch_shape x 1 x d`-dim Tensor of `batch_shape` t-batches
@@ -484,7 +488,7 @@ class qLowerBoundMaxValueEntropy(MaxValueBase):
                 All are obtained without noise.
 
         Returns:
-            A `batch_shape`-dim Tensor of MVE values at the given design points `X`.
+            A `1 x batch_shape`-dim Tensor of MVE values at the given design points `X`.
         """
 
         # TODO: give the Posterior API an add_observation_noise function to avoid
@@ -525,63 +529,58 @@ class qLowerBoundMaxValueEntropy(MaxValueBase):
         check_no_nans(rhos_squared)
 
         # calculate quality contribution to the GIBBON acqusition function
-        inner_log = 1 - rhos_squared * ratio * (normalized_mvs + ratio)
-        acq = -0.5 * inner_log.clamp_min(CLAMP_LB).log()
-        # average over Gumbel samples
-        acq = acq.mean(dim=1)
+        inner_term = 1 - rhos_squared * ratio * (normalized_mvs + ratio)
+        acq = -0.5 * inner_term.clamp_min(CLAMP_LB).log()
+        # average over posterior max samples
+        acq = acq.mean(dim=1).unsqueeze(0)
 
-        if self.X_pending is not None:
-            # for q>1 GIBBON requires repulsion terms
-            # r_i = log |C_i| for the predictive
-            # correlation matricies C_i between each candidate point in X and
-            # the m current batch elements in X_pending.
-
-            # Each predictive covariance matrix can be expressed as
-            # V_i = [[v_i, A_i], [A_i,B]] for a shared m x m tensor B.
-            # So we can efficientely calculate |V_i| using the formula for
-            # determinant of block matricies
-            v = variance_m
-            full_covariance = self.model(
-                torch.cat([X.squeeze(1), self.X_pending], dim=0)
-            )
-
-            # only evaluate required cross covariance elements
-            A = (
-                full_covariance.lazy_covariance_matrix[: len(X), len(X) :]
-                .evaluate()
-                .unsqueeze(1)
-            )
-            # batch_shape x 1
-            B = self.model.posterior(
-                self.X_pending, observation_noise=True
-            ).mvn.covariance_matrix
-            B_inv = torch.inverse(B)
-
-            # use determinant of block matrix formula
-
-            covariance_determinant = v - torch.matmul(
-                torch.matmul(A, B_inv), A.transpose(1, 2)
-            ).squeeze(-1)
-
-            covariance_determinant = covariance_determinant
-            # batch_shape x 1
-
-            # Take logs and convert covariances to correlations.
-            r = covariance_determinant.log() - v.log()
-            r = 0.5 * r.squeeze(1)
-            print((acq + r).shape)
-            return acq + r
-
-        else:
+        if self.X_pending is None:
             # for q=1, no replusion term required
             return acq
+
+        # for q>1 GIBBON requires repulsion terms r_i, where
+        # r_i = log |C_i| for the predictive
+        # correlation matricies C_i between each candidate point in X and
+        # the m current batch elements in X_pending.
+
+        # Each predictive covariance matrix can be expressed as
+        # V_i = [[v_i, A_i], [A_i,B]] for a shared m x m tensor B.
+        # So we can efficientely calculate |V_i| using the formula for
+        # determinant of block matricies, i.e.
+        # |V_i| = (v_i - A_i^T * B^{-1} * A_i) * |B|
+        # As the |B| term does not depend on X and we later take its log,
+        # it provides only a translation of the acqusition function surface
+        # and can thus be ignored.
+
+        X_batches = torch.cat(
+            [X, self.X_pending.unsqueeze(0).repeat(X.shape[0], 1, 1)], 1
+        )
+        # batch_shape x (1 + m) x d
+        V = self.model(X_batches)
+        # Evaluate terms required for A
+        A = V.lazy_covariance_matrix[:, 0, 1:].unsqueeze(1)
+        # batch_shape x 1 x m
+        # Evaluate terms required for B
+        B = self.model.posterior(
+            self.X_pending, observation_noise=True
+        ).mvn.covariance_matrix.unsqueeze(0)
+        # 1 x m x m
+
+        # use determinant of block matrix formula
+        V_determinant = variance_m - inv_quad(B, A.transpose(1, 2)).unsqueeze(1)
+        # batch_shape x 1
+
+        # Take logs and convert covariances to correlations.
+        r = V_determinant.log() - variance_m.log()
+        r = 0.5 * r.transpose(0, 1)
+        return acq + r
 
 
 class qMultiFidelityMaxValueEntropy(qMaxValueEntropy):
     r"""Multi-fidelity max-value entropy.
 
     The acquisition function for multi-fidelity max-value entropy search
-    with support for trace observations. See [Takeno2019mfmves]_ 
+    with support for trace observations. See [Takeno2019mfmves]_
     for a detailed discussion of the basic ideas on multi-fidelity MES
     (note that this implementation is somewhat different).
 
@@ -716,7 +715,8 @@ class qMultiFidelityMaxValueEntropy(qMaxValueEntropy):
             X=X_expand, mean_M=mean_M, variance_M=variance_M, covar_mM=covar_mM
         )
         ig = self.cost_aware_utility(X=X, deltas=ig, sampler=self.cost_sampler)
-        return ig  # average over the fantasies
+        ig = ig.mean(dim=0)  # average over the fantasies
+        return ig
 
 
 def _sample_max_value_Thompson(
