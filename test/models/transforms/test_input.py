@@ -445,11 +445,13 @@ class TestInputTransforms(BotorchTestCase):
 
                     # test untransform
                     untransformed_X = warp_tf.untransform(X_tf)
-
-                    print(untransformed_X)
-                    print(X)
                     self.assertTrue(
-                        torch.allclose(untransformed_X, X, rtol=1e-3, atol=1e-3)
+                        torch.allclose(
+                            untransformed_X,
+                            X,
+                            rtol=1e-3,
+                            atol=1e-3 if self.device == torch.device("cpu") else 1e-2,
+                        )
                     )
 
                     # test no transform on eval

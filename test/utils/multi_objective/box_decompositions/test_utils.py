@@ -285,7 +285,8 @@ class TestFastPartitioningUtils(BotorchTestCase):
                 [[6.0, 2.0, 4.0], [4.0, 7.0, 3.0], [3.0, 5.0, 7.0]],
                 [[10.0, 0.0, 0.0], [4.0, 7.0, 3.0], [6.0, 2.0, 4.0]],
                 [[10.0, 0.0, 0.0], [0.0, 10.0, 0.0], [4.0, 7.0, 3.0]],
-            ]
+            ],
+            device=self.device,
         )
 
     def test_local_upper_bounds_utils(self):
