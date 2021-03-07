@@ -44,7 +44,9 @@ class TestGPyTorchPosterior(BotorchTestCase):
             # check enabling of approximate root decomposition
             with ExitStack() as es:
                 mock_func = es.enter_context(
-                    mock.patch(ROOT_DECOMP_PATH, return_value=torch.cholesky(covar))
+                    mock.patch(
+                        ROOT_DECOMP_PATH, return_value=torch.linalg.cholesky(covar)
+                    )
                 )
                 es.enter_context(gpt_settings.max_cholesky_size(0))
                 es.enter_context(

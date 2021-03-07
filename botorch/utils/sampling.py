@@ -379,7 +379,7 @@ class PolytopeSampler:
 
         if equality_constraints is not None:
             self.C, self.d = equality_constraints
-            U, S, V = torch.svd(self.C, some=False)
+            U, S, V = torch.linalg.svd(self.C)
             r = torch.nonzero(S).size(0)  # rank of matrix C
             self.nullC = V[:, r:]  # orthonormal null space of C, satisfying
             # C @ nullC = 0 and nullC.T @ nullC = I

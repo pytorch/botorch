@@ -136,7 +136,7 @@ class MultivariateNormalQMCEngine:
         )
         # compute Cholesky decomp; if it fails, do the eigendecomposition
         try:
-            self._corr_matrix = torch.cholesky(cov).transpose(-1, -2)
+            self._corr_matrix = torch.linalg.cholesky(cov).transpose(-1, -2)
         except RuntimeError:
             eigval, eigvec = torch.symeig(cov, eigenvectors=True)
             if not torch.all(eigval >= -1e-8):
