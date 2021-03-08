@@ -25,6 +25,7 @@ jobs:
       run: |
         pip install git+https://github.com/cornellius-gp/gpytorch.git
         pip install .[dev]
+        pip install beautifulsoup4 ipython "nbconvert<6.0"
     - name: Validate Sphinx
       run: |
         python scripts/validate_sphinx.py -p "$(pwd)"
@@ -32,3 +33,6 @@ jobs:
       run: |
         # warnings treated as errors
         sphinx-build -WT --keep-going sphinx/source sphinx/build
+    - name: Validate and parse tutorials
+      run: |
+        python scripts/parse_tutorials.py -w "$(pwd)"
