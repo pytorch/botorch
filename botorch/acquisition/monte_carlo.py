@@ -216,7 +216,10 @@ class qNoisyExpectedImprovement(MCAcquisitionFunction):
         )
         if prune_baseline:
             X_baseline = prune_inferior_points(
-                model=model, X=X_baseline, objective=objective
+                model=model,
+                X=X_baseline,
+                objective=objective,
+                marginalize_dim=kwargs.get("marginalize_dim"),
             )
         self.register_buffer("X_baseline", X_baseline)
 
@@ -241,7 +244,7 @@ class qNoisyExpectedImprovement(MCAcquisitionFunction):
         posterior = self.model.posterior(X_full)
         samples = self.sampler(posterior)
         obj = self.objective(samples, X=X_full)
-        diffs = obj[:, :, :q].max(dim=-1)[0] - obj[:, :, q:].max(dim=-1)[0]
+        diffs = obj[..., :q].max(dim=-1).values - obj[..., q:].max(dim=-1).values
         return diffs.clamp_min(0).mean(dim=0)
 
 

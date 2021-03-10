@@ -363,6 +363,15 @@ class TestQNoisyExpectedImprovement(BotorchTestCase):
                     )
                 mock_prune.assert_called_once()
                 self.assertTrue(torch.equal(acqf.X_baseline, X_pruned))
+                with mock.patch(prune, return_value=X_pruned) as mock_prune:
+                    acqf = qNoisyExpectedImprovement(
+                        model=mm,
+                        X_baseline=X_baseline,
+                        prune_baseline=True,
+                        marginalize_dim=-3,
+                    )
+                    _, kwargs = mock_prune.call_args
+                    self.assertEqual(kwargs["marginalize_dim"], -3)
 
     # TODO: Test different objectives (incl. constraints)
 

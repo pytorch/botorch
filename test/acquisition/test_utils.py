@@ -61,6 +61,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
 
     @mock.patch(f"{monte_carlo.__name__}.qExpectedImprovement")
     def test_GetQEI(self, mock_acqf):
+        self.model = MockModel(MockPosterior(mean=torch.zeros(1, 2)))
         acqf = get_acquisition_function(
             acquisition_function_name="qEI",
             model=self.model,
@@ -69,6 +70,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             X_pending=self.X_pending,
             mc_samples=self.mc_samples,
             seed=self.seed,
+            marginalize_dim=0,
         )
         self.assertTrue(acqf == mock_acqf.return_value)
         best_f = self.objective(self.model.posterior(self.X_observed).mean).max().item()
@@ -79,6 +81,19 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             objective=self.objective,
             X_pending=self.X_pending,
         )
+        # test batched model
+        self.model = MockModel(MockPosterior(mean=torch.zeros(1, 2, 1)))
+        acqf = get_acquisition_function(
+            acquisition_function_name="qEI",
+            model=self.model,
+            objective=self.objective,
+            X_observed=self.X_observed,
+            X_pending=self.X_pending,
+            mc_samples=self.mc_samples,
+            seed=self.seed,
+        )
+        self.assertTrue(acqf == mock_acqf.return_value)
+        # test batched model without marginalize dim
         args, kwargs = mock_acqf.call_args
         self.assertEqual(args, ())
         sampler = kwargs["sampler"]
@@ -90,6 +105,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
     @mock.patch(f"{monte_carlo.__name__}.qProbabilityOfImprovement")
     def test_GetQPI(self, mock_acqf):
         # basic test
+        self.model = MockModel(MockPosterior(mean=torch.zeros(1, 2)))
         acqf = get_acquisition_function(
             acquisition_function_name="qPI",
             model=self.model,
@@ -148,6 +164,18 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             seed=2,
             tau=1.0,
         )
+        # test batched model
+        self.model = MockModel(MockPosterior(mean=torch.zeros(1, 2, 1)))
+        acqf = get_acquisition_function(
+            acquisition_function_name="qPI",
+            model=self.model,
+            objective=self.objective,
+            X_observed=self.X_observed,
+            X_pending=self.X_pending,
+            mc_samples=self.mc_samples,
+            seed=self.seed,
+        )
+        self.assertTrue(acqf == mock_acqf.return_value)
 
     @mock.patch(f"{monte_carlo.__name__}.qNoisyExpectedImprovement")
     def test_GetQNEI(self, mock_acqf):
@@ -160,6 +188,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             X_pending=self.X_pending,
             mc_samples=self.mc_samples,
             seed=self.seed,
+            marginalize_dim=0,
         )
         self.assertTrue(acqf == mock_acqf.return_value)
         self.assertTrue(mock_acqf.call_count, 1)
@@ -171,6 +200,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         self.assertIsInstance(sampler, SobolQMCNormalSampler)
         self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
         self.assertEqual(sampler.seed, 1)
+        self.assertEqual(kwargs["marginalize_dim"], 0)
         # test with non-qmc, no X_pending
         acqf = get_acquisition_function(
             acquisition_function_name="qNEI",
@@ -442,8 +472,16 @@ class TestPruneInferiorPoints(BotorchTestCase):
             # test that a batched X raises errors
             with self.assertRaises(UnsupportedError):
                 prune_inferior_points(model=mm, X=X.expand(2, 3, 2))
-            # test that a batched model raises errors (event shape is `q x t` = 3 x 1)
+            # test marginalize_dim
             mm2 = MockModel(MockPosterior(samples=samples.expand(2, 3, 1)))
+            X_pruned = prune_inferior_points(model=mm2, X=X, marginalize_dim=-3)
+            with self.assertRaises(UnsupportedError):
+                # test error raised when marginalize_dim is not specified with
+                # a batch model
+                prune_inferior_points(model=mm2, X=X)
+            self.assertTrue(torch.equal(X_pruned, X[[-1]]))
+            # test that a batched model raises errors when there are multiple batch dims
+            mm2 = MockModel(MockPosterior(samples=samples.expand(1, 2, 3, 1)))
             with self.assertRaises(UnsupportedError):
                 prune_inferior_points(model=mm2, X=X)
             # test that invalid max_frac is checked properly
