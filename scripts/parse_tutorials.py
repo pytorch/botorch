@@ -78,13 +78,20 @@ def gen_tutorials(repo_dir: str) -> None:
     with open(os.path.join(repo_dir, "website", "tutorials.json"), "r") as infile:
         tutorial_config = json.load(infile)
 
+    # create output directories if necessary
+    html_out_dir = os.path.join(repo_dir, "website", "_tutorials")
+    files_out_dir = os.path.join(repo_dir, "website", "static", "files")
+    for d in (html_out_dir, files_out_dir):
+        if not os.path.exists(d):
+            os.makedirs(d)
+
     tutorial_ids = {x["id"] for v in tutorial_config.values() for x in v}
 
     for tid in tutorial_ids:
-        print("Generating {} tutorial".format(tid))
+        print(f"Generating {tid} tutorial")
 
         # convert notebook to HTML
-        ipynb_in_path = os.path.join(repo_dir, "tutorials", "{}.ipynb".format(tid))
+        ipynb_in_path = os.path.join(repo_dir, "tutorials", f"{tid}.ipynb")
         with open(ipynb_in_path, "r") as infile:
             nb_str = infile.read()
             nb = nbformat.reads(nb_str, nbformat.NO_CONVERT)
@@ -104,7 +111,8 @@ def gen_tutorials(repo_dir: str) -> None:
 
         # generate html file
         html_out_path = os.path.join(
-            repo_dir, "website", "_tutorials", "{}.html".format(tid)
+            html_out_dir,
+            f"{tid}.html",
         )
         with open(html_out_path, "w") as html_outfile:
             html_outfile.write(html_out)
@@ -112,24 +120,20 @@ def gen_tutorials(repo_dir: str) -> None:
         # generate JS file
         script = TEMPLATE.format(tid)
         js_out_path = os.path.join(
-            repo_dir, "website", "pages", "tutorials", "{}.js".format(tid)
+            repo_dir, "website", "pages", "tutorials", f"{tid}.js"
         )
         with open(js_out_path, "w") as js_outfile:
             js_outfile.write(script)
 
         # output tutorial in both ipynb & py form
-        ipynb_out_path = os.path.join(
-            repo_dir, "website", "static", "files", "{}.ipynb".format(tid)
-        )
+        ipynb_out_path = os.path.join(files_out_dir, f"{tid}.ipynb")
         with open(ipynb_out_path, "w") as ipynb_outfile:
             ipynb_outfile.write(nb_str)
         exporter = PythonExporter()
         script, meta = exporter.from_notebook_node(nb)
         # make sure to use python3 shebang
         script = script.replace("#!/usr/bin/env python", "#!/usr/bin/env python3")
-        py_out_path = os.path.join(
-            repo_dir, "website", "static", "files", "{}.py".format(tid)
-        )
+        py_out_path = os.path.join(repo_dir, "website", "static", "files", f"{tid}.py")
         with open(py_out_path, "w") as py_outfile:
             py_outfile.write(script)
 
