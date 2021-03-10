@@ -618,13 +618,14 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
             batch_shape: The batch shape.
         """
         super().__init__()
-        self.eps = eps
         self.register_buffer("indices", torch.tensor(indices, dtype=torch.long))
         self.transform_on_train = transform_on_train
         self.transform_on_eval = transform_on_eval
         self.transform_on_preprocess = transform_on_preprocess
         self.reverse = reverse
         self.batch_shape = batch_shape or torch.Size([])
+        self._X_min = eps
+        self._X_range = 1 - 2 * eps
         if len(self.batch_shape) > 0:
             # Note: this follows the gpytorch shape convention for lengthscales
             # There is ongoing discussion about the extra `1`.
@@ -684,8 +685,13 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
         k = Kumaraswamy(
             concentration1=self.concentration1, concentration0=self.concentration0
         )
+        # normalize to [eps, 1-eps]
         X_tf[..., self.indices] = k.cdf(
-            X_tf[..., self.indices].clamp(self.eps, 1 - self.eps)
+            torch.clamp(
+                X_tf[..., self.indices] * self._X_range + self._X_min,
+                self._X_min,
+                1.0 - self._X_min,
+            )
         )
         return X_tf
 
@@ -709,5 +715,8 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
         k = Kumaraswamy(
             concentration1=self.concentration1, concentration0=self.concentration0
         )
-        X_tf[..., self.indices] = k.icdf(X_tf[..., self.indices])
+        # unnormalize from [eps, 1-eps] to [0,1]
+        X_tf[..., self.indices] = (
+            (k.icdf(X_tf[..., self.indices]) - self._X_min) / self._X_range
+        ).clamp(0.0, 1.0)
         return X_tf

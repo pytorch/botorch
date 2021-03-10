@@ -449,9 +449,7 @@ class TestInputTransforms(BotorchTestCase):
                     X, batch_shape=warp_tf.batch_shape
                 )
                 expected_X_tf[..., indices] = k.cdf(
-                    expected_X_tf[..., indices]
-                    .clamp_min(warp_tf.eps)
-                    .clamp_max(1 - warp_tf.eps)
+                    expected_X_tf[..., indices] * warp_tf._X_range + warp_tf._X_min
                 )
 
                 self.assertTrue(torch.equal(expected_X_tf, X_tf))
