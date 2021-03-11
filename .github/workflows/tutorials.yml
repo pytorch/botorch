@@ -23,11 +23,11 @@ jobs:
       # we need to do this so setuptools_scm knows how to set the botorch version
       run: git fetch --prune --unshallow
     - name: Install dependencies
-      # we install in this order so Ax doesn't install a different BoTorch version
+      env:
+        # this is so Ax's setup doesn't install a pinned BoTorch version
+        ALLOW_BOTORCH_LATEST: true
       run: |
         pip install git+https://github.com/cornellius-gp/gpytorch.git
-        pip install .
-        pip install git+https://github.com/facebook/Ax.git
         pip install .[tutorials]
     - name: Run tutorials
       run: |
