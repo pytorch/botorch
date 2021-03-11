@@ -139,7 +139,8 @@ class MultivariateNormalQMCEngine:
             self._corr_matrix = torch.linalg.cholesky(cov).transpose(-1, -2)
         except RuntimeError:
             eigval, eigvec = torch.linalg.eigh(cov)
-            if not torch.all(eigval >= -1e-8):
+            tol = 1e-8 if eigval.dtype == torch.double else 1e-6
+            if torch.any(eigval < -tol):
                 raise ValueError("Covariance matrix not PSD.")
             eigval_root = eigval.clamp_min(0.0).sqrt()
             self._corr_matrix = (eigvec * eigval_root).transpose(-1, -2)
