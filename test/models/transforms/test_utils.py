@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import math
+from itertools import product
 
 import torch
 from botorch.models.transforms.utils import (
@@ -12,8 +13,10 @@ from botorch.models.transforms.utils import (
     norm_to_lognorm,
     norm_to_lognorm_mean,
     norm_to_lognorm_variance,
+    expand_and_copy_tensor,
 )
 from botorch.utils.testing import BotorchTestCase
+from gpytorch.utils.broadcasting import _mul_broadcast_shape
 
 
 class TestTransformUtils(BotorchTestCase):
@@ -105,3 +108,18 @@ class TestTransformUtils(BotorchTestCase):
                 mu_rt, Cov_rt = norm_to_lognorm(mu_n, Cov_n)
                 self.assertTrue(torch.allclose(mu_rt, mu, atol=1e-4))
                 self.assertTrue(torch.allclose(Cov_rt, Cov, atol=1e-4))
+
+    def test_expand_and_copy_tensor(self):
+        for input_batch_shape, batch_shape in product(
+            (torch.Size([4, 1]), torch.Size([2, 3, 1])),
+            (torch.Size([5]), torch.Size([])),
+        ):
+            if len(batch_shape) == 0:
+                input_batch_shape = input_batch_shape[:-1]
+            X = torch.rand(input_batch_shape + torch.Size([2, 1]))
+            expand_shape = (
+                _mul_broadcast_shape(input_batch_shape, batch_shape) + X.shape[-2:]
+            )
+            X_tf = expand_and_copy_tensor(X, batch_shape=batch_shape)
+            self.assertEqual(X_tf.shape, expand_shape)
+            self.assertFalse(X_tf is X.expand(expand_shape))

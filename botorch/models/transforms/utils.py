@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import Tuple
 
 import torch
+from gpytorch.utils.broadcasting import _mul_broadcast_shape
 from torch import Tensor
 
 
@@ -89,3 +90,22 @@ def norm_to_lognorm_variance(mu: Tensor, var: Tensor) -> Tensor:
     """
     b = mu + 0.5 * var
     return (torch.exp(var) - 1) * torch.exp(2 * b)
+
+
+def expand_and_copy_tensor(X: Tensor, batch_shape: torch.Size) -> Tensor:
+    r"""Expand and copy X according to batch_shape.
+
+    Args:
+        X: A `input_batch_shape x n x d`-dim tensor of inputs
+        batch_shape: The new batch shape
+
+    Returns:
+        A `input_batch_shape x batch_shape x n x d`-dim tensor of inputs
+    """
+    err_msg = (
+        f"Provided batch shape ({batch_shape}) and input batch shape "
+        f"({X.shape[:-2]}) are not broadcastable."
+    )
+    batch_shape = _mul_broadcast_shape(X.shape[:-2], batch_shape, error_msg=err_msg)
+    expand_shape = batch_shape + X.shape[-2:]
+    return X.expand(expand_shape).clone()

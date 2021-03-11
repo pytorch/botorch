@@ -18,6 +18,7 @@ from botorch.models.transforms.input import (
     Normalize,
     Round,
 )
+from botorch.models.transforms.utils import expand_and_copy_tensor
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.priors import LogNormalPrior
 from torch.nn import Module
@@ -25,8 +26,13 @@ from torch.nn import Module
 
 def get_test_warp(indices, **kwargs):
     warp_tf = Warp(indices=indices, **kwargs)
-    warp_tf._set_concentration(0, torch.tensor([1.0, 2.0]))
-    warp_tf._set_concentration(1, torch.tensor([2.0, 3.0]))
+    c0 = torch.tensor([1.0, 2.0])[: len(indices)]
+    c1 = torch.tensor([2.0, 3.0])[: len(indices)]
+    batch_shape = kwargs.get("batch_shape", torch.Size([]))
+    c0 = c0.expand(batch_shape + c0.shape)
+    c1 = c1.expand(batch_shape + c1.shape)
+    warp_tf._set_concentration(0, c0)
+    warp_tf._set_concentration(1, c1)
     return warp_tf
 
 
@@ -416,105 +422,131 @@ class TestInputTransforms(BotorchTestCase):
                 self.assertTrue(torch.equal(log_tf.preprocess_transform(X), X_tf))
 
     def test_warp_transform(self):
-        for dtype in (torch.float, torch.double):
+        for dtype, batch_shape, warp_batch_shape in itertools.product(
+            (torch.float, torch.double),
+            (torch.Size(), torch.Size([3])),
+            (torch.Size(), torch.Size([2])),
+        ):
             tkwargs = {"device": self.device, "dtype": dtype}
 
             # basic init
             indices = [0, 2]
-            warp_tf = get_test_warp(indices).to(**tkwargs)
+            warp_tf = get_test_warp(indices, batch_shape=warp_batch_shape).to(**tkwargs)
             self.assertTrue(warp_tf.training)
 
             k = Kumaraswamy(warp_tf.concentration1, warp_tf.concentration0)
 
             self.assertEqual(warp_tf.indices.tolist(), indices)
 
-            # basic usage
-            for batch_shape in (torch.Size(), torch.Size([3])):
-                X = torch.rand(*batch_shape, 4, 3, **tkwargs)
-                with torch.no_grad():
-                    warp_tf = get_test_warp(indices=indices).to(**tkwargs)
-                    X_tf = warp_tf(X)
-                    expected_X_tf = X.clone()
-                    expected_X_tf[..., indices] = k.cdf(
-                        expected_X_tf[..., indices]
-                        .clamp_min(warp_tf.eps)
-                        .clamp_max(1 - warp_tf.eps)
-                    )
-                    # check non-integers parameters are unchanged
-                    self.assertTrue(torch.equal(expected_X_tf, X_tf))
-
-                    # test untransform
-                    untransformed_X = warp_tf.untransform(X_tf)
-
-                    print(untransformed_X)
-                    print(X)
-                    self.assertTrue(
-                        torch.allclose(untransformed_X, X, rtol=1e-3, atol=1e-3)
-                    )
-
-                    # test no transform on eval
-                    warp_tf = get_test_warp(indices, transform_on_eval=False).to(
-                        **tkwargs
-                    )
-                    X_tf = warp_tf(X)
-                    self.assertFalse(torch.equal(X, X_tf))
-                    warp_tf.eval()
-                    X_tf = warp_tf(X)
-                    self.assertTrue(torch.equal(X, X_tf))
-
-                    # test no transform on train
-                    warp_tf = get_test_warp(
-                        indices=indices, transform_on_train=False
-                    ).to(**tkwargs)
-                    X_tf = warp_tf(X)
-                    self.assertTrue(torch.equal(X, X_tf))
-                    warp_tf.eval()
-                    X_tf = warp_tf(X)
-                    self.assertFalse(torch.equal(X, X_tf))
-
-                    # test equals
-                    warp_tf2 = get_test_warp(
-                        indices=indices, transform_on_train=False
-                    ).to(**tkwargs)
-                    self.assertTrue(warp_tf.equals(warp_tf2))
-                    # test different transform_on_train
-                    warp_tf2 = get_test_warp(indices=indices)
-                    self.assertFalse(warp_tf.equals(warp_tf2))
-                    # test different indices
-                    warp_tf2 = get_test_warp(
-                        indices=[0, 1], transform_on_train=False
-                    ).to(**tkwargs)
-                    self.assertFalse(warp_tf.equals(warp_tf2))
-
-                    # test preprocess_transform
-                    self.assertTrue(torch.equal(warp_tf.preprocess_transform(X), X))
-                    warp_tf.transform_on_preprocess = True
-                    self.assertTrue(torch.equal(warp_tf.preprocess_transform(X), X_tf))
-
-                    # test _set_concentration
-                    warp_tf._set_concentration(0, warp_tf.concentration0.shape)
-                    warp_tf._set_concentration(1, warp_tf.concentration1.shape)
-
-                    # test concentration prior
-                    prior0 = LogNormalPrior(0.0, 0.75).to(**tkwargs)
-                    prior1 = LogNormalPrior(0.0, 0.5).to(**tkwargs)
-                    warp_tf = get_test_warp(
-                        indices=[0, 1],
-                        concentration0_prior=prior0,
-                        concentration1_prior=prior1,
-                    )
-                    for i, (name, module, p, _, _) in enumerate(warp_tf.named_priors()):
-                        self.assertEqual(name, f"concentration{i}_prior")
-                        self.assertIsInstance(p, LogNormalPrior)
-                        self.assertEqual(p.base_dist.scale, 0.75 if i == 0 else 0.5)
-
-                # test gradients
-                X = 1 + 5 * torch.rand(*batch_shape, 4, 3, **tkwargs)
-                warp_tf = get_test_warp(indices=indices).to(**tkwargs)
+            X = torch.rand(*batch_shape, 4, 3, **tkwargs)
+            X = X.unsqueeze(-3) if len(warp_batch_shape) > 0 else X
+            with torch.no_grad():
+                warp_tf = get_test_warp(
+                    indices=indices, batch_shape=warp_batch_shape
+                ).to(**tkwargs)
                 X_tf = warp_tf(X)
-                X_tf.sum().backward()
-                for grad in (warp_tf.concentration0.grad, warp_tf.concentration1.grad):
-                    self.assertIsNotNone(grad)
-                    self.assertFalse(torch.isnan(grad).any())
-                    self.assertFalse(torch.isinf(grad).any())
-                    self.assertFalse((grad == 0).all())
+                expected_X_tf = expand_and_copy_tensor(
+                    X, batch_shape=warp_tf.batch_shape
+                )
+                expected_X_tf[..., indices] = k.cdf(
+                    expected_X_tf[..., indices] * warp_tf._X_range + warp_tf._X_min
+                )
+
+                self.assertTrue(torch.equal(expected_X_tf, X_tf))
+
+                # test untransform
+                untransformed_X = warp_tf.untransform(X_tf)
+                self.assertTrue(
+                    torch.allclose(
+                        untransformed_X,
+                        expand_and_copy_tensor(X, batch_shape=warp_tf.batch_shape),
+                        rtol=1e-3,
+                        atol=1e-3 if self.device == torch.device("cpu") else 1e-2,
+                    )
+                )
+                if len(warp_batch_shape) > 0:
+                    with self.assertRaises(BotorchTensorDimensionError):
+                        warp_tf.untransform(X_tf.unsqueeze(-3))
+
+                # test no transform on eval
+                warp_tf = get_test_warp(
+                    indices, transform_on_eval=False, batch_shape=warp_batch_shape
+                ).to(**tkwargs)
+                X_tf = warp_tf(X)
+                self.assertFalse(torch.equal(X, X_tf))
+                warp_tf.eval()
+                X_tf = warp_tf(X)
+                self.assertTrue(torch.equal(X, X_tf))
+
+                # test no transform on train
+                warp_tf = get_test_warp(
+                    indices=indices,
+                    transform_on_train=False,
+                    batch_shape=warp_batch_shape,
+                ).to(**tkwargs)
+                X_tf = warp_tf(X)
+                self.assertTrue(torch.equal(X, X_tf))
+                warp_tf.eval()
+                X_tf = warp_tf(X)
+                self.assertFalse(torch.equal(X, X_tf))
+
+                # test equals
+                warp_tf2 = get_test_warp(
+                    indices=indices,
+                    transform_on_train=False,
+                    batch_shape=warp_batch_shape,
+                ).to(**tkwargs)
+                self.assertTrue(warp_tf.equals(warp_tf2))
+                # test different transform_on_train
+                warp_tf2 = get_test_warp(indices=indices, batch_shape=warp_batch_shape)
+                self.assertFalse(warp_tf.equals(warp_tf2))
+                # test different indices
+                warp_tf2 = get_test_warp(
+                    indices=[0, 1],
+                    transform_on_train=False,
+                    batch_shape=warp_batch_shape,
+                ).to(**tkwargs)
+                self.assertFalse(warp_tf.equals(warp_tf2))
+
+                # test preprocess_transform
+                self.assertTrue(torch.equal(warp_tf.preprocess_transform(X), X))
+                warp_tf.transform_on_preprocess = True
+                self.assertTrue(torch.equal(warp_tf.preprocess_transform(X), X_tf))
+
+                # test _set_concentration
+                warp_tf._set_concentration(0, warp_tf.concentration0)
+                warp_tf._set_concentration(1, warp_tf.concentration1)
+
+                # test concentration prior
+                prior0 = LogNormalPrior(0.0, 0.75).to(**tkwargs)
+                prior1 = LogNormalPrior(0.0, 0.5).to(**tkwargs)
+                warp_tf = get_test_warp(
+                    indices=[0, 1],
+                    concentration0_prior=prior0,
+                    concentration1_prior=prior1,
+                    batch_shape=warp_batch_shape,
+                )
+                for i, (name, _, p, _, _) in enumerate(warp_tf.named_priors()):
+                    self.assertEqual(name, f"concentration{i}_prior")
+                    self.assertIsInstance(p, LogNormalPrior)
+                    self.assertEqual(p.base_dist.scale, 0.75 if i == 0 else 0.5)
+
+            # test gradients
+            X = 1 + 5 * torch.rand(*batch_shape, 4, 3, **tkwargs)
+            X = X.unsqueeze(-3) if len(warp_batch_shape) > 0 else X
+            warp_tf = get_test_warp(indices=indices, batch_shape=warp_batch_shape).to(
+                **tkwargs
+            )
+            X_tf = warp_tf(X)
+            X_tf.sum().backward()
+            for grad in (warp_tf.concentration0.grad, warp_tf.concentration1.grad):
+                self.assertIsNotNone(grad)
+                self.assertFalse(torch.isnan(grad).any())
+                self.assertFalse(torch.isinf(grad).any())
+                self.assertFalse((grad == 0).all())
+
+            # test set with scalar
+            warp_tf._set_concentration(i=0, value=2.0)
+            self.assertTrue((warp_tf.concentration0 == 2.0).all())
+            warp_tf._set_concentration(i=1, value=3.0)
+            self.assertTrue((warp_tf.concentration1 == 3.0).all())
