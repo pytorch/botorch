@@ -24,6 +24,8 @@ def is_non_dominated(Y: Tensor, deduplicate: bool = True) -> Tensor:
         A `(batch_shape) x n`-dim boolean tensor indicating whether
         each point is non-dominated.
     """
+    if Y.shape[-2] == 0:
+        return torch.zeros(Y.shape[:-1], dtype=torch.bool, device=Y.device)
     Y1 = Y.unsqueeze(-3)
     Y2 = Y.unsqueeze(-2)
     dominates = (Y1 >= Y2).all(dim=-1) & (Y1 > Y2).any(dim=-1)
