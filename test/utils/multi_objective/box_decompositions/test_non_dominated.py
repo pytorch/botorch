@@ -141,10 +141,6 @@ class TestNonDominatedPartitioning(BotorchTestCase):
                 cell_bounds2 = partitioning.get_hypercell_bounds()
                 self.assertTrue(torch.equal(cell_bounds, cell_bounds2))
 
-                # test improper batch shape
-                # with self.assertRaises(BotorchTensorDimensionError):
-                #     partitioning.get_hypercell_bounds()
-
                 # test improper Y shape (too many batch dims)
                 with self.assertRaises(NotImplementedError):
                     NondominatedPartitioning(ref_point=ref_point, Y=Y.unsqueeze(0))
