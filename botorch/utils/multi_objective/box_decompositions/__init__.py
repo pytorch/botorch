@@ -16,11 +16,13 @@ from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     NondominatedPartitioning,
 )
 from botorch.utils.multi_objective.box_decompositions.utils import (
+    compute_dominated_hypercell_bounds_2d,
     compute_non_dominated_hypercell_bounds_2d,
 )
 
 
 __all__ = [
+    "compute_dominated_hypercell_bounds_2d",
     "compute_non_dominated_hypercell_bounds_2d",
     "BoxDecompositionList",
     "DominatedPartitioning",

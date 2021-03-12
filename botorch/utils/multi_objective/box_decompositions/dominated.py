@@ -14,6 +14,7 @@ from botorch.utils.multi_objective.box_decompositions.box_decomposition import (
 )
 from botorch.utils.multi_objective.box_decompositions.utils import (
     get_partition_bounds,
+    compute_dominated_hypercell_bounds_2d,
 )
 
 
@@ -25,6 +26,19 @@ class DominatedPartitioning(FastPartitioning):
     Example:
         >>> bd = DominatedPartitioning(ref_point, Y)
     """
+
+    def _partition_space_2d(self) -> None:
+        r"""Partition the non-dominated space into disjoint hypercells.
+
+        This direct method works for `m=2` outcomes.
+        """
+        cell_bounds = compute_dominated_hypercell_bounds_2d(
+            # flip self.pareto_Y because it is sorted in decreasing order (since
+            # self._pareto_Y was sorted in increasing order and we multiplied by -1)
+            pareto_Y_sorted=self.pareto_Y.flip(-2),
+            ref_point=self.ref_point,
+        )
+        self.register_buffer("hypercell_bounds", cell_bounds)
 
     def _get_partitioning(self) -> None:
         r"""Get the bounds of each hypercell in the decomposition."""

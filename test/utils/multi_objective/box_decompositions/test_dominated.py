@@ -52,22 +52,22 @@ class TestDominatedPartitioning(BotorchTestCase):
                 [
                     [
                         [0.0, 0.0],
-                        [0.0, 3.0],
-                        [0.0, 4.0],
-                        [0.0, 5.0],
-                        [0.0, 6.0],
-                        [0.0, 7.0],
+                        [3.0, 0.0],
+                        [4.0, 0.0],
+                        [5.0, 0.0],
+                        [6.0, 0.0],
+                        [7.0, 0.0],
                     ],
                     [
-                        [8.0, 3.0],
-                        [7.0, 4.0],
-                        [6.0, 5.0],
-                        [5.0, 6.0],
-                        [4.0, 7.0],
                         [3.0, 8.0],
+                        [4.0, 7.0],
+                        [5.0, 6.0],
+                        [6.0, 5.0],
+                        [7.0, 4.0],
+                        [8.0, 3.0],
                     ],
                 ],
-                **tkwargs,
+                **tkwargs
             )
             cell_bounds = partitioning.get_hypercell_bounds()
             self.assertTrue(torch.equal(cell_bounds, expected_cell_bounds))
@@ -84,8 +84,45 @@ class TestDominatedPartitioning(BotorchTestCase):
             Y = torch.rand(3, 10, 2, **tkwargs)
 
             # test batched m=2
-            with self.assertRaises(NotImplementedError):
-                DominatedPartitioning(ref_point=ref_point, Y=Y)
+            partitioning = DominatedPartitioning(ref_point=ref_point, Y=Y)
+            cell_bounds = partitioning.get_hypercell_bounds()
+            partitionings = []
+            for i in range(Y.shape[0]):
+                partitioning_i = DominatedPartitioning(ref_point=ref_point, Y=Y[i])
+                partitionings.append(partitioning_i)
+                # check pareto_Y
+                pareto_set1 = {tuple(x) for x in partitioning_i.pareto_Y.tolist()}
+                pareto_set2 = {tuple(x) for x in partitioning.pareto_Y[i].tolist()}
+                self.assertEqual(pareto_set1, pareto_set2)
+                expected_cell_bounds_i = partitioning_i.get_hypercell_bounds()
+                # remove padding
+                no_padding_cell_bounds_i = cell_bounds[:, i][
+                    :, ((cell_bounds[1, i] - cell_bounds[0, i]) != 0).all(dim=-1)
+                ]
+                self.assertTrue(
+                    torch.equal(expected_cell_bounds_i, no_padding_cell_bounds_i)
+                )
+
+            # test batch ref point
+            partitioning = DominatedPartitioning(
+                ref_point=ref_point.unsqueeze(0).expand(3, *ref_point.shape), Y=Y
+            )
+            cell_bounds2 = partitioning.get_hypercell_bounds()
+            self.assertTrue(torch.equal(cell_bounds, cell_bounds2))
+
+            # test batched where batches have different numbers of pareto points
+            partitioning = DominatedPartitioning(
+                ref_point=pareto_Y.max(dim=-2).values,
+                Y=torch.stack(
+                    [pareto_Y, pareto_Y + pareto_Y.max(dim=-2).values], dim=0
+                ),
+            )
+            hv = partitioning.compute_hypervolume()
+            self.assertEqual(hv[0].item(), 0.0)
+            self.assertEqual(hv[1].item(), 49.0)
+            cell_bounds = partitioning.get_hypercell_bounds()
+            self.assertEqual(cell_bounds.shape, torch.Size([2, 2, 6, 2]))
+
             # test batched m>2
             ref_point = torch.zeros(3, **tkwargs)
             with self.assertRaises(NotImplementedError):
@@ -114,5 +151,3 @@ class TestDominatedPartitioning(BotorchTestCase):
                 torch.Size([2, 1, pareto_Y.shape[-1]]),
             )
             self.assertEqual(partitioning.compute_hypervolume().item(), 0)
-
-            # TODO: test approximate decomposition

@@ -12,6 +12,7 @@ from botorch.utils.multi_objective.box_decompositions.utils import (
     _expand_ref_point,
     _pad_batch_pareto_frontier,
     compute_local_upper_bounds,
+    compute_dominated_hypercell_bounds_2d,
     compute_non_dominated_hypercell_bounds_2d,
     get_partition_bounds,
     update_local_upper_bounds_incremental,
@@ -158,82 +159,106 @@ class TestUtils(BotorchTestCase):
                 Y=Y.unsqueeze(0), ref_point=ref_point, is_pareto=False
             )
 
-    def test_compute_non_dominated_hypercell_bounds_2d(self):
+    def test_compute_hypercell_bounds_2d(self):
         ref_point_raw = torch.zeros(2, device=self.device)
         arange = torch.arange(3, 9, device=self.device)
         pareto_Y_raw = torch.stack([arange, 11 - arange], dim=-1)
         inf = float("inf")
-        expected_cell_bounds_raw = torch.tensor(
-            [
-                [
-                    [8.0, 0.0],
-                    [7.0, 3.0],
-                    [6.0, 4.0],
-                    [5.0, 5.0],
-                    [4.0, 6.0],
-                    [3.0, 7.0],
-                    [0.0, 8.0],
-                ],
-                [
-                    [inf, inf],
-                    [8.0, inf],
-                    [7.0, inf],
-                    [6.0, inf],
-                    [5.0, inf],
-                    [4.0, inf],
-                    [3.0, inf],
-                ],
-            ],
-            device=self.device,
-        )
-        for dtype in (torch.float, torch.double):
-            pareto_Y = pareto_Y_raw.to(dtype=dtype)
-            ref_point = ref_point_raw.to(dtype=dtype)
-            expected_cell_bounds = expected_cell_bounds_raw.to(dtype=dtype)
-            # test non-batch
-            cell_bounds = compute_non_dominated_hypercell_bounds_2d(
-                pareto_Y_sorted=pareto_Y,
-                ref_point=ref_point,
-            )
-            num_matches = (
-                (cell_bounds.unsqueeze(0) == expected_cell_bounds.unsqueeze(1))
-                .all(dim=-1)
-                .any(dim=0)
-                .sum()
-            )
-            self.assertTrue(num_matches, 7)
-            # test batch
-            pareto_Y_batch = torch.stack(
-                [pareto_Y, pareto_Y + pareto_Y.max(dim=-2).values], dim=0
-            )
-            # filter out points that are not better than ref_point
-            ref_point = pareto_Y.max(dim=-2).values
-            pareto_Y_batch = _pad_batch_pareto_frontier(
-                Y=pareto_Y_batch, ref_point=ref_point, is_pareto=True
-            )
-            # sort pareto_Y_batch
-            pareto_Y_batch = pareto_Y_batch.gather(
-                index=torch.argsort(pareto_Y_batch[..., :1], dim=-2).expand(
-                    pareto_Y_batch.shape
-                ),
-                dim=-2,
-            )
-            cell_bounds = compute_non_dominated_hypercell_bounds_2d(
-                ref_point=ref_point,
-                pareto_Y_sorted=pareto_Y_batch,
-            )
-            # check hypervolume
-            max_vals = (pareto_Y + pareto_Y).max(dim=-2).values
-            clamped_cell_bounds = torch.min(cell_bounds, max_vals)
-            total_hv = (max_vals - ref_point).prod()
-            nondom_hv = (
-                (clamped_cell_bounds[1] - clamped_cell_bounds[0])
-                .prod(dim=-1)
-                .sum(dim=-1)
-            )
-            hv = total_hv - nondom_hv
-            self.assertEqual(hv[0].item(), 0.0)
-            self.assertEqual(hv[1].item(), 49.0)
+        for method in (
+            compute_non_dominated_hypercell_bounds_2d,
+            compute_dominated_hypercell_bounds_2d,
+        ):
+            if method == compute_non_dominated_hypercell_bounds_2d:
+                expected_cell_bounds_raw = torch.tensor(
+                    [
+                        [
+                            [0.0, 8.0],
+                            [3.0, 7.0],
+                            [4.0, 6.0],
+                            [5.0, 5.0],
+                            [6.0, 4.0],
+                            [7.0, 3.0],
+                            [8.0, 0.0],
+                        ],
+                        [
+                            [3.0, inf],
+                            [4.0, inf],
+                            [5.0, inf],
+                            [6.0, inf],
+                            [7.0, inf],
+                            [8.0, inf],
+                            [inf, inf],
+                        ],
+                    ],
+                    device=self.device,
+                )
+            else:
+                expected_cell_bounds_raw = torch.tensor(
+                    [
+                        [
+                            [0.0, 0.0],
+                            [3.0, 0.0],
+                            [4.0, 0.0],
+                            [5.0, 0.0],
+                            [6.0, 0.0],
+                            [7.0, 0.0],
+                        ],
+                        [
+                            [3.0, 8.0],
+                            [4.0, 7.0],
+                            [5.0, 6.0],
+                            [6.0, 5.0],
+                            [7.0, 4.0],
+                            [8.0, 3.0],
+                        ],
+                    ],
+                    device=self.device,
+                )
+            for dtype in (torch.float, torch.double):
+                pareto_Y = pareto_Y_raw.to(dtype=dtype)
+                ref_point = ref_point_raw.to(dtype=dtype)
+                expected_cell_bounds = expected_cell_bounds_raw.to(dtype=dtype)
+                # test non-batch
+                cell_bounds = method(
+                    pareto_Y_sorted=pareto_Y,
+                    ref_point=ref_point,
+                )
+                self.assertTrue(torch.equal(cell_bounds, expected_cell_bounds))
+                # test batch
+                pareto_Y_batch = torch.stack(
+                    [pareto_Y, pareto_Y + pareto_Y.max(dim=-2).values], dim=0
+                )
+                # filter out points that are not better than ref_point
+                ref_point = pareto_Y.max(dim=-2).values
+                pareto_Y_batch = _pad_batch_pareto_frontier(
+                    Y=pareto_Y_batch, ref_point=ref_point, is_pareto=True
+                )
+                # sort pareto_Y_batch
+                pareto_Y_batch = pareto_Y_batch.gather(
+                    index=torch.argsort(pareto_Y_batch[..., :1], dim=-2).expand(
+                        pareto_Y_batch.shape
+                    ),
+                    dim=-2,
+                )
+                cell_bounds = method(
+                    ref_point=ref_point,
+                    pareto_Y_sorted=pareto_Y_batch,
+                )
+                # check hypervolume
+                max_vals = (pareto_Y + pareto_Y).max(dim=-2).values
+                if method == compute_non_dominated_hypercell_bounds_2d:
+                    clamped_cell_bounds = torch.min(cell_bounds, max_vals)
+                    total_hv = (max_vals - ref_point).prod()
+                    nondom_hv = (
+                        (clamped_cell_bounds[1] - clamped_cell_bounds[0])
+                        .prod(dim=-1)
+                        .sum(dim=-1)
+                    )
+                    hv = total_hv - nondom_hv
+                else:
+                    hv = (cell_bounds[1] - cell_bounds[0]).prod(dim=-1).sum(dim=-1)
+                self.assertEqual(hv[0].item(), 0.0)
+                self.assertEqual(hv[1].item(), 49.0)
 
 
 class TestFastPartitioningUtils(BotorchTestCase):

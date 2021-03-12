@@ -285,3 +285,51 @@ def compute_non_dominated_hypercell_bounds_2d(
         dim=-1,
     )
     return torch.stack([bottom_lefts, top_rights], dim=0)
+
+
+def compute_dominated_hypercell_bounds_2d(
+    pareto_Y_sorted: Tensor, ref_point: Tensor
+) -> Tensor:
+    r"""Compute an axis-aligned partitioning of the dominated space for 2-objectives.
+
+    Args:
+        pareto_Y_sorted: A `(batch_shape) x n_pareto x 2`-dim tensor of pareto outcomes
+            that are sorted by the 0th dimension in increasing order.
+        ref_point: A `2`-dim reference point.
+
+    Returns:
+        A `2 x (batch_shape) x n_pareto x m`-dim tensor of cell bounds.
+    """
+    # add boundary point to each front
+    # the boundary point is the extreme value in each outcome
+    # (a single coordinate of reference point)
+    batch_shape = pareto_Y_sorted.shape[:-2]
+    if ref_point.ndim == pareto_Y_sorted.ndim - 1:
+        expanded_boundary_point = ref_point.unsqueeze(-2)
+    else:
+        view_shape = torch.Size([1] * len(batch_shape)) + torch.Size([1, 2])
+        expanded_shape = batch_shape + torch.Size([1, 2])
+        expanded_boundary_point = ref_point.view(view_shape).expand(expanded_shape)
+
+    # add the points (ref, y) and (x, ref) to the corresponding ends
+    pareto_Y_sorted0, pareto_Y_sorted1 = torch.split(pareto_Y_sorted, 1, dim=-1)
+    expanded_boundary_point0, expanded_boundary_point1 = torch.split(
+        expanded_boundary_point, 1, dim=-1
+    )
+    left_end = torch.cat(
+        [expanded_boundary_point0[..., :1, :], pareto_Y_sorted0[..., :1, :]], dim=-1
+    )
+    right_end = torch.cat(
+        [pareto_Y_sorted1[..., :1, :], expanded_boundary_point1[..., :1, :]], dim=-1
+    )
+    front = torch.cat([left_end, pareto_Y_sorted, right_end], dim=-2)
+    # compute hypervolume by summing rectangles from min_x -> max_x
+    top_rights = front[..., 1:-1, :]
+    bottom_lefts = torch.cat(
+        [
+            front[..., :-2, :1],
+            expanded_boundary_point1.expand(*top_rights.shape[:-1], 1),
+        ],
+        dim=-1,
+    )
+    return torch.stack([bottom_lefts, top_rights], dim=0)
