@@ -205,9 +205,30 @@ class TestBoxDecomposition(BotorchTestCase):
             with mock.patch.object(
                 DummyFastPartitioning,
                 "reset",
+                wraps=bd.reset,
             ) as mock_reset:
                 bd.update(Y=Y[0:])
                 mock_reset.assert_called_once()
+
+            # test empty pareto Y
+            bd = DummyFastPartitioning(ref_point=ref_point)
+            with mock.patch.object(
+                DummyFastPartitioning,
+                "_get_single_cell",
+                wraps=bd._get_single_cell,
+            ) as mock_get_single_cell:
+                bd.update(Y=Y[:0])
+                mock_get_single_cell.assert_called_once()
+            # test batched empty pareto Y
+            if m == 2:
+                bd = DummyFastPartitioning(ref_point=ref_point)
+                with mock.patch.object(
+                    DummyFastPartitioning,
+                    "_get_single_cell",
+                    wraps=bd._get_single_cell,
+                ) as mock_get_single_cell:
+                    bd.update(Y=Y.unsqueeze(0)[:, :0])
+                    mock_get_single_cell.assert_called_once()
 
             # test that update_local_upper_bounds_incremental is called when m>2
             bd = DummyFastPartitioning(ref_point=ref_point)

@@ -283,7 +283,7 @@ class FastPartitioning(BoxDecomposition, ABC):
         pass  # pragma: no cover
 
     def partition_space(self) -> None:
-        if self._neg_pareto_Y.shape[0] == 0:
+        if self._neg_pareto_Y.shape[-2] == 0:
             self._get_single_cell()
         else:
             super().partition_space()
