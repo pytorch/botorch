@@ -192,7 +192,7 @@ class DiscreteMaxValueBase(MaxValueBase):
         self,
         model: Model,
         candidate_set: Tensor,
-        num_mv_samples: int,
+        num_mv_samples: int = 10,
         use_gumbel: bool = True,
         maximize: bool = True,
         X_pending: Optional[Tensor] = None,
