@@ -21,10 +21,11 @@ References
     GIBBON: General-purpose Information-Based Bayesian OptimisatioN
     arXiv:2102.03324, 2021
 
-.. [Takeno2019mfmves]
-    Takeno, S., et al.,
-    Multi-fidelity Bayesian Optimization with Max-value Entropy Search.
-    arXiv:1901.08275v1, 2019
+.. [Takeno2020mfmves]
+    S. Takeno, H. Fukuoka, Y. Tsukada, T. Koyama, M. Shiga, I. Takeuchi,
+    M. Karasuyama. Multi-fidelity Bayesian Optimization with Max-value Entropy
+    Search and its Parallelization. Proceedings of the 37th International
+    Conference on Machine Learning, 2020.
 """
 
 from __future__ import annotations
@@ -142,9 +143,7 @@ class MaxValueBase(AcquisitionFunction, ABC):
     # ------- Abstract methods that need to be implemented by subclasses ------- #
 
     @abstractmethod
-    def _compute_information_gain(
-        self, X: Tensor, mean_M: Tensor, variance_M: Tensor, covar_mM: Tensor
-    ) -> Tensor:
+    def _compute_information_gain(self, X: Tensor, **kwargs: Any) -> Tensor:
         r"""Compute the information gain at the design points `X`.
 
         `num_fantasies = 1` for non-fantasized models.
@@ -152,10 +151,7 @@ class MaxValueBase(AcquisitionFunction, ABC):
          Args:
             X: A `batch_shape x 1 x d`-dim Tensor of `batch_shape` t-batches
                 with `1` `d`-dim design point each.
-            mean_M: A `batch_shape x num_fantasies`-dim Tensor of means.
-            variance_M: A `batch_shape x num_fantasies`-dim Tensor of variances.
-            covar_mM: A `batch_shape x num_fantasies x (1 + num_trace_observations)`
-                -dim Tensor of covariances.
+            kwargs: Other keyword arguments used by subclasses.
 
         Returns:
             A `num_fantasies x batch_shape`-dim Tensor of information gains at the
@@ -214,8 +210,8 @@ class DiscreteMaxValueBase(MaxValueBase):
             maximize: If True, consider the problem a maximization problem.
             X_pending: A `m x d`-dim Tensor of `m` design points that have been
                 submitted for function evaluation but have not yet been evaluated.
-            train_inputs: A `n_train x d` Tensor that the model has been fitted on,
-                optional if model is an exact GP model.
+            train_inputs: A `n_train x d` Tensor that the model has been fitted on.
+                Not required if the model is an instance of a GPyTorch ExactGP model.
         """
         self.use_gumbel = use_gumbel
 
@@ -310,7 +306,7 @@ class qMaxValueEntropy(DiscreteMaxValueBase):
         use_gumbel: bool = True,
         maximize: bool = True,
         X_pending: Optional[Tensor] = None,
-        train_inputs: Tensor = None,
+        train_inputs: Optional[Tensor] = None,
         **kwargs: Any,
     ) -> None:
         r"""Single-outcome max-value entropy search acquisition function.
@@ -329,8 +325,8 @@ class qMaxValueEntropy(DiscreteMaxValueBase):
             maximize: If True, consider the problem a maximization problem.
             X_pending: A `m x d`-dim Tensor of `m` design points that have been
                 submitted for function evaluation but have not yet been evaluated.
-            train_inputs: A `n_train x d` Tensor that the model has been fitted on,
-                optional if model is an exact GP model.
+            train_inputs: A `n_train x d` Tensor that the model has been fitted on.
+                Not required if the model is an instance of a GPyTorch ExactGP model.
         """
         super().__init__(
             model=model,
@@ -382,8 +378,8 @@ class qMaxValueEntropy(DiscreteMaxValueBase):
         observation and trace observations.
 
         The implementation is inspired from the papers on multi-fidelity MES by
-        Takeno et. al. [Takeno2019mfmves]_. The notation in the comments in this
-        function follows the Appendix A of Takeno et al..
+        [Takeno2020mfmves]_. The notation in the comments in this function follows
+        the Appendix C of [Takeno2020mfmves]_.
 
         `num_fantasies = 1` for non-fantasized models.
 
@@ -606,7 +602,7 @@ class qMultiFidelityMaxValueEntropy(qMaxValueEntropy):
     r"""Multi-fidelity max-value entropy.
 
     The acquisition function for multi-fidelity max-value entropy search
-    with support for trace observations. See [Takeno2019mfmves]_
+    with support for trace observations. See [Takeno2020mfmves]_
     for a detailed discussion of the basic ideas on multi-fidelity MES
     (note that this implementation is somewhat different).
 
