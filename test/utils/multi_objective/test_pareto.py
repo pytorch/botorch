@@ -122,3 +122,13 @@ class TestPareto(BotorchTestCase):
             self.assertTrue(
                 torch.equal(batch_Y3[1][nondom_mask3[1]], expected_nondom_Y3b_no_dedup)
             )
+
+            # test empty pareto
+            mask = is_non_dominated(Y3[:0])
+            expected_mask = torch.zeros(0, dtype=torch.bool, device=Y3.device)
+            self.assertTrue(torch.equal(expected_mask, mask))
+            mask = is_non_dominated(batch_Y3[:, :0])
+            expected_mask = torch.zeros(
+                *batch_Y3.shape[:-2], 0, dtype=torch.bool, device=Y3.device
+            )
+            self.assertTrue(torch.equal(expected_mask, mask))
