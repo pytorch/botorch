@@ -26,9 +26,10 @@ from torch import Tensor
 class MESMockModel(MockModel):
     r"""Mock object that implements dummy methods and feeds through specified outputs"""
 
-    def __init__(self, num_outputs=1):
+    def __init__(self, num_outputs=1, batch_shape=None):
         super().__init__(None)
         self._num_outputs = num_outputs
+        self._batch_shape = torch.Size() if batch_shape is None else batch_shape
 
     def posterior(self, X: Tensor, observation_noise: bool = False) -> MockPosterior:
         m_shape = X.shape[:-1]
@@ -45,8 +46,20 @@ class MESMockModel(MockModel):
         return self.posterior(X).mvn
 
     @property
+    def batch_shape(self) -> torch.Size:
+        return self._batch_shape
+
+    @property
     def num_outputs(self) -> int:
         return self._num_outputs
+
+
+class NoBatchShapeMESMockModel(MESMockModel):
+    # For some reason it's really hard to mock this property to raise a
+    # NotImplementedError, so let's just make a class for it.
+    @property
+    def batch_shape(self) -> torch.Size:
+        raise NotImplementedError
 
 
 class TestMaxValueEntropySearch(BotorchTestCase):
@@ -60,18 +73,32 @@ class TestMaxValueEntropySearch(BotorchTestCase):
             candidate_set = torch.rand(1000, 2, device=self.device, dtype=dtype)
 
             # test error in case of batch GP model
-            train_inputs = torch.rand(5, 10, 2, device=self.device, dtype=dtype)
-            mm.train_inputs = (train_inputs,)
+            mm = MESMockModel(batch_shape=torch.Size([2]))
             with self.assertRaises(NotImplementedError):
                 qMaxValueEntropy(mm, candidate_set, num_mv_samples=10)
+            mm = MESMockModel()
+            train_inputs = torch.rand(5, 10, 2, device=self.device, dtype=dtype)
+            with self.assertRaises(NotImplementedError):
+                qMaxValueEntropy(
+                    mm, candidate_set, num_mv_samples=10, train_inputs=train_inputs
+                )
+
+            # test that init works if batch_shape is not implemented on the model
+            mm = NoBatchShapeMESMockModel()
+            qMaxValueEntropy(
+                mm,
+                candidate_set,
+                num_mv_samples=10,
+            )
 
             # test error when number of outputs > 1
+            mm = MESMockModel()
             mm._num_outputs = 2
             with self.assertRaises(NotImplementedError):
                 qMaxValueEntropy(mm, candidate_set, num_mv_samples=10)
-            mm._num_outputs = 1
 
             # test with X_pending is None
+            mm = MESMockModel()
             train_inputs = torch.rand(10, 2, device=self.device, dtype=dtype)
             mm.train_inputs = (train_inputs,)
             qMVE = qMaxValueEntropy(mm, candidate_set, num_mv_samples=10)
@@ -122,18 +149,21 @@ class TestMaxValueEntropySearch(BotorchTestCase):
             candidate_set = torch.rand(1000, 2, device=self.device, dtype=dtype)
 
             # test error in case of batch GP model
-            train_inputs = torch.rand(5, 10, 2, device=self.device, dtype=dtype)
-            mm.train_inputs = (train_inputs,)
+            # train_inputs = torch.rand(5, 10, 2, device=self.device, dtype=dtype)
+            # mm.train_inputs = (train_inputs,)
+            mm = MESMockModel(batch_shape=torch.Size([2]))
             with self.assertRaises(NotImplementedError):
                 qLowerBoundMaxValueEntropy(mm, candidate_set, num_mv_samples=10)
 
             # test error when number of outputs > 1
+            mm = MESMockModel()
             mm._num_outputs = 2
             with self.assertRaises(NotImplementedError):
                 qLowerBoundMaxValueEntropy(mm, candidate_set, num_mv_samples=10)
             mm._num_outputs = 1
 
             # test with X_pending is None
+            mm = MESMockModel()
             train_inputs = torch.rand(10, 2, device=self.device, dtype=dtype)
             mm.train_inputs = (train_inputs,)
             qGIBBON = qLowerBoundMaxValueEntropy(mm, candidate_set, num_mv_samples=10)
