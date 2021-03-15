@@ -133,7 +133,8 @@ def gen_candidates_scipy(
         jac=True,
         bounds=bounds,
         constraints=constraints,
-        options={k: v for k, v in options.items() if k != "method"},
+        callback=options.get("callback", None),
+        options={k: v for k, v in options.items() if k not in ["method", "callback"]},
     )
     candidates = fix_features(
         X=torch.from_numpy(res.x).to(initial_conditions).view(shapeX).contiguous(),
