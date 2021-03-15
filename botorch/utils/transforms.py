@@ -163,7 +163,7 @@ def _verify_output_shape(acqf: Any, X: Tensor, output: Tensor) -> bool:
         warnings.warn(
             "Output shape checks failed! Expected output shape to match t-batch shape"
             f"of X, but got output with shape {output.shape} for X with shape"
-            "{X.shape}. Make sure that this is the intended behavior!",
+            f"{X.shape}. Make sure that this is the intended behavior!",
             RuntimeWarning,
         )
         return True
