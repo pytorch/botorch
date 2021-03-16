@@ -8,7 +8,6 @@ import itertools
 from copy import deepcopy
 
 import torch
-from botorch.distributions.distributions import Kumaraswamy
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.models.transforms.input import (
     ChainedInputTransform,
@@ -21,6 +20,7 @@ from botorch.models.transforms.input import (
 from botorch.models.transforms.utils import expand_and_copy_tensor
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.priors import LogNormalPrior
+from torch.distributions import Kumaraswamy
 from torch.nn import Module
 
 
