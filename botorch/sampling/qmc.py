@@ -136,10 +136,11 @@ class MultivariateNormalQMCEngine:
         )
         # compute Cholesky decomp; if it fails, do the eigendecomposition
         try:
-            self._corr_matrix = torch.cholesky(cov).transpose(-1, -2)
+            self._corr_matrix = torch.linalg.cholesky(cov).transpose(-1, -2)
         except RuntimeError:
-            eigval, eigvec = torch.symeig(cov, eigenvectors=True)
-            if not torch.all(eigval >= -1e-8):
+            eigval, eigvec = torch.linalg.eigh(cov)
+            tol = 1e-8 if eigval.dtype == torch.double else 1e-6
+            if torch.any(eigval < -tol):
                 raise ValueError("Covariance matrix not PSD.")
             eigval_root = eigval.clamp_min(0.0).sqrt()
             self._corr_matrix = (eigvec * eigval_root).transpose(-1, -2)

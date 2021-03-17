@@ -379,10 +379,10 @@ class PolytopeSampler:
 
         if equality_constraints is not None:
             self.C, self.d = equality_constraints
-            U, S, V = torch.svd(self.C, some=False)
+            U, S, Vh = torch.linalg.svd(self.C)
             r = torch.nonzero(S).size(0)  # rank of matrix C
-            self.nullC = V[:, r:]  # orthonormal null space of C, satisfying
-            # C @ nullC = 0 and nullC.T @ nullC = I
+            self.nullC = Vh[r:, :].transpose(-1, -2)  # orthonormal null space of C,
+            # satisfying # C @ nullC = 0 and nullC.T @ nullC = I
             # using the change of variables x=x0+nullC*y,
             # sample y satisfies A*nullC*y<=b-A*x0.
             # the linear constraint is automatically satisfied as x0 satisfies it.
