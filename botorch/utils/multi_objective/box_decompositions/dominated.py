@@ -16,6 +16,7 @@ from botorch.utils.multi_objective.box_decompositions.utils import (
     get_partition_bounds,
     compute_dominated_hypercell_bounds_2d,
 )
+from torch import Tensor
 
 
 class DominatedPartitioning(FastPartitioning):
@@ -48,7 +49,7 @@ class DominatedPartitioning(FastPartitioning):
         cell_bounds = -minimization_cell_bounds.flip(0)
         self.register_buffer("hypercell_bounds", cell_bounds)
 
-    def compute_hypervolume(self):
+    def compute_hypervolume(self) -> Tensor:
         r"""Compute hypervolume that is dominated by the Pareto Frontier.
 
         Returns:
