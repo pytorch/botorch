@@ -21,7 +21,6 @@ from collections import OrderedDict
 from typing import List, Optional, Union
 
 import torch
-from botorch.distributions.distributions import Kumaraswamy
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.models.transforms.utils import expand_and_copy_tensor
 from botorch.utils.rounding import approximate_round
@@ -29,6 +28,7 @@ from gpytorch import Module as GPyTorchModule
 from gpytorch.constraints import GreaterThan
 from gpytorch.priors import Prior
 from torch import Tensor, nn
+from torch.distributions import Kumaraswamy
 from torch.nn import Module, ModuleDict
 
 
