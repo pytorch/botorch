@@ -6,11 +6,18 @@
 
 r"""
 Utilities for MC and qMC sampling.
+
+References
+
+.. [Trikalinos2014polytope]
+    T. A. Trikalinos and G. van Valkenhoef. Efficient sampling from uniform
+    density n-polytopes. Technical report, Brown University, 2014.
 """
 
 from __future__ import annotations
 
 import warnings
+from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from typing import Generator, Iterable, Optional, Tuple
 
@@ -20,6 +27,7 @@ import torch
 from botorch.exceptions.warnings import SamplingWarning
 from botorch.posteriors.posterior import Posterior
 from botorch.sampling.qmc import NormalQMCEngine
+from scipy.spatial import Delaunay, HalfspaceIntersection
 from torch import LongTensor, Tensor
 from torch.quasirandom import SobolEngine
 
@@ -274,7 +282,7 @@ def sample_simplex(
         qmc: If True, use QMC Sobol sampling (instead of i.i.d. uniform).
         seed: If provided, use as a seed for the RNG.
         device: The torch device.
-        dtype:  The torch dtype.
+        dtype: The torch dtype.
 
     Returns:
         An `n x d` tensor of uniform samples from from the d-simplex.
@@ -298,6 +306,66 @@ def sample_simplex(
     if device is not None:
         srnd = srnd.to(device)
     return srnd[..., 1:] - srnd[..., :-1]
+
+
+def sample_polytope(
+    A: Tensor,
+    b: Tensor,
+    x0: Tensor,
+    n: int = 10000,
+    n0: int = 100,
+    seed: Optional[int] = None,
+) -> Tensor:
+    r"""
+    Hit and run sampler from uniform sampling points from a polytope,
+    described via inequality constraints A*x<=b.
+
+    Args:
+        A: A Tensor describing inequality constraints
+            so that all samples satisfy Ax<=b.
+        b: A Tensor describing the inequality constraints
+            so that all samples satisfy Ax<=b.
+        x0: A `d`-dim Tensor representing a starting point of the chain
+            satisfying the constraints.
+        n: The number of resulting samples kept in the output.
+        n0: The number of burn-in samples. The chain will produce
+            n+n0 samples but the first n0 samples are not saved.
+        seed: The seed for the sampler. If omitted, use a random seed.
+
+    Returns:
+        (n, d) dim Tensor containing the resulting samples.
+    """
+    n_tot = n + n0
+    seed = seed if seed is not None else torch.randint(0, 1000000, (1,)).item()
+    with manual_seed(seed=seed):
+        rands = torch.rand(n_tot, dtype=A.dtype, device=A.device)
+
+    # pre-sample samples from hypersphere
+    d = x0.size(0)
+    # uniform samples from unit ball in d dims
+    Rs = sample_hypersphere(d=d, n=n_tot, dtype=A.dtype, device=A.device).unsqueeze(-1)
+
+    # compute matprods in batch
+    ARs = (A @ Rs).squeeze(-1)
+    out = torch.empty(n, A.size(-1), dtype=A.dtype, device=A.device)
+    x = x0.clone()
+    for i, (ar, r, rnd) in enumerate(zip(ARs, Rs, rands)):
+        # given x, the next point in the chain is x+alpha*r
+        # it also satisfies A(x+alpha*r)<=b which implies A*alpha*r<=b-Ax
+        # so alpha<=(b-Ax)/ar for ar>0, and alpha>=(b-Ax)/ar for ar<0.
+        w = (b - A @ x).squeeze() / ar  # b - A @ x is always >= 0
+        pos = w >= 0
+        alpha_max = w[pos].min()
+        # important to include equality here in cases x is at the boundary
+        # of the polytope
+        neg = w <= 0
+        alpha_min = w[neg].max()
+        # alpha~Unif[alpha_min, alpha_max]
+        alpha = alpha_min + rnd * (alpha_max - alpha_min)
+        x = x + alpha * r
+        if i >= n0:  # save samples after burn-in period
+            out[i - n0] = x.squeeze()
+    return out
 
 
 def batched_multinomial(
@@ -344,37 +412,83 @@ def batched_multinomial(
     return flat_samples.view(*batch_shape, num_samples)
 
 
-class PolytopeSampler:
-    r"""
-    Sampling points from a polytope described via a set of inequality and
-    equality constraints.
+def find_interior_point(
+    A: np.ndarray,
+    b: np.ndarray,
+    A_eq: Optional[np.ndarray] = None,
+    b_eq: Optional[np.ndarray] = None,
+) -> np.ndarray:
+    r"""Find an interior point of a polytope via linear programming.
+
+    Args:
+        A: A `n_ineq x d`-dim numpy array containing the coefficients of the
+            constraint inequalities.
+        b: A `n_ineq x 1`-dim numpy array containing the right hand sides of
+            the constraint inequalities.
+        A_eq: A `n_eq x d`-dim numpy array containing the coefficients of the
+            constraint equalities.
+        b_eq: A `n_eq x 1`-dim numpy array containing the right hand sides of
+            the constraint equalities.
+
+    Returns:
+        A `d`-dim numpy array containing an interior point of the polytope.
+        This function will raise a ValueError if there is no such point.
+
+    This method solves the following Linear Program:
+        min -s subject to A @ x <= b - 2 * s, s >= 0, A_eq @ x = b_eq
     """
+    # augment inequality constraints: A @ (x, s) <= b
+    ncon = A.shape[-2] + 1
+    dim = A.shape[-1] + 1
+    c = np.zeros(dim)
+    c[-1] = -1
+    b_ub = np.zeros(ncon)
+    b_ub[:-1] = b.squeeze(-1)
+    A_ub = np.zeros((ncon, dim))
+    A_ub[:-1, :-1] = A
+    A_ub[:, -1] = 2.0
+    A_ub[-1, -1] = -1.0
+
+    result = scipy.optimize.linprog(c=c, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq)
+
+    if result.status == 2:
+        raise ValueError(
+            "No feasible point found. Constraint polytope appears empty. "
+            + "Check your constraints."
+        )
+    elif result.status > 0:
+        raise ValueError(
+            "Problem checking constraint specification. "
+            + "linprog status: {}".format(result.message)
+        )
+    # the x in the result is really (x, s)
+    return result.x[:-1]
+
+
+class PolytopeSampler(ABC):
+    r"""Base class for samplers that sample points from a polytope."""
 
     def __init__(
         self,
         inequality_constraints: Tuple[Tensor, Tensor],
-        n_burnin: int = 0,
         equality_constraints: Optional[Tuple[Tensor, Tensor]] = None,
-        initial_point: Optional[Tensor] = None,
+        interior_point: Optional[Tensor] = None,
     ) -> None:
-        r"""
+        r"""Sampler for sampling uniformly from a polytope.
+
         Args:
-            inequality_constraints: Tensors (A, b) describing inequality
-                constraints: A*x<=b, where A is (n_ineq_con, d_sample)-dim Tensor
-                and b is (n_ineq_con, 1)-dim Tensor with n_ineq_con
-                being the number of inequalities and d_sample the dimension
-                of the sample space.
-            n_burnin: The number of burn in samples.
-            equality_constraints: Tensors (C, d) describing the equality
-                constraints: C*x=d, where C is (n_eq_con, d_sample)-dim Tensor and
-                d is (n_eq_con-dim, 1) Tensor with n_eq_con
-                being the number of equalities.
-            initial_point: An (d_sample, 1)-dim Tensor presenting an inital point of
-                the chain satisfying all the conditions.
-                Determined automatically (by solving an LP) if not provided.
+            inequality_constraints: Tensors `(A, b)` describing inequality
+                constraints `A @ x <= b`, where `A` is a `n_ineq_con x d`-dim
+                Tensor and `b` is a `n_ineq_con x 1`-dim Tensor, with `n_ineq_con`
+                the number of inequalities and `d` the dimension of the sample space.
+            equality_constraints: Tensors `(C, d)` describing the equality constraints
+                `C @ x = d`, where `C` is a `n_eq_con x d`-dim Tensor and `d` is a
+                `n_eq_con x 1`-dim Tensor with `n_eq_con` the number of equalities.
+            interior_point: A `d_sample x 1`-dim Tensor presenting a point in the
+                (relative) interior of the polytope. If omitted, determined
+                automatically by solving a Linear Program.
         """
         self.A, self.b = inequality_constraints
-        self.n_burnin = n_burnin
         self.equality_constraints = equality_constraints
 
         if equality_constraints is not None:
@@ -396,41 +510,37 @@ class PolytopeSampler:
         self.new_A = self.A @ self.nullC  # doesn't depend on the initial point
 
         # initial point for the original, not transformed, problem
-        if initial_point is not None:
-            if self.feasible(initial_point):
-                self.x0 = initial_point
+        if interior_point is not None:
+            if self.feasible(interior_point):
+                self.x0 = interior_point
             else:
                 raise ValueError("The given input point is not feasible.")
         else:
-            self.x0 = self.find_initial_point()
+            self.x0 = self.find_interior_point()
 
     def feasible(self, x: Tensor) -> bool:
+        r"""Check whether a point is contained in the polytope.
+
+        Args:
+            x: A `d x 1`-dim Tensor.
+
+        Returns:
+            True if `x` is contained inside the polytope (incl. its boundary),
+            False otherwise.
+        """
         ineq = (self.A @ x - self.b <= 0).all()
         if self.equality_constraints is not None:
             eq = (self.C @ x - self.d == 0).all()
             return ineq & eq
         return ineq
 
-    def find_initial_point(self):
-        r"""
-        Finds a feasible point of the original problem.
-        Details: Solves the following LP:
-        min -s such that Ax<=b-2*s, s>=0, plus equality constraints.
-        The number of inequality constrains in LP: nrow(A) + 1.
-        LP solution dimension: dim(x) + dim(s) = dim(x) + 1.
-        """
-        # inequality constraints: A_ub * (x, s) <= b_ub
-        ncon = self.A.size(0) + 1
-        dim = self.A.size(-1) + 1
-        c = np.zeros(dim)
-        c[-1] = -1
-        b_ub = np.zeros(ncon)
-        b_ub[:-1] = self.b.cpu().squeeze(-1).numpy()
-        A_ub = np.zeros((ncon, dim))
-        A_ub[:-1, :-1] = self.A.cpu().numpy()
-        A_ub[:, -1] = 2.0
-        A_ub[-1, -1] = -1.0
+    def find_interior_point(self) -> Tensor:
+        r"""Find an interior point of the polytope.
 
+        Returns:
+            A `d x 1`-dim Tensor representing a point contained in the polytope.
+            This function will raise a ValueError if there is no such point.
+        """
         if self.equality_constraints:
             # equality constraints: A_eq * (x, s) = b_eq
             A_eq = np.zeros((self.C.size(0), self.C.size(-1) + 1))
@@ -439,32 +549,69 @@ class PolytopeSampler:
         else:
             A_eq = None
             b_eq = None
-
-        result = scipy.optimize.linprog(  # solving LP
-            c=c, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq
+        x0 = find_interior_point(
+            A=self.A.cpu().numpy(), b=self.b.cpu().numpy(), A_eq=A_eq, b_eq=b_eq
         )
+        return torch.from_numpy(x0).to(self.A).unsqueeze(-1)
 
-        if result.status == 2:
-            raise ValueError(
-                "No feasible point found. Constraint polytope appears empty. "
-                + "Check your constraints."
-            )
-        elif result.status > 0:
-            raise ValueError(
-                "Problem checking constraint specification. "
-                + "linprog status: {}".format(result.message)
-            )
+    # -------- Abstract methods to be implemented by subclasses -------- #
 
-        x0 = (
-            torch.from_numpy(result.x[:-1])
-            .to(dtype=self.A.dtype, device=self.A.device)
-            .unsqueeze(-1)
+    @abstractmethod
+    def draw(self, n: int = 1, seed: Optional[int] = None) -> Tensor:
+        r"""Draw samples from the polytope.
+
+        Args:
+            n: The number of samples.
+            seed: The random seed.
+
+        Returns:
+            A `n x d_sample` Tensor of samples from the polytope.
+        """
+        pass  # pragma: no cover
+
+
+class HitAndRunPolytopeSampler(PolytopeSampler):
+    r"""A sampler for sampling from a polyope using a hit-and-run algorithm."""
+
+    def __init__(
+        self,
+        inequality_constraints: Tuple[Tensor, Tensor],
+        equality_constraints: Optional[Tuple[Tensor, Tensor]] = None,
+        interior_point: Optional[Tensor] = None,
+        n_burnin: int = 0,
+    ) -> None:
+        r"""A sampler for sampling from a polyope using a hit-and-run algorithm.
+
+        Args:
+            inequality_constraints: Tensors `(A, b)` describing inequality
+                constraints `A @ x <= b`, where `A` is a `n_ineq_con x d`-dim
+                Tensor and `b` is a `n_ineq_con x 1`-dim Tensor, with `n_ineq_con`
+                the number of inequalities and `d` the dimension of the sample space.
+            equality_constraints: Tensors `(C, d)` describing the equality constraints
+                `C @ x = d`, where `C` is a `n_eq_con x d`-dim Tensor and `d` is a
+                `n_eq_con x 1`-dim Tensor with `n_eq_con` the number of equalities.
+            interior_point: A `d_sample x 1`-dim Tensor presenting a point in the
+                (relative) interior of the polytope. If omitted, determined
+                automatically by solving a Linear Program.
+            n_burnin: The number of burn in samples.
+        """
+        super().__init__(
+            inequality_constraints=inequality_constraints,
+            equality_constraints=equality_constraints,
+            interior_point=interior_point,
         )
-
-        return x0
+        self.n_burnin = n_burnin
 
     def draw(self, n: int = 1, seed: Optional[int] = None) -> Tensor:
+        r"""Draw samples from the polytope.
 
+        Args:
+            n: The number of samples.
+            seed: The random seed.
+
+        Returns:
+            A `n x d_sample` Tensor of samples from the polytope.
+        """
         transformed_samples = sample_polytope(
             A=self.new_A,
             b=self.b - self.A @ self.x0,
@@ -475,73 +622,125 @@ class PolytopeSampler:
             n0=self.n_burnin,
             seed=seed,
         )
-
         init_shift = self.x0.transpose(-1, -2)
         samples = init_shift + transformed_samples @ self.nullC.transpose(-1, -2)
-
         # keep the last element of the resulting chain as
         # the beginning of the next chain
         self.x0 = samples[-1].reshape(-1, 1)
-        # next time the sampling is called there won't be any burn-in
+        # reset counter so there is no burn-in for subsequent samples
         self.n_burnin = 0
         return samples
 
 
-def sample_polytope(
-    A: Tensor,
-    b: Tensor,
-    x0: Tensor,
-    n: int = 10000,
-    n0: int = 100,
-    seed: Optional[int] = None,
-) -> Tensor:
-    r"""
-    Hit and run sampler from uniform sampling points from a polytope,
-    described via inequality constraints A*x<=b.
+class DelaunayPolytopeSampler(PolytopeSampler):
+    r"""A polytope sampler using Delaunay triangulation.
 
-    Args:
-        A: A Tensor describing inequality constraints
-            so that all samples satisfy Ax<=b.
-        b: A Tensor describing the inequality constraints
-            so that all samples satisfy Ax<=b.
-        x0: d dim Tensor representing a starting point of the chain
-            satisfying the constraints.
-        n: The number of resulting samples kept in the output.
-        n0: The number of burn-in samples. The chain will produce
-            n+n0 samples but the first n0 samples are not saved.
-        seed: The seed for the sampler. If omitted, use a random seed.
+    This sampler first enumerates the vertices of the constraint polytope and
+    then uses a Delaunay triangulation to tesselate its convex hull.
 
-    Returns:
-        (n, d) dim Tensor containing the resulting samples.
+    The sampling happens in two stages:
+    1. First, we sample from the set of hypertriangles generated by the
+    Delaunay triangulation (i.e. which hyper-triangle to draw the sample
+    from) with probabilities proportional to the triangle volumes.
+    2. Then, we sample uniformly from the chosen hypertriangle by sampling
+    uniformly from the unit simplex of the appropriate dimension, and
+    then computing the convex combination of the vertices of the
+    hypertriangle according to that draw from the simplex.
+
+    The best reference (not exactly the same, but functionally equivalent) is
+    [Trikalinos2014polytope]_. A simple R implementation is available at
+    https://github.com/gertvv/tesselample.
     """
-    n_tot = n + n0
-    seed = seed if seed is not None else torch.randint(0, 1000000, (1,)).item()
-    with manual_seed(seed=seed):
-        rands = torch.rand(n_tot, dtype=A.dtype, device=A.device)
 
-    # pre-sample samples from hypersphere
-    d = x0.size(0)
-    # uniform samples from unit ball in d dims
-    Rs = sample_hypersphere(d=d, n=n_tot, dtype=A.dtype, device=A.device).unsqueeze(-1)
+    def __init__(
+        self,
+        inequality_constraints: Tuple[Tensor, Tensor],
+        equality_constraints: Optional[Tuple[Tensor, Tensor]] = None,
+        interior_point: Optional[Tensor] = None,
+    ) -> None:
+        r"""Initialize DelaunayPolytopeSampler.
 
-    # compute matprods in batch
-    ARs = (A @ Rs).squeeze(-1)
-    out = torch.empty(n, A.size(-1), dtype=A.dtype, device=A.device)
-    x = x0.clone()
-    for i, (ar, r, rnd) in enumerate(zip(ARs, Rs, rands)):
-        # given x, the next point in the chain is x+alpha*r
-        # it also satisfies A(x+alpha*r)<=b which implies A*alpha*r<=b-Ax
-        # so alpha<=(b-Ax)/ar for ar>0, and alpha>=(b-Ax)/ar for ar<0.
-        w = (b - A @ x).squeeze() / ar  # b - A @ x is always >= 0
-        pos = w >= 0
-        alpha_max = w[pos].min()
-        # important to include equality here in cases x is at the boundary
-        # of the polytope
-        neg = w <= 0
-        alpha_min = w[neg].max()
-        # alpha~Unif[alpha_min, alpha_max]
-        alpha = alpha_min + rnd * (alpha_max - alpha_min)
-        x = x + alpha * r
-        if i >= n0:  # save samples after burn-in period
-            out[i - n0] = x.squeeze()
-    return out
+        Args:
+            inequality_constraints: Tensors `(A, b)` describing inequality
+                constraints `A @ x <= b`, where `A` is a `n_ineq_con x d`-dim
+                Tensor and `b` is a `n_ineq_con x 1`-dim Tensor, with `n_ineq_con`
+                the number of inequalities and `d` the dimension of the sample space.
+            equality_constraints: Tensors `(C, d)` describing the equality constraints
+                `C @ x = d`, where `C` is a `n_eq_con x d`-dim Tensor and `d` is a
+                `n_eq_con x 1`-dim Tensor with `n_eq_con` the number of equalities.
+            interior_point: A `d_sample x 1`-dim Tensor presenting a point in the
+                (relative) interior of the polytope. If omitted, determined
+                automatically by solving a Linear Program.
+
+        Warning: The vertex enumeration performed in this algorithm can become
+        extremely costly if there are a large number of inequalities. Similarly,
+        the triangulation can get very expensive in high dimensions. Only use
+        this algorithm for moderate dimensions / moderately complex constraint sets.
+        An alternative is the `HitAndRunPolytopeSampler`.
+        """
+        super().__init__(
+            inequality_constraints=inequality_constraints,
+            equality_constraints=equality_constraints,
+            interior_point=interior_point,
+        )
+        # shift coordinate system to be anchored at x0
+        new_b = self.b - self.A @ self.x0
+        if self.new_A.shape[-1] < 2:
+            # if the polytope is in dim 1 (i.e. a line segment) Qhull won't work
+            tshlds = new_b / self.new_A
+            neg = self.new_A < 0
+            self.y_min = tshlds[neg].max()
+            self.y_max = tshlds[~neg].min()
+            self.dim = 1
+        else:
+            # Qhull expects inputs of the form A @ x + b <= 0, so we need to negate here
+            halfspaces = torch.cat([self.new_A, -new_b], dim=-1).cpu().numpy()
+            vertices = HalfspaceIntersection(
+                halfspaces=halfspaces, interior_point=np.zeros(self.new_A.shape[-1])
+            ).intersections
+            self.dim = vertices.shape[-1]
+            try:
+                delaunay = Delaunay(vertices)
+            except ValueError as e:
+                if "Points cannot contain NaN" in str(e):
+                    raise ValueError("Polytope is unbounded.")
+                raise e  # pragma: no cover
+            polytopes = torch.tensor(
+                [delaunay.points[s] for s in delaunay.simplices],
+                device=self.A.device,
+                dtype=self.A.dtype,
+            )
+            volumes = torch.stack([torch.det(p[1:] - p[0]).abs() for p in polytopes])
+            self._polytopes = polytopes
+            self._p = volumes / volumes.sum()
+
+    def draw(self, n: int = 1, seed: Optional[int] = None) -> Tensor:
+        r"""Draw samples from the polytope.
+
+        Args:
+            n: The number of samples.
+            seed: The random seed.
+
+        Returns:
+            A `n x d_sample` Tensor of samples from the polytope.
+        """
+        if self.dim == 1:
+            with manual_seed(seed):
+                e = torch.rand(n, 1, device=self.new_A.device, dtype=self.new_A.dtype)
+            transformed_samples = self.y_min + (self.y_max - self.y_min) * e
+        else:
+            index_rvs = torch.multinomial(
+                self._p,
+                num_samples=n,
+                replacement=True,
+                generator=None if seed is None else torch.manual_seed(seed),
+            )
+            simplex_rvs = sample_simplex(
+                d=self.dim + 1, n=n, seed=seed, device=self.A.device, dtype=self.A.dtype
+            )
+            transformed_samples = torch.stack(
+                [rv @ self._polytopes[idx] for rv, idx in zip(simplex_rvs, index_rvs)]
+            )
+        init_shift = self.x0.transpose(-1, -2)
+        samples = init_shift + transformed_samples @ self.nullC.transpose(-1, -2)
+        return samples

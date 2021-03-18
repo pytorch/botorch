@@ -4,8 +4,11 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+from __future__ import annotations
+
 import itertools
 import warnings
+from typing import Any, Dict, Type
 from unittest import mock
 
 import torch
@@ -13,6 +16,8 @@ from botorch import settings
 from botorch.exceptions.warnings import SamplingWarning
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.utils.sampling import (
+    DelaunayPolytopeSampler,
+    HitAndRunPolytopeSampler,
     PolytopeSampler,
     batched_multinomial,
     construct_base_samples,
@@ -235,64 +240,83 @@ class TestSampleUtils(BotorchTestCase):
                     self.assertTrue(torch.unique(s).size(0), num_samples)
 
 
-class PolytopeSamplerTestCase(BotorchTestCase):
+class PolytopeSamplerTestBase:
+
+    sampler_class: Type[PolytopeSampler]
+    sampler_kwargs: Dict[str, Any] = {}
+
+    def setUp(self):
+        self.A = torch.tensor(
+            [
+                [-1.0, 0.0, 0.0],
+                [1.0, 0.0, 0.0],
+                [0.0, -1.0, 0.0],
+                [0.0, 0.0, -1.0],
+                [0.0, 4.0, 1.0],
+            ],
+            device=self.device,
+        )
+        self.b = torch.tensor([[0.0], [1.0], [0.0], [0.0], [1.0]], device=self.device)
+        self.x0 = torch.tensor([0.1, 0.1, 0.1], device=self.device).unsqueeze(-1)
+
     def test_sample_polytope(self):
         for dtype in (torch.float, torch.double):
-            A = torch.tensor(
-                [[0.0, -1.0, 0.0], [0.0, 0.0, -1.0], [0.0, 4.0, 1.0]],
-                device=self.device,
-                dtype=dtype,
-            )
-            b = torch.tensor([[0.0], [0.0], [1.0]], device=self.device, dtype=dtype)
-
-            x0 = torch.tensor(
-                [0.1, 0.1, 0.1], device=self.device, dtype=dtype
-            ).unsqueeze(-1)
-
-            for initial_point in [x0, None]:
-
-                sampler = PolytopeSampler(
+            A = self.A.to(dtype)
+            b = self.b.to(dtype)
+            x0 = self.x0.to(dtype)
+            for interior_point in [x0, None]:
+                sampler = self.sampler_class(
                     inequality_constraints=(A, b),
-                    initial_point=initial_point,
-                    n_burnin=0,
+                    interior_point=interior_point,
+                    **self.sampler_kwargs,
                 )
-
                 samples = sampler.draw(n=10, seed=1)
                 self.assertEqual(((A @ samples.t() - b) > 0).sum().item(), 0)
                 # make sure we can draw mulitple samples
                 more_samples = sampler.draw(n=5)
                 self.assertEqual(((A @ more_samples.t() - b) > 0).sum().item(), 0)
 
-    def test_sample_polytope_with_constraints(self):
+    def test_sample_polytope_with_eq_constraints(self):
         for dtype in (torch.float, torch.double):
-            A = torch.tensor(
-                [[0.0, -1.0, 0.0], [0.0, 0.0, -1.0], [0.0, 4.0, 1.0]],
-                device=self.device,
-                dtype=dtype,
-            )
-            b = torch.tensor([[0.0], [0.0], [1.0]], device=self.device, dtype=dtype)
-            C = torch.tensor([1.0, -1, 0.0], device=self.device, dtype=dtype).reshape(
-                (1, 3)
-            )
-            d = torch.tensor([0.0], device=self.device, dtype=dtype).reshape((1, 1))
+            A = self.A.to(dtype)
+            b = self.b.to(dtype)
+            x0 = self.x0.to(dtype)
+            C = torch.tensor([[1.0, -1, 0.0]], device=self.device, dtype=dtype)
+            d = torch.zeros(1, 1, device=self.device, dtype=dtype)
 
-            x0 = torch.tensor(
-                [0.1, 0.1, 0.1], device=self.device, dtype=dtype
-            ).unsqueeze(-1)
-
-            for initial_point in [x0, None]:
-                sampler = PolytopeSampler(
+            for interior_point in [x0, None]:
+                sampler = self.sampler_class(
                     inequality_constraints=(A, b),
                     equality_constraints=(C, d),
-                    initial_point=initial_point,
-                    n_burnin=0,
+                    interior_point=interior_point,
+                    **self.sampler_kwargs,
                 )
-
                 samples = sampler.draw(n=10, seed=1)
-
                 inequality_satisfied = ((A @ samples.t() - b) > 0).sum().item() == 0
-                equality_satisfied = (C @ samples.t() - d).abs().sum().item() < 10e-6
+                equality_satisfied = (C @ samples.t() - d).abs().sum().item() < 1e-6
+                self.assertTrue(inequality_satisfied)
+                self.assertTrue(equality_satisfied)
 
+    def test_sample_polytope_1d(self):
+        for dtype in (torch.float, torch.double):
+            A = torch.tensor(
+                [[-1.0, 0.0], [0.0, -1.0], [1.0, 1.0]], device=self.device, dtype=dtype
+            )
+            b = torch.tensor([[0.0], [0.0], [1.0]], device=self.device, dtype=dtype)
+            C = torch.tensor([[1.0, -1.0]], device=self.device, dtype=dtype)
+            x0 = torch.tensor([[0.1], [0.1]], device=self.device, dtype=dtype)
+            C = torch.tensor([[1.0, -1.0]], device=self.device, dtype=dtype)
+            d = torch.tensor([[0.0]], device=self.device, dtype=dtype)
+            for interior_point in [x0, None]:
+                sampler = self.sampler_class(
+                    inequality_constraints=(A, b),
+                    equality_constraints=(C, d),
+                    interior_point=interior_point,
+                    **self.sampler_kwargs,
+                )
+                samples = sampler.draw(n=10, seed=1)
+                inequality_satisfied = ((A @ samples.t() - b) > 0).sum().item() == 0
+                equality_satisfied = (C @ samples.t() - d).abs().sum().item() < 1e-6
                 self.assertTrue(inequality_satisfied)
                 self.assertTrue(equality_satisfied)
 
@@ -304,17 +328,14 @@ class PolytopeSamplerTestCase(BotorchTestCase):
                 dtype=dtype,
             )
             b = torch.tensor([[0.0], [-1.0], [1.0]], device=self.device, dtype=dtype)
-
-            x0 = torch.tensor(
-                [0.1, 0.1, 0.1], device=self.device, dtype=dtype
-            ).unsqueeze(-1)
+            x0 = self.x0.to(dtype)
 
             # testing for infeasibility of the initial point and
             # infeasibility of the original LP (status 2 of the linprog output).
-            for initial_point in [x0, None]:
+            for interior_point in [x0, None]:
                 with self.assertRaises(ValueError):
-                    PolytopeSampler(
-                        inequality_constraints=(A, b), initial_point=initial_point
+                    self.sampler_class(
+                        inequality_constraints=(A, b), interior_point=interior_point
                     )
 
             class Result:
@@ -325,4 +346,30 @@ class PolytopeSamplerTestCase(BotorchTestCase):
             with mock.patch("scipy.optimize.linprog") as mock_linprog:
                 mock_linprog.return_value = Result()
                 with self.assertRaises(ValueError):
-                    PolytopeSampler(inequality_constraints=(A, b))
+                    self.sampler_class(inequality_constraints=(A, b))
+
+
+class TestHitAndRunPolytopeSampler(PolytopeSamplerTestBase, BotorchTestCase):
+
+    sampler_class = HitAndRunPolytopeSampler
+    sampler_kwargs = {"n_burnin": 2}
+
+
+class TestDelaunayPolytopeSampler(PolytopeSamplerTestBase, BotorchTestCase):
+
+    sampler_class = DelaunayPolytopeSampler
+
+    def test_sample_polytope_unbounded(self):
+        A = torch.tensor(
+            [[-1.0, 0.0, 0.0], [0.0, -1.0, 0.0], [0.0, 0.0, -1.0], [0.0, 4.0, 1.0]],
+            device=self.device,
+        )
+        b = torch.tensor([[0.0], [0.0], [0.0], [1.0]], device=self.device)
+        with self.assertRaises(ValueError):
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                self.sampler_class(
+                    inequality_constraints=(A, b),
+                    interior_point=self.x0,
+                    **self.sampler_kwargs,
+                )
