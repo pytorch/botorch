@@ -43,7 +43,7 @@ the the Bayesian Optimization loop untouched. It is then straightforward to plug
 your custom BoTorch model or acquisition function into Ax to take advantage of
 Ax's various loop control APIs, as well as its powerful automated metadata
 management, data storage, etc. See the
-[Using a custom BoTorch model in Ax](../tutorials/custom_botorch_model_in_ax)
+[Using a custom BoTorch model in Ax](../tutorials/custom_botorch_model_in_ax.ipynb)
 tutorial for more on how to do this.
 
 
@@ -54,8 +54,8 @@ or structured feature or design spaces, or where the model fitting process
 requires interactive work, then using Ax may not be the best solution for you.
 In such a situation, you might be better off writing your own full Bayesian
 Optimization loop in BoTorch. The
-[q-Noisy Constrained EI](../tutorials/closed_loop_botorch_only) tutorial and
-[variational auto-encoder](../tutorials/vae_mnist) tutorial give examples of how
+[q-Noisy Constrained EI](../tutorials/closed_loop_botorch_only.ipynb) tutorial and
+[variational auto-encoder](../tutorials/vae_mnist.ipynb) tutorial give examples of how
 this can be done.
 
 You may also consider working purely in BoTorch if you want to be able to
