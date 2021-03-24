@@ -25,6 +25,7 @@ jobs:
       run: |
         pip install ufmt
     - name: ufmt
+      # TODO: Show mismatches in logs: https://github.com/omnilib/ufmt/issues/2
       run: |
         ufmt check .
 
