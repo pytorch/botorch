@@ -10,8 +10,8 @@ on:
 
 jobs:
 
-  black:
-    name: Lint with black
+  ufmt:
+    name: Code formatting and sorting with ufmt
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -23,10 +23,10 @@ jobs:
         python-version: 3.7
     - name: Install dependencies
       run: |
-        pip install black
-    - name: Black
+        pip install ufmt
+    - name: ufmt
       run: |
-        black --check --diff .
+        ufmt check .
 
   flake8:
     name: Lint with flake8
@@ -45,21 +45,3 @@ jobs:
     - name: Flake8
       run: |
         flake8
-
-  usort:
-    name: Import sorting with usort
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-    steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.7
-    - name: Install dependencies
-      run: |
-        pip install usort
-    - name: usort
-      run: |
-        usort check .

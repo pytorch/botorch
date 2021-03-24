@@ -28,20 +28,20 @@ from the repository root. No additional configuration should be needed (see the
 [black documentation](https://black.readthedocs.io/en/stable/installation_and_usage.html#usage)
 for advanced usage).
 
-We feel strongly that having a consistent code style is extremely important, so
-Travis will fail on your PR if it does not adhere to the black formatting style.
-
 
 #### Import Sorting
 
-BoTorch uses [usort](https://github.com/facebookexperimental/usort) for consistent
-sorting of imports across the codebase. Install via `pip install usort`, and auto-
-sort with
+BoTorch uses [ufmt]https://github.com/omnilib/ufmt library for consistent
+sorting of imports across the codebase. Install via `pip install ufmt`, and
+auto-sort with
 ```bash
-usort format .
+ufmt format .
 ```
-from the repository root. You can also create a diff or just validate sorting following
-the instructions [here](https://github.com/facebookexperimental/usort#usage).
+from the repository root.
+
+We feel strongly that having a consistent code style and imports is important,
+so CI will fail on your PR if it does not pass ufmt muster (note: under the
+hood ufmt also checks black code style).
 
 
 #### Type Hints
