@@ -154,6 +154,8 @@ def optimize_acqf(
             num_restarts=num_restarts,
             raw_samples=raw_samples,
             options=options,
+            inequality_constraints=inequality_constraints,
+            equality_constraints=equality_constraints,
         )
 
     batch_limit: int = options.get("batch_limit", num_restarts)
