@@ -19,11 +19,12 @@ from __future__ import annotations
 import warnings
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
-from typing import Generator, Iterable, Optional, Tuple
+from typing import Generator, Iterable, List, Optional, Tuple
 
 import numpy as np
 import scipy
 import torch
+from botorch.exceptions.errors import BotorchError
 from botorch.exceptions.warnings import SamplingWarning
 from botorch.posteriors.posterior import Posterior
 from botorch.sampling.qmc import NormalQMCEngine
@@ -412,6 +413,24 @@ def batched_multinomial(
     return flat_samples.view(*batch_shape, num_samples)
 
 
+def _convert_bounds_to_inequality_constraints(bounds: Tensor) -> Tuple[Tensor, Tensor]:
+    r"""Convert bounds into inequality constraints of the form Ax <= b.
+
+    Args:
+        bounds: A `2 x d`-dim tensor of bounds
+
+    Returns:
+        A two-element tuple containing
+            - A: A `2d x d`-dim tensor of coefficients
+            - b: A `2d x 1`-dim tensor containing the right hand side
+    """
+    d = bounds.shape[-1]
+    eye = torch.eye(d, dtype=bounds.dtype, device=bounds.device)
+    A = torch.cat([-eye, eye], dim=0)
+    b = torch.cat([-bounds[0], bounds[1]], dim=0).unsqueeze(-1)
+    return A, b
+
+
 def find_interior_point(
     A: np.ndarray,
     b: np.ndarray,
@@ -470,11 +489,12 @@ class PolytopeSampler(ABC):
 
     def __init__(
         self,
-        inequality_constraints: Tuple[Tensor, Tensor],
+        inequality_constraints: Optional[Tuple[Tensor, Tensor]] = None,
         equality_constraints: Optional[Tuple[Tensor, Tensor]] = None,
         interior_point: Optional[Tensor] = None,
+        bounds: Optional[Tensor] = None,
     ) -> None:
-        r"""Sampler for sampling uniformly from a polytope.
+        r"""Initialize PolytopeSampler.
 
         Args:
             inequality_constraints: Tensors `(A, b)` describing inequality
@@ -487,8 +507,27 @@ class PolytopeSampler(ABC):
             interior_point: A `d_sample x 1`-dim Tensor presenting a point in the
                 (relative) interior of the polytope. If omitted, determined
                 automatically by solving a Linear Program.
+            bounds: A `2 x d`-dim tensor of box bounds.
         """
-        self.A, self.b = inequality_constraints
+        if inequality_constraints is None:
+            if bounds is None:
+                raise BotorchError(
+                    "PolytopeSampler requires either inequality constraints or bounds."
+                )
+            A = torch.empty(
+                0, bounds.shape[-1], dtype=bounds.dtype, device=bounds.device
+            )
+            b = torch.empty(0, 1, dtype=bounds.dtype, device=bounds.device)
+        else:
+            A, b = inequality_constraints
+        if bounds is not None:
+            # add inequality constraints for bounds
+            # TODO: make sure there are not deduplicate constraints
+            A2, b2 = _convert_bounds_to_inequality_constraints(bounds=bounds)
+            A = torch.cat([A, A2], dim=0)
+            b = torch.cat([b, b2], dim=0)
+        self.A = A
+        self.b = b
         self.equality_constraints = equality_constraints
 
         if equality_constraints is not None:
@@ -575,9 +614,10 @@ class HitAndRunPolytopeSampler(PolytopeSampler):
 
     def __init__(
         self,
-        inequality_constraints: Tuple[Tensor, Tensor],
+        inequality_constraints: Optional[Tuple[Tensor, Tensor]] = None,
         equality_constraints: Optional[Tuple[Tensor, Tensor]] = None,
         interior_point: Optional[Tensor] = None,
+        bounds: Optional[Tensor] = None,
         n_burnin: int = 0,
     ) -> None:
         r"""A sampler for sampling from a polyope using a hit-and-run algorithm.
@@ -593,12 +633,14 @@ class HitAndRunPolytopeSampler(PolytopeSampler):
             interior_point: A `d_sample x 1`-dim Tensor presenting a point in the
                 (relative) interior of the polytope. If omitted, determined
                 automatically by solving a Linear Program.
+            bounds: A `2 x d`-dim tensor of box bounds.
             n_burnin: The number of burn in samples.
         """
         super().__init__(
             inequality_constraints=inequality_constraints,
             equality_constraints=equality_constraints,
             interior_point=interior_point,
+            bounds=bounds,
         )
         self.n_burnin = n_burnin
 
@@ -613,15 +655,14 @@ class HitAndRunPolytopeSampler(PolytopeSampler):
             A `n x d_sample` Tensor of samples from the polytope.
         """
         transformed_samples = sample_polytope(
-            A=self.new_A,
-            b=self.b - self.A @ self.x0,
-            x0=torch.zeros(
-                (self.nullC.size(1), 1), dtype=self.A.dtype, device=self.A.device
-            ),
+            # run this on the cpu
+            A=self.new_A.cpu(),
+            b=(self.b - self.A @ self.x0).cpu(),
+            x0=torch.zeros((self.nullC.size(1), 1), dtype=self.A.dtype),
             n=n,
             n0=self.n_burnin,
             seed=seed,
-        )
+        ).to(self.b)
         init_shift = self.x0.transpose(-1, -2)
         samples = init_shift + transformed_samples @ self.nullC.transpose(-1, -2)
         # keep the last element of the resulting chain as
@@ -654,9 +695,10 @@ class DelaunayPolytopeSampler(PolytopeSampler):
 
     def __init__(
         self,
-        inequality_constraints: Tuple[Tensor, Tensor],
+        inequality_constraints: Optional[Tuple[Tensor, Tensor]] = None,
         equality_constraints: Optional[Tuple[Tensor, Tensor]] = None,
         interior_point: Optional[Tensor] = None,
+        bounds: Optional[Tensor] = None,
     ) -> None:
         r"""Initialize DelaunayPolytopeSampler.
 
@@ -671,6 +713,7 @@ class DelaunayPolytopeSampler(PolytopeSampler):
             interior_point: A `d_sample x 1`-dim Tensor presenting a point in the
                 (relative) interior of the polytope. If omitted, determined
                 automatically by solving a Linear Program.
+            bounds: A `2 x d`-dim tensor of box bounds.
 
         Warning: The vertex enumeration performed in this algorithm can become
         extremely costly if there are a large number of inequalities. Similarly,
@@ -682,6 +725,7 @@ class DelaunayPolytopeSampler(PolytopeSampler):
             inequality_constraints=inequality_constraints,
             equality_constraints=equality_constraints,
             interior_point=interior_point,
+            bounds=bounds,
         )
         # shift coordinate system to be anchored at x0
         new_b = self.b - self.A @ self.x0
@@ -744,3 +788,94 @@ class DelaunayPolytopeSampler(PolytopeSampler):
         init_shift = self.x0.transpose(-1, -2)
         samples = init_shift + transformed_samples @ self.nullC.transpose(-1, -2)
         return samples
+
+
+def get_polytope_samples(
+    n: int,
+    bounds: Tensor,
+    inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
+    equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
+    seed: Optional[int] = None,
+    thinning: int = 32,
+    n_burnin: int = 10_000,
+) -> Tensor:
+    r"""Sample from polytope defined by box bounds and (in)equality constraints.
+
+    This uses a hit-and-run Markov chain sampler.
+
+    TODO: make this method return the sampler object, to avoid doing burn-in
+    every time we draw samples.
+
+    Args:
+        n: The number of samples.
+        bounds: A `2 x d`-dim tensor containing the box bounds.
+        inequality constraints: A list of tuples (indices, coefficients, rhs),
+            with each tuple encoding an inequality constraint of the form
+            `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`.
+        equality constraints: A list of tuples (indices, coefficients, rhs),
+            with each tuple encoding an inequality constraint of the form
+            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`.
+        seed: The random seed.
+        thinning: The amount of thinning.
+        n_burnin: The number of burn-in samples for the Markov chain sampler.
+
+    Returns:
+        A `n x d`-dim tensor of samples.
+    """
+    # create tensors representing linear inequality constraints
+    # of the form Ax >= b.
+    if inequality_constraints:
+        A, b = sparse_to_dense_constraints(
+            d=bounds.shape[-1],
+            constraints=inequality_constraints,
+        )
+        # Note the inequality constraints are of the form Ax >= b,
+        # but PolytopeSampler expects inequality constraints of the
+        # form Ax <= b, so we multiply by -1 below.
+        dense_inequality_constraints = -A, -b
+    else:
+        dense_inequality_constraints = None
+    if equality_constraints:
+        dense_equality_constraints = sparse_to_dense_constraints(
+            d=bounds.shape[-1],
+            constraints=equality_constraints,
+        )
+    else:
+        dense_equality_constraints = None
+    polytope_sampler = HitAndRunPolytopeSampler(
+        inequality_constraints=dense_inequality_constraints,
+        bounds=bounds,
+        equality_constraints=dense_equality_constraints,
+        n_burnin=n_burnin,
+    )
+    return polytope_sampler.draw(n=n * thinning, seed=seed)[::thinning]
+
+
+def sparse_to_dense_constraints(
+    d: int,
+    constraints: List[Tuple[Tensor, Tensor, float]],
+) -> Tuple[Tensor, Tensor]:
+    r"""Convert parameter constraints from a sparse format into a dense format.
+
+    This method converts sparse triples of the form (indices, coefficients, rhs)
+    to constraints of the form Ax >= b or Ax = b.
+
+    Args:
+        d: The input dimension.
+        inequality constraints: A list of tuples (indices, coefficients, rhs),
+            with each tuple encoding an (in)equality constraint of the form
+            `\sum_i (X[indices[i]] * coefficients[i]) >= rhs` or
+            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`.
+
+    Returns:
+        A two-element tuple containing:
+            - A: A `n_constraints x d`-dim tensor of coefficients.
+            - b: A `n_constraints x 1`-dim tensor of right hand sides.
+    """
+    _t = constraints[0][1]
+    A = torch.zeros(len(constraints), d, dtype=_t.dtype, device=_t.device)
+    b = torch.zeros(len(constraints), 1, dtype=_t.dtype, device=_t.device)
+    for i, (indices, coefficients, rhs) in enumerate(constraints):
+        A[i, indices.long()] = coefficients
+        b[i] = rhs
+    return A, b

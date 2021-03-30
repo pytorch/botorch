@@ -221,6 +221,77 @@ class TestGenBatchInitialCandidates(BotorchTestCase):
                     )
                 )
 
+    def test_gen_batch_initial_conditions_constraints(self):
+        for dtype in (torch.float, torch.double):
+            bounds = torch.tensor([[0, 0], [1, 1]], device=self.device, dtype=dtype)
+            inequality_constraints = [
+                (
+                    torch.tensor([1], device=self.device, dtype=dtype),
+                    torch.tensor([-4], device=self.device, dtype=dtype),
+                    torch.tensor(-3, device=self.device, dtype=dtype),
+                )
+            ]
+            equality_constraints = [
+                (
+                    torch.tensor([0], device=self.device, dtype=dtype),
+                    torch.tensor([1], device=self.device, dtype=dtype),
+                    torch.tensor(0.5, device=self.device, dtype=dtype),
+                )
+            ]
+            for nonnegative in (True, False):
+                for seed in (None, 1234):
+                    mock_acqf = MockAcquisitionFunction()
+                    for init_batch_limit in (None, 1):
+                        mock_acqf = MockAcquisitionFunction()
+                        with mock.patch.object(
+                            MockAcquisitionFunction,
+                            "__call__",
+                            wraps=mock_acqf.__call__,
+                        ) as mock_acqf_call:
+                            batch_initial_conditions = gen_batch_initial_conditions(
+                                acq_function=mock_acqf,
+                                bounds=bounds,
+                                q=1,
+                                num_restarts=2,
+                                raw_samples=10,
+                                options={
+                                    "nonnegative": nonnegative,
+                                    "eta": 0.01,
+                                    "alpha": 0.1,
+                                    "seed": seed,
+                                    "init_batch_limit": init_batch_limit,
+                                    "thinning": 2,
+                                    "n_burnin": 3,
+                                },
+                                inequality_constraints=inequality_constraints,
+                                equality_constraints=equality_constraints,
+                            )
+                            expected_shape = torch.Size([2, 1, 2])
+                            self.assertEqual(
+                                batch_initial_conditions.shape, expected_shape
+                            )
+                            self.assertEqual(
+                                batch_initial_conditions.device, bounds.device
+                            )
+                            self.assertEqual(
+                                batch_initial_conditions.dtype, bounds.dtype
+                            )
+                            batch_shape = (
+                                torch.Size([])
+                                if init_batch_limit is None
+                                else torch.Size([init_batch_limit])
+                            )
+                            raw_samps = mock_acqf_call.call_args[0][0]
+                            batch_shape = (
+                                torch.Size([10])
+                                if init_batch_limit is None
+                                else torch.Size([init_batch_limit])
+                            )
+                            expected_raw_samps_shape = batch_shape + torch.Size([1, 2])
+                            self.assertEqual(raw_samps.shape, expected_raw_samps_shape)
+                            self.assertTrue((raw_samps[..., 0] == 0.5).all())
+                            self.assertTrue((-4 * raw_samps[..., 1] >= -3).all())
+
 
 class TestGenOneShotKGInitialConditions(BotorchTestCase):
     def test_gen_one_shot_kg_initial_conditions(self):
