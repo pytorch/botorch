@@ -23,9 +23,9 @@
 <div class="documentwrapper">
 <div class="bodywrapper">
 <div class="body" role="main">
-<div class="section" id="module-botorch.utils">
+<section id="module-botorch.utils">
 <span id="botorch-utils"></span><h1>botorch.utils<a class="headerlink" href="#module-botorch.utils" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="module-botorch.utils.constraints">
+<section id="module-botorch.utils.constraints">
 <span id="constraints"></span><h2>Constraints<a class="headerlink" href="#module-botorch.utils.constraints" title="Permalink to this headline">¶</a></h2>
 <p>Helpers for handling outcome constraints.</p>
 <dl class="py function">
@@ -56,8 +56,8 @@ Negative values imply feasibility. The callables support broadcasting
 </pre></div>
 </div>
 </dd></dl>
-</div>
-<div class="section" id="module-botorch.utils.containers">
+</section>
+<section id="module-botorch.utils.containers">
 <span id="containers"></span><h2>Containers<a class="headerlink" href="#module-botorch.utils.containers" title="Permalink to this headline">¶</a></h2>
 <p>Containers to standardize inputs into models and acquisition functions.</p>
 <dl class="py class">
@@ -82,8 +82,8 @@ Negative values imply feasibility. The callables support broadcasting
 <dd><p>Alias for field number 2</p>
 </dd></dl>
 </dd></dl>
-</div>
-<div class="section" id="module-botorch.utils.objective">
+</section>
+<section id="module-botorch.utils.objective">
 <span id="objective"></span><h2>Objective<a class="headerlink" href="#module-botorch.utils.objective" title="Permalink to this headline">¶</a></h2>
 <p>Helpers for handling objectives.</p>
 <dl class="py function">
@@ -193,8 +193,8 @@ output models (<cite>m</cite> &gt; 1).</p></li>
 </dd>
 </dl>
 </dd></dl>
-</div>
-<div class="section" id="module-botorch.utils.rounding">
+</section>
+<section id="module-botorch.utils.rounding">
 <span id="rounding"></span><h2>Rounding<a class="headerlink" href="#module-botorch.utils.rounding" title="Permalink to this headline">¶</a></h2>
 <dl class="py function">
 <dt id="botorch.utils.rounding.approximate_round">
@@ -217,8 +217,8 @@ each piece is a hyperbolic tangent function.</p>
 </dd>
 </dl>
 </dd></dl>
-</div>
-<div class="section" id="module-botorch.utils.sampling">
+</section>
+<section id="module-botorch.utils.sampling">
 <span id="sampling"></span><h2>Sampling<a class="headerlink" href="#module-botorch.utils.sampling" title="Permalink to this headline">¶</a></h2>
 <p>Utilities for MC and qMC sampling.</p>
 <dl class="py function">
@@ -536,8 +536,8 @@ n+n0 samples but the first n0 samples are not saved.</p></li>
 </dd>
 </dl>
 </dd></dl>
-</div>
-<div class="section" id="module-botorch.utils.gp_sampling">
+</section>
+<section id="module-botorch.utils.gp_sampling">
 <span id="sampling-from-gp-priors"></span><h2>Sampling from GP priors<a class="headerlink" href="#module-botorch.utils.gp_sampling" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
 <dt id="botorch.utils.gp_sampling.GPDraw">
@@ -597,8 +597,8 @@ evaluated (or <cite>None</cite> if the sample has never been evaluated).</p>
 <code class="sig-name descname"><span class="pre">training</span></code><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.utils.gp_sampling.GPDraw.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
-</div>
-<div class="section" id="module-botorch.utils.testing">
+</section>
+<section id="module-botorch.utils.testing">
 <span id="testing"></span><h2>Testing<a class="headerlink" href="#module-botorch.utils.testing" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
 <dt id="botorch.utils.testing.BotorchTestCase">
@@ -872,8 +872,8 @@ in <a class="reference internal" href="#botorch.utils.testing.MockModel.state_di
 <code class="sig-name descname"><span class="pre">functions</span></code><em class="property"><span class="pre">:</span> <span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="test_functions.html#botorch.test_functions.base.BaseTestProblem" title="botorch.test_functions.base.BaseTestProblem"><span class="pre">botorch.test_functions.base.BaseTestProblem</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.utils.testing.ConstrainedMultiObjectiveTestProblemBaseTestCase.functions" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
-</div>
-<div class="section" id="module-botorch.utils.torch">
+</section>
+<section id="module-botorch.utils.torch">
 <span id="torch"></span><h2>Torch<a class="headerlink" href="#module-botorch.utils.torch" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
 <dt id="botorch.utils.torch.BufferDict">
@@ -976,8 +976,8 @@ strings are acceptable.</p>
 <code class="sig-name descname"><span class="pre">training</span></code><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.utils.torch.BufferDict.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
-</div>
-<div class="section" id="module-botorch.utils.transforms">
+</section>
+<section id="module-botorch.utils.transforms">
 <span id="transformations"></span><h2>Transformations<a class="headerlink" href="#module-botorch.utils.transforms" title="Permalink to this headline">¶</a></h2>
 <p>Some basic data transformation helpers.</p>
 <dl class="py function">
@@ -1207,8 +1207,8 @@ the batch dimensions of <cite>Y</cite> (if compatible). For instance, if <cite>X
 <code class="sig-prename descclassname"><span class="pre">botorch.utils.transforms.</span></code><code class="sig-name descname"><span class="pre">convert_to_target_pre_hook</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/transforms.html#convert_to_target_pre_hook"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.transforms.convert_to_target_pre_hook" title="Permalink to this definition">¶</a></dt>
 <dd><p>Pre-hook for automatically calling <cite>.to(X)</cite> on module prior to <cite>forward</cite></p>
 </dd></dl>
-</div>
-<div class="section" id="module-botorch.utils.feasible_volume">
+</section>
+<section id="module-botorch.utils.feasible_volume">
 <span id="feasible-volume"></span><h2>Feasible Volume<a class="headerlink" href="#module-botorch.utils.feasible_volume" title="Permalink to this headline">¶</a></h2>
 <dl class="py function">
 <dt id="botorch.utils.feasible_volume.get_feasible_samples">
@@ -1311,11 +1311,11 @@ with probability above the given threshold.</p>
 </dd>
 </dl>
 </dd></dl>
-<div class="section" id="multi-objective-utilities">
+<section id="multi-objective-utilities">
 <h3>Multi-Objective Utilities<a class="headerlink" href="#multi-objective-utilities" title="Permalink to this headline">¶</a></h3>
-</div>
-</div>
-<div class="section" id="module-botorch.utils.multi_objective.box_decompositions.box_decomposition">
+</section>
+</section>
+<section id="module-botorch.utils.multi_objective.box_decompositions.box_decomposition">
 <span id="abstract-box-decompositions"></span><h2>Abstract Box Decompositions<a class="headerlink" href="#module-botorch.utils.multi_objective.box_decompositions.box_decomposition" title="Permalink to this headline">¶</a></h2>
 <p>Box decomposition algorithms.</p>
 <dl class="py class">
@@ -1428,23 +1428,23 @@ with probability above the given threshold.</p>
 <code class="sig-name descname"><span class="pre">training</span></code><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
-</div>
-<div class="section" id="box-decomposition-list">
+</section>
+<section id="box-decomposition-list">
 <h2>Box Decomposition List<a class="headerlink" href="#box-decomposition-list" title="Permalink to this headline">¶</a></h2>
-</div>
-<div class="section" id="module-botorch.utils.multi_objective.box_decompositions.utils">
+</section>
+<section id="module-botorch.utils.multi_objective.box_decompositions.utils">
 <span id="box-decomposition-utilities"></span><h2>Box Decomposition Utilities<a class="headerlink" href="#module-botorch.utils.multi_objective.box_decompositions.utils" title="Permalink to this headline">¶</a></h2>
 <p>Utilities for box decomposition algorithms.</p>
-</div>
-<div class="section" id="module-botorch.utils.multi_objective.box_decomposition">
+</section>
+<section id="module-botorch.utils.multi_objective.box_decomposition">
 <span id="box-decompositions-deprecated-use-botorch-utils-multi-objective-box-decompositions"></span><h2>Box Decompositions [DEPRECATED - use botorch..utils.multi_objective.box_decompositions]<a class="headerlink" href="#module-botorch.utils.multi_objective.box_decomposition" title="Permalink to this headline">¶</a></h2>
 <p>DEPRECATED - Box decomposition algorithms.
 Use the botorch.utils.multi_objective.box_decompositions instead.</p>
-</div>
-<div class="section" id="dominated-partitionings">
+</section>
+<section id="dominated-partitionings">
 <h2>Dominated Partitionings<a class="headerlink" href="#dominated-partitionings" title="Permalink to this headline">¶</a></h2>
-</div>
-<div class="section" id="module-botorch.utils.multi_objective.hypervolume">
+</section>
+<section id="module-botorch.utils.multi_objective.hypervolume">
 <span id="hypervolume"></span><h2>Hypervolume<a class="headerlink" href="#module-botorch.utils.multi_objective.hypervolume" title="Permalink to this headline">¶</a></h2>
 <p>Hypervolume Utilities.</p>
 <p>References</p>
@@ -1621,8 +1621,8 @@ nodes of the node that is reinserted are in the list.</p>
 </dl>
 </dd></dl>
 </dd></dl>
-</div>
-<div class="section" id="module-botorch.utils.multi_objective.box_decompositions.non_dominated">
+</section>
+<section id="module-botorch.utils.multi_objective.box_decompositions.non_dominated">
 <span id="non-dominated-partitionings"></span><h2>Non-dominated Partitionings<a class="headerlink" href="#module-botorch.utils.multi_objective.box_decompositions.non_dominated" title="Permalink to this headline">¶</a></h2>
 <p>Algorithms for partitioning the non-dominated space into rectangles.</p>
 <p>References</p>
@@ -1721,8 +1721,8 @@ is quite fast.</p>
 <code class="sig-name descname"><span class="pre">training</span></code><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.non_dominated.NondominatedPartitioning.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
-</div>
-<div class="section" id="module-botorch.utils.multi_objective.pareto">
+</section>
+<section id="module-botorch.utils.multi_objective.pareto">
 <span id="pareto"></span><h2>Pareto<a class="headerlink" href="#module-botorch.utils.multi_objective.pareto" title="Permalink to this headline">¶</a></h2>
 <dl class="py function">
 <dt id="botorch.utils.multi_objective.pareto.is_non_dominated">
@@ -1746,8 +1746,8 @@ each point is non-dominated.</p>
 </dd>
 </dl>
 </dd></dl>
-</div>
-<div class="section" id="module-botorch.utils.multi_objective.scalarization">
+</section>
+<section id="module-botorch.utils.multi_objective.scalarization">
 <span id="scalarization"></span><h2>Scalarization<a class="headerlink" href="#module-botorch.utils.multi_objective.scalarization" title="Permalink to this headline">¶</a></h2>
 <p>Helper utilities for constructing scalarizations.</p>
 <p>References</p>
@@ -1795,8 +1795,8 @@ default value comes from <a class="reference internal" href="#knowles2005" id="i
 </pre></div>
 </div>
 </dd></dl>
-</div>
-</div>
+</section>
+</section>
 </div>
 </div>
 </div>
@@ -1804,7 +1804,7 @@ default value comes from <a class="reference internal" href="#knowles2005" id="i
 <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="index.html">BoTorch</a></h1>
 <h3>Navigation</h3>
-<p class="caption"><span class="caption-text">API Reference</span></p>
+<p><span class="caption-text">API Reference</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="acquisition.html">botorch.acquisition</a></li>
 <li class="toctree-l1"><a class="reference internal" href="models.html">botorch.models</a></li>
