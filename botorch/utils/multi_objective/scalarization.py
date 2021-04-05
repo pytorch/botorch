@@ -63,12 +63,26 @@ def get_chebyshev_scalarization(
         )
     elif Y.ndim > 2:
         raise NotImplementedError("Batched Y is not currently supported.")
-    Y_bounds = torch.stack([Y.min(dim=-2).values, Y.max(dim=-2).values])
+
+    def chebyshev_obj(Y: Tensor, X: Optional[Tensor] = None) -> Tensor:
+        product = weights * Y
+        return product.min(dim=-1).values + alpha * product.sum(dim=-1)
+
+    if Y.shape[-2] == 0:
+        # If there are no observations, we do not need to normalize the objectives
+        return chebyshev_obj
+    if Y.shape[-2] == 1:
+        # If there is only one observation, set the bounds to be
+        # [min(Y_m), min(Y_m) + 1] for each objective m. This ensures we do not
+        # divide by zero
+        Y_bounds = torch.cat([Y, Y + 1], dim=0)
+    else:
+        # Set the bounds to be [min(Y_m), max(Y_m)], for each objective m
+        Y_bounds = torch.stack([Y.min(dim=-2).values, Y.max(dim=-2).values])
 
     def obj(Y: Tensor, X: Optional[Tensor] = None) -> Tensor:
         # scale to [0,1]
         Y_normalized = normalize(Y, bounds=Y_bounds)
-        product = weights * Y_normalized
-        return product.min(dim=-1).values + alpha * product.sum(dim=-1)
+        return chebyshev_obj(Y=Y_normalized)
 
     return obj
