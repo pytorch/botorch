@@ -68,3 +68,23 @@ class TestGetChebyshevScalarization(BotorchTestCase):
                     dim=-1
                 ).values + 0.05 * (weights * normalized_Y_test).sum(dim=-1)
                 self.assertTrue(torch.equal(Y_transformed, expected_Y_transformed))
+                # test that with no observations there is no normalization
+                objective_transform = get_chebyshev_scalarization(
+                    weights=weights, Y=Y_train[:0]
+                )
+                Y_transformed = objective_transform(Y_test)
+                expected_Y_transformed = (weights * Y_test).min(
+                    dim=-1
+                ).values + 0.05 * (weights * Y_test).sum(dim=-1)
+                self.assertTrue(torch.equal(Y_transformed, expected_Y_transformed))
+                # test that with one observation, we normalize by subtracting Y_train
+                single_Y_train = Y_train[:1]
+                objective_transform = get_chebyshev_scalarization(
+                    weights=weights, Y=single_Y_train
+                )
+                Y_transformed = objective_transform(Y_test)
+                normalized_Y_test = Y_test - single_Y_train
+                expected_Y_transformed = (weights * normalized_Y_test).min(
+                    dim=-1
+                ).values + 0.05 * (weights * normalized_Y_test).sum(dim=-1)
+                self.assertTrue(torch.equal(Y_transformed, expected_Y_transformed))
