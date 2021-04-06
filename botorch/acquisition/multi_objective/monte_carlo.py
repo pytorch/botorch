@@ -74,7 +74,9 @@ class MultiObjectiveMCAcquisitionFunction(AcquisitionFunction):
                 "Multi-Objective MC acquisition functions."
             )
         self.add_module("objective", objective)
-        self.set_X_pending(X_pending)
+        self.X_pending = None
+        if X_pending is not None:
+            self.set_X_pending(X_pending)
 
     @abstractmethod
     def forward(self, X: Tensor) -> Tensor:

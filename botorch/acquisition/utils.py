@@ -79,8 +79,10 @@ def get_acquisition_function(
     else:
         sampler = IIDNormalSampler(num_samples=mc_samples, seed=seed)
     # instantiate and return the requested acquisition function
+    if acquisition_function_name in ("qEI", "qPI"):
+        obj = objective(model.posterior(X_observed).mean)
+        best_f = obj.max(dim=-1).values
     if acquisition_function_name == "qEI":
-        best_f = objective(model.posterior(X_observed).mean).max().item()
         return monte_carlo.qExpectedImprovement(
             model=model,
             best_f=best_f,
@@ -89,7 +91,6 @@ def get_acquisition_function(
             X_pending=X_pending,
         )
     elif acquisition_function_name == "qPI":
-        best_f = objective(model.posterior(X_observed).mean).max().item()
         return monte_carlo.qProbabilityOfImprovement(
             model=model,
             best_f=best_f,
@@ -106,6 +107,7 @@ def get_acquisition_function(
             objective=objective,
             X_pending=X_pending,
             prune_baseline=kwargs.get("prune_baseline", False),
+            marginalize_dim=kwargs.get("marginalize_dim"),
         )
     elif acquisition_function_name == "qSR":
         return monte_carlo.qSimpleRegret(
@@ -228,6 +230,7 @@ def prune_inferior_points(
     num_samples: int = 2048,
     max_frac: float = 1.0,
     sampler: Optional[MCSampler] = None,
+    marginalize_dim: Optional[int] = None,
 ) -> Tensor:
     r"""Prune points from an input tensor that are unlikely to be the best point.
 
@@ -249,6 +252,9 @@ def prune_inferior_points(
             returned tensor does not exceed `ceil(max_frac * n)`.
         sampler: If provided, will use this customized sampler instead of
             automatically constructing one with `num_samples`.
+        marginalize_dim: A batch dimension that should be marginalized.
+            For example, this is useful when using a batched fully Bayesian
+            model.
 
     Returns:
         A `n' x d` with subset of points in `X`, where
@@ -285,10 +291,14 @@ def prune_inferior_points(
         objective = IdentityMCObjective()
     obj_vals = objective(samples, X=X)
     if obj_vals.ndim > 2:
-        # TODO: support batched inputs (req. dealing with ragged tensors)
-        raise UnsupportedError(
-            "Batched models are currently unsupported by prune_inferior_points"
-        )
+        if obj_vals.ndim == 3 and marginalize_dim is not None:
+            obj_vals = obj_vals.mean(dim=marginalize_dim)
+        else:
+            # TODO: support batched inputs (req. dealing with ragged tensors)
+            raise UnsupportedError(
+                "Models with multiple batch dims are currently unsupported by"
+                " prune_inferior_points."
+            )
     is_best = torch.argmax(obj_vals, dim=-1)
     idcs, counts = torch.unique(is_best, return_counts=True)
 

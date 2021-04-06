@@ -69,6 +69,10 @@
     {
       "id": "max_value_entropy",
       "title": "The max-value entropy search acquisition function"
+    },
+    {
+      "id": "GIBBON_for_efficient_batch_entropy_search",
+      "title": "The GIBBON acquisition function for efficient batch entropy search"
     }
   ],
   "Advanced Usage": [

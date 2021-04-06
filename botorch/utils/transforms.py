@@ -152,13 +152,18 @@ def _verify_output_shape(acqf: Any, X: Tensor, output: Tensor) -> bool:
             output.shape == X.shape[:-2]
             or (output.shape == torch.Size() and X.shape[:-2] == torch.Size([1]))
             or output.shape == acqf.model.batch_shape
+            # for a batched model, we may unsqueeze a batch dimension in X
+            # corresponding to the model's batch dim. In that case the
+            # acquisition function output should replace the right-most
+            # batch dim of X with the model's batch shape.
+            or output.shape == X.shape[:-3] + acqf.model.batch_shape
         )
     except (AttributeError, NotImplementedError):
         # acqf does not have model or acqf.model does not define `batch_shape`
         warnings.warn(
             "Output shape checks failed! Expected output shape to match t-batch shape"
             f"of X, but got output with shape {output.shape} for X with shape"
-            "{X.shape}. Make sure that this is the intended behavior!",
+            f"{X.shape}. Make sure that this is the intended behavior!",
             RuntimeWarning,
         )
         return True
@@ -210,6 +215,7 @@ def t_batch_mode_transform(
                     f"Expected X to be `batch_shape x q={expected_q} x d`, but"
                     f" got X with shape {X.shape}."
                 )
+            # add t-batch dim
             X = X if X.dim() > 2 else X.unsqueeze(0)
             output = method(acqf, X, *args, **kwargs)
             if assert_output_shape and not _verify_output_shape(

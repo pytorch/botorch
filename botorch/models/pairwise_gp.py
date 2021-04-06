@@ -279,7 +279,7 @@ class PairwiseGP(Model, GP):
             # This may be VERY slow given upstream pytorch issue:
             # https://github.com/pytorch/pytorch/issues/34272
             try:
-                _ = torch.cholesky(X)
+                _ = torch.linalg.cholesky(X)
                 warnings.warn(
                     "X is not a p.d. matrix; "
                     f"Added jitter of {jitter_new:.2e} to the diagonal",
@@ -647,7 +647,7 @@ class PairwiseGP(Model, GP):
             cov_hl = cov_hl + eye  # add 1 to cov_hl
             g = self._grad_posterior_f(x, dp, D, DT, ch, ci)
             cov_g = covar @ g.unsqueeze(-1)
-            x_update = torch.solve(cov_g, cov_hl).solution.squeeze(-1)
+            x_update = torch.linalg.solve(cov_hl, cov_g).squeeze(-1)
             x_next = x - x_update
             diff = torch.norm(x - x_next)
             x = x_next
@@ -838,7 +838,7 @@ class PairwiseGP(Model, GP):
                 device=self.datapoints.device,
             ).expand(hl_cov.shape)
             hl_cov_I = hl_cov + eye  # add I to hl_cov
-            train_covar_map = covar - covar @ torch.solve(hl_cov, hl_cov_I).solution
+            train_covar_map = covar - covar @ torch.linalg.solve(hl_cov_I, hl_cov)
             output_mean, output_covar = self.utility, train_covar_map
 
         # Prior mode
@@ -880,7 +880,7 @@ class PairwiseGP(Model, GP):
             # Preictive covariance fatcor: hlcov_eye = (K + C^-1)
             # fac = (K + C^-1)^-1 @ k = pred_cov_fac_inv @ covar_x_xnew
             # used substitution method here to calculate fac
-            fac = torch.solve(hl @ covar_x_xnew, hlcov_eye).solution
+            fac = torch.linalg.solve(hlcov_eye, hl @ covar_x_xnew)
             pred_covar = covar_xnew - (covar_xnew_x @ fac)
 
             output_mean, output_covar = pred_mean, pred_covar

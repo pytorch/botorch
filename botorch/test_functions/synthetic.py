@@ -192,7 +192,7 @@ class DixonPrice(SyntheticTestFunction):
         d = self.dim
         part1 = (X[..., 0] - 1) ** 2
         i = X.new(range(2, d + 1))
-        part2 = torch.sum(i * (2.0 * X[..., 1:] ** 2 - X[..., :-1]) ** 2, dim=1)
+        part2 = torch.sum(i * (2.0 * X[..., 1:] ** 2 - X[..., :-1]) ** 2, dim=-1)
         return part1 + part2
 
 
@@ -232,11 +232,9 @@ class Griewank(SyntheticTestFunction):
         super().__init__(noise_std=noise_std, negate=negate)
 
     def evaluate_true(self, X: Tensor) -> Tensor:
-        part1 = torch.sum(X ** 2 / 4000.0, dim=1)
-        d = X.shape[1]
-        part2 = -(
-            torch.prod(torch.cos(X / torch.sqrt(X.new(range(1, d + 1))).view(1, -1)))
-        )
+        part1 = torch.sum(X ** 2 / 4000.0, dim=-1)
+        d = X.shape[-1]
+        part2 = -(torch.prod(torch.cos(X / torch.sqrt(X.new(range(1, d + 1))))))
         return part1 + part2 + 1.0
 
 
@@ -323,8 +321,8 @@ class Hartmann(SyntheticTestFunction):
 
     def evaluate_true(self, X: Tensor) -> Tensor:
         self.to(device=X.device, dtype=X.dtype)
-        inner_sum = torch.sum(self.A * (X.unsqueeze(1) - 0.0001 * self.P) ** 2, dim=2)
-        H = -(torch.sum(self.ALPHA * torch.exp(-inner_sum), dim=1))
+        inner_sum = torch.sum(self.A * (X.unsqueeze(-2) - 0.0001 * self.P) ** 2, dim=-1)
+        H = -(torch.sum(self.ALPHA * torch.exp(-inner_sum), dim=-1))
         if self.dim == 4:
             H = (1.1 + H) / 0.839
         return H
@@ -356,7 +354,7 @@ class HolderTable(SyntheticTestFunction):
     ]
 
     def evaluate_true(self, X: Tensor) -> Tensor:
-        term = torch.abs(1 - torch.norm(X, dim=1) / math.pi)
+        term = torch.abs(1 - torch.norm(X, dim=-1) / math.pi)
         return -(
             torch.abs(torch.sin(X[..., 0]) * torch.cos(X[..., 1]) * torch.exp(term))
         )
@@ -393,7 +391,7 @@ class Levy(SyntheticTestFunction):
         part2 = torch.sum(
             (w[..., :-1] - 1.0) ** 2
             * (1.0 + 10.0 * torch.sin(math.pi * w[..., :-1] + 1.0) ** 2),
-            dim=1,
+            dim=-1,
         )
         part3 = (w[..., -1] - 1.0) ** 2 * (
             1.0 + torch.sin(2.0 * math.pi * w[..., -1]) ** 2
@@ -592,7 +590,7 @@ class StyblinskiTang(SyntheticTestFunction):
         super().__init__(noise_std=noise_std, negate=negate)
 
     def evaluate_true(self, X: Tensor) -> Tensor:
-        return 0.5 * (X ** 4 - 16 * X ** 2 + 5 * X).sum(dim=1)
+        return 0.5 * (X ** 4 - 16 * X ** 2 + 5 * X).sum(dim=-1)
 
 
 class ThreeHumpCamel(SyntheticTestFunction):

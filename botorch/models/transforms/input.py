@@ -21,13 +21,14 @@ from collections import OrderedDict
 from typing import List, Optional, Union
 
 import torch
-from botorch.distributions.distributions import Kumaraswamy
 from botorch.exceptions.errors import BotorchTensorDimensionError
+from botorch.models.transforms.utils import expand_and_copy_tensor
 from botorch.utils.rounding import approximate_round
 from gpytorch import Module as GPyTorchModule
 from gpytorch.constraints import GreaterThan
 from gpytorch.priors import Prior
 from torch import Tensor, nn
+from torch.distributions import Kumaraswamy
 from torch.nn import Module, ModuleDict
 
 
@@ -595,6 +596,7 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
         eps: float = 1e-7,
         concentration1_prior: Optional[Prior] = None,
         concentration0_prior: Optional[Prior] = None,
+        batch_shape: Optional[torch.Size] = None,
     ) -> None:
         r"""Initialize transform.
 
@@ -613,20 +615,30 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
                 of the Kumaraswamy distribution.
             concentration0_prior: A prior distribution on the concentration0 parameter
                 of the Kumaraswamy distribution.
-
-
+            batch_shape: The batch shape.
         """
         super().__init__()
-        self.eps = eps
         self.register_buffer("indices", torch.tensor(indices, dtype=torch.long))
         self.transform_on_train = transform_on_train
         self.transform_on_eval = transform_on_eval
         self.transform_on_preprocess = transform_on_preprocess
         self.reverse = reverse
+        self.batch_shape = batch_shape or torch.Size([])
+        self._X_min = eps
+        self._X_range = 1 - 2 * eps
+        if len(self.batch_shape) > 0:
+            # Note: this follows the gpytorch shape convention for lengthscales
+            # There is ongoing discussion about the extra `1`.
+            # TODO: update to follow new gpytorch convention resulting from
+            # https://github.com/cornellius-gp/gpytorch/issues/1317
+            batch_shape = self.batch_shape + torch.Size([1])
+        else:
+            batch_shape = self.batch_shape
         for i in (0, 1):
             p_name = f"concentration{i}"
             self.register_parameter(
-                p_name, nn.Parameter(torch.full(self.indices.shape, 1.0))
+                p_name,
+                nn.Parameter(torch.full(batch_shape + self.indices.shape, 1.0)),
             )
         if concentration0_prior is not None:
             self.register_prior(
@@ -661,24 +673,50 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
         r"""Warp the inputs through the Kumaraswamy CDF.
 
         Args:
-            X: A `batch_shape x n x d`-dim tensor of inputs.
+            X: A `input_batch_shape x (batch_shape) x n x d`-dim tensor of inputs.
+                batch_shape here can either be self.batch_shape or 1's such that
+                it is broadcastable with self.batch_shape if self.batch_shape is set.
 
         Returns:
-            A `batch_shape x n x d`-dim tensor of transformed inputs.
+            A `input_batch_shape x (batch_shape) x n x d`-dim tensor of transformed
+                inputs.
         """
-        X_tf = X.clone()
+        X_tf = expand_and_copy_tensor(X=X, batch_shape=self.batch_shape)
         k = Kumaraswamy(
             concentration1=self.concentration1, concentration0=self.concentration0
         )
+        # normalize to [eps, 1-eps]
         X_tf[..., self.indices] = k.cdf(
-            X[..., self.indices].clamp(self.eps, 1 - self.eps)
+            torch.clamp(
+                X_tf[..., self.indices] * self._X_range + self._X_min,
+                self._X_min,
+                1.0 - self._X_min,
+            )
         )
         return X_tf
 
     def _untransform(self, X: Tensor) -> Tensor:
+        r"""Warp the inputs through the Kumaraswamy inverse CDF.
+
+        Args:
+            X: A `input_batch_shape x batch_shape x n x d`-dim tensor of inputs.
+
+        Returns:
+            A `input_batch_shape x batch_shape x n x d`-dim tensor of transformed
+                inputs.
+        """
+        if len(self.batch_shape) > 0:
+            if self.batch_shape != X.shape[-2 - len(self.batch_shape) : -2]:
+                raise BotorchTensorDimensionError(
+                    "The right most batch dims of X must match self.batch_shape: "
+                    f"({self.batch_shape})."
+                )
         X_tf = X.clone()
         k = Kumaraswamy(
             concentration1=self.concentration1, concentration0=self.concentration0
         )
-        X_tf[..., self.indices] = k.icdf(X[..., self.indices])
+        # unnormalize from [eps, 1-eps] to [0,1]
+        X_tf[..., self.indices] = (
+            (k.icdf(X_tf[..., self.indices]) - self._X_min) / self._X_range
+        ).clamp(0.0, 1.0)
         return X_tf
