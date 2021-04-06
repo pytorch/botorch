@@ -49,7 +49,7 @@ class BaseTestProblemBaseTestCase:
 
     def test_forward(self):
         for dtype in (torch.float, torch.double):
-            for batch_shape in (torch.Size(), torch.Size([2])):
+            for batch_shape in (torch.Size(), torch.Size([2]), torch.Size([2, 3])):
                 for f in self.functions:
                     f.to(device=self.device, dtype=dtype)
                     X = torch.rand(*batch_shape, f.dim, device=self.device, dtype=dtype)
