@@ -252,6 +252,8 @@ def get_gp_samples(
     if num_outputs > 1:
         if not isinstance(model, ModelListGP):
             models = batched_to_model_list(model).models
+        else:
+            models = model.models
     else:
         models = [model]
     if isinstance(models[0], MultiTaskGP):
