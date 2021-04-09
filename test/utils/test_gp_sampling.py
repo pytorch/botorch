@@ -9,6 +9,7 @@ from math import pi
 from unittest import mock
 
 import torch
+from botorch.models.converter import batched_to_model_list
 from botorch.models.deterministic import DeterministicModel
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.multitask import MultiTaskGP
@@ -351,18 +352,20 @@ class TestRandomFourierFeatures(BotorchTestCase):
         tkwargs = {"device": self.device}
         for dtype, m in product((torch.float, torch.double), (1, 2)):
             tkwargs["dtype"] = dtype
-            model, X, Y = _get_model(**tkwargs, multi_output=m == 2)
-            gp_samples = get_gp_samples(
-                model=model,
-                num_outputs=m,
-                n_samples=20,
-                num_rff_features=500,
-            )
-            self.assertEqual(len(gp_samples), 20)
-            self.assertIsInstance(gp_samples[0], DeterministicModel)
-            Y_hat_rff = torch.stack(
-                [gp_sample(X) for gp_sample in gp_samples], dim=0
-            ).mean(dim=0)
-            with torch.no_grad():
-                Y_hat = model.posterior(X).mean
-            self.assertTrue(torch.allclose(Y_hat_rff, Y_hat, atol=2e-1))
+            for mtype in range(2):
+                model, X, Y = _get_model(**tkwargs, multi_output=m == 2)
+                use_batch_model = mtype == 0 and m == 2
+                gp_samples = get_gp_samples(
+                    model=batched_to_model_list(model) if use_batch_model else model,
+                    num_outputs=m,
+                    n_samples=20,
+                    num_rff_features=500,
+                )
+                self.assertEqual(len(gp_samples), 20)
+                self.assertIsInstance(gp_samples[0], DeterministicModel)
+                Y_hat_rff = torch.stack(
+                    [gp_sample(X) for gp_sample in gp_samples], dim=0
+                ).mean(dim=0)
+                with torch.no_grad():
+                    Y_hat = model.posterior(X).mean
+                self.assertTrue(torch.allclose(Y_hat_rff, Y_hat, atol=2e-1))
