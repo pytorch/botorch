@@ -223,7 +223,8 @@ def gen_candidates_torch(
 
         def closure():
             bayes_optimizer.zero_grad()
-            loss.backward()
+            output_grad = torch.autograd.grad(loss, candidates)[0]
+            candidates.grad = output_grad
             return loss
 
         bayes_optimizer.step(closure)
