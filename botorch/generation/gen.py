@@ -219,7 +219,7 @@ def gen_candidates_torch(
         if verbose:
             print("Iter: {} - Value: {:.3f}".format(i, -(loss.item())))
         loss_trajectory.append(loss.item())
-        param_trajectory["candidates"].append(candidates.clone())
+        param_trajectory["candidates"].append(candidates.clone().detach())
 
         def closure():
             bayes_optimizer.zero_grad()
