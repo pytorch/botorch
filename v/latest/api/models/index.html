@@ -23,11 +23,11 @@
 <div class="documentwrapper">
 <div class="bodywrapper">
 <div class="body" role="main">
-<section id="module-botorch.models">
+<div class="section" id="module-botorch.models">
 <span id="botorch-models"></span><h1>botorch.models<a class="headerlink" href="#module-botorch.models" title="Permalink to this headline">¶</a></h1>
-<section id="model-apis">
+<div class="section" id="model-apis">
 <h2>Model APIs<a class="headerlink" href="#model-apis" title="Permalink to this headline">¶</a></h2>
-<section id="module-botorch.models.model">
+<div class="section" id="module-botorch.models.model">
 <span id="abstract-model-api"></span><h3>Abstract Model API<a class="headerlink" href="#module-botorch.models.model" title="Permalink to this headline">¶</a></h3>
 <p>Abstract base module for all BoTorch models.</p>
 <dl class="py class">
@@ -198,8 +198,8 @@ batch shape of the model).</p></li>
 <code class="sig-name descname"><span class="pre">training</span></code><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.model.Model.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
-</section>
-<section id="module-botorch.models.gpytorch">
+</div>
+<div class="section" id="module-botorch.models.gpytorch">
 <span id="gpytorch-model-api"></span><h3>GPyTorch Model API<a class="headerlink" href="#module-botorch.models.gpytorch" title="Permalink to this headline">¶</a></h3>
 <p>Abstract model class for all GPyTorch-based botorch models.</p>
 <p>To implement your own, simply inherit from both the provided classes and a
@@ -588,8 +588,8 @@ distributions over <cite>q</cite> points and the outputs selected by
 <code class="sig-name descname"><span class="pre">training</span></code><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.gpytorch.MultiTaskGPyTorchModel.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
-</section>
-<section id="module-botorch.models.deterministic">
+</div>
+<div class="section" id="module-botorch.models.deterministic">
 <span id="deterministic-model-api"></span><h3>Deterministic Model API<a class="headerlink" href="#module-botorch.models.deterministic" title="Permalink to this headline">¶</a></h3>
 <p>Deterministic Models. Simple wrappers that allow the usage of deterministic
 mappings via the BoTorch Model and Posterior APIs. Useful e.g. for defining
@@ -754,11 +754,11 @@ dimension <cite>m</cite> must be explicit if <cite>m=1</cite>).</p>
 <code class="sig-name descname"><span class="pre">training</span></code><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.deterministic.AffineDeterministicModel.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
-</section>
-</section>
-<section id="models">
+</div>
+</div>
+<div class="section" id="models">
 <h2>Models<a class="headerlink" href="#models" title="Permalink to this headline">¶</a></h2>
-<section id="module-botorch.models.cost">
+<div class="section" id="module-botorch.models.cost">
 <span id="cost-models-for-cost-aware-optimization"></span><h3>Cost Models (for cost-aware optimization)<a class="headerlink" href="#module-botorch.models.cost" title="Permalink to this headline">¶</a></h3>
 <p>Cost models to be used with multi-fidelity optimization.</p>
 <dl class="py class">
@@ -810,8 +810,8 @@ an element of a q-batch).</p></li>
 <code class="sig-name descname"><span class="pre">training</span></code><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.cost.AffineFidelityCostModel.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
-</section>
-<section id="module-botorch.models.gp_regression">
+</div>
+<div class="section" id="module-botorch.models.gp_regression">
 <span id="gp-regression-models"></span><h3>GP Regression Models<a class="headerlink" href="#module-botorch.models.gp_regression" title="Permalink to this headline">¶</a></h3>
 <p>Gaussian Process Regression models based on GPyTorch models.</p>
 <dl class="py class">
@@ -1104,8 +1104,8 @@ observations passed in via kwargs).</p>
 </dl>
 </dd></dl>
 </dd></dl>
-</section>
-<section id="module-botorch.models.gp_regression_fidelity">
+</div>
+<div class="section" id="module-botorch.models.gp_regression_fidelity">
 <span id="multi-fidelity-gp-regression-models"></span><h3>Multi-Fidelity GP Regression Models<a class="headerlink" href="#module-botorch.models.gp_regression_fidelity" title="Permalink to this headline">¶</a></h3>
 <p>Gaussian Process Regression models based on GPyTorch models.</p>
 <dl class="citation">
@@ -1288,8 +1288,8 @@ or for multiple outcomes for batched multi-output case.</p></li>
 </dl>
 </dd></dl>
 </dd></dl>
-</section>
-<section id="module-botorch.models.model_list_gp_regression">
+</div>
+<div class="section" id="module-botorch.models.model_list_gp_regression">
 <span id="model-list-gp-regression-models"></span><h3>Model List GP Regression Models<a class="headerlink" href="#module-botorch.models.model_list_gp_regression" title="Permalink to this headline">¶</a></h3>
 <p>Model List GP Regression models.</p>
 <dl class="py class">
@@ -1372,8 +1372,8 @@ been added and all test-time caches have been updated.</p>
 <code class="sig-name descname"><span class="pre">training</span></code><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.model_list_gp_regression.ModelListGP.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
-</section>
-<section id="module-botorch.models.multitask">
+</div>
+<div class="section" id="module-botorch.models.multitask">
 <span id="multitask-gp-models"></span><h3>Multitask GP Models<a class="headerlink" href="#module-botorch.models.multitask" title="Permalink to this headline">¶</a></h3>
 <p>Multi-Task GP models.</p>
 <dl class="py class">
@@ -1559,8 +1559,8 @@ float),</p></li>
 <code class="sig-name descname"><span class="pre">training</span></code><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.multitask.FixedNoiseMultiTaskGP.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
-</section>
-<section id="module-botorch.models.higher_order_gp">
+</div>
+<div class="section" id="module-botorch.models.higher_order_gp">
 <span id="higher-order-gp-models"></span><h3>Higher Order GP Models<a class="headerlink" href="#module-botorch.models.higher_order_gp" title="Permalink to this headline">¶</a></h3>
 <p>References</p>
 <dl class="citation">
@@ -1808,8 +1808,8 @@ the joint covariance across all data points.</p>
 </dl>
 </dd></dl>
 </dd></dl>
-</section>
-<section id="module-botorch.models.pairwise_gp">
+</div>
+<div class="section" id="module-botorch.models.pairwise_gp">
 <span id="pairwise-gp-models"></span><h3>Pairwise GP Models<a class="headerlink" href="#module-botorch.models.pairwise_gp" title="Permalink to this headline">¶</a></h3>
 <p>Preference Learning with Gaussian Process</p>
 <dl class="citation">
@@ -2016,8 +2016,8 @@ original model conditioned on the new observations <cite>(X, Y)</cite>.</p>
 <code class="sig-name descname"><span class="pre">training</span></code><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.pairwise_gp.PairwiseLaplaceMarginalLogLikelihood.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
-</section>
-<section id="module-botorch.models.contextual">
+</div>
+<div class="section" id="module-botorch.models.contextual">
 <span id="contextual-gp-models-with-aggregate-rewards"></span><h3>Contextual GP Models with Aggregate Rewards<a class="headerlink" href="#module-botorch.models.contextual" title="Permalink to this headline">¶</a></h3>
 <dl class="py class">
 <dt id="botorch.models.contextual.SACGP">
@@ -2114,8 +2114,8 @@ forward pass.</p></li>
 </pre></div>
 </div>
 </dd></dl>
-</section>
-<section id="module-botorch.models.contextual_multioutput">
+</div>
+<div class="section" id="module-botorch.models.contextual_multioutput">
 <span id="contextual-gp-models-with-context-rewards"></span><h3>Contextual GP Models with Context Rewards<a class="headerlink" href="#module-botorch.models.contextual_multioutput" title="Permalink to this headline">¶</a></h3>
 <dl class="py class">
 <dt id="botorch.models.contextual_multioutput.LCEMGP">
@@ -2271,11 +2271,11 @@ forward pass.</p></li>
 <code class="sig-name descname"><span class="pre">training</span></code><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.contextual_multioutput.FixedNoiseLCEMGP.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
-</section>
-</section>
-<section id="model-components">
+</div>
+</div>
+<div class="section" id="model-components">
 <h2>Model Components<a class="headerlink" href="#model-components" title="Permalink to this headline">¶</a></h2>
-<section id="module-botorch.models.kernels.downsampling">
+<div class="section" id="module-botorch.models.kernels.downsampling">
 <span id="kernels"></span><h3>Kernels<a class="headerlink" href="#module-botorch.models.kernels.downsampling" title="Permalink to this headline">¶</a></h3>
 <dl class="py class">
 <dt id="botorch.models.kernels.downsampling.DownsamplingKernel">
@@ -2486,11 +2486,11 @@ contexts.</p></li>
 </dl>
 <p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
 </dd></dl>
-</section>
-</section>
-<section id="transforms">
+</div>
+</div>
+<div class="section" id="transforms">
 <h2>Transforms<a class="headerlink" href="#transforms" title="Permalink to this headline">¶</a></h2>
-<section id="module-botorch.models.transforms.outcome">
+<div class="section" id="module-botorch.models.transforms.outcome">
 <span id="outcome-transforms"></span><h3>Outcome Transforms<a class="headerlink" href="#module-botorch.models.transforms.outcome" title="Permalink to this headline">¶</a></h3>
 <p>Outcome transformations for automatically transforming and un-transforming
 model outputs. Outcome transformations are typically part of a Model and
@@ -2900,8 +2900,8 @@ observation noises associated with the training targets
 <code class="sig-name descname"><span class="pre">training</span></code><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.transforms.outcome.Log.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
-</section>
-<section id="module-botorch.models.transforms.input">
+</div>
+<div class="section" id="module-botorch.models.transforms.input">
 <span id="input-transforms"></span><h3>Input Transforms<a class="headerlink" href="#module-botorch.models.transforms.input" title="Permalink to this headline">¶</a></h3>
 <p>Input Transformations.</p>
 <p>These classes implement a variety of transformations for
@@ -3457,8 +3457,8 @@ of the Kumaraswamy distribution.</p></li>
 <code class="sig-name descname"><span class="pre">reverse</span></code><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.models.transforms.input.Warp.reverse" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
-</section>
-<section id="module-botorch.models.transforms.utils">
+</div>
+<div class="section" id="module-botorch.models.transforms.utils">
 <span id="transform-utilities"></span><h3>Transform Utilities<a class="headerlink" href="#module-botorch.models.transforms.utils" title="Permalink to this headline">¶</a></h3>
 <dl class="py function">
 <dt id="botorch.models.transforms.utils.lognorm_to_norm">
@@ -3561,11 +3561,11 @@ Cov_ln_{ij} = exp(mu_{i} + mu_{j} + 0.5 * (Cov_{ii} + Cov_{jj})) *
 </dd>
 </dl>
 </dd></dl>
-</section>
-</section>
-<section id="utilities">
+</div>
+</div>
+<div class="section" id="utilities">
 <h2>Utilities<a class="headerlink" href="#utilities" title="Permalink to this headline">¶</a></h2>
-<section id="module-botorch.models.converter">
+<div class="section" id="module-botorch.models.converter">
 <span id="model-conversion"></span><h3>Model Conversion<a class="headerlink" href="#module-botorch.models.converter" title="Permalink to this headline">¶</a></h3>
 <p>Utilities for converting between different models.</p>
 <dl class="py function">
@@ -3615,8 +3615,8 @@ type and have the shape (batch shape and number of training inputs).</p>
 </pre></div>
 </div>
 </dd></dl>
-</section>
-<section id="module-botorch.models.utils">
+</div>
+<div class="section" id="module-botorch.models.utils">
 <span id="other-utilties"></span><h3>Other Utilties<a class="headerlink" href="#module-botorch.models.utils" title="Permalink to this headline">¶</a></h3>
 <p>Utiltiy functions for models.</p>
 <dl class="py function">
@@ -3795,9 +3795,9 @@ attribute.</p></li>
 <code class="sig-prename descclassname"><span class="pre">botorch.models.utils.</span></code><code class="sig-name descname"><span class="pre">gpt_posterior_settings</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/utils.html#gpt_posterior_settings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.utils.gpt_posterior_settings" title="Permalink to this definition">¶</a></dt>
 <dd><p>Context manager for settings used for computing model posteriors.</p>
 </dd></dl>
-</section>
-</section>
-</section>
+</div>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -3805,7 +3805,7 @@ attribute.</p></li>
 <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="index.html">BoTorch</a></h1>
 <h3>Navigation</h3>
-<p><span class="caption-text">API Reference</span></p>
+<p class="caption"><span class="caption-text">API Reference</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="acquisition.html">botorch.acquisition</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">botorch.models</a></li>
