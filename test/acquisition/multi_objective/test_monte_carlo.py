@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import warnings
+from unittest import mock
 
 import torch
 from botorch import settings
@@ -21,6 +22,7 @@ from botorch.exceptions.errors import BotorchError, UnsupportedError
 from botorch.exceptions.warnings import BotorchWarning
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
+    FastNondominatedPartitioning,
     NondominatedPartitioning,
 )
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
@@ -402,6 +404,77 @@ class TestQExpectedHypervolumeImprovement(BotorchTestCase):
             X = torch.zeros(2, 2, **tkwargs)
             res = acqf(X)
             self.assertEqual(res.item(), 22.0)
+
+            # test batched model
+            pareto_Y = torch.tensor(
+                [[4.0, 2.0, 3.0], [3.0, 5.0, 1.0], [2.0, 4.0, 2.0]], **tkwargs
+            )
+            samples = torch.tensor(
+                [[1.0, 2.0, 6.0], [1.0, 3.0, 4.0]], **tkwargs
+            ).unsqueeze(0)
+            samples = torch.stack([samples, samples + 1], dim=1)
+            mm = MockModel(MockPosterior(samples=samples))
+            ref_point = [-1.0] * 3
+            t_ref_point = torch.tensor(ref_point, **tkwargs)
+            partitioning = NondominatedPartitioning(ref_point=t_ref_point, Y=pareto_Y)
+            acqf = qExpectedHypervolumeImprovement(
+                model=mm,
+                ref_point=ref_point,
+                partitioning=partitioning,
+                sampler=sampler,
+            )
+            X = torch.zeros(2, 2, **tkwargs)
+            res = acqf(X)
+            self.assertTrue(
+                torch.equal(
+                    res,
+                    # batch_shape x model_batch_shape
+                    torch.tensor([[22.0, 60.0]], **tkwargs),
+                )
+            )
+            # test batched model with batched partitioning with multiple batch dims
+            pareto_Y = torch.tensor(
+                [[4.0, 5.0], [5.0, 5.0], [8.5, 3.5], [8.5, 3.0], [9.0, 1.0]], **tkwargs
+            )
+            pareto_Y = torch.stack(
+                [
+                    pareto_Y,
+                    pareto_Y + 0.5,
+                ],
+                dim=0,
+            )
+            samples = torch.tensor([[6.5, 4.5], [7.0, 4.0]], **tkwargs).unsqueeze(0)
+            samples = torch.stack([samples, samples + 1], dim=1)
+            mm = MockModel(MockPosterior(samples=samples))
+            ref_point = [-1.0] * 2
+            t_ref_point = torch.tensor(ref_point, **tkwargs)
+            partitioning = FastNondominatedPartitioning(
+                ref_point=t_ref_point, Y=pareto_Y
+            )
+            cell_bounds = partitioning.get_hypercell_bounds().unsqueeze(1)
+            with mock.patch.object(
+                partitioning, "get_hypercell_bounds", return_value=cell_bounds
+            ):
+                acqf = qExpectedHypervolumeImprovement(
+                    model=mm,
+                    ref_point=ref_point,
+                    partitioning=partitioning,
+                    sampler=sampler,
+                )
+                # test multiple batch dims
+                self.assertEqual(acqf.cell_lower_bounds.shape, torch.Size([1, 2, 4, 2]))
+                self.assertEqual(acqf.cell_upper_bounds.shape, torch.Size([1, 2, 4, 2]))
+            X = torch.zeros(2, 2, **tkwargs)
+            res = acqf(X)
+            self.assertTrue(
+                torch.equal(
+                    res,
+                    # batch_shape x model_batch_shape
+                    torch.tensor(
+                        [[1.75, 3.5]], dtype=samples.dtype, device=samples.device
+                    ),
+                )
+            )
 
     def test_constrained_q_expected_hypervolume_improvement(self):
         for dtype in (torch.float, torch.double):

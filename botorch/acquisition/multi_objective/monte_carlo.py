@@ -194,8 +194,8 @@ class qExpectedHypervolumeImprovement(MultiObjectiveMCAcquisitionFunction):
             X: A `batch_shape x q x d`-dim tensor of inputs.
 
         Returns:
-            A `batch_shape`-dim tensor of expected hypervolume improvement for each
-                batch.
+            A `batch_shape x (model_batch_shape)`-dim tensor of expected hypervolume
+            improvement for each batch.
         """
         q = samples.shape[-2]
         # Note that the objective may subset the outcomes (e.g. this will usually happen
@@ -213,15 +213,21 @@ class qExpectedHypervolumeImprovement(MultiObjectiveMCAcquisitionFunction):
             )
         self._cache_q_subset_indices(q=q)
         batch_shape = samples.shape[:-2]
+        # this is n_samples x input_batch_shape x
         areas_per_segment = torch.zeros(
             *batch_shape,
             self.cell_lower_bounds.shape[-2],
             dtype=obj.dtype,
             device=obj.device,
         )
-        sample_batch_view_shape = [
-            batch_shape[0] if self.cell_lower_bounds.ndim == 3 else 1
-        ] + [1] * (len(batch_shape) - 1)
+        cell_batch_ndim = self.cell_lower_bounds.ndim - 2
+        sample_batch_view_shape = torch.Size(
+            [
+                batch_shape[0] if cell_batch_ndim > 0 else 1,
+                *[1 for _ in range(len(batch_shape) - max(cell_batch_ndim, 1))],
+                *self.cell_lower_bounds.shape[1:-2],
+            ]
+        )
         view_shape = (
             *sample_batch_view_shape,
             self.cell_upper_bounds.shape[-2],
