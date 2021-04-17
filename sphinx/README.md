@@ -6,10 +6,7 @@ This file describes the sphinx setup for auto-generating the botorch API referen
 ## Installation
 
 **Requirements**:
-- sphinx >= 2.0
-- sphinx_autodoc_typehints
-
-You can install these via `pip install sphinx sphinx_autodoc_typehints`.
+- sphinx >= 3.0  (Install via `pip install sphinx`)
 
 
 ## Building
