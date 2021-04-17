@@ -257,12 +257,27 @@ class TestModelListGPyTorchModel(BotorchTestCase):
             )
             train_Y1 = torch.sin(train_X1)
             train_Y2 = torch.cos(train_X2)
-            m1 = SimpleGPyTorchModel(train_X1, train_Y1)
+            # test different batch shapes
+            m1 = SimpleGPyTorchModel(
+                train_X1.expand(2, *train_X1.shape), train_Y1.expand(2, *train_Y1.shape)
+            )
             m2 = SimpleGPyTorchModel(train_X2, train_Y2)
             model = SimpleModelListGPyTorchModel(m1, m2)
             self.assertEqual(model.num_outputs, 2)
             with self.assertRaises(NotImplementedError):
                 model.batch_shape
+            # test same batch shape
+            m2 = SimpleGPyTorchModel(
+                train_X2.expand(2, *train_X2.shape), train_Y2.expand(2, *train_Y2.shape)
+            )
+            model = SimpleModelListGPyTorchModel(m1, m2)
+            self.assertEqual(model.num_outputs, 2)
+            self.assertEqual(model.batch_shape, torch.Size([2]))
+            # test non-batch
+            m1 = SimpleGPyTorchModel(train_X1, train_Y1)
+            m2 = SimpleGPyTorchModel(train_X2, train_Y2)
+            model = SimpleModelListGPyTorchModel(m1, m2)
+            self.assertEqual(model.batch_shape, torch.Size([]))
             test_X = torch.rand(2, 1, **tkwargs)
             posterior = model.posterior(test_X)
             self.assertIsInstance(posterior, GPyTorchPosterior)

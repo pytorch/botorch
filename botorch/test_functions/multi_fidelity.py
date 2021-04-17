@@ -96,11 +96,11 @@ class AugmentedHartmann(SyntheticTestFunction):
     def evaluate_true(self, X: Tensor) -> Tensor:
         self.to(device=X.device, dtype=X.dtype)
         inner_sum = torch.sum(
-            self.A * (X[..., :6].unsqueeze(1) - 0.0001 * self.P) ** 2, dim=2
+            self.A * (X[..., :6].unsqueeze(-2) - 0.0001 * self.P) ** 2, dim=-1
         )
         alpha1 = self.ALPHA[0] - 0.1 * (1 - X[..., 6])
         H = (
-            -(torch.sum(self.ALPHA[1:] * torch.exp(-inner_sum)[..., 1:], dim=1))
+            -(torch.sum(self.ALPHA[1:] * torch.exp(-inner_sum)[..., 1:], dim=-1))
             - alpha1 * torch.exp(-inner_sum)[..., 0]
         )
         return H

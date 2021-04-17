@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import Dict, Optional, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import torch
 from botorch import settings
@@ -19,7 +19,12 @@ from botorch.acquisition.knowledge_gradient import (
 from botorch.acquisition.utils import is_nonnegative
 from botorch.exceptions.warnings import BadInitialCandidatesWarning, SamplingWarning
 from botorch.models.model import Model
-from botorch.utils.sampling import batched_multinomial, draw_sobol_samples, manual_seed
+from botorch.utils.sampling import (
+    batched_multinomial,
+    draw_sobol_samples,
+    manual_seed,
+    get_polytope_samples,
+)
 from botorch.utils.transforms import standardize
 from torch import Tensor
 from torch.quasirandom import SobolEngine
@@ -32,8 +37,12 @@ def gen_batch_initial_conditions(
     num_restarts: int,
     raw_samples: int,
     options: Optional[Dict[str, Union[bool, float, int]]] = None,
+    inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
+    equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
 ) -> Tensor:
     r"""Generate a batch of initial conditions for random-restart optimziation.
+
+    TODO: Support t-batches of initial conditions.
 
     Args:
         acq_function: The acquisition function to be optimized.
@@ -51,6 +60,12 @@ def gen_batch_initial_conditions(
             to specify the batch limit for the initialization. This is useful
             for avoiding memory limits when computing the batch posterior over
             raw samples.
+        inequality constraints: A list of tuples (indices, coefficients, rhs),
+            with each tuple encoding an inequality constraint of the form
+            `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`.
+        equality constraints: A list of tuples (indices, coefficients, rhs),
+            with each tuple encoding an inequality constraint of the form
+            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`.
 
     Returns:
         A `num_restarts x q x d` tensor of initial conditions.
@@ -94,14 +109,30 @@ def gen_batch_initial_conditions(
     while factor < max_factor:
         with warnings.catch_warnings(record=True) as ws:
             n = raw_samples * factor
-            if effective_dim <= SobolEngine.MAXDIM:
-                X_rnd = draw_sobol_samples(bounds=bounds, n=n, q=q, seed=seed)
+            if inequality_constraints is None and equality_constraints is None:
+                if effective_dim <= SobolEngine.MAXDIM:
+                    X_rnd = draw_sobol_samples(bounds=bounds, n=n, q=q, seed=seed)
+                else:
+                    with manual_seed(seed):
+                        # load on cpu
+                        X_rnd_nlzd = torch.rand(
+                            n, q, bounds.shape[-1], dtype=bounds.dtype
+                        )
+                    X_rnd = bounds[0] + (bounds[1] - bounds[0]) * X_rnd_nlzd
             else:
-                with manual_seed(seed):
-                    # load on cpu
-                    X_rnd_nlzd = torch.rand(n * effective_dim, dtype=bounds.dtype)
-                    X_rnd_nlzd = X_rnd_nlzd.view(n, q, bounds.shape[-1])
-                X_rnd = bounds[0] + (bounds[1] - bounds[0]) * X_rnd_nlzd
+                X_rnd = (
+                    get_polytope_samples(
+                        n=n * q,
+                        bounds=bounds,
+                        inequality_constraints=inequality_constraints,
+                        equality_constraints=equality_constraints,
+                        seed=seed,
+                        n_burnin=options.get("n_burnin", 10000),
+                        thinning=options.get("thinning", 32),
+                    )
+                    .view(n, q, -1)
+                    .cpu()
+                )
             with torch.no_grad():
                 if batch_limit is None:
                     batch_limit = X_rnd.shape[0]
@@ -139,6 +170,8 @@ def gen_one_shot_kg_initial_conditions(
     num_restarts: int,
     raw_samples: int,
     options: Optional[Dict[str, Union[bool, float, int]]] = None,
+    inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
+    equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
 ) -> Optional[Tensor]:
     r"""Generate a batch of smart initializations for qKnowledgeGradient.
 
@@ -172,6 +205,12 @@ def gen_one_shot_kg_initial_conditions(
             restarts and raw samples for solving the posterior objective
             maximization problem, respectively) and `eta` (temperature parameter
             for sampling heuristic from posterior objective maximizers).
+        inequality constraints: A list of tuples (indices, coefficients, rhs),
+            with each tuple encoding an inequality constraint of the form
+            `\sum_i (X[indices[i]] * coefficients[i]) >= rhs`.
+        equality constraints: A list of tuples (indices, coefficients, rhs),
+            with each tuple encoding an inequality constraint of the form
+            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`.
 
     Returns:
         A `num_restarts x q' x d` tensor that can be used as initial conditions
@@ -202,6 +241,8 @@ def gen_one_shot_kg_initial_conditions(
         num_restarts=num_restarts,
         raw_samples=raw_samples,
         options=options,
+        inequality_constraints=inequality_constraints,
+        equality_constraints=equality_constraints,
     )
 
     # compute maximizer of the value function
@@ -220,6 +261,8 @@ def gen_one_shot_kg_initial_conditions(
         num_restarts=options.get("num_inner_restarts", 20),
         raw_samples=options.get("raw_inner_samples", 1024),
         return_best_only=False,
+        inequality_constraints=inequality_constraints,
+        equality_constraints=equality_constraints,
     )
 
     # sampling from the optimizers

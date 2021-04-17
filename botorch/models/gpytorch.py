@@ -484,7 +484,13 @@ class ModelListGPyTorchModel(GPyTorchModel, ABC):
         shape `broadcast(test_batch_shape, model.batch_shape) x q x m`.
         """
         # TODO: Either check that batch shapes match across models, or broadcast them
-        raise NotImplementedError
+        batch_shape = self.models[0].batch_shape
+        if all(batch_shape == m.batch_shape for m in self.models[1:]):
+            return batch_shape
+        raise NotImplementedError(
+            "ModelListGPyTorchModel.batch_shape is only supported if all "
+            "constituent models have the same batch_shape."
+        )
 
     def posterior(
         self,
