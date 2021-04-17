@@ -37,19 +37,19 @@ retries can be passed in as a <cite>max_retries</cite> kwarg (default is 5).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>mll</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">MarginalLogLikelihood</span></code>) – MarginalLogLikelihood to be maximized.</p></li>
-<li><p><strong>optimizer</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>) – The optimizer function.</p></li>
-<li><p><strong>kwargs</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>) – Arguments passed along to the optimizer function, including
+<li><p><strong>mll</strong> (<em>gpytorch.mlls.marginal_log_likelihood.MarginalLogLikelihood</em>) – MarginalLogLikelihood to be maximized.</p></li>
+<li><p><strong>optimizer</strong> (<em>Callable</em>) – The optimizer function.</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – Arguments passed along to the optimizer function, including
 <cite>max_retries</cite> and <cite>sequential</cite> (controls the fitting of <cite>ModelListGP</cite>
 and <cite>BatchedMultiOutputGPyTorchModel</cite> models) or <cite>approx_mll</cite>
 (whether to use gpytorch’s approximate MLL computation).</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">MarginalLogLikelihood</span></code></p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>MarginalLogLikelihood with optimized parameters.</p>
 </dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>MarginalLogLikelihood with optimized parameters.</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>gpytorch.mlls.marginal_log_likelihood.MarginalLogLikelihood</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>

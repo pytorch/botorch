@@ -56,22 +56,20 @@ variance across t-batches.</p>
 <p>Abstract base class for Samplers.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>batch_range</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The range of t-batch dimensions in the <cite>base_sample_shape</cite>
+<dd class="field-odd"><p><strong>batch_range</strong> (<em>Tuple</em><em>[</em><em>int</em><em>, </em><em>int</em><em>]</em>) – The range of t-batch dimensions in the <cite>base_sample_shape</cite>
 used by <cite>collapse_batch_dims</cite>. The t-batch dims are
 batch_range[0]:batch_range[1]. By default, this is (0, -2),
 for the case where the non-batch dimensions are -2 (q) and
 -1 (d) and all dims in the front are t-batch dims.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py method">
 <dt id="botorch.sampling.samplers.MCSampler.batch_range">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">batch_range</span></code><a class="headerlink" href="#botorch.sampling.samplers.MCSampler.batch_range" title="Permalink to this definition">¶</a></dt>
 <dd><p>The t-batch range.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py method">
 <dt id="botorch.sampling.samplers.MCSampler.forward">
@@ -79,13 +77,13 @@ for the case where the non-batch dimensions are -2 (q) and
 <dd><p>Draws MC samples from the posterior.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>posterior</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">Posterior</span></code></a>) – The Posterior to sample from.</p>
+<dd class="field-odd"><p><strong>posterior</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><em>botorch.posteriors.posterior.Posterior</em></a>) – The Posterior to sample from.</p>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The samples drawn from the posterior.</p>
 </dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>The samples drawn from the posterior.</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -93,11 +91,6 @@ for the case where the non-batch dimensions are -2 (q) and
 <dt id="botorch.sampling.samplers.MCSampler.sample_shape">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">sample_shape</span></code><a class="headerlink" href="#botorch.sampling.samplers.MCSampler.sample_shape" title="Permalink to this definition">¶</a></dt>
 <dd><p>The shape of a single sample.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code></p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py attribute">
 <dt id="botorch.sampling.samplers.MCSampler.training">
@@ -119,20 +112,23 @@ for the case where the non-batch dimensions are -2 (q) and
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>num_samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of samples to use.</p></li>
-<li><p><strong>resample</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If <cite>True</cite>, re-draw samples in each <cite>forward</cite> evaluation -
+<li><p><strong>num_samples</strong> (<em>int</em>) – The number of samples to use.</p></li>
+<li><p><strong>resample</strong> (<em>bool</em>) – If <cite>True</cite>, re-draw samples in each <cite>forward</cite> evaluation -
 this results in stochastic acquisition functions (and thus should
 not be used with deterministic optimization algorithms).</p></li>
-<li><p><strong>seed</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The seed for the RNG. If omitted, use a random seed.</p></li>
-<li><p><strong>collapse_batch_dims</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, collapse the t-batch dimensions to
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The seed for the RNG. If omitted, use a random seed.</p></li>
+<li><p><strong>collapse_batch_dims</strong> (<em>bool</em>) – If True, collapse the t-batch dimensions to
 size 1. This is useful for preventing sampling variance across
 t-batches.</p></li>
-<li><p><strong>batch_range</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The range of t-batch dimensions in the <cite>base_sample_shape</cite>
+<li><p><strong>batch_range</strong> (<em>Tuple</em><em>[</em><em>int</em><em>, </em><em>int</em><em>]</em>) – The range of t-batch dimensions in the <cite>base_sample_shape</cite>
 used by <cite>collapse_batch_dims</cite>. The t-batch dims are
 batch_range[0]:batch_range[1]. By default, this is (0, -2),
 for the case where the non-batch dimensions are -2 (q) and
 -1 (d) and all dims in the front are t-batch dims.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -155,20 +151,23 @@ for the case where the non-batch dimensions are -2 (q) and
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>num_samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of samples to use.</p></li>
-<li><p><strong>resample</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If <cite>True</cite>, re-draw samples in each <cite>forward</cite> evaluation -
+<li><p><strong>num_samples</strong> (<em>int</em>) – The number of samples to use.</p></li>
+<li><p><strong>resample</strong> (<em>bool</em>) – If <cite>True</cite>, re-draw samples in each <cite>forward</cite> evaluation -
 this results in stochastic acquisition functions (and thus should
 not be used with deterministic optimization algorithms).</p></li>
-<li><p><strong>seed</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The seed for the RNG. If omitted, use a random seed.</p></li>
-<li><p><strong>collapse_batch_dims</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, collapse the t-batch dimensions to
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The seed for the RNG. If omitted, use a random seed.</p></li>
+<li><p><strong>collapse_batch_dims</strong> (<em>bool</em>) – If True, collapse the t-batch dimensions to
 size 1. This is useful for preventing sampling variance across
 t-batches.</p></li>
-<li><p><strong>batch_range</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The range of t-batch dimensions in the <cite>base_sample_shape</cite>
+<li><p><strong>batch_range</strong> (<em>Tuple</em><em>[</em><em>int</em><em>, </em><em>int</em><em>]</em>) – The range of t-batch dimensions in the <cite>base_sample_shape</cite>
 used by <cite>collapse_batch_dims</cite>. The t-batch dims are
 batch_range[0]:batch_range[1]. By default, this is (0, -2),
 for the case where the non-batch dimensions are -2 (q) and
 -1 (d) and all dims in the front are t-batch dims.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -182,13 +181,13 @@ for the case where the non-batch dimensions are -2 (q) and
 <dd><p>Split a base sample shape into sample and base sample shapes.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>base_sample_shape</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code>) – The base sample shape.</p>
+<dd class="field-odd"><p><strong>base_sample_shape</strong> (<em>torch.Size</em>) – The base sample shape.</p>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code>]</p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A tuple containing the sample and base sample shape.</p>
 </dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A tuple containing the sample and base sample shape.</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Tuple[torch.Size, torch.Size]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -205,11 +204,14 @@ with PairwiseGP and BoTorch acquisition functions (e.g., qKnowledgeGradient)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>max_num_comparisons</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – Max number of comparisons drawn within samples.
+<li><p><strong>max_num_comparisons</strong> (<em>int</em>) – Max number of comparisons drawn within samples.
 If None, use all possible pairwise comparisons</p></li>
-<li><p><strong>seed</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The seed for np.random.seed. If omitted, use a random seed.
+<li><p><strong>seed</strong> (<em>int</em>) – The seed for np.random.seed. If omitted, use a random seed.
 May be overwritten by sibling classes or subclasses.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py method">
@@ -218,14 +220,14 @@ May be overwritten by sibling classes or subclasses.</p></li>
 <dd><p>Draws MC samples from the posterior and make comparisons</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>posterior</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">Posterior</span></code></a>) – The Posterior to sample from.
+<dd class="field-odd"><p><strong>posterior</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><em>botorch.posteriors.posterior.Posterior</em></a>) – The Posterior to sample from.
 The returned samples are expected to have output dimension of 1.</p>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Posterior sample pairwise comparisons.</p>
 </dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>Posterior sample pairwise comparisons.</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -244,11 +246,17 @@ with PairwiseGP and BoTorch acquisition functions (e.g., qKnowledgeGradient)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>max_num_comparisons</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – Max number of comparisons drawn within samples.
+<li><p><strong>max_num_comparisons</strong> (<em>int</em>) – Max number of comparisons drawn within samples.
 If None, use all possible pairwise comparisons</p></li>
-<li><p><strong>seed</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The seed for np.random.seed. If omitted, use a random seed.
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The seed for np.random.seed. If omitted, use a random seed.
 May be overwritten by sibling classes or subclasses.</p></li>
+<li><p><strong>num_samples</strong> (<em>int</em>) – </p></li>
+<li><p><strong>resample</strong> (<em>bool</em>) – </p></li>
+<li><p><strong>collapse_batch_dims</strong> (<em>bool</em>) – </p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -266,11 +274,17 @@ with PairwiseGP and BoTorch acquisition functions (e.g., qKnowledgeGradient)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>max_num_comparisons</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – Max number of comparisons drawn within samples.
+<li><p><strong>max_num_comparisons</strong> (<em>int</em>) – Max number of comparisons drawn within samples.
 If None, use all possible pairwise comparisons</p></li>
-<li><p><strong>seed</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The seed for np.random.seed. If omitted, use a random seed.
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The seed for np.random.seed. If omitted, use a random seed.
 May be overwritten by sibling classes or subclasses.</p></li>
+<li><p><strong>num_samples</strong> (<em>int</em>) – </p></li>
+<li><p><strong>resample</strong> (<em>bool</em>) – </p></li>
+<li><p><strong>collapse_batch_dims</strong> (<em>bool</em>) – </p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -306,11 +320,14 @@ instead, set <cite>inv_transform=True</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>d</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The dimension of the samples.</p></li>
-<li><p><strong>seed</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The seed with which to seed the random number generator of the
+<li><p><strong>d</strong> (<em>int</em>) – The dimension of the samples.</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The seed with which to seed the random number generator of the
 underlying SobolEngine.</p></li>
-<li><p><strong>inv_transform</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, use inverse transform instead of Box-Muller.</p></li>
+<li><p><strong>inv_transform</strong> (<em>bool</em>) – If True, use inverse transform instead of Box-Muller.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py method">
@@ -320,17 +337,17 @@ underlying SobolEngine.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>n</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of samples to draw.</p></li>
-<li><p><strong>out</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – An option output tensor. If provided, draws are put into this
+<li><p><strong>n</strong> (<em>int</em>) – The number of samples to draw.</p></li>
+<li><p><strong>out</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – An option output tensor. If provided, draws are put into this
 tensor, and the function returns None.</p></li>
-<li><p><strong>dtype</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">dtype</span></code>) – The desired torch data type (ignored if <cite>out</cite> is provided).</p></li>
+<li><p><strong>dtype</strong> (<em>torch.dtype</em>) – The desired torch data type (ignored if <cite>out</cite> is provided).</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>n x d</cite> tensor of samples if <cite>out=None</cite> and <cite>None</cite> otherwise.</p>
 </dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>n x d</cite> tensor of samples if <cite>out=None</cite> and <cite>None</cite> otherwise.</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Optional[torch.Tensor]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -354,12 +371,15 @@ instead, set <cite>inv_transform=True</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>mean</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – The mean vector.</p></li>
-<li><p><strong>cov</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – The covariance matrix.</p></li>
-<li><p><strong>seed</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The seed with which to seed the random number generator of the
+<li><p><strong>mean</strong> (<em>Tensor</em>) – The mean vector.</p></li>
+<li><p><strong>cov</strong> (<em>Tensor</em>) – The covariance matrix.</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The seed with which to seed the random number generator of the
 underlying SobolEngine.</p></li>
-<li><p><strong>inv_transform</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, use inverse transform instead of Box-Muller.</p></li>
+<li><p><strong>inv_transform</strong> (<em>bool</em>) – If True, use inverse transform instead of Box-Muller.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py method">
@@ -369,16 +389,16 @@ underlying SobolEngine.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>n</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of samples to draw.</p></li>
-<li><p><strong>out</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – An option output tensor. If provided, draws are put into this
+<li><p><strong>n</strong> (<em>int</em>) – The number of samples to draw.</p></li>
+<li><p><strong>out</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – An option output tensor. If provided, draws are put into this
 tensor, and the function returns None.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>n x d</cite> tensor of samples if <cite>out=None</cite> and <cite>None</cite> otherwise.</p>
 </dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>n x d</cite> tensor of samples if <cite>out=None</cite> and <cite>None</cite> otherwise.</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Optional[torch.Tensor]</p>
 </dd>
 </dl>
 </dd></dl>

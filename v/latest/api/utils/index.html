@@ -34,18 +34,18 @@
 <dd><p>Create outcome constraint callables from outcome constraint tensors.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>outcome_constraints</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]]) – A tuple of <cite>(A, b)</cite>. For <cite>k</cite> outcome constraints
+<dd class="field-odd"><p><strong>outcome_constraints</strong> (<em>Optional</em><em>[</em><em>Tuple</em><em>[</em><em>torch.Tensor</em><em>, </em><em>torch.Tensor</em><em>]</em><em>]</em>) – A tuple of <cite>(A, b)</cite>. For <cite>k</cite> outcome constraints
 and <cite>m</cite> outputs at <cite>f(x)`</cite>, <cite>A</cite> is <cite>k x m</cite> and <cite>b</cite> is <cite>k x 1</cite> such
 that <cite>A f(x) &lt;= b</cite>.</p>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]]]</p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A list of callables, each mapping a Tensor of size <cite>b x q x m</cite> to a
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A list of callables, each mapping a Tensor of size <cite>b x q x m</cite> to a
 tensor of size <cite>b x q</cite>, where <cite>m</cite> is the number of outputs of the model.
 Negative values imply feasibility. The callables support broadcasting
 (e.g. for calling on a tensor of shape <cite>mc_samples x b x q x m</cite>).</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Optional[List[Callable[[torch.Tensor], torch.Tensor]]]</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -62,10 +62,19 @@ Negative values imply feasibility. The callables support broadcasting
 <p>Containers to standardize inputs into models and acquisition functions.</p>
 <dl class="py class">
 <dt id="botorch.utils.containers.TrainingData">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">botorch.utils.containers.</span></code><code class="sig-name descname"><span class="pre">TrainingData</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/containers.html#TrainingData"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.containers.TrainingData" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">botorch.utils.containers.</span></code><code class="sig-name descname"><span class="pre">TrainingData</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/containers.html#TrainingData"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.containers.TrainingData" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></p>
 <p>Standardized struct of model training data for a single outcome.</p>
 <p>Create new instance of TrainingData(X, Y, Yvar)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>torch.Tensor</em>) – </p></li>
+<li><p><strong>Y</strong> (<em>torch.Tensor</em>) – </p></li>
+<li><p><strong>Yvar</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – </p></li>
+</ul>
+</dd>
+</dl>
 <dl class="py method">
 <dt id="botorch.utils.containers.TrainingData.X">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">X</span></code><a class="headerlink" href="#botorch.utils.containers.TrainingData.X" title="Permalink to this definition">¶</a></dt>
@@ -98,14 +107,14 @@ This callable supports broadcasting (e.g. for calling on a tensor of shape
 determine the optimization direction.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>weights</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – a 1-dimensional Tensor containing a weight for each task.
+<dd class="field-odd"><p><strong>weights</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – a 1-dimensional Tensor containing a weight for each task.
 If not provided, the identity mapping is used.</p>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Transform function using the objective weights.</p>
 </dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>Transform function using the objective weights.</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Callable[[torch.Tensor, Optional[torch.Tensor]], torch.Tensor]</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -123,20 +132,20 @@ each constraint.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>obj</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>n_samples x b x q</cite> Tensor of objective values.</p></li>
-<li><p><strong>constraints</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]]) – A list of callables, each mapping a Tensor of size <cite>b x q x m</cite>
+<li><p><strong>obj</strong> (<em>torch.Tensor</em>) – A <cite>n_samples x b x q</cite> Tensor of objective values.</p></li>
+<li><p><strong>constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>torch.Tensor</em><em>]</em><em>, </em><em>torch.Tensor</em><em>]</em><em>]</em>) – A list of callables, each mapping a Tensor of size <cite>b x q x m</cite>
 to a Tensor of size <cite>b x q</cite>, where negative values imply feasibility.
 This callable must support broadcasting. Only relevant for multi-
 output models (<cite>m</cite> &gt; 1).</p></li>
-<li><p><strong>samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>b x q x m</cite> Tensor of samples drawn from the posterior.</p></li>
-<li><p><strong>eta</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – The temperature parameter for the sigmoid function.</p></li>
+<li><p><strong>samples</strong> (<em>torch.Tensor</em>) – A <cite>b x q x m</cite> Tensor of samples drawn from the posterior.</p></li>
+<li><p><strong>eta</strong> (<em>float</em>) – The temperature parameter for the sigmoid function.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>n_samples x b x q</cite>-dim tensor of feasibility-weighted objectives.</p>
 </dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>n_samples x b x q</cite>-dim tensor of feasibility-weighted objectives.</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -148,18 +157,18 @@ output models (<cite>m</cite> &gt; 1).</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>lhs</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – The left hand side of the constraint <cite>lhs &lt;= 0</cite>.</p></li>
-<li><p><strong>eta</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – The temperature parameter of the softmax function. As eta
+<li><p><strong>lhs</strong> (<em>torch.Tensor</em>) – The left hand side of the constraint <cite>lhs &lt;= 0</cite>.</p></li>
+<li><p><strong>eta</strong> (<em>float</em>) – The temperature parameter of the softmax function. As eta
 grows larger, this approximates the Heaviside step function.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>Element-wise ‘soft’ feasibility indicator of the same shape as <cite>lhs</cite>.
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Element-wise ‘soft’ feasibility indicator of the same shape as <cite>lhs</cite>.
 For each element <cite>x</cite>, <cite>value(x) -&gt; 0</cite> as <cite>x</cite> becomes positive, and
 <cite>value(x) -&gt; 1</cite> as x becomes negative.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -175,21 +184,21 @@ objective can be negative by usingthe following strategy:
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>obj</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>n_samples x b x q</cite> Tensor of objective values.</p></li>
-<li><p><strong>constraints</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]]) – A list of callables, each mapping a Tensor of size <cite>b x q x m</cite>
+<li><p><strong>obj</strong> (<em>torch.Tensor</em>) – A <cite>n_samples x b x q</cite> Tensor of objective values.</p></li>
+<li><p><strong>constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>torch.Tensor</em><em>]</em><em>, </em><em>torch.Tensor</em><em>]</em><em>]</em>) – A list of callables, each mapping a Tensor of size <cite>b x q x m</cite>
 to a Tensor of size <cite>b x q</cite>, where negative values imply feasibility.
 This callable must support broadcasting. Only relevant for multi-
 output models (<cite>m</cite> &gt; 1).</p></li>
-<li><p><strong>samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>b x q x m</cite> Tensor of samples drawn from the posterior.</p></li>
-<li><p><strong>infeasible_cost</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – The infeasible value.</p></li>
-<li><p><strong>eta</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – The temperature parameter of the sigmoid function.</p></li>
+<li><p><strong>samples</strong> (<em>torch.Tensor</em>) – A <cite>b x q x m</cite> Tensor of samples drawn from the posterior.</p></li>
+<li><p><strong>infeasible_cost</strong> (<em>float</em>) – The infeasible value.</p></li>
+<li><p><strong>eta</strong> (<em>float</em>) – The temperature parameter of the sigmoid function.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>n_samples x b x q</cite>-dim tensor of feasibility-weighted objectives.</p>
 </dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>n_samples x b x q</cite>-dim tensor of feasibility-weighted objectives.</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -205,15 +214,15 @@ each piece is a hyperbolic tangent function.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – The tensor to round to the nearest integer (element-wise).</p></li>
-<li><p><strong>tau</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – A temperature hyperparameter.</p></li>
+<li><p><strong>X</strong> (<em>torch.Tensor</em>) – The tensor to round to the nearest integer (element-wise).</p></li>
+<li><p><strong>tau</strong> (<em>float</em>) – A temperature hyperparameter.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The approximately rounded input tensor.</p>
 </dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>The approximately rounded input tensor.</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -227,13 +236,13 @@ each piece is a hyperbolic tangent function.</p>
 <dd><p>Contextmanager for manual setting the torch.random seed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>seed</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The seed to set the random number generator to.</p>
+<dd class="field-odd"><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The seed to set the random number generator to.</p>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Generator</span></code>[<code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>]</p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Generator</p>
 </dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>Generator</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Generator[None, None, None]</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -249,22 +258,24 @@ each piece is a hyperbolic tangent function.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>batch_shape</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code>) – The batch shape of the base samples to generate. Typically,
+<li><p><strong>batch_shape</strong> (<em>torch.Size</em>) – The batch shape of the base samples to generate. Typically,
 this is used with each dimension of size 1, so as to eliminate
 sampling variance across batches.</p></li>
-<li><p><strong>output_shape</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code>) – The output shape (<cite>q x m</cite>) of the base samples to generate.</p></li>
-<li><p><strong>sample_shape</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code>) – The sample shape of the samples to draw.</p></li>
-<li><p><strong>qmc</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, use quasi-MC sampling (instead of iid draws).</p></li>
-<li><p><strong>seed</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – If provided, use as a seed for the RNG.</p></li>
+<li><p><strong>output_shape</strong> (<em>torch.Size</em>) – The output shape (<cite>q x m</cite>) of the base samples to generate.</p></li>
+<li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The sample shape of the samples to draw.</p></li>
+<li><p><strong>qmc</strong> (<em>bool</em>) – If True, use quasi-MC sampling (instead of iid draws).</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – If provided, use as a seed for the RNG.</p></li>
+<li><p><strong>device</strong> (<em>Optional</em><em>[</em><em>torch.device</em><em>]</em>) – </p></li>
+<li><p><strong>dtype</strong> (<em>Optional</em><em>[</em><em>torch.dtype</em><em>]</em>) – </p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>sample_shape x batch_shape x mutput_shape</cite> dimensional tensor of base
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>sample_shape x batch_shape x mutput_shape</cite> dimensional tensor of base
 samples, drawn from a N(0, I_qm) distribution (using QMC if <cite>qmc=True</cite>).
 Here <cite>output_shape = q x m</cite>.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -282,21 +293,22 @@ Here <cite>output_shape = q x m</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>posterior</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">Posterior</span></code></a>) – A Posterior object.</p></li>
-<li><p><strong>sample_shape</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code>) – The sample shape of the samples to draw.</p></li>
-<li><p><strong>qmc</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, use quasi-MC sampling (instead of iid draws).</p></li>
-<li><p><strong>seed</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – If provided, use as a seed for the RNG.</p></li>
+<li><p><strong>posterior</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><em>botorch.posteriors.posterior.Posterior</em></a>) – A Posterior object.</p></li>
+<li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The sample shape of the samples to draw.</p></li>
+<li><p><strong>qmc</strong> (<em>bool</em>) – If True, use quasi-MC sampling (instead of iid draws).</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – If provided, use as a seed for the RNG.</p></li>
+<li><p><strong>collapse_batch_dims</strong> (<em>bool</em>) – </p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>num_samples x 1 x q x m</cite> dimensional Tensor of base samples, drawn
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>num_samples x 1 x q x m</cite> dimensional Tensor of base samples, drawn
 from a N(0, I_qm) distribution (using QMC if <cite>qmc=True</cite>). Here <cite>q</cite> and
 <cite>m</cite> are the same as in the posterior’s <cite>event_shape</cite> <cite>b x q x m</cite>.
 Importantly, this only obtain a single t-batch of samples, so as to not
 introduce any sampling variance across t-batches.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -312,21 +324,24 @@ introduce any sampling variance across t-batches.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>bounds</strong> – A <cite>2 x d</cite> dimensional tensor specifying box constraints on a
+<li><p><strong>bounds</strong> (<em>Tensor</em>) – A <cite>2 x d</cite> dimensional tensor specifying box constraints on a
 <cite>d</cite>-dimensional space, where bounds[0, :] and bounds[1, :] correspond
 to lower and upper bounds, respectively.</p></li>
-<li><p><strong>n</strong> – The number of (q-batch) samples.</p></li>
-<li><p><strong>q</strong> – The size of each q-batch.</p></li>
-<li><p><strong>batch_shape</strong> – The batch shape of the samples. If given, returns samples
+<li><p><strong>n</strong> (<em>int</em>) – The number of (q-batch) samples.</p></li>
+<li><p><strong>q</strong> (<em>int</em>) – The size of each q-batch.</p></li>
+<li><p><strong>batch_shape</strong> (<em>Optional</em><em>[</em><em>Iterable</em><em>[</em><em>int</em><em>]</em><em>, </em><em>torch.Size</em><em>]</em>) – The batch shape of the samples. If given, returns samples
 of shape <cite>n x batch_shape x q x d</cite>, where each batch is an
 <cite>n x q x d</cite>-dim tensor of qMC samples.</p></li>
-<li><p><strong>seed</strong> – The seed used for initializing Owen scrambling. If None (default),
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The seed used for initializing Owen scrambling. If None (default),
 use a random seed.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>A <cite>n x batch_shape x q x d</cite>-dim tensor of qMC samples from the box
 defined by bounds.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Tensor</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -344,20 +359,20 @@ of f(X) over X where each element of X is drawn N(0, 1).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>d</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The dimension of the normal distribution.</p></li>
-<li><p><strong>n</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of samples to return.</p></li>
-<li><p><strong>device</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">device</span></code>]) – The torch device.</p></li>
-<li><p><strong>dtype</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">dtype</span></code>]) – The torch dtype.</p></li>
-<li><p><strong>seed</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The seed used for initializing Owen scrambling. If None (default),
+<li><p><strong>d</strong> (<em>int</em>) – The dimension of the normal distribution.</p></li>
+<li><p><strong>n</strong> (<em>int</em>) – The number of samples to return.</p></li>
+<li><p><strong>device</strong> (<em>Optional</em><em>[</em><em>torch.device</em><em>]</em>) – The torch device.</p></li>
+<li><p><strong>dtype</strong> (<em>Optional</em><em>[</em><em>torch.dtype</em><em>]</em>) – The torch dtype.</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The seed used for initializing Owen scrambling. If None (default),
 use a random seed.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A tensor of qMC standard normal samples with dimension <cite>n x d</cite> with device
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A tensor of qMC standard normal samples with dimension <cite>n x d</cite> with device
 and dtype specified by the input.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -372,19 +387,19 @@ and dtype specified by the input.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>d</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The dimension of the hypersphere.</p></li>
-<li><p><strong>n</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of samples to return.</p></li>
-<li><p><strong>qmc</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, use QMC Sobol sampling (instead of i.i.d. uniform).</p></li>
-<li><p><strong>seed</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – If provided, use as a seed for the RNG.</p></li>
-<li><p><strong>device</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">device</span></code>]) – The torch device.</p></li>
-<li><p><strong>dtype</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">dtype</span></code>]) – The torch dtype.</p></li>
+<li><p><strong>d</strong> (<em>int</em>) – The dimension of the hypersphere.</p></li>
+<li><p><strong>n</strong> (<em>int</em>) – The number of samples to return.</p></li>
+<li><p><strong>qmc</strong> (<em>bool</em>) – If True, use QMC Sobol sampling (instead of i.i.d. uniform).</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – If provided, use as a seed for the RNG.</p></li>
+<li><p><strong>device</strong> (<em>Optional</em><em>[</em><em>torch.device</em><em>]</em>) – The torch device.</p></li>
+<li><p><strong>dtype</strong> (<em>Optional</em><em>[</em><em>torch.dtype</em><em>]</em>) – The torch dtype.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>An  <cite>n x d</cite> tensor of uniform samples from from the d-hypersphere.</p>
 </dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>An  <cite>n x d</cite> tensor of uniform samples from from the d-hypersphere.</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -399,19 +414,19 @@ and dtype specified by the input.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>d</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The dimension of the simplex.</p></li>
-<li><p><strong>n</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of samples to return.</p></li>
-<li><p><strong>qmc</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, use QMC Sobol sampling (instead of i.i.d. uniform).</p></li>
-<li><p><strong>seed</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – If provided, use as a seed for the RNG.</p></li>
-<li><p><strong>device</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">device</span></code>]) – The torch device.</p></li>
-<li><p><strong>dtype</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">dtype</span></code>]) – The torch dtype.</p></li>
+<li><p><strong>d</strong> (<em>int</em>) – The dimension of the simplex.</p></li>
+<li><p><strong>n</strong> (<em>int</em>) – The number of samples to return.</p></li>
+<li><p><strong>qmc</strong> (<em>bool</em>) – If True, use QMC Sobol sampling (instead of i.i.d. uniform).</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – If provided, use as a seed for the RNG.</p></li>
+<li><p><strong>device</strong> (<em>Optional</em><em>[</em><em>torch.device</em><em>]</em>) – The torch device.</p></li>
+<li><p><strong>dtype</strong> (<em>Optional</em><em>[</em><em>torch.dtype</em><em>]</em>) – The torch dtype.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>An <cite>n x d</cite> tensor of uniform samples from from the d-simplex.</p>
 </dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>An <cite>n x d</cite> tensor of uniform samples from from the d-simplex.</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -426,23 +441,23 @@ and dtype specified by the input.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>weights</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x num_categories</cite> tensor of weights. For each batch
+<li><p><strong>weights</strong> (<em>torch.Tensor</em>) – A <cite>batch_shape x num_categories</cite> tensor of weights. For each batch
 index <cite>i, j, …</cite>, this functions samples from a multinomial with <cite>input</cite>
 <cite>weights[i, j, …, :]</cite>. Note that the weights need not sum to one, but must
 be non-negative, finite and have a non-zero sum.</p></li>
-<li><p><strong>num_samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of samples to draw for each batch index. Must be smaller
+<li><p><strong>num_samples</strong> (<em>int</em>) – The number of samples to draw for each batch index. Must be smaller
 than <cite>num_categories</cite> if <cite>replacement=False</cite>.</p></li>
-<li><p><strong>replacement</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, samples are drawn with replacement.</p></li>
-<li><p><strong>generator</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Generator</span></code>]) – A a pseudorandom number generator for sampling.</p></li>
-<li><p><strong>out</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – The output tensor (optional). If provided, must be of size
+<li><p><strong>replacement</strong> (<em>bool</em>) – If True, samples are drawn with replacement.</p></li>
+<li><p><strong>generator</strong> (<em>Optional</em><em>[</em><em>torch._C.Generator</em><em>]</em>) – A a pseudorandom number generator for sampling.</p></li>
+<li><p><strong>out</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – The output tensor (optional). If provided, must be of size
 <cite>batch_shape x num_samples</cite>.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">LongTensor</span></code></p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>batch_shape x num_samples</cite> tensor of samples.</p>
 </dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>batch_shape x num_samples</cite> tensor of samples.</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.LongTensor</p>
 </dd>
 </dl>
 <p>This is a thin wrapper around <cite>torch.multinomial</cite> that allows weight (<cite>input</cite>)
@@ -464,28 +479,34 @@ equality constraints.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>inequality_constraints</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – Tensors (A, b) describing inequality
+<li><p><strong>inequality_constraints</strong> (<em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>]</em>) – Tensors (A, b) describing inequality
 constraints: A*x&lt;=b, where A is (n_ineq_con, d_sample)-dim Tensor
 and b is (n_ineq_con, 1)-dim Tensor with n_ineq_con
 being the number of inequalities and d_sample the dimension
 of the sample space.</p></li>
-<li><p><strong>n_burnin</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of burn in samples.</p></li>
-<li><p><strong>equality_constraints</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]]) – Tensors (C, d) describing the equality
+<li><p><strong>n_burnin</strong> (<em>int</em>) – The number of burn in samples.</p></li>
+<li><p><strong>equality_constraints</strong> (<em>Optional</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – Tensors (C, d) describing the equality
 constraints: C*x=d, where C is (n_eq_con, d_sample)-dim Tensor and
 d is (n_eq_con-dim, 1) Tensor with n_eq_con
 being the number of equalities.</p></li>
-<li><p><strong>initial_point</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – An (d_sample, 1)-dim Tensor presenting an inital point of
+<li><p><strong>initial_point</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – An (d_sample, 1)-dim Tensor presenting an inital point of
 the chain satisfying all the conditions.
 Determined automatically (by solving an LP) if not provided.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py method">
 <dt id="botorch.utils.sampling.PolytopeSampler.feasible">
 <code class="sig-name descname"><span class="pre">feasible</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#PolytopeSampler.feasible"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.sampling.PolytopeSampler.feasible" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>
@@ -502,8 +523,14 @@ LP solution dimension: dim(x) + dim(s) = dim(x) + 1.</p>
 <dt id="botorch.utils.sampling.PolytopeSampler.draw">
 <code class="sig-name descname"><span class="pre">draw</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#PolytopeSampler.draw"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.sampling.PolytopeSampler.draw" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n</strong> (<em>int</em>) – </p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -516,23 +543,23 @@ described via inequality constraints A*x&lt;=b.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>A</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A Tensor describing inequality constraints
+<li><p><strong>A</strong> (<em>torch.Tensor</em>) – A Tensor describing inequality constraints
 so that all samples satisfy Ax&lt;=b.</p></li>
-<li><p><strong>b</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A Tensor describing the inequality constraints
+<li><p><strong>b</strong> (<em>torch.Tensor</em>) – A Tensor describing the inequality constraints
 so that all samples satisfy Ax&lt;=b.</p></li>
-<li><p><strong>x0</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – d dim Tensor representing a starting point of the chain
+<li><p><strong>x0</strong> (<em>torch.Tensor</em>) – d dim Tensor representing a starting point of the chain
 satisfying the constraints.</p></li>
-<li><p><strong>n</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of resulting samples kept in the output.</p></li>
-<li><p><strong>n0</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of burn-in samples. The chain will produce
+<li><p><strong>n</strong> (<em>int</em>) – The number of resulting samples kept in the output.</p></li>
+<li><p><strong>n0</strong> (<em>int</em>) – The number of burn-in samples. The chain will produce
 n+n0 samples but the first n0 samples are not saved.</p></li>
-<li><p><strong>seed</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The seed for the sampler. If omitted, use a random seed.</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The seed for the sampler. If omitted, use a random seed.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>(n, d) dim Tensor containing the resulting samples.</p>
 </dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>(n, d) dim Tensor containing the resulting samples.</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -551,7 +578,13 @@ evaluation.</p>
 <p>Construct a GP function sampler.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a>) – The Model defining the GP prior.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – The Model defining the GP prior.</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py method">
@@ -559,22 +592,12 @@ evaluation.</p>
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">Xs</span></code><a class="headerlink" href="#botorch.utils.gp_sampling.GPDraw.Xs" title="Permalink to this definition">¶</a></dt>
 <dd><p>A <cite>(batch_shape) x n_eval x d</cite>-dim tensor of locations at which the GP was
 evaluated (or <cite>None</cite> if the sample has never been evaluated).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py method">
 <dt id="botorch.utils.gp_sampling.GPDraw.Ys">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">Ys</span></code><a class="headerlink" href="#botorch.utils.gp_sampling.GPDraw.Ys" title="Permalink to this definition">¶</a></dt>
 <dd><p>A <cite>(batch_shape) x n_eval x d</cite>-dim tensor of associated function values (or
 <cite>None</cite> if the sample has never been evaluated).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py method">
 <dt id="botorch.utils.gp_sampling.GPDraw.forward">
@@ -582,13 +605,13 @@ evaluated (or <cite>None</cite> if the sample has never been evaluated).</p>
 <dd><p>Evaluate the GP sample function at a set of points X.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x d</cite>-dim tensor of points</p>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – A <cite>batch_shape x n x d</cite>-dim tensor of points</p>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The value of the GP sample at the <cite>n</cite> points.</p>
 </dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>The value of the GP sample at the <cite>n</cite> points.</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -664,31 +687,16 @@ not have a method with the specified name.</p>
 <dt id="botorch.utils.testing.MockPosterior.device">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">device</span></code><a class="headerlink" href="#botorch.utils.testing.MockPosterior.device" title="Permalink to this definition">¶</a></dt>
 <dd><p>The torch device of the posterior.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">device</span></code></p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py method">
 <dt id="botorch.utils.testing.MockPosterior.dtype">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">dtype</span></code><a class="headerlink" href="#botorch.utils.testing.MockPosterior.dtype" title="Permalink to this definition">¶</a></dt>
 <dd><p>The torch dtype of the posterior.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">dtype</span></code></p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py method">
 <dt id="botorch.utils.testing.MockPosterior.event_shape">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">event_shape</span></code><a class="headerlink" href="#botorch.utils.testing.MockPosterior.event_shape" title="Permalink to this definition">¶</a></dt>
 <dd><p>The event shape (i.e. the shape of a single sample).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code></p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py method">
 <dt id="botorch.utils.testing.MockPosterior.mean">
@@ -706,8 +714,14 @@ not have a method with the specified name.</p>
 <dd><p>Mock sample by repeating self._samples. If base_samples is provided,
 do a shape check but return the same mock samples.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sample_shape</strong> (<em>Optional</em><em>[</em><em>torch.Size</em><em>]</em>) – </p></li>
+<li><p><strong>base_samples</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -718,6 +732,14 @@ do a shape check but return the same mock samples.</p>
 <dd><p>Bases: <a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.model.Model</span></code></a></p>
 <p>Mock object that implements dummy methods and feeds through specified outputs</p>
 <p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>posterior</strong> (<a class="reference internal" href="#botorch.utils.testing.MockPosterior" title="botorch.utils.testing.MockPosterior"><em>MockPosterior</em></a>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt id="botorch.utils.testing.MockModel.posterior">
 <code class="sig-name descname"><span class="pre">posterior</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MockModel.posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.MockModel.posterior" title="Permalink to this definition">¶</a></dt>
@@ -725,23 +747,23 @@ do a shape check but return the same mock samples.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>b x q x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of the
+<li><p><strong>X</strong> (<em>torch.Tensor</em>) – A <cite>b x q x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of the
 feature space, <cite>q</cite> is the number of points considered jointly,
 and <cite>b</cite> is the batch dimension.</p></li>
-<li><p><strong>output_indices</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]) – A list of indices, corresponding to the outputs over
+<li><p><strong>output_indices</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list of indices, corresponding to the outputs over
 which to compute the posterior (if the model is multi-output).
 Can be used to speed up computation if only a subset of the
 model’s outputs are required for optimization. If omitted,
 computes the posterior over all model outputs.</p></li>
-<li><p><strong>observation_noise</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, add observation noise to the posterior.</p></li>
+<li><p><strong>observation_noise</strong> (<em>bool</em>) – If True, add observation noise to the posterior.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><a class="reference internal" href="#botorch.utils.testing.MockPosterior" title="botorch.utils.testing.MockPosterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">MockPosterior</span></code></a></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>Posterior</cite> object, representing a batch of <cite>b</cite> joint distributions
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>Posterior</cite> object, representing a batch of <cite>b</cite> joint distributions
 over <cite>q</cite> points and <cite>m</cite> outputs each.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#botorch.utils.testing.MockPosterior" title="botorch.utils.testing.MockPosterior">botorch.utils.testing.MockPosterior</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -749,11 +771,6 @@ over <cite>q</cite> points and <cite>m</cite> outputs each.</p>
 <dt id="botorch.utils.testing.MockModel.num_outputs">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">num_outputs</span></code><a class="headerlink" href="#botorch.utils.testing.MockModel.num_outputs" title="Permalink to this definition">¶</a></dt>
 <dd><p>The number of outputs of the model.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py method">
 <dt id="botorch.utils.testing.MockModel.batch_shape">
@@ -764,11 +781,6 @@ representation of the model (as e.g. in BatchedMultiOutputGPyTorchModel).
 For a model with <cite>m</cite> outputs, a <cite>test_batch_shape x q x d</cite>-shaped input <cite>X</cite>
 to the <cite>posterior</cite> method returns a Posterior object over an output of
 shape <cite>broadcast(test_batch_shape, model.batch_shape) x q x m</cite>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code></p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py method">
 <dt id="botorch.utils.testing.MockModel.state_dict">
@@ -832,7 +844,12 @@ in <a class="reference internal" href="#botorch.utils.testing.MockModel.state_di
 <dl class="py method">
 <dt id="botorch.utils.testing.MockAcquisitionFunction.set_X_pending">
 <code class="sig-name descname"><span class="pre">set_X_pending</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MockAcquisitionFunction.set_X_pending"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.MockAcquisitionFunction.set_X_pending" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X_pending</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – </p>
+</dd>
+</dl>
+</dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt id="botorch.utils.testing.MultiObjectiveTestProblemBaseTestCase">
@@ -986,13 +1003,13 @@ strings are acceptable.</p>
 <dd><p>Squeeze the last dimension of a Tensor.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>… x d</cite>-dim Tensor.</p>
+<dd class="field-odd"><p><strong>Y</strong> (<em>torch.Tensor</em>) – A <cite>… x d</cite>-dim Tensor.</p>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The input tensor with last dimension squeezed.</p>
 </dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>The input tensor with last dimension squeezed.</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -1010,13 +1027,13 @@ If for some batch index all elements are equal (or if there is only a single
 data point), this function will return 0 for that batch index.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x n x m</cite>-dim tensor.</p>
+<dd class="field-odd"><p><strong>Y</strong> (<em>torch.Tensor</em>) – A <cite>batch_shape x n x m</cite>-dim tensor.</p>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The standardized <cite>Y</cite>.</p>
 </dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>The standardized <cite>Y</cite>.</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -1032,22 +1049,22 @@ data point), this function will return 0 for that batch index.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – <cite>… x d</cite> tensor of data</p></li>
-<li><p><strong>bounds</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – <cite>2 x d</cite> tensor of lower and upper bounds for each of the X’s d
+<li><p><strong>X</strong> (<em>torch.Tensor</em>) – <cite>… x d</cite> tensor of data</p></li>
+<li><p><strong>bounds</strong> (<em>torch.Tensor</em>) – <cite>2 x d</cite> tensor of lower and upper bounds for each of the X’s d
 columns.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><dl class="simple">
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
 <dt>A <cite>… x d</cite>-dim tensor of normalized data, given by</dt><dd><p><cite>(X - bounds[0]) / (bounds[1] - bounds[0])</cite>. If all elements of <cite>X</cite>
 are contained within <cite>bounds</cite>, the normalized values will be
 contained within <cite>[0, 1]^d</cite>.</p>
 </dd>
 </dl>
 </p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -1064,22 +1081,22 @@ contained within <cite>[0, 1]^d</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – <cite>… x d</cite> tensor of data</p></li>
-<li><p><strong>bounds</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – <cite>2 x d</cite> tensor of lower and upper bounds for each of the X’s d
+<li><p><strong>X</strong> (<em>torch.Tensor</em>) – <cite>… x d</cite> tensor of data</p></li>
+<li><p><strong>bounds</strong> (<em>torch.Tensor</em>) – <cite>2 x d</cite> tensor of lower and upper bounds for each of the X’s d
 columns.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><dl class="simple">
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
 <dt>A <cite>… x d</cite>-dim tensor of unnormalized data, given by</dt><dd><p><cite>X * (bounds[1] - bounds[0]) + bounds[0]</cite>. If all elements of <cite>X</cite>
 are contained in <cite>[0, 1]^d</cite>, the un-normalized values will be
 contained within <cite>bounds</cite>.</p>
 </dd>
 </dl>
 </p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -1096,17 +1113,17 @@ contained within <cite>bounds</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>indices</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]) – A list of indices (may contain negative indices for indexing
+<li><p><strong>indices</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list of indices (may contain negative indices for indexing
 “from the back”).</p></li>
-<li><p><strong>d</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The dimension of the tensor to index.</p></li>
+<li><p><strong>d</strong> (<em>int</em>) – The dimension of the tensor to index.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]</p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A normalized list of indices such that each index is between <cite>0</cite> and
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A normalized list of indices such that each index is between <cite>0</cite> and
 <cite>d-1</cite>, or None if indices is None.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Optional[List[int]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1121,19 +1138,19 @@ is provided, and the output shape if <cite>assert_output_shape</cite> is <cite>T
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>expected_q</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The expected q-batch size of X. If specified, this will raise an
+<li><p><strong>expected_q</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The expected q-batch size of X. If specified, this will raise an
 AssertionError if X’s q-batch size does not equal expected_q.</p></li>
-<li><p><strong>assert_output_shape</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If <cite>True</cite>, this will raise an AssertionError if the
+<li><p><strong>assert_output_shape</strong> (<em>bool</em>) – If <cite>True</cite>, this will raise an AssertionError if the
 output shape does not match either the t-batch shape of X,
 or the <cite>acqf.model.batch_shape</cite> for acquisition functions using
 batched models.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]], <code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]</p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The decorated instance method.</p>
 </dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>The decorated instance method.</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Callable[[Callable[[Any, torch.Tensor], Any]], Callable[[Any, torch.Tensor], Any]]</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -1165,8 +1182,11 @@ appropriately expanding the pending points to match the batch shape of <cite>X</
 </pre></div>
 </div>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]</p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>method</strong> (<em>Callable</em><em>[</em><em>[</em><em>Any</em><em>, </em><em>torch.Tensor</em><em>]</em><em>, </em><em>Any</em><em>]</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>Callable[[Any, torch.Tensor], Any]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1177,20 +1197,20 @@ appropriately expanding the pending points to match the batch shape of <cite>X</
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape_X x q x d</cite> tensor, whose batch dimensions that
+<li><p><strong>X</strong> (<em>torch.Tensor</em>) – A <cite>batch_shape_X x q x d</cite> tensor, whose batch dimensions that
 correspond to batch dimensions of <cite>Y</cite> are to be matched to those
 (if compatible).</p></li>
-<li><p><strong>Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape_Y x q’ x d</cite> tensor.</p></li>
+<li><p><strong>Y</strong> (<em>torch.Tensor</em>) – A <cite>batch_shape_Y x q’ x d</cite> tensor.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>batch_shape_Y x q x d</cite> tensor containing the data of <cite>X</cite> expanded to
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>batch_shape_Y x q x d</cite> tensor containing the data of <cite>X</cite> expanded to
 the batch dimensions of <cite>Y</cite> (if compatible). For instance, if <cite>X</cite> is
 <cite>b’’ x b’ x q x d</cite> and <cite>Y</cite> is <cite>b x q x d</cite>, then the returned tensor is
 <cite>b’’ x b x q x d</cite>.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -1217,23 +1237,24 @@ the batch dimensions of <cite>Y</cite> (if compatible). For instance, if <cite>X
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>sample size x d</cite> size tensor of feature samples,
+<li><p><strong>samples</strong> (<em>torch.Tensor</em>) – A <cite>sample size x d</cite> size tensor of feature samples,
 where d is a feature dimension.</p></li>
 <li><p><strong>constraints</strong> (<em>inequality</em>) – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs</cite>.</p></li>
+<li><p><strong>inequality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>torch.Tensor</em><em>, </em><em>torch.Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]</p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><p>2-element tuple containing</p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><p>2-element tuple containing</p>
 <ul class="simple">
 <li><p>Samples satisfying the linear constraints.</p></li>
 <li><p>Estimated proportion of samples satisfying the linear constraints.</p></li>
 </ul>
 </p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Tuple[torch.Tensor, float]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1244,23 +1265,23 @@ with each tuple encoding an inequality constraint of the form
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a>) – The model used for sampling the posterior.</p></li>
-<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A tensor of dimension <cite>batch-shape x 1 x d</cite>, where d is feature dimension.</p></li>
-<li><p><strong>outcome_constraints</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]]) – A list of callables, each mapping a Tensor of dimension
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>botorch.models.model.Model</em></a>) – The model used for sampling the posterior.</p></li>
+<li><p><strong>X</strong> (<em>torch.Tensor</em>) – A tensor of dimension <cite>batch-shape x 1 x d</cite>, where d is feature dimension.</p></li>
+<li><p><strong>outcome_constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>torch.Tensor</em><em>]</em><em>, </em><em>torch.Tensor</em><em>]</em><em>]</em>) – A list of callables, each mapping a Tensor of dimension
 <cite>sample_shape x batch-shape x q x m</cite> to a Tensor of dimension
 <cite>sample_shape x batch-shape x q</cite>, where negative values imply feasibility.</p></li>
-<li><p><strong>threshold</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – A lower limit for the probability of posterior samples feasibility.</p></li>
-<li><p><strong>nsample_outcome</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of samples from the model posterior.</p></li>
-<li><p><strong>seed</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The seed for the posterior sampler. If omitted, use a random seed.</p></li>
+<li><p><strong>threshold</strong> (<em>float</em>) – A lower limit for the probability of posterior samples feasibility.</p></li>
+<li><p><strong>nsample_outcome</strong> (<em>int</em>) – The number of samples from the model posterior.</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The seed for the posterior sampler. If omitted, use a random seed.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>Estimated proportion of features for which posterior samples satisfy
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Estimated proportion of features for which posterior samples satisfy
 given outcome constraints with probability above or equal to
 the given threshold.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>float</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1272,22 +1293,25 @@ to feature constraints and outcome constraints.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>bounds</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>2 x d</cite> tensor of lower and upper bounds
+<li><p><strong>bounds</strong> (<em>torch.Tensor</em>) – A <cite>2 x d</cite> tensor of lower and upper bounds
 for each column of <cite>X</cite>.</p></li>
-<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a>) – The model used for sampling the outcomes.</p></li>
-<li><p><strong>outcome_constraints</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]]) – A list of callables, each mapping a Tensor of dimension
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>botorch.models.model.Model</em></a>) – The model used for sampling the outcomes.</p></li>
+<li><p><strong>outcome_constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>torch.Tensor</em><em>]</em><em>, </em><em>torch.Tensor</em><em>]</em><em>]</em>) – A list of callables, each mapping a Tensor of dimension
 <cite>sample_shape x batch-shape x q x m</cite> to a Tensor of dimension
 <cite>sample_shape x batch-shape x q</cite>, where negative values imply
 feasibility.</p></li>
 <li><p><strong>constraints</strong> (<em>inequality</em>) – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs</cite>.</p></li>
-<li><p><strong>nsample_feature</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of feature samples satisfying the bounds.</p></li>
-<li><p><strong>nsample_outcome</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of outcome samples from the model posterior.</p></li>
-<li><p><strong>threshold</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – A lower limit for the probability of outcome feasibility</p></li>
-<li><p><strong>seed</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The seed for both feature and outcome samplers. If omitted,
+<li><p><strong>nsample_feature</strong> (<em>int</em>) – The number of feature samples satisfying the bounds.</p></li>
+<li><p><strong>nsample_outcome</strong> (<em>int</em>) – The number of outcome samples from the model posterior.</p></li>
+<li><p><strong>threshold</strong> (<em>float</em>) – A lower limit for the probability of outcome feasibility</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The seed for both feature and outcome samplers. If omitted,
 use a random seed.</p></li>
-<li><p><strong>verbose</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – An indicator for whether to log the results.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em>) – An indicator for whether to log the results.</p></li>
+<li><p><strong>inequality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>torch.Tensor</em><em>, </em><em>torch.Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>device</strong> (<em>Optional</em><em>[</em><em>torch.device</em><em>]</em>) – </p></li>
+<li><p><strong>dtype</strong> (<em>Optional</em><em>[</em><em>torch.dtype</em><em>]</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1328,10 +1352,13 @@ with probability above the given threshold.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ref_point</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>m</cite>-dim tensor containing the reference point.</p></li>
-<li><p><strong>sort</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – A boolean indicating whether to sort the Pareto frontier.</p></li>
-<li><p><strong>Y</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>(batch_shape) x n x m</cite>-dim tensor of outcomes.</p></li>
+<li><p><strong>ref_point</strong> (<em>Tensor</em>) – A <cite>m</cite>-dim tensor containing the reference point.</p></li>
+<li><p><strong>sort</strong> (<em>bool</em>) – A boolean indicating whether to sort the Pareto frontier.</p></li>
+<li><p><strong>Y</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>(batch_shape) x n x m</cite>-dim tensor of outcomes.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py method">
@@ -1339,11 +1366,8 @@ with probability above the given threshold.</p>
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">pareto_Y</span></code><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition.pareto_Y" title="Permalink to this definition">¶</a></dt>
 <dd><p>This returns the non-dominated set.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A <cite>n_pareto x m</cite>-dim tensor of outcomes.</p>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>n_pareto x m</cite>-dim tensor of outcomes.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1352,11 +1376,8 @@ with probability above the given threshold.</p>
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">ref_point</span></code><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition.ref_point" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the reference point.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A <cite>m</cite>-dim tensor of outcomes.</p>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>m</cite>-dim tensor of outcomes.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1365,11 +1386,8 @@ with probability above the given threshold.</p>
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">Y</span></code><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition.Y" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the raw outcomes.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A <cite>n x m</cite>-dim tensor of outcomes.</p>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>n x m</cite>-dim tensor of outcomes.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1379,7 +1397,7 @@ with probability above the given threshold.</p>
 <dd><p>Compute box decomposition.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1389,7 +1407,7 @@ with probability above the given threshold.</p>
 <dd><p>Compute box decomposition for 2 objectives.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1398,15 +1416,15 @@ with probability above the given threshold.</p>
 <em class="property"><span class="pre">abstract</span> </em><code class="sig-name descname"><span class="pre">get_hypercell_bounds</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/box_decomposition.html#BoxDecomposition.get_hypercell_bounds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition.get_hypercell_bounds" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the bounds of each hypercell in the decomposition.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p><dl class="simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><dl class="simple">
 <dt>A <cite>2 x num_cells x num_outcomes</cite>-dim tensor containing the</dt><dd><p>lower and upper vertices bounding each hypercell.</p>
 </dd>
 </dl>
 </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1416,10 +1434,10 @@ with probability above the given threshold.</p>
 <dd><p>Update non-dominated front and decomposition.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>(batch_shape) x n x m</cite>-dim tensor of outcomes.</p>
+<dd class="field-odd"><p><strong>Y</strong> (<em>torch.Tensor</em>) – A <cite>(batch_shape) x n x m</cite>-dim tensor of outcomes.</p>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1468,7 +1486,10 @@ Computation, pages 1157-1163, Vancouver, Canada, July 2006.</p>
 <p>Initialize hypervolume object.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>ref_point</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – <cite>m</cite>-dim Tensor containing the reference point.</p>
+<dd class="field-odd"><p><strong>ref_point</strong> (<em>Tensor</em>) – <cite>m</cite>-dim Tensor containing the reference point.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py method">
@@ -1476,11 +1497,8 @@ Computation, pages 1157-1163, Vancouver, Canada, July 2006.</p>
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">ref_point</span></code><a class="headerlink" href="#botorch.utils.multi_objective.hypervolume.Hypervolume.ref_point" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get reference point (for maximization).</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A <cite>m</cite>-dim tensor containing the reference point.</p>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>m</cite>-dim tensor containing the reference point.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1490,13 +1508,13 @@ Computation, pages 1157-1163, Vancouver, Canada, July 2006.</p>
 <dd><p>Compute hypervolume.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>pareto_Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>n x m</cite>-dim tensor of pareto optimal outcomes</p>
+<dd class="field-odd"><p><strong>pareto_Y</strong> (<em>torch.Tensor</em>) – A <cite>n x m</cite>-dim tensor of pareto optimal outcomes</p>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The hypervolume.</p>
 </dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>The hypervolume.</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>float</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1508,12 +1526,12 @@ Computation, pages 1157-1163, Vancouver, Canada, July 2006.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>nodes</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference internal" href="#botorch.utils.multi_objective.hypervolume.Node" title="botorch.utils.multi_objective.hypervolume.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">Node</span></code></a>]) – A list of Nodes</p></li>
-<li><p><strong>i</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The index of the objective to sort by</p></li>
+<li><p><strong>nodes</strong> (<em>List</em><em>[</em><a class="reference internal" href="#botorch.utils.multi_objective.hypervolume.Node" title="botorch.utils.multi_objective.hypervolume.Node"><em>botorch.utils.multi_objective.hypervolume.Node</em></a><em>]</em>) – A list of Nodes</p></li>
+<li><p><strong>i</strong> (<em>int</em>) – The index of the objective to sort by</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1526,11 +1544,14 @@ Computation, pages 1157-1163, Vancouver, Canada, July 2006.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>m</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of objectives</p></li>
-<li><p><strong>dtype</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">dtype</span></code>) – The dtype</p></li>
-<li><p><strong>device</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">device</span></code>) – The device</p></li>
-<li><p><strong>data</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – The tensor data to be stored in this Node.</p></li>
+<li><p><strong>m</strong> (<em>int</em>) – The number of objectives</p></li>
+<li><p><strong>dtype</strong> (<em>torch.dtype</em>) – The dtype</p></li>
+<li><p><strong>device</strong> (<em>torch.device</em>) – The device</p></li>
+<li><p><strong>data</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – The tensor data to be stored in this Node.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1545,10 +1566,13 @@ Every node has multiple predecessors and successors, one in every list.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>m</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – number of doubly linked lists</p></li>
-<li><p><strong>dtype</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">dtype</span></code>) – the dtype</p></li>
-<li><p><strong>device</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">device</span></code>) – the device</p></li>
+<li><p><strong>m</strong> (<em>int</em>) – number of doubly linked lists</p></li>
+<li><p><strong>dtype</strong> (<em>torch.dtype</em>) – the dtype</p></li>
+<li><p><strong>device</strong> (<em>torch.device</em>) – the device</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py method">
@@ -1558,12 +1582,12 @@ Every node has multiple predecessors and successors, one in every list.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>node</strong> (<a class="reference internal" href="#botorch.utils.multi_objective.hypervolume.Node" title="botorch.utils.multi_objective.hypervolume.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">Node</span></code></a>) – the new node</p></li>
-<li><p><strong>index</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – the index where the node should be appended.</p></li>
+<li><p><strong>node</strong> (<a class="reference internal" href="#botorch.utils.multi_objective.hypervolume.Node" title="botorch.utils.multi_objective.hypervolume.Node"><em>botorch.utils.multi_objective.hypervolume.Node</em></a>) – the new node</p></li>
+<li><p><strong>index</strong> (<em>int</em>) – the index where the node should be appended.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1574,12 +1598,12 @@ Every node has multiple predecessors and successors, one in every list.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>nodes</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference internal" href="#botorch.utils.multi_objective.hypervolume.Node" title="botorch.utils.multi_objective.hypervolume.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">Node</span></code></a>]) – list of nodes to append at the given index.</p></li>
-<li><p><strong>index</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – the index where the nodes should be appended.</p></li>
+<li><p><strong>nodes</strong> (<em>List</em><em>[</em><a class="reference internal" href="#botorch.utils.multi_objective.hypervolume.Node" title="botorch.utils.multi_objective.hypervolume.Node"><em>botorch.utils.multi_objective.hypervolume.Node</em></a><em>]</em>) – list of nodes to append at the given index.</p></li>
+<li><p><strong>index</strong> (<em>int</em>) – the index where the nodes should be appended.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1590,13 +1614,13 @@ Every node has multiple predecessors and successors, one in every list.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>node</strong> (<a class="reference internal" href="#botorch.utils.multi_objective.hypervolume.Node" title="botorch.utils.multi_objective.hypervolume.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">Node</span></code></a>) – The node to remove</p></li>
-<li><p><strong>index</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The upper bound on the range of indices</p></li>
-<li><p><strong>bounds</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>2 x m</cite>-dim tensor bounds on the objectives</p></li>
+<li><p><strong>node</strong> (<a class="reference internal" href="#botorch.utils.multi_objective.hypervolume.Node" title="botorch.utils.multi_objective.hypervolume.Node"><em>botorch.utils.multi_objective.hypervolume.Node</em></a>) – The node to remove</p></li>
+<li><p><strong>index</strong> (<em>int</em>) – The upper bound on the range of indices</p></li>
+<li><p><strong>bounds</strong> (<em>torch.Tensor</em>) – A <cite>2 x m</cite>-dim tensor bounds on the objectives</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><a class="reference internal" href="#botorch.utils.multi_objective.hypervolume.Node" title="botorch.utils.multi_objective.hypervolume.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">Node</span></code></a></p>
+<dd class="field-even"><p><a class="reference internal" href="#botorch.utils.multi_objective.hypervolume.Node" title="botorch.utils.multi_objective.hypervolume.Node">botorch.utils.multi_objective.hypervolume.Node</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1610,13 +1634,13 @@ nodes of the node that is reinserted are in the list.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>node</strong> (<a class="reference internal" href="#botorch.utils.multi_objective.hypervolume.Node" title="botorch.utils.multi_objective.hypervolume.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">Node</span></code></a>) – The node</p></li>
-<li><p><strong>index</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The upper bound on the range of indices</p></li>
-<li><p><strong>bounds</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>2 x m</cite>-dim tensor bounds on the objectives</p></li>
+<li><p><strong>node</strong> (<a class="reference internal" href="#botorch.utils.multi_objective.hypervolume.Node" title="botorch.utils.multi_objective.hypervolume.Node"><em>botorch.utils.multi_objective.hypervolume.Node</em></a>) – The node</p></li>
+<li><p><strong>index</strong> (<em>int</em>) – The upper bound on the range of indices</p></li>
+<li><p><strong>bounds</strong> (<em>torch.Tensor</em>) – A <cite>2 x m</cite>-dim tensor bounds on the objectives</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1657,11 +1681,14 @@ is adapted from numpy/tensorflow implementation at:
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ref_point</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>m</cite>-dim tensor containing the reference point.</p></li>
-<li><p><strong>Y</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A <cite>(batch_shape) x n x m</cite>-dim tensor.</p></li>
-<li><p><strong>alpha</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – A thresold fraction of total volume used in an approximate
+<li><p><strong>ref_point</strong> (<em>Tensor</em>) – A <cite>m</cite>-dim tensor containing the reference point.</p></li>
+<li><p><strong>Y</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>(batch_shape) x n x m</cite>-dim tensor.</p></li>
+<li><p><strong>alpha</strong> (<em>float</em>) – A thresold fraction of total volume used in an approximate
 decomposition.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py method">
@@ -1671,7 +1698,7 @@ decomposition.</p></li>
 <p>This direct method works for <cite>m=2</cite> outcomes.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-odd"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1683,15 +1710,15 @@ decomposition.</p></li>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>ref_point</strong> – A <cite>(batch_shape) x m</cite>-dim tensor containing the reference point.</p>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><dl class="simple">
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
 <dt>A <cite>2 x num_cells x num_outcomes</cite>-dim tensor containing the</dt><dd><p>lower and upper vertices bounding each hypercell.</p>
 </dd>
 </dl>
 </p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1708,11 +1735,11 @@ hypervolume when m &gt; 2 (which do not require partitioning the
 non-dominated space). Given such a partitioning, this method
 is quite fast.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><cite>(batch_shape)</cite>-dim tensor containing the dominated hypervolume.</p>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p><cite>(batch_shape)</cite>-dim tensor containing the dominated hypervolume.</p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1732,17 +1759,17 @@ is quite fast.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>(batch_shape) x n x m</cite>-dim tensor of outcomes.</p></li>
-<li><p><strong>deduplicate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – A boolean indicating whether to only return
+<li><p><strong>Y</strong> (<em>torch.Tensor</em>) – A <cite>(batch_shape) x n x m</cite>-dim tensor of outcomes.</p></li>
+<li><p><strong>deduplicate</strong> (<em>bool</em>) – A boolean indicating whether to only return
 unique points on the pareto frontier.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>(batch_shape) x n</cite>-dim boolean tensor indicating whether
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>(batch_shape) x n</cite>-dim boolean tensor indicating whether
 each point is non-dominated.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1775,18 +1802,18 @@ as proposed in <a class="reference internal" href="acquisition.html#daulton2020q
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>weights</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>m</cite>-dim tensor of weights.</p></li>
-<li><p><strong>Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>n x m</cite>-dim tensor of observed outcomes, which are used for
+<li><p><strong>weights</strong> (<em>torch.Tensor</em>) – A <cite>m</cite>-dim tensor of weights.</p></li>
+<li><p><strong>Y</strong> (<em>torch.Tensor</em>) – A <cite>n x m</cite>-dim tensor of observed outcomes, which are used for
 scaling the outcomes to [0,1].</p></li>
-<li><p><strong>alpha</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Parameter governing the influence of the weighted sum term. The
+<li><p><strong>alpha</strong> (<em>float</em>) – Parameter governing the influence of the weighted sum term. The
 default value comes from <a class="reference internal" href="#knowles2005" id="id7"><span>[Knowles2005]</span></a>.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Transform function using the objective weights.</p>
 </dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>Transform function using the objective weights.</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Callable[[torch.Tensor, Optional[torch.Tensor]], torch.Tensor]</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>

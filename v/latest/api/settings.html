@@ -33,6 +33,14 @@
 <p>Flag for propagating gradients to model training inputs / training data.</p>
 <p>When set to <cite>True</cite>, gradients will be propagated to the training inputs.
 This is useful in particular for propating gradients through fantasy models.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>state</strong> (<em>bool</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
 </dd></dl>
 <dl class="py function">
 <dt id="botorch.settings.suppress_botorch_warnings">
@@ -40,10 +48,13 @@ This is useful in particular for propating gradients through fantasy models.</p>
 <dd><p>Set botorch warning filter.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>state</strong> – A boolean indicating whether warnings should be prints</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>state</strong> – A boolean indicating whether warnings should be prints</p></li>
+<li><p><strong>suppress</strong> (<em>bool</em>) – </p></li>
+</ul>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -55,6 +66,14 @@ This is useful in particular for propating gradients through fantasy models.</p>
 <p>When set to <cite>True</cite>, verbose <cite>BotorchWarning`s will be printed for debuggability.
 Warnings that are not subclasses of `BotorchWarning</cite> will not be affected by
 this context_manager.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>state</strong> (<em>bool</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
 </dd></dl>
 <dl class="py class">
 <dt id="botorch.settings.validate_input_scaling">
@@ -68,6 +87,14 @@ tolerance) that
 (iii) the training targets (<cite>train_Y</cite>) are standardized (zero mean, unit var)
 No checks (other than the NaN check) are performed for observed variances
 (<cite>train_Y_var</cite>) at this point.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>state</strong> (<em>bool</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
 </dd></dl>
 <dl class="py class">
 <dt id="botorch.settings.log_level">
@@ -77,6 +104,14 @@ No checks (other than the NaN check) are performed for observed variances
 <p>Applies the given level to logging.getLogger(‘botorch’) calls. For
 instance, when set to logging.INFO, all logger calls of level INFO or
 above will be printed to STDERR</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>level</strong> (<em>int</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
 <dl class="py attribute">
 <dt id="botorch.settings.log_level.level">
 <code class="sig-name descname"><span class="pre">level</span></code><em class="property"><span class="pre">:</span> <span class="pre">int</span></em><em class="property"> <span class="pre">=</span> <span class="pre">50</span></em><a class="headerlink" href="#botorch.settings.log_level.level" title="Permalink to this definition">¶</a></dt>

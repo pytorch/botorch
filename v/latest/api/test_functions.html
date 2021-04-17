@@ -37,9 +37,12 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the function.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -53,16 +56,16 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x d</cite>-dim tensor of point(s) at which to evaluate the
+<li><p><strong>X</strong> (<em>torch.Tensor</em>) – A <cite>batch_shape x d</cite>-dim tensor of point(s) at which to evaluate the
 function.</p></li>
-<li><p><strong>noise</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If <cite>True</cite>, add observation noise as specified by <cite>noise_std</cite>.</p></li>
+<li><p><strong>noise</strong> (<em>bool</em>) – If <cite>True</cite>, add observation noise as specified by <cite>noise_std</cite>.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>batch_shape</cite>-dim tensor ouf function evaluations.</p>
 </dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>batch_shape</cite>-dim tensor ouf function evaluations.</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -71,8 +74,11 @@ function.</p></li>
 <em class="property"><span class="pre">abstract</span> </em><code class="sig-name descname"><span class="pre">evaluate_true</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/base.html#BaseTestProblem.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.base.BaseTestProblem.evaluate_true" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -89,9 +95,12 @@ constraints of the form <cite>c_i(x) &gt;= 0</cite> for <cite>i=1, …, n_c</cit
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the function.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -108,21 +117,21 @@ slack means that the constraint is violated.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x d</cite>-dim tensor of point(s) at which to evaluate the
+<li><p><strong>X</strong> (<em>torch.Tensor</em>) – A <cite>batch_shape x d</cite>-dim tensor of point(s) at which to evaluate the
 constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p></li>
-<li><p><strong>noise</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If <cite>True</cite>, add observation noise to the slack as specified by
+<li><p><strong>noise</strong> (<em>bool</em>) – If <cite>True</cite>, add observation noise to the slack as specified by
 <cite>noise_std</cite>.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><dl class="simple">
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
 <dt>A <cite>batch_shape x n_c</cite>-dim tensor of constraint slack (where positive slack</dt><dd><p>corresponds to the constraint being feasible).</p>
 </dd>
 </dl>
 </p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -133,20 +142,20 @@ constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x d</cite>-dim tensor of point(s) at which to evaluate the
+<li><p><strong>X</strong> (<em>torch.Tensor</em>) – A <cite>batch_shape x d</cite>-dim tensor of point(s) at which to evaluate the
 constraints.</p></li>
-<li><p><strong>noise</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If <cite>True</cite>, add observation noise as specified by <cite>noise_std</cite>.</p></li>
+<li><p><strong>noise</strong> (<em>bool</em>) – If <cite>True</cite>, add observation noise as specified by <cite>noise_std</cite>.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><dl class="simple">
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
 <dt>A <cite>batch_shape</cite>-dim boolean tensor that is <cite>True</cite> iff all constraint</dt><dd><p>slacks (potentially including observation noise) are positive.</p>
 </dd>
 </dl>
 </p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -156,18 +165,18 @@ constraints.</p></li>
 <dd><p>Evaluate the constraint slack (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x d</cite>-dim tensor of point(s) at which to evaluate the
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – A <cite>batch_shape x d</cite>-dim tensor of point(s) at which to evaluate the
 constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><dl class="simple">
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
 <dt>A <cite>batch_shape x n_c</cite>-dim tensor of constraint slack (where positive slack</dt><dd><p>corresponds to the constraint being feasible).</p>
 </dd>
 </dl>
 </p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -183,9 +192,12 @@ between a provided point and the closest point on the true pareto front.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the objectives.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -195,19 +207,17 @@ between a provided point and the closest point on the true pareto front.</p>
 <dl class="py method">
 <dt id="botorch.test_functions.base.MultiObjectiveTestProblem.max_hv">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">max_hv</span></code><a class="headerlink" href="#botorch.test_functions.base.MultiObjectiveTestProblem.max_hv" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
-</dd>
-</dl>
-</dd></dl>
+<dd></dd></dl>
 <dl class="py method">
 <dt id="botorch.test_functions.base.MultiObjectiveTestProblem.gen_pareto_front">
 <code class="sig-name descname"><span class="pre">gen_pareto_front</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/base.html#MultiObjectiveTestProblem.gen_pareto_front"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.base.MultiObjectiveTestProblem.gen_pareto_front" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate <cite>n</cite> pareto optimal points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>n</strong> (<em>int</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -226,9 +236,12 @@ Reference: <a class="reference external" href="https://www.sfu.ca/~ssurjano/opti
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the function.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -239,11 +252,6 @@ Reference: <a class="reference external" href="https://www.sfu.ca/~ssurjano/opti
 <dt id="botorch.test_functions.synthetic.SyntheticTestFunction.optimal_value">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">optimal_value</span></code><a class="headerlink" href="#botorch.test_functions.synthetic.SyntheticTestFunction.optimal_value" title="Permalink to this definition">¶</a></dt>
 <dd><p>The global minimum (maximum if negate=True) of the function.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
-</dd>
-</dl>
 </dd></dl>
 </dd></dl>
 <dl class="py class">
@@ -264,9 +272,13 @@ Reference: <a class="reference external" href="https://www.sfu.ca/~ssurjano/opti
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the function.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
+<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py method">
@@ -274,8 +286,11 @@ Reference: <a class="reference external" href="https://www.sfu.ca/~ssurjano/opti
 <code class="sig-name descname"><span class="pre">evaluate_true</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#Ackley.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.Ackley.evaluate_true" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -288,9 +303,12 @@ Reference: <a class="reference external" href="https://www.sfu.ca/~ssurjano/opti
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the function.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -302,8 +320,11 @@ Reference: <a class="reference external" href="https://www.sfu.ca/~ssurjano/opti
 <code class="sig-name descname"><span class="pre">evaluate_true</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#Beale.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.Beale.evaluate_true" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -329,9 +350,12 @@ B has 3 minimizers for its global minimum at <cite>z_1 = (-pi, 12.275)</cite>,
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the function.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -343,8 +367,11 @@ B has 3 minimizers for its global minimum at <cite>z_1 = (-pi, 12.275)</cite>,
 <code class="sig-name descname"><span class="pre">evaluate_true</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#Branin.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.Branin.evaluate_true" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -361,9 +388,12 @@ B has 3 minimizers for its global minimum at <cite>z_1 = (-pi, 12.275)</cite>,
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the function.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -375,8 +405,11 @@ B has 3 minimizers for its global minimum at <cite>z_1 = (-pi, 12.275)</cite>,
 <code class="sig-name descname"><span class="pre">evaluate_true</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#Bukin.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.Bukin.evaluate_true" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -396,9 +429,12 @@ B has 3 minimizers for its global minimum at <cite>z_1 = (-pi, 12.275)</cite>,
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the function.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -410,8 +446,11 @@ B has 3 minimizers for its global minimum at <cite>z_1 = (-pi, 12.275)</cite>,
 <code class="sig-name descname"><span class="pre">evaluate_true</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#Cosine8.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.Cosine8.evaluate_true" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -428,9 +467,12 @@ B has 3 minimizers for its global minimum at <cite>z_1 = (-pi, 12.275)</cite>,
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the function.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -442,8 +484,11 @@ B has 3 minimizers for its global minimum at <cite>z_1 = (-pi, 12.275)</cite>,
 <code class="sig-name descname"><span class="pre">evaluate_true</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#DropWave.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.DropWave.evaluate_true" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -460,9 +505,12 @@ B has 3 minimizers for its global minimum at <cite>z_1 = (-pi, 12.275)</cite>,
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the function.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -474,8 +522,11 @@ B has 3 minimizers for its global minimum at <cite>z_1 = (-pi, 12.275)</cite>,
 <code class="sig-name descname"><span class="pre">evaluate_true</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#DixonPrice.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.DixonPrice.evaluate_true" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -498,9 +549,12 @@ B has 3 minimizers for its global minimum at <cite>z_1 = (-pi, 12.275)</cite>,
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the function.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -512,8 +566,11 @@ B has 3 minimizers for its global minimum at <cite>z_1 = (-pi, 12.275)</cite>,
 <code class="sig-name descname"><span class="pre">evaluate_true</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#EggHolder.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.EggHolder.evaluate_true" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -526,9 +583,12 @@ B has 3 minimizers for its global minimum at <cite>z_1 = (-pi, 12.275)</cite>,
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the function.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -540,8 +600,11 @@ B has 3 minimizers for its global minimum at <cite>z_1 = (-pi, 12.275)</cite>,
 <code class="sig-name descname"><span class="pre">evaluate_true</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#Griewank.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.Griewank.evaluate_true" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -569,9 +632,12 @@ B has 3 minimizers for its global minimum at <cite>z_1 = (-pi, 12.275)</cite>,
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the function.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -582,28 +648,21 @@ B has 3 minimizers for its global minimum at <cite>z_1 = (-pi, 12.275)</cite>,
 <dt id="botorch.test_functions.synthetic.Hartmann.optimal_value">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">optimal_value</span></code><a class="headerlink" href="#botorch.test_functions.synthetic.Hartmann.optimal_value" title="Permalink to this definition">¶</a></dt>
 <dd><p>The global minimum (maximum if negate=True) of the function.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py method">
 <dt id="botorch.test_functions.synthetic.Hartmann.optimizers">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">optimizers</span></code><a class="headerlink" href="#botorch.test_functions.synthetic.Hartmann.optimizers" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-</dl>
-</dd></dl>
+<dd></dd></dl>
 <dl class="py method">
 <dt id="botorch.test_functions.synthetic.Hartmann.evaluate_true">
 <code class="sig-name descname"><span class="pre">evaluate_true</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#Hartmann.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.Hartmann.evaluate_true" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -632,9 +691,12 @@ z_4 = ( 8.05502, -9.66459)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the function.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -646,8 +708,11 @@ z_4 = ( 8.05502, -9.66459)</p>
 <code class="sig-name descname"><span class="pre">evaluate_true</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#HolderTable.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.HolderTable.evaluate_true" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -676,9 +741,12 @@ z_4 = ( 8.05502, -9.66459)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the function.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -690,8 +758,11 @@ z_4 = ( 8.05502, -9.66459)</p>
 <code class="sig-name descname"><span class="pre">evaluate_true</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#Levy.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.Levy.evaluate_true" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -713,9 +784,12 @@ z_4 = ( 8.05502, -9.66459)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the function.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -725,19 +799,17 @@ z_4 = ( 8.05502, -9.66459)</p>
 <dl class="py method">
 <dt id="botorch.test_functions.synthetic.Michalewicz.optimizers">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">optimizers</span></code><a class="headerlink" href="#botorch.test_functions.synthetic.Michalewicz.optimizers" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-</dl>
-</dd></dl>
+<dd></dd></dl>
 <dl class="py method">
 <dt id="botorch.test_functions.synthetic.Michalewicz.evaluate_true">
 <code class="sig-name descname"><span class="pre">evaluate_true</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#Michalewicz.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.Michalewicz.evaluate_true" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -754,9 +826,12 @@ z_4 = ( 8.05502, -9.66459)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the function.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -768,8 +843,11 @@ z_4 = ( 8.05502, -9.66459)</p>
 <code class="sig-name descname"><span class="pre">evaluate_true</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#Powell.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.Powell.evaluate_true" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -786,9 +864,12 @@ z_4 = ( 8.05502, -9.66459)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the function.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -800,8 +881,11 @@ z_4 = ( 8.05502, -9.66459)</p>
 <code class="sig-name descname"><span class="pre">evaluate_true</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#Rastrigin.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.Rastrigin.evaluate_true" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -825,9 +909,12 @@ z_4 = ( 8.05502, -9.66459)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the function.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -839,8 +926,11 @@ z_4 = ( 8.05502, -9.66459)</p>
 <code class="sig-name descname"><span class="pre">evaluate_true</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#Rosenbrock.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.Rosenbrock.evaluate_true" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -864,9 +954,13 @@ z_4 = ( 8.05502, -9.66459)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the function.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
+<li><p><strong>m</strong> (<em>int</em>) – </p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -878,8 +972,11 @@ z_4 = ( 8.05502, -9.66459)</p>
 <code class="sig-name descname"><span class="pre">evaluate_true</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#Shekel.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.Shekel.evaluate_true" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -896,9 +993,12 @@ z_4 = ( 8.05502, -9.66459)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the function.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -910,8 +1010,11 @@ z_4 = ( 8.05502, -9.66459)</p>
 <code class="sig-name descname"><span class="pre">evaluate_true</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#SixHumpCamel.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.SixHumpCamel.evaluate_true" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -934,9 +1037,12 @@ z_4 = ( 8.05502, -9.66459)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the function.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -948,8 +1054,11 @@ z_4 = ( 8.05502, -9.66459)</p>
 <code class="sig-name descname"><span class="pre">evaluate_true</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#StyblinskiTang.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.StyblinskiTang.evaluate_true" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -966,9 +1075,12 @@ z_4 = ( 8.05502, -9.66459)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the function.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -980,8 +1092,11 @@ z_4 = ( 8.05502, -9.66459)</p>
 <code class="sig-name descname"><span class="pre">evaluate_true</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/synthetic.html#ThreeHumpCamel.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.synthetic.ThreeHumpCamel.evaluate_true" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1015,9 +1130,12 @@ and <cite>B_min = 0.397887</cite></p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the function.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -1029,8 +1147,11 @@ and <cite>B_min = 0.397887</cite></p>
 <code class="sig-name descname"><span class="pre">evaluate_true</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_fidelity.html#AugmentedBranin.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_fidelity.AugmentedBranin.evaluate_true" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1059,9 +1180,12 @@ dimension is the fidelity parameter.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the function.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -1073,8 +1197,11 @@ dimension is the fidelity parameter.</p>
 <code class="sig-name descname"><span class="pre">evaluate_true</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_fidelity.html#AugmentedHartmann.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_fidelity.AugmentedHartmann.evaluate_true" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1102,9 +1229,12 @@ where the last two dimensions are the fidelity parameters:</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the function.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the function.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -1116,8 +1246,11 @@ where the last two dimensions are the fidelity parameters:</p>
 <code class="sig-name descname"><span class="pre">evaluate_true</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_fidelity.html#AugmentedRosenbrock.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_fidelity.AugmentedRosenbrock.evaluate_true" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1192,9 +1325,12 @@ pp. 173–195, 2000.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the objectives.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -1210,8 +1346,11 @@ pp. 173–195, 2000.</p>
 <code class="sig-name descname"><span class="pre">evaluate_true</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#BraninCurrin.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.BraninCurrin.evaluate_true" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1230,9 +1369,14 @@ pp. 173–195, 2000.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the objectives.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
+<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
+<li><p><strong>num_objectives</strong> (<em>int</em>) – </p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -1268,9 +1412,14 @@ The goal is to minimize both objectives. The reference point comes from <a class
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the objectives.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
+<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
+<li><p><strong>num_objectives</strong> (<em>int</em>) – </p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py method">
@@ -1278,8 +1427,11 @@ The goal is to minimize both objectives. The reference point comes from <a class
 <code class="sig-name descname"><span class="pre">evaluate_true</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#DTLZ1.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.DTLZ1.evaluate_true" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1289,8 +1441,11 @@ The goal is to minimize both objectives. The reference point comes from <a class
 <dd><p>Generate <cite>n</cite> pareto optimal points.</p>
 <p>The pareto points randomly sampled from the hyperplane sum_i f(x_i) = 0.5.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>n</strong> (<em>int</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1325,9 +1480,14 @@ both objectives.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the objectives.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
+<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
+<li><p><strong>num_objectives</strong> (<em>int</em>) – </p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py method">
@@ -1335,8 +1495,11 @@ both objectives.</p>
 <code class="sig-name descname"><span class="pre">evaluate_true</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#DTLZ2.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.DTLZ2.evaluate_true" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1347,8 +1510,11 @@ both objectives.</p>
 <p>The pareto points are randomly sampled from the hypersphere’s
 positive section.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>n</strong> (<em>int</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1379,9 +1545,12 @@ pareto front from <a class="reference internal" href="#tanabe2020" id="id5"><spa
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the objectives.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -1397,8 +1566,11 @@ pareto front from <a class="reference internal" href="#tanabe2020" id="id5"><spa
 <code class="sig-name descname"><span class="pre">evaluate_true</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#VehicleSafety.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.VehicleSafety.evaluate_true" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1417,9 +1589,14 @@ pareto front from <a class="reference internal" href="#tanabe2020" id="id5"><spa
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the objectives.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
+<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
+<li><p><strong>num_objectives</strong> (<em>int</em>) – </p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -1452,9 +1629,14 @@ g(x) = 1 + 9 / (d - 1) * sum_{i=1}^{d-1} x_i</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the objectives.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
+<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
+<li><p><strong>num_objectives</strong> (<em>int</em>) – </p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py method">
@@ -1462,8 +1644,11 @@ g(x) = 1 + 9 / (d - 1) * sum_{i=1}^{d-1} x_i</p>
 <code class="sig-name descname"><span class="pre">evaluate_true</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#ZDT1.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.ZDT1.evaluate_true" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1472,8 +1657,11 @@ g(x) = 1 + 9 / (d - 1) * sum_{i=1}^{d-1} x_i</p>
 <code class="sig-name descname"><span class="pre">gen_pareto_front</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#ZDT1.gen_pareto_front"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.ZDT1.gen_pareto_front" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate <cite>n</cite> pareto optimal points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>n</strong> (<em>int</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1507,9 +1695,14 @@ g(x) = 1 + 9 / (d - 1) * sum_{i=1}^{d-1} x_i</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the objectives.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
+<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
+<li><p><strong>num_objectives</strong> (<em>int</em>) – </p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py method">
@@ -1517,8 +1710,11 @@ g(x) = 1 + 9 / (d - 1) * sum_{i=1}^{d-1} x_i</p>
 <code class="sig-name descname"><span class="pre">evaluate_true</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#ZDT2.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.ZDT2.evaluate_true" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1527,8 +1723,11 @@ g(x) = 1 + 9 / (d - 1) * sum_{i=1}^{d-1} x_i</p>
 <code class="sig-name descname"><span class="pre">gen_pareto_front</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#ZDT2.gen_pareto_front"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.ZDT2.gen_pareto_front" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate <cite>n</cite> pareto optimal points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>n</strong> (<em>int</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1562,9 +1761,14 @@ g(x) = 1 + 9 / (d - 1) * sum_{i=1}^{d-1} x_i</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the objectives.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
+<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
+<li><p><strong>num_objectives</strong> (<em>int</em>) – </p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py method">
@@ -1572,8 +1776,11 @@ g(x) = 1 + 9 / (d - 1) * sum_{i=1}^{d-1} x_i</p>
 <code class="sig-name descname"><span class="pre">evaluate_true</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#ZDT3.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.ZDT3.evaluate_true" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1582,8 +1789,11 @@ g(x) = 1 + 9 / (d - 1) * sum_{i=1}^{d-1} x_i</p>
 <code class="sig-name descname"><span class="pre">gen_pareto_front</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#ZDT3.gen_pareto_front"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.ZDT3.gen_pareto_front" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate <cite>n</cite> pareto optimal points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>n</strong> (<em>int</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1611,9 +1821,12 @@ minimization problem.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the objectives.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -1633,8 +1846,11 @@ minimization problem.</p>
 <code class="sig-name descname"><span class="pre">evaluate_true</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#BNH.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.BNH.evaluate_true" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1644,18 +1860,18 @@ minimization problem.</p>
 <dd><p>Evaluate the constraint slack (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x d</cite>-dim tensor of point(s) at which to evaluate the
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – A <cite>batch_shape x d</cite>-dim tensor of point(s) at which to evaluate the
 constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><dl class="simple">
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
 <dt>A <cite>batch_shape x n_c</cite>-dim tensor of constraint slack (where positive slack</dt><dd><p>corresponds to the constraint being feasible).</p>
 </dd>
 </dl>
 </p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1675,9 +1891,12 @@ minimization problem.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the objectives.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -1697,8 +1916,11 @@ minimization problem.</p>
 <code class="sig-name descname"><span class="pre">evaluate_true</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#SRN.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.SRN.evaluate_true" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1708,18 +1930,18 @@ minimization problem.</p>
 <dd><p>Evaluate the constraint slack (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x d</cite>-dim tensor of point(s) at which to evaluate the
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – A <cite>batch_shape x d</cite>-dim tensor of point(s) at which to evaluate the
 constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><dl class="simple">
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
 <dt>A <cite>batch_shape x n_c</cite>-dim tensor of constraint slack (where positive slack</dt><dd><p>corresponds to the constraint being feasible).</p>
 </dd>
 </dl>
 </p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1739,9 +1961,12 @@ minimization problem.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the objectives.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -1761,8 +1986,11 @@ minimization problem.</p>
 <code class="sig-name descname"><span class="pre">evaluate_true</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#CONSTR.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.CONSTR.evaluate_true" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1772,18 +2000,18 @@ minimization problem.</p>
 <dd><p>Evaluate the constraint slack (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x d</cite>-dim tensor of point(s) at which to evaluate the
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – A <cite>batch_shape x d</cite>-dim tensor of point(s) at which to evaluate the
 constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><dl class="simple">
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
 <dt>A <cite>batch_shape x n_c</cite>-dim tensor of constraint slack (where positive slack</dt><dd><p>corresponds to the constraint being feasible).</p>
 </dd>
 </dl>
 </p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1802,9 +2030,12 @@ constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the objectives.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -1825,18 +2056,18 @@ constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 <dd><p>Evaluate the constraint slack (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x d</cite>-dim tensor of point(s) at which to evaluate the
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – A <cite>batch_shape x d</cite>-dim tensor of point(s) at which to evaluate the
 constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><dl class="simple">
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
 <dt>A <cite>batch_shape x n_c</cite>-dim tensor of constraint slack (where positive slack</dt><dd><p>corresponds to the constraint being feasible).</p>
 </dd>
 </dl>
 </p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1853,9 +2084,14 @@ constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the objectives.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
+<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
+<li><p><strong>num_objectives</strong> (<em>int</em>) – </p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -1868,18 +2104,18 @@ constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 <dd><p>Evaluate the constraint slack (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x d</cite>-dim tensor of point(s) at which to evaluate the
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – A <cite>batch_shape x d</cite>-dim tensor of point(s) at which to evaluate the
 constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><dl class="simple">
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
 <dt>A <cite>batch_shape x n_c</cite>-dim tensor of constraint slack (where positive slack</dt><dd><p>corresponds to the constraint being feasible).</p>
 </dd>
 </dl>
 </p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1908,9 +2144,12 @@ Note that this implementation assumes minimization, so please choose negate=True
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>noise_std</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – Standard deviation of the observation noise.</p></li>
-<li><p><strong>negate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, negate the objectives.</p></li>
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -1930,8 +2169,11 @@ Note that this implementation assumes minimization, so please choose negate=True
 <code class="sig-name descname"><span class="pre">evaluate_true</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#OSY.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.OSY.evaluate_true" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1941,18 +2183,18 @@ Note that this implementation assumes minimization, so please choose negate=True
 <dd><p>Evaluate the constraint slack (w/o observation noise) on a set of points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x d</cite>-dim tensor of point(s) at which to evaluate the
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – A <cite>batch_shape x d</cite>-dim tensor of point(s) at which to evaluate the
 constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><dl class="simple">
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
 <dt>A <cite>batch_shape x n_c</cite>-dim tensor of constraint slack (where positive slack</dt><dd><p>corresponds to the constraint being feasible).</p>
 </dd>
 </dl>
 </p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>

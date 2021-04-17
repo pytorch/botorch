@@ -37,38 +37,37 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>acq_function</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code></a>) – An AcquisitionFunction.</p></li>
-<li><p><strong>bounds</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of <cite>X</cite>.</p></li>
-<li><p><strong>q</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of candidates.</p></li>
-<li><p><strong>num_restarts</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of starting points for multistart acquisition
+<li><p><strong>acq_function</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><em>botorch.acquisition.acquisition.AcquisitionFunction</em></a>) – An AcquisitionFunction.</p></li>
+<li><p><strong>bounds</strong> (<em>torch.Tensor</em>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of <cite>X</cite>.</p></li>
+<li><p><strong>q</strong> (<em>int</em>) – The number of candidates.</p></li>
+<li><p><strong>num_restarts</strong> (<em>int</em>) – The number of starting points for multistart acquisition
 function optimization.</p></li>
-<li><p><strong>raw_samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of samples for initialization.</p></li>
-<li><p><strong>options</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]]) – Options for candidate generation.</p></li>
+<li><p><strong>raw_samples</strong> (<em>int</em>) – The number of samples for initialization.</p></li>
+<li><p><strong>options</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>bool</em><em>, </em><em>float</em><em>, </em><em>int</em><em>, </em><em>str</em><em>]</em><em>]</em><em>]</em>) – Options for candidate generation.</p></li>
 <li><p><strong>constraints</strong> (<em>equality</em>) – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs</cite></p></li>
 <li><p><strong>constraints</strong> – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite></p></li>
-<li><p><strong>fixed_features</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]]) – A map <cite>{feature_index: value}</cite> for features that
+<li><p><strong>fixed_features</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em>) – A map <cite>{feature_index: value}</cite> for features that
 should be fixed to a particular value during generation.</p></li>
-<li><p><strong>post_processing_func</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]]) – A function that post-processes an optimization
+<li><p><strong>post_processing_func</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>torch.Tensor</em><em>]</em><em>, </em><em>torch.Tensor</em><em>]</em><em>]</em>) – A function that post-processes an optimization
 result appropriately (i.e., according to <cite>round-trip</cite>
 transformations).</p></li>
-<li><p><strong>batch_initial_conditions</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A tensor to specify the initial conditions. Set
+<li><p><strong>batch_initial_conditions</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – A tensor to specify the initial conditions. Set
 this if you do not want to use default initialization strategy.</p></li>
-<li><p><strong>return_best_only</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If False, outputs the solutions corresponding to all
+<li><p><strong>return_best_only</strong> (<em>bool</em>) – If False, outputs the solutions corresponding to all
 random restart initializations of the optimization.</p></li>
-<li><p><strong>sequential</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If False, uses joint optimization, otherwise uses sequential
+<li><p><strong>sequential</strong> (<em>bool</em>) – If False, uses joint optimization, otherwise uses sequential
 optimization.</p></li>
-<li><p><strong>kwargs</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>) – Additonal keyword arguments.</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – Additonal keyword arguments.</p></li>
+<li><p><strong>inequality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>torch.Tensor</em><em>, </em><em>torch.Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>equality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>torch.Tensor</em><em>, </em><em>torch.Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><p>A two-element tuple containing</p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><p>A two-element tuple containing</p>
 <ul class="simple">
 <li><p>a <cite>(num_restarts) x q x d</cite>-dim tensor of generated candidates.</p></li>
 <li><dl class="simple">
@@ -81,6 +80,9 @@ values conditional on having observed canidates <cite>0,1,…,i-1</cite>.</p>
 </li>
 </ul>
 </p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Tuple[torch.Tensor, torch.Tensor]</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -106,35 +108,34 @@ values conditional on having observed canidates <cite>0,1,…,i-1</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>acq_function</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code></a>) – An AcquisitionFunction</p></li>
-<li><p><strong>bounds</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of <cite>X</cite>.</p></li>
-<li><p><strong>q</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of candidates.</p></li>
-<li><p><strong>num_restarts</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of starting points for multistart acquisition
+<li><p><strong>acq_function</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><em>botorch.acquisition.acquisition.AcquisitionFunction</em></a>) – An AcquisitionFunction</p></li>
+<li><p><strong>bounds</strong> (<em>torch.Tensor</em>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of <cite>X</cite>.</p></li>
+<li><p><strong>q</strong> (<em>int</em>) – The number of candidates.</p></li>
+<li><p><strong>num_restarts</strong> (<em>int</em>) – Number of starting points for multistart acquisition
 function optimization.</p></li>
-<li><p><strong>raw_samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of samples for initialization.</p></li>
-<li><p><strong>options</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]]) – Options for candidate generation.</p></li>
+<li><p><strong>raw_samples</strong> (<em>int</em>) – Number of samples for initialization.</p></li>
+<li><p><strong>options</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>bool</em><em>, </em><em>float</em><em>, </em><em>int</em><em>, </em><em>str</em><em>]</em><em>]</em><em>]</em>) – Options for candidate generation.</p></li>
 <li><p><strong>constraints</strong> (<em>equality</em>) – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs</cite></p></li>
 <li><p><strong>constraints</strong> – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite></p></li>
-<li><p><strong>fixed_features</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]]) – A map <cite>{feature_index: value}</cite> for features that
+<li><p><strong>fixed_features</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em>) – A map <cite>{feature_index: value}</cite> for features that
 should be fixed to a particular value during generation.</p></li>
-<li><p><strong>post_processing_func</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]]) – A function that post-processes an optimization
+<li><p><strong>post_processing_func</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>torch.Tensor</em><em>]</em><em>, </em><em>torch.Tensor</em><em>]</em><em>]</em>) – A function that post-processes an optimization
 result appropriately (i.e., according to <cite>round-trip</cite>
 transformations).</p></li>
-<li><p><strong>batch_initial_conditions</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A tensor to specify the initial conditions.
+<li><p><strong>batch_initial_conditions</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – A tensor to specify the initial conditions.
 If no initial conditions are provided, the default initialization will
 be used.</p></li>
-<li><p><strong>cyclic_options</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]]) – Options for stopping criterion for outer cyclic optimization.</p></li>
+<li><p><strong>cyclic_options</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>bool</em><em>, </em><em>float</em><em>, </em><em>int</em><em>, </em><em>str</em><em>]</em><em>]</em><em>]</em>) – Options for stopping criterion for outer cyclic optimization.</p></li>
+<li><p><strong>inequality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>torch.Tensor</em><em>, </em><em>torch.Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>equality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>torch.Tensor</em><em>, </em><em>torch.Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><p>A two-element tuple containing</p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><p>A two-element tuple containing</p>
 <ul class="simple">
 <li><p>a <cite>q x d</cite>-dim tensor of generated candidates.</p></li>
 <li><dl class="simple">
@@ -145,6 +146,9 @@ all candidates except candidate <cite>i</cite>.</p>
 </li>
 </ul>
 </p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Tuple[torch.Tensor, torch.Tensor]</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -168,30 +172,29 @@ set as <cite>X_pending</cite>. This is also known as sequential greedy optimizat
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>acq_function_list</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference internal" href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code></a>]) – A list of acquisition functions.</p></li>
-<li><p><strong>bounds</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of <cite>X</cite>.</p></li>
-<li><p><strong>num_restarts</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of starting points for multistart acquisition
+<li><p><strong>acq_function_list</strong> (<em>List</em><em>[</em><a class="reference internal" href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><em>botorch.acquisition.acquisition.AcquisitionFunction</em></a><em>]</em>) – A list of acquisition functions.</p></li>
+<li><p><strong>bounds</strong> (<em>torch.Tensor</em>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of <cite>X</cite>.</p></li>
+<li><p><strong>num_restarts</strong> (<em>int</em>) – Number of starting points for multistart acquisition
 function optimization.</p></li>
-<li><p><strong>raw_samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of samples for initialization.</p></li>
-<li><p><strong>options</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]]) – Options for candidate generation.</p></li>
+<li><p><strong>raw_samples</strong> (<em>int</em>) – Number of samples for initialization.</p></li>
+<li><p><strong>options</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>bool</em><em>, </em><em>float</em><em>, </em><em>int</em><em>, </em><em>str</em><em>]</em><em>]</em><em>]</em>) – Options for candidate generation.</p></li>
 <li><p><strong>constraints</strong> (<em>equality</em>) – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs</cite></p></li>
 <li><p><strong>constraints</strong> – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite></p></li>
-<li><p><strong>fixed_features</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]]) – A map <cite>{feature_index: value}</cite> for features that
+<li><p><strong>fixed_features</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em>) – A map <cite>{feature_index: value}</cite> for features that
 should be fixed to a particular value during generation.</p></li>
-<li><p><strong>post_processing_func</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]]) – A function that post-processes an optimization
+<li><p><strong>post_processing_func</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>torch.Tensor</em><em>]</em><em>, </em><em>torch.Tensor</em><em>]</em><em>]</em>) – A function that post-processes an optimization
 result appropriately (i.e., according to <cite>round-trip</cite>
 transformations).</p></li>
+<li><p><strong>inequality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>torch.Tensor</em><em>, </em><em>torch.Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>equality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>torch.Tensor</em><em>, </em><em>torch.Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><p>A two-element tuple containing</p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><p>A two-element tuple containing</p>
 <ul class="simple">
 <li><p>a <cite>q x d</cite>-dim tensor of generated candidates.</p></li>
 <li><dl class="simple">
@@ -203,6 +206,9 @@ all candidates except candidate <cite>i</cite>.</p>
 </ul>
 </p>
 </dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Tuple[torch.Tensor, torch.Tensor]</p>
+</dd>
 </dl>
 </dd></dl>
 <dl class="py function">
@@ -213,40 +219,42 @@ This is useful for optimizing over mixed continuous and discrete domains.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>acq_function</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code></a>) – An AcquisitionFunction</p></li>
-<li><p><strong>bounds</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of <cite>X</cite>.</p></li>
-<li><p><strong>q</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of candidates.</p></li>
-<li><p><strong>num_restarts</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of starting points for multistart acquisition
+<li><p><strong>acq_function</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><em>botorch.acquisition.acquisition.AcquisitionFunction</em></a>) – An AcquisitionFunction</p></li>
+<li><p><strong>bounds</strong> (<em>torch.Tensor</em>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of <cite>X</cite>.</p></li>
+<li><p><strong>q</strong> (<em>int</em>) – The number of candidates.</p></li>
+<li><p><strong>num_restarts</strong> (<em>int</em>) – Number of starting points for multistart acquisition
 function optimization.</p></li>
-<li><p><strong>raw_samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Number of samples for initialization.</p></li>
-<li><p><strong>fixed_features_list</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]]) – A list of maps <cite>{feature_index: value}</cite>. The i-th
+<li><p><strong>raw_samples</strong> (<em>int</em>) – Number of samples for initialization.</p></li>
+<li><p><strong>fixed_features_list</strong> (<em>List</em><em>[</em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em>) – A list of maps <cite>{feature_index: value}</cite>. The i-th
 item represents the fixed_feature for the i-th optimization.</p></li>
-<li><p><strong>options</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]]) – Options for candidate generation.</p></li>
+<li><p><strong>options</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>bool</em><em>, </em><em>float</em><em>, </em><em>int</em><em>, </em><em>str</em><em>]</em><em>]</em><em>]</em>) – Options for candidate generation.</p></li>
 <li><p><strong>constraints</strong> (<em>equality</em>) – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs</cite></p></li>
 <li><p><strong>constraints</strong> – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite></p></li>
-<li><p><strong>post_processing_func</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]]) – A function that post-processes an optimization
+<li><p><strong>post_processing_func</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>torch.Tensor</em><em>]</em><em>, </em><em>torch.Tensor</em><em>]</em><em>]</em>) – A function that post-processes an optimization
 result appropriately (i.e., according to <cite>round-trip</cite>
 transformations).</p></li>
-<li><p><strong>batch_initial_conditions</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A tensor to specify the initial conditions. Set
+<li><p><strong>batch_initial_conditions</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – A tensor to specify the initial conditions. Set
 this if you do not want to use default initialization strategy.</p></li>
-<li><p><strong>sequential</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If False, uses joint optimization, otherwise uses sequential
+<li><p><strong>sequential</strong> (<em>bool</em>) – If False, uses joint optimization, otherwise uses sequential
 optimization.</p></li>
+<li><p><strong>inequality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>torch.Tensor</em><em>, </em><em>torch.Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>equality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>torch.Tensor</em><em>, </em><em>torch.Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><p>A two-element tuple containing</p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><p>A two-element tuple containing</p>
 <ul class="simple">
 <li><p>a <cite>q x d</cite>-dim tensor of generated candidates.</p></li>
 <li><p>an associated acquisition value.</p></li>
 </ul>
 </p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Tuple[torch.Tensor, torch.Tensor]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -263,35 +271,35 @@ Note: this method requires that the model has <cite>train_inputs</cite> and <cit
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>mll</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">MarginalLogLikelihood</span></code>) – MarginalLogLikelihood to be maximized.</p></li>
-<li><p><strong>bounds</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>], <code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]]]]) – A ParameterBounds dictionary mapping parameter names to tuples
+<li><p><strong>mll</strong> (<em>gpytorch.mlls.marginal_log_likelihood.MarginalLogLikelihood</em>) – MarginalLogLikelihood to be maximized.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>]</em><em>]</em><em>]</em>) – A ParameterBounds dictionary mapping parameter names to tuples
 of lower and upper bounds. Bounds specified here take precedence
 over bounds on the same parameters specified in the constraints
 registered with the module.</p></li>
-<li><p><strong>optimizer_cls</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code>) – Torch optimizer to use. Must not require a closure.</p></li>
-<li><p><strong>options</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]) – options for model fitting. Relevant options will be passed to
+<li><p><strong>optimizer_cls</strong> (<em>torch.optim.optimizer.Optimizer</em>) – Torch optimizer to use. Must not require a closure.</p></li>
+<li><p><strong>options</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em>) – options for model fitting. Relevant options will be passed to
 the <cite>optimizer_cls</cite>. Additionally, options can include: “disp”
 to specify whether to display model fitting diagnostics and “maxiter”
 to specify the maximum number of iterations.</p></li>
-<li><p><strong>track_iterations</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Track the function values and wall time for each
+<li><p><strong>track_iterations</strong> (<em>bool</em>) – Track the function values and wall time for each
 iteration.</p></li>
-<li><p><strong>approx_mll</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, use gpytorch’s approximate MLL computation (
+<li><p><strong>approx_mll</strong> (<em>bool</em>) – If True, use gpytorch’s approximate MLL computation (
 according to the gpytorch defaults based on the training at size).
 Unlike for the deterministic algorithms used in fit_gpytorch_scipy,
 this is not an issue for stochastic optimizers.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">MarginalLogLikelihood</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">OptimizationIteration</span></code>]]]]</p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>2-element tuple containing
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>2-element tuple containing
 - mll with parameters optimized in-place.
 - Dictionary with the following key/values:
 “fopt”: Best mll value.
 “wall_time”: Wall time of fitting.
 “iterations”: List of OptimizationIteration objects with information on each
 iteration. If track_iterations is False, will be empty.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Tuple[gpytorch.mlls.marginal_log_likelihood.MarginalLogLikelihood, Dict[str, Union[float, List[botorch.optim.fit.OptimizationIteration]]]]</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -312,24 +320,24 @@ This method requires that the model has <cite>train_inputs</cite> and <cite>trai
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>mll</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">MarginalLogLikelihood</span></code>) – MarginalLogLikelihood to be maximized.</p></li>
-<li><p><strong>bounds</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>], <code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]]]]) – A dictionary mapping parameter names to tuples of lower and upper
+<li><p><strong>mll</strong> (<em>gpytorch.mlls.marginal_log_likelihood.MarginalLogLikelihood</em>) – MarginalLogLikelihood to be maximized.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>]</em><em>]</em><em>]</em>) – A dictionary mapping parameter names to tuples of lower and upper
 bounds.</p></li>
-<li><p><strong>method</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Solver type, passed along to scipy.minimize.</p></li>
-<li><p><strong>options</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]) – Dictionary of solver options, passed along to scipy.minimize.</p></li>
-<li><p><strong>track_iterations</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Track the function values and wall time for each
+<li><p><strong>method</strong> (<em>str</em>) – Solver type, passed along to scipy.minimize.</p></li>
+<li><p><strong>options</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em>) – Dictionary of solver options, passed along to scipy.minimize.</p></li>
+<li><p><strong>track_iterations</strong> (<em>bool</em>) – Track the function values and wall time for each
 iteration.</p></li>
-<li><p><strong>approx_mll</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, use gpytorch’s approximate MLL computation. This is
+<li><p><strong>approx_mll</strong> (<em>bool</em>) – If True, use gpytorch’s approximate MLL computation. This is
 disabled by default since the stochasticity is an issue for
 determistic optimizers). Enabling this is only recommended when
 working with large training data sets (n&gt;2000).</p></li>
+<li><p><strong>scipy_objective</strong> (<em>Callable</em><em>[</em><em>[</em><em>numpy.ndarray</em><em>, </em><em>gpytorch.mlls.marginal_log_likelihood.MarginalLogLikelihood</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#botorch.optim.numpy_converter.TorchAttr" title="botorch.optim.numpy_converter.TorchAttr"><em>botorch.optim.numpy_converter.TorchAttr</em></a><em>]</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>float</em><em>, </em><em>numpy.ndarray</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>module_to_array_func</strong> (<em>Callable</em><em>[</em><em>[</em><em>torch.nn.modules.module.Module</em><em>, </em><em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>]</em><em>]</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>Set</em><em>[</em><em>str</em><em>]</em><em>]</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>numpy.ndarray</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#botorch.optim.numpy_converter.TorchAttr" title="botorch.optim.numpy_converter.TorchAttr"><em>botorch.optim.numpy_converter.TorchAttr</em></a><em>]</em><em>, </em><em>Optional</em><em>[</em><em>numpy.ndarray</em><em>]</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>module_from_array_func</strong> (<em>Callable</em><em>[</em><em>[</em><em>torch.nn.modules.module.Module</em><em>, </em><em>numpy.ndarray</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#botorch.optim.numpy_converter.TorchAttr" title="botorch.optim.numpy_converter.TorchAttr"><em>botorch.optim.numpy_converter.TorchAttr</em></a><em>]</em><em>]</em><em>, </em><em>torch.nn.modules.module.Module</em><em>]</em>) – </p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">MarginalLogLikelihood</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">OptimizationIteration</span></code>]]]]</p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>2-element tuple containing
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>2-element tuple containing
 - MarginalLogLikelihood with parameters optimized in-place.
 - Dictionary with the following key/values:
 “fopt”: Best mll value.
@@ -337,6 +345,9 @@ working with large training data sets (n&gt;2000).</p></li>
 “iterations”: List of OptimizationIteration objects with information on each
 iteration. If track_iterations is False, will be empty.
 “OptimizeResult”: The result returned by <cite>scipy.optim.minimize</cite>.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Tuple[gpytorch.mlls.marginal_log_likelihood.MarginalLogLikelihood, Dict[str, Union[float, List[botorch.optim.fit.OptimizationIteration]]]]</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -358,14 +369,14 @@ iteration. If track_iterations is False, will be empty.
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>acq_function</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code></a>) – The acquisition function to be optimized.</p></li>
-<li><p><strong>bounds</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of <cite>X</cite>.</p></li>
-<li><p><strong>q</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of candidates to consider.</p></li>
-<li><p><strong>num_restarts</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of starting points for multistart acquisition
+<li><p><strong>acq_function</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><em>botorch.acquisition.acquisition.AcquisitionFunction</em></a>) – The acquisition function to be optimized.</p></li>
+<li><p><strong>bounds</strong> (<em>torch.Tensor</em>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of <cite>X</cite>.</p></li>
+<li><p><strong>q</strong> (<em>int</em>) – The number of candidates to consider.</p></li>
+<li><p><strong>num_restarts</strong> (<em>int</em>) – The number of starting points for multistart acquisition
 function optimization.</p></li>
-<li><p><strong>raw_samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of raw samples to consider in the initialization
+<li><p><strong>raw_samples</strong> (<em>int</em>) – The number of raw samples to consider in the initialization
 heuristic.</p></li>
-<li><p><strong>options</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]]) – Options for initial condition generation. For valid options see
+<li><p><strong>options</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>bool</em><em>, </em><em>float</em><em>, </em><em>int</em><em>]</em><em>]</em><em>]</em>) – Options for initial condition generation. For valid options see
 <cite>initialize_q_batch</cite> and <cite>initialize_q_batch_nonneg</cite>. If <cite>options</cite>
 contains a <cite>nonnegative=True</cite> entry, then <cite>acq_function</cite> is
 assumed to be non-negative (useful when using custom acquisition
@@ -375,11 +386,11 @@ for avoiding memory limits when computing the batch posterior over
 raw samples.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>num_restarts x q x d</cite> tensor of initial conditions.</p>
 </dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>num_restarts x q x d</cite> tensor of initial conditions.</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -410,15 +421,15 @@ strategy in <cite>gen_batch_initial_conditions</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>acq_function</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient" title="botorch.acquisition.knowledge_gradient.qKnowledgeGradient"><code class="xref py py-class docutils literal notranslate"><span class="pre">qKnowledgeGradient</span></code></a>) – The qKnowledgeGradient instance to be optimized.</p></li>
-<li><p><strong>bounds</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of
+<li><p><strong>acq_function</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient" title="botorch.acquisition.knowledge_gradient.qKnowledgeGradient"><em>botorch.acquisition.knowledge_gradient.qKnowledgeGradient</em></a>) – The qKnowledgeGradient instance to be optimized.</p></li>
+<li><p><strong>bounds</strong> (<em>torch.Tensor</em>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of
 task features.</p></li>
-<li><p><strong>q</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of candidates to consider.</p></li>
-<li><p><strong>num_restarts</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of starting points for multistart acquisition
+<li><p><strong>q</strong> (<em>int</em>) – The number of candidates to consider.</p></li>
+<li><p><strong>num_restarts</strong> (<em>int</em>) – The number of starting points for multistart acquisition
 function optimization.</p></li>
-<li><p><strong>raw_samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of raw samples to consider in the initialization
+<li><p><strong>raw_samples</strong> (<em>int</em>) – The number of raw samples to consider in the initialization
 heuristic.</p></li>
-<li><p><strong>options</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]]) – Options for initial condition generation. These contain all
+<li><p><strong>options</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>bool</em><em>, </em><em>float</em><em>, </em><em>int</em><em>]</em><em>]</em><em>]</em>) – Options for initial condition generation. These contain all
 settings for the standard heuristic initialization from
 <cite>gen_batch_initial_conditions</cite>. In addition, they contain
 <cite>frac_random</cite> (the fraction of fully random fantasy points),
@@ -428,13 +439,13 @@ maximization problem, respectively) and <cite>eta</cite> (temperature parameter
 for sampling heuristic from posterior objective maximizers).</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>num_restarts x q’ x d</cite> tensor that can be used as initial conditions
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>num_restarts x q’ x d</cite> tensor that can be used as initial conditions
 for <cite>optimize_acqf()</cite>. Here <cite>q’ = q + num_fantasies</cite> is the total number
 of points (candidate points plus fantasy points).</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Optional[torch.Tensor]</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -468,16 +479,16 @@ conditions are selected according to the standard initialization strategy in
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>acq_function</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code></a>) – The value function instance to be optimized.</p></li>
-<li><p><strong>bounds</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of
+<li><p><strong>acq_function</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><em>botorch.acquisition.acquisition.AcquisitionFunction</em></a>) – The value function instance to be optimized.</p></li>
+<li><p><strong>bounds</strong> (<em>torch.Tensor</em>) – A <cite>2 x d</cite> tensor of lower and upper bounds for each column of
 task features.</p></li>
-<li><p><strong>num_restarts</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of starting points for multistart acquisition
+<li><p><strong>num_restarts</strong> (<em>int</em>) – The number of starting points for multistart acquisition
 function optimization.</p></li>
-<li><p><strong>raw_samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of raw samples to consider in the initialization
+<li><p><strong>raw_samples</strong> (<em>int</em>) – The number of raw samples to consider in the initialization
 heuristic.</p></li>
-<li><p><strong>current_model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a>) – The model of the KG acquisition function that was used to
+<li><p><strong>current_model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>botorch.models.model.Model</em></a>) – The model of the KG acquisition function that was used to
 generate the fantasy model of the value function.</p></li>
-<li><p><strong>options</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]]) – Options for initial condition generation. These contain all
+<li><p><strong>options</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>bool</em><em>, </em><em>float</em><em>, </em><em>int</em><em>]</em><em>]</em><em>]</em>) – Options for initial condition generation. These contain all
 settings for the standard heuristic initialization from
 <cite>gen_batch_initial_conditions</cite>. In addition, they contain
 <cite>frac_random</cite> (the fraction of fully random fantasy points),
@@ -487,13 +498,13 @@ maximization problem, respectively) and <cite>eta</cite> (temperature parameter
 for sampling heuristic from posterior objective maximizers).</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>num_restarts x batch_shape x q x d</cite> tensor that can be used as initial
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>num_restarts x batch_shape x q x d</cite> tensor that can be used as initial
 conditions for <cite>optimize_acqf()</cite>. Here <cite>batch_shape</cite> is the batch shape
 of value function model.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -521,22 +532,22 @@ over large areas of the feature space (e.g. qEI), you should use
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>b x batch_shape x q x d</cite> tensor of <cite>b</cite> - <cite>batch_shape</cite> samples of
+<li><p><strong>X</strong> (<em>torch.Tensor</em>) – A <cite>b x batch_shape x q x d</cite> tensor of <cite>b</cite> - <cite>batch_shape</cite> samples of
 <cite>q</cite>-batches from a d`-dim feature space. Typically, these are generated
 using qMC sampling.</p></li>
-<li><p><strong>Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A tensor of <cite>b x batch_shape</cite> outcomes associated with the samples.
+<li><p><strong>Y</strong> (<em>torch.Tensor</em>) – A tensor of <cite>b x batch_shape</cite> outcomes associated with the samples.
 Typically, this is the value of the batch acquisition function to be
 maximized.</p></li>
-<li><p><strong>n</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of initial condition to be generated. Must be less than <cite>b</cite>.</p></li>
-<li><p><strong>eta</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Temperature parameter for weighting samples.</p></li>
+<li><p><strong>n</strong> (<em>int</em>) – The number of initial condition to be generated. Must be less than <cite>b</cite>.</p></li>
+<li><p><strong>eta</strong> (<em>float</em>) – Temperature parameter for weighting samples.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>n x batch_shape x q x d</cite> tensor of <cite>n</cite> - <cite>batch_shape</cite> <cite>q</cite>-batch initial
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>n x batch_shape x q x d</cite> tensor of <cite>n</cite> - <cite>batch_shape</cite> <cite>q</cite>-batch initial
 conditions, where each batch of <cite>n x q x d</cite> samples is selected independently.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -560,22 +571,22 @@ one positive value).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>b x q x d</cite> tensor of <cite>b</cite> samples of <cite>q</cite>-batches from a <cite>d</cite>-dim.
+<li><p><strong>X</strong> (<em>torch.Tensor</em>) – A <cite>b x q x d</cite> tensor of <cite>b</cite> samples of <cite>q</cite>-batches from a <cite>d</cite>-dim.
 feature space. Typically, these are generated using qMC.</p></li>
-<li><p><strong>Y</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A tensor of <cite>b</cite> outcomes associated with the samples. Typically, this
+<li><p><strong>Y</strong> (<em>torch.Tensor</em>) – A tensor of <cite>b</cite> outcomes associated with the samples. Typically, this
 is the value of the batch acquisition function to be maximized.</p></li>
-<li><p><strong>n</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of initial condition to be generated. Must be less than <cite>b</cite>.</p></li>
-<li><p><strong>eta</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Temperature parameter for weighting samples.</p></li>
-<li><p><strong>alpha</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – The threshold (as a fraction of the maximum observed value) under
+<li><p><strong>n</strong> (<em>int</em>) – The number of initial condition to be generated. Must be less than <cite>b</cite>.</p></li>
+<li><p><strong>eta</strong> (<em>float</em>) – Temperature parameter for weighting samples.</p></li>
+<li><p><strong>alpha</strong> (<em>float</em>) – The threshold (as a fraction of the maximum observed value) under
 which to ignore samples. All input samples for which
 <cite>Y &lt; alpha * max(Y)</cite> will be ignored.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>n x q x d</cite> tensor of <cite>n</cite> <cite>q</cite>-batch initial conditions.</p>
 </dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>n x q x d</cite> tensor of <cite>n</cite> <cite>q</cite>-batch initial conditions.</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -603,16 +614,16 @@ can keep track of past function values between optimization steps.</p>
 <dd><p>Evaluate the stopping criterion.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>fvals</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – tensor containing function values for the current iteration. If
+<dd class="field-odd"><p><strong>fvals</strong> (<em>torch.Tensor</em>) – tensor containing function values for the current iteration. If
 <cite>fvals</cite> contains more than one element, then the stopping criterion is
 evaluated element-wise and True is returned if the stopping criterion is
 true for all elements.</p>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Stopping indicator (if True, stop the optimziation).</p>
 </dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>Stopping indicator (if True, stop the optimziation).</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>
@@ -638,12 +649,15 @@ Letting <cite>ma[i] := sum_j(v[i,j])</cite>, the criterion evaluates to <cite>Tr
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>maxiter</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Maximum number of iterations.</p></li>
-<li><p><strong>minimize</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, assume minimization.</p></li>
-<li><p><strong>n_window</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The size of the exponential moving average window.</p></li>
-<li><p><strong>eta</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – The exponential decay factor in the weights.</p></li>
-<li><p><strong>rel_tol</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Relative tolerance for termination.</p></li>
+<li><p><strong>maxiter</strong> (<em>int</em>) – Maximum number of iterations.</p></li>
+<li><p><strong>minimize</strong> (<em>bool</em>) – If True, assume minimization.</p></li>
+<li><p><strong>n_window</strong> (<em>int</em>) – The size of the exponential moving average window.</p></li>
+<li><p><strong>eta</strong> (<em>float</em>) – The exponential decay factor in the weights.</p></li>
+<li><p><strong>rel_tol</strong> (<em>float</em>) – Relative tolerance for termination.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py method">
@@ -652,19 +666,25 @@ Letting <cite>ma[i] := sum_j(v[i,j])</cite>, the criterion evaluates to <cite>Tr
 <dd><p>Evaluate the stopping criterion.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>fvals</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – tensor containing function values for the current iteration. If
+<dd class="field-odd"><p><strong>fvals</strong> (<em>torch.Tensor</em>) – tensor containing function values for the current iteration. If
 <cite>fvals</cite> contains more than one element, then the stopping criterion is
 evaluated element-wise and True is returned if the stopping criterion is
 true for all elements.</p>
 </dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>bool</p>
+</dd>
 </dl>
 <p>TODO: add support for utilizing gradient information</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Stopping indicator (if True, stop the optimziation).</p>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Stopping indicator (if True, stop the optimziation).</p>
+<dt class="field-even">Parameters</dt>
+<dd class="field-even"><p><strong>fvals</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>
@@ -683,6 +703,15 @@ for optimizing module parameters.</p>
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">botorch.optim.numpy_converter.</span></code><code class="sig-name descname"><span class="pre">TorchAttr</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/optim/numpy_converter.html#TorchAttr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.optim.numpy_converter.TorchAttr" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></p>
 <p>Create new instance of TorchAttr(shape, dtype, device)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>shape</strong> (<em>torch.Size</em>) – </p></li>
+<li><p><strong>dtype</strong> (<em>torch.dtype</em>) – </p></li>
+<li><p><strong>device</strong> (<em>torch.device</em>) – </p></li>
+</ul>
+</dd>
+</dl>
 <dl class="py method">
 <dt id="botorch.optim.numpy_converter.TorchAttr.shape">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">shape</span></code><a class="headerlink" href="#botorch.optim.numpy_converter.TorchAttr.shape" title="Permalink to this definition">¶</a></dt>
@@ -707,25 +736,25 @@ for optimizing module parameters.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>module</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>) – A module with parameters. May specify parameter constraints in
+<li><p><strong>module</strong> (<em>torch.nn.modules.module.Module</em>) – A module with parameters. May specify parameter constraints in
 a <cite>named_parameters_and_constraints</cite> method.</p></li>
-<li><p><strong>bounds</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>], <code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]]]]) – A ParameterBounds dictionary mapping parameter names to tuples
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>, </em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>]</em><em>]</em><em>]</em>) – A ParameterBounds dictionary mapping parameter names to tuples
 of lower and upper bounds. Bounds specified here take precedence
 over bounds on the same parameters specified in the constraints
 registered with the module.</p></li>
-<li><p><strong>exclude</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Set</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – A list of parameter names that are to be excluded from extraction.</p></li>
+<li><p><strong>exclude</strong> (<em>Optional</em><em>[</em><em>Set</em><em>[</em><em>str</em><em>]</em><em>]</em>) – A list of parameter names that are to be excluded from extraction.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference internal" href="#botorch.optim.numpy_converter.TorchAttr" title="botorch.optim.numpy_converter.TorchAttr"><code class="xref py py-class docutils literal notranslate"><span class="pre">TorchAttr</span></code></a>], <code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>]]</p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>3-element tuple containing
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>3-element tuple containing
 - The parameter values as a numpy array.
 - An ordered dictionary with the name and tensor attributes of each
 parameter.
 - A <cite>2 x n_params</cite> numpy array with lower and upper bounds if at least
 one constraint is finite, and None otherwise.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Tuple[numpy.ndarray, Dict[str, <a class="reference internal" href="#botorch.optim.numpy_converter.TorchAttr" title="botorch.optim.numpy_converter.TorchAttr">botorch.optim.numpy_converter.TorchAttr</a>], Optional[numpy.ndarray]]</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -741,9 +770,9 @@ one constraint is finite, and None otherwise.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>module</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>) – Module with parameters to be set</p></li>
-<li><p><strong>x</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>) – Numpy array with parameter values</p></li>
-<li><p><strong>property_dict</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference internal" href="#botorch.optim.numpy_converter.TorchAttr" title="botorch.optim.numpy_converter.TorchAttr"><code class="xref py py-class docutils literal notranslate"><span class="pre">TorchAttr</span></code></a>]) – Dictionary of parameter names and torch attributes as
+<li><p><strong>module</strong> (<em>torch.nn.modules.module.Module</em>) – Module with parameters to be set</p></li>
+<li><p><strong>x</strong> (<em>numpy.ndarray</em>) – Numpy array with parameter values</p></li>
+<li><p><strong>property_dict</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#botorch.optim.numpy_converter.TorchAttr" title="botorch.optim.numpy_converter.TorchAttr"><em>botorch.optim.numpy_converter.TorchAttr</em></a><em>]</em>) – Dictionary of parameter names and torch attributes as
 returned by module_to_array.</p></li>
 </ul>
 </dd>
@@ -773,19 +802,19 @@ returned by module_to_array.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – <cite>… x d</cite> tensor</p></li>
-<li><p><strong>lower_bounds</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>]) – Lower bounds on each column (last dimension) of <cite>X</cite>. If
+<li><p><strong>X</strong> (<em>torch.Tensor</em>) – <cite>… x d</cite> tensor</p></li>
+<li><p><strong>lower_bounds</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>float</em><em>, </em><em>torch.Tensor</em><em>]</em><em>]</em>) – Lower bounds on each column (last dimension) of <cite>X</cite>. If
 this is a single float, then all columns have the same bound.</p></li>
-<li><p><strong>upper_bounds</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>]) – Lower bounds on each column (last dimension) of <cite>X</cite>. If
+<li><p><strong>upper_bounds</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>float</em><em>, </em><em>torch.Tensor</em><em>]</em><em>]</em>) – Lower bounds on each column (last dimension) of <cite>X</cite>. If
 this is a single float, then all columns have the same bound.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Bounds</span></code>]</p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A scipy <cite>Bounds</cite> object if either lower_bounds or upper_bounds is not
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A scipy <cite>Bounds</cite> object if either lower_bounds or upper_bounds is not
 None, and None otherwise.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Optional[scipy.optimize._constraints.Bounds]</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -801,7 +830,7 @@ None, and None otherwise.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>shapeX</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code>) – The shape of the torch.Tensor to optimize over (i.e. <cite>b x q x d</cite>)</p></li>
+<li><p><strong>shapeX</strong> (<em>torch.Size</em>) – The shape of the torch.Tensor to optimize over (i.e. <cite>b x q x d</cite>)</p></li>
 <li><p><strong>constraints</strong> (<em>equality</em>) – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs</cite>, where
@@ -813,15 +842,17 @@ rhs is a scalar.</p></li>
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) == rhs</cite> (with <cite>indices</cite>
 and <cite>coefficients</cite> of the same form as in <cite>inequality_constraints</cite>).</p></li>
+<li><p><strong>inequality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>torch.Tensor</em><em>, </em><em>torch.Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>equality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>torch.Tensor</em><em>, </em><em>torch.Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>], <code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>]]]]</p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A list of dictionaries containing callables for constraint function
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A list of dictionaries containing callables for constraint function
 values and Jacobians and a string indicating the associated constraint
 type (“eq”, “ineq”), as expected by <cite>scipy.minimize</cite>.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>List[Dict[str, Union[str, Callable[[numpy.ndarray], float], Callable[[numpy.ndarray], numpy.ndarray]]]]</p>
 </dd>
 </dl>
 <p>This function assumes that constraints are the same for each input batch,
@@ -854,10 +885,10 @@ element of the q-batch, for each of the 3 t-batches:</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>x</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>) – The input array.</p></li>
-<li><p><strong>flat_idxr</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The indices in <cite>x</cite> to consider.</p></li>
-<li><p><strong>coeffs</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>) – The coefficients corresponding to the indices.</p></li>
-<li><p><strong>rhs</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – The right-hand-side of the constraint.</p></li>
+<li><p><strong>x</strong> (<em>numpy.ndarray</em>) – The input array.</p></li>
+<li><p><strong>flat_idxr</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – The indices in <cite>x</cite> to consider.</p></li>
+<li><p><strong>coeffs</strong> (<em>numpy.ndarray</em>) – The coefficients corresponding to the indices.</p></li>
+<li><p><strong>rhs</strong> (<em>float</em>) – The right-hand-side of the constraint.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -875,17 +906,17 @@ element of the q-batch, for each of the 3 t-batches:</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>x</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>) – The input array.</p></li>
-<li><p><strong>flat_idxr</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – The indices for the elements of x that appear in the constraint.</p></li>
-<li><p><strong>coeffs</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>) – The coefficients corresponding to the indices.</p></li>
-<li><p><strong>n</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – number of elements</p></li>
+<li><p><strong>x</strong> (<em>numpy.ndarray</em>) – The input array.</p></li>
+<li><p><strong>flat_idxr</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – The indices for the elements of x that appear in the constraint.</p></li>
+<li><p><strong>coeffs</strong> (<em>numpy.ndarray</em>) – The coefficients corresponding to the indices.</p></li>
+<li><p><strong>n</strong> (<em>int</em>) – number of elements</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The Jacobian.</p>
 </dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>The Jacobian.</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
 </dd>
 </dl>
 </dd></dl>
@@ -899,10 +930,10 @@ element of the q-batch, for each of the 3 t-batches:</p>
 <dd><p>Sample from hyperparameter priors (in-place).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.gpytorch.GPyTorchModel" title="botorch.models.gpytorch.GPyTorchModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">GPyTorchModel</span></code></a>) – A GPyTorchModel.</p>
+<dd class="field-odd"><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.gpytorch.GPyTorchModel" title="botorch.models.gpytorch.GPyTorchModel"><em>botorch.models.gpytorch.GPyTorchModel</em></a>) – A GPyTorchModel.</p>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -918,20 +949,20 @@ scipy optimizer that satisfy bounds only up to numerical accuracy.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – The <cite>b x n x d</cite> input tensor. If 2-dimensional, <cite>b</cite> is assumed to be 1.</p></li>
-<li><p><strong>lower</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>]) – The column-wise lower bounds. If scalar, apply bound to all columns.</p></li>
-<li><p><strong>upper</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>]) – The column-wise upper bounds. If scalar, apply bound to all columns.</p></li>
-<li><p><strong>raise_on_violation</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If <cite>True</cite>, raise an exception when the elments in <cite>X</cite>
+<li><p><strong>X</strong> (<em>torch.Tensor</em>) – The <cite>b x n x d</cite> input tensor. If 2-dimensional, <cite>b</cite> is assumed to be 1.</p></li>
+<li><p><strong>lower</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>float</em><em>, </em><em>torch.Tensor</em><em>]</em><em>]</em>) – The column-wise lower bounds. If scalar, apply bound to all columns.</p></li>
+<li><p><strong>upper</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>float</em><em>, </em><em>torch.Tensor</em><em>]</em><em>]</em>) – The column-wise upper bounds. If scalar, apply bound to all columns.</p></li>
+<li><p><strong>raise_on_violation</strong> (<em>bool</em>) – If <cite>True</cite>, raise an exception when the elments in <cite>X</cite>
 are out of the specified bounds (up to numerical accuracy). This is
 useful for post-processing candidates generated by optimizers that
 satisfy imposed bounds only up to numerical accuracy.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The clamped tensor.</p>
 </dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>The clamped tensor.</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -943,18 +974,18 @@ satisfy imposed bounds only up to numerical accuracy.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – input Tensor with shape <cite>… x p</cite>, where <cite>p</cite> is the number of features</p></li>
-<li><p><strong>fixed_features</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]]]) – A dictionary with keys as column indices and values
+<li><p><strong>X</strong> (<em>torch.Tensor</em>) – input Tensor with shape <cite>… x p</cite>, where <cite>p</cite> is the number of features</p></li>
+<li><p><strong>fixed_features</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>]</em><em>]</em>) – A dictionary with keys as column indices and values
 equal to what the feature should be set to in <cite>X</cite>. If the value is
 None, that column is just considered fixed. Keys should be in the
 range <cite>[0, p - 1]</cite>.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The tensor X with fixed features.</p>
 </dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>The tensor X with fixed features.</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>

@@ -42,61 +42,31 @@
 <p>This function may be overwritten by subclasses in case <cite>base_sample_shape</cite>
 and <cite>event_shape</cite> do not agree (e.g. if the posterior is a Multivariate
 Gaussian that is not full rank).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code></p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py method">
 <dt id="botorch.posteriors.posterior.Posterior.device">
 <em class="property"><span class="pre">abstract</span> <span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">device</span></code><a class="headerlink" href="#botorch.posteriors.posterior.Posterior.device" title="Permalink to this definition">¶</a></dt>
 <dd><p>The torch device of the posterior.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">device</span></code></p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py method">
 <dt id="botorch.posteriors.posterior.Posterior.dtype">
 <em class="property"><span class="pre">abstract</span> <span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">dtype</span></code><a class="headerlink" href="#botorch.posteriors.posterior.Posterior.dtype" title="Permalink to this definition">¶</a></dt>
 <dd><p>The torch dtype of the posterior.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">dtype</span></code></p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py method">
 <dt id="botorch.posteriors.posterior.Posterior.event_shape">
 <em class="property"><span class="pre">abstract</span> <span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">event_shape</span></code><a class="headerlink" href="#botorch.posteriors.posterior.Posterior.event_shape" title="Permalink to this definition">¶</a></dt>
 <dd><p>The event shape (i.e. the shape of a single sample).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code></p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py method">
 <dt id="botorch.posteriors.posterior.Posterior.mean">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">mean</span></code><a class="headerlink" href="#botorch.posteriors.posterior.Posterior.mean" title="Permalink to this definition">¶</a></dt>
 <dd><p>The mean of the posterior as a <cite>(b) x n x m</cite>-dim Tensor.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py method">
 <dt id="botorch.posteriors.posterior.Posterior.variance">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">variance</span></code><a class="headerlink" href="#botorch.posteriors.posterior.Posterior.variance" title="Permalink to this definition">¶</a></dt>
 <dd><p>The variance of the posterior as a <cite>(b) x n x m</cite>-dim Tensor.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py method">
 <dt id="botorch.posteriors.posterior.Posterior.rsample">
@@ -105,19 +75,19 @@ Gaussian that is not full rank).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>sample_shape</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code>]) – A <cite>torch.Size</cite> object specifying the sample shape. To
+<li><p><strong>sample_shape</strong> (<em>Optional</em><em>[</em><em>torch.Size</em><em>]</em>) – A <cite>torch.Size</cite> object specifying the sample shape. To
 draw <cite>n</cite> samples, set to <cite>torch.Size([n])</cite>. To draw <cite>b</cite> batches
 of <cite>n</cite> samples each, set to <cite>torch.Size([b, n])</cite>.</p></li>
-<li><p><strong>base_samples</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – An (optional) Tensor of <cite>N(0, I)</cite> base samples of
+<li><p><strong>base_samples</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – An (optional) Tensor of <cite>N(0, I)</cite> base samples of
 appropriate dimension, typically obtained from a <cite>Sampler</cite>.
 This is used for deterministic optimization.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>sample_shape x event</cite>-dim Tensor of samples from the posterior.</p>
 </dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>sample_shape x event</cite>-dim Tensor of samples from the posterior.</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -129,19 +99,19 @@ This is used for deterministic optimization.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>sample_shape</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code>]) – A <cite>torch.Size</cite> object specifying the sample shape. To
+<li><p><strong>sample_shape</strong> (<em>Optional</em><em>[</em><em>torch.Size</em><em>]</em>) – A <cite>torch.Size</cite> object specifying the sample shape. To
 draw <cite>n</cite> samples, set to <cite>torch.Size([n])</cite>. To draw <cite>b</cite> batches
 of <cite>n</cite> samples each, set to <cite>torch.Size([b, n])</cite>.</p></li>
-<li><p><strong>base_samples</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – An (optional) Tensor of <cite>N(0, I)</cite> base samples of
+<li><p><strong>base_samples</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – An (optional) Tensor of <cite>N(0, I)</cite> base samples of
 appropriate dimension, typically obtained from a <cite>Sampler</cite> object.
 This is used for deterministic optimization.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>sample_shape x event_shape</cite>-dim Tensor of samples from the posterior.</p>
 </dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>sample_shape x event_shape</cite>-dim Tensor of samples from the posterior.</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -161,49 +131,32 @@ This is used for deterministic optimization.</p></li>
 <p>A posterior based on GPyTorch’s multi-variate Normal distributions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>mvn</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">MultivariateNormal</span></code>) – A GPyTorch MultivariateNormal (single-output case) or
+<dd class="field-odd"><p><strong>mvn</strong> (<em>MultivariateNormal</em>) – A GPyTorch MultivariateNormal (single-output case) or
 MultitaskMultivariateNormal (multi-output case).</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py method">
 <dt id="botorch.posteriors.gpytorch.GPyTorchPosterior.base_sample_shape">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">base_sample_shape</span></code><a class="headerlink" href="#botorch.posteriors.gpytorch.GPyTorchPosterior.base_sample_shape" title="Permalink to this definition">¶</a></dt>
 <dd><p>The shape of a base sample used for constructing posterior samples.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code></p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py method">
 <dt id="botorch.posteriors.gpytorch.GPyTorchPosterior.device">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">device</span></code><a class="headerlink" href="#botorch.posteriors.gpytorch.GPyTorchPosterior.device" title="Permalink to this definition">¶</a></dt>
 <dd><p>The torch device of the posterior.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">device</span></code></p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py method">
 <dt id="botorch.posteriors.gpytorch.GPyTorchPosterior.dtype">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">dtype</span></code><a class="headerlink" href="#botorch.posteriors.gpytorch.GPyTorchPosterior.dtype" title="Permalink to this definition">¶</a></dt>
 <dd><p>The torch dtype of the posterior.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">dtype</span></code></p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py method">
 <dt id="botorch.posteriors.gpytorch.GPyTorchPosterior.event_shape">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">event_shape</span></code><a class="headerlink" href="#botorch.posteriors.gpytorch.GPyTorchPosterior.event_shape" title="Permalink to this definition">¶</a></dt>
 <dd><p>The event shape (i.e. the shape of a single sample) of the posterior.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code></p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py method">
 <dt id="botorch.posteriors.gpytorch.GPyTorchPosterior.rsample">
@@ -212,19 +165,19 @@ MultitaskMultivariateNormal (multi-output case).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>sample_shape</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code>]) – A <cite>torch.Size</cite> object specifying the sample shape. To
+<li><p><strong>sample_shape</strong> (<em>Optional</em><em>[</em><em>torch.Size</em><em>]</em>) – A <cite>torch.Size</cite> object specifying the sample shape. To
 draw <cite>n</cite> samples, set to <cite>torch.Size([n])</cite>. To draw <cite>b</cite> batches
 of <cite>n</cite> samples each, set to <cite>torch.Size([b, n])</cite>.</p></li>
-<li><p><strong>base_samples</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – An (optional) Tensor of <cite>N(0, I)</cite> base samples of
+<li><p><strong>base_samples</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – An (optional) Tensor of <cite>N(0, I)</cite> base samples of
 appropriate dimension, typically obtained from a <cite>Sampler</cite>.
 This is used for deterministic optimization.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>sample_shape x event_shape</cite>-dim Tensor of samples from the posterior.</p>
 </dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>sample_shape x event_shape</cite>-dim Tensor of samples from the posterior.</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -232,21 +185,11 @@ This is used for deterministic optimization.</p></li>
 <dt id="botorch.posteriors.gpytorch.GPyTorchPosterior.mean">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">mean</span></code><a class="headerlink" href="#botorch.posteriors.gpytorch.GPyTorchPosterior.mean" title="Permalink to this definition">¶</a></dt>
 <dd><p>The posterior mean.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py method">
 <dt id="botorch.posteriors.gpytorch.GPyTorchPosterior.variance">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">variance</span></code><a class="headerlink" href="#botorch.posteriors.gpytorch.GPyTorchPosterior.variance" title="Permalink to this definition">¶</a></dt>
 <dd><p>The posterior variance.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-</dl>
 </dd></dl>
 </dd></dl>
 <dl class="py function">
@@ -256,22 +199,22 @@ This is used for deterministic optimization.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>posterior</strong> (<a class="reference internal" href="#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">GPyTorchPosterior</span></code></a>) – The posterior over <cite>m</cite> outcomes to be scalarized.
+<li><p><strong>posterior</strong> (<a class="reference internal" href="#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior"><em>botorch.posteriors.gpytorch.GPyTorchPosterior</em></a>) – The posterior over <cite>m</cite> outcomes to be scalarized.
 Supports <cite>t</cite>-batching.</p></li>
-<li><p><strong>weights</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A tensor of weights of size <cite>m</cite>.</p></li>
-<li><p><strong>offset</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – The offset of the affine transformation.</p></li>
+<li><p><strong>weights</strong> (<em>torch.Tensor</em>) – A tensor of weights of size <cite>m</cite>.</p></li>
+<li><p><strong>offset</strong> (<em>float</em>) – The offset of the affine transformation.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><a class="reference internal" href="#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">GPyTorchPosterior</span></code></a></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><dl class="simple">
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
 <dt>The transformed (single-output) posterior. If the input posterior has</dt><dd><p>mean <cite>mu</cite> and covariance matrix <cite>Sigma</cite>, this posterior has mean
 <cite>weights^T * mu</cite> and variance <cite>weights^T Sigma w</cite>.</p>
 </dd>
 </dl>
 </p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior">botorch.posteriors.gpytorch.GPyTorchPosterior</a></p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -293,56 +236,39 @@ models.</p>
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">botorch.posteriors.deterministic.</span></code><code class="sig-name descname"><span class="pre">DeterministicPosterior</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/posteriors/deterministic.html#DeterministicPosterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.posteriors.deterministic.DeterministicPosterior" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.posteriors.posterior.Posterior</span></code></a></p>
 <p>Deterministic posterior.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>values</strong> (<em>Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt id="botorch.posteriors.deterministic.DeterministicPosterior.device">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">device</span></code><a class="headerlink" href="#botorch.posteriors.deterministic.DeterministicPosterior.device" title="Permalink to this definition">¶</a></dt>
 <dd><p>The torch device of the posterior.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">device</span></code></p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py method">
 <dt id="botorch.posteriors.deterministic.DeterministicPosterior.dtype">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">dtype</span></code><a class="headerlink" href="#botorch.posteriors.deterministic.DeterministicPosterior.dtype" title="Permalink to this definition">¶</a></dt>
 <dd><p>The torch dtype of the posterior.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">dtype</span></code></p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py method">
 <dt id="botorch.posteriors.deterministic.DeterministicPosterior.event_shape">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">event_shape</span></code><a class="headerlink" href="#botorch.posteriors.deterministic.DeterministicPosterior.event_shape" title="Permalink to this definition">¶</a></dt>
 <dd><p>The event shape (i.e. the shape of a single sample).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code></p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py method">
 <dt id="botorch.posteriors.deterministic.DeterministicPosterior.mean">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">mean</span></code><a class="headerlink" href="#botorch.posteriors.deterministic.DeterministicPosterior.mean" title="Permalink to this definition">¶</a></dt>
 <dd><p>The mean of the posterior as a <cite>(b) x n x m</cite>-dim Tensor.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py method">
 <dt id="botorch.posteriors.deterministic.DeterministicPosterior.variance">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">variance</span></code><a class="headerlink" href="#botorch.posteriors.deterministic.DeterministicPosterior.variance" title="Permalink to this definition">¶</a></dt>
 <dd><p>The variance of the posterior as a <cite>(b) x n x m</cite>-dim Tensor.</p>
 <p>As this is a deterministic posterior, this is a tensor of zeros.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py method">
 <dt id="botorch.posteriors.deterministic.DeterministicPosterior.rsample">
@@ -353,20 +279,20 @@ to the requested shape.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>sample_shape</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code>]) – A <cite>torch.Size</cite> object specifying the sample shape. To
+<li><p><strong>sample_shape</strong> (<em>Optional</em><em>[</em><em>torch.Size</em><em>]</em>) – A <cite>torch.Size</cite> object specifying the sample shape. To
 draw <cite>n</cite> samples, set to <cite>torch.Size([n])</cite>. To draw <cite>b</cite> batches
 of <cite>n</cite> samples each, set to <cite>torch.Size([b, n])</cite>.</p></li>
-<li><p><strong>base_samples</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – An (optional) Tensor of <cite>N(0, I)</cite> base samples of
+<li><p><strong>base_samples</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – An (optional) Tensor of <cite>N(0, I)</cite> base samples of
 appropriate dimension, typically obtained from a <cite>Sampler</cite>.
 Ignored in construction of the samples (used only for shape
 validation).</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>sample_shape x event</cite>-dim Tensor of samples from the posterior.</p>
 </dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>sample_shape x event</cite>-dim Tensor of samples from the posterior.</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -391,15 +317,18 @@ called from the HigherOrderGP.posterior(…) method.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>mvn</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">MultivariateNormal</span></code>) – Posterior multivariate normal distribution</p></li>
-<li><p><strong>joint_covariance_matrix</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">LazyTensor</span></code>) – Joint test train covariance matrix over the entire
+<li><p><strong>mvn</strong> (<em>gpytorch.distributions.multivariate_normal.MultivariateNormal</em>) – Posterior multivariate normal distribution</p></li>
+<li><p><strong>joint_covariance_matrix</strong> (<em>gpytorch.lazy.lazy_tensor.LazyTensor</em>) – Joint test train covariance matrix over the entire
 tensor</p></li>
-<li><p><strong>train_train_covar</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">LazyTensor</span></code>) – covariance matrix of train points in the data space</p></li>
-<li><p><strong>test_train_covar</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">LazyTensor</span></code>) – covariance matrix of test x train points in the data space</p></li>
-<li><p><strong>train_targets</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – training responses vectorized</p></li>
-<li><p><strong>output_shape</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code>) – shape output training responses</p></li>
-<li><p><strong>num_outputs</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – batch shaping of model</p></li>
+<li><p><strong>train_train_covar</strong> (<em>gpytorch.lazy.lazy_tensor.LazyTensor</em>) – covariance matrix of train points in the data space</p></li>
+<li><p><strong>test_train_covar</strong> (<em>gpytorch.lazy.lazy_tensor.LazyTensor</em>) – covariance matrix of test x train points in the data space</p></li>
+<li><p><strong>train_targets</strong> (<em>torch.Tensor</em>) – training responses vectorized</p></li>
+<li><p><strong>output_shape</strong> (<em>torch.Size</em>) – shape output training responses</p></li>
+<li><p><strong>num_outputs</strong> (<em>int</em>) – batch shaping of model</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py method">
@@ -425,19 +354,19 @@ samples.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>sample_shape</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code>]) – A <cite>torch.Size</cite> object specifying the sample shape. To
+<li><p><strong>sample_shape</strong> (<em>Optional</em><em>[</em><em>torch.Size</em><em>]</em>) – A <cite>torch.Size</cite> object specifying the sample shape. To
 draw <cite>n</cite> samples, set to <cite>torch.Size([n])</cite>. To draw <cite>b</cite> batches
 of <cite>n</cite> samples each, set to <cite>torch.Size([b, n])</cite>.</p></li>
-<li><p><strong>base_samples</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – An (optional) Tensor of <cite>N(0, I)</cite> base samples of
+<li><p><strong>base_samples</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – An (optional) Tensor of <cite>N(0, I)</cite> base samples of
 appropriate dimension, typically obtained from a <cite>Sampler</cite>.
 This is used for deterministic optimization.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>sample_shape x event_shape</cite>-dim Tensor of samples from the posterior.</p>
 </dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>sample_shape x event_shape</cite>-dim Tensor of samples from the posterior.</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -454,79 +383,52 @@ This is used for deterministic optimization.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>posterior</strong> (<a class="reference internal" href="#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">Posterior</span></code></a>) – The posterior object to be transformed.</p></li>
-<li><p><strong>sample_transform</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – A callable applying a sample-level transform to a
+<li><p><strong>posterior</strong> (<a class="reference internal" href="#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><em>Posterior</em></a>) – The posterior object to be transformed.</p></li>
+<li><p><strong>sample_transform</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em>) – A callable applying a sample-level transform to a
 <cite>sample_shape x batch_shape x q x m</cite>-dim tensor of samples from
 the original posterior, returning a tensor of samples of the
 same shape.</p></li>
-<li><p><strong>mean_transform</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]]) – A callable transforming a 2-tuple of mean and
+<li><p><strong>mean_transform</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – A callable transforming a 2-tuple of mean and
 variance (both of shape <cite>batch_shape x m x o</cite>) of the original
 posterior to the mean of the transformed posterior.</p></li>
-<li><p><strong>variance_transform</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]]) – A callable transforming a 2-tuple of mean and
+<li><p><strong>variance_transform</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>]</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – A callable transforming a 2-tuple of mean and
 variance (both of shape <cite>batch_shape x m x o</cite>) of the original
 posterior to a variance of the transformed posterior.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py method">
 <dt id="botorch.posteriors.transformed.TransformedPosterior.base_sample_shape">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">base_sample_shape</span></code><a class="headerlink" href="#botorch.posteriors.transformed.TransformedPosterior.base_sample_shape" title="Permalink to this definition">¶</a></dt>
 <dd><p>The shape of a base sample used for constructing posterior samples.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code></p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py method">
 <dt id="botorch.posteriors.transformed.TransformedPosterior.device">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">device</span></code><a class="headerlink" href="#botorch.posteriors.transformed.TransformedPosterior.device" title="Permalink to this definition">¶</a></dt>
 <dd><p>The torch device of the posterior.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">device</span></code></p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py method">
 <dt id="botorch.posteriors.transformed.TransformedPosterior.dtype">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">dtype</span></code><a class="headerlink" href="#botorch.posteriors.transformed.TransformedPosterior.dtype" title="Permalink to this definition">¶</a></dt>
 <dd><p>The torch dtype of the posterior.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">dtype</span></code></p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py method">
 <dt id="botorch.posteriors.transformed.TransformedPosterior.event_shape">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">event_shape</span></code><a class="headerlink" href="#botorch.posteriors.transformed.TransformedPosterior.event_shape" title="Permalink to this definition">¶</a></dt>
 <dd><p>The event shape (i.e. the shape of a single sample).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code></p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py method">
 <dt id="botorch.posteriors.transformed.TransformedPosterior.mean">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">mean</span></code><a class="headerlink" href="#botorch.posteriors.transformed.TransformedPosterior.mean" title="Permalink to this definition">¶</a></dt>
 <dd><p>The mean of the posterior as a <cite>batch_shape x n x m</cite>-dim Tensor.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py method">
 <dt id="botorch.posteriors.transformed.TransformedPosterior.variance">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">variance</span></code><a class="headerlink" href="#botorch.posteriors.transformed.TransformedPosterior.variance" title="Permalink to this definition">¶</a></dt>
 <dd><p>The variance of the posterior as a <cite>batch_shape x n x m</cite>-dim Tensor.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py method">
 <dt id="botorch.posteriors.transformed.TransformedPosterior.rsample">
@@ -535,19 +437,19 @@ posterior to a variance of the transformed posterior.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>sample_shape</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Size</span></code>]) – A <cite>torch.Size</cite> object specifying the sample shape. To
+<li><p><strong>sample_shape</strong> (<em>Optional</em><em>[</em><em>torch.Size</em><em>]</em>) – A <cite>torch.Size</cite> object specifying the sample shape. To
 draw <cite>n</cite> samples, set to <cite>torch.Size([n])</cite>. To draw <cite>b</cite> batches
 of <cite>n</cite> samples each, set to <cite>torch.Size([b, n])</cite>.</p></li>
-<li><p><strong>base_samples</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – An (optional) Tensor of <cite>N(0, I)</cite> base samples of
+<li><p><strong>base_samples</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – An (optional) Tensor of <cite>N(0, I)</cite> base samples of
 appropriate dimension, typically obtained from a <cite>Sampler</cite>.
 This is used for deterministic optimization.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>sample_shape x event</cite>-dim Tensor of samples from the posterior.</p>
 </dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>sample_shape x event</cite>-dim Tensor of samples from the posterior.</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>

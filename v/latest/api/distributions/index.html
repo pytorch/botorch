@@ -39,10 +39,11 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>concentration1</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – 1st concentration parameter of the distribution
+<li><p><strong>concentration1</strong> (<em>Union</em><em>[</em><em>float</em><em>, </em><em>Tensor</em><em>]</em>) – 1st concentration parameter of the distribution
 (often referred to as alpha)</p></li>
-<li><p><strong>concentration0</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – 2nd concentration parameter of the distribution
+<li><p><strong>concentration0</strong> (<em>Union</em><em>[</em><em>float</em><em>, </em><em>Tensor</em><em>]</em>) – 2nd concentration parameter of the distribution
 (often referred to as beta)</p></li>
+<li><p><strong>validate_args</strong> (<em>bool</em>) – </p></li>
 </ul>
 </dd>
 </dl>
@@ -72,16 +73,16 @@ this does not repeat any args checking or parameter broadcasting in
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>batch_shape</strong> (<em>torch.Size</em>) – the desired expanded size.</p></li>
-<li><p><strong>_instance</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="#botorch.distributions.distributions.Kumaraswamy" title="botorch.distributions.distributions.Kumaraswamy"><code class="xref py py-class docutils literal notranslate"><span class="pre">Kumaraswamy</span></code></a>]) – new instance provided by subclasses that
+<li><p><strong>_instance</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.distributions.distributions.Kumaraswamy" title="botorch.distributions.distributions.Kumaraswamy"><em>botorch.distributions.distributions.Kumaraswamy</em></a><em>]</em>) – new instance provided by subclasses that
 need to override <cite>.expand</cite>.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><a class="reference internal" href="#botorch.distributions.distributions.Kumaraswamy" title="botorch.distributions.distributions.Kumaraswamy"><code class="xref py py-class docutils literal notranslate"><span class="pre">Kumaraswamy</span></code></a></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>New distribution instance with batch dimensions expanded to
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>New distribution instance with batch dimensions expanded to
 <cite>batch_size</cite>.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#botorch.distributions.distributions.Kumaraswamy" title="botorch.distributions.distributions.Kumaraswamy">botorch.distributions.distributions.Kumaraswamy</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -89,32 +90,22 @@ need to override <cite>.expand</cite>.</p></li>
 <dt id="botorch.distributions.Kumaraswamy.mean">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">mean</span></code><a class="headerlink" href="#botorch.distributions.Kumaraswamy.mean" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the mean of the distribution.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py method">
 <dt id="botorch.distributions.Kumaraswamy.variance">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">variance</span></code><a class="headerlink" href="#botorch.distributions.Kumaraswamy.variance" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the variance of the distribution.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py method">
 <dt id="botorch.distributions.Kumaraswamy.entropy">
 <code class="sig-name descname"><span class="pre">entropy</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/distributions/distributions.html#Kumaraswamy.entropy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.distributions.Kumaraswamy.entropy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns entropy of distribution, batched over batch_shape.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Tensor of shape batch_shape.</p>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Tensor of shape batch_shape.</p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -140,10 +131,11 @@ tensorflow_probability/python/distributions/kumaraswamy.py.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>concentration1</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – 1st concentration parameter of the distribution
+<li><p><strong>concentration1</strong> (<em>Union</em><em>[</em><em>float</em><em>, </em><em>Tensor</em><em>]</em>) – 1st concentration parameter of the distribution
 (often referred to as alpha)</p></li>
-<li><p><strong>concentration0</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]) – 2nd concentration parameter of the distribution
+<li><p><strong>concentration0</strong> (<em>Union</em><em>[</em><em>float</em><em>, </em><em>Tensor</em><em>]</em>) – 2nd concentration parameter of the distribution
 (often referred to as beta)</p></li>
+<li><p><strong>validate_args</strong> (<em>bool</em>) – </p></li>
 </ul>
 </dd>
 </dl>
@@ -173,16 +165,16 @@ this does not repeat any args checking or parameter broadcasting in
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>batch_shape</strong> (<em>torch.Size</em>) – the desired expanded size.</p></li>
-<li><p><strong>_instance</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="#botorch.distributions.distributions.Kumaraswamy" title="botorch.distributions.distributions.Kumaraswamy"><code class="xref py py-class docutils literal notranslate"><span class="pre">Kumaraswamy</span></code></a>]) – new instance provided by subclasses that
+<li><p><strong>_instance</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.distributions.distributions.Kumaraswamy" title="botorch.distributions.distributions.Kumaraswamy"><em>botorch.distributions.distributions.Kumaraswamy</em></a><em>]</em>) – new instance provided by subclasses that
 need to override <cite>.expand</cite>.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><a class="reference internal" href="#botorch.distributions.distributions.Kumaraswamy" title="botorch.distributions.distributions.Kumaraswamy"><code class="xref py py-class docutils literal notranslate"><span class="pre">Kumaraswamy</span></code></a></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>New distribution instance with batch dimensions expanded to
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>New distribution instance with batch dimensions expanded to
 <cite>batch_size</cite>.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#botorch.distributions.distributions.Kumaraswamy" title="botorch.distributions.distributions.Kumaraswamy">botorch.distributions.distributions.Kumaraswamy</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -190,32 +182,22 @@ need to override <cite>.expand</cite>.</p></li>
 <dt id="botorch.distributions.distributions.Kumaraswamy.mean">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">mean</span></code><a class="headerlink" href="#botorch.distributions.distributions.Kumaraswamy.mean" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the mean of the distribution.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py method">
 <dt id="botorch.distributions.distributions.Kumaraswamy.variance">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">variance</span></code><a class="headerlink" href="#botorch.distributions.distributions.Kumaraswamy.variance" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the variance of the distribution.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
-</dd>
-</dl>
 </dd></dl>
 <dl class="py method">
 <dt id="botorch.distributions.distributions.Kumaraswamy.entropy">
 <code class="sig-name descname"><span class="pre">entropy</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/distributions/distributions.html#Kumaraswamy.entropy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.distributions.distributions.Kumaraswamy.entropy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns entropy of distribution, batched over batch_shape.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Tensor of shape batch_shape.</p>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Tensor of shape batch_shape.</p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
