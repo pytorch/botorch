@@ -140,13 +140,24 @@ def optimize_acqf(
 
     options = options or {}
 
+    # Handle the trivial case when all features are fixed
+    if fixed_features is not None and len(fixed_features) == bounds.shape[-1]:
+        X = torch.tensor(
+            [fixed_features[i] for i in range(bounds.shape[-1])],
+            device=bounds.device,
+            dtype=bounds.dtype,
+        )
+        X = X.expand(q, *X.shape)
+        with torch.no_grad():
+            acq_value = acq_function(X)
+        return X, acq_value
+
     if batch_initial_conditions is None:
         ic_gen = (
             gen_one_shot_kg_initial_conditions
             if isinstance(acq_function, qKnowledgeGradient)
             else gen_batch_initial_conditions
         )
-        # TODO: Generating initial candidates should use parameter constraints.
         batch_initial_conditions = ic_gen(
             acq_function=acq_function,
             bounds=bounds,

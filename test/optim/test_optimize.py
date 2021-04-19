@@ -53,12 +53,12 @@ class TestOptimizeAcqf(BotorchTestCase):
         raw_samples = 10
         options = {}
         mock_acq_function = MockAcquisitionFunction()
-        cnt = 1
+        cnt = 0
         for dtype in (torch.float, torch.double):
             mock_gen_batch_initial_conditions.return_value = torch.zeros(
                 num_restarts, q, 3, device=self.device, dtype=dtype
             )
-            base_cand = torch.ones(1, q, 3, device=self.device, dtype=dtype)
+            base_cand = torch.arange(3, device=self.device, dtype=dtype).expand(1, q, 3)
             mock_candidates = torch.cat(
                 [i * base_cand for i in range(num_restarts)], dim=0
             )
@@ -82,7 +82,10 @@ class TestOptimizeAcqf(BotorchTestCase):
             )
             self.assertTrue(torch.equal(candidates, mock_candidates[0]))
             self.assertTrue(torch.equal(acq_vals, mock_acq_values[0]))
+            cnt += 1
+            self.assertEqual(mock_gen_batch_initial_conditions.call_count, cnt)
 
+            # test generation with provided initial conditions
             candidates, acq_vals = optimize_acqf(
                 acq_function=mock_acq_function,
                 bounds=bounds,
@@ -98,7 +101,46 @@ class TestOptimizeAcqf(BotorchTestCase):
             self.assertTrue(torch.equal(candidates, mock_candidates))
             self.assertTrue(torch.equal(acq_vals, mock_acq_values))
             self.assertEqual(mock_gen_batch_initial_conditions.call_count, cnt)
+
+            # test fixed features
+            fixed_features = {0: 0.1}
+            mock_candidates[:, 0] = 0.1
+            mock_gen_candidates.return_value = (mock_candidates, mock_acq_values)
+            candidates, acq_vals = optimize_acqf(
+                acq_function=mock_acq_function,
+                bounds=bounds,
+                q=q,
+                num_restarts=num_restarts,
+                raw_samples=raw_samples,
+                options=options,
+                fixed_features=fixed_features,
+            )
+            self.assertEqual(
+                mock_gen_candidates.call_args[1]["fixed_features"], fixed_features
+            )
+            self.assertTrue(torch.equal(candidates, mock_candidates[0]))
             cnt += 1
+            self.assertEqual(mock_gen_batch_initial_conditions.call_count, cnt)
+
+            # test trivial case when all features are fixed
+            candidates, acq_vals = optimize_acqf(
+                acq_function=mock_acq_function,
+                bounds=bounds,
+                q=q,
+                num_restarts=num_restarts,
+                raw_samples=raw_samples,
+                options=options,
+                fixed_features={0: 0.1, 1: 0.2, 2: 0.3},
+            )
+            self.assertTrue(
+                torch.equal(
+                    candidates,
+                    torch.tensor(
+                        [0.1, 0.2, 0.3], device=self.device, dtype=dtype
+                    ).expand(3, 3),
+                )
+            )
+            self.assertEqual(mock_gen_batch_initial_conditions.call_count, cnt)
 
         # test OneShotAcquisitionFunction
         mock_acq_function = MockOneShotAcquisitionFunction()
