@@ -44,6 +44,11 @@ Multi-Fidelity GP Regression Models
 .. automodule:: botorch.models.gp_regression_fidelity
     :members:
 
+GP Regression Models for Mixed Parameter Spaces
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.gp_regression_mixed
+    :members:
+
 Model List GP Regression Models
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.models.model_list_gp_regression
@@ -80,6 +85,9 @@ Model Components
 
 Kernels
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.kernels.categorical
+.. autoclass:: CategoricalKernel
+
 .. automodule:: botorch.models.kernels.downsampling
 .. autoclass:: DownsamplingKernel
 
