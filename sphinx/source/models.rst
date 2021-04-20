@@ -80,6 +80,9 @@ Model Components
 
 Kernels
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.kernels.categorical
+.. autoclass:: CategoricalKernel
+
 .. automodule:: botorch.models.kernels.downsampling
 .. autoclass:: DownsamplingKernel
 
