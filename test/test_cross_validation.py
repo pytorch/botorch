@@ -18,14 +18,14 @@ from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikeliho
 class TestFitBatchCrossValidation(BotorchTestCase):
     def test_single_task_batch_cv(self):
         n = 10
-        for batch_shape, num_outputs, dtype in itertools.product(
+        for batch_shape, m, dtype in itertools.product(
             (torch.Size(), torch.Size([2])), (1, 2), (torch.float, torch.double)
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
             train_X, train_Y = _get_random_data(
-                batch_shape=batch_shape, num_outputs=num_outputs, n=n, **tkwargs
+                batch_shape=batch_shape, m=m, n=n, **tkwargs
             )
-            if num_outputs == 1:
+            if m == 1:
                 train_Y = train_Y.squeeze(-1)
             train_Yvar = torch.full_like(train_Y, 0.01)
             noiseless_cv_folds = gen_loo_cv_folds(train_X=train_X, train_Y=train_Y)
@@ -37,8 +37,8 @@ class TestFitBatchCrossValidation(BotorchTestCase):
             self.assertEqual(noiseless_cv_folds.train_X.shape, expected_shape_train_X)
             self.assertEqual(noiseless_cv_folds.test_X.shape, expected_shape_test_X)
 
-            expected_shape_train_Y = batch_shape + torch.Size([n, n - 1, num_outputs])
-            expected_shape_test_Y = batch_shape + torch.Size([n, 1, num_outputs])
+            expected_shape_train_Y = batch_shape + torch.Size([n, n - 1, m])
+            expected_shape_test_Y = batch_shape + torch.Size([n, 1, m])
 
             self.assertEqual(noiseless_cv_folds.train_Y.shape, expected_shape_train_Y)
             self.assertEqual(noiseless_cv_folds.test_Y.shape, expected_shape_test_Y)
@@ -53,7 +53,7 @@ class TestFitBatchCrossValidation(BotorchTestCase):
                     cv_folds=noiseless_cv_folds,
                     fit_args={"options": {"maxiter": 1}},
                 )
-            expected_shape = batch_shape + torch.Size([n, 1, num_outputs])
+            expected_shape = batch_shape + torch.Size([n, 1, m])
             self.assertEqual(cv_results.posterior.mean.shape, expected_shape)
             self.assertEqual(cv_results.observed_Y.shape, expected_shape)
 

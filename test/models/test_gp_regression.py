@@ -39,9 +39,7 @@ class TestSingleTaskGP(BotorchTestCase):
     def _get_model_and_data(
         self, batch_shape, m, outcome_transform=None, input_transform=None, **tkwargs
     ):
-        train_X, train_Y = _get_random_data(
-            batch_shape=batch_shape, num_outputs=m, **tkwargs
-        )
+        train_X, train_Y = _get_random_data(batch_shape=batch_shape, m=m, **tkwargs)
         model_kwargs = {
             "train_X": train_X,
             "train_Y": train_Y,
@@ -174,7 +172,7 @@ class TestSingleTaskGP(BotorchTestCase):
             fant_shape = torch.Size([2])
             # fantasize at different input points
             X_fant, Y_fant = _get_random_data(
-                fant_shape + batch_shape, m, n=3, **tkwargs
+                batch_shape=fant_shape + batch_shape, m=m, n=3, **tkwargs
             )
             c_kwargs = (
                 {"noise": torch.full_like(Y_fant, 0.01)}
@@ -319,9 +317,7 @@ class TestFixedNoiseGP(TestSingleTaskGP):
     def _get_model_and_data(
         self, batch_shape, m, outcome_transform=None, input_transform=None, **tkwargs
     ):
-        train_X, train_Y = _get_random_data(
-            batch_shape=batch_shape, num_outputs=m, **tkwargs
-        )
+        train_X, train_Y = _get_random_data(batch_shape=batch_shape, m=m, **tkwargs)
         model_kwargs = {
             "train_X": train_X,
             "train_Y": train_Y,
@@ -381,9 +377,7 @@ class TestHeteroskedasticSingleTaskGP(TestSingleTaskGP):
         self, batch_shape, m, outcome_transform=None, input_transform=None, **tkwargs
     ):
         with manual_seed(0):
-            train_X, train_Y = _get_random_data(
-                batch_shape=batch_shape, num_outputs=m, **tkwargs
-            )
+            train_X, train_Y = _get_random_data(batch_shape=batch_shape, m=m, **tkwargs)
         train_Yvar = (0.1 + 0.1 * torch.rand_like(train_Y)) ** 2
         model_kwargs = {
             "train_X": train_X,

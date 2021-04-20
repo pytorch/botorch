@@ -15,6 +15,7 @@ from botorch.models.gp_regression import (
     SingleTaskGP,
 )
 from botorch.models.gp_regression_fidelity import SingleTaskMultiFidelityGP
+from botorch.models.gp_regression_mixed import MixedSingleTaskGP
 from botorch.models.higher_order_gp import HigherOrderGP
 from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.models.multitask import FixedNoiseMultiTaskGP, MultiTaskGP
@@ -28,6 +29,7 @@ __all__ = [
     "GenericDeterministicModel",
     "HeteroskedasticSingleTaskGP",
     "HigherOrderGP",
+    "MixedSingleTaskGP",
     "ModelListGP",
     "MultiTaskGP",
     "PairwiseGP",
