@@ -17,6 +17,7 @@ import torch
 from botorch.exceptions import UnsupportedError
 from botorch.models.gp_regression import FixedNoiseGP, HeteroskedasticSingleTaskGP
 from botorch.models.gp_regression_fidelity import SingleTaskMultiFidelityGP
+from botorch.models.gp_regression_mixed import MixedSingleTaskGP
 from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
 from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.models.transforms.input import InputTransform
@@ -206,6 +207,10 @@ def batched_to_model_list(batch_model: BatchedMultiOutputGPyTorchModel) -> Model
     if isinstance(batch_model, HeteroskedasticSingleTaskGP):
         raise NotImplementedError(
             "Conversion of HeteroskedasticSingleTaskGP currently not supported."
+        )
+    if isinstance(batch_model, MixedSingleTaskGP):
+        raise NotImplementedError(
+            "Conversion of MixedSingleTaskGP currently not supported."
         )
     input_transform = getattr(batch_model, "input_transform", None)
     batch_sd = batch_model.state_dict()
