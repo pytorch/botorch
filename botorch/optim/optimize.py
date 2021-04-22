@@ -107,7 +107,6 @@ def optimize_acqf(
                 "acquisition functions. Must have `sequential=False`."
             )
         candidate_list, acq_value_list = [], []
-        candidates = torch.tensor([], device=bounds.device, dtype=bounds.dtype)
         base_X_pending = acq_function.X_pending
         for i in range(q):
             candidate, acq_value = optimize_acqf(
@@ -172,12 +171,11 @@ def optimize_acqf(
     batch_limit: int = options.get("batch_limit", num_restarts)
     batch_candidates_list: List[Tensor] = []
     batch_acq_values_list: List[Tensor] = []
-    start_idcs = list(range(0, num_restarts, batch_limit))
-    for start_idx in start_idcs:
-        end_idx = min(start_idx + batch_limit, num_restarts)
+    batched_ics = batch_initial_conditions.split(batch_limit)
+    for i, batched_ics_ in enumerate(batched_ics):
         # optimize using random restart optimization
         batch_candidates_curr, batch_acq_values_curr = gen_candidates_scipy(
-            initial_conditions=batch_initial_conditions[start_idx:end_idx],
+            initial_conditions=batched_ics_,
             acquisition_function=acq_function,
             lower_bounds=bounds[0],
             upper_bounds=bounds[1],
@@ -192,7 +190,7 @@ def optimize_acqf(
         )
         batch_candidates_list.append(batch_candidates_curr)
         batch_acq_values_list.append(batch_acq_values_curr)
-        logger.info(f"Generated candidate batch {start_idx+1} of {len(start_idcs)}.")
+        logger.info(f"Generated candidate batch {i+1} of {len(batched_ics)}.")
     batch_candidates = torch.cat(batch_candidates_list)
     batch_acq_values = torch.cat(batch_acq_values_list)
 
@@ -462,10 +460,83 @@ def optimize_acqf_mixed(
             post_processing_func=post_processing_func,
             batch_initial_conditions=batch_initial_conditions,
             return_best_only=True,
-            sequential=False,
+            sequential=sequential,
         )
         ff_candidate_list.append(candidate)
         ff_acq_value_list.append(acq_value)
     ff_acq_values = torch.stack(ff_acq_value_list)
     best = torch.argmax(ff_acq_values)
     return ff_candidate_list[best], ff_acq_values[best]
+
+
+def optimize_acqf_discrete(
+    acq_function: AcquisitionFunction,
+    q: int,
+    choices: Tensor,
+    max_batch_size: int = 2048,
+    unique: bool = True,
+) -> Tuple[Tensor, Tensor]:
+    r"""Optimize over a discrete set of points using batch evaluation.
+
+    For `q > 1` this function generates candidates by means of sequential
+    conditioning (rather than joint optimization), since for all but the
+    smalles number of choices the set `choices^q` of discrete points to
+    evaluate quickly explodes.
+
+    Args:
+        acq_function: An AcquisitionFunction.
+        q: The number of candidates.
+        choices: A `num_choices x d` tensor of possible choices.
+        max_batch_size: The maximum number of choices to evaluate in batch.
+            A large limit can cause excessive memory usage if the model has
+            a large training set.
+        unique: If True return unique choices, o/w choices may be repeated
+            (only relevant if `q > 1`).
+
+    Returns:
+        A three-element tuple containing
+
+        - a `q x d`-dim tensor of generated candidates.
+        - an associated acquisition value.
+    """
+    choices_batched = choices.unsqueeze(-2)
+    if q > 1:
+        candidate_list, acq_value_list = [], []
+        base_X_pending = acq_function.X_pending
+        for _ in range(q):
+            acq_values = _split_batch_eval_acqf(
+                acq_function=acq_function,
+                X=choices_batched,
+                max_batch_size=max_batch_size,
+            )
+            best_idx = torch.argmax(acq_values)
+            candidate_list.append(choices_batched[best_idx])
+            acq_value_list.append(acq_values[best_idx])
+            # set pending points
+            candidates = torch.cat(candidate_list, dim=-2)
+            acq_function.set_X_pending(
+                torch.cat([base_X_pending, candidates], dim=-2)
+                if base_X_pending is not None
+                else candidates
+            )
+            # need to remove choice from choice set if enforcing uniqueness
+            if unique:
+                choices_batched = torch.cat(
+                    [choices_batched[:best_idx], choices_batched[best_idx + 1 :]]
+                )
+
+        # Reset acq_func to previous X_pending state
+        acq_function.set_X_pending(base_X_pending)
+        return candidates, torch.stack(acq_value_list)
+
+    acq_values = _split_batch_eval_acqf(
+        acq_function=acq_function, X=choices_batched, max_batch_size=max_batch_size
+    )
+    best_idx = torch.argmax(acq_values)
+    return choices_batched[best_idx], acq_values[best_idx]
+
+
+def _split_batch_eval_acqf(
+    acq_function: AcquisitionFunction, X: Tensor, max_batch_size: int
+) -> Tensor:
+    return torch.cat([acq_function(X_) for X_ in X.split(max_batch_size)])
