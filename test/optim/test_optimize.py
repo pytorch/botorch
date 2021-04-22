@@ -13,6 +13,7 @@ from botorch.optim.optimize import (
     optimize_acqf,
     optimize_acqf_cyclic,
     optimize_acqf_list,
+    optimize_acqf_discrete,
     optimize_acqf_mixed,
 )
 from botorch.utils.testing import BotorchTestCase, MockAcquisitionFunction
@@ -550,3 +551,78 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
                 num_restarts=2,
                 raw_samples=10,
             )
+
+
+class SquaredAcquisitionFunction:
+
+    X_pending = None
+
+    def __init__(self, f):
+        self.f = f
+
+    def __call__(self, X):
+        return self.f(X)
+
+    def set_X_pending(self, X_pending):
+        self.X_pending = X_pending
+
+
+class TestOptimizeAcqfDisrete(BotorchTestCase):
+    def test_optimize_acqf_discrete(self):
+
+        for q, dtype in itertools.product((1, 2), (torch.float, torch.double)):
+            tkwargs = {"device": self.device, "dtype": dtype}
+
+            def square(X):
+                return torch.norm(X, dim=-1).squeeze(-1)
+
+            mock_acq_function = SquaredAcquisitionFunction(f=square)
+
+            choices = torch.rand(5, 2, **tkwargs)
+            exp_acq_vals = square(choices)
+
+            # test unique
+            candidates, acq_value = optimize_acqf_discrete(
+                acq_function=mock_acq_function,
+                q=q,
+                choices=choices,
+            )
+            best_idcs = torch.topk(exp_acq_vals, q).indices
+            expected_candidates = choices[best_idcs]
+            expected_acq_value = exp_acq_vals[best_idcs]
+            self.assertTrue(torch.allclose(acq_value, expected_acq_value))
+            self.assertTrue(torch.allclose(candidates, expected_candidates))
+
+            # test non-unique (test does not properly use pending points)
+            candidates, acq_value = optimize_acqf_discrete(
+                acq_function=mock_acq_function, q=q, choices=choices, unique=False
+            )
+            best_idx = torch.argmax(exp_acq_vals)
+            expected_candidates = choices[best_idx].repeat(q, 1)
+            expected_acq_value = exp_acq_vals[best_idx].repeat(q)
+            self.assertTrue(torch.allclose(acq_value, expected_acq_value))
+            self.assertTrue(torch.allclose(candidates, expected_candidates))
+
+            # test max_batch_limit
+            candidates, acq_value = optimize_acqf_discrete(
+                acq_function=mock_acq_function, q=q, choices=choices, max_batch_size=3
+            )
+            best_idcs = torch.topk(exp_acq_vals, q).indices
+            expected_candidates = choices[best_idcs]
+            expected_acq_value = exp_acq_vals[best_idcs]
+            self.assertTrue(torch.allclose(acq_value, expected_acq_value))
+            self.assertTrue(torch.allclose(candidates, expected_candidates))
+
+            # test max_batch_limit & unique
+            candidates, acq_value = optimize_acqf_discrete(
+                acq_function=mock_acq_function,
+                q=q,
+                choices=choices,
+                unique=False,
+                max_batch_size=3,
+            )
+            best_idx = torch.argmax(exp_acq_vals)
+            expected_candidates = choices[best_idx].repeat(q, 1)
+            expected_acq_value = exp_acq_vals[best_idx].repeat(q)
+            self.assertTrue(torch.allclose(acq_value, expected_acq_value))
+            self.assertTrue(torch.allclose(candidates, expected_candidates))
