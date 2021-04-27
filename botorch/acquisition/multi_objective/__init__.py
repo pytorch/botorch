@@ -8,6 +8,9 @@ from botorch.acquisition.multi_objective.analytic import (
     ExpectedHypervolumeImprovement,
     MultiObjectiveAnalyticAcquisitionFunction,
 )
+from botorch.acquisition.multi_objective.max_value_entropy_search import (
+    qMultiObjectiveMaxValueEntropy,
+)
 from botorch.acquisition.multi_objective.monte_carlo import (
     MultiObjectiveMCAcquisitionFunction,
     qExpectedHypervolumeImprovement,
@@ -32,6 +35,7 @@ __all__ = [
     "MultiObjectiveAnalyticAcquisitionFunction",
     "MultiObjectiveMCAcquisitionFunction",
     "qExpectedHypervolumeImprovement",
+    "qMultiObjectiveMaxValueEntropy",
     "UnstandardizeAnalyticMultiOutputObjective",
     "UnstandardizeMCMultiOutputObjective",
     "WeightedMCMultiOutputObjective",

@@ -61,6 +61,11 @@ Multi-Objective Analytic Acquisition Functions
     :members:
     :exclude-members: MultiObjectiveAnalyticAcquisitionFunction
 
+Multi-Objective Entropy-Based Acquisition Functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.acquisition.multi_objective.max_value_entropy_search
+    :members:
+
 Multi-Objective Monte-Carlo Acquisition Functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.acquisition.multi_objective.monte_carlo
