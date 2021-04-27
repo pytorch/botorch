@@ -219,7 +219,16 @@ class qMultiStepLookahead(MCAcquisitionFunction, OneShotAcquisitionFunction):
         return q + self._num_auxiliary
 
     def get_split_shapes(self, X: Tensor) -> Tuple[Size, List[Size], List[int]]:
-        r""""""
+        r"""Get the split shapes from
+
+        Args:
+            X: A `batch_shape x q_aug x d`-dim tensor including fantasy points.
+
+        Returns:
+            A 3-tuple `(batch_shape, shapes, sizes)`, where
+            `shape[i] = f_i x .... x f_1 x batch_shape x q_i x d` and
+            `size[i] = f_i * ... f_1 * q_i`.
+        """
         batch_shape, (q_aug, d) = X.shape[:-2], X.shape[-2:]
         q = q_aug - self._num_auxiliary
         batch_sizes = [q] + self.batch_sizes
@@ -228,7 +237,7 @@ class qMultiStepLookahead(MCAcquisitionFunction, OneShotAcquisitionFunction):
             torch.Size(self.num_fantasies[:i][::-1] + [*batch_shape, q_i, d])
             for i, q_i in enumerate(batch_sizes)
         ]
-        # Each X_i in Xsplit has shape batch_shape x qtilde x d with
+        # Each X_i in the split X has shape batch_shape x qtilde x d with
         # qtilde = f_i * ... * f_1 * q_i
         sizes = [s[: (-2 - len(batch_shape))].numel() * s[-2] for s in shapes]
         return batch_shape, shapes, sizes
