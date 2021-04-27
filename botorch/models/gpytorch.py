@@ -568,10 +568,9 @@ class ModelListGPyTorchModel(GPyTorchModel, ABC):
         # return result as a GPyTorchPosteriors
         if len(mvns) == 1:
             return GPyTorchPosterior(mvn=mvns[0])
-        else:
-            return GPyTorchPosterior(
-                mvn=MultitaskMultivariateNormal.from_independent_mvns(mvns=mvns)
-            )
+        return GPyTorchPosterior(
+            mvn=MultitaskMultivariateNormal.from_independent_mvns(mvns=mvns)
+        )
 
     def condition_on_observations(
         self, X: Tensor, Y: Tensor, **kwargs: Any
