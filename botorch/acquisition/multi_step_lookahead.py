@@ -219,7 +219,7 @@ class qMultiStepLookahead(MCAcquisitionFunction, OneShotAcquisitionFunction):
         return q + self._num_auxiliary
 
     def get_split_shapes(self, X: Tensor) -> Tuple[Size, List[Size], List[int]]:
-        r"""Get the split shapes from
+        r"""Get the split shapes from X.
 
         Args:
             X: A `batch_shape x q_aug x d`-dim tensor including fantasy points.
