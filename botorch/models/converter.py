@@ -191,7 +191,7 @@ def batched_to_model_list(batch_model: BatchedMultiOutputGPyTorchModel) -> Model
     """Convert a BatchedMultiOutputGPyTorchModel to a ModelListGP.
 
     Args:
-        model_list: The `BatchedMultiOutputGPyTorchModel` to be converted to a
+        batch_model: The `BatchedMultiOutputGPyTorchModel` to be converted to a
             `ModelListGP`.
 
     Returns:
@@ -253,6 +253,78 @@ def batched_to_model_list(batch_model: BatchedMultiOutputGPyTorchModel) -> Model
         models.append(model)
 
     return ModelListGP(*models)
+
+
+def batched_multi_output_to_single_output(
+    batch_mo_model: BatchedMultiOutputGPyTorchModel,
+) -> BatchedMultiOutputGPyTorchModel:
+    """Convert a model from batched multi-output to a batched single-output.
+
+    Note: the underlying GPyTorch GP does not change. The GPyTorch GP's batch_shape
+    (referred to as `_aug_batch_shape`) is still `_input_batch_shape x num_outputs`.
+    The only things that change are the attributes of the
+    BatchedMultiOutputGPyTorchModel that are responsible the internal accounting of
+    the number of outputs: namely, num_outputs, _input_batch_shape, and
+    _aug_batch_shape.
+    Initially for the batched MO models these are: `num_outputs = m`,
+    `_input_batch_shape = train_X.batch_shape`, and
+    `_aug_batch_shape = train_X.batch_shape + torch.Size([num_outputs])`.
+    In the new SO model, these are: `num_outputs = 1`,
+    `_input_batch_shape = train_X.batch_shape + torch.Size([num_outputs])`,
+    and `_aug_batch_shape = train_X.batch_shape + torch.Size([num_outputs])`.
+
+    This is a (hopefully) temporary measure until multi-output MVNs with
+    independent outputs have better support in GPyTorch (see
+    https://github.com/cornellius-gp/gpytorch/pull/1083).
+
+    Args:
+        batched_mo_model: The BatchedMultiOutputGPyTorchModel
+
+    Returns:
+        The model converted into a batch single-output model.
+
+    Example:
+        >>> train_X = torch.rand(5, 2)
+        >>> train_Y = torch.rand(5, 2)
+        >>> batch_mo_gp = SingleTaskGP(train_X, train_Y)
+        >>> batch_so_gp = batched_multioutput_to_single_output(batch_gp)
+    """
+    # TODO: Add support for HeteroskedasticSingleTaskGP
+    if isinstance(batch_mo_model, HeteroskedasticSingleTaskGP):
+        raise NotImplementedError(
+            "Conversion of HeteroskedasticSingleTaskGP currently not supported."
+        )
+    elif not isinstance(batch_mo_model, BatchedMultiOutputGPyTorchModel):
+        raise UnsupportedError("Only BatchedMultiOutputGPyTorchModels are supported.")
+    # TODO: Add support for custom likelihoods
+    elif getattr(batch_mo_model, "_is_custom_likelihood", False):
+        raise NotImplementedError(
+            "Conversion of models with custom likelihoods is currently unsupported."
+        )
+    input_transform = getattr(batch_mo_model, "input_transform", None)
+    batch_sd = batch_mo_model.state_dict()
+
+    # TODO: add support for outcome transforms
+    if hasattr(batch_mo_model, "outcome_transform"):
+        raise NotImplementedError(
+            "Converting batched multi-output models with outcome transforms "
+            "is not currently supported."
+        )
+
+    kwargs = {
+        "train_X": batch_mo_model.train_inputs[0].clone(),
+        "train_Y": batch_mo_model.train_targets.clone().unsqueeze(-1),
+    }
+    if isinstance(batch_mo_model, FixedNoiseGP):
+        noise_covar = batch_mo_model.likelihood.noise_covar
+        kwargs["train_Yvar"] = noise_covar.noise.clone().unsqueeze(-1)
+    if isinstance(batch_mo_model, SingleTaskMultiFidelityGP):
+        kwargs.update(batch_mo_model._init_args)
+    single_outcome_model = batch_mo_model.__class__(
+        input_transform=input_transform, **kwargs
+    )
+    single_outcome_model.load_state_dict(batch_sd)
+    return single_outcome_model
 
 
 def _get_adjusted_batch_keys(

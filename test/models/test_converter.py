@@ -14,8 +14,13 @@ from botorch.models import (
     SingleTaskGP,
     SingleTaskMultiFidelityGP,
 )
-from botorch.models.converter import batched_to_model_list, model_list_to_batched
+from botorch.models.converter import (
+    batched_to_model_list,
+    model_list_to_batched,
+    batched_multi_output_to_single_output,
+)
 from botorch.models.transforms.input import Normalize
+from botorch.models.transforms.outcome import Standardize
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.likelihoods import GaussianLikelihood
 
@@ -211,3 +216,79 @@ class TestConverters(BotorchTestCase):
                 self.assertTrue(
                     all(torch.equal(sd_orig[k], sd_recov[k]) for k in sd_orig)
                 )
+
+    def test_batched_multi_output_to_single_output(self):
+        for dtype in (torch.float, torch.double):
+            # basic test
+            train_X = torch.rand(10, 2, device=self.device, dtype=dtype)
+            train_Y = torch.stack(
+                [
+                    train_X.sum(dim=-1),
+                    (train_X[:, 0] - train_X[:, 1]),
+                ],
+                dim=1,
+            )
+            batched_mo_model = SingleTaskGP(train_X, train_Y)
+            batched_so_model = batched_multi_output_to_single_output(batched_mo_model)
+            self.assertIsInstance(batched_so_model, SingleTaskGP)
+            self.assertEqual(batched_so_model.num_outputs, 1)
+            # test non-batched models
+            non_batch_model = SimpleGPyTorchModel(train_X, train_Y[:, :1])
+            with self.assertRaises(UnsupportedError):
+                batched_multi_output_to_single_output(non_batch_model)
+            gp2 = HeteroskedasticSingleTaskGP(
+                train_X, train_Y, torch.ones_like(train_Y)
+            )
+            with self.assertRaises(NotImplementedError):
+                batched_multi_output_to_single_output(gp2)
+            # test custom likelihood
+            gp2 = SingleTaskGP(train_X, train_Y, likelihood=GaussianLikelihood())
+            with self.assertRaises(NotImplementedError):
+                batched_multi_output_to_single_output(gp2)
+            # test FixedNoiseGP
+            train_X = torch.rand(10, 2, device=self.device, dtype=dtype)
+            batched_mo_model = FixedNoiseGP(train_X, train_Y, torch.rand_like(train_Y))
+            batched_so_model = batched_multi_output_to_single_output(batched_mo_model)
+            self.assertIsInstance(batched_so_model, FixedNoiseGP)
+            self.assertEqual(batched_so_model.num_outputs, 1)
+            # test SingleTaskMultiFidelityGP
+            batched_mo_model = SingleTaskMultiFidelityGP(
+                train_X, train_Y, iteration_fidelity=1
+            )
+            batched_so_model = batched_multi_output_to_single_output(batched_mo_model)
+            self.assertIsInstance(batched_so_model, SingleTaskMultiFidelityGP)
+            self.assertEqual(batched_so_model.num_outputs, 1)
+            # test input transform
+            input_tf = Normalize(
+                d=2,
+                bounds=torch.tensor(
+                    [[0.0, 0.0], [1.0, 1.0]], device=self.device, dtype=dtype
+                ),
+            )
+            batched_mo_model = SingleTaskGP(train_X, train_Y, input_transform=input_tf)
+            batch_so_model = batched_multi_output_to_single_output(batched_mo_model)
+            self.assertIsInstance(batch_so_model.input_transform, Normalize)
+            self.assertTrue(
+                torch.equal(batch_so_model.input_transform.bounds, input_tf.bounds)
+            )
+
+            # test batched input transform
+            input_tf2 = Normalize(
+                d=2,
+                bounds=torch.tensor(
+                    [[-1.0, -1.0], [1.0, 1.0]], device=self.device, dtype=dtype
+                ),
+                batch_shape=torch.Size([2]),
+            )
+            batched_mo_model = SingleTaskGP(train_X, train_Y, input_transform=input_tf2)
+            batched_so_model = batched_multi_output_to_single_output(batched_mo_model)
+            self.assertIsInstance(batch_so_model.input_transform, Normalize)
+            self.assertTrue(
+                torch.equal(batch_so_model.input_transform.bounds, input_tf.bounds)
+            )
+            # test outcome transform
+            batched_mo_model = SingleTaskGP(
+                train_X, train_Y, outcome_transform=Standardize(m=2)
+            )
+            with self.assertRaises(NotImplementedError):
+                batched_multi_output_to_single_output(batched_mo_model)
