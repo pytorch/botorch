@@ -26,8 +26,15 @@ from gpytorch.kernels.scale_kernel import ScaleKernel
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
-from gpytorch.priors.smoothed_box_prior import SmoothedBoxPrior
+from gpytorch.priors.prior import Prior
 from gpytorch.priors.torch_priors import GammaPrior
+
+
+class DummyPrior(Prior):
+    arg_constraints = {}
+
+    def rsample(self, sample_shape=torch.Size()):
+        raise NotImplementedError
 
 
 class TestColumnWiseClamp(BotorchTestCase):
@@ -223,13 +230,13 @@ class TestSampleAllPriors(BotorchTestCase):
             ls = model.covar_module.base_kernel.raw_lengthscale.view(-1).tolist()
             self.assertTrue(all(ls[0] != ls[i]) for i in range(1, len(ls)))
 
-            # change one of the priors to SmoothedBoxPrior
+            # change one of the priors to a dummy prior that does not support sampling
             model.covar_module = ScaleKernel(
                 MaternKernel(
                     nu=2.5,
                     ard_num_dims=model.train_inputs[0].shape[-1],
                     batch_shape=model._aug_batch_shape,
-                    lengthscale_prior=SmoothedBoxPrior(3.0, 6.0),
+                    lengthscale_prior=DummyPrior(),
                 ),
                 batch_shape=model._aug_batch_shape,
                 outputscale_prior=GammaPrior(2.0, 0.15),
@@ -241,7 +248,7 @@ class TestSampleAllPriors(BotorchTestCase):
                 self.assertTrue("rsample" in str(ws[0].message))
 
             # the lengthscale should not have changed because sampling is
-            # not implemented for SmoothedBoxPrior
+            # not implemented for DummyPrior
             self.assertTrue(
                 torch.equal(
                     dict(model.state_dict())[
