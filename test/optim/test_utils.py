@@ -33,7 +33,7 @@ from gpytorch.priors.torch_priors import GammaPrior
 class DummyPrior(Prior):
     arg_constraints = {}
 
-    def rsample(self, sample_shape=torch.Size()):
+    def rsample(self, sample_shape=torch.Size()):  # noqa: B008
         raise NotImplementedError
 
 
