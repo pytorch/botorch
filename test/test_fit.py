@@ -22,10 +22,12 @@ from botorch.optim.fit import (
     fit_gpytorch_torch,
 )
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
-from gpytorch.constraints import GreaterThan
+from gpytorch.constraints import GreaterThan, Interval
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.models.gp import GP
+from gpytorch.utils.errors import NotPSDError
+from gpytorch.utils.warnings import NumericalWarning
 
 
 NOISE = [
@@ -95,8 +97,12 @@ class TestFitGPyTorchModel(BotorchTestCase):
                     mll, optimizer=optimizer, options=options, max_retries=1
                 )
                 if optimizer == fit_gpytorch_scipy:
-                    self.assertEqual(len(ws), 1)
-                    self.assertTrue(MAX_RETRY_MSG in str(ws[0].message))
+                    self.assertTrue(
+                        any(issubclass(w.category, OptimizationWarning)) for w in ws
+                    )
+                    self.assertEqual(
+                        sum(1 for w in ws if MAX_RETRY_MSG in str(w.message)), 1
+                    )
             model = mll.model
             # Make sure all of the parameters changed
             self.assertGreater(model.likelihood.raw_noise.abs().item(), 1e-3)
@@ -117,8 +123,12 @@ class TestFitGPyTorchModel(BotorchTestCase):
                     bounds={"likelihood.noise_covar.raw_noise": (1e-1, None)},
                 )
                 if optimizer == fit_gpytorch_scipy:
-                    self.assertEqual(len(ws), 1)
-                    self.assertTrue(MAX_RETRY_MSG in str(ws[0].message))
+                    self.assertTrue(
+                        any(issubclass(w.category, OptimizationWarning)) for w in ws
+                    )
+                    self.assertEqual(
+                        sum(1 for w in ws if MAX_RETRY_MSG in str(w.message)), 1
+                    )
 
             model = mll.model
             self.assertGreaterEqual(model.likelihood.raw_noise.abs().item(), 1e-1)
@@ -191,8 +201,12 @@ class TestFitGPyTorchModel(BotorchTestCase):
                     mll, optimizer=optimizer, options=options, max_retries=1
                 )
                 if optimizer == fit_gpytorch_scipy:
-                    self.assertEqual(len(ws), 1)
-                    self.assertTrue(MAX_RETRY_MSG in str(ws[0].message))
+                    self.assertTrue(
+                        any(issubclass(w.category, OptimizationWarning)) for w in ws
+                    )
+                    self.assertEqual(
+                        sum(1 for w in ws if MAX_RETRY_MSG in str(w.message)), 1
+                    )
             model = mll.model
             # Make excluded params did not change
             self.assertEqual(
@@ -219,8 +233,12 @@ class TestFitGPyTorchModel(BotorchTestCase):
                     approx_mll=is_scipy,
                 )
                 if is_scipy:
-                    self.assertEqual(len(ws), 1)
-                    self.assertTrue(MAX_RETRY_MSG in str(ws[0].message))
+                    self.assertTrue(
+                        any(issubclass(w.category, OptimizationWarning)) for w in ws
+                    )
+                    self.assertEqual(
+                        sum(1 for w in ws if MAX_RETRY_MSG in str(w.message)), 1
+                    )
             model = mll.model
             # Make sure all of the parameters changed
             self.assertGreater(model.likelihood.raw_noise.abs().item(), 1e-3)
@@ -236,7 +254,7 @@ class TestFitGPyTorchModel(BotorchTestCase):
             X_train = torch.ones(2, 2, device=self.device, dtype=dtype)
             Y_train = torch.zeros(2, 1, device=self.device, dtype=dtype)
             test_likelihood = GaussianLikelihood(
-                noise_constraint=GreaterThan(-1.0, transform=None, initial_value=0.0)
+                noise_constraint=GreaterThan(-1e-7, transform=None, initial_value=0.0)
             )
             gp = SingleTaskGP(X_train, Y_train, likelihood=test_likelihood)
             mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
@@ -245,8 +263,16 @@ class TestFitGPyTorchModel(BotorchTestCase):
             with warnings.catch_warnings(record=True) as ws, settings.debug(True):
                 fit_gpytorch_model(mll, options=options, max_retries=2)
                 self.assertTrue(
-                    any(issubclass(w.category, OptimizationWarning) for w in ws)
+                    any(issubclass(w.category, NumericalWarning) for w in ws)
                 )
+            # ensure that we fail if noise ensures that jitter does not help
+            gp.likelihood = GaussianLikelihood(
+                noise_constraint=Interval(-2, -1, transform=None, initial_value=-1.5)
+            )
+            mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
+            mll.to(device=self.device, dtype=dtype)
+            with self.assertRaises(NotPSDError):
+                fit_gpytorch_model(mll, options=options, max_retries=2)
 
     def test_fit_gpytorch_model_torch(self):
         self.test_fit_gpytorch_model(optimizer=fit_gpytorch_torch)
