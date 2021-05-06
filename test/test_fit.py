@@ -275,9 +275,7 @@ class TestFitGPyTorchModel(BotorchTestCase):
             with self.assertRaises(NotPSDError):
                 fit_gpytorch_model(mll, options=options, max_retries=2)
             # ensure we can handle NaNErrors in the optimizer
-            with mock.patch.object(
-                SingleTaskGP, "__call__", side_effect=NanError
-            ) as mock_call:
+            with mock.patch.object(SingleTaskGP, "__call__", side_effect=NanError):
                 gp = SingleTaskGP(X_train, Y_train, likelihood=test_likelihood)
                 mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
                 mll.to(device=self.device, dtype=dtype)
