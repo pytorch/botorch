@@ -7,6 +7,7 @@
 import math
 import warnings
 from itertools import product
+from unittest import mock
 
 import torch
 from botorch import fit_gpytorch_model, settings
@@ -26,7 +27,7 @@ from gpytorch.constraints import GreaterThan, Interval
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.models.gp import GP
-from gpytorch.utils.errors import NotPSDError
+from gpytorch.utils.errors import NanError, NotPSDError
 from gpytorch.utils.warnings import NumericalWarning
 
 
@@ -273,6 +274,12 @@ class TestFitGPyTorchModel(BotorchTestCase):
             mll.to(device=self.device, dtype=dtype)
             with self.assertRaises(NotPSDError):
                 fit_gpytorch_model(mll, options=options, max_retries=2)
+            # ensure we can handle NaNErrors in the optimizer
+            with mock.patch.object(SingleTaskGP, '__call__', side_effect=NanError) as mock_call:
+                gp = SingleTaskGP(X_train, Y_train, likelihood=test_likelihood)
+                mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
+                mll.to(device=self.device, dtype=dtype)
+                fit_gpytorch_model(mll, options={"disp": False, "maxiter": 1}, max_retries=1)
 
     def test_fit_gpytorch_model_torch(self):
         self.test_fit_gpytorch_model(optimizer=fit_gpytorch_torch)
