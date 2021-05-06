@@ -12,10 +12,12 @@ from __future__ import annotations
 
 import warnings
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Any, Dict, Optional
 
+from botorch.acquisition.objective import AcquisitionObjective
 from botorch.exceptions import BotorchWarning
 from botorch.models.model import Model
+from botorch.utils.containers import TrainingData
 from torch import Tensor
 from torch.nn import Module
 
@@ -63,6 +65,37 @@ class AcquisitionFunction(Module, ABC):
             design points `X`.
         """
         pass  # pragma: no cover
+
+    @classmethod
+    def construct_inputs(
+        cls,
+        model: Model,
+        training_data: TrainingData,
+        objective: Optional[AcquisitionObjective] = None,
+        **kwargs: Any
+    ) -> Dict[str, Any]:
+        r"""Construct kwargs for the `AcquisitionFunction` constructor.
+
+        Args:
+            model: The model to be used in the acquisition function.
+            training_data: A TrainingData object contraining the model's
+                training data. Used e.g. to extract inputs such as `best_f`
+                for expected improvement acquisition functions.
+            objective: The objective to in the acquisition function.
+
+        Returns:
+            A dict mapping kwarg names of the constructor to values.
+
+        This functionality is optional and useful for programmatically constructing
+        acquistion function objects using a consistent top-level interface.
+
+        Example:
+            >>> kwargs = ExpectedImprovement.construct_inputs(
+                    model, training_data,
+                )
+            >>> EI = ExpectedImprovement(**kwargs)
+        """
+        raise NotImplementedError
 
 
 class OneShotAcquisitionFunction(AcquisitionFunction, ABC):
