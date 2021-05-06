@@ -22,15 +22,17 @@ from __future__ import annotations
 
 import math
 from abc import ABC, abstractmethod
-from typing import Any, Optional, Union
+from typing import Any, Dict, Optional, Union
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
+from botorch.acquisition.objective import AcquisitionObjective
 from botorch.acquisition.objective import IdentityMCObjective, MCAcquisitionObjective
 from botorch.acquisition.utils import prune_inferior_points
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.model import Model
 from botorch.sampling.samplers import MCSampler, SobolQMCNormalSampler
+from botorch.utils.containers import TrainingData
 from botorch.utils.transforms import (
     concatenate_pending_points,
     match_batch_shape,
@@ -89,6 +91,48 @@ class MCAcquisitionFunction(AcquisitionFunction, ABC):
         """
         pass  # pragma: no cover
 
+    @classmethod
+    def construct_inputs(
+        cls,
+        model: Model,
+        training_data: TrainingData,
+        objective: Optional[AcquisitionObjective] = None,
+        X_pending: Optional[Tensor] = None,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        r"""Construct kwargs for the `MCAcquisitionFunction` constructor.
+
+        Args:
+            model: The model to be used in the acquisition function.
+            training_data: A TrainingData object contraining the model's
+                training data. Used e.g. to extract inputs such as `best_f`
+                for expected improvement acquisition functions.
+            objective: The objective to in the acquisition function.
+            X_pending: A `m x d`-dim Tensor of `m` design points that have been
+                submitted for function evaluation but have not yet been evaluated.
+                Concatenated into X upon forward call. Copied and set to have no
+                gradient.
+
+        Returns:
+            A dict mapping kwarg names of the constructor to values.
+
+        This functionality is optional and useful for programmatically constructing
+        acquistion function objects using a consistent top-level interface.
+
+        Example:
+            >>> kwargs = qNoisyExpectedImprovement.construct_inputs(
+                    model, training_data,
+                )
+            >>> qNEI = qNoisyExpectedImprovement(**kwargs)
+        """
+        return {
+            "model": model,
+            "objective": objective,
+            # TODO: use config and construct sampler here
+            "sampler": kwargs.get("sampler"),
+            "X_pending": X_pending,
+        }
+
 
 class qExpectedImprovement(MCAcquisitionFunction):
     r"""MC-based batch Expected Improvement.
@@ -104,7 +148,7 @@ class qExpectedImprovement(MCAcquisitionFunction):
     Example:
         >>> model = SingleTaskGP(train_X, train_Y)
         >>> best_f = train_Y.max()[0]
-        >>> sampler = SobolQMCNormalSampler(1000)
+        >>> sampler = SobolQMCNormalSampler(1024)
         >>> qEI = qExpectedImprovement(model, best_f, sampler)
         >>> qei = qEI(test_X)
     """
@@ -129,7 +173,7 @@ class qExpectedImprovement(MCAcquisitionFunction):
                 `SobolQMCNormalSampler(num_samples=500, collapse_batch_dims=True)`
             objective: The MCAcquisitionObjective under which the samples are evalauted.
                 Defaults to `IdentityMCObjective()`.
-            X_pending:  A `m x d`-dim Tensor of `m` design points that have been
+            X_pending: A `m x d`-dim Tensor of `m` design points that have been
                 submitted for function evaluation but have not yet been evaluated.
                 Concatenated into X upon forward call. Copied and set to have no
                 gradient.
@@ -160,6 +204,52 @@ class qExpectedImprovement(MCAcquisitionFunction):
         q_ei = obj.max(dim=-1)[0].mean(dim=0)
         return q_ei
 
+    @classmethod
+    def construct_inputs(
+        cls,
+        model: Model,
+        training_data: TrainingData,
+        objective: Optional[AcquisitionObjective] = None,
+        X_pending: Optional[Tensor] = None,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        r"""Construct kwargs for the `qExpectedImprovement` constructor.
+
+        Args:
+            model: The model to be used in the acquisition function.
+            training_data: A TrainingData object contraining the model's
+                training data. Used e.g. to extract inputs such as `best_f`
+                for expected improvement acquisition functions.
+            objective: The objective to in the acquisition function.
+            X_pending: A `m x d`-dim Tensor of `m` design points that have been
+                submitted for function evaluation but have not yet been evaluated.
+                Concatenated into X upon forward call. Copied and set to have no
+                gradient.
+
+        Returns:
+            A dict mapping kwarg names of the constructor to values.
+
+        This functionality is optional and useful for programmatically constructing
+        acquistion function objects using a consistent top-level interface.
+
+        Example:
+            >>> kwargs = qExpectedImprovement.construct_inputs(
+                    model, training_data,
+                )
+            >>> qEI = qExpectedImprovement(**kwargs)
+        """
+        super_inputs = super().construct_inputs(
+            model=model, training_data=training_data, objective=objective, **kwargs
+        )
+        # TODO: Dedup handling of this here and in the constructor (maybe via a
+        # shared classmethod doing this)
+        if objective is None:
+            if training_data.Y.shape[-1] > 1:
+                raise NotImplementedError
+            objective = IdentityMCObjective()
+        best_f = objective(training_data.Y).max(-1).values
+        return {**super_inputs, "best_f": best_f}
+
 
 class qNoisyExpectedImprovement(MCAcquisitionFunction):
     r"""MC-based batch Noisy Expected Improvement.
@@ -174,7 +264,7 @@ class qNoisyExpectedImprovement(MCAcquisitionFunction):
 
     Example:
         >>> model = SingleTaskGP(train_X, train_Y)
-        >>> sampler = SobolQMCNormalSampler(1000)
+        >>> sampler = SobolQMCNormalSampler(1024)
         >>> qNEI = qNoisyExpectedImprovement(model, train_X, sampler)
         >>> qnei = qNEI(test_X)
     """
@@ -247,6 +337,48 @@ class qNoisyExpectedImprovement(MCAcquisitionFunction):
         diffs = obj[..., :q].max(dim=-1).values - obj[..., q:].max(dim=-1).values
         return diffs.clamp_min(0).mean(dim=0)
 
+    @classmethod
+    def construct_inputs(
+        cls,
+        model: Model,
+        training_data: TrainingData,
+        objective: Optional[AcquisitionObjective] = None,
+        X_pending: Optional[Tensor] = None,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        r"""Construct kwargs for the `qNoisyExpectedImprovement` constructor.
+
+        Args:
+            model: The model to be used in the acquisition function.
+            training_data: A TrainingData object contraining the model's
+                training data. Used e.g. to extract inputs such as `best_f`
+                for expected improvement acquisition functions.
+            objective: The objective to in the acquisition function.
+            X_pending: A `m x d`-dim Tensor of `m` design points that have been
+                submitted for function evaluation but have not yet been evaluated.
+                Concatenated into X upon forward call. Copied and set to have no
+                gradient.
+            X_baseline: A `batch_shape x r x d`-dim Tensor of `r` design points
+                that have already been observed. These points are considered as
+                the potential best design point. If omitted, use `training_data.X`.
+
+        Returns:
+            A dict mapping kwarg names of the constructor to values.
+
+        This functionality is optional and useful for programmatically constructing
+        acquistion function objects using a consistent top-level interface.
+
+        Example:
+            >>> kwargs = qNoisyExpectedImprovement.construct_inputs(
+                    model, training_data,
+                )
+            >>> qEI = qNoisyExpectedImprovement(**kwargs)
+        """
+        super_inputs = super().construct_inputs(
+            model=model, training_data=training_data, objective=objective, **kwargs
+        )
+        return {**super_inputs, "X_baseline": kwargs.get("X_baseline", training_data.X)}
+
 
 class qProbabilityOfImprovement(MCAcquisitionFunction):
     r"""MC-based batch Probability of Improvement.
@@ -262,7 +394,7 @@ class qProbabilityOfImprovement(MCAcquisitionFunction):
     Example:
         >>> model = SingleTaskGP(train_X, train_Y)
         >>> best_f = train_Y.max()[0]
-        >>> sampler = SobolQMCNormalSampler(1000)
+        >>> sampler = SobolQMCNormalSampler(1024)
         >>> qPI = qProbabilityOfImprovement(model, best_f, sampler)
         >>> qpi = qPI(test_X)
     """
@@ -287,7 +419,7 @@ class qProbabilityOfImprovement(MCAcquisitionFunction):
                 `SobolQMCNormalSampler(num_samples=500, collapse_batch_dims=True)`
             objective: The MCAcquisitionObjective under which the samples are
                 evaluated. Defaults to `IdentityMCObjective()`.
-            X_pending:  A `m x d`-dim Tensor of `m` design points that have
+            X_pending: A `m x d`-dim Tensor of `m` design points that have
                 points that have been submitted for function evaluation
                 but have not yet been evaluated.  Concatenated into X upon
                 forward call.  Copied and set to have no gradient.
@@ -324,6 +456,49 @@ class qProbabilityOfImprovement(MCAcquisitionFunction):
         val = torch.sigmoid(impr / self.tau).mean(dim=0)
         return val
 
+    @classmethod
+    def construct_inputs(
+        cls,
+        model: Model,
+        training_data: TrainingData,
+        objective: Optional[AcquisitionObjective] = None,
+        X_pending: Optional[Tensor] = None,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        r"""Construct kwargs for the `qProbabilityOfImprovement` constructor.
+
+        Args:
+            model: The model to be used in the acquisition function.
+            training_data: A TrainingData object contraining the model's
+                training data. Used e.g. to extract inputs such as `best_f`
+                for expected improvement acquisition functions.
+            objective: The objective to in the acquisition function.
+            X_pending: A `m x d`-dim Tensor of `m` design points that have been
+                submitted for function evaluation but have not yet been evaluated.
+                Concatenated into X upon forward call. Copied and set to have no
+                gradient.
+            tau: The temperature parameter used in the sigmoid approximation
+                of the step function. Smaller values yield more accurate
+                approximations of the function, but result in gradients
+                estimates with higher variance. Defaults to 1e-3.
+
+        Returns:
+            A dict mapping kwarg names of the constructor to values.
+
+        This functionality is optional and useful for programmatically constructing
+        acquistion function objects using a consistent top-level interface.
+
+        Example:
+            >>> kwargs = qProbabilityOfImprovement.construct_inputs(
+                    model, training_data,
+                )
+            >>> qEI = qProbabilityOfImprovement(**kwargs)
+        """
+        super_inputs = qExpectedImprovement.construct_inputs(
+            model=model, training_data=training_data, objective=objective, **kwargs
+        )
+        return {**super_inputs, "tau": kwargs.get("tau", 1e-3)}
+
 
 class qSimpleRegret(MCAcquisitionFunction):
     r"""MC-based batch Simple Regret.
@@ -334,7 +509,7 @@ class qSimpleRegret(MCAcquisitionFunction):
 
     Example:
         >>> model = SingleTaskGP(train_X, train_Y)
-        >>> sampler = SobolQMCNormalSampler(1000)
+        >>> sampler = SobolQMCNormalSampler(1024)
         >>> qSR = qSimpleRegret(model, sampler)
         >>> qsr = qSR(test_X)
     """
@@ -371,7 +546,7 @@ class qUpperConfidenceBound(MCAcquisitionFunction):
 
     Example:
         >>> model = SingleTaskGP(train_X, train_Y)
-        >>> sampler = SobolQMCNormalSampler(1000)
+        >>> sampler = SobolQMCNormalSampler(1024)
         >>> qUCB = qUpperConfidenceBound(model, 0.1, sampler)
         >>> qucb = qUCB(test_X)
     """
@@ -423,3 +598,48 @@ class qUpperConfidenceBound(MCAcquisitionFunction):
         mean = obj.mean(dim=0)
         ucb_samples = mean + self.beta_prime * (obj - mean).abs()
         return ucb_samples.max(dim=-1)[0].mean(dim=0)
+
+    @classmethod
+    def construct_inputs(
+        cls,
+        model: Model,
+        training_data: TrainingData,
+        objective: Optional[AcquisitionObjective] = None,
+        X_pending: Optional[Tensor] = None,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        r"""Construct kwargs for the `qUpperConfidenceBound` constructor.
+
+        Args:
+            model: The model to be used in the acquisition function.
+            training_data: A TrainingData object contraining the model's
+                training data. Used e.g. to extract inputs such as `best_f`
+                for expected improvement acquisition functions.
+            objective: The objective to in the acquisition function.
+            X_pending: A `m x d`-dim Tensor of `m` design points that have been
+                submitted for function evaluation but have not yet been evaluated.
+                Concatenated into X upon forward call. Copied and set to have no
+                gradient.
+            beta: Controls tradeoff between mean and standard deviation in UCB.
+
+        Returns:
+            A dict mapping kwarg names of the constructor to values.
+
+        This functionality is optional and useful for programmatically constructing
+        acquistion function objects using a consistent top-level interface.
+
+        Example:
+            >>> kwargs = qUpperConfidenceBound.construct_inputs(
+                    model, training_data, beta=1e-3
+                )
+            >>> qEI = qUpperConfidenceBound(**kwargs)
+        """
+        super_inputs = super().construct_inputs(
+            model=model, training_data=training_data, objective=objective, **kwargs
+        )
+        try:
+            return {**super_inputs, "beta": kwargs["beta"]}
+        except KeyError:
+            raise ValueError(
+                "qUpperConfidenceBound.construct_inputs requires a `beta` kwarg."
+            )

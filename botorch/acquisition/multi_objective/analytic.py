@@ -21,7 +21,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from itertools import product
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
@@ -29,8 +29,12 @@ from botorch.acquisition.multi_objective.objective import (
     AnalyticMultiOutputObjective,
     IdentityAnalyticMultiOutputObjective,
 )
+from botorch.acquisition.multi_objective.utils import get_default_partitioning_alpha
+from botorch.acquisition.objective import AcquisitionObjective
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.model import Model
+from botorch.utils import get_outcome_constraint_transforms
+from botorch.utils.containers import TrainingData
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     NondominatedPartitioning,
 )
@@ -151,6 +155,53 @@ class ExpectedHypervolumeImprovement(MultiObjectiveAnalyticAcquisitionFunction):
             device=ref_point.device,
         )
         self.normal = Normal(0, 1)
+
+    @classmethod
+    def construct_inputs(
+        cls,
+        model: Model,
+        training_data: TrainingData,
+        objective_thresholds: Tensor,
+        objective: Optional[AcquisitionObjective] = None,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        r"""Construct kwargs for `ExpectedHypervolumeImprovement`."""
+        num_objectives = objective_thresholds.shape[0]
+        outcome_constraints = kwargs.get("outcome_constraints")
+        X_observed = training_data.X
+
+        # compute posterior mean (for ref point computation ref pareto frontier)
+        with torch.no_grad():
+            Y_pmean = model.posterior(X_observed).mean
+
+        # For HV-based acquisition functions we pass the constraint transform directly
+        if outcome_constraints is None:
+            cons_tfs = None
+        else:
+            cons_tfs = get_outcome_constraint_transforms(outcome_constraints)
+
+        alpha = kwargs.get(
+            "alpha",
+            get_default_partitioning_alpha(num_objectives=num_objectives),
+        )
+        # this selects the objectives (a subset of the outcomes) and set each
+        # objective threhsold to have the proper optimization direction
+        ref_point = objective(objective_thresholds)
+        # get feasible points
+        if cons_tfs is not None:
+            feas = torch.stack([c(Y_pmean) <= 0 for c in cons_tfs], dim=-1).all(dim=-1)
+            Y_pmean = Y_pmean[feas]
+        partitioning = NondominatedPartitioning(
+            ref_point=ref_point,
+            Y=objective(Y_pmean),
+            alpha=alpha,
+        )
+        return {
+            "model": model,
+            "ref_point": ref_point,
+            "partitioning": partitioning,
+            "objective": objective,
+        }
 
     def psi(self, lower: Tensor, upper: Tensor, mu: Tensor, sigma: Tensor) -> None:
         r"""Compute Psi function.

@@ -20,17 +20,20 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from itertools import combinations
-from typing import Callable, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
+from botorch.acquisition.multi_objective.analytic import ExpectedHypervolumeImprovement
 from botorch.acquisition.multi_objective.objective import (
     IdentityMCMultiOutputObjective,
     MCMultiOutputObjective,
 )
+from botorch.acquisition.objective import AcquisitionObjective
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.model import Model
 from botorch.sampling.samplers import MCSampler, SobolQMCNormalSampler
+from botorch.utils.containers import TrainingData
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     NondominatedPartitioning,
 )
@@ -159,6 +162,29 @@ class qExpectedHypervolumeImprovement(MultiObjectiveMCAcquisitionFunction):
         self.register_buffer("cell_upper_bounds", cell_bounds[1])
         self.q = -1
         self.q_subset_indices = BufferDict()
+
+    @classmethod
+    def construct_inputs(
+        cls,
+        model: Model,
+        training_data: TrainingData,
+        objective_thresholds: Tensor,
+        objective: Optional[AcquisitionObjective] = None,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        r"""Construct kwargs for `qExpectedHypervolumeImprovement`."""
+        ehvi_kwargs = ExpectedHypervolumeImprovement.construct_inputs(
+            model=model,
+            training_data=training_data,
+            objective_thresholds=objective_thresholds,
+            objective=objective,
+            **kwargs,
+        )
+        add_qehvi_kwargs = {
+            k: kwargs.get(k) for k in ("sampler", "constraints", "X_pending")
+        }
+        add_qehvi_kwargs["eta"] = kwargs.get("eta", 1e-3)
+        return {**ehvi_kwargs, **add_qehvi_kwargs}
 
     def _cache_q_subset_indices(self, q: int) -> None:
         r"""Cache indices corresponding to all subsets of `q`.

@@ -13,17 +13,18 @@ from __future__ import annotations
 
 from abc import ABC
 from copy import deepcopy
-from typing import Dict, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Tuple, Union
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
-from botorch.acquisition.objective import ScalarizedObjective
+from botorch.acquisition.objective import AcquisitionObjective, ScalarizedObjective
 from botorch.exceptions import UnsupportedError
 from botorch.models.gp_regression import FixedNoiseGP
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.model import Model
 from botorch.posteriors.posterior import Posterior
 from botorch.sampling.samplers import SobolQMCNormalSampler
+from botorch.utils.containers import TrainingData
 from botorch.utils.transforms import convert_to_target_pre_hook, t_batch_mode_transform
 from torch import Tensor
 from torch.distributions import Normal
@@ -80,7 +81,61 @@ class AnalyticAcquisitionFunction(AcquisitionFunction, ABC):
         )
 
 
-class ExpectedImprovement(AnalyticAcquisitionFunction):
+class _AnalyticBestFBase(ABC):
+    r"""Abstract base for acquisition functions requiring the best observed point so far."""
+
+    def __init__(
+        self,
+        model: Model,
+        best_f: Union[float, Tensor],
+        objective: Optional[ScalarizedObjective] = None,
+        maximize: bool = True,
+    ) -> None:
+        r"""Constructor for acquisition functions requiring the best observed point so far.
+
+        Args:
+            model: A fitted single-outcome model.
+            best_f: Either a scalar or a `b`-dim Tensor (batch mode) representing
+                the best function value observed so far (assumed noiseless).
+            objective: A ScalarizedObjective (optional).
+            maximize: If True, consider the problem a maximization problem.
+        """
+        super().__init__(model=model, objective=objective)
+        self.maximize = maximize
+        if not torch.is_tensor(best_f):
+            best_f = torch.tensor(best_f)
+        self.register_buffer("best_f", best_f)
+
+    @classmethod
+    def construct_inputs(
+        cls,
+        model: Model,
+        training_data: TrainingData,
+        objective: Optional[AcquisitionObjective] = None,
+        **kwargs: Any
+    ) -> Dict[str, Any]:
+        r"""Construct kwargs for the acquisition function's constructor.
+
+        Args:
+            model: The model to be used in the acquisition function.
+            training_data: A TrainingData object contraining the model's
+                training data. Used to extract `best_f` input.
+            objective: The objective to in the acquisition function.
+
+        Returns:
+            A dict mapping kwarg names of the constructor to values.
+
+        Example:
+            >>> kwargs = ExpectedImprovement.construct_inputs(
+                    model, training_data,
+                )
+            >>> EI = ExpectedImprovement(**kwargs)
+        """
+        best_f = training_data.Y.max(-2).values.squeeze(-1)
+        return {"model": model, "objective": objective, "best_f": best_f}
+
+
+class ExpectedImprovement(_AnalyticBestFBase, AnalyticAcquisitionFunction):
     r"""Single-outcome Expected Improvement (analytic).
 
     Computes classic Expected Improvement over the current best observed value,
@@ -97,28 +152,6 @@ class ExpectedImprovement(AnalyticAcquisitionFunction):
         >>> EI = ExpectedImprovement(model, best_f=0.2)
         >>> ei = EI(test_X)
     """
-
-    def __init__(
-        self,
-        model: Model,
-        best_f: Union[float, Tensor],
-        objective: Optional[ScalarizedObjective] = None,
-        maximize: bool = True,
-    ) -> None:
-        r"""Single-outcome Expected Improvement (analytic).
-
-        Args:
-            model: A fitted single-outcome model.
-            best_f: Either a scalar or a `b`-dim Tensor (batch mode) representing
-                the best function value observed so far (assumed noiseless).
-            objective: A ScalarizedObjective (optional).
-            maximize: If True, consider the problem a maximization problem.
-        """
-        super().__init__(model=model, objective=objective)
-        self.maximize = maximize
-        if not torch.is_tensor(best_f):
-            best_f = torch.tensor(best_f)
-        self.register_buffer("best_f", best_f)
 
     @t_batch_mode_transform(expected_q=1, assert_output_shape=False)
     def forward(self, X: Tensor) -> Tensor:
@@ -178,8 +211,35 @@ class PosteriorMean(AnalyticAcquisitionFunction):
         posterior = self._get_posterior(X=X)
         return posterior.mean.view(X.shape[:-2])
 
+    @classmethod
+    def construct_inputs(
+        cls,
+        model: Model,
+        training_data: TrainingData,
+        objective: Optional[AcquisitionObjective] = None,
+        **kwargs: Any
+    ) -> Dict[str, Any]:
+        r"""Construct kwargs for the acquisition function's constructor.
 
-class ProbabilityOfImprovement(AnalyticAcquisitionFunction):
+        Args:
+            model: The model to be used in the acquisition function.
+            training_data: A TrainingData object contraining the model's
+                training data. Used to extract `best_f` input.
+            objective: The objective to in the acquisition function.
+
+        Returns:
+            A dict mapping kwarg names of the constructor to values.
+
+        Example:
+            >>> kwargs = PosteriorMean.construct_inputs(
+                    model, training_data,
+                )
+            >>> PM = PosteriorMean(**kwargs)
+        """
+        return {"model": model, "objective": objective}
+
+
+class ProbabilityOfImprovement(_AnalyticBestFBase, AnalyticAcquisitionFunction):
     r"""Single-outcome Probability of Improvement.
 
     Probability of improvment over the current best observed value, computed
@@ -194,28 +254,6 @@ class ProbabilityOfImprovement(AnalyticAcquisitionFunction):
         >>> PI = ProbabilityOfImprovement(model, best_f=0.2)
         >>> pi = PI(test_X)
     """
-
-    def __init__(
-        self,
-        model: Model,
-        best_f: Union[float, Tensor],
-        objective: Optional[ScalarizedObjective] = None,
-        maximize: bool = True,
-    ) -> None:
-        r"""Single-outcome analytic Probability of Improvement.
-
-        Args:
-            model: A fitted single-outcome model.
-            best_f: Either a scalar or a `b`-dim Tensor (batch mode) representing
-                the best function value observed so far (assumed noiseless).
-            objective: A ScalarizedObjective (optional).
-            maximize: If True, consider the problem a maximization problem.
-        """
-        super().__init__(model=model, objective=objective)
-        self.maximize = maximize
-        if not torch.is_tensor(best_f):
-            best_f = torch.tensor(best_f)
-        self.register_buffer("best_f", best_f)
 
     @t_batch_mode_transform(expected_q=1)
     def forward(self, X: Tensor) -> Tensor:
@@ -304,6 +342,38 @@ class UpperConfidenceBound(AnalyticAcquisitionFunction):
             return mean + delta
         else:
             return -mean + delta
+
+    @classmethod
+    def construct_inputs(
+        cls,
+        model: Model,
+        training_data: TrainingData,
+        objective: Optional[AcquisitionObjective] = None,
+        **kwargs: Any
+    ) -> Dict[str, Any]:
+        r"""Construct kwargs for the acquisition function's constructor.
+
+        Args:
+            model: The model to be used in the acquisition function.
+            training_data: A TrainingData object contraining the model's
+                training data. Used to extract `best_f` input.
+            objective: The objective to in the acquisition function.
+
+        Returns:
+            A dict mapping kwarg names of the constructor to values.
+
+        Example:
+            >>> kwargs = UpperConfidenceBound.construct_inputs(
+                    model, training_data, beta=0.2
+                )
+            >>> PM = UpperConfidenceBound(**kwargs)
+        """
+        try:
+            return {"model": model, "objective": objective, "beta": kwargs["beta"]}
+        except KeyError:
+            raise ValueError(
+                "UpperConfidenceBound.construct_inputs requires a `beta` kwarg."
+            )
 
 
 class ConstrainedExpectedImprovement(AnalyticAcquisitionFunction):
@@ -547,6 +617,119 @@ class NoisyExpectedImprovement(ExpectedImprovement):
         # add batch dimension for broadcasting to fantasy models
         return super().forward(X.unsqueeze(-3)).mean(dim=-1)
 
+    @classmethod
+    def construct_inputs(
+        cls,
+        model: Model,
+        training_data: TrainingData,
+        objective: Optional[AcquisitionObjective] = None,
+        **kwargs: Any
+    ) -> Dict[str, Any]:
+        r"""Construct kwargs for the acquisition function's constructor.
+
+        Args:
+            model: The model to be used in the acquisition function.
+            training_data: A TrainingData object contraining the model's
+                training data. Used to extract `best_f` input.
+            objective: The objective to in the acquisition function.
+
+        Returns:
+            A dict mapping kwarg names of the constructor to values.
+
+        Example:
+            >>> kwargs = NoisyExpectedImprovement.construct_inputs(
+                    model, training_data,
+                )
+            >>> NEI = NoisyExpectedImprovement(**kwargs)
+        """
+        # TODO: Check if `training_data.X` works with the training data of
+        # if we should rather use `model.train_inputs`
+        return {
+            "model": model,
+            "objective": objective,
+            "X_observed": kwargs.get("X_observed", training_data.X),
+            "num_fantasies": kwargs.get("num_fantasies", 20),
+            "maximize": kwargs.get("maximize", True),
+        }
+
+
+class ScalarizedPosteriorMean(AnalyticAcquisitionFunction):
+    r"""Scalarized Posterior Mean.
+
+    This acquisition function returns a scalarized (across the q-batch)
+    posterior mean given a vector of weights.
+    """
+
+    def __init__(
+        self,
+        model: Model,
+        weights: Tensor,
+        objective: Optional[ScalarizedObjective] = None,
+    ) -> None:
+        r"""Scalarized Posterior Mean.
+
+        Args:
+            model: A fitted single-outcome model.
+            weights: A tensor of shape `q` for scalarization.
+            objective: A ScalarizedObjective. Required for multi-output models.
+        """
+        super().__init__(model=model, objective=objective)
+        self.register_buffer("weights", weights.unsqueeze(dim=0))
+
+    @t_batch_mode_transform()
+    def forward(self, X: Tensor) -> Tensor:
+        r"""Evaluate the scalarized posterior mean on the candidate set X.
+
+        Args:
+            X: A `(b) x q x d`-dim Tensor of `(b)` t-batches of `d`-dim design
+                points each.
+
+        Returns:
+            A `(b)`-dim Tensor of Posterior Mean values at the given design
+            points `X`.
+        """
+        posterior = self._get_posterior(X=X)
+        weighted_means = posterior.mean.squeeze(dim=-1) * self.weights
+        return weighted_means.sum(dim=-1)
+
+    @classmethod
+    def construct_inputs(
+        cls,
+        model: Model,
+        training_data: TrainingData,
+        objective: Optional[AcquisitionObjective] = None,
+        **kwargs: Any
+    ) -> Dict[str, Any]:
+        r"""Construct kwargs for the acquisition function's constructor.
+
+        Args:
+            model: The model to be used in the acquisition function.
+            training_data: A TrainingData object contraining the model's
+                training data. Used to extract `best_f` input.
+            objective: The objective to in the acquisition function.
+
+        Returns:
+            A dict mapping kwarg names of the constructor to values.
+
+        Example:
+            >>> kwargs = ScalarizedPosteriorMean.construct_inputs(
+                    model, training_data, weights=torch.tensor([0.2, 0.8])
+                )
+            >>> SPM = ScalarizedPosteriorMean(**kwargs)
+        """
+        # TODO: Check if this works with the training data of if we should
+        # rather use model.train_inputs
+        try:
+            return {
+                "model": model,
+                "objective": objective,
+                "weights": kwargs["weights"],
+            }
+        except KeyError:
+            raise ValueError(
+                "ScalarizedPosteriorMean.construct_inputs requires a `weights` kwarg."
+            )
+
 
 def _construct_dist(means: Tensor, sigmas: Tensor, inds: Tensor) -> Normal:
     mean = means.index_select(dim=-1, index=inds)
@@ -591,43 +774,3 @@ def _get_noiseless_fantasy_model(
     state_dict = deepcopy(model.state_dict())
     fantasy_model.load_state_dict(state_dict)
     return fantasy_model
-
-
-class ScalarizedPosteriorMean(AnalyticAcquisitionFunction):
-    r"""Scalarized Posterior Mean.
-
-    This acquisition function returns a scalarized (across the q-batch)
-    posterior mean given a vector of weights.
-    """
-
-    def __init__(
-        self,
-        model: Model,
-        weights: Tensor,
-        objective: Optional[ScalarizedObjective] = None,
-    ) -> None:
-        r"""Scalarized Posterior Mean.
-
-        Args:
-            model: A fitted single-outcome model.
-            weights: A tensor of shape `q` for scalarization.
-            objective: A ScalarizedObjective. Required for multi-output models.
-        """
-        super().__init__(model=model, objective=objective)
-        self.register_buffer("weights", weights.unsqueeze(dim=0))
-
-    @t_batch_mode_transform()
-    def forward(self, X: Tensor) -> Tensor:
-        r"""Evaluate the scalarized posterior mean on the candidate set X.
-
-        Args:
-            X: A `(b) x q x d`-dim Tensor of `(b)` t-batches of `d`-dim design
-                points each.
-
-        Returns:
-            A `(b)`-dim Tensor of Posterior Mean values at the given design
-            points `X`.
-        """
-        posterior = self._get_posterior(X=X)
-        weighted_means = posterior.mean.squeeze(dim=-1) * self.weights
-        return weighted_means.sum(dim=-1)
