@@ -161,7 +161,7 @@ class TestFitGPyTorchModel(BotorchTestCase):
                     mll, info_dict = optimizer(
                         mll, options=options, track_iterations=False, method="slsqp"
                     )
-                self.assertEqual(len(ws), 1)
+                self.assertGreaterEqual(len(ws), 1)
                 self.assertEqual(len(info_dict["iterations"]), 0)
                 self.assertTrue("fopt" in info_dict)
                 self.assertTrue("wall_time" in info_dict)
