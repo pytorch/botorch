@@ -154,13 +154,12 @@ class TestGPyTorchPosterior(BotorchTestCase):
             self.assertTrue(torch.equal(posterior.variance, variance_exp))
 
             # rsample
-            with warnings.catch_warnings(record=True) as w:
+            with warnings.catch_warnings(record=True) as ws:
                 # we check that the p.d. warning is emitted - this only
                 # happens once per posterior, so we need to check only once
                 samples = posterior.rsample(sample_shape=torch.Size([4]))
-                self.assertEqual(len(w), 1)
-                self.assertTrue(issubclass(w[-1].category, RuntimeWarning))
-                self.assertTrue("not p.d." in str(w[-1].message))
+                self.assertTrue(any(issubclass(w.category, RuntimeWarning) for w in ws))
+                self.assertTrue(any("not p.d" in str(w.message) for w in ws))
             self.assertEqual(samples.shape, torch.Size([4, 3, 1]))
             samples2 = posterior.rsample(sample_shape=torch.Size([4, 2]))
             self.assertEqual(samples2.shape, torch.Size([4, 2, 3, 1]))
@@ -187,13 +186,12 @@ class TestGPyTorchPosterior(BotorchTestCase):
             b_mvn = MultivariateNormal(b_mean, lazify(b_degenerate_covar))
             b_posterior = GPyTorchPosterior(mvn=b_mvn)
             b_base_samples = torch.randn(4, 2, 3, 1, device=self.device, dtype=dtype)
-            with warnings.catch_warnings(record=True) as w:
+            with warnings.catch_warnings(record=True) as ws:
                 b_samples = b_posterior.rsample(
                     sample_shape=torch.Size([4]), base_samples=b_base_samples
                 )
-                self.assertEqual(len(w), 1)
-                self.assertTrue(issubclass(w[-1].category, RuntimeWarning))
-                self.assertTrue("not p.d." in str(w[-1].message))
+                self.assertTrue(any(issubclass(w.category, RuntimeWarning) for w in ws))
+                self.assertTrue(any("not p.d" in str(w.message) for w in ws))
             self.assertEqual(b_samples.shape, torch.Size([4, 2, 3, 1]))
 
     def test_degenerate_GPyTorchPosterior_Multitask(self):
@@ -215,13 +213,12 @@ class TestGPyTorchPosterior(BotorchTestCase):
             variance_exp = degenerate_covar.diag().unsqueeze(-1).repeat(1, 2)
             self.assertTrue(torch.equal(posterior.variance, variance_exp))
             # rsample
-            with warnings.catch_warnings(record=True) as w:
+            with warnings.catch_warnings(record=True) as ws:
                 # we check that the p.d. warning is emitted - this only
                 # happens once per posterior, so we need to check only once
                 samples = posterior.rsample(sample_shape=torch.Size([4]))
-                self.assertEqual(len(w), 1)
-                self.assertTrue(issubclass(w[-1].category, RuntimeWarning))
-                self.assertTrue("not p.d." in str(w[-1].message))
+                self.assertTrue(any(issubclass(w.category, RuntimeWarning) for w in ws))
+                self.assertTrue(any("not p.d" in str(w.message) for w in ws))
             self.assertEqual(samples.shape, torch.Size([4, 3, 2]))
             samples2 = posterior.rsample(sample_shape=torch.Size([4, 2]))
             self.assertEqual(samples2.shape, torch.Size([4, 2, 3, 2]))
@@ -249,13 +246,12 @@ class TestGPyTorchPosterior(BotorchTestCase):
             b_mvn = MultitaskMultivariateNormal.from_independent_mvns([b_mvn, b_mvn])
             b_posterior = GPyTorchPosterior(mvn=b_mvn)
             b_base_samples = torch.randn(4, 1, 3, 2, device=self.device, dtype=dtype)
-            with warnings.catch_warnings(record=True) as w:
+            with warnings.catch_warnings(record=True) as ws:
                 b_samples = b_posterior.rsample(
                     sample_shape=torch.Size([4]), base_samples=b_base_samples
                 )
-                self.assertEqual(len(w), 1)
-                self.assertTrue(issubclass(w[-1].category, RuntimeWarning))
-                self.assertTrue("not p.d." in str(w[-1].message))
+                self.assertTrue(any(issubclass(w.category, RuntimeWarning) for w in ws))
+                self.assertTrue(any("not p.d" in str(w.message) for w in ws))
             self.assertEqual(b_samples.shape, torch.Size([4, 2, 3, 2]))
 
     def test_scalarize_posterior(self):
@@ -309,7 +305,7 @@ class TestGPyTorchPosterior(BotorchTestCase):
                     lazy=lazy,
                     interleaved=False,
                     independent=independent,
-                    **tkwargs
+                    **tkwargs,
                 )
                 mean, covar = posterior.mvn.mean, posterior.mvn.covariance_matrix
                 new_posterior = scalarize_posterior(posterior, weights, offset)
