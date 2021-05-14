@@ -305,7 +305,7 @@ class TestSingleTaskGP(BotorchTestCase):
             model, model_kwargs = self._get_model_and_data(
                 batch_shape=batch_shape, m=2, **tkwargs
             )
-            training_data = TrainingData(
+            training_data = TrainingData.from_block_design(
                 X=model_kwargs["train_X"], Y=model_kwargs["train_Y"]
             )
             data_dict = model.construct_inputs(training_data)
@@ -352,7 +352,7 @@ class TestFixedNoiseGP(TestSingleTaskGP):
             model, model_kwargs = self._get_model_and_data(
                 batch_shape=batch_shape, m=2, **tkwargs
             )
-            training_data = TrainingData(
+            training_data = TrainingData.from_block_design(
                 X=model_kwargs["train_X"],
                 Y=model_kwargs["train_Y"],
                 Yvar=model_kwargs["train_Yvar"],
@@ -365,7 +365,7 @@ class TestFixedNoiseGP(TestSingleTaskGP):
                 torch.equal(data_dict["train_Yvar"], model_kwargs["train_Yvar"])
             )
             # if Yvars is missing, then raise error
-            training_data = TrainingData(
+            training_data = TrainingData.from_block_design(
                 X=model_kwargs["train_X"], Y=model_kwargs["train_Y"]
             )
             with self.assertRaises(ValueError):
