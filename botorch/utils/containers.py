@@ -8,6 +8,8 @@ r"""
 Containers to standardize inputs into models and acquisition functions.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import List, Optional
 
@@ -98,3 +100,33 @@ class TrainingData:
             if not self.is_block_design:
                 raise UnsupportedError
             return torch.cat(self.Yvars, dim=-1)
+
+    def __eq__(self, other: TrainingData) -> bool:
+        # Check for `None` Yvars and unequal attribute lengths upfront.
+        if self.Yvars is None or other.Yvars is None:
+            if not (self.Yvars is other.Yvars is None):
+                return False
+        else:
+            if len(self.Yvars) != len(other.Yvars):
+                return False
+
+        if len(self.Xs) != len(other.Xs) or len(self.Ys) != len(other.Ys):
+            return False
+
+        return (  # Deep-check equality of attributes.
+            all(
+                torch.equal(self_X, other_X)
+                for self_X, other_X in zip(self.Xs, other.Xs)
+            )
+            and all(
+                torch.equal(self_Y, other_Y)
+                for self_Y, other_Y in zip(self.Ys, other.Ys)
+            )
+            and (
+                self.Yvars is other.Yvars is None
+                or all(
+                    torch.equal(self_Yvar, other_Yvar)
+                    for self_Yvar, other_Yvar in zip(self.Yvars, other.Yvars)
+                )
+            )
+        )
