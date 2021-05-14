@@ -270,7 +270,7 @@ class TestMixedSingleTaskGP(BotorchTestCase):
                 batch_shape=batch_shape, m=m, d=d, **tkwargs
             )
             cat_dims = list(range(ncat))
-            training_data = TrainingData(X=train_X, Y=train_Y)
+            training_data = TrainingData.from_block_design(X=train_X, Y=train_Y)
             kwarg_dict = MixedSingleTaskGP.construct_inputs(
                 training_data, categorical_features=cat_dims
             )
