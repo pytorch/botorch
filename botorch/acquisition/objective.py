@@ -57,6 +57,17 @@ class ScalarizedObjective(AcquisitionObjective):
         self.register_buffer("weights", weights)
         self.offset = offset
 
+    def evaluate(self, Y: Tensor) -> Tensor:
+        r"""Evaluate the objective on a set of outcomes.
+
+        Args:
+            Y: A `batch_shape x q x m`-dim tensor of outcomes.
+
+        Returns:
+            A `batch_shape x q`-dim tensor of objective values.
+        """
+        return self.offset + Y @ self.weights
+
     def forward(self, posterior: GPyTorchPosterior) -> GPyTorchPosterior:
         r"""Compute the posterior of the affine transformation.
 
