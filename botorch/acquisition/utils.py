@@ -20,7 +20,10 @@ from botorch.acquisition import analytic, multi_objective
 from botorch.acquisition import monte_carlo  # noqa F401
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.multi_objective import monte_carlo as moo_monte_carlo
-from botorch.acquisition.objective import IdentityMCObjective, MCAcquisitionObjective
+from botorch.acquisition.objective import (
+    IdentityMCObjective,
+    MCAcquisitionObjective,
+)
 from botorch.exceptions.errors import UnsupportedError
 from botorch.exceptions.warnings import SamplingWarning
 from botorch.models.model import Model
