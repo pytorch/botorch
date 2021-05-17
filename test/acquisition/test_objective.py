@@ -65,6 +65,11 @@ class TestScalarizedObjective(BotorchTestCase):
             # test error
             with self.assertRaises(ValueError):
                 ScalarizedObjective(weights=torch.rand(2, m))
+            # test evaluate
+            Y = torch.rand(2, m, device=self.device, dtype=dtype)
+            val = obj.evaluate(Y)
+            val_expected = offset + Y @ weights
+            self.assertTrue(torch.equal(val, val_expected))
 
 
 class TestMCAcquisitionObjective(BotorchTestCase):
