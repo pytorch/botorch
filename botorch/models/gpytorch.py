@@ -582,7 +582,7 @@ class ModelListGPyTorchModel(GPyTorchModel, ABC):
 
 
 class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
-    r"""Abstract base class for multi-task models baed on GPyTorch models.
+    r"""Abstract base class for multi-task models based on GPyTorch models.
 
     This class provides the `posterior` method to models that implement a
     "long-format" multi-task GP in the style of `MultiTaskGP`.
