@@ -43,6 +43,7 @@ class TestContainers(BotorchTestCase):
         self.assertTrue(torch.equal(training_data_bd.Ys[1], Y_bd[..., 1:]))
         self.assertTrue(torch.equal(training_data_bd.Yvars[0], Yvar_bd[..., :1]))
         self.assertTrue(torch.equal(training_data_bd.Yvars[1], Yvar_bd[..., 1:]))
+
         # test equality check with non-null Yvars and one-element Xs ans Ys
         self.assertEqual(
             training_data_bd,
@@ -68,7 +69,9 @@ class TestContainers(BotorchTestCase):
         with self.assertRaises(UnsupportedError):
             training_data_nbd.Y
         self.assertIsNone(training_data_nbd.Yvar)
+
         # test equality check with different length Xs and Ys in two training data
+        # and only one training data including non-null Yvars
         self.assertNotEqual(training_data_nbd, training_data_bd)
 
         # non-block design, with variance observations
@@ -87,9 +90,12 @@ class TestContainers(BotorchTestCase):
             training_data_nbd_yvar.Y
         with self.assertRaises(UnsupportedError):
             training_data_nbd_yvar.Yvar
+
         # test equality check with same length Xs and Ys in two training data but
         # with variance observations only in one
         self.assertNotEqual(training_data_nbd, training_data_nbd_yvar)
+        # test equality check with different length Xs and Ys in two training data
+        self.assertNotEqual(training_data_nbd_yvar, training_data_bd)
 
         # implicit block design, without variance observations
         X = torch.rand(2, 4, 3)
@@ -119,3 +125,9 @@ class TestContainers(BotorchTestCase):
         self.assertTrue(torch.equal(training_data.Ys[1], Ys[1]))
         self.assertTrue(torch.equal(training_data.Yvars[0], Yvars[0]))
         self.assertTrue(torch.equal(training_data.Yvars[1], Yvars[1]))
+
+        # test equality with same Xs and Ys but different-length Yvars
+        self.assertNotEqual(
+            TrainingData(Xs, Ys, Yvars),
+            TrainingData(Xs, Ys, Yvars[:1]),
+        )
