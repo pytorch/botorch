@@ -90,10 +90,20 @@ def acqf_input_constructor(
 
     def decorator(method):
         for acqf_cls_ in acqf_cls:
+            _register_acqf_input_constructor(
+                acqf_cls=acqf_cls_, input_constructor=method
+            )
             ACQF_INPUT_CONSTRUCTOR_REGISTRY[acqf_cls_] = method
         return method
 
     return decorator
+
+
+def _register_acqf_input_constructor(
+    acqf_cls: Type[AcquisitionFunction],
+    input_constructor: Callable[..., Dict[str, Any]],
+) -> None:
+    ACQF_INPUT_CONSTRUCTOR_REGISTRY[acqf_cls] = input_constructor
 
 
 # --------------------- Input argument constructors --------------------- #
