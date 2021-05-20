@@ -47,7 +47,7 @@ class TestMultiObjectiveMaxValueEntropy(BotorchTestCase):
             mesmo = qMultiObjectiveMaxValueEntropy(model, dummy_sample_pareto_frontiers)
             self.assertEqual(mesmo.num_fantasies, 16)
             self.assertIsInstance(mesmo.sampler, SobolQMCNormalSampler)
-            self.assertEqual(mesmo.sampler.sample_shape, torch.Size([512]))
+            self.assertEqual(mesmo.sampler.sample_shape, torch.Size([128]))
             self.assertIsInstance(mesmo.fantasies_sampler, SobolQMCNormalSampler)
             self.assertEqual(mesmo.posterior_max_values.shape, torch.Size([3, 1, m]))
             # test conversion to single-output model
@@ -67,7 +67,7 @@ class TestMultiObjectiveMaxValueEntropy(BotorchTestCase):
             mesmo = qMultiObjectiveMaxValueEntropy(model, mock_sample_pfs)
             self.assertEqual(mesmo.num_fantasies, 16)
             self.assertIsInstance(mesmo.sampler, SobolQMCNormalSampler)
-            self.assertEqual(mesmo.sampler.sample_shape, torch.Size([512]))
+            self.assertEqual(mesmo.sampler.sample_shape, torch.Size([128]))
             self.assertIsInstance(mesmo.fantasies_sampler, SobolQMCNormalSampler)
             self.assertEqual(mesmo.posterior_max_values.shape, torch.Size([3, 1, m]))
             # test conversion to batched MO model

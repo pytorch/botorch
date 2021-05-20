@@ -155,6 +155,21 @@ def get_acquisition_function(
             constraints=constraints,
             X_pending=X_pending,
         )
+    elif acquisition_function_name == "qNEHVI":
+        if "ref_point" not in kwargs:
+            raise ValueError("`ref_point` must be specified in kwargs for qNEHVI")
+        return moo_monte_carlo.qNoisyExpectedHypervolumeImprovement(
+            model=model,
+            ref_point=kwargs["ref_point"],
+            X_baseline=X_observed,
+            sampler=sampler,
+            objective=objective,
+            constraints=constraints,
+            prune_baseline=True,
+            alpha=kwargs.get("alpha", 0.0),
+            X_pending=X_pending,
+            marginalize_dim=kwargs.get("marginalize_dim"),
+        )
     raise NotImplementedError(
         f"Unknown acquisition function {acquisition_function_name}"
     )
@@ -222,6 +237,7 @@ def is_nonnegative(acq_function: AcquisitionFunction) -> bool:
             monte_carlo.qProbabilityOfImprovement,
             multi_objective.analytic.ExpectedHypervolumeImprovement,
             multi_objective.monte_carlo.qExpectedHypervolumeImprovement,
+            multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement,
         ),
     )
 
