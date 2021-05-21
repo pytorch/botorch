@@ -160,6 +160,16 @@ class TestOptimizeAcqf(BotorchTestCase):
         )
         self.assertTrue(torch.equal(acq_vals, mock_acq_values[0]))
 
+        # verify ValueError
+        with self.assertRaisesRegex(ValueError, "Must specify"):
+            optimize_acqf(
+                acq_function=MockAcquisitionFunction(),
+                bounds=bounds,
+                q=q,
+                num_restarts=num_restarts,
+                options=options,
+            )
+
     @mock.patch("botorch.optim.optimize.gen_batch_initial_conditions")
     @mock.patch("botorch.optim.optimize.gen_candidates_scipy")
     def test_optimize_acqf_sequential(

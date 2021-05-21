@@ -33,7 +33,7 @@ def optimize_acqf(
     bounds: Tensor,
     q: int,
     num_restarts: int,
-    raw_samples: int,
+    raw_samples: Optional[int] = None,
     options: Optional[Dict[str, Union[bool, float, int, str]]] = None,
     inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
@@ -52,7 +52,8 @@ def optimize_acqf(
         q: The number of candidates.
         num_restarts: The number of starting points for multistart acquisition
             function optimization.
-        raw_samples: The number of samples for initialization.
+        raw_samples: The number of samples for initialization. This is required
+            if `batch_initial_conditions` is not specified.
         options: Options for candidate generation.
         inequality constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
@@ -99,7 +100,7 @@ def optimize_acqf(
     if sequential and q > 1:
         if not return_best_only:
             raise NotImplementedError(
-                "return_best_only=False only supported for joint optimization"
+                "`return_best_only=False` only supported for joint optimization."
             )
         if isinstance(acq_function, OneShotAcquisitionFunction):
             raise NotImplementedError(
@@ -152,6 +153,11 @@ def optimize_acqf(
         return X, acq_value
 
     if batch_initial_conditions is None:
+        if raw_samples is None:
+            raise ValueError(
+                "Must specify `raw_samples` when `batch_initial_conditions` is `None`."
+            )
+
         ic_gen = (
             gen_one_shot_kg_initial_conditions
             if isinstance(acq_function, qKnowledgeGradient)
@@ -214,7 +220,7 @@ def optimize_acqf_cyclic(
     bounds: Tensor,
     q: int,
     num_restarts: int,
-    raw_samples: int,
+    raw_samples: Optional[int] = None,
     options: Optional[Dict[str, Union[bool, float, int, str]]] = None,
     inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
@@ -231,7 +237,8 @@ def optimize_acqf_cyclic(
         q: The number of candidates.
         num_restarts:  Number of starting points for multistart acquisition
             function optimization.
-        raw_samples: Number of samples for initialization.
+        raw_samples: Number of samples for initialization. This is required
+            if `batch_initial_conditions` is not specified.
         options: Options for candidate generation.
         inequality constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
@@ -325,7 +332,7 @@ def optimize_acqf_list(
     acq_function_list: List[AcquisitionFunction],
     bounds: Tensor,
     num_restarts: int,
-    raw_samples: int,
+    raw_samples: Optional[int] = None,
     options: Optional[Dict[str, Union[bool, float, int, str]]] = None,
     inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
@@ -342,7 +349,8 @@ def optimize_acqf_list(
         bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.
         num_restarts:  Number of starting points for multistart acquisition
             function optimization.
-        raw_samples: Number of samples for initialization.
+        raw_samples: Number of samples for initialization. This is required
+            if `batch_initial_conditions` is not specified.
         options: Options for candidate generation.
         inequality constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
@@ -401,8 +409,8 @@ def optimize_acqf_mixed(
     bounds: Tensor,
     q: int,
     num_restarts: int,
-    raw_samples: int,
     fixed_features_list: List[Dict[int, float]],
+    raw_samples: Optional[int] = None,
     options: Optional[Dict[str, Union[bool, float, int, str]]] = None,
     inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
@@ -419,7 +427,8 @@ def optimize_acqf_mixed(
         q: The number of candidates.
         num_restarts:  Number of starting points for multistart acquisition
             function optimization.
-        raw_samples: Number of samples for initialization.
+        raw_samples: Number of samples for initialization. This is required
+            if `batch_initial_conditions` is not specified.
         fixed_features_list: A list of maps `{feature_index: value}`. The i-th
             item represents the fixed_feature for the i-th optimization.
         options: Options for candidate generation.
