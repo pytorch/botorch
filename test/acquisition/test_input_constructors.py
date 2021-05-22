@@ -9,8 +9,11 @@ from unittest import mock
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.analytic import (
+    # ConstrainedExpectedImprovement,
     ExpectedImprovement,
+    NoisyExpectedImprovement,
     PosteriorMean,
+    UpperConfidenceBound,
 )
 from botorch.acquisition.input_constructors import (
     acqf_input_constructor,
@@ -21,11 +24,14 @@ from botorch.acquisition.input_constructors import (
 from botorch.acquisition.monte_carlo import (
     qExpectedImprovement,
     qNoisyExpectedImprovement,
+    qProbabilityOfImprovement,
     qSimpleRegret,
+    qUpperConfidenceBound,
 )
 from botorch.acquisition.multi_objective import (
-    qExpectedHypervolumeImprovement,
     ExpectedHypervolumeImprovement,
+    qExpectedHypervolumeImprovement,
+    qNoisyExpectedHypervolumeImprovement,
 )
 from botorch.acquisition.multi_objective.objective import (
     IdentityAnalyticMultiOutputObjective,
@@ -38,6 +44,7 @@ from botorch.acquisition.objective import (
 )
 from botorch.exceptions.errors import UnsupportedError
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
+from botorch.utils.constraints import get_outcome_constraint_transforms
 from botorch.utils.containers import TrainingData
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     NondominatedPartitioning,
@@ -130,6 +137,42 @@ class TestAnalyticAcquisitionFunctionInputConstructors(
         self.assertEqual(kwargs["best_f"], 0.1)
         self.assertTrue(kwargs["maximize"])
 
+    def test_construct_inputs_ucb(self):
+        c = get_acqf_input_constructor(UpperConfidenceBound)
+        mock_model = mock.Mock()
+        kwargs = c(model=mock_model, training_data=self.bd_td)
+        self.assertEqual(kwargs["model"], mock_model)
+        self.assertIsNone(kwargs["objective"])
+        self.assertEqual(kwargs["beta"], 0.2)
+        self.assertTrue(kwargs["maximize"])
+        kwargs = c(model=mock_model, training_data=self.bd_td, beta=0.1, maximize=False)
+        self.assertEqual(kwargs["model"], mock_model)
+        self.assertIsNone(kwargs["objective"])
+        self.assertEqual(kwargs["beta"], 0.1)
+        self.assertFalse(kwargs["maximize"])
+
+    # def test_construct_inputs_constrained_ei(self):
+    #     c = get_acqf_input_constructor(ConstrainedExpectedImprovement)
+    #     mock_model = mock.Mock()
+
+    def test_construct_inputs_noisy_ei(self):
+        c = get_acqf_input_constructor(NoisyExpectedImprovement)
+        mock_model = mock.Mock()
+        kwargs = c(model=mock_model, training_data=self.bd_td)
+        self.assertEqual(kwargs["model"], mock_model)
+        self.assertTrue(torch.equal(kwargs["X_observed"], self.bd_td.X))
+        self.assertEqual(kwargs["num_fantasies"], 20)
+        self.assertTrue(kwargs["maximize"])
+        kwargs = c(
+            model=mock_model, training_data=self.bd_td, num_fantasies=10, maximize=False
+        )
+        self.assertEqual(kwargs["model"], mock_model)
+        self.assertTrue(torch.equal(kwargs["X_observed"], self.bd_td.X))
+        self.assertEqual(kwargs["num_fantasies"], 10)
+        self.assertFalse(kwargs["maximize"])
+        with self.assertRaisesRegex(NotImplementedError, "only block designs"):
+            c(model=mock_model, training_data=self.nbd_td)
+
 
 class TestMCAcquisitionFunctionInputConstructors(
     InputConstructorBaseTestCase, BotorchTestCase
@@ -205,6 +248,54 @@ class TestMCAcquisitionFunctionInputConstructors(
         self.assertIsNone(kwargs["sampler"])
         self.assertTrue(kwargs["prune_baseline"])
         self.assertTrue(torch.equal(kwargs["X_baseline"], X_baseline))
+
+    def test_construct_inputs_qPI(self):
+        c = get_acqf_input_constructor(qProbabilityOfImprovement)
+        mock_model = mock.Mock()
+        kwargs = c(model=mock_model, training_data=self.bd_td)
+        self.assertEqual(kwargs["model"], mock_model)
+        self.assertIsNone(kwargs["objective"])
+        self.assertIsNone(kwargs["X_pending"])
+        self.assertIsNone(kwargs["sampler"])
+        self.assertEqual(kwargs["tau"], 1e-3)
+        X_pending = torch.rand(2, 2)
+        objective = LinearMCObjective(torch.rand(2))
+        kwargs = c(
+            model=mock_model,
+            training_data=self.bd_td,
+            objective=objective,
+            X_pending=X_pending,
+            tau=1e-2,
+        )
+        self.assertEqual(kwargs["model"], mock_model)
+        self.assertTrue(torch.equal(kwargs["objective"].weights, objective.weights))
+        self.assertTrue(torch.equal(kwargs["X_pending"], X_pending))
+        self.assertIsNone(kwargs["sampler"])
+        self.assertEqual(kwargs["tau"], 1e-2)
+
+    def test_construct_inputs_qUCB(self):
+        c = get_acqf_input_constructor(qUpperConfidenceBound)
+        mock_model = mock.Mock()
+        kwargs = c(model=mock_model, training_data=self.bd_td)
+        self.assertEqual(kwargs["model"], mock_model)
+        self.assertIsNone(kwargs["objective"])
+        self.assertIsNone(kwargs["X_pending"])
+        self.assertIsNone(kwargs["sampler"])
+        self.assertEqual(kwargs["beta"], 0.2)
+        X_pending = torch.rand(2, 2)
+        objective = LinearMCObjective(torch.rand(2))
+        kwargs = c(
+            model=mock_model,
+            training_data=self.bd_td,
+            objective=objective,
+            X_pending=X_pending,
+            beta=0.1,
+        )
+        self.assertEqual(kwargs["model"], mock_model)
+        self.assertTrue(torch.equal(kwargs["objective"].weights, objective.weights))
+        self.assertTrue(torch.equal(kwargs["X_pending"], X_pending))
+        self.assertIsNone(kwargs["sampler"])
+        self.assertEqual(kwargs["beta"], 0.1)
 
 
 class TestMultiObjectiveAcquisitionFunctionInputConstructors(
@@ -362,3 +453,71 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         self.assertIsInstance(sampler, SobolQMCNormalSampler)
         self.assertEqual(sampler.sample_shape, torch.Size([16]))
         self.assertEqual(sampler.seed, 1234)
+
+    def test_construct_inputs_qNEHVI(self):
+        c = get_acqf_input_constructor(qNoisyExpectedHypervolumeImprovement)
+        objective_thresholds = torch.rand(2)
+        mock_model = mock.Mock()
+
+        # Test defaults
+        kwargs = c(
+            model=mock_model,
+            training_data=self.bd_td,
+            objective_thresholds=objective_thresholds,
+        )
+        ref_point_expected = objective_thresholds
+        self.assertTrue(torch.equal(kwargs["ref_point"], ref_point_expected))
+        self.assertTrue(torch.equal(kwargs["X_baseline"], self.bd_td.X))
+        self.assertIsNone(kwargs["sampler"])
+        self.assertIsInstance(kwargs["objective"], IdentityAnalyticMultiOutputObjective)
+        self.assertIsNone(kwargs["constraints"])
+        self.assertIsNone(kwargs["X_pending"])
+        self.assertEqual(kwargs["eta"], 1e-3)
+        self.assertFalse(kwargs["prune_baseline"])
+        self.assertEqual(kwargs["alpha"], 0.0)
+        self.assertTrue(kwargs["cache_pending"])
+        self.assertEqual(kwargs["max_iep"], 0)
+        self.assertTrue(kwargs["incremental_nehvi"])
+
+        # Test custom inputs
+        weights = torch.rand(2)
+        objective = WeightedMCMultiOutputObjective(weights=weights)
+        X_baseline = torch.rand(2, 2)
+        sampler = IIDNormalSampler(num_samples=4)
+        outcome_constraints = (torch.tensor([[0.0, 1.0]]), torch.tensor([[0.5]]))
+        X_pending = torch.rand(1, 2)
+        kwargs = c(
+            model=mock_model,
+            training_data=self.bd_td,
+            objective_thresholds=objective_thresholds,
+            objective=objective,
+            X_baseline=X_baseline,
+            sampler=sampler,
+            outcome_constraints=outcome_constraints,
+            X_pending=X_pending,
+            eta=1e-2,
+            prune_baseline=True,
+            alpha=0.1,
+            cache_pending=False,
+            max_iep=1,
+            incremental_nehvi=False,
+        )
+        ref_point_expected = objective(objective_thresholds)
+        self.assertTrue(torch.equal(kwargs["ref_point"], ref_point_expected))
+        self.assertTrue(torch.equal(kwargs["X_baseline"], X_baseline))
+        sampler_ = kwargs["sampler"]
+        self.assertIsInstance(sampler_, IIDNormalSampler)
+        self.assertEqual(sampler_.sample_shape, torch.Size([4]))
+        self.assertEqual(kwargs["objective"], objective)
+        cons_tfs_expected = get_outcome_constraint_transforms(outcome_constraints)
+        cons_tfs = kwargs["constraints"]
+        self.assertEqual(len(cons_tfs), 1)
+        test_Y = torch.rand(1, 2)
+        self.assertTrue(torch.equal(cons_tfs[0](test_Y), cons_tfs_expected[0](test_Y)))
+        self.assertTrue(torch.equal(kwargs["X_pending"], X_pending))
+        self.assertEqual(kwargs["eta"], 1e-2)
+        self.assertTrue(kwargs["prune_baseline"])
+        self.assertEqual(kwargs["alpha"], 0.1)
+        self.assertFalse(kwargs["cache_pending"])
+        self.assertEqual(kwargs["max_iep"], 1)
+        self.assertFalse(kwargs["incremental_nehvi"])
