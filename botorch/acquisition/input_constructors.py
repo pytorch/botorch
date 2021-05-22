@@ -9,7 +9,7 @@ A registry of helpers for generating inputs to acquisition function
 constructors programmatically from a consistent input format.
 """
 
-from typing import Any, Callable, Dict, Optional, Type
+from typing import Any, Callable, Dict, Optional, Tuple, Type, Union
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
@@ -17,15 +17,21 @@ from botorch.acquisition.analytic import (
     ExpectedImprovement,
     PosteriorMean,
     ProbabilityOfImprovement,
+    UpperConfidenceBound,
+    ConstrainedExpectedImprovement,
+    NoisyExpectedImprovement,
 )
 from botorch.acquisition.monte_carlo import (
     qExpectedImprovement,
     qNoisyExpectedImprovement,
+    qProbabilityOfImprovement,
     qSimpleRegret,
+    qUpperConfidenceBound,
 )
 from botorch.acquisition.multi_objective import (
-    qExpectedHypervolumeImprovement,
     ExpectedHypervolumeImprovement,
+    qExpectedHypervolumeImprovement,
+    qNoisyExpectedHypervolumeImprovement,
 )
 from botorch.acquisition.multi_objective.objective import (
     IdentityAnalyticMultiOutputObjective,
@@ -159,6 +165,104 @@ def construct_inputs_best_f(
     return {**base_inputs, "best_f": best_f, "maximize": maximize}
 
 
+@acqf_input_constructor(UpperConfidenceBound)
+def construct_inputs_ucb(
+    model: Model,
+    training_data: TrainingData,
+    objective: Optional[AcquisitionObjective] = None,
+    beta: Union[float, Tensor] = 0.2,
+    maximize: bool = True,
+    **kwargs: Any,
+) -> Dict[str, Any]:
+    r"""Construct kwargs for `UpperConfidenceBound`.
+
+    Args:
+        model: The model to be used in the acquisition function.
+        training_data: A TrainingData object contraining the model's
+            training data. `best_f` is extracted from here.
+        objective: The objective to in the acquisition function.
+        beta: Either a scalar or a one-dim tensor with `b` elements (batch mode)
+            representing the trade-off parameter between mean and covariance
+        maximize: If True, consider the problem a maximization problem.
+
+    Returns:
+        A dict mapping kwarg names of the constructor to values.
+    """
+    base_inputs = construct_inputs_analytic_base(
+        model=model, training_data=training_data, objective=objective
+    )
+    return {**base_inputs, "beta": beta, "maximize": maximize}
+
+
+@acqf_input_constructor(ConstrainedExpectedImprovement)
+def construct_inputs_constrained_ei(
+    model: Model,
+    training_data: TrainingData,
+    objective_index: int,
+    constraints: Dict[int, Tuple[Optional[float], Optional[float]]],
+    maximize: bool = True,
+    **kwargs: Any,
+) -> Dict[str, Any]:
+    r"""Construct kwargs for `ConstrainedExpectedImprovement`.
+
+    Args:
+        model: The model to be used in the acquisition function.
+        training_data: A TrainingData object contraining the model's
+            training data. `best_f` is extracted from here.
+        objective_index: The index of the objective.
+        constraints: A dictionary of the form `{i: [lower, upper]}`, where
+            `i` is the output index, and `lower` and `upper` are lower and upper
+            bounds on that output (resp. interpreted as -Inf / Inf if None)
+        maximize: If True, consider the problem a maximization problem.
+
+    Returns:
+        A dict mapping kwarg names of the constructor to values.
+    """
+    # TODO: Implement best point computation from training data
+    # best_f =
+    # return {
+    #     "model": model,
+    #     "best_f": best_f,
+    #     "objective_index": objective_index,
+    #     "constraints": constraints,
+    #     "maximize": maximize,
+    # }
+    raise NotImplementedError  # pragma: nocover
+
+
+@acqf_input_constructor(NoisyExpectedImprovement)
+def construct_inputs_noisy_ei(
+    model: Model,
+    training_data: TrainingData,
+    num_fantasies: int = 20,
+    maximize: bool = True,
+    **kwargs: Any,
+) -> Dict[str, Any]:
+    r"""Construct kwargs for `NoisyExpectedImprovement`.
+
+    Args:
+        model: The model to be used in the acquisition function.
+        training_data: A TrainingData object contraining the model's
+            training data. `best_f` is extracted from here.
+        num_fantasies: The number of fantasies to generate. The higher this
+            number the more accurate the model (at the expense of model
+            complexity and performance).
+        maximize: If True, consider the problem a maximization problem.
+
+    Returns:
+        A dict mapping kwarg names of the constructor to values.
+    """
+    # TODO: Add prune_baseline functionality as for qNEI
+    if not training_data.is_block_design:
+        raise NotImplementedError("Currently only block designs are supported")
+    return {
+        "model": model,
+        "X_observed": training_data.X,
+        "num_fantasies": num_fantasies,
+        "maximize": maximize,
+    }
+
+
 @acqf_input_constructor(qSimpleRegret)
 def construct_inputs_mc_base(
     model: Model,
@@ -287,6 +391,88 @@ def construct_inputs_qNEI(
     }
 
 
+@acqf_input_constructor(qProbabilityOfImprovement)
+def construct_inputs_qPI(
+    model: Model,
+    training_data: TrainingData,
+    objective: Optional[AcquisitionObjective] = None,
+    X_pending: Optional[Tensor] = None,
+    sampler: Optional[MCSampler] = None,
+    tau: float = 1e-3,
+    **kwargs: Any,
+) -> Dict[str, Any]:
+    r"""Construct kwargs for the `qProbabilityOfImprovement` constructor.
+
+    Args:
+        model: The model to be used in the acquisition function.
+        training_data: A TrainingData object contraining the model's
+            training data. Used e.g. to extract inputs such as `best_f`
+            for expected improvement acquisition functions.
+        objective: The objective to in the acquisition function.
+        X_pending: A `m x d`-dim Tensor of `m` design points that have been
+            submitted for function evaluation but have not yet been evaluated.
+            Concatenated into X upon forward call.
+        sampler: The sampler used to draw base samples. If omitted, uses
+            the acquisition functions's default sampler.
+        tau: The temperature parameter used in the sigmoid approximation
+            of the step function. Smaller values yield more accurate
+            approximations of the function, but result in gradients
+            estimates with higher variance.
+
+    Returns:
+        A dict mapping kwarg names of the constructor to values.
+    """
+    base_inputs = construct_inputs_mc_base(
+        model=model,
+        training_data=training_data,
+        objective=objective,
+        sampler=sampler,
+        X_pending=X_pending,
+    )
+    return {
+        **base_inputs,
+        "tau": tau,
+    }
+
+
+@acqf_input_constructor(qUpperConfidenceBound)
+def construct_inputs_qUCB(
+    model: Model,
+    training_data: TrainingData,
+    objective: Optional[AcquisitionObjective] = None,
+    X_pending: Optional[Tensor] = None,
+    sampler: Optional[MCSampler] = None,
+    beta: float = 0.2,
+    **kwargs: Any,
+) -> Dict[str, Any]:
+    r"""Construct kwargs for the `qUpperConfidenceBound` constructor.
+
+    Args:
+        model: The model to be used in the acquisition function.
+        training_data: A TrainingData object contraining the model's
+            training data. Used e.g. to extract inputs such as `best_f`
+            for expected improvement acquisition functions.
+        objective: The objective to in the acquisition function.
+        X_pending: A `m x d`-dim Tensor of `m` design points that have been
+            submitted for function evaluation but have not yet been evaluated.
+            Concatenated into X upon forward call.
+        sampler: The sampler used to draw base samples. If omitted, uses
+            the acquisition functions's default sampler.
+        beta: Controls tradeoff between mean and standard deviation in UCB.
+
+    Returns:
+        A dict mapping kwarg names of the constructor to values.
+    """
+    base_inputs = construct_inputs_mc_base(
+        model=model,
+        training_data=training_data,
+        objective=objective,
+        sampler=sampler,
+        X_pending=X_pending,
+    )
+    return {**base_inputs, "beta": beta}
+
+
 @acqf_input_constructor(ExpectedHypervolumeImprovement)
 def construct_inputs_EHVI(
     model: Model,
@@ -368,12 +554,11 @@ def construct_inputs_qEHVI(
         **kwargs,
     )
 
-    # Set up sampler.
+    # Set up sampler
     sampler = kwargs.get("sampler")
     if sampler is None:
         mc_samples = kwargs.get("mc_samples", 128)
         qmc = kwargs.get("qmc", True)
-
         # initialize the sampler
         seed = int(torch.randint(1, 10000, (1,)).item())
         if qmc:
@@ -385,9 +570,46 @@ def construct_inputs_qEHVI(
         "sampler": sampler,
         "X_pending": kwargs.get("X_pending"),
         "constraints": cons_tfs,
+        "eta": kwargs.get("eta", 1e-3),
     }
-    add_qehvi_kwargs["eta"] = kwargs.get("eta", 1e-3)
     return {**ehvi_kwargs, **add_qehvi_kwargs}
+
+
+@acqf_input_constructor(qNoisyExpectedHypervolumeImprovement)
+def construct_inputs_qNEHVI(
+    model: Model,
+    training_data: TrainingData,
+    objective_thresholds: Tensor,
+    objective: Optional[AcquisitionObjective] = None,
+    **kwargs: Any,
+) -> Dict[str, Any]:
+    r"""Construct kwargs for `qNoisyExpectedHypervolumeImprovement` constructor."""
+    # This selects the objectives (a subset of the outcomes) and set each
+    # objective threhsold to have the proper optimization direction.
+    if objective is None:
+        objective = IdentityAnalyticMultiOutputObjective()
+
+    outcome_constraints = kwargs.pop("outcome_constraints", None)
+    if outcome_constraints is None:
+        cons_tfs = None
+    else:
+        cons_tfs = get_outcome_constraint_transforms(outcome_constraints)
+
+    return {
+        "model": model,
+        "ref_point": objective(objective_thresholds),
+        "X_baseline": kwargs.get("X_baseline", training_data.X),
+        "sampler": kwargs.get("sampler"),
+        "objective": objective,
+        "constraints": cons_tfs,
+        "X_pending": kwargs.get("X_pending"),
+        "eta": kwargs.get("eta", 1e-3),
+        "prune_baseline": kwargs.get("prune_baseline", False),
+        "alpha": kwargs.get("alpha", 0.0),
+        "cache_pending": kwargs.get("cache_pending", True),
+        "max_iep": kwargs.get("max_iep", 0),
+        "incremental_nehvi": kwargs.get("incremental_nehvi", True),
+    }
 
 
 def get_best_f_analytic(
