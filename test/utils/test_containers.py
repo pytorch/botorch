@@ -73,6 +73,17 @@ class TestContainers(BotorchTestCase):
         # test equality check with different length Xs and Ys in two training data
         # and only one training data including non-null Yvars
         self.assertNotEqual(training_data_nbd, training_data_bd)
+        # test equality of two training datas with different legth Xs/Ys
+        training_data_nbd_X = TrainingData(
+            Xs=Xs + [torch.rand(2, 2, 3)],
+            Ys=Ys,
+        )
+        self.assertNotEqual(training_data_nbd, training_data_nbd_X)
+        training_data_nbd_Y = TrainingData(
+            Xs=Xs,
+            Ys=Ys + [torch.rand(2, 2, 2)],
+        )
+        self.assertNotEqual(training_data_nbd, training_data_nbd_Y)
 
         # non-block design, with variance observations
         Yvars = [torch.rand(2, 4, 2), torch.rand(2, 3, 2)]
