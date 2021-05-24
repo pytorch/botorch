@@ -191,7 +191,7 @@ class MockAcquisitionFunction:
         self.X_pending = None
 
     def __call__(self, X):
-        return X[..., 0].max(dim=-1)[0]
+        return X[..., 0].max(dim=-1).values
 
     def set_X_pending(self, X_pending: Optional[Tensor] = None):
         self.X_pending = X_pending

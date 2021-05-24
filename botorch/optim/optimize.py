@@ -416,10 +416,12 @@ def optimize_acqf_mixed(
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
     batch_initial_conditions: Optional[Tensor] = None,
-    sequential: bool = False,
 ) -> Tuple[Tensor, Tensor]:
     r"""Optimize over a list of fixed_features and returns the best solution.
+
     This is useful for optimizing over mixed continuous and discrete domains.
+    For q > 1 this function always performs sequential greedy optimization (with
+    proper conditioning on generated candidates).
 
     Args:
         acq_function: An AcquisitionFunction
@@ -443,8 +445,6 @@ def optimize_acqf_mixed(
             transformations).
         batch_initial_conditions: A tensor to specify the initial conditions. Set
             this if you do not want to use default initialization strategy.
-        sequential: If False, uses joint optimization, otherwise uses sequential
-            optimization.
 
     Returns:
         A two-element tuple containing
@@ -454,28 +454,61 @@ def optimize_acqf_mixed(
     """
     if not fixed_features_list:
         raise ValueError("fixed_features_list must be non-empty.")
-    ff_candidate_list, ff_acq_value_list = [], []
-    for fixed_features in fixed_features_list:
-        candidate, acq_value = optimize_acqf(
+
+    if q == 1:
+        ff_candidate_list, ff_acq_value_list = [], []
+        for fixed_features in fixed_features_list:
+            candidate, acq_value = optimize_acqf(
+                acq_function=acq_function,
+                bounds=bounds,
+                q=q,
+                num_restarts=num_restarts,
+                raw_samples=raw_samples,
+                options=options or {},
+                inequality_constraints=inequality_constraints,
+                equality_constraints=equality_constraints,
+                fixed_features=fixed_features,
+                post_processing_func=post_processing_func,
+                batch_initial_conditions=batch_initial_conditions,
+                return_best_only=True,
+            )
+            ff_candidate_list.append(candidate)
+            ff_acq_value_list.append(acq_value)
+
+        ff_acq_values = torch.stack(ff_acq_value_list)
+        best = torch.argmax(ff_acq_values)
+        return ff_candidate_list[best], ff_acq_values[best]
+
+    # For batch optimization with q > 1 we do not want to enumerate all n_combos^n
+    # possible combinations of discrete choices. Instead, we use sequential greedy
+    # optimization.
+    base_X_pending = acq_function.X_pending
+    candidates = torch.tensor([], device=bounds.device, dtype=bounds.dtype)
+
+    for _ in range(q):
+        candidate, acq_value = optimize_acqf_mixed(
             acq_function=acq_function,
             bounds=bounds,
-            q=q,
+            q=1,
             num_restarts=num_restarts,
             raw_samples=raw_samples,
+            fixed_features_list=fixed_features_list,
             options=options or {},
             inequality_constraints=inequality_constraints,
             equality_constraints=equality_constraints,
-            fixed_features=fixed_features,
             post_processing_func=post_processing_func,
             batch_initial_conditions=batch_initial_conditions,
-            return_best_only=True,
-            sequential=sequential,
         )
-        ff_candidate_list.append(candidate)
-        ff_acq_value_list.append(acq_value)
-    ff_acq_values = torch.stack(ff_acq_value_list)
-    best = torch.argmax(ff_acq_values)
-    return ff_candidate_list[best], ff_acq_values[best]
+        candidates = torch.cat([candidates, candidate], dim=-2)
+        acq_function.set_X_pending(
+            torch.cat([base_X_pending, candidates], dim=-2)
+            if base_X_pending is not None
+            else candidates
+        )
+
+    acq_function.set_X_pending(base_X_pending)
+    acq_value = acq_function(candidates)  # compute joint acquisition value
+    return candidates, acq_value
 
 
 def optimize_acqf_discrete(
