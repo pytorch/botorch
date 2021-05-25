@@ -480,7 +480,7 @@ class TestOptimizeAcqfList(BotorchTestCase):
 
 class TestOptimizeAcqfMixed(BotorchTestCase):
     @mock.patch("botorch.optim.optimize.optimize_acqf")  # noqa: C901
-    def test_optimize_acqf_mixed(self, mock_optimize_acqf):
+    def test_optimize_acqf_mixed_q1(self, mock_optimize_acqf):
         num_restarts = 2
         raw_samples = 10
         q = 1
@@ -495,13 +495,9 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
 
             candidate_rvs = []
             acq_val_rvs = []
-            gcs_return_vals = [
-                (torch.rand(1, 3, **tkwargs), torch.rand(1, **tkwargs))
-                for _ in range(num_ff)
-            ]
-            for rv in gcs_return_vals:
-                candidate_rvs.append(rv[0])
-                acq_val_rvs.append(rv[1])
+            for _ in range(num_ff):
+                candidate_rvs.append(torch.rand(1, 3, **tkwargs))
+                acq_val_rvs.append(torch.rand(1, **tkwargs))
             fixed_features_list = [{i: i * 0.1} for i in range(num_ff)]
             side_effect = list(zip(candidate_rvs, acq_val_rvs))
             mock_optimize_acqf.side_effect = side_effect
@@ -550,7 +546,50 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
                     else:
                         self.assertEqual(expected_call_args[k], v)
 
-    def test_optimize_acqf_empty_ff(self):
+    @mock.patch("botorch.optim.optimize.optimize_acqf")  # noqa: C901
+    def test_optimize_acqf_mixed_q2(self, mock_optimize_acqf):
+        num_restarts = 2
+        raw_samples = 10
+        q = 2
+        options = {}
+        tkwargs = {"device": self.device}
+        bounds = torch.stack([torch.zeros(3), 4 * torch.ones(3)])
+        mock_acq_function = MockAcquisitionFunction()
+        for num_ff, dtype in itertools.product([1, 3], (torch.float, torch.double)):
+            tkwargs["dtype"] = dtype
+            mock_optimize_acqf.reset_mock()
+            bounds = bounds.to(**tkwargs)
+
+            fixed_features_list = [{i: i * 0.1} for i in range(num_ff)]
+            candidate_rvs, exp_candidates, acq_val_rvs = [], [], []
+            # generate mock side effects and compute expected outputs
+            for _ in range(q):
+                candidate_rvs_q = [torch.rand(1, 3, **tkwargs) for _ in range(num_ff)]
+                acq_val_rvs_q = [torch.rand(1, **tkwargs) for _ in range(num_ff)]
+                best = torch.argmax(torch.stack(acq_val_rvs_q))
+                exp_candidates.append(candidate_rvs_q[best])
+                candidate_rvs += candidate_rvs_q
+                acq_val_rvs += acq_val_rvs_q
+            side_effect = list(zip(candidate_rvs, acq_val_rvs))
+            mock_optimize_acqf.side_effect = side_effect
+
+            candidates, acq_value = optimize_acqf_mixed(
+                acq_function=mock_acq_function,
+                q=q,
+                fixed_features_list=fixed_features_list,
+                bounds=bounds,
+                num_restarts=num_restarts,
+                raw_samples=raw_samples,
+                options=options,
+                post_processing_func=rounding_func,
+            )
+
+            expected_candidates = torch.cat(exp_candidates, dim=-2)
+            expected_acq_value = mock_acq_function(expected_candidates)
+            self.assertTrue(torch.equal(candidates, expected_candidates))
+            self.assertTrue(torch.equal(acq_value, expected_acq_value))
+
+    def test_optimize_acqf_mixed_empty_ff(self):
         with self.assertRaises(ValueError):
             mock_acq_function = MockAcquisitionFunction()
             optimize_acqf_mixed(
