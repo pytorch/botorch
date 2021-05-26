@@ -169,6 +169,7 @@ def optimize_acqf(
             q=q,
             num_restarts=num_restarts,
             raw_samples=raw_samples,
+            fixed_features=fixed_features,
             options=options,
             inequality_constraints=inequality_constraints,
             equality_constraints=equality_constraints,
