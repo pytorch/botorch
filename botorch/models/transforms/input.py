@@ -35,6 +35,10 @@ from torch.nn import Module, ModuleDict
 class InputTransform(ABC):
     r"""Abstract base class for input transforms.
 
+    Note: Input transforms must inherit from `torch.nn.Module`. This
+        is deferred to the subclasses to avoid any potential conflict
+        between `gpytorch.module.Module` and `torch.nn.Module` in `Warp`.
+
     Properties:
         transform_on_train: A boolean indicating whether to apply the
             transform in train() mode.
@@ -91,7 +95,7 @@ class InputTransform(ABC):
     def equals(self, other: InputTransform) -> bool:
         r"""Check if another input transform is equivalent.
 
-        Note: The reason that a custom equals method is definde rather than
+        Note: The reason that a custom equals method is defined rather than
         defining an __eq__ method is because defining an __eq__ method sets
         the __hash__ method to None. Hashing modules is currently used in
         pytorch. See https://github.com/pytorch/pytorch/issues/7733.
