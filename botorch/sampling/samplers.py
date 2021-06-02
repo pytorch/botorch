@@ -227,7 +227,7 @@ class SobolQMCNormalSampler(MCSampler):
     r"""Sampler for quasi-MC base samples using Sobol sequences.
 
     Example:
-        >>> sampler = SobolQMCNormalSampler(1000, seed=1234)
+        >>> sampler = SobolQMCNormalSampler(1024, seed=1234)
         >>> posterior = model.posterior(test_X)
         >>> samples = sampler(posterior)
     """
@@ -243,7 +243,8 @@ class SobolQMCNormalSampler(MCSampler):
         r"""Sampler for quasi-MC base samples using Sobol sequences.
 
         Args:
-            num_samples: The number of samples to use.
+            num_samples: The number of samples to use. As a best practice,
+                use powers of 2.
             resample: If `True`, re-draw samples in each `forward` evaluation -
                 this results in stochastic acquisition functions (and thus should
                 not be used with deterministic optimization algorithms).
