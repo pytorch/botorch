@@ -167,7 +167,7 @@ def draw_sobol_samples(
         bounds: A `2 x d` dimensional tensor specifying box constraints on a
             `d`-dimensional space, where bounds[0, :] and bounds[1, :] correspond
             to lower and upper bounds, respectively.
-        n: The number of (q-batch) samples.
+        n: The number of (q-batch) samples. As a best practice, use powers of 2.
         q: The size of each q-batch.
         batch_shape: The batch shape of the samples. If given, returns samples
             of shape `n x batch_shape x q x d`, where each batch is an
@@ -181,7 +181,7 @@ def draw_sobol_samples(
 
     Example:
         >>> bounds = torch.stack([torch.zeros(3), torch.ones(3)])
-        >>> samples = draw_sobol_samples(bounds, 10, 2)
+        >>> samples = draw_sobol_samples(bounds, 16, 2)
     """
     batch_shape = batch_shape or torch.Size()
     batch_size = int(torch.prod(torch.tensor(batch_shape)))
@@ -210,7 +210,7 @@ def draw_sobol_normal_samples(
 
     Args:
         d: The dimension of the normal distribution.
-        n: The number of samples to return.
+        n: The number of samples to return. As a best practice, use powers of 2.
         device: The torch device.
         dtype:  The torch dtype.
         seed: The seed used for initializing Owen scrambling. If None (default),
@@ -221,7 +221,7 @@ def draw_sobol_normal_samples(
         and dtype specified by the input.
 
     Example:
-        >>> samples = draw_sobol_normal_samples(2, 10)
+        >>> samples = draw_sobol_normal_samples(2, 16)
     """
     normal_qmc_engine = NormalQMCEngine(d=d, seed=seed, inv_transform=True)
     samples = normal_qmc_engine.draw(n, dtype=torch.float if dtype is None else dtype)

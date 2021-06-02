@@ -104,7 +104,7 @@ class qExpectedImprovement(MCAcquisitionFunction):
     Example:
         >>> model = SingleTaskGP(train_X, train_Y)
         >>> best_f = train_Y.max()[0]
-        >>> sampler = SobolQMCNormalSampler(1000)
+        >>> sampler = SobolQMCNormalSampler(1024)
         >>> qEI = qExpectedImprovement(model, best_f, sampler)
         >>> qei = qEI(test_X)
     """
@@ -126,7 +126,7 @@ class qExpectedImprovement(MCAcquisitionFunction):
                 a `batch_shape`-shaped tensor, which in case of a batched model
                 specifies potentially different values for each element of the batch.
             sampler: The sampler used to draw base samples. Defaults to
-                `SobolQMCNormalSampler(num_samples=500, collapse_batch_dims=True)`
+                `SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)`
             objective: The MCAcquisitionObjective under which the samples are evalauted.
                 Defaults to `IdentityMCObjective()`.
             X_pending:  A `m x d`-dim Tensor of `m` design points that have been
@@ -174,7 +174,7 @@ class qNoisyExpectedImprovement(MCAcquisitionFunction):
 
     Example:
         >>> model = SingleTaskGP(train_X, train_Y)
-        >>> sampler = SobolQMCNormalSampler(1000)
+        >>> sampler = SobolQMCNormalSampler(1024)
         >>> qNEI = qNoisyExpectedImprovement(model, train_X, sampler)
         >>> qnei = qNEI(test_X)
     """
@@ -197,7 +197,7 @@ class qNoisyExpectedImprovement(MCAcquisitionFunction):
                 that have already been observed. These points are considered as
                 the potential best design point.
             sampler: The sampler used to draw base samples. Defaults to
-                `SobolQMCNormalSampler(num_samples=500, collapse_batch_dims=True)`.
+                `SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)`.
             objective: The MCAcquisitionObjective under which the samples are
                 evaluated. Defaults to `IdentityMCObjective()`.
             X_pending: A `batch_shape x m x d`-dim Tensor of `m` design points
@@ -239,8 +239,8 @@ class qNoisyExpectedImprovement(MCAcquisitionFunction):
         """
         q = X.shape[-2]
         X_full = torch.cat([X, match_batch_shape(self.X_baseline, X)], dim=-2)
-        # TODO (T41248036): Implement more efficient way to compute posterior
-        # over both training and test points in GPyTorch
+        # TODO: Implement more efficient way to compute posterior over both training and
+        # test points in GPyTorch (https://github.com/cornellius-gp/gpytorch/issues/567)
         posterior = self.model.posterior(X_full)
         samples = self.sampler(posterior)
         obj = self.objective(samples, X=X_full)
@@ -262,7 +262,7 @@ class qProbabilityOfImprovement(MCAcquisitionFunction):
     Example:
         >>> model = SingleTaskGP(train_X, train_Y)
         >>> best_f = train_Y.max()[0]
-        >>> sampler = SobolQMCNormalSampler(1000)
+        >>> sampler = SobolQMCNormalSampler(1024)
         >>> qPI = qProbabilityOfImprovement(model, best_f, sampler)
         >>> qpi = qPI(test_X)
     """
@@ -284,7 +284,7 @@ class qProbabilityOfImprovement(MCAcquisitionFunction):
                 be a `batch_shape`-shaped tensor, which in case of a batched model
                 specifies potentially different values for each element of the batch.
             sampler: The sampler used to draw base samples. Defaults to
-                `SobolQMCNormalSampler(num_samples=500, collapse_batch_dims=True)`
+                `SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)`
             objective: The MCAcquisitionObjective under which the samples are
                 evaluated. Defaults to `IdentityMCObjective()`.
             X_pending:  A `m x d`-dim Tensor of `m` design points that have
@@ -334,7 +334,7 @@ class qSimpleRegret(MCAcquisitionFunction):
 
     Example:
         >>> model = SingleTaskGP(train_X, train_Y)
-        >>> sampler = SobolQMCNormalSampler(1000)
+        >>> sampler = SobolQMCNormalSampler(1024)
         >>> qSR = qSimpleRegret(model, sampler)
         >>> qsr = qSR(test_X)
     """
@@ -371,7 +371,7 @@ class qUpperConfidenceBound(MCAcquisitionFunction):
 
     Example:
         >>> model = SingleTaskGP(train_X, train_Y)
-        >>> sampler = SobolQMCNormalSampler(1000)
+        >>> sampler = SobolQMCNormalSampler(1024)
         >>> qUCB = qUpperConfidenceBound(model, 0.1, sampler)
         >>> qucb = qUCB(test_X)
     """
@@ -390,7 +390,7 @@ class qUpperConfidenceBound(MCAcquisitionFunction):
             model: A fitted model.
             beta: Controls tradeoff between mean and standard deviation in UCB.
             sampler: The sampler used to draw base samples. Defaults to
-                `SobolQMCNormalSampler(num_samples=500, collapse_batch_dims=True)`
+                `SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)`
             objective: The MCAcquisitionObjective under which the samples are
                 evaluated. Defaults to `IdentityMCObjective()`.
             X_pending: A `batch_shape x m x d`-dim Tensor of `m` design points that have
