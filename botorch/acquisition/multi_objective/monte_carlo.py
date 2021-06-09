@@ -532,7 +532,7 @@ class qNoisyExpectedHypervolumeImprovement(qExpectedHypervolumeImprovement):
         # use numel() rather than view(-1) to handle case of no baseline points
         new_batch_shape = self._batch_sample_shape.numel()
         obj = obj.view(new_batch_shape, *obj.shape[-2:])
-        if self.constraints is not None:
+        if self.constraints is not None and feas is not None:
             feas = feas.view(new_batch_shape, *feas.shape[-1:])
 
         if self.partitioning is None and not self.incremental_nehvi:
@@ -542,7 +542,7 @@ class qNoisyExpectedHypervolumeImprovement(qExpectedHypervolumeImprovement):
             # due to advanced indexing
             ref_point_cpu = self.ref_point.cpu()
             obj_cpu = obj.cpu()
-            if self.constraints is not None:
+            if self.constraints is not None and feas is not None:
                 feas_cpu = feas.cpu()
                 obj_cpu = [obj_cpu[i][feas_cpu[i]] for i in range(obj.shape[0])]
             partitionings = []
