@@ -111,6 +111,11 @@ Cost-Aware Utility
 .. automodule:: botorch.acquisition.cost_aware
     :members:
 
+Risk Measures
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.acquisition.risk_measures
+    :members:
+
 
 Utilities
 -------------------------------------------
