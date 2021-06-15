@@ -10,8 +10,8 @@ on:
 
 jobs:
 
-  black:
-    name: Lint with black
+  ufmt:
+    name: Code formatting and sorting with ufmt
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -23,10 +23,10 @@ jobs:
         python-version: 3.7
     - name: Install dependencies
       run: |
-        pip install black
-    - name: Black
+        pip install ufmt
+    - name: ufmt
       run: |
-        black --check --diff .
+        ufmt diff .
 
   flake8:
     name: Lint with flake8
