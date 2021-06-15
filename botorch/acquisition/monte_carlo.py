@@ -127,7 +127,7 @@ class qExpectedImprovement(MCAcquisitionFunction):
                 specifies potentially different values for each element of the batch.
             sampler: The sampler used to draw base samples. Defaults to
                 `SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)`
-            objective: The MCAcquisitionObjective under which the samples are evalauted.
+            objective: The MCAcquisitionObjective under which the samples are evaluated.
                 Defaults to `IdentityMCObjective()`.
             X_pending:  A `m x d`-dim Tensor of `m` design points that have been
                 submitted for function evaluation but have not yet been evaluated.
