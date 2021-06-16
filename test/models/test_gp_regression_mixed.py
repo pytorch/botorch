@@ -56,7 +56,7 @@ class TestMixedSingleTaskGP(BotorchTestCase):
                     train_Y,
                     cat_dims=cat_dims,
                     input_transform=Normalize(
-                        d=d, bounds=bounds.to(**tkwargs), transform_on_preprocess=True
+                        d=d, bounds=bounds.to(**tkwargs), transform_on_train=True
                     ),
                 )
             if len(cat_dims) == 0:

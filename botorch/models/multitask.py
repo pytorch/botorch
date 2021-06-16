@@ -156,7 +156,8 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
         return x_basic, task_idcs
 
     def forward(self, x: Tensor) -> MultivariateNormal:
-        x = self.transform_inputs(x)
+        if self.training:
+            x = self.transform_inputs(x)
         x_basic, task_idcs = self._split_inputs(x)
         # Compute base mean and covariance
         mean_x = self.mean_module(x_basic)

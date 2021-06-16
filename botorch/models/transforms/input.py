@@ -23,6 +23,7 @@ from typing import List, Optional, Union
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.models.transforms.utils import expand_and_copy_tensor
+from botorch.models.utils import fantasize
 from botorch.utils.rounding import approximate_round
 from gpytorch import Module as GPyTorchModule
 from gpytorch.constraints import GreaterThan
@@ -44,13 +45,13 @@ class InputTransform(ABC):
             transform in train() mode.
         transform_on_eval: A boolean indicating whether to apply the
             transform in eval() mode.
-        transform_on_preprocess: A boolean indicating whether to apply
-            the transform when preprocessing inputs.
+        transform_on_fantasize: A boolean indicating whether to apply
+            the transform when called from within a `fantasize` call.
     """
 
     transform_on_eval: bool
     transform_on_train: bool
-    transform_on_preprocess: bool
+    transform_on_fantasize: bool
 
     def forward(self, X: Tensor) -> Tensor:
         r"""Transform the inputs to a model.
@@ -59,12 +60,14 @@ class InputTransform(ABC):
             X: A `batch_shape x n x d`-dim tensor of inputs.
 
         Returns:
-            A `batch_shape x n x d`-dim tensor of transformed inputs.
+            A `batch_shape x n' x d`-dim tensor of transformed inputs.
         """
-        if (self.training and self.transform_on_train) or (
-            not self.training and self.transform_on_eval
-        ):
-            return self.transform(X)
+        if self.training:
+            if self.transform_on_train:
+                return self.transform(X)
+        elif self.transform_on_eval:
+            if fantasize.off() or self.transform_on_fantasize:
+                return self.transform(X)
         return X
 
     @abstractmethod
@@ -111,6 +114,7 @@ class InputTransform(ABC):
             type(self) == type(other)
             and (self.transform_on_train == other.transform_on_train)
             and (self.transform_on_eval == other.transform_on_eval)
+            and (self.transform_on_fantasize == other.transform_on_fantasize)
             and all(
                 torch.allclose(v, other_state_dict[k].to(v))
                 for k, v in self.state_dict().items()
@@ -123,7 +127,7 @@ class InputTransform(ABC):
         The main use cases for this method are 1) to preprocess training data
         before calling `set_train_data` and 2) preprocess `X_baseline` for noisy
         acquisition functions so that `X_baseline` is "preprocessed" with the
-        same transformations as the cached training inputs
+        same transformations as the cached training inputs.
 
         Args:
             X: A `batch_shape x n x d`-dim tensor of inputs.
@@ -131,7 +135,7 @@ class InputTransform(ABC):
         Returns:
             A `batch_shape x n x d`-dim tensor of (transformed) inputs.
         """
-        if self.transform_on_preprocess:
+        if self.transform_on_train:
             return self.transform(X)
         return X
 
@@ -160,11 +164,11 @@ class ChainedInputTransform(InputTransform, ModuleDict):
         super().__init__(OrderedDict(transforms))
         self.transform_on_train = False
         self.transform_on_eval = False
-        self.transform_on_preprocess = False
+        self.transform_on_fantasize = False
         for tf in transforms.values():
             self.transform_on_train |= tf.transform_on_train
             self.transform_on_eval |= tf.transform_on_eval
-            self.transform_on_preprocess |= tf.transform_on_preprocess
+            self.transform_on_fantasize |= tf.transform_on_fantasize
 
     def transform(self, X: Tensor) -> Tensor:
         r"""Transform the inputs to a model.
@@ -311,7 +315,7 @@ class Normalize(ReversibleInputTransform, Module):
         batch_shape: torch.Size = torch.Size(),  # noqa: B008
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
-        transform_on_preprocess: bool = False,
+        transform_on_fantasize: bool = True,
         reverse: bool = False,
     ) -> None:
         r"""Normalize the inputs to the unit cube.
@@ -327,8 +331,8 @@ class Normalize(ReversibleInputTransform, Module):
                 transforms in train() mode. Default: True
             transform_on_eval: A boolean indicating whether to apply the
                 transform in eval() mode. Default: True
-            transform_on_preprocess: A boolean indicating whether to apply the
-                transform when preprocessing inputs. Default: False
+            transform_on_fantasize: A boolean indicating whether to apply the
+                transform when called from within a `fantasize` call. Default: True
             reverse: A boolean indicating whether the forward pass should untransform
                 the inputs.
         """
@@ -350,7 +354,7 @@ class Normalize(ReversibleInputTransform, Module):
         self._d = d
         self.transform_on_train = transform_on_train
         self.transform_on_eval = transform_on_eval
-        self.transform_on_preprocess = transform_on_preprocess
+        self.transform_on_fantasize = transform_on_fantasize
         self.reverse = reverse
         self.batch_shape = batch_shape
 
@@ -454,7 +458,7 @@ class Round(InputTransform, Module):
         indices: List[int],
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
-        transform_on_preprocess: bool = False,
+        transform_on_fantasize: bool = True,
         approximate: bool = True,
         tau: float = 1e-3,
     ) -> None:
@@ -466,8 +470,8 @@ class Round(InputTransform, Module):
                 transforms in train() mode. Default: True
             transform_on_eval: A boolean indicating whether to apply the
                 transform in eval() mode. Default: True
-            transform_on_preprocess: A boolean indicating whether to apply the
-                transform when preprocessing inputs. Default: False
+            transform_on_fantasize: A boolean indicating whether to apply the
+                transform when called from within a `fantasize` call. Default: True
             approximate: A boolean indicating whether approximate or exact
                 rounding should be used. Default: approximate
             tau: The temperature parameter for approximate rounding
@@ -475,7 +479,7 @@ class Round(InputTransform, Module):
         super().__init__()
         self.transform_on_train = transform_on_train
         self.transform_on_eval = transform_on_eval
-        self.transform_on_preprocess = transform_on_preprocess
+        self.transform_on_fantasize = transform_on_fantasize
         self.register_buffer("indices", torch.tensor(indices, dtype=torch.long))
         self.approximate = approximate
         self.tau = tau
@@ -522,7 +526,7 @@ class Log10(ReversibleInputTransform, Module):
         indices: List[int],
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
-        transform_on_preprocess: bool = False,
+        transform_on_fantasize: bool = True,
         reverse: bool = False,
     ) -> None:
         r"""Initialize transform.
@@ -533,8 +537,8 @@ class Log10(ReversibleInputTransform, Module):
                 transforms in train() mode. Default: True
             transform_on_eval: A boolean indicating whether to apply the
                 transform in eval() mode. Default: True
-            transform_on_preprocess: A boolean indicating whether to apply the
-                transform when preprocessing inputs. Default: False
+            transform_on_fantasize: A boolean indicating whether to apply the
+                transform when called from within a `fantasize` call. Default: True
             reverse: A boolean indicating whether the forward pass should untransform
                 the inputs.
         """
@@ -542,7 +546,7 @@ class Log10(ReversibleInputTransform, Module):
         self.register_buffer("indices", torch.tensor(indices, dtype=torch.long))
         self.transform_on_train = transform_on_train
         self.transform_on_eval = transform_on_eval
-        self.transform_on_preprocess = transform_on_preprocess
+        self.transform_on_fantasize = transform_on_fantasize
         self.reverse = reverse
 
     def _transform(self, X: Tensor) -> Tensor:
@@ -595,7 +599,7 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
         indices: List[int],
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
-        transform_on_preprocess: bool = False,
+        transform_on_fantasize: bool = True,
         reverse: bool = False,
         eps: float = 1e-7,
         concentration1_prior: Optional[Prior] = None,
@@ -610,8 +614,8 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
                 transforms in train() mode. Default: True.
             transform_on_eval: A boolean indicating whether to apply the
                 transform in eval() mode. Default: True.
-            transform_on_preprocess: A boolean indicating whether to apply the
-                transform when preprocessing. Default: False.
+            transform_on_fantasize: A boolean indicating whether to apply the
+                transform when called from within a `fantasize` call. Default: True
             reverse: A boolean indicating whether the forward pass should untransform
                 the inputs.
             eps: A small value used to clip values to be in the interval (0, 1).
@@ -625,7 +629,7 @@ class Warp(ReversibleInputTransform, GPyTorchModule):
         self.register_buffer("indices", torch.tensor(indices, dtype=torch.long))
         self.transform_on_train = transform_on_train
         self.transform_on_eval = transform_on_eval
-        self.transform_on_preprocess = transform_on_preprocess
+        self.transform_on_fantasize = transform_on_fantasize
         self.reverse = reverse
         self.batch_shape = batch_shape or torch.Size([])
         self._X_min = eps

@@ -7,6 +7,7 @@
 import itertools
 
 import torch
+from botorch import fit_gpytorch_model
 from botorch import settings
 from botorch.exceptions import (
     BotorchTensorDimensionError,
@@ -18,21 +19,44 @@ from botorch.models.gpytorch import (
     ModelListGPyTorchModel,
 )
 from botorch.models.transforms import Standardize
+from botorch.models.transforms.input import ChainedInputTransform, InputTransform
+from botorch.models.utils import fantasize
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.sampling.samplers import SobolQMCNormalSampler
 from botorch.utils.testing import BotorchTestCase
+from gpytorch import ExactMarginalLogLikelihood
 from gpytorch.distributions import MultivariateNormal
 from gpytorch.kernels import RBFKernel, ScaleKernel
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.means import ConstantMean
 from gpytorch.models import ExactGP, IndependentModelList
+from torch import Tensor
+
+
+class SimpleInputTransform(InputTransform, torch.nn.Module):
+    def __init__(self, transform_on_train: bool) -> None:
+        super().__init__()
+        self.transform_on_train = transform_on_train
+        self.transform_on_eval = True
+        self.transform_on_fantasize = True
+
+    def transform(self, X: Tensor) -> Tensor:
+        return X + 1.0
 
 
 class SimpleGPyTorchModel(GPyTorchModel, ExactGP):
-    def __init__(self, train_X, train_Y, outcome_transform=None):
+    last_fantasize_flag: bool = False
+
+    def __init__(self, train_X, train_Y, outcome_transform=None, input_transform=None):
+        if input_transform is not None:
+            input_transform.to(train_X)
+        with torch.no_grad():
+            transformed_X = self.transform_inputs(
+                X=train_X, input_transform=input_transform
+            )
         if outcome_transform is not None:
             train_Y, _ = outcome_transform(train_Y)
-        self._validate_tensor_args(train_X, train_Y)
+        self._validate_tensor_args(transformed_X, train_Y)
         train_Y = train_Y.squeeze(-1)
         likelihood = GaussianLikelihood()
         super().__init__(train_X, train_Y, likelihood)
@@ -40,18 +64,33 @@ class SimpleGPyTorchModel(GPyTorchModel, ExactGP):
         self.covar_module = ScaleKernel(RBFKernel())
         if outcome_transform is not None:
             self.outcome_transform = outcome_transform
+        if input_transform is not None:
+            self.input_transform = input_transform
         self._num_outputs = 1
         self.to(train_X)
+        self.transformed_call_args = []
 
     def forward(self, x):
+        self.last_fantasize_flag = fantasize.on()
+        if self.training:
+            x = self.transform_inputs(x)
+        self.transformed_call_args.append(x)
         mean_x = self.mean_module(x)
         covar_x = self.covar_module(x)
         return MultivariateNormal(mean_x, covar_x)
 
 
 class SimpleBatchedMultiOutputGPyTorchModel(BatchedMultiOutputGPyTorchModel, ExactGP):
-    def __init__(self, train_X, train_Y, outcome_transform=None):
-        self._validate_tensor_args(train_X, train_Y)
+    def __init__(self, train_X, train_Y, outcome_transform=None, input_transform=None):
+        if input_transform is not None:
+            input_transform.to(train_X)
+        with torch.no_grad():
+            transformed_X = self.transform_inputs(
+                X=train_X, input_transform=input_transform
+            )
+        if outcome_transform is not None:
+            train_Y, _ = outcome_transform(train_Y)
+        self._validate_tensor_args(transformed_X, train_Y)
         self._set_dimensions(train_X=train_X, train_Y=train_Y)
         train_X, train_Y, _ = self._transform_tensor_args(X=train_X, Y=train_Y)
         likelihood = GaussianLikelihood(batch_shape=self._aug_batch_shape)
@@ -63,9 +102,13 @@ class SimpleBatchedMultiOutputGPyTorchModel(BatchedMultiOutputGPyTorchModel, Exa
         )
         if outcome_transform is not None:
             self.outcome_transform = outcome_transform
+        if input_transform is not None:
+            self.input_transform = input_transform
         self.to(train_X)
 
     def forward(self, x):
+        if self.training:
+            x = self.transform_inputs(x)
         mean_x = self.mean_module(x)
         covar_x = self.covar_module(x)
         return MultivariateNormal(mean_x, covar_x)
@@ -173,6 +216,53 @@ class TestGPyTorchModel(BotorchTestCase):
                     BotorchTensorDimensionWarning
                 ):
                     GPyTorchModel._validate_tensor_args(X, Y[0], strict=False)
+
+    def test_fantasize_flag(self):
+        train_X = torch.rand(5, 1)
+        train_Y = torch.sin(train_X)
+        model = SimpleGPyTorchModel(train_X, train_Y)
+        model.eval()
+        test_X = torch.ones(1, 1)
+        model(test_X)
+        self.assertFalse(model.last_fantasize_flag)
+        model.posterior(test_X)
+        self.assertFalse(model.last_fantasize_flag)
+        model.fantasize(test_X, SobolQMCNormalSampler(2))
+        self.assertTrue(model.last_fantasize_flag)
+        model.last_fantasize_flag = False
+        with fantasize():
+            model.posterior(test_X)
+            self.assertTrue(model.last_fantasize_flag)
+
+    def test_input_transform(self):
+        # simple test making sure that the input transforms are applied to both
+        # train and test inputs
+        for dtype, transform_on_train in itertools.product(
+            (torch.float, torch.double), (False, True)
+        ):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            train_X = torch.rand(5, 1, **tkwargs)
+            train_Y = torch.sin(train_X)
+            intf = SimpleInputTransform(transform_on_train)
+            model = SimpleGPyTorchModel(train_X, train_Y, input_transform=intf)
+            mll = ExactMarginalLogLikelihood(model.likelihood, model)
+            fit_gpytorch_model(mll, options={"maxiter": 2})
+
+            test_X = torch.rand(2, 1, **tkwargs)
+            model.posterior(test_X)
+            # posterior calls model.forward twice, one with training inputs only,
+            # other with both train and test inputs
+            expected_train = intf(train_X) if transform_on_train else train_X
+            expected_test = intf(test_X)
+            self.assertTrue(
+                torch.equal(model.transformed_call_args[-2], expected_train)
+            )
+            self.assertTrue(
+                torch.equal(
+                    model.transformed_call_args[-1],
+                    torch.cat([expected_train, expected_test], dim=0),
+                )
+            )
 
 
 class TestBatchedMultiOutputGPyTorchModel(BotorchTestCase):
@@ -304,4 +394,66 @@ class TestModelListGPyTorchModel(BotorchTestCase):
             with self.assertRaises(NotImplementedError):
                 model.condition_on_observations(
                     X=torch.rand(2, 1, **tkwargs), Y=torch.rand(2, 2, **tkwargs)
+                )
+
+    def test_input_transform(self):
+        # test that the input transforms are applied properly to individual models
+        for dtype in (torch.float, torch.double):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            train_X1, train_X2 = (
+                torch.rand(5, 1, **tkwargs),
+                torch.rand(5, 1, **tkwargs),
+            )
+            train_Y1 = torch.sin(train_X1)
+            train_Y2 = torch.cos(train_X2)
+            # test transform on only one model
+            m1 = SimpleGPyTorchModel(train_X1, train_Y1)
+            m2_tf = SimpleInputTransform(True)
+            m2 = SimpleGPyTorchModel(train_X2, train_Y2, input_transform=m2_tf)
+            for m in [m1, m2]:
+                mll = ExactMarginalLogLikelihood(m.likelihood, m)
+                fit_gpytorch_model(mll, options={"maxiter": 2})
+            model = SimpleModelListGPyTorchModel(m1, m2)
+
+            test_X = torch.rand(2, 1, **tkwargs)
+            model.posterior(test_X)
+            # posterior calls model.forward twice, one with training inputs only,
+            # other with both train and test inputs
+            for m, t_X in [[m1, train_X1], [m2, train_X2]]:
+                expected_train = m.transform_inputs(t_X)
+                expected_test = m.transform_inputs(test_X)
+                self.assertTrue(
+                    torch.equal(m.transformed_call_args[-2], expected_train)
+                )
+                self.assertTrue(
+                    torch.equal(
+                        m.transformed_call_args[-1],
+                        torch.cat([expected_train, expected_test], dim=0),
+                    )
+                )
+
+            # different transforms on the two models
+            m1_tf = ChainedInputTransform(
+                tf1=SimpleInputTransform(False),
+                tf2=SimpleInputTransform(True),
+            )
+            m1 = SimpleGPyTorchModel(train_X1, train_Y1, input_transform=m1_tf)
+            m2_tf = SimpleInputTransform(False)
+            m2 = SimpleGPyTorchModel(train_X2, train_Y2, input_transform=m2_tf)
+            for m in [m1, m2]:
+                mll = ExactMarginalLogLikelihood(m.likelihood, m)
+                fit_gpytorch_model(mll, options={"maxiter": 2})
+            model = SimpleModelListGPyTorchModel(m1, m2)
+            model.posterior(test_X)
+            for m, t_X in [[m1, train_X1], [m2, train_X2]]:
+                expected_train = m.input_transform.preprocess_transform(t_X)
+                expected_test = m.transform_inputs(test_X)
+                self.assertTrue(
+                    torch.equal(m.transformed_call_args[-2], expected_train)
+                )
+                self.assertTrue(
+                    torch.equal(
+                        m.transformed_call_args[-1],
+                        torch.cat([expected_train, expected_test], dim=0),
+                    )
                 )

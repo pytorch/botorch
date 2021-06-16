@@ -128,6 +128,7 @@ def fit_gpytorch_model(
         for w in ws:
             has_optwarning |= issubclass(w.category, OptimizationWarning)
             warnings.warn(w.message, w.category)
+        # TODO: this counts hitting `maxiter` as an optimization failure!
         if not has_optwarning:
             _set_transformed_inputs(mll=mll)
             mll.eval()
@@ -136,6 +137,7 @@ def fit_gpytorch_model(
         logging.log(logging.DEBUG, f"Fitting failed on try {retry}.")
 
     warnings.warn("Fitting failed on all retries.", OptimizationWarning)
+    _set_transformed_inputs(mll=mll)
     return mll.eval()
 
 

@@ -145,7 +145,8 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         self.to(train_X)
 
     def forward(self, x: Tensor) -> MultivariateNormal:
-        x = self.transform_inputs(x)
+        if self.training:
+            x = self.transform_inputs(x)
         mean_x = self.mean_module(x)
         covar_x = self.covar_module(x)
         return MultivariateNormal(mean_x, covar_x)
@@ -298,7 +299,8 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         return self.condition_on_observations(X=X, Y=Y_fantasized, noise=noise)
 
     def forward(self, x: Tensor) -> MultivariateNormal:
-        x = self.transform_inputs(x)
+        if self.training:
+            x = self.transform_inputs(x)
         mean_x = self.mean_module(x)
         covar_x = self.covar_module(x)
         return MultivariateNormal(mean_x, covar_x)
