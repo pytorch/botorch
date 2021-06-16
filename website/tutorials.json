@@ -73,6 +73,10 @@
     {
       "id": "GIBBON_for_efficient_batch_entropy_search",
       "title": "The GIBBON acquisition function for efficient batch entropy search"
+    },
+    {
+      "id": "risk_averse_bo_with_environmental_variables",
+      "title": "Risk averse Bayesian optimization with environmental variables"
     }
   ],
   "Advanced Usage": [
