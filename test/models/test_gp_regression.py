@@ -61,9 +61,7 @@ class TestSingleTaskGP(BotorchTestCase):
             tkwargs = {"device": self.device, "dtype": dtype}
             octf = Standardize(m=m, batch_shape=batch_shape) if use_octf else None
             intf = (
-                Normalize(
-                    d=1, bounds=bounds.to(**tkwargs), transform_on_preprocess=True
-                )
+                Normalize(d=1, bounds=bounds.to(**tkwargs), transform_on_train=True)
                 if use_intf
                 else None
             )
@@ -72,7 +70,7 @@ class TestSingleTaskGP(BotorchTestCase):
                 m=m,
                 outcome_transform=octf,
                 input_transform=intf,
-                **tkwargs
+                **tkwargs,
             )
             mll = ExactMarginalLogLikelihood(model.likelihood, model).to(**tkwargs)
             with warnings.catch_warnings():
@@ -422,6 +420,7 @@ class TestHeteroskedasticSingleTaskGP(TestSingleTaskGP):
 
 
 def _get_pvar_expected(posterior, model, X, m):
+    X = model.transform_inputs(X)
     lh_kwargs = {}
     if isinstance(model.likelihood, FixedNoiseGaussianLikelihood):
         lh_kwargs["noise"] = model.likelihood.noise.mean().expand(X.shape[:-1])

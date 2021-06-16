@@ -335,15 +335,17 @@ class TestSetTransformedInputs(BotorchTestCase):
             tf = Normalize(
                 d=1,
                 bounds=torch.tensor([[0.0], [2.0]], dtype=dtype, device=self.device),
-                transform_on_preprocess=False,
             )
             model = SingleTaskGP(train_x, train_y, input_transform=tf)
             self.assertTrue(torch.equal(model.train_inputs[0], train_x))
             mll = ExactMarginalLogLikelihood(model.likelihood, model)
-            # check that input transform is only applied when the transform
-            # is a transform_on_preprocess is True
+            # check that input transform is only applied when
+            # transform_on_train=True
             self.assertTrue(torch.equal(model.train_inputs[0], train_x))
-            tf.transform_on_preprocess = True
+            tf.transform_on_train = False
+            _set_transformed_inputs(mll)
+            self.assertTrue(torch.equal(model.train_inputs[0], train_x))
+            tf.transform_on_train = True
             _set_transformed_inputs(mll)
             self.assertTrue(torch.equal(model.train_inputs[0], tf(train_x)))
             model.eval()

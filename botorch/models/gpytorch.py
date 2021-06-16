@@ -133,6 +133,9 @@ class GPyTorchModel(Model, ABC):
             specified.
         """
         self.eval()  # make sure model is in eval mode
+        # input transforms are applied at `posterior` in `eval` mode, and at
+        # `model.forward()` at the training time
+        X = self.transform_inputs(X)
         with gpt_posterior_settings():
             mvn = self(X)
             if observation_noise is not False:
@@ -316,6 +319,9 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
             `output_indices` each. Includes observation noise if specified.
         """
         self.eval()  # make sure model is in eval mode
+        # input transforms are applied at `posterior` in `eval` mode, and at
+        # `model.forward()` at the training time
+        X = self.transform_inputs(X)
         with gpt_posterior_settings():
             # insert a dimension for the output dimension
             if self._num_outputs > 1:
@@ -523,11 +529,14 @@ class ModelListGPyTorchModel(GPyTorchModel, ABC):
             `observation_noise` is specified.
         """
         self.eval()  # make sure model is in eval mode
+        # input transforms are applied at `posterior` in `eval` mode, and at
+        # `model.forward()` at the training time
+        transformed_X = self.transform_inputs(X)
         mvn_gen: Iterator
         with gpt_posterior_settings():
             # only compute what's necessary
             if output_indices is not None:
-                mvns = [self.forward_i(i, X) for i in output_indices]
+                mvns = [self.forward_i(i, transformed_X[i]) for i in output_indices]
                 if observation_noise is not False:
                     if torch.is_tensor(observation_noise):
                         lh_kwargs = [
@@ -536,25 +545,26 @@ class ModelListGPyTorchModel(GPyTorchModel, ABC):
                         ]
                     else:
                         lh_kwargs = [
-                            {"noise": lh.noise.mean().expand(X.shape[:-1])}
+                            {"noise": lh.noise.mean().expand(t_X.shape[:-1])}
                             if isinstance(lh, FixedNoiseGaussianLikelihood)
                             else {}
-                            for lh in self.likelihood.likelihoods
+                            for t_X, lh in zip(
+                                transformed_X, self.likelihood.likelihoods
+                            )
                         ]
                     mvns = [
-                        self.likelihood_i(i, mvn, X, **lkws)
+                        self.likelihood_i(i, mvn, transformed_X[i], **lkws)
                         for i, mvn, lkws in zip(output_indices, mvns, lh_kwargs)
                     ]
                 mvn_gen = zip(output_indices, mvns)
             else:
-                mvns = self(*[X for _ in range(self.num_outputs)])
+                mvns = self(*transformed_X)
                 if observation_noise is not False:
+                    mvnX = [(mvn, transformed_X[i]) for i, mvn in enumerate(mvns)]
                     if torch.is_tensor(observation_noise):
-                        mvns = self.likelihood(
-                            *[(mvn, X) for mvn in mvns], noise=observation_noise
-                        )
+                        mvns = self.likelihood(*mvnX, noise=observation_noise)
                     else:
-                        mvns = self.likelihood(*[(mvn, X) for mvn in mvns])
+                        mvns = self.likelihood(*mvnX)
                 mvn_gen = enumerate(mvns)
         # apply output transforms of individual models if present
         mvns = []
@@ -579,6 +589,23 @@ class ModelListGPyTorchModel(GPyTorchModel, ABC):
         raise NotImplementedError(
             f"`condition_on_observations` not implemented in {class_name}"
         )
+
+    def transform_inputs(self, X: Tensor) -> List[Tensor]:
+        r"""Individually transform the inputs for each model.
+
+        Args:
+            X: A tensor of inputs
+
+        Returns:
+            A list of tensors of transformed inputs
+        """
+        transformed_X_list = []
+        for model in self.models:
+            try:
+                transformed_X_list.append(model.input_transform(X))
+            except AttributeError:
+                transformed_X_list.append(X)
+        return transformed_X_list
 
 
 class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
@@ -631,6 +658,9 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
         X_full = _make_X_full(X=X, output_indices=output_indices, tf=self._task_feature)
 
         self.eval()  # make sure model is in eval mode
+        # input transforms are applied at `posterior` in `eval` mode, and at
+        # `model.forward()` at the training time
+        X_full = self.transform_inputs(X_full)
         with gpt_posterior_settings():
             mvn = self(X_full)
             if observation_noise is not False:

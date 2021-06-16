@@ -326,7 +326,8 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
                 )
 
     def forward(self, X: Tensor) -> MultivariateNormal:
-        X = self.transform_inputs(X)
+        if self.training:
+            X = self.transform_inputs(X)
 
         covariance_list = []
         covariance_list.append(self.covar_modules[0](X))

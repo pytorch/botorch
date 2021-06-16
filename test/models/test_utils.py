@@ -14,6 +14,7 @@ from botorch.models.utils import (
     check_min_max_scaling,
     check_no_nans,
     check_standardization,
+    fantasize,
     gpt_posterior_settings,
     multioutput_to_batch_mode_transform,
     validate_input_scaling,
@@ -212,3 +213,15 @@ class TestGPTPosteriorSettings(BotorchTestCase):
                         self.assertTrue(gpt_settings.detach_test_caches.on())
                     else:
                         self.assertTrue(gpt_settings.detach_test_caches.off())
+
+
+class TestFantasize(BotorchTestCase):
+    def test_fantasize(self):
+        self.assertFalse(fantasize.on())
+        self.assertTrue(fantasize.off())
+        with fantasize():
+            self.assertTrue(fantasize.on())
+            self.assertFalse(fantasize.off())
+        with fantasize(False):
+            self.assertFalse(fantasize.on())
+            self.assertTrue(fantasize.off())
