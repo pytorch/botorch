@@ -10,6 +10,7 @@ from copy import deepcopy
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.models.transforms.input import (
+    AppendFeatures,
     ChainedInputTransform,
     InputTransform,
     Warp,
@@ -568,3 +569,37 @@ class TestInputTransforms(BotorchTestCase):
             self.assertTrue((warp_tf.concentration0 == 2.0).all())
             warp_tf._set_concentration(i=1, value=3.0)
             self.assertTrue((warp_tf.concentration1 == 3.0).all())
+
+
+class TestAppendFeatures(BotorchTestCase):
+    def test_append_features(self):
+        with self.assertRaises(ValueError):
+            AppendFeatures(torch.ones(1))
+        with self.assertRaises(ValueError):
+            AppendFeatures(torch.ones(3, 4, 2))
+
+        for dtype in (torch.float, torch.double):
+            feature_set = (
+                torch.linspace(0, 1, 6).view(3, 2).to(device=self.device, dtype=dtype)
+            )
+            transform = AppendFeatures(feature_set=feature_set)
+            X = torch.rand(4, 5, 3, device=self.device, dtype=dtype)
+            # in train - no transform
+            transform.train()
+            transformed_X = transform(X)
+            self.assertTrue(torch.equal(X, transformed_X))
+            # in eval - yes transform
+            transform.eval()
+            transformed_X = transform(X)
+            self.assertFalse(torch.equal(X, transformed_X))
+            self.assertEqual(transformed_X.shape, torch.Size([4, 15, 5]))
+            self.assertTrue(
+                torch.equal(transformed_X[..., :3], X.repeat_interleave(3, dim=-2))
+            )
+            self.assertTrue(
+                torch.equal(transformed_X[..., 3:], feature_set.repeat(4, 5, 1))
+            )
+            # in fantasize - no transform
+            with fantasize():
+                transformed_X = transform(X)
+            self.assertTrue(torch.equal(X, transformed_X))
