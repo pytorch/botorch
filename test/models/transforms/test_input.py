@@ -12,6 +12,7 @@ from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.models.transforms.input import (
     AppendFeatures,
     ChainedInputTransform,
+    InputPerturbation,
     InputTransform,
     Warp,
     Log10,
@@ -603,3 +604,110 @@ class TestAppendFeatures(BotorchTestCase):
             with fantasize():
                 transformed_X = transform(X)
             self.assertTrue(torch.equal(X, transformed_X))
+
+
+class TestInputPerturbation(BotorchTestCase):
+    def test_input_perturbation(self):
+        with self.assertRaisesRegex(ValueError, "-dim tensor!"):
+            InputPerturbation(torch.ones(1))
+        with self.assertRaisesRegex(ValueError, "-dim tensor!"):
+            InputPerturbation(torch.ones(3, 2, 1))
+        with self.assertRaisesRegex(ValueError, "the same number of columns"):
+            InputPerturbation(torch.ones(2, 1), bounds=torch.ones(2, 4))
+
+        for dtype in (torch.float, torch.double):
+            perturbation_set = torch.tensor(
+                [[0.5, -0.3], [0.2, 0.4], [-0.7, 0.1]], device=self.device, dtype=dtype
+            )
+            transform = InputPerturbation(perturbation_set=perturbation_set)
+            X = torch.tensor(
+                [[[0.5, 0.5], [0.9, 0.7]], [[0.3, 0.2], [0.1, 0.4]]],
+                device=self.device,
+                dtype=dtype,
+            )
+            expected = torch.tensor(
+                [
+                    [
+                        [1.0, 0.2],
+                        [0.7, 0.9],
+                        [-0.2, 0.6],
+                        [1.4, 0.4],
+                        [1.1, 1.1],
+                        [0.2, 0.8],
+                    ],
+                    [
+                        [0.8, -0.1],
+                        [0.5, 0.6],
+                        [-0.4, 0.3],
+                        [0.6, 0.1],
+                        [0.3, 0.8],
+                        [-0.6, 0.5],
+                    ],
+                ],
+                device=self.device,
+                dtype=dtype,
+            )
+            # in train - no transform
+            transformed = transform(X)
+            self.assertTrue(torch.equal(transformed, X))
+            # in eval - transform
+            transform.eval()
+            transformed = transform(X)
+            self.assertTrue(torch.allclose(transformed, expected))
+            # in fantasize - no transform
+            with fantasize():
+                transformed = transform(X)
+            self.assertTrue(torch.equal(transformed, X))
+            # with bounds
+            bounds = torch.tensor(
+                [[0.0, 0.2], [1.2, 0.9]], device=self.device, dtype=dtype
+            )
+            transform = InputPerturbation(
+                perturbation_set=perturbation_set, bounds=bounds
+            )
+            transform.eval()
+            expected = torch.tensor(
+                [
+                    [
+                        [1.0, 0.2],
+                        [0.7, 0.9],
+                        [0.0, 0.6],
+                        [1.2, 0.4],
+                        [1.1, 0.9],
+                        [0.2, 0.8],
+                    ],
+                    [
+                        [0.8, 0.2],
+                        [0.5, 0.6],
+                        [0.0, 0.3],
+                        [0.6, 0.2],
+                        [0.3, 0.8],
+                        [0.0, 0.5],
+                    ],
+                ],
+                device=self.device,
+                dtype=dtype,
+            )
+            transformed = transform(X)
+            self.assertTrue(torch.allclose(transformed, expected))
+
+            # multiplicative
+            perturbation_set = torch.tensor(
+                [[0.5, 1.5], [1.0, 2.0]],
+                device=self.device,
+                dtype=dtype,
+            )
+            transform = InputPerturbation(
+                perturbation_set=perturbation_set, multiplicative=True
+            )
+            transform.eval()
+            transformed = transform(X)
+            expected = torch.tensor(
+                [
+                    [[0.25, 0.75], [0.5, 1.0], [0.45, 1.05], [0.9, 1.4]],
+                    [[0.15, 0.3], [0.3, 0.4], [0.05, 0.6], [0.1, 0.8]],
+                ],
+                device=self.device,
+                dtype=dtype,
+            )
+            self.assertTrue(torch.allclose(transformed, expected))
