@@ -11,17 +11,26 @@ import warnings
 import torch
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.fit import fit_gpytorch_model
-from botorch.models.multitask import FixedNoiseMultiTaskGP, MultiTaskGP
+from botorch.models.multitask import (
+    FixedNoiseMultiTaskGP,
+    KroneckerMultiTaskGP,
+    MultiTaskGP,
+)
 from botorch.models.transforms.input import Normalize
 from botorch.posteriors import GPyTorchPosterior
 from botorch.utils.containers import TrainingData
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
-from gpytorch.kernels import IndexKernel, MaternKernel, ScaleKernel
-from gpytorch.likelihoods import FixedNoiseGaussianLikelihood, GaussianLikelihood
+from gpytorch.kernels import IndexKernel, MaternKernel, MultitaskKernel, ScaleKernel
+from gpytorch.likelihoods import (
+    FixedNoiseGaussianLikelihood,
+    GaussianLikelihood,
+    MultitaskGaussianLikelihood,
+)
 from gpytorch.means import ConstantMean
+from gpytorch.means import MultitaskMean
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
-from gpytorch.priors import GammaPrior
+from gpytorch.priors import GammaPrior, SmoothedBoxPrior
 from gpytorch.priors.lkj_prior import LKJCovariancePrior
 
 
@@ -107,6 +116,33 @@ def _get_fixed_noise_and_prior_model(**tkwargs):
         task_covar_prior=LKJCovariancePrior(2, 0.6, sd_prior),
     )
     return model.to(**tkwargs)
+
+
+def _get_random_kronecker_mt_data(batch_shape=None, **tkwargs):
+    batch_shape = batch_shape or torch.Size()
+    train_X = (
+        torch.linspace(0, 0.95, 10, **tkwargs).unsqueeze(-1).expand(*batch_shape, 10, 1)
+    )
+    train_X = train_X + 0.05 * torch.rand(*batch_shape, 10, 2, **tkwargs)
+    train_y1 = (
+        torch.sin(train_X[..., 0] * (2 * math.pi))
+        + torch.randn_like(train_X[..., 0]) * 0.2
+    )
+    train_y2 = (
+        torch.cos(train_X[..., 1] * (2 * math.pi))
+        + torch.randn_like(train_X[..., 0]) * 0.2
+    )
+    train_Y = torch.stack([train_y1, train_y2], dim=-1)
+    return train_X, train_Y
+
+
+def _get_kronecker_model_and_training_data(
+    model_kwargs=None, batch_shape=None, **tkwargs
+):
+    model_kwargs = model_kwargs or {}
+    train_X, train_Y = _get_random_kronecker_mt_data(batch_shape=batch_shape, **tkwargs)
+    model = KroneckerMultiTaskGP(train_X, train_Y, **model_kwargs)
+    return model.to(**tkwargs), train_X, train_Y
 
 
 class TestMultiTaskGP(BotorchTestCase):
@@ -469,3 +505,142 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
             self.assertTrue(torch.equal(data_dict["train_Yvar"], train_Yvar))
             self.assertEqual(data_dict["task_feature"], 0)
             self.assertIsInstance(data_dict["task_covar_prior"], LKJCovariancePrior)
+
+
+class TestKroneckerMultiTaskGP(BotorchTestCase):
+    def test_KroneckerMultiTaskGP_default(self):
+        for batch_shape, dtype in itertools.product(
+            (torch.Size(),),  # torch.Size([3])), TODO: Fix and test batch mode
+            (torch.float, torch.double),
+        ):
+            tkwargs = {"device": self.device, "dtype": dtype}
+
+            # initialization with default settings
+            model, train_X, _ = _get_kronecker_model_and_training_data(
+                batch_shape=batch_shape, **tkwargs
+            )
+            self.assertIsInstance(model, KroneckerMultiTaskGP)
+            self.assertEqual(model.num_outputs, 2)
+            self.assertIsInstance(model.likelihood, MultitaskGaussianLikelihood)
+            self.assertEqual(model.likelihood.rank, 0)
+            self.assertIsInstance(model.mean_module, MultitaskMean)
+            self.assertIsInstance(model.covar_module, ScaleKernel)
+            base_kernel = model.covar_module.base_kernel
+            self.assertIsInstance(base_kernel, MultitaskKernel)
+            self.assertIsInstance(base_kernel.data_covar_module, MaternKernel)
+            self.assertIsInstance(base_kernel.task_covar_module, IndexKernel)
+            task_covar_prior = base_kernel.task_covar_module.IndexKernelPrior
+            self.assertIsInstance(task_covar_prior, LKJCovariancePrior)
+            self.assertEqual(task_covar_prior.correlation_prior.eta, 1.5)
+            self.assertIsInstance(task_covar_prior.sd_prior, SmoothedBoxPrior)
+            lengthscale_prior = base_kernel.data_covar_module.lengthscale_prior
+            self.assertIsInstance(lengthscale_prior, GammaPrior)
+            self.assertEqual(lengthscale_prior.concentration, 3.0)
+            self.assertEqual(lengthscale_prior.rate, 6.0)
+            self.assertEqual(base_kernel.task_covar_module.covar_factor.shape[-1], 2)
+
+            # test model fitting
+            mll = ExactMarginalLogLikelihood(model.likelihood, model)
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=OptimizationWarning)
+                mll = fit_gpytorch_model(mll, options={"maxiter": 1}, max_retries=1)
+
+            # test posterior
+            test_x = torch.rand(2, 2, **tkwargs)
+            posterior_f = model.posterior(test_x)
+            self.assertIsInstance(posterior_f, GPyTorchPosterior)
+            self.assertIsInstance(posterior_f.mvn, MultitaskMultivariateNormal)
+            self.assertEqual(posterior_f.mean.shape, torch.Size([2, 2]))
+            self.assertEqual(posterior_f.variance.shape, torch.Size([2, 2]))
+
+            # test observation noise
+            posterior_noisy = model.posterior(test_x, observation_noise=True)
+            self.assertTrue(
+                torch.allclose(
+                    posterior_noisy.variance, model.likelihood(posterior_f.mvn).variance
+                )
+            )
+
+            # test posterior (batch eval)
+            test_x = torch.rand(3, 2, 2, **tkwargs)
+            posterior_f = model.posterior(test_x)
+            self.assertIsInstance(posterior_f, GPyTorchPosterior)
+            self.assertIsInstance(posterior_f.mvn, MultitaskMultivariateNormal)
+            self.assertEqual(posterior_f.mean.shape, torch.Size([3, 2, 2]))
+            self.assertEqual(posterior_f.variance.shape, torch.Size([3, 2, 2]))
+
+    def test_KroneckerMultiTaskGP_custom(self):
+        for batch_shape, dtype in itertools.product(
+            (torch.Size(),),  # torch.Size([3])), TODO: Fix and test batch mode
+            (torch.float, torch.double),
+        ):
+            tkwargs = {"device": self.device, "dtype": dtype}
+
+            # initialization with custom settings
+            likelihood = MultitaskGaussianLikelihood(
+                num_tasks=2,
+                rank=1,
+                batch_shape=batch_shape,
+            )
+            task_covar_prior = LKJCovariancePrior(
+                n=2,
+                eta=0.5,
+                sd_prior=SmoothedBoxPrior(math.exp(-3), math.exp(2), 0.1),
+            )
+            model_kwargs = {
+                "likelihood": likelihood,
+                "task_covar_prior": task_covar_prior,
+                "rank": 1,
+            }
+
+            model, train_X, _ = _get_kronecker_model_and_training_data(
+                model_kwargs=model_kwargs, batch_shape=batch_shape, **tkwargs
+            )
+            self.assertIsInstance(model, KroneckerMultiTaskGP)
+            self.assertEqual(model.num_outputs, 2)
+            self.assertIsInstance(model.likelihood, MultitaskGaussianLikelihood)
+            self.assertEqual(model.likelihood.rank, 1)
+            self.assertIsInstance(model.mean_module, MultitaskMean)
+            self.assertIsInstance(model.covar_module, ScaleKernel)
+            base_kernel = model.covar_module.base_kernel
+            self.assertIsInstance(base_kernel, MultitaskKernel)
+            self.assertIsInstance(base_kernel.data_covar_module, MaternKernel)
+            self.assertIsInstance(base_kernel.task_covar_module, IndexKernel)
+            task_covar_prior = base_kernel.task_covar_module.IndexKernelPrior
+            self.assertIsInstance(task_covar_prior, LKJCovariancePrior)
+            self.assertEqual(task_covar_prior.correlation_prior.eta, 0.5)
+            lengthscale_prior = base_kernel.data_covar_module.lengthscale_prior
+            self.assertIsInstance(lengthscale_prior, GammaPrior)
+            self.assertEqual(lengthscale_prior.concentration, 3.0)
+            self.assertEqual(lengthscale_prior.rate, 6.0)
+            self.assertEqual(base_kernel.task_covar_module.covar_factor.shape[-1], 1)
+
+            # test model fitting
+            mll = ExactMarginalLogLikelihood(model.likelihood, model)
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=OptimizationWarning)
+                mll = fit_gpytorch_model(mll, options={"maxiter": 1}, max_retries=1)
+
+            # test posterior
+            test_x = torch.rand(2, 2, **tkwargs)
+            posterior_f = model.posterior(test_x)
+            self.assertIsInstance(posterior_f, GPyTorchPosterior)
+            self.assertIsInstance(posterior_f.mvn, MultitaskMultivariateNormal)
+            self.assertEqual(posterior_f.mean.shape, torch.Size([2, 2]))
+            self.assertEqual(posterior_f.variance.shape, torch.Size([2, 2]))
+
+            # test observation noise
+            posterior_noisy = model.posterior(test_x, observation_noise=True)
+            self.assertTrue(
+                torch.allclose(
+                    posterior_noisy.variance, model.likelihood(posterior_f.mvn).variance
+                )
+            )
+
+            # test posterior (batch eval)
+            test_x = torch.rand(3, 2, 2, **tkwargs)
+            posterior_f = model.posterior(test_x)
+            self.assertIsInstance(posterior_f, GPyTorchPosterior)
+            self.assertIsInstance(posterior_f.mvn, MultitaskMultivariateNormal)
+            self.assertEqual(posterior_f.mean.shape, torch.Size([3, 2, 2]))
+            self.assertEqual(posterior_f.variance.shape, torch.Size([3, 2, 2]))
