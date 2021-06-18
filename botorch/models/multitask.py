@@ -10,24 +10,37 @@ Multi-Task GP models.
 
 from __future__ import annotations
 
+import math
 from typing import Any, Dict, List, Optional, Tuple
 
 import torch
+from botorch.models.gp_regression import MIN_INFERRED_NOISE_LEVEL
+from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.gpytorch import MultiTaskGPyTorchModel
 from botorch.models.transforms.input import InputTransform
 from botorch.utils.containers import TrainingData
+from gpytorch.constraints import GreaterThan
+from gpytorch.distributions.multitask_multivariate_normal import (
+    MultitaskMultivariateNormal,
+)
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels.index_kernel import IndexKernel
 from gpytorch.kernels.matern_kernel import MaternKernel
+from gpytorch.kernels.multitask_kernel import MultitaskKernel
 from gpytorch.kernels.scale_kernel import ScaleKernel
 from gpytorch.likelihoods.gaussian_likelihood import (
     FixedNoiseGaussianLikelihood,
     GaussianLikelihood,
 )
+from gpytorch.likelihoods.multitask_gaussian_likelihood import (
+    MultitaskGaussianLikelihood,
+)
+from gpytorch.means import MultitaskMean
 from gpytorch.means.constant_mean import ConstantMean
 from gpytorch.models.exact_gp import ExactGP
 from gpytorch.priors.lkj_prior import LKJCovariancePrior
 from gpytorch.priors.prior import Prior
+from gpytorch.priors.smoothed_box_prior import SmoothedBoxPrior
 from gpytorch.priors.torch_priors import GammaPrior
 from torch import Tensor
 
@@ -338,3 +351,103 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
         inputs = super().construct_inputs(training_data=training_data, **kwargs)
         inputs["train_Yvar"] = training_data.Yvar
         return inputs
+
+
+class KroneckerMultiTaskGP(ExactGP, GPyTorchModel):
+    """Multi-task GP with Kronecker structure, using an ICM kernel.
+
+    This model assumes the "block design" case, i.e., it requires that all tasks
+    are observed at all data points.
+    """
+
+    def __init__(
+        self,
+        train_X: Tensor,
+        train_Y: Tensor,
+        likelihood: Optional[MultitaskGaussianLikelihood] = None,
+        task_covar_prior: Optional[Prior] = None,
+        rank: Optional[int] = None,
+        **kwargs: Any,
+    ) -> None:
+        r"""Multi-task GP with Kronecker structure, using a simple ICM kernel.
+
+        Args:
+            train_X: A `batch_shape x n x d` tensor of training features.
+            train_Y: A `batch_shape x n x m` tensor of training observations.
+            likelihood: A `MultitaskGaussianLikelihood`. If omitted, uses a
+                `MultitaskGaussianLikelihood` with a `GammaPrior(1.1, 0.05)`
+                noise prior.
+            task_covar_prior : A Prior on the task covariance matrix. Must operate
+                on p.s.d. matrices. A common prior for this is the `LKJ` prior. If
+                omitted, uses `LKJCovariancePrior` with `eta` parameter as specified
+                in the keyword arguments (if not specified, use `eta=1.5`).
+            rank: The rank of the ICM kernel. If omitted, use a full rank kernel.
+            kwargs: Additional arguments to override default settings of priors,
+                including:
+                - eta: The eta parameter on the default LKJ task_covar_prior.
+                A value of 1.0 is uninformative, values <1.0 favor stronger
+                correlations (in magnitude), correlations vanish as eta -> inf.
+                - sd_prior: A scalar prior over nonnegative numbers, which is used
+                for the default LKJCovariancePrior task_covar_prior.
+                - likelihood_rank: The rank of the task covariance matrix to fit.
+                Defaults to 0 (which corresponds to a diagonal covariance matrix).
+
+        Example:
+            >>> train_X = torch.rand(10, 2)
+            >>> train_Y = torch.cat([f_1(X), f_2(X)], dim=-1)
+            >>> model = KroneckerMultiTaskGP(train_X, train_Y)
+        """
+        self._validate_tensor_args(X=train_X, Y=train_Y)
+        self._num_outputs = train_Y.shape[-1]
+        batch_shape, ard_num_dims = train_X.shape[:-2], train_X.shape[-1]
+        num_tasks = train_Y.shape[-1]
+        if rank is None:
+            rank = num_tasks
+        if likelihood is None:
+            noise_prior = GammaPrior(1.1, 0.05)
+            noise_prior_mode = (noise_prior.concentration - 1) / noise_prior.rate
+            likelihood = MultitaskGaussianLikelihood(
+                num_tasks=num_tasks,
+                batch_shape=batch_shape,
+                noise_prior=noise_prior,
+                noise_constraint=GreaterThan(
+                    MIN_INFERRED_NOISE_LEVEL,
+                    transform=None,
+                    initial_value=noise_prior_mode,
+                ),
+                rank=kwargs.get("likelihood_rank", 0),
+            )
+        if task_covar_prior is None:
+            task_covar_prior = LKJCovariancePrior(
+                n=num_tasks,
+                eta=kwargs.get("eta", 1.5),
+                sd_prior=kwargs.get(
+                    "sd_prior",
+                    SmoothedBoxPrior(math.exp(-6), math.exp(1.25), 0.05),
+                ),
+            )
+        super().__init__(train_X, train_Y, likelihood)
+        self.mean_module = MultitaskMean(
+            base_means=ConstantMean(batch_shape=batch_shape), num_tasks=num_tasks
+        )
+        self.covar_module = ScaleKernel(
+            MultitaskKernel(
+                data_covar_module=MaternKernel(
+                    nu=2.5,
+                    ard_num_dims=ard_num_dims,
+                    lengthscale_prior=GammaPrior(3.0, 6.0),
+                    batch_shape=batch_shape,
+                ),
+                num_tasks=num_tasks,
+                rank=rank,
+                batch_shape=batch_shape,
+                task_covar_prior=task_covar_prior,
+            ),
+            batch_shape=batch_shape,
+            outputscale_prior=GammaPrior(2.0, 0.15),
+        )
+
+    def forward(self, X: Tensor) -> MultitaskMultivariateNormal:
+        mean_x = self.mean_module(X)
+        covar_x = self.covar_module(X)
+        return MultitaskMultivariateNormal(mean_x, covar_x)
