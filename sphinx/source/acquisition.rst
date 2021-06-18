@@ -61,6 +61,11 @@ Multi-Objective Analytic Acquisition Functions
     :members:
     :exclude-members: MultiObjectiveAnalyticAcquisitionFunction
 
+Multi-Objective Entropy-Based Acquisition Functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.acquisition.multi_objective.max_value_entropy_search
+    :members:
+
 Multi-Objective Monte-Carlo Acquisition Functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.acquisition.multi_objective.monte_carlo
@@ -106,6 +111,11 @@ Cost-Aware Utility
 .. automodule:: botorch.acquisition.cost_aware
     :members:
 
+Risk Measures
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.acquisition.risk_measures
+    :members:
+
 
 Utilities
 -------------------------------------------
@@ -113,6 +123,11 @@ Utilities
 Fixed Feature Acquisition Function
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.acquisition.fixed_feature
+    :members:
+
+Constructors for Acquisition Function Input Arguments
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.acquisition.input_constructors
     :members:
 
 Penalized Acquisition Function Wrapper
@@ -123,4 +138,10 @@ Penalized Acquisition Function Wrapper
 General Utilities for Acquisition Functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.acquisition.utils
+    :members:
+
+
+Multi-Objective Utilities for Acquisition Functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.acquisition.multi_objective.utils
     :members:

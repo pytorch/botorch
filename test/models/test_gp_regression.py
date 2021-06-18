@@ -39,9 +39,7 @@ class TestSingleTaskGP(BotorchTestCase):
     def _get_model_and_data(
         self, batch_shape, m, outcome_transform=None, input_transform=None, **tkwargs
     ):
-        train_X, train_Y = _get_random_data(
-            batch_shape=batch_shape, num_outputs=m, **tkwargs
-        )
+        train_X, train_Y = _get_random_data(batch_shape=batch_shape, m=m, **tkwargs)
         model_kwargs = {
             "train_X": train_X,
             "train_Y": train_Y,
@@ -63,9 +61,7 @@ class TestSingleTaskGP(BotorchTestCase):
             tkwargs = {"device": self.device, "dtype": dtype}
             octf = Standardize(m=m, batch_shape=batch_shape) if use_octf else None
             intf = (
-                Normalize(
-                    d=1, bounds=bounds.to(**tkwargs), transform_on_preprocess=True
-                )
+                Normalize(d=1, bounds=bounds.to(**tkwargs), transform_on_train=True)
                 if use_intf
                 else None
             )
@@ -74,7 +70,7 @@ class TestSingleTaskGP(BotorchTestCase):
                 m=m,
                 outcome_transform=octf,
                 input_transform=intf,
-                **tkwargs
+                **tkwargs,
             )
             mll = ExactMarginalLogLikelihood(model.likelihood, model).to(**tkwargs)
             with warnings.catch_warnings():
@@ -174,7 +170,7 @@ class TestSingleTaskGP(BotorchTestCase):
             fant_shape = torch.Size([2])
             # fantasize at different input points
             X_fant, Y_fant = _get_random_data(
-                fant_shape + batch_shape, m, n=3, **tkwargs
+                batch_shape=fant_shape + batch_shape, m=m, n=3, **tkwargs
             )
             c_kwargs = (
                 {"noise": torch.full_like(Y_fant, 0.01)}
@@ -307,7 +303,7 @@ class TestSingleTaskGP(BotorchTestCase):
             model, model_kwargs = self._get_model_and_data(
                 batch_shape=batch_shape, m=2, **tkwargs
             )
-            training_data = TrainingData(
+            training_data = TrainingData.from_block_design(
                 X=model_kwargs["train_X"], Y=model_kwargs["train_Y"]
             )
             data_dict = model.construct_inputs(training_data)
@@ -319,9 +315,7 @@ class TestFixedNoiseGP(TestSingleTaskGP):
     def _get_model_and_data(
         self, batch_shape, m, outcome_transform=None, input_transform=None, **tkwargs
     ):
-        train_X, train_Y = _get_random_data(
-            batch_shape=batch_shape, num_outputs=m, **tkwargs
-        )
+        train_X, train_Y = _get_random_data(batch_shape=batch_shape, m=m, **tkwargs)
         model_kwargs = {
             "train_X": train_X,
             "train_Y": train_Y,
@@ -356,7 +350,7 @@ class TestFixedNoiseGP(TestSingleTaskGP):
             model, model_kwargs = self._get_model_and_data(
                 batch_shape=batch_shape, m=2, **tkwargs
             )
-            training_data = TrainingData(
+            training_data = TrainingData.from_block_design(
                 X=model_kwargs["train_X"],
                 Y=model_kwargs["train_Y"],
                 Yvar=model_kwargs["train_Yvar"],
@@ -369,7 +363,7 @@ class TestFixedNoiseGP(TestSingleTaskGP):
                 torch.equal(data_dict["train_Yvar"], model_kwargs["train_Yvar"])
             )
             # if Yvars is missing, then raise error
-            training_data = TrainingData(
+            training_data = TrainingData.from_block_design(
                 X=model_kwargs["train_X"], Y=model_kwargs["train_Y"]
             )
             with self.assertRaises(ValueError):
@@ -381,9 +375,7 @@ class TestHeteroskedasticSingleTaskGP(TestSingleTaskGP):
         self, batch_shape, m, outcome_transform=None, input_transform=None, **tkwargs
     ):
         with manual_seed(0):
-            train_X, train_Y = _get_random_data(
-                batch_shape=batch_shape, num_outputs=m, **tkwargs
-            )
+            train_X, train_Y = _get_random_data(batch_shape=batch_shape, m=m, **tkwargs)
         train_Yvar = (0.1 + 0.1 * torch.rand_like(train_Y)) ** 2
         model_kwargs = {
             "train_X": train_X,
@@ -428,6 +420,7 @@ class TestHeteroskedasticSingleTaskGP(TestSingleTaskGP):
 
 
 def _get_pvar_expected(posterior, model, X, m):
+    X = model.transform_inputs(X)
     lh_kwargs = {}
     if isinstance(model.likelihood, FixedNoiseGaussianLikelihood):
         lh_kwargs["noise"] = model.likelihood.noise.mean().expand(X.shape[:-1])

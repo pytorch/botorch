@@ -55,7 +55,7 @@ def gen_candidates_scipy(
             `\sum_i (X[indices[i]] * coefficients[i]) = rhs`.
         options: Options used to control the optimization including "method"
             and "maxiter". Select method for `scipy.minimize` using the
-            method" key. By default uses L-BFGS-B for box-constrained problems
+            "method" key. By default uses L-BFGS-B for box-constrained problems
             and SLSQP if inequality or equality constraints are present.
         fixed_features: This is a dictionary of feature indices to values, where
             all generated candidates will have features fixed to these values.

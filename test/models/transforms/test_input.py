@@ -10,7 +10,9 @@ from copy import deepcopy
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.models.transforms.input import (
+    AppendFeatures,
     ChainedInputTransform,
+    InputPerturbation,
     InputTransform,
     Warp,
     Log10,
@@ -18,6 +20,7 @@ from botorch.models.transforms.input import (
     Round,
 )
 from botorch.models.transforms.utils import expand_and_copy_tensor
+from botorch.models.utils import fantasize
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.priors import LogNormalPrior
 from torch.distributions import Kumaraswamy
@@ -38,12 +41,15 @@ def get_test_warp(indices, **kwargs):
 
 class NotSoAbstractInputTransform(InputTransform, Module):
     def __init__(
-        self, transform_on_train, transform_on_eval, transform_on_preprocess=False
+        self,
+        transform_on_train,
+        transform_on_eval,
+        transform_on_fantasize=True,
     ):
         super().__init__()
         self.transform_on_train = transform_on_train
         self.transform_on_eval = transform_on_eval
-        self.transform_on_preprocess = transform_on_preprocess
+        self.transform_on_fantasize = transform_on_fantasize
 
     def transform(self, X):
         return X + 1
@@ -98,11 +104,23 @@ class TestInputTransforms(BotorchTestCase):
         ipt4 = NotSoAbstractInputTransform(
             transform_on_train=True,
             transform_on_eval=False,
-            transform_on_preprocess=True,
         )
-        self.assertTrue(torch.equal(ipt4.preprocess_transform(X), X + 1))
-        ipt4.transform_on_preprocess = False
+        self.assertTrue(torch.equal(ipt4.preprocess_transform(X), X_tf))
+        ipt4.transform_on_train = False
         self.assertTrue(torch.equal(ipt4.preprocess_transform(X), X))
+
+        # test transform_on_fantasize
+        ipt5 = NotSoAbstractInputTransform(
+            transform_on_train=True, transform_on_eval=True, transform_on_fantasize=True
+        )
+        ipt5.eval()
+        self.assertTrue(torch.equal(ipt5(X), X_tf))
+        with fantasize():
+            self.assertTrue(torch.equal(ipt5(X), X_tf))
+        ipt5.transform_on_fantasize = False
+        self.assertTrue(torch.equal(ipt5(X), X_tf))
+        with fantasize():
+            self.assertTrue(torch.equal(ipt5(X), X))
 
     def test_normalize(self):
         for dtype in (torch.float, torch.double):
@@ -236,14 +254,12 @@ class TestInputTransforms(BotorchTestCase):
             tf1 = Normalize(d=d, bounds=bounds, batch_shape=batch_shape)
             tf2 = Normalize(d=d, batch_shape=batch_shape)
             tf = ChainedInputTransform(stz_fixed=tf1, stz_learned=tf2)
+            # make copies for validation below
             tf1_, tf2_ = deepcopy(tf1), deepcopy(tf2)
             self.assertTrue(tf.training)
             self.assertEqual(sorted(tf.keys()), ["stz_fixed", "stz_learned"])
             self.assertEqual(tf["stz_fixed"], tf1)
             self.assertEqual(tf["stz_learned"], tf2)
-
-            # make copies for validation below
-            tf1_, tf2_ = deepcopy(tf1), deepcopy(tf2)
 
             X = torch.rand(*batch_shape, 4, d, device=self.device, dtype=dtype)
             X_tf = tf(X)
@@ -270,6 +286,7 @@ class TestInputTransforms(BotorchTestCase):
             tf1.transform_on_train = False
             tf2.transform_on_train = False
             tf = ChainedInputTransform(stz_fixed=tf1, stz_learned=tf2)
+            tf.train()
             self.assertTrue(torch.equal(tf(X), X))
 
             # test __eq__
@@ -280,8 +297,8 @@ class TestInputTransforms(BotorchTestCase):
             self.assertFalse(tf.equals(other_tf))
 
             # test preprocess_transform
-            tf2.transform_on_preprocess = False
-            tf1.transform_on_preprocess = True
+            tf2.transform_on_train = False
+            tf1.transform_on_train = True
             tf = ChainedInputTransform(stz_fixed=tf1, stz_learned=tf2)
             self.assertTrue(torch.equal(tf.preprocess_transform(X), tf1.transform(X)))
 
@@ -362,8 +379,9 @@ class TestInputTransforms(BotorchTestCase):
                 self.assertFalse(round_tf.equals(round_tf2))
 
                 # test preprocess_transform
+                round_tf.transform_on_train = False
                 self.assertTrue(torch.equal(round_tf.preprocess_transform(X), X))
-                round_tf.transform_on_preprocess = True
+                round_tf.transform_on_train = True
                 self.assertTrue(
                     torch.equal(round_tf.preprocess_transform(X), X_rounded)
                 )
@@ -417,8 +435,9 @@ class TestInputTransforms(BotorchTestCase):
                 self.assertFalse(log_tf.equals(log_tf2))
 
                 # test preprocess_transform
+                log_tf.transform_on_train = False
                 self.assertTrue(torch.equal(log_tf.preprocess_transform(X), X))
-                log_tf.transform_on_preprocess = True
+                log_tf.transform_on_train = True
                 self.assertTrue(torch.equal(log_tf.preprocess_transform(X), X_tf))
 
     def test_warp_transform(self):
@@ -509,8 +528,9 @@ class TestInputTransforms(BotorchTestCase):
                 self.assertFalse(warp_tf.equals(warp_tf2))
 
                 # test preprocess_transform
+                warp_tf.transform_on_train = False
                 self.assertTrue(torch.equal(warp_tf.preprocess_transform(X), X))
-                warp_tf.transform_on_preprocess = True
+                warp_tf.transform_on_train = True
                 self.assertTrue(torch.equal(warp_tf.preprocess_transform(X), X_tf))
 
                 # test _set_concentration
@@ -550,3 +570,144 @@ class TestInputTransforms(BotorchTestCase):
             self.assertTrue((warp_tf.concentration0 == 2.0).all())
             warp_tf._set_concentration(i=1, value=3.0)
             self.assertTrue((warp_tf.concentration1 == 3.0).all())
+
+
+class TestAppendFeatures(BotorchTestCase):
+    def test_append_features(self):
+        with self.assertRaises(ValueError):
+            AppendFeatures(torch.ones(1))
+        with self.assertRaises(ValueError):
+            AppendFeatures(torch.ones(3, 4, 2))
+
+        for dtype in (torch.float, torch.double):
+            feature_set = (
+                torch.linspace(0, 1, 6).view(3, 2).to(device=self.device, dtype=dtype)
+            )
+            transform = AppendFeatures(feature_set=feature_set)
+            X = torch.rand(4, 5, 3, device=self.device, dtype=dtype)
+            # in train - no transform
+            transform.train()
+            transformed_X = transform(X)
+            self.assertTrue(torch.equal(X, transformed_X))
+            # in eval - yes transform
+            transform.eval()
+            transformed_X = transform(X)
+            self.assertFalse(torch.equal(X, transformed_X))
+            self.assertEqual(transformed_X.shape, torch.Size([4, 15, 5]))
+            self.assertTrue(
+                torch.equal(transformed_X[..., :3], X.repeat_interleave(3, dim=-2))
+            )
+            self.assertTrue(
+                torch.equal(transformed_X[..., 3:], feature_set.repeat(4, 5, 1))
+            )
+            # in fantasize - no transform
+            with fantasize():
+                transformed_X = transform(X)
+            self.assertTrue(torch.equal(X, transformed_X))
+
+
+class TestInputPerturbation(BotorchTestCase):
+    def test_input_perturbation(self):
+        with self.assertRaisesRegex(ValueError, "-dim tensor!"):
+            InputPerturbation(torch.ones(1))
+        with self.assertRaisesRegex(ValueError, "-dim tensor!"):
+            InputPerturbation(torch.ones(3, 2, 1))
+        with self.assertRaisesRegex(ValueError, "the same number of columns"):
+            InputPerturbation(torch.ones(2, 1), bounds=torch.ones(2, 4))
+
+        for dtype in (torch.float, torch.double):
+            perturbation_set = torch.tensor(
+                [[0.5, -0.3], [0.2, 0.4], [-0.7, 0.1]], device=self.device, dtype=dtype
+            )
+            transform = InputPerturbation(perturbation_set=perturbation_set)
+            X = torch.tensor(
+                [[[0.5, 0.5], [0.9, 0.7]], [[0.3, 0.2], [0.1, 0.4]]],
+                device=self.device,
+                dtype=dtype,
+            )
+            expected = torch.tensor(
+                [
+                    [
+                        [1.0, 0.2],
+                        [0.7, 0.9],
+                        [-0.2, 0.6],
+                        [1.4, 0.4],
+                        [1.1, 1.1],
+                        [0.2, 0.8],
+                    ],
+                    [
+                        [0.8, -0.1],
+                        [0.5, 0.6],
+                        [-0.4, 0.3],
+                        [0.6, 0.1],
+                        [0.3, 0.8],
+                        [-0.6, 0.5],
+                    ],
+                ],
+                device=self.device,
+                dtype=dtype,
+            )
+            # in train - no transform
+            transformed = transform(X)
+            self.assertTrue(torch.equal(transformed, X))
+            # in eval - transform
+            transform.eval()
+            transformed = transform(X)
+            self.assertTrue(torch.allclose(transformed, expected))
+            # in fantasize - no transform
+            with fantasize():
+                transformed = transform(X)
+            self.assertTrue(torch.equal(transformed, X))
+            # with bounds
+            bounds = torch.tensor(
+                [[0.0, 0.2], [1.2, 0.9]], device=self.device, dtype=dtype
+            )
+            transform = InputPerturbation(
+                perturbation_set=perturbation_set, bounds=bounds
+            )
+            transform.eval()
+            expected = torch.tensor(
+                [
+                    [
+                        [1.0, 0.2],
+                        [0.7, 0.9],
+                        [0.0, 0.6],
+                        [1.2, 0.4],
+                        [1.1, 0.9],
+                        [0.2, 0.8],
+                    ],
+                    [
+                        [0.8, 0.2],
+                        [0.5, 0.6],
+                        [0.0, 0.3],
+                        [0.6, 0.2],
+                        [0.3, 0.8],
+                        [0.0, 0.5],
+                    ],
+                ],
+                device=self.device,
+                dtype=dtype,
+            )
+            transformed = transform(X)
+            self.assertTrue(torch.allclose(transformed, expected))
+
+            # multiplicative
+            perturbation_set = torch.tensor(
+                [[0.5, 1.5], [1.0, 2.0]],
+                device=self.device,
+                dtype=dtype,
+            )
+            transform = InputPerturbation(
+                perturbation_set=perturbation_set, multiplicative=True
+            )
+            transform.eval()
+            transformed = transform(X)
+            expected = torch.tensor(
+                [
+                    [[0.25, 0.75], [0.5, 1.0], [0.45, 1.05], [0.9, 1.4]],
+                    [[0.15, 0.3], [0.3, 0.4], [0.05, 0.6], [0.1, 0.8]],
+                ],
+                device=self.device,
+                dtype=dtype,
+            )
+            self.assertTrue(torch.allclose(transformed, expected))

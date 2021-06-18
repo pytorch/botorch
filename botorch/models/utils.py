@@ -17,6 +17,7 @@ from typing import List, Optional, Tuple
 import torch
 from botorch import settings
 from botorch.exceptions import InputDataError, InputDataWarning
+from botorch.settings import _Flag
 from gpytorch import settings as gpt_settings
 from gpytorch.module import Module
 from gpytorch.utils.broadcasting import _mul_broadcast_shape
@@ -262,3 +263,8 @@ def gpt_posterior_settings():
             gpt_settings.detach_test_caches(settings.propagate_grads.off())
         )
         yield
+
+
+class fantasize(_Flag):
+    r"""A flag denoting whether we are currently in a `fantasize` context."""
+    _state: bool = False

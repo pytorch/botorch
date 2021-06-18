@@ -37,7 +37,6 @@ version = get_distribution("botorch").version
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
-    "sphinx_autodoc_typehints",
     "sphinx.ext.doctest",
     "sphinx.ext.todo",
     "sphinx.ext.coverage",
@@ -73,6 +72,8 @@ autodoc_default_options = {
     "show-inheritance": True,
     "member-order": "bysource",
 }
+# show type hints in the method description
+autodoc_typehints = "description"
 
 # Inlcude init docstrings into body of autoclass directives
 autoclass_content = "both"

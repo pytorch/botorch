@@ -33,7 +33,7 @@ class NormalQMCEngine:
 
     Example:
         >>> engine = NormalQMCEngine(3)
-        >>> samples = engine.draw(10)
+        >>> samples = engine.draw(16)
     """
 
     def __init__(
@@ -63,7 +63,7 @@ class NormalQMCEngine:
         r"""Draw `n` qMC samples from the standard Normal.
 
         Args:
-            n: The number of samples to draw.
+            n: The number of samples to draw. As a best practice, use powers of 2.
             out: An option output tensor. If provided, draws are put into this
                 tensor, and the function returns None.
             dtype: The desired torch data type (ignored if `out` is provided).
@@ -104,7 +104,7 @@ class MultivariateNormalQMCEngine:
         >>> mean = torch.tensor([1.0, 2.0])
         >>> cov = torch.tensor([[1.0, 0.25], [0.25, 2.0]])
         >>> engine = MultivariateNormalQMCEngine(mean, cov)
-        >>> samples = engine.draw(10)
+        >>> samples = engine.draw(16)
     """
 
     def __init__(
@@ -149,7 +149,7 @@ class MultivariateNormalQMCEngine:
         r"""Draw `n` qMC samples from the multivariate Normal.
 
         Args:
-            n: The number of samples to draw.
+            n: The number of samples to draw. As a best practice, use powers of 2.
             out: An option output tensor. If provided, draws are put into this
                 tensor, and the function returns None.
 

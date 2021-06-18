@@ -126,9 +126,7 @@ class TestMultiTaskGP(BotorchTestCase):
             octf = Standardize(m=1) if use_octf else None
 
             intf = (
-                Normalize(
-                    d=2, bounds=bounds.to(**tkwargs), transform_on_preprocess=True
-                )
+                Normalize(d=2, bounds=bounds.to(**tkwargs), transform_on_train=True)
                 if use_intf
                 else None
             )
@@ -273,9 +271,7 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
             intf = (
-                Normalize(
-                    d=2, bounds=bounds.to(**tkwargs), transform_on_preprocess=True
-                )
+                Normalize(d=2, bounds=bounds.to(**tkwargs), transform_on_train=True)
                 if use_intf
                 else None
             )
@@ -410,7 +406,7 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
         for dtype in (torch.float, torch.double):
             tkwargs = {"device": self.device, "dtype": dtype}
             model, train_X, train_Y = _get_model_and_training_data(**tkwargs)
-            training_data = TrainingData(X=train_X, Y=train_Y)
+            training_data = TrainingData.from_block_design(X=train_X, Y=train_Y)
             # Test that task features are required.
             with self.assertRaisesRegex(ValueError, "`task_features` required"):
                 model.construct_inputs(training_data)
@@ -458,11 +454,13 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
                 train_Y,
                 train_Yvar,
             ) = _get_fixed_noise_model_and_training_data(**tkwargs)
-            td_no_Yvar = TrainingData(X=train_X, Y=train_Y)
+            td_no_Yvar = TrainingData.from_block_design(X=train_X, Y=train_Y)
             # Test that Yvar is required.
             with self.assertRaisesRegex(ValueError, "Yvar required"):
                 model.construct_inputs(td_no_Yvar)
-            training_data = TrainingData(X=train_X, Y=train_Y, Yvar=train_Yvar)
+            training_data = TrainingData.from_block_design(
+                X=train_X, Y=train_Y, Yvar=train_Yvar
+            )
             # Test that task features are required.
             with self.assertRaisesRegex(ValueError, "`task_features` required"):
                 model.construct_inputs(training_data)

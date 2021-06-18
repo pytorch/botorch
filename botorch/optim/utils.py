@@ -24,7 +24,7 @@ from botorch.optim.numpy_converter import TorchAttr, set_params_with_array
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
-from gpytorch.utils.errors import NanError
+from gpytorch.utils.errors import NanError, NotPSDError
 from torch import Tensor
 
 
@@ -213,10 +213,11 @@ def _scipy_objective_and_grad(
         args = [output, train_targets] + _get_extra_mll_args(mll)
         loss = -mll(*args).sum()
     except RuntimeError as e:
+        if isinstance(e, NotPSDError):
+            raise e
         if isinstance(e, NanError) or "singular" in e.args[0]:
             return float("nan"), np.full_like(x, "nan")
-        else:
-            raise e  # pragma: nocover
+        raise e  # pragma: nocover
     loss.backward()
     param_dict = OrderedDict(mll.named_parameters())
     grad = []
