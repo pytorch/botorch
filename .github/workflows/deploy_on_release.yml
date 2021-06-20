@@ -82,7 +82,7 @@ jobs:
       shell: bash -l {0}
       run: |
         conda install -y -c pytorch pytorch cpuonly
-        conda install -y scipy "sphinx<4.0" pytest flake8
+        conda install -y scipy sphinx pytest flake8
         conda install -y -c gpytorch gpytorch
         conda install -y conda-build anaconda-client
         conda config --set anaconda_upload no
