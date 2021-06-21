@@ -17,6 +17,7 @@ from botorch.models.multitask import (
     MultiTaskGP,
 )
 from botorch.models.transforms.input import Normalize
+from botorch.models.transforms.outcome import Standardize
 from botorch.posteriors import GPyTorchPosterior
 from botorch.utils.containers import TrainingData
 from botorch.utils.testing import BotorchTestCase
@@ -52,10 +53,16 @@ def _get_model(input_transform=None, **tkwargs):
     return _get_model_and_training_data(input_transform=input_transform, **tkwargs)[0]
 
 
-def _get_model_and_training_data(input_transform=None, **tkwargs):
+def _get_model_and_training_data(
+    input_transform=None, outcome_transform=None, **tkwargs
+):
     train_X, train_Y = _get_random_mt_data(**tkwargs)
     model = MultiTaskGP(
-        train_X, train_Y, task_feature=1, input_transform=input_transform
+        train_X,
+        train_Y,
+        task_feature=1,
+        input_transform=input_transform,
+        outcome_transform=outcome_transform,
     )
     return model.to(**tkwargs), train_X, train_Y
 
@@ -148,17 +155,19 @@ def _get_kronecker_model_and_training_data(
 class TestMultiTaskGP(BotorchTestCase):
     def test_MultiTaskGP(self):
         bounds = torch.tensor([[-1.0, 0.0], [1.0, 1.0]])
-        for dtype, use_intf in itertools.product(
-            (torch.float, torch.double), (False, True)
+        for dtype, use_intf, use_octf in itertools.product(
+            (torch.float, torch.double), (False, True), (False, True)
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
+            octf = Standardize(m=1) if use_octf else None
+
             intf = (
                 Normalize(d=2, bounds=bounds.to(**tkwargs), transform_on_train=True)
                 if use_intf
                 else None
             )
             model, train_X, _ = _get_model_and_training_data(
-                input_transform=intf, **tkwargs
+                input_transform=intf, outcome_transform=octf, **tkwargs
             )
             self.assertIsInstance(model, MultiTaskGP)
             self.assertEqual(model.num_outputs, 2)
@@ -233,10 +242,15 @@ class TestMultiTaskGP(BotorchTestCase):
             with self.assertRaises(RuntimeError):
                 MultiTaskGP(train_X, train_Y, 0, output_tasks=[2])
 
-            # test error if outcome_transform attribute is present
-            model.outcome_transform = None
-            with self.assertRaises(NotImplementedError):
-                model.posterior(test_x)
+            # test outcome transform
+            if use_octf:
+                # ensure un-transformation is applied
+                tmp_tf = model.outcome_transform
+                del model.outcome_transform
+                p_utf = model.posterior(test_x)
+                model.outcome_transform = tmp_tf
+                expected_var = tmp_tf.untransform_posterior(p_utf).variance
+                self.assertTrue(torch.allclose(posterior_f.variance, expected_var))
 
     def test_MultiTaskGP_single_output(self):
         for dtype in (torch.float, torch.double):
@@ -509,15 +523,29 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
 
 class TestKroneckerMultiTaskGP(BotorchTestCase):
     def test_KroneckerMultiTaskGP_default(self):
-        for batch_shape, dtype in itertools.product(
+        bounds = torch.tensor([[-1.0, 0.0], [1.0, 1.0]])
+
+        for batch_shape, dtype, use_intf, use_octf in itertools.product(
             (torch.Size(),),  # torch.Size([3])), TODO: Fix and test batch mode
             (torch.float, torch.double),
+            (False, True),
+            (False, True),
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
 
+            octf = Standardize(m=2) if use_octf else None
+
+            intf = (
+                Normalize(d=2, bounds=bounds.to(**tkwargs), transform_on_train=True)
+                if use_intf
+                else None
+            )
+
             # initialization with default settings
             model, train_X, _ = _get_kronecker_model_and_training_data(
-                batch_shape=batch_shape, **tkwargs
+                model_kwargs={"outcome_transform": octf, "input_transform": intf},
+                batch_shape=batch_shape,
+                **tkwargs,
             )
             self.assertIsInstance(model, KroneckerMultiTaskGP)
             self.assertEqual(model.num_outputs, 2)
@@ -553,13 +581,23 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
             self.assertEqual(posterior_f.mean.shape, torch.Size([2, 2]))
             self.assertEqual(posterior_f.variance.shape, torch.Size([2, 2]))
 
-            # test observation noise
-            posterior_noisy = model.posterior(test_x, observation_noise=True)
-            self.assertTrue(
-                torch.allclose(
-                    posterior_noisy.variance, model.likelihood(posterior_f.mvn).variance
+            if use_octf:
+                # ensure un-transformation is applied
+                tmp_tf = model.outcome_transform
+                del model.outcome_transform
+                p_tf = model.posterior(test_x)
+                model.outcome_transform = tmp_tf
+                expected_var = tmp_tf.untransform_posterior(p_tf).variance
+                self.assertTrue(torch.allclose(posterior_f.variance, expected_var))
+            else:
+                # test observation noise
+                posterior_noisy = model.posterior(test_x, observation_noise=True)
+                self.assertTrue(
+                    torch.allclose(
+                        posterior_noisy.variance,
+                        model.likelihood(posterior_f.mvn).variance,
+                    )
                 )
-            )
 
             # test posterior (batch eval)
             test_x = torch.rand(3, 2, 2, **tkwargs)

@@ -18,6 +18,7 @@ from botorch.models.gp_regression import MIN_INFERRED_NOISE_LEVEL
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.gpytorch import MultiTaskGPyTorchModel
 from botorch.models.transforms.input import InputTransform
+from botorch.models.transforms.outcome import OutcomeTransform
 from botorch.utils.containers import TrainingData
 from gpytorch.constraints import GreaterThan
 from gpytorch.distributions.multitask_multivariate_normal import (
@@ -67,6 +68,7 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
         output_tasks: Optional[List[int]] = None,
         rank: Optional[int] = None,
         input_transform: Optional[InputTransform] = None,
+        outcome_transform: Optional[OutcomeTransform] = None,
     ) -> None:
         r"""Multi-Task GP model using an ICM kernel, inferring observation noise.
 
@@ -104,6 +106,9 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
         all_tasks, task_feature, d = self.get_all_tasks(
             transformed_X, task_feature, output_tasks
         )
+        if outcome_transform is not None:
+            train_Y, _ = outcome_transform(train_Y)
+
         # squeeze output dim
         train_Y = train_Y.squeeze(-1)
         if output_tasks is None:
@@ -140,6 +145,8 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
         )
         if input_transform is not None:
             self.input_transform = input_transform
+        if outcome_transform is not None:
+            self.outcome_transform = outcome_transform
         self.to(train_X)
 
     def _split_inputs(self, x: Tensor) -> Tuple[Tensor, Tensor]:
@@ -367,6 +374,8 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel):
         likelihood: Optional[MultitaskGaussianLikelihood] = None,
         task_covar_prior: Optional[Prior] = None,
         rank: Optional[int] = None,
+        input_transform: Optional[InputTransform] = None,
+        outcome_transform: Optional[OutcomeTransform] = None,
         **kwargs: Any,
     ) -> None:
         r"""Multi-task GP with Kronecker structure, using a simple ICM kernel.
@@ -397,10 +406,20 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel):
             >>> train_Y = torch.cat([f_1(X), f_2(X)], dim=-1)
             >>> model = KroneckerMultiTaskGP(train_X, train_Y)
         """
-        self._validate_tensor_args(X=train_X, Y=train_Y)
+        if input_transform is not None:
+            input_transform.to(train_X)
+        with torch.no_grad():
+            transformed_X = self.transform_inputs(
+                X=train_X, input_transform=input_transform
+            )
+        if outcome_transform is not None:
+            train_Y, _ = outcome_transform(train_Y)
+
+        self._validate_tensor_args(X=transformed_X, Y=train_Y)
         self._num_outputs = train_Y.shape[-1]
         batch_shape, ard_num_dims = train_X.shape[:-2], train_X.shape[-1]
         num_tasks = train_Y.shape[-1]
+
         if rank is None:
             rank = num_tasks
         if likelihood is None:
@@ -447,7 +466,16 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel):
             outputscale_prior=GammaPrior(2.0, 0.15),
         )
 
+        if outcome_transform is not None:
+            self.outcome_transform = outcome_transform
+        if input_transform is not None:
+            self.input_transform = input_transform
+        self.to(train_X)
+
     def forward(self, X: Tensor) -> MultitaskMultivariateNormal:
+        if self.training:
+            X = self.transform_inputs(X)
+
         mean_x = self.mean_module(X)
         covar_x = self.covar_module(X)
         return MultitaskMultivariateNormal(mean_x, covar_x)
