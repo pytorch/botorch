@@ -447,21 +447,24 @@ class TestInputTransforms(BotorchTestCase):
             (torch.Size(), torch.Size([2])),
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
+            eps = 1e-6 if dtype == torch.double else 1e-5
 
             # basic init
             indices = [0, 2]
-            warp_tf = get_test_warp(indices, batch_shape=warp_batch_shape).to(**tkwargs)
+            warp_tf = get_test_warp(indices, batch_shape=warp_batch_shape, eps=eps).to(
+                **tkwargs
+            )
             self.assertTrue(warp_tf.training)
 
             k = Kumaraswamy(warp_tf.concentration1, warp_tf.concentration0)
 
             self.assertEqual(warp_tf.indices.tolist(), indices)
 
-            X = torch.rand(*batch_shape, 4, 3, **tkwargs)
+            X = 0.025 + 0.95 * torch.rand(*batch_shape, 4, 3, **tkwargs)
             X = X.unsqueeze(-3) if len(warp_batch_shape) > 0 else X
             with torch.no_grad():
                 warp_tf = get_test_warp(
-                    indices=indices, batch_shape=warp_batch_shape
+                    indices=indices, batch_shape=warp_batch_shape, eps=eps
                 ).to(**tkwargs)
                 X_tf = warp_tf(X)
                 expected_X_tf = expand_and_copy_tensor(
@@ -489,7 +492,10 @@ class TestInputTransforms(BotorchTestCase):
 
                 # test no transform on eval
                 warp_tf = get_test_warp(
-                    indices, transform_on_eval=False, batch_shape=warp_batch_shape
+                    indices,
+                    transform_on_eval=False,
+                    batch_shape=warp_batch_shape,
+                    eps=eps,
                 ).to(**tkwargs)
                 X_tf = warp_tf(X)
                 self.assertFalse(torch.equal(X, X_tf))
@@ -502,6 +508,7 @@ class TestInputTransforms(BotorchTestCase):
                     indices=indices,
                     transform_on_train=False,
                     batch_shape=warp_batch_shape,
+                    eps=eps,
                 ).to(**tkwargs)
                 X_tf = warp_tf(X)
                 self.assertTrue(torch.equal(X, X_tf))
@@ -514,16 +521,20 @@ class TestInputTransforms(BotorchTestCase):
                     indices=indices,
                     transform_on_train=False,
                     batch_shape=warp_batch_shape,
+                    eps=eps,
                 ).to(**tkwargs)
                 self.assertTrue(warp_tf.equals(warp_tf2))
                 # test different transform_on_train
-                warp_tf2 = get_test_warp(indices=indices, batch_shape=warp_batch_shape)
+                warp_tf2 = get_test_warp(
+                    indices=indices, batch_shape=warp_batch_shape, eps=eps
+                )
                 self.assertFalse(warp_tf.equals(warp_tf2))
                 # test different indices
                 warp_tf2 = get_test_warp(
                     indices=[0, 1],
                     transform_on_train=False,
                     batch_shape=warp_batch_shape,
+                    eps=eps,
                 ).to(**tkwargs)
                 self.assertFalse(warp_tf.equals(warp_tf2))
 
@@ -545,6 +556,7 @@ class TestInputTransforms(BotorchTestCase):
                     concentration0_prior=prior0,
                     concentration1_prior=prior1,
                     batch_shape=warp_batch_shape,
+                    eps=eps,
                 )
                 for i, (name, _, p, _, _) in enumerate(warp_tf.named_priors()):
                     self.assertEqual(name, f"concentration{i}_prior")
@@ -554,9 +566,9 @@ class TestInputTransforms(BotorchTestCase):
             # test gradients
             X = 1 + 5 * torch.rand(*batch_shape, 4, 3, **tkwargs)
             X = X.unsqueeze(-3) if len(warp_batch_shape) > 0 else X
-            warp_tf = get_test_warp(indices=indices, batch_shape=warp_batch_shape).to(
-                **tkwargs
-            )
+            warp_tf = get_test_warp(
+                indices=indices, batch_shape=warp_batch_shape, eps=eps
+            ).to(**tkwargs)
             X_tf = warp_tf(X)
             X_tf.sum().backward()
             for grad in (warp_tf.concentration0.grad, warp_tf.concentration1.grad):
