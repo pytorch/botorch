@@ -96,8 +96,6 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
             >>> train_Y = torch.cat(f1(X1), f2(X2)).unsqueeze(-1)
             >>> model = MultiTaskGP(train_X, train_Y, task_feature=-1)
         """
-        if input_transform is not None:
-            input_transform.to(train_X)
         with torch.no_grad():
             transformed_X = self.transform_inputs(
                 X=train_X, input_transform=input_transform
@@ -312,8 +310,6 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
             >>> train_Yvar = 0.1 + 0.1 * torch.rand_like(train_Y)
             >>> model = FixedNoiseMultiTaskGP(train_X, train_Y, train_Yvar, -1)
         """
-        if input_transform is not None:
-            input_transform.to(train_X)
         with torch.no_grad():
             transformed_X = self.transform_inputs(
                 X=train_X, input_transform=input_transform
@@ -406,8 +402,6 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel):
             >>> train_Y = torch.cat([f_1(X), f_2(X)], dim=-1)
             >>> model = KroneckerMultiTaskGP(train_X, train_Y)
         """
-        if input_transform is not None:
-            input_transform.to(train_X)
         with torch.no_grad():
             transformed_X = self.transform_inputs(
                 X=train_X, input_transform=input_transform
