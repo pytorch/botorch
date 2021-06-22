@@ -168,7 +168,11 @@ class TestOutcomeTransforms(BotorchTestCase):
             samples2 = p_utf2.rsample(sample_shape=torch.Size([4, 2]))
             self.assertEqual(samples2.shape, torch.Size([4, 2]) + shape)
 
-            # TODO implement and test incompatible output dimensions
+            # test error on incompatible output dimension
+            # TODO: add a unit test for MTGP posterior once #840 goes in
+            tf_big = Standardize(m=4).eval()
+            with self.assertRaises(RuntimeError):
+                tf_big.untransform_posterior(posterior2)
 
         # test transforming a subset of outcomes
         for batch_shape, dtype in itertools.product(batch_shapes, dtypes):
