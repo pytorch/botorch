@@ -326,7 +326,10 @@ class Standardize(OutcomeTransform):
                 "Standardize does not yet support output selection for "
                 "untransform_posterior"
             )
-        if not self._m == posterior.event_shape[-1] and not posterior._is_mt:
+        is_mtgp_posterior = False
+        if isinstance(posterior, GPyTorchPosterior):
+            is_mtgp_posterior = posterior._is_mt
+        if not self._m == posterior.event_shape[-1] and not is_mtgp_posterior:
             raise RuntimeError(
                 "Incompatible output dimensions encountered for transform "
                 f"{self._m} and posterior {posterior.event_shape[-1]}."
