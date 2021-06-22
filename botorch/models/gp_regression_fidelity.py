@@ -95,8 +95,6 @@ class SingleTaskMultiFidelityGP(SingleTaskGP):
             raise UnsupportedError(
                 "SingleTaskMultiFidelityGP requires at least one fidelity parameter."
             )
-        if input_transform is not None:
-            input_transform.to(train_X)
         with torch.no_grad():
             transformed_X = self.transform_inputs(
                 X=train_X, input_transform=input_transform
@@ -207,8 +205,6 @@ class FixedNoiseMultiFidelityGP(FixedNoiseGP):
             raise UnsupportedError(
                 "FixedNoiseMultiFidelityGP requires at least one fidelity parameter."
             )
-        if input_transform is not None:
-            input_transform.to(train_X)
         with torch.no_grad():
             transformed_X = self.transform_inputs(
                 X=train_X, input_transform=input_transform
