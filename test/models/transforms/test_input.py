@@ -460,8 +460,8 @@ class TestInputTransforms(BotorchTestCase):
 
             self.assertEqual(warp_tf.indices.tolist(), indices)
 
-            # We don't want these data points to end up all the way near zero, since this
-            # would cause numerical issues and thus result in aflaky test.
+            # We don't want these data points to end up all the way near zero, since
+            # this would cause numerical issues and thus result in a flaky test.
             X = 0.025 + 0.95 * torch.rand(*batch_shape, 4, 3, **tkwargs)
             X = X.unsqueeze(-3) if len(warp_batch_shape) > 0 else X
             with torch.no_grad():
