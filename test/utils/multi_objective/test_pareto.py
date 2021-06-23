@@ -6,8 +6,13 @@
 
 from __future__ import annotations
 
+from itertools import product
+
 import torch
-from botorch.utils.multi_objective.pareto import is_non_dominated
+from botorch.utils.multi_objective.pareto import (
+    is_non_dominated,
+    _is_non_dominated_loop,
+)
 from botorch.utils.testing import BotorchTestCase
 
 
@@ -132,3 +137,76 @@ class TestPareto(BotorchTestCase):
                 *batch_Y3.shape[:-2], 0, dtype=torch.bool, device=Y3.device
             )
             self.assertTrue(torch.equal(expected_mask, mask))
+
+    def test_is_non_dominated_loop(self):
+        n = 20
+        tkwargs = {"device": self.device}
+        for dtype, batch_shape, m, maximize in product(
+            (torch.float, torch.double),
+            (torch.Size([]), torch.Size([2])),
+            (1, 2, 3),
+            (True, False),
+        ):
+            tkwargs["dtype"] = dtype
+            Y = torch.rand(batch_shape + torch.Size([n, m]), **tkwargs)
+            pareto_mask = _is_non_dominated_loop(
+                # this is so that we can assume maximization in the test
+                # code
+                Y=Y if maximize else -Y,
+                maximize=maximize,
+            )
+            self.assertEqual(pareto_mask.shape, Y.shape[:-1])
+            self.assertEqual(pareto_mask.dtype, torch.bool)
+            self.assertEqual(pareto_mask.device.type, self.device.type)
+            if len(batch_shape) > 0:
+                pareto_masks = [pareto_mask[i] for i in range(pareto_mask.shape[0])]
+            else:
+                pareto_masks = [pareto_mask]
+                Y = Y.unsqueeze(0)
+            for i, mask in enumerate(pareto_masks):
+                pareto_Y = Y[i][mask]
+                pareto_indices = mask.nonzero().view(-1)
+                if pareto_Y.shape[0] > 1:
+                    # compare against other pareto points
+                    point_mask = torch.zeros(
+                        pareto_Y.shape[0], dtype=torch.bool, device=self.device
+                    )
+                    Y_not_j_mask = torch.ones(
+                        Y[i].shape[0], dtype=torch.bool, device=self.device
+                    )
+                    for j in range(pareto_Y.shape[0]):
+                        point_mask[j] = True
+                        # check each pareto point is non-dominated
+                        Y_idx = pareto_indices[j].item()
+                        Y_not_j_mask[Y_idx] = False
+                        self.assertFalse(
+                            (pareto_Y[point_mask] <= Y[i][Y_not_j_mask])
+                            .all(dim=-1)
+                            .any()
+                        )
+                        Y_not_j_mask[Y_idx] = True
+                        if pareto_Y.shape[0] > 1:
+                            # check that each point is better than
+                            # pareto_Y[j] in some objective
+                            j_better_than_Y = (
+                                pareto_Y[point_mask] > pareto_Y[~point_mask]
+                            )
+                            best_obj_mask = torch.zeros(
+                                m, dtype=torch.bool, device=self.device
+                            )
+                            for k in range(m):
+                                best_obj_mask[k] = True
+                                j_k_better_than_Y = j_better_than_Y[:, k]
+                                if j_k_better_than_Y.any():
+                                    self.assertTrue(
+                                        (
+                                            pareto_Y[point_mask, ~best_obj_mask]
+                                            < pareto_Y[~point_mask][j_k_better_than_Y][
+                                                :, ~best_obj_mask
+                                            ]
+                                        )
+                                        .any(dim=-1)
+                                        .all()
+                                    )
+                                best_obj_mask[k] = False
+                        point_mask[j] = False
