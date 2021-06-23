@@ -552,9 +552,8 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
             self.assertIsInstance(model.likelihood, MultitaskGaussianLikelihood)
             self.assertEqual(model.likelihood.rank, 0)
             self.assertIsInstance(model.mean_module, MultitaskMean)
-            self.assertIsInstance(model.covar_module, ScaleKernel)
-            base_kernel = model.covar_module.base_kernel
-            self.assertIsInstance(base_kernel, MultitaskKernel)
+            self.assertIsInstance(model.covar_module, MultitaskKernel)
+            base_kernel = model.covar_module
             self.assertIsInstance(base_kernel.data_covar_module, MaternKernel)
             self.assertIsInstance(base_kernel.task_covar_module, IndexKernel)
             task_covar_prior = base_kernel.task_covar_module.IndexKernelPrior
@@ -591,6 +590,7 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
                 self.assertTrue(torch.allclose(posterior_f.variance, expected_var))
             else:
                 # test observation noise
+                # TODO: outcome transform + likelihood noise?
                 posterior_noisy = model.posterior(test_x, observation_noise=True)
                 self.assertTrue(
                     torch.allclose(
@@ -639,9 +639,8 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
             self.assertIsInstance(model.likelihood, MultitaskGaussianLikelihood)
             self.assertEqual(model.likelihood.rank, 1)
             self.assertIsInstance(model.mean_module, MultitaskMean)
-            self.assertIsInstance(model.covar_module, ScaleKernel)
-            base_kernel = model.covar_module.base_kernel
-            self.assertIsInstance(base_kernel, MultitaskKernel)
+            self.assertIsInstance(model.covar_module, MultitaskKernel)
+            base_kernel = model.covar_module
             self.assertIsInstance(base_kernel.data_covar_module, MaternKernel)
             self.assertIsInstance(base_kernel.task_covar_module, IndexKernel)
             task_covar_prior = base_kernel.task_covar_module.IndexKernelPrior
