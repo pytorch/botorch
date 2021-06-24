@@ -35,6 +35,7 @@ from botorch.acquisition.multi_objective import (
 )
 from botorch.acquisition.multi_objective.objective import (
     IdentityAnalyticMultiOutputObjective,
+    IdentityMCMultiOutputObjective,
 )
 from botorch.acquisition.multi_objective.utils import get_default_partitioning_alpha
 from botorch.acquisition.objective import (
@@ -48,6 +49,7 @@ from botorch.sampling.samplers import IIDNormalSampler, MCSampler, SobolQMCNorma
 from botorch.utils.constraints import get_outcome_constraint_transforms
 from botorch.utils.containers import TrainingData
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
+    FastNondominatedPartitioning,
     NondominatedPartitioning,
 )
 from torch import Tensor
@@ -473,6 +475,15 @@ def construct_inputs_qUCB(
     return {**base_inputs, "beta": beta}
 
 
+def _get_sampler(mc_samples: int, qmc: bool) -> MCSampler:
+    """Set up MC sampler for q(N)EHVI."""
+    # initialize the sampler
+    seed = int(torch.randint(1, 10000, (1,)).item())
+    if qmc:
+        return SobolQMCNormalSampler(num_samples=mc_samples, seed=seed)
+    return IIDNormalSampler(num_samples=mc_samples, seed=seed)
+
+
 @acqf_input_constructor(ExpectedHypervolumeImprovement)
 def construct_inputs_EHVI(
     model: Model,
@@ -503,12 +514,17 @@ def construct_inputs_EHVI(
     if Y_pmean is None:
         with torch.no_grad():
             Y_pmean = model.posterior(X_observed).mean
-
-    partitioning = NondominatedPartitioning(
-        ref_point=ref_point,
-        Y=objective(Y_pmean),
-        alpha=alpha,
-    )
+    if alpha > 0:
+        partitioning = NondominatedPartitioning(
+            ref_point=ref_point,
+            Y=objective(Y_pmean),
+            alpha=alpha,
+        )
+    else:
+        partitioning = FastNondominatedPartitioning(
+            ref_point=ref_point,
+            Y=objective(Y_pmean),
+        )
 
     return {
         "model": model,
@@ -543,6 +559,9 @@ def construct_inputs_qEHVI(
         feas = torch.stack([c(Y_pmean) <= 0 for c in cons_tfs], dim=-1).all(dim=-1)
         Y_pmean = Y_pmean[feas]
 
+    if objective is None:
+        objective = IdentityMCMultiOutputObjective()
+
     ehvi_kwargs = construct_inputs_EHVI(
         model=model,
         training_data=training_data,
@@ -554,17 +573,11 @@ def construct_inputs_qEHVI(
         **kwargs,
     )
 
-    # Set up sampler
     sampler = kwargs.get("sampler")
     if sampler is None:
-        mc_samples = kwargs.get("mc_samples", 128)
-        qmc = kwargs.get("qmc", True)
-        # initialize the sampler
-        seed = int(torch.randint(1, 10000, (1,)).item())
-        if qmc:
-            sampler = SobolQMCNormalSampler(num_samples=mc_samples, seed=seed)
-        else:
-            sampler = IIDNormalSampler(num_samples=mc_samples, seed=seed)
+        sampler = _get_sampler(
+            mc_samples=kwargs.get("mc_samples", 128), qmc=kwargs.get("qmc", True)
+        )
 
     add_qehvi_kwargs = {
         "sampler": sampler,
@@ -587,7 +600,7 @@ def construct_inputs_qNEHVI(
     # This selects the objectives (a subset of the outcomes) and set each
     # objective threhsold to have the proper optimization direction.
     if objective is None:
-        objective = IdentityAnalyticMultiOutputObjective()
+        objective = IdentityMCMultiOutputObjective()
 
     outcome_constraints = kwargs.pop("outcome_constraints", None)
     if outcome_constraints is None:
@@ -595,16 +608,22 @@ def construct_inputs_qNEHVI(
     else:
         cons_tfs = get_outcome_constraint_transforms(outcome_constraints)
 
+    sampler = kwargs.get("sampler")
+    if sampler is None:
+        sampler = _get_sampler(
+            mc_samples=kwargs.get("mc_samples", 128), qmc=kwargs.get("qmc", True)
+        )
+
     return {
         "model": model,
         "ref_point": objective(objective_thresholds),
         "X_baseline": kwargs.get("X_baseline", training_data.X),
-        "sampler": kwargs.get("sampler"),
+        "sampler": sampler,
         "objective": objective,
         "constraints": cons_tfs,
         "X_pending": kwargs.get("X_pending"),
         "eta": kwargs.get("eta", 1e-3),
-        "prune_baseline": kwargs.get("prune_baseline", False),
+        "prune_baseline": kwargs.get("prune_baseline", True),
         "alpha": kwargs.get("alpha", 0.0),
         "cache_pending": kwargs.get("cache_pending", True),
         "max_iep": kwargs.get("max_iep", 0),

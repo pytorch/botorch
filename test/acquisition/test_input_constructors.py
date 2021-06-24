@@ -35,6 +35,7 @@ from botorch.acquisition.multi_objective import (
 )
 from botorch.acquisition.multi_objective.objective import (
     IdentityAnalyticMultiOutputObjective,
+    IdentityMCMultiOutputObjective,
     WeightedMCMultiOutputObjective,
 )
 from botorch.acquisition.multi_objective.utils import get_default_partitioning_alpha
@@ -47,6 +48,7 @@ from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.constraints import get_outcome_constraint_transforms
 from botorch.utils.containers import TrainingData
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
+    FastNondominatedPartitioning,
     NondominatedPartitioning,
 )
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
@@ -304,7 +306,7 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
     def test_construct_inputs_EHVI(self):
         c = get_acqf_input_constructor(ExpectedHypervolumeImprovement)
         mock_model = mock.Mock()
-        objective_thresholds = torch.rand(2)
+        objective_thresholds = torch.rand(6)
 
         # test error on unsupported outcome constraints
         with self.assertRaises(NotImplementedError):
@@ -316,7 +318,7 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
             )
 
         # test with Y_pmean supplied explicitly
-        Y_pmean = torch.rand(3, 2)
+        Y_pmean = torch.rand(3, 6)
         kwargs = c(
             model=mock_model,
             training_data=self.bd_td,
@@ -325,13 +327,24 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         )
         self.assertEqual(kwargs["model"], mock_model)
         self.assertIsInstance(kwargs["objective"], IdentityAnalyticMultiOutputObjective)
-        ref_point_expected = objective_thresholds
-        self.assertTrue(torch.equal(kwargs["ref_point"], ref_point_expected))
+        self.assertTrue(torch.equal(kwargs["ref_point"], objective_thresholds))
         partitioning = kwargs["partitioning"]
-        alpha_expected = get_default_partitioning_alpha(2)
+        alpha_expected = get_default_partitioning_alpha(6)
         self.assertIsInstance(partitioning, NondominatedPartitioning)
         self.assertEqual(partitioning.alpha, alpha_expected)
-        self.assertTrue(torch.equal(partitioning._neg_ref_point, -ref_point_expected))
+        self.assertTrue(torch.equal(partitioning._neg_ref_point, -objective_thresholds))
+
+        Y_pmean = torch.rand(3, 2)
+        objective_thresholds = torch.rand(2)
+        kwargs = c(
+            model=mock_model,
+            training_data=self.bd_td,
+            objective_thresholds=objective_thresholds,
+            Y_pmean=Y_pmean,
+        )
+        partitioning = kwargs["partitioning"]
+        self.assertIsInstance(partitioning, FastNondominatedPartitioning)
+        self.assertTrue(torch.equal(partitioning.ref_point, objective_thresholds))
 
         # test with custom objective
         weights = torch.rand(2)
@@ -363,13 +376,10 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
             objective_thresholds=objective_thresholds,
         )
         self.assertIsInstance(kwargs["objective"], IdentityAnalyticMultiOutputObjective)
-        ref_point_expected = objective_thresholds
-        self.assertTrue(torch.equal(kwargs["ref_point"], ref_point_expected))
+        self.assertTrue(torch.equal(kwargs["ref_point"], objective_thresholds))
         partitioning = kwargs["partitioning"]
-        alpha_expected = get_default_partitioning_alpha(2)
-        self.assertIsInstance(partitioning, NondominatedPartitioning)
-        self.assertEqual(partitioning.alpha, alpha_expected)
-        self.assertTrue(torch.equal(partitioning._neg_ref_point, -ref_point_expected))
+        self.assertIsInstance(partitioning, FastNondominatedPartitioning)
+        self.assertTrue(torch.equal(partitioning.ref_point, objective_thresholds))
         self.assertTrue(torch.equal(partitioning._neg_Y, -mean))
 
     def test_construct_inputs_qEHVI(self):
@@ -378,21 +388,19 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
 
         # Test defaults
         mean = torch.rand(1, 2)
-        variance = torch.ones(1, 1)
+        variance = torch.ones(1, 2)
         mm = MockModel(MockPosterior(mean=mean, variance=variance))
         kwargs = c(
             model=mm,
             training_data=self.bd_td,
             objective_thresholds=objective_thresholds,
         )
-        self.assertIsInstance(kwargs["objective"], IdentityAnalyticMultiOutputObjective)
+        self.assertIsInstance(kwargs["objective"], IdentityMCMultiOutputObjective)
         ref_point_expected = objective_thresholds
         self.assertTrue(torch.equal(kwargs["ref_point"], ref_point_expected))
         partitioning = kwargs["partitioning"]
-        alpha_expected = get_default_partitioning_alpha(2)
-        self.assertIsInstance(partitioning, NondominatedPartitioning)
-        self.assertEqual(partitioning.alpha, alpha_expected)
-        self.assertTrue(torch.equal(partitioning._neg_ref_point, -ref_point_expected))
+        self.assertIsInstance(partitioning, FastNondominatedPartitioning)
+        self.assertTrue(torch.equal(partitioning.ref_point, ref_point_expected))
         self.assertTrue(torch.equal(partitioning._neg_Y, -mean))
         sampler = kwargs["sampler"]
         self.assertIsInstance(sampler, SobolQMCNormalSampler)
@@ -468,12 +476,13 @@ class TestMultiObjectiveAcquisitionFunctionInputConstructors(
         ref_point_expected = objective_thresholds
         self.assertTrue(torch.equal(kwargs["ref_point"], ref_point_expected))
         self.assertTrue(torch.equal(kwargs["X_baseline"], self.bd_td.X))
-        self.assertIsNone(kwargs["sampler"])
-        self.assertIsInstance(kwargs["objective"], IdentityAnalyticMultiOutputObjective)
+        self.assertIsInstance(kwargs["sampler"], SobolQMCNormalSampler)
+        self.assertEqual(kwargs["sampler"].sample_shape, torch.Size([128]))
+        self.assertIsInstance(kwargs["objective"], IdentityMCMultiOutputObjective)
         self.assertIsNone(kwargs["constraints"])
         self.assertIsNone(kwargs["X_pending"])
         self.assertEqual(kwargs["eta"], 1e-3)
-        self.assertFalse(kwargs["prune_baseline"])
+        self.assertTrue(kwargs["prune_baseline"])
         self.assertEqual(kwargs["alpha"], 0.0)
         self.assertTrue(kwargs["cache_pending"])
         self.assertEqual(kwargs["max_iep"], 0)
