@@ -33,13 +33,19 @@ from torch.quasirandom import SobolEngine
 
 
 def get_default_partitioning_alpha(num_objectives: int) -> float:
-    """Adaptively selects a reasonable partitioning based on the number of objectives.
+    r"""Determines an approximation level based on the number of objectives.
 
-    This strategy is derived from the results in [Daulton2020qehvi]_, which suggest
-    that this heuristic provides a reasonable trade-off between the closed-loop
-    performance and the wall time required for the partitioning.
+    If `alpha` is 0, FastNondominatedPartitioning should be used. Otherwise,
+    an approximate NondominatedPartitioning should be used with approximation
+    level `alpha`.
+
+    Args:
+        num_objectives: the number of objectives.
+
+    Returns:
+        The approximation level `alpha`.
     """
-    if num_objectives == 2:
+    if num_objectives <= 4:
         return 0.0
     elif num_objectives > 6:
         warnings.warn("EHVI works best for less than 7 objectives.", BotorchWarning)
