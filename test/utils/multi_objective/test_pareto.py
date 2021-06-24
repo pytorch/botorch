@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 from itertools import product
+from unittest.mock import patch
 
 import torch
 from botorch.utils.multi_objective.pareto import (
@@ -137,6 +138,14 @@ class TestPareto(BotorchTestCase):
                 *batch_Y3.shape[:-2], 0, dtype=torch.bool, device=Y3.device
             )
             self.assertTrue(torch.equal(expected_mask, mask))
+            with patch(
+                "botorch.utils.multi_objective.pareto._is_non_dominated_loop"
+            ) as mock_is_non_dominated_loop:
+                y = torch.rand(1001, 2, dtype=dtype, device=Y3.device)
+                is_non_dominated(y)
+                mock_is_non_dominated_loop.assert_called_once()
+                cargs = mock_is_non_dominated_loop.call_args[0]
+                self.assertTrue(torch.equal(cargs[0], y))
 
     def test_is_non_dominated_loop(self):
         n = 20
