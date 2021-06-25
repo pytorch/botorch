@@ -8,9 +8,13 @@ from botorch.acquisition.multi_objective.analytic import (
     ExpectedHypervolumeImprovement,
     MultiObjectiveAnalyticAcquisitionFunction,
 )
+from botorch.acquisition.multi_objective.max_value_entropy_search import (
+    qMultiObjectiveMaxValueEntropy,
+)
 from botorch.acquisition.multi_objective.monte_carlo import (
     MultiObjectiveMCAcquisitionFunction,
     qExpectedHypervolumeImprovement,
+    qNoisyExpectedHypervolumeImprovement,
 )
 from botorch.acquisition.multi_objective.objective import (
     AnalyticMultiOutputObjective,
@@ -21,9 +25,18 @@ from botorch.acquisition.multi_objective.objective import (
     UnstandardizeMCMultiOutputObjective,
     WeightedMCMultiOutputObjective,
 )
+from botorch.acquisition.multi_objective.utils import (
+    get_default_partitioning_alpha,
+    prune_inferior_points_multi_objective,
+)
 
 
 __all__ = [
+    "get_default_partitioning_alpha",
+    "prune_inferior_points_multi_objective",
+    "qExpectedHypervolumeImprovement",
+    "qNoisyExpectedHypervolumeImprovement",
+    "qMultiObjectiveMaxValueEntropy",
     "AnalyticMultiOutputObjective",
     "ExpectedHypervolumeImprovement",
     "IdentityAnalyticMultiOutputObjective",
@@ -31,7 +44,6 @@ __all__ = [
     "MCMultiOutputObjective",
     "MultiObjectiveAnalyticAcquisitionFunction",
     "MultiObjectiveMCAcquisitionFunction",
-    "qExpectedHypervolumeImprovement",
     "UnstandardizeAnalyticMultiOutputObjective",
     "UnstandardizeMCMultiOutputObjective",
     "WeightedMCMultiOutputObjective",

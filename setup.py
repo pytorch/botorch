@@ -29,7 +29,7 @@ if sys.version_info < (REQUIRED_MAJOR, REQUIRED_MINOR):
 
 TEST_REQUIRES = ["pytest", "pytest-cov"]
 
-DEV_REQUIRES = TEST_REQUIRES + ["black", "flake8", "sphinx", "sphinx-autodoc-typehints"]
+DEV_REQUIRES = TEST_REQUIRES + ["black", "flake8", "sphinx", "usort"]
 
 TUTORIALS_REQUIRES = [
     "ax-platform",
@@ -81,7 +81,7 @@ setup(
             else "node-and-date"
         ),
     },
-    install_requires=["torch>=1.8", "gpytorch>=1.4", "scipy"],
+    install_requires=["torch>=1.8.1", "gpytorch>=1.4", "scipy"],
     packages=find_packages(),
     extras_require={
         "dev": DEV_REQUIRES,

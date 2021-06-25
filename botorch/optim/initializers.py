@@ -19,6 +19,7 @@ from botorch.acquisition.knowledge_gradient import (
 from botorch.acquisition.utils import is_nonnegative
 from botorch.exceptions.warnings import BadInitialCandidatesWarning, SamplingWarning
 from botorch.models.model import Model
+from botorch.optim.utils import fix_features
 from botorch.utils.sampling import (
     batched_multinomial,
     draw_sobol_samples,
@@ -36,6 +37,7 @@ def gen_batch_initial_conditions(
     q: int,
     num_restarts: int,
     raw_samples: int,
+    fixed_features: Optional[Dict[int, float]] = None,
     options: Optional[Dict[str, Union[bool, float, int]]] = None,
     inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
@@ -52,6 +54,8 @@ def gen_batch_initial_conditions(
             function optimization.
         raw_samples: The number of raw samples to consider in the initialization
             heuristic.
+        fixed_features: A map `{feature_index: value}` for features that
+            should be fixed to a particular value during generation.
         options: Options for initial condition generation. For valid options see
             `initialize_q_batch` and `initialize_q_batch_nonneg`. If `options`
             contains a `nonnegative=True` entry, then `acq_function` is
@@ -133,6 +137,8 @@ def gen_batch_initial_conditions(
                     .view(n, q, -1)
                     .cpu()
                 )
+
+            X_rnd = fix_features(X_rnd, fixed_features=fixed_features)
             with torch.no_grad():
                 if batch_limit is None:
                     batch_limit = X_rnd.shape[0]
@@ -169,6 +175,7 @@ def gen_one_shot_kg_initial_conditions(
     q: int,
     num_restarts: int,
     raw_samples: int,
+    fixed_features: Optional[Dict[int, float]] = None,
     options: Optional[Dict[str, Union[bool, float, int]]] = None,
     inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
@@ -197,6 +204,8 @@ def gen_one_shot_kg_initial_conditions(
             function optimization.
         raw_samples: The number of raw samples to consider in the initialization
             heuristic.
+        fixed_features: A map `{feature_index: value}` for features that
+            should be fixed to a particular value during generation.
         options: Options for initial condition generation. These contain all
             settings for the standard heuristic initialization from
             `gen_batch_initial_conditions`. In addition, they contain
@@ -240,6 +249,7 @@ def gen_one_shot_kg_initial_conditions(
         q=q_aug,
         num_restarts=num_restarts,
         raw_samples=raw_samples,
+        fixed_features=fixed_features,
         options=options,
         inequality_constraints=inequality_constraints,
         equality_constraints=equality_constraints,
@@ -260,6 +270,7 @@ def gen_one_shot_kg_initial_conditions(
         q=1,
         num_restarts=options.get("num_inner_restarts", 20),
         raw_samples=options.get("raw_inner_samples", 1024),
+        fixed_features=fixed_features,
         return_best_only=False,
         inequality_constraints=inequality_constraints,
         equality_constraints=equality_constraints,
@@ -282,6 +293,7 @@ def gen_value_function_initial_conditions(
     num_restarts: int,
     raw_samples: int,
     current_model: Model,
+    fixed_features: Optional[Dict[int, float]] = None,
     options: Optional[Dict[str, Union[bool, float, int]]] = None,
 ) -> Tensor:
     r"""Generate a batch of smart initializations for optimizing
@@ -311,6 +323,8 @@ def gen_value_function_initial_conditions(
             heuristic.
         current_model: The model of the KG acquisition function that was used to
             generate the fantasy model of the value function.
+        fixed_features: A map `{feature_index: value}` for features that
+            should be fixed to a particular value during generation.
         options: Options for initial condition generation. These contain all
             settings for the standard heuristic initialization from
             `gen_batch_initial_conditions`. In addition, they contain
@@ -358,6 +372,7 @@ def gen_value_function_initial_conditions(
         q=1,
         num_restarts=options.get("num_inner_restarts", 20),
         raw_samples=options.get("raw_inner_samples", 1024),
+        fixed_features=fixed_features,
         return_best_only=False,
         options={
             k: v
@@ -394,6 +409,7 @@ def gen_value_function_initial_conditions(
     ).to(resampled)
     # full set of raw samples
     X_rnd = torch.cat([resampled, randomized], dim=0)
+    X_rnd = fix_features(X_rnd, fixed_features=fixed_features)
 
     # evaluate the raw samples
     with torch.no_grad():

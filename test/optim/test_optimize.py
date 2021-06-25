@@ -13,6 +13,7 @@ from botorch.optim.optimize import (
     optimize_acqf,
     optimize_acqf_cyclic,
     optimize_acqf_list,
+    optimize_acqf_discrete,
     optimize_acqf_mixed,
 )
 from botorch.utils.testing import BotorchTestCase, MockAcquisitionFunction
@@ -53,12 +54,12 @@ class TestOptimizeAcqf(BotorchTestCase):
         raw_samples = 10
         options = {}
         mock_acq_function = MockAcquisitionFunction()
-        cnt = 1
+        cnt = 0
         for dtype in (torch.float, torch.double):
             mock_gen_batch_initial_conditions.return_value = torch.zeros(
                 num_restarts, q, 3, device=self.device, dtype=dtype
             )
-            base_cand = torch.ones(1, q, 3, device=self.device, dtype=dtype)
+            base_cand = torch.arange(3, device=self.device, dtype=dtype).expand(1, q, 3)
             mock_candidates = torch.cat(
                 [i * base_cand for i in range(num_restarts)], dim=0
             )
@@ -82,7 +83,10 @@ class TestOptimizeAcqf(BotorchTestCase):
             )
             self.assertTrue(torch.equal(candidates, mock_candidates[0]))
             self.assertTrue(torch.equal(acq_vals, mock_acq_values[0]))
+            cnt += 1
+            self.assertEqual(mock_gen_batch_initial_conditions.call_count, cnt)
 
+            # test generation with provided initial conditions
             candidates, acq_vals = optimize_acqf(
                 acq_function=mock_acq_function,
                 bounds=bounds,
@@ -98,7 +102,46 @@ class TestOptimizeAcqf(BotorchTestCase):
             self.assertTrue(torch.equal(candidates, mock_candidates))
             self.assertTrue(torch.equal(acq_vals, mock_acq_values))
             self.assertEqual(mock_gen_batch_initial_conditions.call_count, cnt)
+
+            # test fixed features
+            fixed_features = {0: 0.1}
+            mock_candidates[:, 0] = 0.1
+            mock_gen_candidates.return_value = (mock_candidates, mock_acq_values)
+            candidates, acq_vals = optimize_acqf(
+                acq_function=mock_acq_function,
+                bounds=bounds,
+                q=q,
+                num_restarts=num_restarts,
+                raw_samples=raw_samples,
+                options=options,
+                fixed_features=fixed_features,
+            )
+            self.assertEqual(
+                mock_gen_candidates.call_args[1]["fixed_features"], fixed_features
+            )
+            self.assertTrue(torch.equal(candidates, mock_candidates[0]))
             cnt += 1
+            self.assertEqual(mock_gen_batch_initial_conditions.call_count, cnt)
+
+            # test trivial case when all features are fixed
+            candidates, acq_vals = optimize_acqf(
+                acq_function=mock_acq_function,
+                bounds=bounds,
+                q=q,
+                num_restarts=num_restarts,
+                raw_samples=raw_samples,
+                options=options,
+                fixed_features={0: 0.1, 1: 0.2, 2: 0.3},
+            )
+            self.assertTrue(
+                torch.equal(
+                    candidates,
+                    torch.tensor(
+                        [0.1, 0.2, 0.3], device=self.device, dtype=dtype
+                    ).expand(3, 3),
+                )
+            )
+            self.assertEqual(mock_gen_batch_initial_conditions.call_count, cnt)
 
         # test OneShotAcquisitionFunction
         mock_acq_function = MockOneShotAcquisitionFunction()
@@ -116,6 +159,16 @@ class TestOptimizeAcqf(BotorchTestCase):
             )
         )
         self.assertTrue(torch.equal(acq_vals, mock_acq_values[0]))
+
+        # verify ValueError
+        with self.assertRaisesRegex(ValueError, "Must specify"):
+            optimize_acqf(
+                acq_function=MockAcquisitionFunction(),
+                bounds=bounds,
+                q=q,
+                num_restarts=num_restarts,
+                options=options,
+            )
 
     @mock.patch("botorch.optim.optimize.gen_batch_initial_conditions")
     @mock.patch("botorch.optim.optimize.gen_candidates_scipy")
@@ -427,7 +480,7 @@ class TestOptimizeAcqfList(BotorchTestCase):
 
 class TestOptimizeAcqfMixed(BotorchTestCase):
     @mock.patch("botorch.optim.optimize.optimize_acqf")  # noqa: C901
-    def test_optimize_acqf_mixed(self, mock_optimize_acqf):
+    def test_optimize_acqf_mixed_q1(self, mock_optimize_acqf):
         num_restarts = 2
         raw_samples = 10
         q = 1
@@ -442,13 +495,9 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
 
             candidate_rvs = []
             acq_val_rvs = []
-            gcs_return_vals = [
-                (torch.rand(1, 3, **tkwargs), torch.rand(1, **tkwargs))
-                for _ in range(num_ff)
-            ]
-            for rv in gcs_return_vals:
-                candidate_rvs.append(rv[0])
-                acq_val_rvs.append(rv[1])
+            for _ in range(num_ff):
+                candidate_rvs.append(torch.rand(1, 3, **tkwargs))
+                acq_val_rvs.append(torch.rand(1, **tkwargs))
             fixed_features_list = [{i: i * 0.1} for i in range(num_ff)]
             side_effect = list(zip(candidate_rvs, acq_val_rvs))
             mock_optimize_acqf.side_effect = side_effect
@@ -497,7 +546,50 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
                     else:
                         self.assertEqual(expected_call_args[k], v)
 
-    def test_optimize_acqf_empty_ff(self):
+    @mock.patch("botorch.optim.optimize.optimize_acqf")  # noqa: C901
+    def test_optimize_acqf_mixed_q2(self, mock_optimize_acqf):
+        num_restarts = 2
+        raw_samples = 10
+        q = 2
+        options = {}
+        tkwargs = {"device": self.device}
+        bounds = torch.stack([torch.zeros(3), 4 * torch.ones(3)])
+        mock_acq_function = MockAcquisitionFunction()
+        for num_ff, dtype in itertools.product([1, 3], (torch.float, torch.double)):
+            tkwargs["dtype"] = dtype
+            mock_optimize_acqf.reset_mock()
+            bounds = bounds.to(**tkwargs)
+
+            fixed_features_list = [{i: i * 0.1} for i in range(num_ff)]
+            candidate_rvs, exp_candidates, acq_val_rvs = [], [], []
+            # generate mock side effects and compute expected outputs
+            for _ in range(q):
+                candidate_rvs_q = [torch.rand(1, 3, **tkwargs) for _ in range(num_ff)]
+                acq_val_rvs_q = [torch.rand(1, **tkwargs) for _ in range(num_ff)]
+                best = torch.argmax(torch.stack(acq_val_rvs_q))
+                exp_candidates.append(candidate_rvs_q[best])
+                candidate_rvs += candidate_rvs_q
+                acq_val_rvs += acq_val_rvs_q
+            side_effect = list(zip(candidate_rvs, acq_val_rvs))
+            mock_optimize_acqf.side_effect = side_effect
+
+            candidates, acq_value = optimize_acqf_mixed(
+                acq_function=mock_acq_function,
+                q=q,
+                fixed_features_list=fixed_features_list,
+                bounds=bounds,
+                num_restarts=num_restarts,
+                raw_samples=raw_samples,
+                options=options,
+                post_processing_func=rounding_func,
+            )
+
+            expected_candidates = torch.cat(exp_candidates, dim=-2)
+            expected_acq_value = mock_acq_function(expected_candidates)
+            self.assertTrue(torch.equal(candidates, expected_candidates))
+            self.assertTrue(torch.equal(acq_value, expected_acq_value))
+
+    def test_optimize_acqf_mixed_empty_ff(self):
         with self.assertRaises(ValueError):
             mock_acq_function = MockAcquisitionFunction()
             optimize_acqf_mixed(
@@ -508,3 +600,78 @@ class TestOptimizeAcqfMixed(BotorchTestCase):
                 num_restarts=2,
                 raw_samples=10,
             )
+
+
+class SquaredAcquisitionFunction:
+
+    X_pending = None
+
+    def __init__(self, f):
+        self.f = f
+
+    def __call__(self, X):
+        return self.f(X)
+
+    def set_X_pending(self, X_pending):
+        self.X_pending = X_pending
+
+
+class TestOptimizeAcqfDisrete(BotorchTestCase):
+    def test_optimize_acqf_discrete(self):
+
+        for q, dtype in itertools.product((1, 2), (torch.float, torch.double)):
+            tkwargs = {"device": self.device, "dtype": dtype}
+
+            def square(X):
+                return torch.norm(X, dim=-1).squeeze(-1)
+
+            mock_acq_function = SquaredAcquisitionFunction(f=square)
+
+            choices = torch.rand(5, 2, **tkwargs)
+            exp_acq_vals = square(choices)
+
+            # test unique
+            candidates, acq_value = optimize_acqf_discrete(
+                acq_function=mock_acq_function,
+                q=q,
+                choices=choices,
+            )
+            best_idcs = torch.topk(exp_acq_vals, q).indices
+            expected_candidates = choices[best_idcs]
+            expected_acq_value = exp_acq_vals[best_idcs]
+            self.assertTrue(torch.allclose(acq_value, expected_acq_value))
+            self.assertTrue(torch.allclose(candidates, expected_candidates))
+
+            # test non-unique (test does not properly use pending points)
+            candidates, acq_value = optimize_acqf_discrete(
+                acq_function=mock_acq_function, q=q, choices=choices, unique=False
+            )
+            best_idx = torch.argmax(exp_acq_vals)
+            expected_candidates = choices[best_idx].repeat(q, 1)
+            expected_acq_value = exp_acq_vals[best_idx].repeat(q)
+            self.assertTrue(torch.allclose(acq_value, expected_acq_value))
+            self.assertTrue(torch.allclose(candidates, expected_candidates))
+
+            # test max_batch_limit
+            candidates, acq_value = optimize_acqf_discrete(
+                acq_function=mock_acq_function, q=q, choices=choices, max_batch_size=3
+            )
+            best_idcs = torch.topk(exp_acq_vals, q).indices
+            expected_candidates = choices[best_idcs]
+            expected_acq_value = exp_acq_vals[best_idcs]
+            self.assertTrue(torch.allclose(acq_value, expected_acq_value))
+            self.assertTrue(torch.allclose(candidates, expected_candidates))
+
+            # test max_batch_limit & unique
+            candidates, acq_value = optimize_acqf_discrete(
+                acq_function=mock_acq_function,
+                q=q,
+                choices=choices,
+                unique=False,
+                max_batch_size=3,
+            )
+            best_idx = torch.argmax(exp_acq_vals)
+            expected_candidates = choices[best_idx].repeat(q, 1)
+            expected_acq_value = exp_acq_vals[best_idx].repeat(q)
+            self.assertTrue(torch.allclose(acq_value, expected_acq_value))
+            self.assertTrue(torch.allclose(candidates, expected_candidates))

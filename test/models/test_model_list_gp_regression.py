@@ -27,10 +27,10 @@ from gpytorch.priors import GammaPrior
 
 def _get_model(n, fixed_noise=False, use_octf=False, **tkwargs):
     train_x1, train_y1 = _get_random_data(
-        batch_shape=torch.Size(), num_outputs=1, n=10, **tkwargs
+        batch_shape=torch.Size(), m=1, n=10, **tkwargs
     )
     train_x2, train_y2 = _get_random_data(
-        batch_shape=torch.Size(), num_outputs=1, n=11, **tkwargs
+        batch_shape=torch.Size(), m=1, n=11, **tkwargs
     )
     octfs = [Standardize(m=1), Standardize(m=1)] if use_octf else [None, None]
     if fixed_noise:
@@ -234,10 +234,10 @@ class TestModelListGP(BotorchTestCase):
     def test_ModelListGP_single(self):
         tkwargs = {"device": self.device, "dtype": torch.float}
         train_x1, train_y1 = _get_random_data(
-            batch_shape=torch.Size(), num_outputs=1, n=10, **tkwargs
+            batch_shape=torch.Size(), m=1, n=10, **tkwargs
         )
         train_x2, train_y2 = _get_random_data(
-            batch_shape=torch.Size(), num_outputs=1, n=11, **tkwargs
+            batch_shape=torch.Size(), m=1, n=11, **tkwargs
         )
         model1 = SingleTaskGP(train_X=train_x1, train_Y=train_y1)
         model = ModelListGP(model1)

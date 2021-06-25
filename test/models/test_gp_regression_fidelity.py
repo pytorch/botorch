@@ -6,6 +6,7 @@
 
 import itertools
 import warnings
+from typing import Tuple
 
 import torch
 from botorch import fit_gpytorch_model
@@ -25,13 +26,18 @@ from gpytorch.kernels.scale_kernel import ScaleKernel
 from gpytorch.likelihoods import FixedNoiseGaussianLikelihood
 from gpytorch.means import ConstantMean
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
+from torch import Tensor
 
 
-def _get_random_data_with_fidelity(batch_shape, m, n_fidelity, n=10, **tkwargs):
+def _get_random_data_with_fidelity(
+    batch_shape: torch.Size, m: int, n_fidelity: int, d: int = 1, n: int = 10, **tkwargs
+) -> Tuple[Tensor, Tensor]:
     r"""Construct test data.
     For this test, by convention the trailing dimesions are the fidelity dimensions
     """
-    train_x, train_y = _get_random_data(batch_shape, m, n, **tkwargs)
+    train_x, train_y = _get_random_data(
+        batch_shape=batch_shape, m=m, d=d, n=n, **tkwargs
+    )
     s = torch.rand(n, n_fidelity, **tkwargs).repeat(batch_shape + torch.Size([1, 1]))
     train_x = torch.cat((train_x, s), dim=-1)
     train_y = train_y + (1 - s).pow(2).sum(dim=-1).unsqueeze(-1)
@@ -372,7 +378,7 @@ class TestSingleTaskMultiFidelityGP(BotorchTestCase):
                     **tkwargs,
                 )
                 # len(Xs) == len(Ys) == 1
-                training_data = TrainingData(
+                training_data = TrainingData.from_block_design(
                     X=model_kwargs["train_X"],
                     Y=model_kwargs["train_Y"],
                     Yvar=torch.full_like(model_kwargs["train_Y"], 0.01),
@@ -477,14 +483,14 @@ class TestFixedNoiseMultiFidelityGP(TestSingleTaskMultiFidelityGP):
                     lin_truncated=lin_trunc,
                     **tkwargs,
                 )
-                training_data = TrainingData(
+                training_data = TrainingData.from_block_design(
                     X=model_kwargs["train_X"], Y=model_kwargs["train_Y"]
                 )
                 # missing Yvars
                 with self.assertRaises(ValueError):
                     model.construct_inputs(training_data, fidelity_features=[1])
                 # len(Xs) == len(Ys) == 1
-                training_data = TrainingData(
+                training_data = TrainingData.from_block_design(
                     X=model_kwargs["train_X"],
                     Y=model_kwargs["train_Y"],
                     Yvar=torch.full_like(model_kwargs["train_Y"], 0.01),

@@ -79,11 +79,6 @@ class TestNonDominatedPartitioning(BotorchTestCase):
                 **tkwargs,
             )
             cell_bounds = partitioning.get_hypercell_bounds()
-            print(partitioning_class)
-            print(cell_bounds.shape)
-            print(expected_cell_bounds.shape)
-            print(cell_bounds)
-            print(expected_cell_bounds)
             num_matches = (
                 (cell_bounds.unsqueeze(0) == expected_cell_bounds.unsqueeze(1))
                 .all(dim=-1)

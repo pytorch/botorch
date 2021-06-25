@@ -7,6 +7,7 @@
 from botorch.posteriors.deterministic import DeterministicPosterior
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.posteriors.higher_order import HigherOrderGPPosterior
+from botorch.posteriors.multitask import MultitaskGPPosterior
 from botorch.posteriors.posterior import Posterior
 from botorch.posteriors.transformed import TransformedPosterior
 
@@ -15,6 +16,7 @@ __all__ = [
     "DeterministicPosterior",
     "GPyTorchPosterior",
     "HigherOrderGPPosterior",
+    "MultitaskGPPosterior",
     "Posterior",
     "TransformedPosterior",
 ]

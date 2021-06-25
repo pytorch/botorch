@@ -29,6 +29,7 @@ from botorch.exceptions.errors import UnsupportedError
 from botorch.exceptions.warnings import SamplingWarning
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
+    FastNondominatedPartitioning,
     NondominatedPartitioning,
 )
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
@@ -403,10 +404,28 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         self.assertIsInstance(sampler, IIDNormalSampler)
         self.assertIsInstance(kwargs["objective"], DummyMCMultiOutputObjective)
         partitioning = kwargs["partitioning"]
-        self.assertIsInstance(partitioning, NondominatedPartitioning)
-
+        self.assertIsInstance(partitioning, FastNondominatedPartitioning)
         self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
         self.assertEqual(sampler.seed, 2)
+        # test that approximate partitioning is used when alpha > 0
+        # test with non-qmc
+        acqf = get_acquisition_function(
+            acquisition_function_name="qEHVI",
+            model=self.model,
+            objective=self.mo_objective,
+            X_observed=self.X_observed,
+            X_pending=self.X_pending,
+            mc_samples=self.mc_samples,
+            seed=2,
+            qmc=False,
+            ref_point=self.ref_point,
+            Y=self.Y,
+            alpha=0.1,
+        )
+        _, kwargs = mock_acqf.call_args
+        partitioning = kwargs["partitioning"]
+        self.assertIsInstance(partitioning, NondominatedPartitioning)
+        self.assertEqual(partitioning.alpha, 0.1)
         # test constraints
         acqf = get_acquisition_function(
             acquisition_function_name="qEHVI",
@@ -424,6 +443,89 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         _, kwargs = mock_acqf.call_args
         partitioning = kwargs["partitioning"]
         self.assertEqual(partitioning.pareto_Y.shape[0], 0)
+
+    @mock.patch(f"{moo_monte_carlo.__name__}.qNoisyExpectedHypervolumeImprovement")
+    def test_GetQNEHVI(self, mock_acqf):
+        # make sure ref_point is specified
+        with self.assertRaises(ValueError):
+            acqf = get_acquisition_function(
+                acquisition_function_name="qNEHVI",
+                model=self.model,
+                objective=self.objective,
+                X_observed=self.X_observed,
+                X_pending=self.X_pending,
+                mc_samples=self.mc_samples,
+                seed=self.seed,
+            )
+        acqf = get_acquisition_function(
+            acquisition_function_name="qNEHVI",
+            model=self.model,
+            objective=self.objective,
+            X_observed=self.X_observed,
+            X_pending=self.X_pending,
+            mc_samples=self.mc_samples,
+            seed=self.seed,
+            ref_point=self.ref_point,
+        )
+        self.assertTrue(acqf == mock_acqf.return_value)
+        mock_acqf.assert_called_once_with(
+            constraints=None,
+            model=self.model,
+            X_baseline=self.X_observed,
+            objective=self.objective,
+            ref_point=self.ref_point,
+            sampler=mock.ANY,
+            prune_baseline=True,
+            alpha=0.0,
+            X_pending=self.X_pending,
+            marginalize_dim=None,
+        )
+        args, kwargs = mock_acqf.call_args
+        self.assertEqual(args, ())
+        sampler = kwargs["sampler"]
+        self.assertIsInstance(sampler, SobolQMCNormalSampler)
+        self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
+        self.assertEqual(sampler.seed, 1)
+        # test with non-qmc
+        acqf = get_acquisition_function(
+            acquisition_function_name="qNEHVI",
+            model=self.model,
+            objective=self.objective,
+            X_observed=self.X_observed,
+            X_pending=self.X_pending,
+            mc_samples=self.mc_samples,
+            seed=2,
+            qmc=False,
+            ref_point=self.ref_point,
+        )
+        self.assertTrue(mock_acqf.call_count, 2)
+        args, kwargs = mock_acqf.call_args
+        self.assertEqual(args, ())
+        self.assertEqual(kwargs["ref_point"], self.ref_point)
+        sampler = kwargs["sampler"]
+        self.assertIsInstance(sampler, IIDNormalSampler)
+        ref_point = kwargs["ref_point"]
+        self.assertEqual(ref_point, self.ref_point)
+
+        self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
+        self.assertEqual(sampler.seed, 2)
+
+        # test passing alpha
+        acqf = get_acquisition_function(
+            acquisition_function_name="qNEHVI",
+            model=self.model,
+            objective=self.objective,
+            X_observed=self.X_observed,
+            X_pending=self.X_pending,
+            mc_samples=self.mc_samples,
+            seed=2,
+            qmc=False,
+            ref_point=self.ref_point,
+            alpha=0.01,
+        )
+        self.assertTrue(mock_acqf.call_count, 3)
+        args, kwargs = mock_acqf.call_args
+        self.assertEqual(kwargs["alpha"], 0.01)
 
     def test_GetUnknownAcquisitionFunction(self):
         with self.assertRaises(NotImplementedError):

@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional
 
 import torch
 from botorch import settings
+from botorch.models.utils import fantasize as fantasize_flag
 from botorch.posteriors import Posterior
 from botorch.sampling.samplers import MCSampler
 from botorch.utils.containers import TrainingData
@@ -34,6 +35,10 @@ class Model(Module, ABC):
         **kwargs: Any,
     ) -> Posterior:
         r"""Computes the posterior over model outputs at the provided points.
+
+        Note: The input transforms should be applied here using
+            `self.transform_inputs(X)` after the `self.eval()` call and before
+            any `model.forward` or `model.likelihood` calls.
 
         Args:
             X: A `b x q x d`-dim Tensor, where `d` is the dimension of the
@@ -134,10 +139,11 @@ class Model(Module, ABC):
             The constructed fantasy model.
         """
         propagate_grads = kwargs.pop("propagate_grads", False)
-        with settings.propagate_grads(propagate_grads):
-            post_X = self.posterior(X, observation_noise=observation_noise)
-        Y_fantasized = sampler(post_X)  # num_fantasies x batch_shape x n' x m
-        return self.condition_on_observations(X=X, Y=Y_fantasized, **kwargs)
+        with fantasize_flag():
+            with settings.propagate_grads(propagate_grads):
+                post_X = self.posterior(X, observation_noise=observation_noise)
+            Y_fantasized = sampler(post_X)  # num_fantasies x batch_shape x n' x m
+            return self.condition_on_observations(X=X, Y=Y_fantasized, **kwargs)
 
     @classmethod
     def construct_inputs(
@@ -149,7 +155,9 @@ class Model(Module, ABC):
         )
 
     def transform_inputs(
-        self, X: Tensor, input_transform: Optional[Module] = None
+        self,
+        X: Tensor,
+        input_transform: Optional[Module] = None,
     ) -> Tensor:
         r"""Transform inputs.
 
@@ -161,6 +169,7 @@ class Model(Module, ABC):
             A tensor of transformed inputs
         """
         if input_transform is not None:
+            input_transform.to(X)
             return input_transform(X)
         try:
             return self.input_transform(X)

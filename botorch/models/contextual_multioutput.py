@@ -8,6 +8,8 @@ from typing import List, Optional
 
 import torch
 from botorch.models.multitask import MultiTaskGP
+from botorch.models.transforms.input import InputTransform
+from botorch.models.transforms.outcome import OutcomeTransform
 from gpytorch.constraints import Interval
 from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels.rbf_kernel import RBFKernel
@@ -47,12 +49,16 @@ class LCEMGP(MultiTaskGP):
         context_emb_feature: Optional[Tensor] = None,
         embs_dim_list: Optional[List[int]] = None,
         output_tasks: Optional[List[int]] = None,
+        input_transform: Optional[InputTransform] = None,
+        outcome_transform: Optional[OutcomeTransform] = None,
     ) -> None:
         super().__init__(
             train_X=train_X,
             train_Y=train_Y,
             task_feature=task_feature,
             output_tasks=output_tasks,
+            input_transform=input_transform,
+            outcome_transform=outcome_transform,
         )
         self.device = train_X.device
         #  context indices
@@ -128,6 +134,8 @@ class LCEMGP(MultiTaskGP):
         ).evaluate()
 
     def forward(self, x: Tensor) -> MultivariateNormal:
+        if self.training:
+            x = self.transform_inputs(x)
         x_basic, task_idcs = self._split_inputs(x)
         # Compute base mean and covariance
         mean_x = self.mean_module(x_basic)

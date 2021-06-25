@@ -33,7 +33,7 @@ def optimize_acqf(
     bounds: Tensor,
     q: int,
     num_restarts: int,
-    raw_samples: int,
+    raw_samples: Optional[int] = None,
     options: Optional[Dict[str, Union[bool, float, int, str]]] = None,
     inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
@@ -52,7 +52,8 @@ def optimize_acqf(
         q: The number of candidates.
         num_restarts: The number of starting points for multistart acquisition
             function optimization.
-        raw_samples: The number of samples for initialization.
+        raw_samples: The number of samples for initialization. This is required
+            if `batch_initial_conditions` is not specified.
         options: Options for candidate generation.
         inequality constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
@@ -99,7 +100,7 @@ def optimize_acqf(
     if sequential and q > 1:
         if not return_best_only:
             raise NotImplementedError(
-                "return_best_only=False only supported for joint optimization"
+                "`return_best_only=False` only supported for joint optimization."
             )
         if isinstance(acq_function, OneShotAcquisitionFunction):
             raise NotImplementedError(
@@ -107,7 +108,6 @@ def optimize_acqf(
                 "acquisition functions. Must have `sequential=False`."
             )
         candidate_list, acq_value_list = [], []
-        candidates = torch.tensor([], device=bounds.device, dtype=bounds.dtype)
         base_X_pending = acq_function.X_pending
         for i in range(q):
             candidate, acq_value = optimize_acqf(
@@ -140,19 +140,36 @@ def optimize_acqf(
 
     options = options or {}
 
+    # Handle the trivial case when all features are fixed
+    if fixed_features is not None and len(fixed_features) == bounds.shape[-1]:
+        X = torch.tensor(
+            [fixed_features[i] for i in range(bounds.shape[-1])],
+            device=bounds.device,
+            dtype=bounds.dtype,
+        )
+        X = X.expand(q, *X.shape)
+        with torch.no_grad():
+            acq_value = acq_function(X)
+        return X, acq_value
+
     if batch_initial_conditions is None:
+        if raw_samples is None:
+            raise ValueError(
+                "Must specify `raw_samples` when `batch_initial_conditions` is `None`."
+            )
+
         ic_gen = (
             gen_one_shot_kg_initial_conditions
             if isinstance(acq_function, qKnowledgeGradient)
             else gen_batch_initial_conditions
         )
-        # TODO: Generating initial candidates should use parameter constraints.
         batch_initial_conditions = ic_gen(
             acq_function=acq_function,
             bounds=bounds,
             q=q,
             num_restarts=num_restarts,
             raw_samples=raw_samples,
+            fixed_features=fixed_features,
             options=options,
             inequality_constraints=inequality_constraints,
             equality_constraints=equality_constraints,
@@ -161,12 +178,11 @@ def optimize_acqf(
     batch_limit: int = options.get("batch_limit", num_restarts)
     batch_candidates_list: List[Tensor] = []
     batch_acq_values_list: List[Tensor] = []
-    start_idcs = list(range(0, num_restarts, batch_limit))
-    for start_idx in start_idcs:
-        end_idx = min(start_idx + batch_limit, num_restarts)
+    batched_ics = batch_initial_conditions.split(batch_limit)
+    for i, batched_ics_ in enumerate(batched_ics):
         # optimize using random restart optimization
         batch_candidates_curr, batch_acq_values_curr = gen_candidates_scipy(
-            initial_conditions=batch_initial_conditions[start_idx:end_idx],
+            initial_conditions=batched_ics_,
             acquisition_function=acq_function,
             lower_bounds=bounds[0],
             upper_bounds=bounds[1],
@@ -181,7 +197,7 @@ def optimize_acqf(
         )
         batch_candidates_list.append(batch_candidates_curr)
         batch_acq_values_list.append(batch_acq_values_curr)
-        logger.info(f"Generated candidate batch {start_idx+1} of {len(start_idcs)}.")
+        logger.info(f"Generated candidate batch {i+1} of {len(batched_ics)}.")
     batch_candidates = torch.cat(batch_candidates_list)
     batch_acq_values = torch.cat(batch_acq_values_list)
 
@@ -205,7 +221,7 @@ def optimize_acqf_cyclic(
     bounds: Tensor,
     q: int,
     num_restarts: int,
-    raw_samples: int,
+    raw_samples: Optional[int] = None,
     options: Optional[Dict[str, Union[bool, float, int, str]]] = None,
     inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
@@ -222,7 +238,8 @@ def optimize_acqf_cyclic(
         q: The number of candidates.
         num_restarts:  Number of starting points for multistart acquisition
             function optimization.
-        raw_samples: Number of samples for initialization.
+        raw_samples: Number of samples for initialization. This is required
+            if `batch_initial_conditions` is not specified.
         options: Options for candidate generation.
         inequality constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
@@ -316,7 +333,7 @@ def optimize_acqf_list(
     acq_function_list: List[AcquisitionFunction],
     bounds: Tensor,
     num_restarts: int,
-    raw_samples: int,
+    raw_samples: Optional[int] = None,
     options: Optional[Dict[str, Union[bool, float, int, str]]] = None,
     inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
@@ -333,7 +350,8 @@ def optimize_acqf_list(
         bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.
         num_restarts:  Number of starting points for multistart acquisition
             function optimization.
-        raw_samples: Number of samples for initialization.
+        raw_samples: Number of samples for initialization. This is required
+            if `batch_initial_conditions` is not specified.
         options: Options for candidate generation.
         inequality constraints: A list of tuples (indices, coefficients, rhs),
             with each tuple encoding an inequality constraint of the form
@@ -392,17 +410,19 @@ def optimize_acqf_mixed(
     bounds: Tensor,
     q: int,
     num_restarts: int,
-    raw_samples: int,
     fixed_features_list: List[Dict[int, float]],
+    raw_samples: Optional[int] = None,
     options: Optional[Dict[str, Union[bool, float, int, str]]] = None,
     inequality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
     batch_initial_conditions: Optional[Tensor] = None,
-    sequential: bool = False,
 ) -> Tuple[Tensor, Tensor]:
     r"""Optimize over a list of fixed_features and returns the best solution.
+
     This is useful for optimizing over mixed continuous and discrete domains.
+    For q > 1 this function always performs sequential greedy optimization (with
+    proper conditioning on generated candidates).
 
     Args:
         acq_function: An AcquisitionFunction
@@ -410,7 +430,8 @@ def optimize_acqf_mixed(
         q: The number of candidates.
         num_restarts:  Number of starting points for multistart acquisition
             function optimization.
-        raw_samples: Number of samples for initialization.
+        raw_samples: Number of samples for initialization. This is required
+            if `batch_initial_conditions` is not specified.
         fixed_features_list: A list of maps `{feature_index: value}`. The i-th
             item represents the fixed_feature for the i-th optimization.
         options: Options for candidate generation.
@@ -425,8 +446,6 @@ def optimize_acqf_mixed(
             transformations).
         batch_initial_conditions: A tensor to specify the initial conditions. Set
             this if you do not want to use default initialization strategy.
-        sequential: If False, uses joint optimization, otherwise uses sequential
-            optimization.
 
     Returns:
         A two-element tuple containing
@@ -436,25 +455,131 @@ def optimize_acqf_mixed(
     """
     if not fixed_features_list:
         raise ValueError("fixed_features_list must be non-empty.")
-    ff_candidate_list, ff_acq_value_list = [], []
-    for fixed_features in fixed_features_list:
-        candidate, acq_value = optimize_acqf(
+
+    if q == 1:
+        ff_candidate_list, ff_acq_value_list = [], []
+        for fixed_features in fixed_features_list:
+            candidate, acq_value = optimize_acqf(
+                acq_function=acq_function,
+                bounds=bounds,
+                q=q,
+                num_restarts=num_restarts,
+                raw_samples=raw_samples,
+                options=options or {},
+                inequality_constraints=inequality_constraints,
+                equality_constraints=equality_constraints,
+                fixed_features=fixed_features,
+                post_processing_func=post_processing_func,
+                batch_initial_conditions=batch_initial_conditions,
+                return_best_only=True,
+            )
+            ff_candidate_list.append(candidate)
+            ff_acq_value_list.append(acq_value)
+
+        ff_acq_values = torch.stack(ff_acq_value_list)
+        best = torch.argmax(ff_acq_values)
+        return ff_candidate_list[best], ff_acq_values[best]
+
+    # For batch optimization with q > 1 we do not want to enumerate all n_combos^n
+    # possible combinations of discrete choices. Instead, we use sequential greedy
+    # optimization.
+    base_X_pending = acq_function.X_pending
+    candidates = torch.tensor([], device=bounds.device, dtype=bounds.dtype)
+
+    for _ in range(q):
+        candidate, acq_value = optimize_acqf_mixed(
             acq_function=acq_function,
             bounds=bounds,
-            q=q,
+            q=1,
             num_restarts=num_restarts,
             raw_samples=raw_samples,
+            fixed_features_list=fixed_features_list,
             options=options or {},
             inequality_constraints=inequality_constraints,
             equality_constraints=equality_constraints,
-            fixed_features=fixed_features,
             post_processing_func=post_processing_func,
             batch_initial_conditions=batch_initial_conditions,
-            return_best_only=True,
-            sequential=False,
         )
-        ff_candidate_list.append(candidate)
-        ff_acq_value_list.append(acq_value)
-    ff_acq_values = torch.stack(ff_acq_value_list)
-    best = torch.argmax(ff_acq_values)
-    return ff_candidate_list[best], ff_acq_values[best]
+        candidates = torch.cat([candidates, candidate], dim=-2)
+        acq_function.set_X_pending(
+            torch.cat([base_X_pending, candidates], dim=-2)
+            if base_X_pending is not None
+            else candidates
+        )
+
+    acq_function.set_X_pending(base_X_pending)
+    acq_value = acq_function(candidates)  # compute joint acquisition value
+    return candidates, acq_value
+
+
+def optimize_acqf_discrete(
+    acq_function: AcquisitionFunction,
+    q: int,
+    choices: Tensor,
+    max_batch_size: int = 2048,
+    unique: bool = True,
+) -> Tuple[Tensor, Tensor]:
+    r"""Optimize over a discrete set of points using batch evaluation.
+
+    For `q > 1` this function generates candidates by means of sequential
+    conditioning (rather than joint optimization), since for all but the
+    smalles number of choices the set `choices^q` of discrete points to
+    evaluate quickly explodes.
+
+    Args:
+        acq_function: An AcquisitionFunction.
+        q: The number of candidates.
+        choices: A `num_choices x d` tensor of possible choices.
+        max_batch_size: The maximum number of choices to evaluate in batch.
+            A large limit can cause excessive memory usage if the model has
+            a large training set.
+        unique: If True return unique choices, o/w choices may be repeated
+            (only relevant if `q > 1`).
+
+    Returns:
+        A three-element tuple containing
+
+        - a `q x d`-dim tensor of generated candidates.
+        - an associated acquisition value.
+    """
+    choices_batched = choices.unsqueeze(-2)
+    if q > 1:
+        candidate_list, acq_value_list = [], []
+        base_X_pending = acq_function.X_pending
+        for _ in range(q):
+            acq_values = _split_batch_eval_acqf(
+                acq_function=acq_function,
+                X=choices_batched,
+                max_batch_size=max_batch_size,
+            )
+            best_idx = torch.argmax(acq_values)
+            candidate_list.append(choices_batched[best_idx])
+            acq_value_list.append(acq_values[best_idx])
+            # set pending points
+            candidates = torch.cat(candidate_list, dim=-2)
+            acq_function.set_X_pending(
+                torch.cat([base_X_pending, candidates], dim=-2)
+                if base_X_pending is not None
+                else candidates
+            )
+            # need to remove choice from choice set if enforcing uniqueness
+            if unique:
+                choices_batched = torch.cat(
+                    [choices_batched[:best_idx], choices_batched[best_idx + 1 :]]
+                )
+
+        # Reset acq_func to previous X_pending state
+        acq_function.set_X_pending(base_X_pending)
+        return candidates, torch.stack(acq_value_list)
+
+    acq_values = _split_batch_eval_acqf(
+        acq_function=acq_function, X=choices_batched, max_batch_size=max_batch_size
+    )
+    best_idx = torch.argmax(acq_values)
+    return choices_batched[best_idx], acq_values[best_idx]
+
+
+def _split_batch_eval_acqf(
+    acq_function: AcquisitionFunction, X: Tensor, max_batch_size: int
+) -> Tensor:
+    return torch.cat([acq_function(X_) for X_ in X.split(max_batch_size)])

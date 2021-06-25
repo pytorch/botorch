@@ -169,6 +169,7 @@ class TestOutcomeTransforms(BotorchTestCase):
             self.assertEqual(samples2.shape, torch.Size([4, 2]) + shape)
 
             # test error on incompatible output dimension
+            # TODO: add a unit test for MTGP posterior once #840 goes in
             tf_big = Standardize(m=4).eval()
             with self.assertRaises(RuntimeError):
                 tf_big.untransform_posterior(posterior2)

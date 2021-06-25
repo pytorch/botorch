@@ -116,7 +116,7 @@ class WeightedMCMultiOutputObjective(IdentityMCMultiOutputObjective):
             )
         elif outcomes is not None and weights.shape[0] != len(outcomes):
             raise BotorchTensorDimensionError(
-                "weights must contain the name number of elements as outcomes, "
+                "weights must contain the same number of elements as outcomes, "
                 f"but got {weights.numel()} weights and {len(outcomes)} outcomes."
             )
         self.register_buffer("weights", weights)

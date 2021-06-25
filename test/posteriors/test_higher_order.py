@@ -45,7 +45,6 @@ class TestHigherOrderGPPosterior(BotorchTestCase):
             self.assertIsInstance(posterior, HigherOrderGPPosterior)
 
             batch_shape = test_x.shape[:-2]
-            # expected_event_shape = batch_shape + sample_shaping[-2:]
             expected_event_shape = batch_shape + sample_shaping
 
             self.assertEqual(posterior.event_shape, expected_event_shape)

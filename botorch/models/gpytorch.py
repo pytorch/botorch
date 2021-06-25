@@ -133,6 +133,9 @@ class GPyTorchModel(Model, ABC):
             specified.
         """
         self.eval()  # make sure model is in eval mode
+        # input transforms are applied at `posterior` in `eval` mode, and at
+        # `model.forward()` at the training time
+        X = self.transform_inputs(X)
         with gpt_posterior_settings():
             mvn = self(X)
             if observation_noise is not False:
@@ -316,6 +319,9 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
             `output_indices` each. Includes observation noise if specified.
         """
         self.eval()  # make sure model is in eval mode
+        # input transforms are applied at `posterior` in `eval` mode, and at
+        # `model.forward()` at the training time
+        X = self.transform_inputs(X)
         with gpt_posterior_settings():
             # insert a dimension for the output dimension
             if self._num_outputs > 1:
@@ -484,7 +490,13 @@ class ModelListGPyTorchModel(GPyTorchModel, ABC):
         shape `broadcast(test_batch_shape, model.batch_shape) x q x m`.
         """
         # TODO: Either check that batch shapes match across models, or broadcast them
-        raise NotImplementedError
+        batch_shape = self.models[0].batch_shape
+        if all(batch_shape == m.batch_shape for m in self.models[1:]):
+            return batch_shape
+        raise NotImplementedError(
+            "ModelListGPyTorchModel.batch_shape is only supported if all "
+            "constituent models have the same batch_shape."
+        )
 
     def posterior(
         self,
@@ -517,11 +529,14 @@ class ModelListGPyTorchModel(GPyTorchModel, ABC):
             `observation_noise` is specified.
         """
         self.eval()  # make sure model is in eval mode
+        # input transforms are applied at `posterior` in `eval` mode, and at
+        # `model.forward()` at the training time
+        transformed_X = self.transform_inputs(X)
         mvn_gen: Iterator
         with gpt_posterior_settings():
             # only compute what's necessary
             if output_indices is not None:
-                mvns = [self.forward_i(i, X) for i in output_indices]
+                mvns = [self.forward_i(i, transformed_X[i]) for i in output_indices]
                 if observation_noise is not False:
                     if torch.is_tensor(observation_noise):
                         lh_kwargs = [
@@ -530,25 +545,26 @@ class ModelListGPyTorchModel(GPyTorchModel, ABC):
                         ]
                     else:
                         lh_kwargs = [
-                            {"noise": lh.noise.mean().expand(X.shape[:-1])}
+                            {"noise": lh.noise.mean().expand(t_X.shape[:-1])}
                             if isinstance(lh, FixedNoiseGaussianLikelihood)
                             else {}
-                            for lh in self.likelihood.likelihoods
+                            for t_X, lh in zip(
+                                transformed_X, self.likelihood.likelihoods
+                            )
                         ]
                     mvns = [
-                        self.likelihood_i(i, mvn, X, **lkws)
+                        self.likelihood_i(i, mvn, transformed_X[i], **lkws)
                         for i, mvn, lkws in zip(output_indices, mvns, lh_kwargs)
                     ]
                 mvn_gen = zip(output_indices, mvns)
             else:
-                mvns = self(*[X for _ in range(self.num_outputs)])
+                mvns = self(*transformed_X)
                 if observation_noise is not False:
+                    mvnX = [(mvn, transformed_X[i]) for i, mvn in enumerate(mvns)]
                     if torch.is_tensor(observation_noise):
-                        mvns = self.likelihood(
-                            *[(mvn, X) for mvn in mvns], noise=observation_noise
-                        )
+                        mvns = self.likelihood(*mvnX, noise=observation_noise)
                     else:
-                        mvns = self.likelihood(*[(mvn, X) for mvn in mvns])
+                        mvns = self.likelihood(*mvnX)
                 mvn_gen = enumerate(mvns)
         # apply output transforms of individual models if present
         mvns = []
@@ -562,10 +578,9 @@ class ModelListGPyTorchModel(GPyTorchModel, ABC):
         # return result as a GPyTorchPosteriors
         if len(mvns) == 1:
             return GPyTorchPosterior(mvn=mvns[0])
-        else:
-            return GPyTorchPosterior(
-                mvn=MultitaskMultivariateNormal.from_independent_mvns(mvns=mvns)
-            )
+        return GPyTorchPosterior(
+            mvn=MultitaskMultivariateNormal.from_independent_mvns(mvns=mvns)
+        )
 
     def condition_on_observations(
         self, X: Tensor, Y: Tensor, **kwargs: Any
@@ -575,9 +590,26 @@ class ModelListGPyTorchModel(GPyTorchModel, ABC):
             f"`condition_on_observations` not implemented in {class_name}"
         )
 
+    def transform_inputs(self, X: Tensor) -> List[Tensor]:
+        r"""Individually transform the inputs for each model.
+
+        Args:
+            X: A tensor of inputs
+
+        Returns:
+            A list of tensors of transformed inputs
+        """
+        transformed_X_list = []
+        for model in self.models:
+            try:
+                transformed_X_list.append(model.input_transform(X))
+            except AttributeError:
+                transformed_X_list.append(X)
+        return transformed_X_list
+
 
 class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
-    r"""Abstract base class for multi-task models baed on GPyTorch models.
+    r"""Abstract base class for multi-task models based on GPyTorch models.
 
     This class provides the `posterior` method to models that implement a
     "long-format" multi-task GP in the style of `MultiTaskGP`.
@@ -617,15 +649,14 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
         if any(i not in self._output_tasks for i in output_indices):
             raise ValueError("Too many output indices")
         cls_name = self.__class__.__name__
-        if hasattr(self, "outcome_transform"):
-            raise NotImplementedError(
-                f"Outcome transforms currently not supported by {cls_name}"
-            )
 
         # construct evaluation X
         X_full = _make_X_full(X=X, output_indices=output_indices, tf=self._task_feature)
 
         self.eval()  # make sure model is in eval mode
+        # input transforms are applied at `posterior` in `eval` mode, and at
+        # `model.forward()` at the training time
+        X_full = self.transform_inputs(X_full)
         with gpt_posterior_settings():
             mvn = self(X_full)
             if observation_noise is not False:
@@ -641,4 +672,7 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
             covariance_matrix=mvn.lazy_covariance_matrix,
             interleaved=False,
         )
-        return GPyTorchPosterior(mvn=mtmvn)
+        posterior = GPyTorchPosterior(mvn=mtmvn)
+        if hasattr(self, "outcome_transform"):
+            posterior = self.outcome_transform.untransform_posterior(posterior)
+        return posterior

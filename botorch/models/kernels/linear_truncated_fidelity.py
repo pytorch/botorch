@@ -181,7 +181,6 @@ class LinearTruncatedFidelityKernel(Kernel):
         self.initialize(raw_power=self.raw_power_constraint.inverse_transform(value))
 
     def forward(self, x1: Tensor, x2: Tensor, diag: bool = False, **params) -> Tensor:
-        r""""""
         if params.get("last_dim_is_batch", False):
             raise NotImplementedError(
                 "last_dim_is_batch not yet supported by LinearTruncatedFidelityKernel"

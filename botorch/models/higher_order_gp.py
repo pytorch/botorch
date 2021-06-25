@@ -10,11 +10,6 @@ References
 .. [Zhe2019hogp]
     S. Zhe, W. Xing, and R. M. Kirby. Scalable high-order gaussian process regression.
     Proceedings of Machine Learning Research, volume 89, Apr 2019.
-
-.. [Doucet2010sampl]
-    A. Doucet. A Note on Efficient Conditional Simulation of Gaussian Distributions.
-    http://www.stats.ox.ac.uk/~doucet/doucet_simulationconditionalgaussian.pdf,
-    Apr 2010.
 """
 
 from __future__ import annotations
@@ -141,7 +136,8 @@ class FlattenedStandardize(Standardize):
 class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
     r"""
     A Higher order Gaussian process model (HOGP) (predictions are matrices/tensors) as
-    described in [Zhe2019hogp]_.
+    described in [Zhe2019hogp]_. The posterior uses Matheron's rule [Doucet2010sampl]_
+    as described in [Maddox2021bohdo]_.
     """
 
     def __init__(
@@ -326,7 +322,8 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
                 )
 
     def forward(self, X: Tensor) -> MultivariateNormal:
-        X = self.transform_inputs(X)
+        if self.training:
+            X = self.transform_inputs(X)
 
         covariance_list = []
         covariance_list.append(self.covar_modules[0](X))
