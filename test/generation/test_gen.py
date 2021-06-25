@@ -74,7 +74,9 @@ class TestGenCandidates(TestBaseCandidateGeneration):
             self._setUp(double=double)
             acqfs = [
                 qExpectedImprovement(self.model, best_f=self.f_best),
-                qKnowledgeGradient(self.model, num_fantasies=4, current_value=self.f_best),
+                qKnowledgeGradient(
+                    self.model, num_fantasies=4, current_value=self.f_best
+                ),
             ]
             for acqf in acqfs:
                 ics = self.initial_conditions
@@ -109,7 +111,9 @@ class TestGenCandidates(TestBaseCandidateGeneration):
             self._setUp(double=double, expand=True)
             acqfs = [
                 qExpectedImprovement(self.model, best_f=self.f_best),
-                qKnowledgeGradient(self.model, num_fantasies=4, current_value=self.f_best),
+                qKnowledgeGradient(
+                    self.model, num_fantasies=4, current_value=self.f_best
+                ),
             ]
             for acqf in acqfs:
                 ics = self.initial_conditions
@@ -144,7 +148,9 @@ class TestGenCandidates(TestBaseCandidateGeneration):
             self._setUp(double=double, expand=True)
             acqfs = [
                 qExpectedImprovement(self.model, best_f=self.f_best),
-                qKnowledgeGradient(self.model, num_fantasies=4, current_value=self.f_best),
+                qKnowledgeGradient(
+                    self.model, num_fantasies=4, current_value=self.f_best
+                ),
             ]
             for acqf in acqfs:
                 ics = self.initial_conditions
@@ -162,7 +168,7 @@ class TestGenCandidates(TestBaseCandidateGeneration):
 
                 if isinstance(acqf, qKnowledgeGradient):
                     candidates = candidates[0]
-                    
+
                 candidates = candidates.squeeze(0)
                 self.assertTrue(-EPS <= candidates[0] <= 1 + EPS)
                 self.assertTrue(candidates[1].item() == 0.25)
