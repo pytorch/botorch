@@ -77,6 +77,10 @@
     {
       "id": "risk_averse_bo_with_environmental_variables",
       "title": "Risk averse Bayesian optimization with environmental variables"
+    },
+    {
+      "id": "risk_averse_bo_with_input_perturbations",
+      "title": "Risk averse Bayesian optimization with input perturbations"
     }
   ],
   "Advanced Usage": [
