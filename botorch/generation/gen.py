@@ -206,8 +206,6 @@ def gen_candidates_torch(
     bayes_optimizer = optimizer(
         params=[clamped_candidates], lr=options.get("lr", 0.025)
     )
-    param_trajectory: Dict[str, List[Tensor]] = {"candidates": []}
-    loss_trajectory: List[float] = []
     i = 0
     stop = False
     stopping_criterion = ExpMAStoppingCriterion(
@@ -218,8 +216,6 @@ def gen_candidates_torch(
         loss = -acquisition_function(candidates).sum()
         if verbose:
             print("Iter: {} - Value: {:.3f}".format(i, -(loss.item())))
-        loss_trajectory.append(loss.item())
-        param_trajectory["candidates"].append(candidates.clone().detach())
 
         def closure():
             bayes_optimizer.zero_grad()
