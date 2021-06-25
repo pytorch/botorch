@@ -29,6 +29,7 @@ from botorch.exceptions.warnings import SamplingWarning
 from botorch.models.model import Model
 from botorch.sampling.samplers import IIDNormalSampler, MCSampler, SobolQMCNormalSampler
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
+    FastNondominatedPartitioning,
     NondominatedPartitioning,
 )
 from torch import Tensor
@@ -141,11 +142,18 @@ def get_acquisition_function(
             feas = torch.stack([c(Y) <= 0 for c in constraints], dim=-1).all(dim=-1)
             Y = Y[feas]
         obj = objective(Y)
-        partitioning = NondominatedPartitioning(
-            ref_point=torch.as_tensor(ref_point, dtype=Y.dtype, device=Y.device),
-            Y=obj,
-            alpha=kwargs.get("alpha", 0.0),
-        )
+        alpha = kwargs.get("alpha", 0.0)
+        if alpha > 0:
+            partitioning = NondominatedPartitioning(
+                ref_point=torch.as_tensor(ref_point, dtype=Y.dtype, device=Y.device),
+                Y=obj,
+                alpha=alpha,
+            )
+        else:
+            partitioning = FastNondominatedPartitioning(
+                ref_point=torch.as_tensor(ref_point, dtype=Y.dtype, device=Y.device),
+                Y=obj,
+            )
         return moo_monte_carlo.qExpectedHypervolumeImprovement(
             model=model,
             ref_point=ref_point,

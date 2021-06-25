@@ -34,6 +34,11 @@ Higher Order GP Posterior
 .. automodule:: botorch.posteriors.higher_order
     :members:
 
+Multitask GP Posterior
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.posteriors.multitask
+    :members:
+
 Transformed Posterior
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.posteriors.transformed

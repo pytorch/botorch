@@ -39,17 +39,17 @@ class SimpleInputTransform(InputTransform, torch.nn.Module):
         self.transform_on_train = transform_on_train
         self.transform_on_eval = True
         self.transform_on_fantasize = True
+        # to test the `input_transform.to()` call
+        self.register_buffer("add_value", torch.ones(1))
 
     def transform(self, X: Tensor) -> Tensor:
-        return X + 1.0
+        return X + self.add_value
 
 
 class SimpleGPyTorchModel(GPyTorchModel, ExactGP):
     last_fantasize_flag: bool = False
 
     def __init__(self, train_X, train_Y, outcome_transform=None, input_transform=None):
-        if input_transform is not None:
-            input_transform.to(train_X)
         with torch.no_grad():
             transformed_X = self.transform_inputs(
                 X=train_X, input_transform=input_transform
@@ -82,8 +82,6 @@ class SimpleGPyTorchModel(GPyTorchModel, ExactGP):
 
 class SimpleBatchedMultiOutputGPyTorchModel(BatchedMultiOutputGPyTorchModel, ExactGP):
     def __init__(self, train_X, train_Y, outcome_transform=None, input_transform=None):
-        if input_transform is not None:
-            input_transform.to(train_X)
         with torch.no_grad():
             transformed_X = self.transform_inputs(
                 X=train_X, input_transform=input_transform
@@ -410,6 +408,10 @@ class TestModelListGPyTorchModel(BotorchTestCase):
             m1 = SimpleGPyTorchModel(train_X1, train_Y1)
             m2_tf = SimpleInputTransform(True)
             m2 = SimpleGPyTorchModel(train_X2, train_Y2, input_transform=m2_tf)
+            # test `input_transform.to(X)` call
+            self.assertEqual(m2_tf.add_value.dtype, dtype)
+            self.assertEqual(m2_tf.add_value.device, self.device)
+            # train models to have the train inputs preprocessed
             for m in [m1, m2]:
                 mll = ExactMarginalLogLikelihood(m.likelihood, m)
                 fit_gpytorch_model(mll, options={"maxiter": 2})

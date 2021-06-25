@@ -6,18 +6,31 @@
 
 r"""
 Multi-Task GP models.
+
+References
+
+.. [Doucet2010sampl]
+    A. Doucet. A Note on Efficient Conditional Simulation of Gaussian Distributions.
+    http://www.stats.ox.ac.uk/~doucet/doucet_simulationconditionalgaussian.pdf,
+    Apr 2010.
+
+.. [Maddox2021bohdo]
+    W. Maddox, M. Balandat, A. Wilson, and E. Bakshy. Bayesian Optimization with
+    High-Dimensional Outputs. https://botorch.org, Jun 2021.
 """
 
 from __future__ import annotations
 
 import math
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import torch
 from botorch.models.gp_regression import MIN_INFERRED_NOISE_LEVEL
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.gpytorch import MultiTaskGPyTorchModel
 from botorch.models.transforms.input import InputTransform
+from botorch.models.transforms.outcome import OutcomeTransform
+from botorch.posteriors.multitask import MultitaskGPPosterior
 from botorch.utils.containers import TrainingData
 from gpytorch.constraints import GreaterThan
 from gpytorch.distributions.multitask_multivariate_normal import (
@@ -28,6 +41,14 @@ from gpytorch.kernels.index_kernel import IndexKernel
 from gpytorch.kernels.matern_kernel import MaternKernel
 from gpytorch.kernels.multitask_kernel import MultitaskKernel
 from gpytorch.kernels.scale_kernel import ScaleKernel
+from gpytorch.lazy import (
+    BatchRepeatLazyTensor,
+    DiagLazyTensor,
+    KroneckerProductLazyTensor,
+    KroneckerProductDiagLazyTensor,
+    lazify,
+    RootLazyTensor,
+)
 from gpytorch.likelihoods.gaussian_likelihood import (
     FixedNoiseGaussianLikelihood,
     GaussianLikelihood,
@@ -42,6 +63,9 @@ from gpytorch.priors.lkj_prior import LKJCovariancePrior
 from gpytorch.priors.prior import Prior
 from gpytorch.priors.smoothed_box_prior import SmoothedBoxPrior
 from gpytorch.priors.torch_priors import GammaPrior
+from gpytorch.settings import cholesky_jitter, detach_test_caches
+from gpytorch.utils.errors import CachingError
+from gpytorch.utils.memoize import cached, pop_from_cache
 from torch import Tensor
 
 
@@ -67,6 +91,7 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
         output_tasks: Optional[List[int]] = None,
         rank: Optional[int] = None,
         input_transform: Optional[InputTransform] = None,
+        outcome_transform: Optional[OutcomeTransform] = None,
     ) -> None:
         r"""Multi-Task GP model using an ICM kernel, inferring observation noise.
 
@@ -94,8 +119,6 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
             >>> train_Y = torch.cat(f1(X1), f2(X2)).unsqueeze(-1)
             >>> model = MultiTaskGP(train_X, train_Y, task_feature=-1)
         """
-        if input_transform is not None:
-            input_transform.to(train_X)
         with torch.no_grad():
             transformed_X = self.transform_inputs(
                 X=train_X, input_transform=input_transform
@@ -104,6 +127,9 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
         all_tasks, task_feature, d = self.get_all_tasks(
             transformed_X, task_feature, output_tasks
         )
+        if outcome_transform is not None:
+            train_Y, _ = outcome_transform(train_Y)
+
         # squeeze output dim
         train_Y = train_Y.squeeze(-1)
         if output_tasks is None:
@@ -140,6 +166,8 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
         )
         if input_transform is not None:
             self.input_transform = input_transform
+        if outcome_transform is not None:
+            self.outcome_transform = outcome_transform
         self.to(train_X)
 
     def _split_inputs(self, x: Tensor) -> Tuple[Tensor, Tensor]:
@@ -305,8 +333,6 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
             >>> train_Yvar = 0.1 + 0.1 * torch.rand_like(train_Y)
             >>> model = FixedNoiseMultiTaskGP(train_X, train_Y, train_Yvar, -1)
         """
-        if input_transform is not None:
-            input_transform.to(train_X)
         with torch.no_grad():
             transformed_X = self.transform_inputs(
                 X=train_X, input_transform=input_transform
@@ -358,6 +384,10 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel):
 
     This model assumes the "block design" case, i.e., it requires that all tasks
     are observed at all data points.
+
+    For posterior sampling, this model uses Matheron's rule [Doucet2010sampl] to compute
+    the posterior over all tasks as in [Maddox2021bohdo] by exploiting Kronecker
+    structure.
     """
 
     def __init__(
@@ -367,6 +397,8 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel):
         likelihood: Optional[MultitaskGaussianLikelihood] = None,
         task_covar_prior: Optional[Prior] = None,
         rank: Optional[int] = None,
+        input_transform: Optional[InputTransform] = None,
+        outcome_transform: Optional[OutcomeTransform] = None,
         **kwargs: Any,
     ) -> None:
         r"""Multi-task GP with Kronecker structure, using a simple ICM kernel.
@@ -397,10 +429,18 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel):
             >>> train_Y = torch.cat([f_1(X), f_2(X)], dim=-1)
             >>> model = KroneckerMultiTaskGP(train_X, train_Y)
         """
-        self._validate_tensor_args(X=train_X, Y=train_Y)
+        with torch.no_grad():
+            transformed_X = self.transform_inputs(
+                X=train_X, input_transform=input_transform
+            )
+        if outcome_transform is not None:
+            train_Y, _ = outcome_transform(train_Y)
+
+        self._validate_tensor_args(X=transformed_X, Y=train_Y)
         self._num_outputs = train_Y.shape[-1]
         batch_shape, ard_num_dims = train_X.shape[:-2], train_X.shape[-1]
         num_tasks = train_Y.shape[-1]
+
         if rank is None:
             rank = num_tasks
         if likelihood is None:
@@ -430,24 +470,250 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel):
         self.mean_module = MultitaskMean(
             base_means=ConstantMean(batch_shape=batch_shape), num_tasks=num_tasks
         )
-        self.covar_module = ScaleKernel(
-            MultitaskKernel(
-                data_covar_module=MaternKernel(
-                    nu=2.5,
-                    ard_num_dims=ard_num_dims,
-                    lengthscale_prior=GammaPrior(3.0, 6.0),
-                    batch_shape=batch_shape,
-                ),
-                num_tasks=num_tasks,
-                rank=rank,
+        self.covar_module = MultitaskKernel(
+            data_covar_module=MaternKernel(
+                nu=2.5,
+                ard_num_dims=ard_num_dims,
+                lengthscale_prior=GammaPrior(3.0, 6.0),
                 batch_shape=batch_shape,
-                task_covar_prior=task_covar_prior,
             ),
+            num_tasks=num_tasks,
+            rank=rank,
             batch_shape=batch_shape,
-            outputscale_prior=GammaPrior(2.0, 0.15),
+            task_covar_prior=task_covar_prior,
         )
 
+        if outcome_transform is not None:
+            self.outcome_transform = outcome_transform
+        if input_transform is not None:
+            self.input_transform = input_transform
+        self.to(train_X)
+
     def forward(self, X: Tensor) -> MultitaskMultivariateNormal:
+        if self.training:
+            X = self.transform_inputs(X)
+
         mean_x = self.mean_module(X)
         covar_x = self.covar_module(X)
         return MultitaskMultivariateNormal(mean_x, covar_x)
+
+    @property
+    def _task_covar_matrix(self):
+        res = self.covar_module.task_covar_module.covar_matrix
+        if detach_test_caches.on():
+            res = res.detach()
+        return res
+
+    @property
+    @cached(name="train_full_covar")
+    def train_full_covar(self):
+        train_x = self.transform_inputs(self.train_inputs[0])
+
+        # construct Kxx \otimes Ktt
+        train_full_covar = self.covar_module(train_x).evaluate_kernel()
+        if detach_test_caches.on():
+            train_full_covar = train_full_covar.detach()
+        return train_full_covar
+
+    @property
+    @cached(name="predictive_mean_cache")
+    def predictive_mean_cache(self):
+        train_x = self.transform_inputs(self.train_inputs[0])
+        train_noise = self.likelihood._shaped_noise_covar(train_x.shape)
+        if detach_test_caches.on():
+            train_noise = train_noise.detach()
+
+        train_diff = self.train_targets - self.mean_module(train_x)
+        train_solve = (self.train_full_covar + train_noise).inv_matmul(
+            train_diff.reshape(*train_diff.shape[:-2], -1)
+        )
+        if detach_test_caches.on():
+            train_solve = train_solve.detach()
+
+        return train_solve
+
+    def posterior(
+        self,
+        X: Tensor,
+        output_indices: Optional[List[int]] = None,
+        observation_noise: Union[bool, Tensor] = False,
+        **kwargs: Any,
+    ) -> MultitaskGPPosterior:
+        self.eval()
+
+        X = self.transform_inputs(X)
+        train_x = self.transform_inputs(self.train_inputs[0])
+
+        # construct Ktt
+        task_covar = self._task_covar_matrix
+        task_rootlt = self._task_covar_matrix.root_decomposition(
+            method="diagonalization"
+        )
+        task_root = task_rootlt.root
+        if task_covar.batch_shape != X.shape[:-2]:
+            task_covar = BatchRepeatLazyTensor(task_covar, batch_repeat=X.shape[:-2])
+            task_root = BatchRepeatLazyTensor(
+                lazify(task_root), batch_repeat=X.shape[:-2]
+            )
+
+        task_covar_rootlt = RootLazyTensor(task_root)
+
+        # construct RR' \approx Kxx
+        data_data_covar = self.train_full_covar.lazy_tensors[0]
+        # populate the diagonalziation caches for the root and inverse root
+        # decomposition
+        data_data_evals, data_data_evecs = data_data_covar.diagonalization()
+
+        # construct K_{xt, x}
+        test_data_covar = self.covar_module.data_covar_module(X, train_x)
+        # construct K_{xt, xt}
+        test_test_covar = self.covar_module.data_covar_module(X)
+
+        # now update root so that \tilde{R}\tilde{R}' \approx K_{(x,xt), (x,xt)}
+        # cloning preserves the gradient history
+        with cholesky_jitter(cholesky_jitter.value(X.dtype)):
+            updated_lazy_tensor = data_data_covar.cat_rows(
+                cross_mat=test_data_covar.clone(),
+                new_mat=test_test_covar,
+                method="diagonalization",
+            )
+            updated_root = updated_lazy_tensor.root_decomposition().root
+            # occasionally, there's device errors so enforce this comes out right
+            updated_root = updated_root.to(data_data_covar.device)
+
+        # build a root decomposition of the joint train/test covariance matrix
+        # construct (\tilde{R} \otimes M)(\tilde{R} \otimes M)' \approx
+        # (K_{(x,xt), (x,xt)} \otimes Ktt)
+        joint_covar = RootLazyTensor(
+            KroneckerProductLazyTensor(updated_root, task_covar_rootlt.root.detach())
+        )
+
+        # construct K_{xt, x} \otimes Ktt
+        test_obs_kernel = KroneckerProductLazyTensor(test_data_covar, task_covar)
+
+        # collect y - \mu(x) and \mu(X)
+        train_diff = self.train_targets - self.mean_module(train_x)
+        if detach_test_caches.on():
+            train_diff = train_diff.detach()
+        test_mean = self.mean_module(X)
+
+        train_noise = self.likelihood._shaped_noise_covar(train_x.shape)
+        diagonal_noise = isinstance(train_noise, DiagLazyTensor)
+        if detach_test_caches.on():
+            train_noise = train_noise.detach()
+        test_noise = (
+            self.likelihood._shaped_noise_covar(X.shape) if observation_noise else None
+        )
+
+        # predictive mean and variance for the mvn
+        # first the predictive mean
+        pred_mean = (
+            test_obs_kernel.matmul(self.predictive_mean_cache).reshape_as(test_mean)
+            + test_mean
+        )
+        # next the predictive variance, assume diagonal noise
+        test_var_term = KroneckerProductLazyTensor(test_test_covar, task_covar).diag()
+
+        if diagonal_noise:
+            task_evals, task_evecs = self._task_covar_matrix.diagonalization()
+            # TODO: make this be the default KPMatmulLT diagonal method in gpytorch
+            full_data_inv_evals = (
+                KroneckerProductDiagLazyTensor(
+                    DiagLazyTensor(data_data_evals), DiagLazyTensor(task_evals)
+                )
+                + train_noise
+            ).inverse()
+            test_train_hadamard = KroneckerProductLazyTensor(
+                test_data_covar.matmul(data_data_evecs).evaluate() ** 2,
+                task_covar.matmul(task_evecs).evaluate() ** 2,
+            )
+            data_var_term = test_train_hadamard.matmul(full_data_inv_evals).sum(dim=-1)
+        else:
+            # if non-diagonal noise (but still kronecker structured), we have to pull
+            # across the noise because the inverse is not closed form
+            # should be a kronecker lt, R = \Sigma_X^{-1/2} \kron \Sigma_T^{-1/2}
+            # TODO: enforce the diagonalization to return a KPLT for all shapes in
+            # gpytorch or dense linear algebra for small shapes
+            data_noise, task_noise = train_noise.lazy_tensors
+            data_noise_root = data_noise.root_inv_decomposition(
+                method="diagonalization"
+            )
+            task_noise_root = task_noise.root_inv_decomposition(
+                method="diagonalization"
+            )
+
+            # ultimately we need to compute the diagonal of
+            # (K_{x* X} \kron K_T)(K_{XX} \kron K_T + \Sigma_X \kron \Sigma_T)^{-1}
+            #                           (K_{x* X} \kron K_T)^T
+            # = (K_{x* X} \Sigma_X^{-1/2} Q_R)(\Lambda_R + I)^{-1}
+            #                       (K_{x* X} \Sigma_X^{-1/2} Q_R)^T
+            # where R = (\Sigma_X^{-1/2T}K_{XX}\Sigma_X^{-1/2} \kron
+            #                   \Sigma_T^{-1/2T}K_{T}\Sigma_T^{-1/2})
+            # first we construct the components of R's eigen-decomposition
+            # TODO: make this be the default KPMatmulLT diagonal method in gpytorch
+            whitened_data_covar = (
+                data_noise_root.transpose(-1, -2)
+                .matmul(data_data_covar)
+                .matmul(data_noise_root)
+            )
+            w_data_evals, w_data_evecs = whitened_data_covar.diagonalization()
+            whitened_task_covar = (
+                task_noise_root.transpose(-1, -2)
+                .matmul(self._task_covar_matrix)
+                .matmul(task_noise_root)
+            )
+            w_task_evals, w_task_evecs = whitened_task_covar.diagonalization()
+
+            # we add one to the eigenvalues as above (not just for stability)
+            full_data_inv_evals = (
+                KroneckerProductDiagLazyTensor(
+                    DiagLazyTensor(w_data_evals), DiagLazyTensor(w_task_evals)
+                )
+                .add_jitter(1.0)
+                .inverse()
+            )
+
+            test_data_comp = (
+                test_data_covar.matmul(data_noise_root).matmul(w_data_evecs).evaluate()
+                ** 2
+            )
+            task_comp = (
+                task_covar.matmul(task_noise_root).matmul(w_task_evecs).evaluate() ** 2
+            )
+
+            test_train_hadamard = KroneckerProductLazyTensor(test_data_comp, task_comp)
+            data_var_term = test_train_hadamard.matmul(full_data_inv_evals).sum(dim=-1)
+
+        pred_variance = test_var_term - data_var_term
+        specialized_mvn = MultitaskMultivariateNormal(
+            pred_mean, DiagLazyTensor(pred_variance)
+        )
+        if observation_noise:
+            specialized_mvn = self.likelihood(specialized_mvn)
+
+        posterior = MultitaskGPPosterior(
+            mvn=specialized_mvn,
+            joint_covariance_matrix=joint_covar,
+            test_train_covar=test_obs_kernel,
+            train_diff=train_diff,
+            test_mean=test_mean,
+            train_train_covar=self.train_full_covar,
+            train_noise=train_noise,
+            test_noise=test_noise,
+        )
+
+        if hasattr(self, "outcome_transform"):
+            posterior = self.outcome_transform.untransform_posterior(posterior)
+
+        return posterior
+
+    def train(self, val=True, *args, **kwargs):
+        if val:
+            fixed_cache_names = ["data_data_roots", "train_full_covar", "task_root"]
+            for name in fixed_cache_names:
+                try:
+                    pop_from_cache(self, name)
+                except CachingError:
+                    pass
+
+        return super().train(val, *args, **kwargs)
