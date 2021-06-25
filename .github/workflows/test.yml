@@ -56,7 +56,7 @@ jobs:
       shell: bash -l {0}
       run: |
         conda install -y -c pytorch-nightly pytorch cpuonly
-        conda install -y pip scipy "sphinx<4.0" pytest flake8
+        conda install -y pip scipy sphinx pytest flake8
         pip install git+https://github.com/cornellius-gp/gpytorch.git
         pip install .[test]
     - name: Unit tests
