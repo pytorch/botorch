@@ -29,6 +29,7 @@ from botorch.exceptions.errors import UnsupportedError
 from botorch.exceptions.warnings import SamplingWarning
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
+    FastNondominatedPartitioning,
     NondominatedPartitioning,
 )
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
@@ -403,10 +404,28 @@ class TestGetAcquisitionFunction(BotorchTestCase):
         self.assertIsInstance(sampler, IIDNormalSampler)
         self.assertIsInstance(kwargs["objective"], DummyMCMultiOutputObjective)
         partitioning = kwargs["partitioning"]
-        self.assertIsInstance(partitioning, NondominatedPartitioning)
-
+        self.assertIsInstance(partitioning, FastNondominatedPartitioning)
         self.assertEqual(sampler.sample_shape, torch.Size([self.mc_samples]))
         self.assertEqual(sampler.seed, 2)
+        # test that approximate partitioning is used when alpha > 0
+        # test with non-qmc
+        acqf = get_acquisition_function(
+            acquisition_function_name="qEHVI",
+            model=self.model,
+            objective=self.mo_objective,
+            X_observed=self.X_observed,
+            X_pending=self.X_pending,
+            mc_samples=self.mc_samples,
+            seed=2,
+            qmc=False,
+            ref_point=self.ref_point,
+            Y=self.Y,
+            alpha=0.1,
+        )
+        _, kwargs = mock_acqf.call_args
+        partitioning = kwargs["partitioning"]
+        self.assertIsInstance(partitioning, NondominatedPartitioning)
+        self.assertEqual(partitioning.alpha, 0.1)
         # test constraints
         acqf = get_acquisition_function(
             acquisition_function_name="qEHVI",
