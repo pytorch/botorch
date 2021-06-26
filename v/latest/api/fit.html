@@ -12,7 +12,7 @@
             {"zIndex":100}
           )
         });
-        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/latest/versions"><h3>latest</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
 <script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/underscore.js"></script>
@@ -23,12 +23,12 @@
 <div class="documentwrapper">
 <div class="bodywrapper">
 <div class="body" role="main">
-<div class="section" id="module-botorch.fit">
+<section id="module-botorch.fit">
 <span id="botorch-fit"></span><h1>botorch.fit<a class="headerlink" href="#module-botorch.fit" title="Permalink to this headline">¶</a></h1>
 <p>Utilities for model fitting.</p>
 <dl class="py function">
-<dt id="botorch.fit.fit_gpytorch_model">
-<code class="sig-prename descclassname"><span class="pre">botorch.fit.</span></code><code class="sig-name descname"><span class="pre">fit_gpytorch_model</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="pre">mll</span></em>, <em class="sig-param"><span class="pre">optimizer=&lt;function</span> <span class="pre">fit_gpytorch_scipy&gt;</span></em>, <em class="sig-param"><span class="pre">**kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/fit.html#fit_gpytorch_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.fit.fit_gpytorch_model" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="botorch.fit.fit_gpytorch_model">
+<span class="sig-prename descclassname"><span class="pre">botorch.fit.</span></span><span class="sig-name descname"><span class="pre">fit_gpytorch_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">mll</span></em>, <em class="sig-param"><span class="pre">optimizer=&lt;function</span> <span class="pre">fit_gpytorch_scipy&gt;</span></em>, <em class="sig-param"><span class="pre">**kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/fit.html#fit_gpytorch_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.fit.fit_gpytorch_model" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fit hyperparameters of a GPyTorch model.</p>
 <p>On optimizer failures, a new initial condition is sampled from the
 hyperparameter priors and optimization is retried. The maximum number of
@@ -59,7 +59,7 @@ and <cite>BatchedMultiOutputGPyTorchModel</cite> models) or <cite>approx_mll</ci
 </pre></div>
 </div>
 </dd></dl>
-</div>
+</section>
 </div>
 </div>
 </div>
