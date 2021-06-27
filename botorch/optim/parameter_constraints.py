@@ -15,7 +15,7 @@ from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
-from botorch.exceptions.errors import UnsupportedError
+from botorch.exceptions.errors import UnsupportedError, CandidateGenerationError
 from scipy.optimize import Bounds
 from torch import Tensor
 
@@ -267,3 +267,66 @@ def _make_linear_constraints(
     else:
         raise ValueError("`indices` must be at least one-dimensional")
     return constraints
+
+
+def _generate_unfixed_lin_constraints(
+    constraints: Optional[List[Tuple[Tensor, Tensor, float]]],
+    fixed_features: Dict[int, float],
+    dimension: int,
+    eq: bool,
+) -> Optional[List[Tuple[Tensor, Tensor, float]]]:
+
+    # If constraints is None or an empty list, then return itself
+    if not constraints:
+        return constraints
+
+    # replace_index generates the new indices for the unfixed dimensions
+    # after eliminating the fixed dimensions.
+    # Example: dimension = 5, ff.keys() = [1, 3], replace_index = {0: 0, 2: 1, 4: 2}
+    unfixed_keys = sorted(set(range(dimension)) - set(fixed_features))
+    unfixed_keys = torch.tensor(unfixed_keys).to(constraints[0][0])
+    replace_index = torch.arange(dimension - len(fixed_features)).to(constraints[0][0])
+
+    new_constraints = []
+    # parse constraints one-by-one
+    for constraint_id, (indices, coefficients, rhs) in enumerate(constraints):
+        new_rhs = rhs
+        new_indices = []
+        new_coefficients = []
+        # the following unsqueeze is done to facilitate a simpler for-loop.
+        indices_2dim = indices if indices.ndim == 2 else indices.unsqueeze(-1)
+        for coefficient, index in zip(coefficients, indices_2dim):
+            ffval_or_None = fixed_features.get(index[-1].item())
+            # if ffval_or_None is None, then the index is not fixed
+            if ffval_or_None is None:
+                new_indices.append(index)
+                new_coefficients.append(coefficient)
+            # otherwise, we "remove" the constraints corresponding to that index
+            else:
+                new_rhs -= coefficient.item() * ffval_or_None
+
+        # all indices were fixed, so the constraint is gone.
+        if len(new_indices) == 0:
+            if (eq and new_rhs != 0) or (not eq and new_rhs > 0):
+                prefix = "Eq" if eq else "Ineq"
+                raise CandidateGenerationError(
+                    f"{prefix}ality constraint {constraint_id} not met "
+                    "with fixed_features."
+                )
+        else:
+            # However, one key transformation has to be noted.
+            # new_indices is with respect to the older (fuller) domain, and so it will
+            # have to be converted using replace_index.
+            new_indices = torch.stack(new_indices, dim=0)
+            # generate new index location after the removal of fixed_features indices
+            new_indices_dim_d = new_indices[:, -1].unsqueeze(-1)
+            new_indices_dim_d = replace_index[
+                torch.nonzero(new_indices_dim_d == unfixed_keys, as_tuple=True)[1]
+            ]
+            new_indices[:, -1] = new_indices_dim_d
+            # squeeze(-1) is a no-op if dim -1 is not singleton
+            new_indices.squeeze_(-1)
+            # convert new_coefficients to Tensor
+            new_coefficients = torch.stack(new_coefficients)
+            new_constraints.append((new_indices, new_coefficients, new_rhs))
+    return new_constraints
