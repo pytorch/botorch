@@ -13,7 +13,8 @@ Parameter constraints are constraints on the input space that restrict the
 values of the generated candidates. That is, rather than just living inside
 a bounding box defined by the `bounds` argument to `optimize_acqf` (or its
 derivates), candidate points may be further constrained by linear (in)equality
-constraints, specified by the `inequality_constraints` and `equality_constraints` agruments to `optimize_acqf`.
+constraints, specified by the `inequality_constraints` and `equality_constraints`
+arguments to `optimize_acqf`.
 
 Parameter constraints are used e.g. when certain configurations are infeasible
 to implement, or would result in excessive costs. These constraints do not affect
