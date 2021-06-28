@@ -91,7 +91,7 @@ class TestGenCandidates(TestBaseCandidateGeneration):
                     options=options or {},
                 )
                 if isinstance(acqf, qKnowledgeGradient):
-                    candidates = candidates[0]
+                    candidates = acqf.extract_candidates(candidates)
 
                 self.assertTrue(-EPS <= candidates <= 1 + EPS)
 
@@ -129,7 +129,7 @@ class TestGenCandidates(TestBaseCandidateGeneration):
                     options=options or {},
                 )
                 if isinstance(acqf, qKnowledgeGradient):
-                    candidates = candidates[0]
+                    candidates = acqf.extract_candidates(candidates)
                 candidates = candidates.squeeze(0)
                 self.assertTrue(-EPS <= candidates[0] <= 1 + EPS)
                 self.assertTrue(candidates[1].item() == 1.0)
@@ -167,7 +167,7 @@ class TestGenCandidates(TestBaseCandidateGeneration):
                 )
 
                 if isinstance(acqf, qKnowledgeGradient):
-                    candidates = candidates[0]
+                    candidates = acqf.extract_candidates(candidates)
 
                 candidates = candidates.squeeze(0)
                 self.assertTrue(-EPS <= candidates[0] <= 1 + EPS)
