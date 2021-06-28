@@ -6,7 +6,7 @@
 
 import numpy as np
 import torch
-from botorch.exceptions.errors import UnsupportedError
+from botorch.exceptions.errors import UnsupportedError, CandidateGenerationError
 from botorch.optim.parameter_constraints import (
     _arrayify,
     _make_linear_constraints,
@@ -14,6 +14,7 @@ from botorch.optim.parameter_constraints import (
     lin_constraint_jac,
     make_scipy_bounds,
     make_scipy_linear_constraints,
+    _generate_unfixed_lin_constraints,
 )
 from botorch.utils.testing import BotorchTestCase
 from scipy.optimize import Bounds
@@ -192,6 +193,98 @@ class TestParameterConstraints(BotorchTestCase):
                 inequality_constraints=[(indices, coefficients, 1.0)],
                 equality_constraints=[(indices, coefficients, 1.0)],
             )
+
+    def test_generate_unfixed_lin_constraints(self):
+        # Case 1: some fixed features are in the indices
+        indices = [
+            torch.arange(4, device=self.device),
+            torch.arange(2, -1, -1, device=self.device),
+        ]
+        coefficients = [
+            torch.tensor([-0.1, 0.2, -0.3, 0.4], device=self.device),
+            torch.tensor([-0.1, 0.3, -0.5], device=self.device),
+        ]
+        rhs = [0.5, 0.5]
+        dimension = 4
+        fixed_features = {1: 1, 3: 2}
+        new_constraints = _generate_unfixed_lin_constraints(
+            constraints=list(zip(indices, coefficients, rhs)),
+            fixed_features=fixed_features,
+            dimension=dimension,
+            eq=False,
+        )
+        for i, (new_indices, new_coefficients, new_rhs) in enumerate(new_constraints):
+            if i % 2 == 0:  # first list of indices is [0, 1, 2, 3]
+                self.assertTrue(
+                    torch.equal(new_indices, torch.arange(2, device=self.device))
+                )
+            else:  # second list of indices is [2, 1, 0]
+                self.assertTrue(
+                    torch.equal(
+                        new_indices, torch.arange(1, -1, -1, device=self.device)
+                    )
+                )
+            mask = [True] * indices[i].shape[0]
+            subtract = 0
+            for j, old_idx in enumerate(indices[i]):
+                if old_idx.item() in fixed_features:
+                    mask[j] = False
+                    subtract += fixed_features[old_idx.item()] * coefficients[i][j]
+            self.assertTrue(torch.equal(new_coefficients, coefficients[i][mask]))
+            self.assertEqual(new_rhs, rhs[i] - subtract)
+
+        # Case 2: none of fixed features are in the indices, but have to be renumbered
+        indices = [
+            torch.arange(2, 6, device=self.device),
+            torch.arange(5, 2, -1, device=self.device),
+        ]
+        fixed_features = {0: -10, 1: 10}
+        dimension = 6
+        new_constraints = _generate_unfixed_lin_constraints(
+            constraints=list(zip(indices, coefficients, rhs)),
+            fixed_features=fixed_features,
+            dimension=dimension,
+            eq=False,
+        )
+        for i, (new_indices, new_coefficients, new_rhs) in enumerate(new_constraints):
+            if i % 2 == 0:  # first list of indices is [2, 3, 4, 5]
+                self.assertTrue(
+                    torch.equal(new_indices, torch.arange(4, device=self.device))
+                )
+            else:  # second list of indices is [5, 4, 3]
+                self.assertTrue(
+                    torch.equal(new_indices, torch.arange(3, 0, -1, device=self.device))
+                )
+
+            self.assertTrue(torch.equal(new_coefficients, coefficients[i]))
+            self.assertEqual(new_rhs, rhs[i])
+
+        # Case 3: all fixed features are in the indices
+        indices = [
+            torch.arange(4, device=self.device),
+            torch.arange(2, -1, -1, device=self.device),
+        ]
+        # Case 3a: problem is feasible
+        dimension = 4
+        fixed_features = {0: 2, 1: 1, 2: 1, 3: 2}
+        for eq in [False, True]:
+            new_constraints = _generate_unfixed_lin_constraints(
+                constraints=[(indices[0], coefficients[0], rhs[0])],
+                fixed_features=fixed_features,
+                dimension=dimension,
+                eq=eq,
+            )
+            self.assertEqual(new_constraints, [])
+        # Case 3b: problem is infeasible
+        for eq in [False, True]:
+            prefix = "Ineq" if not eq else "Eq"
+            with self.assertRaisesRegex(CandidateGenerationError, prefix):
+                new_constraints = _generate_unfixed_lin_constraints(
+                    constraints=[(indices[1], coefficients[1], rhs[1])],
+                    fixed_features=fixed_features,
+                    dimension=dimension,
+                    eq=eq,
+                )
 
 
 class TestMakeScipyBounds(BotorchTestCase):

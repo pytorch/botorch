@@ -11,7 +11,8 @@ This is useful e.g. for performing contextual optimization.
 
 from __future__ import annotations
 
-from typing import List, Union
+from numbers import Number
+from typing import List, Sequence, Union
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
@@ -36,7 +37,7 @@ class FixedFeatureAcquisitionFunction(AcquisitionFunction):
         acq_function: AcquisitionFunction,
         d: int,
         columns: List[int],
-        values: Union[Tensor, List[float]],
+        values: Union[Tensor, Sequence[Union[Tensor, float]]],
     ) -> None:
         r"""Derived Acquisition Function by fixing a subset of input features.
 
@@ -51,16 +52,47 @@ class FixedFeatureAcquisitionFunction(AcquisitionFunction):
                 different for each of the `q` input points), or an array-like of
                 values that is broadcastable to the input across `t`-batch and
                 `q`-batch dimensions, e.g. a list of length `d_f` if values
-                are the same across all `t` and `q`-batch dimensions.
+                are the same across all `t` and `q`-batch dimensions, or a
+                combination of `Tensor`s and numbers which can be broadcasted
+                to form a tensor with trailing dimension size of `d_f`.
         """
         Module.__init__(self)
         self.acq_func = acq_function
         self.d = d
-        values = torch.as_tensor(values).detach().clone()
-        self.register_buffer("values", values)
+        if isinstance(values, Tensor):
+            new_values = values.detach().clone()
+        else:
+            new_values = []
+            for value in values:
+                if isinstance(value, Number):
+                    new_values.append(torch.tensor([float(value)]))
+                else:
+                    new_values.append(value.detach().clone())
+
+            # There are 3 cases for when `values` is a `Sequence`.
+            # 1) `values` == list of floats as earlier.
+            # 2) `values` == combination of floats and `Tensor`s.
+            # 3) `values` == a list of `Tensor`s.
+            # For 1), the below step creates a vector of length `len(values)`
+            # For 2), the below step creates a `Tensor` of shape `batch_shape x q x d_f`
+            # with the broadcasting functionality.
+            # For 3), this is simply a concatenation, yielding a `Tensor` with the
+            # same shape as in 2).
+            # The key difference arises when `_construct_X_full` is invoked.
+            # In 1), the expansion (`self.values.expand`) will expand the `Tensor` to
+            # size `batch_shape x q x d_f`.
+            # In 2) and 3), this expansion is a no-op because they are already of the
+            # required size. However, 2) and 3) _cannot_ support varying `batch_shape`,
+            # which means that all calls to `FixedFeatureAcquisitionFunction` have
+            # to have the same size throughout when `values` contains a `Tensor`.
+            # This is consistent with the scenario when a singular `Tensor` is passed
+            # as the `values` argument.
+            new_values = torch.cat(torch.broadcast_tensors(*new_values), dim=-1)
+
+        self.register_buffer("values", new_values)
         # build selector for _construct_X_full
         self._selector = []
-        idx_X, idx_f = 0, d - values.shape[-1]
+        idx_X, idx_f = 0, d - new_values.shape[-1]
         for i in range(self.d):
             if i in columns:
                 self._selector.append(idx_f)
