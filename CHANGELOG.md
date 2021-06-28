@@ -2,6 +2,74 @@
 
 The release log for BoTorch.
 
+## [0.5.0] - Jun 28, 2021
+
+#### Compatibility
+* Require PyTorch >=1.8.1 (#832).
+* Require GPyTorch >=1.5 (#848).
+* Changes to how input transforms are applied: `transform_inputs` is applied in `model.forward` if the model is in `train` mode, otherwise it is applied in the `posterior` call (#819, #835).
+
+#### New Features
+* Improved multi-objective optimization capabilities:
+  * `qNoisyExpectedHypervolumeImprovement` acquisition function that improves on `qExpectedHypervolumeImprovement` in terms of tolerating observation noise and speeding up computation for large `q`-batches (#797, #822).
+  * `qMultiObjectiveMaxValueEntropy` acqusition function (913aa0e510dde10568c2b4b911124cdd626f6905, #760).
+  * Heuristic for reference point selection (#830).
+  * `FastNondominatedPartitioning` for Hypervolume computations (#699).
+  * `DominatedPartitioning` for partitioning dominated space (#726).
+  * `BoxDecompositionList` for handling box decompositions of varying sizes (#712).
+  * Direct, batched dominated partitioning for two outcome dimensions (#739).
+  * `get_default_partitioning_alpha` utility providing heuristic for selecting approximation level for partitioning algorithms (#793).
+  * New method for computing Pareto Frontiers with less memory overhead (#842, #846).
+* New `qLowerBoundMaxValueEntropy` acquisition function (a.k.a. GIBBON), a lightweight variant of Multi-fidelity Max-Value Entropy Search using a Determinantal Point Process approximation (#724, #737, #749).
+* Support for discrete and mixed input domains:
+  * `CategoricalKernel` for categorical inputs (#771).
+  * `MixedSingleTaskGP` for mixed search spaces (categorical and ordinal parameters) (#772, #847).
+  * `optimize_acqf_discrete` for optimizing acquisition functions over fully discrete domains (#777).
+  * Extend `optimize_acqf_mixed` to allow batch optimization (#804).
+* Support for robust / risk-aware optimization:
+  * Risk measures for robust / risk-averse optimization (#821).
+  * Modify input transforms to support one-to-many transforms (#819),
+  * `AppendFeatures` transform (#820).
+  * `InputPerturbation` input transform for for risk averse BO with implementation errors (#827).
+  * Tutorial notebook for Bayesian Optimization of risk measures (#823).
+  * Tutorial notebook for risk-averse Bayesian Optimization under input perturbations (#828).
+* More scalable multi-task modeling and sampling:
+  * `KroneckerMultiTaskGP` model for efficient multi-task modeling for block-design settings (all tasks observed at all inputs) (#637).
+  * Support for transforms in Multi-Task GPs (#681).
+  * Posterior sampling based on Matheron's rule for Multi-Task GP models (#841).
+* Various changes to simplify and streamline integration with Ax:
+  * Handle non-block designs in `TrainingData` (#794).
+  * Acquisition function input constructor registry (#788, #802, #845).
+* Random Fourier Feature (RFF) utilties for GP function sampling (#750).
+* `DelaunayPolytopeSampler` for fast uniform sampling from (simple) polytopes (#741).
+* Add `evaluate` method to `ScalarizedObjective` (#795).
+
+#### Bug Fixes
+* Handle the case when all features are fixed in `optimize_acqf` (#770).
+* Pass `fixed_features` to initial candidate generation functions (#806).
+* Handle batch empty pareto frontier in FastPartitioning (#740).
+* Handle empty pareto set in `is_non_dominated` (#743).
+* Handle edge case of no or a single observation in `get_chebyshev_scalarization` (#762).
+* Fix `HigherOrderGP` `dtype` bug (#728).
+* Normalize before clamping in `Warp` input warping transform (#722).
+* Fix bug in GP sampling (#764).
+
+#### Other Changes
+* Modify input transforms to support one-to-many transforms (#819, #835).
+* Make initial conditions for acquisition function optimization honor parameter constraints (#752).
+* Peform optimization only over unfixed features if `fixed_features` is passed (#839).
+* Refactor Max Value Entropy Search Methods (#734).
+* Use Linear Algebra functions from the `torch.linalg` module (#735).
+* Use pytorch `Kumaraswamy` distribution (#746).
+* Improved capabilities and some bugfixes for batched models (#723, #767).
+* Pass `callback` argument to `scipy.optim.minimize` in `gen_candidates_scipy` (#744).
+* Modify behavior of `X_pending` in in multi-objective acqusiition functions (#747).
+* Allow multi-dimensional batch shapes in test functions (#757).
+* Uutility for converting batched multi-output models into batched single-output models (#759)
+* Explicitly raise `NotPSDError` in `_scipy_objective_and_grad` (#787).
+* Make `raw_samples` optional if `batch_initial_conditions` is passed (#801).
+* Use powers of 2 in qMC docstrings & examples (#812).
+
 
 ## [0.4.0] - Feb 23, 2021
 
