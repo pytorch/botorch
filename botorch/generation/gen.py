@@ -297,7 +297,7 @@ def gen_candidates_torch(
         with torch.no_grad():
             clamped_candidates = columnwise_clamp(
                 X=clamped_candidates, lower=lower_bounds, upper=upper_bounds
-            )
+            ).requires_grad_(True)
         stop = stopping_criterion.evaluate(fvals=loss.detach())
     clamped_candidates = columnwise_clamp(
         X=clamped_candidates,
