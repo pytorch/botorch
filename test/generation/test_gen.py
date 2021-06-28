@@ -134,6 +134,27 @@ class TestGenCandidates(TestBaseCandidateGeneration):
             self.assertTrue(-EPS <= candidates[0] <= 1 + EPS)
             self.assertTrue(candidates[1].item() == 0.25)
 
+    def test_gen_candidates_scipy_with_fixed_features_inequality_constraints(self):
+        options = {"maxiter": 5}
+        for double in (True, False):
+            self._setUp(double=double, expand=True)
+            qEI = qExpectedImprovement(self.model, best_f=self.f_best)
+            candidates, _ = gen_candidates_scipy(
+                initial_conditions=self.initial_conditions.reshape(1, 1, -1),
+                acquisition_function=qEI,
+                inequality_constraints=[
+                    (torch.tensor([0]), torch.tensor([1]), 0),
+                    (torch.tensor([1]), torch.tensor([-1]), -1),
+                ],
+                fixed_features={1: 0.25},
+                options=options,
+            )
+            # candidates is of dimension 1 x 1 x 2
+            # so we are squeezing all the singleton dimensions
+            candidates = candidates.squeeze()
+            self.assertTrue(-EPS <= candidates[0] <= 1 + EPS)
+            self.assertTrue(candidates[1].item() == 0.25)
+
     def test_gen_candidates_torch_with_fixed_features(self):
         self.test_gen_candidates_with_fixed_features(
             gen_candidates=gen_candidates_torch, options={"disp": False}
