@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/img/botorch.png"/><link rel="shortcut icon" href="/img/botorch.ico"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/img/botorch.png"/><link rel="shortcut icon" href="/img/botorch.ico"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
               (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
               (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
               m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
@@ -37,7 +37,8 @@
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">numbers</span> <span class="kn">import</span> <span class="n">Number</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
@@ -62,7 +63,7 @@
         <span class="n">acq_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span>
         <span class="n">d</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">columns</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
-        <span class="n">values</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]],</span>
+        <span class="n">values</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Derived Acquisition Function by fixing a subset of input features.</span>
 
@@ -77,16 +78,47 @@
 <span class="sd">                different for each of the `q` input points), or an array-like of</span>
 <span class="sd">                values that is broadcastable to the input across `t`-batch and</span>
 <span class="sd">                `q`-batch dimensions, e.g. a list of length `d_f` if values</span>
-<span class="sd">                are the same across all `t` and `q`-batch dimensions.</span>
+<span class="sd">                are the same across all `t` and `q`-batch dimensions, or a</span>
+<span class="sd">                combination of `Tensor`s and numbers which can be broadcasted</span>
+<span class="sd">                to form a tensor with trailing dimension size of `d_f`.</span>
 <span class="sd">        """</span>
         <span class="n">Module</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">acq_func</span> <span class="o">=</span> <span class="n">acq_function</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">d</span> <span class="o">=</span> <span class="n">d</span>
-        <span class="n">values</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"values"</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">):</span>
+            <span class="n">new_values</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">new_values</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Number</span><span class="p">):</span>
+                    <span class="n">new_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)]))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">new_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">clone</span><span class="p">())</span>
+
+            <span class="c1"># There are 3 cases for when `values` is a `Sequence`.</span>
+            <span class="c1"># 1) `values` == list of floats as earlier.</span>
+            <span class="c1"># 2) `values` == combination of floats and `Tensor`s.</span>
+            <span class="c1"># 3) `values` == a list of `Tensor`s.</span>
+            <span class="c1"># For 1), the below step creates a vector of length `len(values)`</span>
+            <span class="c1"># For 2), the below step creates a `Tensor` of shape `batch_shape x q x d_f`</span>
+            <span class="c1"># with the broadcasting functionality.</span>
+            <span class="c1"># For 3), this is simply a concatenation, yielding a `Tensor` with the</span>
+            <span class="c1"># same shape as in 2).</span>
+            <span class="c1"># The key difference arises when `_construct_X_full` is invoked.</span>
+            <span class="c1"># In 1), the expansion (`self.values.expand`) will expand the `Tensor` to</span>
+            <span class="c1"># size `batch_shape x q x d_f`.</span>
+            <span class="c1"># In 2) and 3), this expansion is a no-op because they are already of the</span>
+            <span class="c1"># required size. However, 2) and 3) _cannot_ support varying `batch_shape`,</span>
+            <span class="c1"># which means that all calls to `FixedFeatureAcquisitionFunction` have</span>
+            <span class="c1"># to have the same size throughout when `values` contains a `Tensor`.</span>
+            <span class="c1"># This is consistent with the scenario when a singular `Tensor` is passed</span>
+            <span class="c1"># as the `values` argument.</span>
+            <span class="n">new_values</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">broadcast_tensors</span><span class="p">(</span><span class="o">*</span><span class="n">new_values</span><span class="p">),</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"values"</span><span class="p">,</span> <span class="n">new_values</span><span class="p">)</span>
         <span class="c1"># build selector for _construct_X_full</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_selector</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">idx_X</span><span class="p">,</span> <span class="n">idx_f</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">d</span> <span class="o">-</span> <span class="n">values</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">idx_X</span><span class="p">,</span> <span class="n">idx_f</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">d</span> <span class="o">-</span> <span class="n">new_values</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">d</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_selector</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">idx_f</span><span class="p">)</span>

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/img/botorch.png"/><link rel="shortcut icon" href="/img/botorch.ico"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/img/botorch.png"/><link rel="shortcut icon" href="/img/botorch.ico"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
               (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
               (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
               m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
@@ -59,7 +59,7 @@
 
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; engine = NormalQMCEngine(3)</span>
-<span class="sd">        &gt;&gt;&gt; samples = engine.draw(10)</span>
+<span class="sd">        &gt;&gt;&gt; samples = engine.draw(16)</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -89,7 +89,7 @@
         <span class="sa">r</span><span class="sd">"""Draw `n` qMC samples from the standard Normal.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            n: The number of samples to draw.</span>
+<span class="sd">            n: The number of samples to draw. As a best practice, use powers of 2.</span>
 <span class="sd">            out: An option output tensor. If provided, draws are put into this</span>
 <span class="sd">                tensor, and the function returns None.</span>
 <span class="sd">            dtype: The desired torch data type (ignored if `out` is provided).</span>
@@ -130,7 +130,7 @@
 <span class="sd">        &gt;&gt;&gt; mean = torch.tensor([1.0, 2.0])</span>
 <span class="sd">        &gt;&gt;&gt; cov = torch.tensor([[1.0, 0.25], [0.25, 2.0]])</span>
 <span class="sd">        &gt;&gt;&gt; engine = MultivariateNormalQMCEngine(mean, cov)</span>
-<span class="sd">        &gt;&gt;&gt; samples = engine.draw(10)</span>
+<span class="sd">        &gt;&gt;&gt; samples = engine.draw(16)</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -162,10 +162,11 @@
         <span class="p">)</span>
         <span class="c1"># compute Cholesky decomp; if it fails, do the eigendecomposition</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_corr_matrix</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cholesky</span><span class="p">(</span><span class="n">cov</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_corr_matrix</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cholesky</span><span class="p">(</span><span class="n">cov</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>
-            <span class="n">eigval</span><span class="p">,</span> <span class="n">eigvec</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">symeig</span><span class="p">(</span><span class="n">cov</span><span class="p">,</span> <span class="n">eigenvectors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">eigval</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="mf">1e-8</span><span class="p">):</span>
+            <span class="n">eigval</span><span class="p">,</span> <span class="n">eigvec</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigh</span><span class="p">(</span><span class="n">cov</span><span class="p">)</span>
+            <span class="n">tol</span> <span class="o">=</span> <span class="mf">1e-8</span> <span class="k">if</span> <span class="n">eigval</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">torch</span><span class="o">.</span><span class="n">double</span> <span class="k">else</span> <span class="mf">1e-6</span>
+            <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">eigval</span> <span class="o">&lt;</span> <span class="o">-</span><span class="n">tol</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Covariance matrix not PSD."</span><span class="p">)</span>
             <span class="n">eigval_root</span> <span class="o">=</span> <span class="n">eigval</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span><span class="o">.</span><span class="n">sqrt</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_corr_matrix</span> <span class="o">=</span> <span class="p">(</span><span class="n">eigvec</span> <span class="o">*</span> <span class="n">eigval_root</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
@@ -174,7 +175,7 @@
         <span class="sa">r</span><span class="sd">"""Draw `n` qMC samples from the multivariate Normal.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            n: The number of samples to draw.</span>
+<span class="sd">            n: The number of samples to draw. As a best practice, use powers of 2.</span>
 <span class="sd">            out: An option output tensor. If provided, draws are put into this</span>
 <span class="sd">                tensor, and the function returns None.</span>
 

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/img/botorch.png"/><link rel="shortcut icon" href="/img/botorch.ico"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/img/botorch.png"/><link rel="shortcut icon" href="/img/botorch.ico"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
               (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
               (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
               m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
@@ -159,6 +159,9 @@
 <span class="sd">            specified.</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>  <span class="c1"># make sure model is in eval mode</span>
+        <span class="c1"># input transforms are applied at `posterior` in `eval` mode, and at</span>
+        <span class="c1"># `model.forward()` at the training time</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="k">with</span> <span class="n">gpt_posterior_settings</span><span class="p">():</span>
             <span class="n">mvn</span> <span class="o">=</span> <span class="bp">self</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">observation_noise</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">False</span><span class="p">:</span>
@@ -342,6 +345,9 @@
 <span class="sd">            `output_indices` each. Includes observation noise if specified.</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>  <span class="c1"># make sure model is in eval mode</span>
+        <span class="c1"># input transforms are applied at `posterior` in `eval` mode, and at</span>
+        <span class="c1"># `model.forward()` at the training time</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="k">with</span> <span class="n">gpt_posterior_settings</span><span class="p">():</span>
             <span class="c1"># insert a dimension for the output dimension</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_outputs</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
@@ -510,7 +516,13 @@
 <span class="sd">        shape `broadcast(test_batch_shape, model.batch_shape) x q x m`.</span>
 <span class="sd">        """</span>
         <span class="c1"># TODO: Either check that batch shapes match across models, or broadcast them</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+        <span class="n">batch_shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">batch_shape</span>
+        <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">batch_shape</span> <span class="o">==</span> <span class="n">m</span><span class="o">.</span><span class="n">batch_shape</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+            <span class="k">return</span> <span class="n">batch_shape</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="s2">"ModelListGPyTorchModel.batch_shape is only supported if all "</span>
+            <span class="s2">"constituent models have the same batch_shape."</span>
+        <span class="p">)</span>
 
 <div class="viewcode-block" id="ModelListGPyTorchModel.posterior"><a class="viewcode-back" href="../../../models.html#botorch.models.gpytorch.ModelListGPyTorchModel.posterior">[docs]</a>    <span class="k">def</span> <span class="nf">posterior</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -543,11 +555,14 @@
 <span class="sd">            `observation_noise` is specified.</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>  <span class="c1"># make sure model is in eval mode</span>
+        <span class="c1"># input transforms are applied at `posterior` in `eval` mode, and at</span>
+        <span class="c1"># `model.forward()` at the training time</span>
+        <span class="n">transformed_X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="n">mvn_gen</span><span class="p">:</span> <span class="n">Iterator</span>
         <span class="k">with</span> <span class="n">gpt_posterior_settings</span><span class="p">():</span>
             <span class="c1"># only compute what's necessary</span>
             <span class="k">if</span> <span class="n">output_indices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">mvns</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">forward_i</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">output_indices</span><span class="p">]</span>
+                <span class="n">mvns</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">forward_i</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">transformed_X</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">output_indices</span><span class="p">]</span>
                 <span class="k">if</span> <span class="n">observation_noise</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">False</span><span class="p">:</span>
                     <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">is_tensor</span><span class="p">(</span><span class="n">observation_noise</span><span class="p">):</span>
                         <span class="n">lh_kwargs</span> <span class="o">=</span> <span class="p">[</span>
@@ -556,25 +571,26 @@
                         <span class="p">]</span>
                     <span class="k">else</span><span class="p">:</span>
                         <span class="n">lh_kwargs</span> <span class="o">=</span> <span class="p">[</span>
-                            <span class="p">{</span><span class="s2">"noise"</span><span class="p">:</span> <span class="n">lh</span><span class="o">.</span><span class="n">noise</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])}</span>
+                            <span class="p">{</span><span class="s2">"noise"</span><span class="p">:</span> <span class="n">lh</span><span class="o">.</span><span class="n">noise</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">t_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])}</span>
                             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lh</span><span class="p">,</span> <span class="n">FixedNoiseGaussianLikelihood</span><span class="p">)</span>
                             <span class="k">else</span> <span class="p">{}</span>
-                            <span class="k">for</span> <span class="n">lh</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="o">.</span><span class="n">likelihoods</span>
+                            <span class="k">for</span> <span class="n">t_X</span><span class="p">,</span> <span class="n">lh</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+                                <span class="n">transformed_X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="o">.</span><span class="n">likelihoods</span>
+                            <span class="p">)</span>
                         <span class="p">]</span>
                     <span class="n">mvns</span> <span class="o">=</span> <span class="p">[</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">likelihood_i</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">mvn</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="o">**</span><span class="n">lkws</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">likelihood_i</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">mvn</span><span class="p">,</span> <span class="n">transformed_X</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="o">**</span><span class="n">lkws</span><span class="p">)</span>
                         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">mvn</span><span class="p">,</span> <span class="n">lkws</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">output_indices</span><span class="p">,</span> <span class="n">mvns</span><span class="p">,</span> <span class="n">lh_kwargs</span><span class="p">)</span>
                     <span class="p">]</span>
                 <span class="n">mvn_gen</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="n">output_indices</span><span class="p">,</span> <span class="n">mvns</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">mvns</span> <span class="o">=</span> <span class="bp">self</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">X</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_outputs</span><span class="p">)])</span>
+                <span class="n">mvns</span> <span class="o">=</span> <span class="bp">self</span><span class="p">(</span><span class="o">*</span><span class="n">transformed_X</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">observation_noise</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">False</span><span class="p">:</span>
+                    <span class="n">mvnX</span> <span class="o">=</span> <span class="p">[(</span><span class="n">mvn</span><span class="p">,</span> <span class="n">transformed_X</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">mvn</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">mvns</span><span class="p">)]</span>
                     <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">is_tensor</span><span class="p">(</span><span class="n">observation_noise</span><span class="p">):</span>
-                        <span class="n">mvns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="p">(</span>
-                            <span class="o">*</span><span class="p">[(</span><span class="n">mvn</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span> <span class="k">for</span> <span class="n">mvn</span> <span class="ow">in</span> <span class="n">mvns</span><span class="p">],</span> <span class="n">noise</span><span class="o">=</span><span class="n">observation_noise</span>
-                        <span class="p">)</span>
+                        <span class="n">mvns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="p">(</span><span class="o">*</span><span class="n">mvnX</span><span class="p">,</span> <span class="n">noise</span><span class="o">=</span><span class="n">observation_noise</span><span class="p">)</span>
                     <span class="k">else</span><span class="p">:</span>
-                        <span class="n">mvns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="p">(</span><span class="o">*</span><span class="p">[(</span><span class="n">mvn</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span> <span class="k">for</span> <span class="n">mvn</span> <span class="ow">in</span> <span class="n">mvns</span><span class="p">])</span>
+                        <span class="n">mvns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="p">(</span><span class="o">*</span><span class="n">mvnX</span><span class="p">)</span>
                 <span class="n">mvn_gen</span> <span class="o">=</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">mvns</span><span class="p">)</span>
         <span class="c1"># apply output transforms of individual models if present</span>
         <span class="n">mvns</span> <span class="o">=</span> <span class="p">[]</span>
@@ -588,10 +604,9 @@
         <span class="c1"># return result as a GPyTorchPosteriors</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">mvns</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">GPyTorchPosterior</span><span class="p">(</span><span class="n">mvn</span><span class="o">=</span><span class="n">mvns</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">GPyTorchPosterior</span><span class="p">(</span>
-                <span class="n">mvn</span><span class="o">=</span><span class="n">MultitaskMultivariateNormal</span><span class="o">.</span><span class="n">from_independent_mvns</span><span class="p">(</span><span class="n">mvns</span><span class="o">=</span><span class="n">mvns</span><span class="p">)</span>
-            <span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">GPyTorchPosterior</span><span class="p">(</span>
+            <span class="n">mvn</span><span class="o">=</span><span class="n">MultitaskMultivariateNormal</span><span class="o">.</span><span class="n">from_independent_mvns</span><span class="p">(</span><span class="n">mvns</span><span class="o">=</span><span class="n">mvns</span><span class="p">)</span>
+        <span class="p">)</span></div>
 
 <div class="viewcode-block" id="ModelListGPyTorchModel.condition_on_observations"><a class="viewcode-back" href="../../../models.html#botorch.models.gpytorch.ModelListGPyTorchModel.condition_on_observations">[docs]</a>    <span class="k">def</span> <span class="nf">condition_on_observations</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
@@ -599,11 +614,28 @@
         <span class="n">class_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"`condition_on_observations` not implemented in </span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">"</span>
-        <span class="p">)</span></div></div>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="ModelListGPyTorchModel.transform_inputs"><a class="viewcode-back" href="../../../models.html#botorch.models.gpytorch.ModelListGPyTorchModel.transform_inputs">[docs]</a>    <span class="k">def</span> <span class="nf">transform_inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="sa">r</span><span class="sd">"""Individually transform the inputs for each model.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A tensor of inputs</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A list of tensors of transformed inputs</span>
+<span class="sd">        """</span>
+        <span class="n">transformed_X_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">transformed_X_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">input_transform</span><span class="p">(</span><span class="n">X</span><span class="p">))</span>
+            <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                <span class="n">transformed_X_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">transformed_X_list</span></div></div>
 
 
 <div class="viewcode-block" id="MultiTaskGPyTorchModel"><a class="viewcode-back" href="../../../models.html#botorch.models.gpytorch.MultiTaskGPyTorchModel">[docs]</a><span class="k">class</span> <span class="nc">MultiTaskGPyTorchModel</span><span class="p">(</span><span class="n">GPyTorchModel</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Abstract base class for multi-task models baed on GPyTorch models.</span>
+    <span class="sa">r</span><span class="sd">"""Abstract base class for multi-task models based on GPyTorch models.</span>
 
 <span class="sd">    This class provides the `posterior` method to models that implement a</span>
 <span class="sd">    "long-format" multi-task GP in the style of `MultiTaskGP`.</span>
@@ -643,15 +675,14 @@
         <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_tasks</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">output_indices</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Too many output indices"</span><span class="p">)</span>
         <span class="n">cls_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"outcome_transform"</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"Outcome transforms currently not supported by </span><span class="si">{</span><span class="n">cls_name</span><span class="si">}</span><span class="s2">"</span>
-            <span class="p">)</span>
 
         <span class="c1"># construct evaluation X</span>
         <span class="n">X_full</span> <span class="o">=</span> <span class="n">_make_X_full</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">output_indices</span><span class="o">=</span><span class="n">output_indices</span><span class="p">,</span> <span class="n">tf</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_task_feature</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>  <span class="c1"># make sure model is in eval mode</span>
+        <span class="c1"># input transforms are applied at `posterior` in `eval` mode, and at</span>
+        <span class="c1"># `model.forward()` at the training time</span>
+        <span class="n">X_full</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="n">X_full</span><span class="p">)</span>
         <span class="k">with</span> <span class="n">gpt_posterior_settings</span><span class="p">():</span>
             <span class="n">mvn</span> <span class="o">=</span> <span class="bp">self</span><span class="p">(</span><span class="n">X_full</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">observation_noise</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">False</span><span class="p">:</span>
@@ -667,7 +698,10 @@
             <span class="n">covariance_matrix</span><span class="o">=</span><span class="n">mvn</span><span class="o">.</span><span class="n">lazy_covariance_matrix</span><span class="p">,</span>
             <span class="n">interleaved</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">GPyTorchPosterior</span><span class="p">(</span><span class="n">mvn</span><span class="o">=</span><span class="n">mtmvn</span><span class="p">)</span></div></div>
+        <span class="n">posterior</span> <span class="o">=</span> <span class="n">GPyTorchPosterior</span><span class="p">(</span><span class="n">mvn</span><span class="o">=</span><span class="n">mtmvn</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"outcome_transform"</span><span class="p">):</span>
+            <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outcome_transform</span><span class="o">.</span><span class="n">untransform_posterior</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">posterior</span></div></div>
 </pre></div>
 </div>
 </div>

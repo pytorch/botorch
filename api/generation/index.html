@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/img/botorch.png"/><link rel="shortcut icon" href="/img/botorch.ico"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/img/botorch.png"/><link rel="shortcut icon" href="/img/botorch.ico"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
               (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
               (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
               m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
@@ -23,51 +23,53 @@
 <div class="documentwrapper">
 <div class="bodywrapper">
 <div class="body" role="main">
-<div class="section" id="module-botorch.generation">
+<section id="module-botorch.generation">
 <span id="botorch-generation"></span><h1>botorch.generation<a class="headerlink" href="#module-botorch.generation" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="module-botorch.generation.gen">
+<section id="module-botorch.generation.gen">
 <span id="candidate-generation-utilities-for-acquisition-functions"></span><h2>Candidate Generation Utilities for Acquisition Functions<a class="headerlink" href="#module-botorch.generation.gen" title="Permalink to this headline">¶</a></h2>
 <p>Candidate generation utilities.</p>
 <dl class="py function">
-<dt id="botorch.generation.gen.gen_candidates_scipy">
-<code class="sig-prename descclassname"><span class="pre">botorch.generation.gen.</span></code><code class="sig-name descname"><span class="pre">gen_candidates_scipy</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">initial_conditions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquisition_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lower_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upper_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/gen.html#gen_candidates_scipy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.generation.gen.gen_candidates_scipy" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="botorch.generation.gen.gen_candidates_scipy">
+<span class="sig-prename descclassname"><span class="pre">botorch.generation.gen.</span></span><span class="sig-name descname"><span class="pre">gen_candidates_scipy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">initial_conditions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquisition_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lower_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upper_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/gen.html#gen_candidates_scipy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.generation.gen.gen_candidates_scipy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a set of candidates using <cite>scipy.optimize.minimize</cite>.</p>
 <p>Optimizes an acquisition function starting from a set of initial candidates
 using <cite>scipy.optimize.minimize</cite> via a numpy converter.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>initial_conditions</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – Starting points for optimization.</p></li>
-<li><p><strong>acquisition_function</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>) – Acquisition function to be used.</p></li>
-<li><p><strong>lower_bounds</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>]) – Minimum values for each column of initial_conditions.</p></li>
-<li><p><strong>upper_bounds</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>]) – Maximum values for each column of initial_conditions.</p></li>
+<li><p><strong>initial_conditions</strong> (<em>torch.Tensor</em>) – Starting points for optimization.</p></li>
+<li><p><strong>acquisition_function</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><em>botorch.acquisition.acquisition.AcquisitionFunction</em></a>) – Acquisition function to be used.</p></li>
+<li><p><strong>lower_bounds</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>float</em><em>, </em><em>torch.Tensor</em><em>]</em><em>]</em>) – Minimum values for each column of initial_conditions.</p></li>
+<li><p><strong>upper_bounds</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>float</em><em>, </em><em>torch.Tensor</em><em>]</em><em>]</em>) – Maximum values for each column of initial_conditions.</p></li>
 <li><p><strong>constraints</strong> (<em>equality</em>) – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs</cite>.</p></li>
 <li><p><strong>constraints</strong> – A list of tuples (indices, coefficients, rhs),
 with each tuple encoding an inequality constraint of the form
 <cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite>.</p></li>
-<li><p><strong>options</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]) – Options used to control the optimization including “method”
+<li><p><strong>options</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em>) – Options used to control the optimization including “method”
 and “maxiter”. Select method for <cite>scipy.minimize</cite> using the
-method” key. By default uses L-BFGS-B for box-constrained problems
+“method” key. By default uses L-BFGS-B for box-constrained problems
 and SLSQP if inequality or equality constraints are present.</p></li>
-<li><p><strong>fixed_features</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]]]) – This is a dictionary of feature indices to values, where
+<li><p><strong>fixed_features</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>]</em><em>]</em>) – This is a dictionary of feature indices to values, where
 all generated candidates will have features fixed to these values.
 If the dictionary value is None, then that feature will just be
 fixed to the clamped value and not optimized. Assumes values to be
 compatible with lower_bounds and upper_bounds!</p></li>
+<li><p><strong>inequality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>torch.Tensor</em><em>, </em><em>torch.Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>equality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>torch.Tensor</em><em>, </em><em>torch.Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><p>2-element tuple containing</p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><p>2-element tuple containing</p>
 <ul class="simple">
 <li><p>The set of generated candidates.</p></li>
 <li><p>The acquisition value for each t-batch.</p></li>
 </ul>
 </p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Tuple[torch.Tensor, torch.Tensor]</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -86,40 +88,40 @@ compatible with lower_bounds and upper_bounds!</p></li>
 </div>
 </dd></dl>
 <dl class="py function">
-<dt id="botorch.generation.gen.gen_candidates_torch">
-<code class="sig-prename descclassname"><span class="pre">botorch.generation.gen.</span></code><code class="sig-name descname"><span class="pre">gen_candidates_torch</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="pre">initial_conditions</span></em>, <em class="sig-param"><span class="pre">acquisition_function</span></em>, <em class="sig-param"><span class="pre">lower_bounds=None</span></em>, <em class="sig-param"><span class="pre">upper_bounds=None</span></em>, <em class="sig-param"><span class="pre">optimizer=&lt;class</span> <span class="pre">'torch.optim.adam.Adam'&gt;</span></em>, <em class="sig-param"><span class="pre">options=None</span></em>, <em class="sig-param"><span class="pre">verbose=True</span></em>, <em class="sig-param"><span class="pre">fixed_features=None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/gen.html#gen_candidates_torch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.generation.gen.gen_candidates_torch" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="botorch.generation.gen.gen_candidates_torch">
+<span class="sig-prename descclassname"><span class="pre">botorch.generation.gen.</span></span><span class="sig-name descname"><span class="pre">gen_candidates_torch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">initial_conditions</span></em>, <em class="sig-param"><span class="pre">acquisition_function</span></em>, <em class="sig-param"><span class="pre">lower_bounds=None</span></em>, <em class="sig-param"><span class="pre">upper_bounds=None</span></em>, <em class="sig-param"><span class="pre">optimizer=&lt;class</span> <span class="pre">'torch.optim.adam.Adam'&gt;</span></em>, <em class="sig-param"><span class="pre">options=None</span></em>, <em class="sig-param"><span class="pre">verbose=True</span></em>, <em class="sig-param"><span class="pre">fixed_features=None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/gen.html#gen_candidates_torch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.generation.gen.gen_candidates_torch" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a set of candidates using a <cite>torch.optim</cite> optimizer.</p>
 <p>Optimizes an acquisition function starting from a set of initial candidates
 using an optimizer from <cite>torch.optim</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>initial_conditions</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – Starting points for optimization.</p></li>
-<li><p><strong>acquisition_function</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>) – Acquisition function to be used.</p></li>
-<li><p><strong>lower_bounds</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>]) – Minimum values for each column of initial_conditions.</p></li>
-<li><p><strong>upper_bounds</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>]) – Maximum values for each column of initial_conditions.</p></li>
+<li><p><strong>initial_conditions</strong> (<em>torch.Tensor</em>) – Starting points for optimization.</p></li>
+<li><p><strong>acquisition_function</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><em>botorch.acquisition.acquisition.AcquisitionFunction</em></a>) – Acquisition function to be used.</p></li>
+<li><p><strong>lower_bounds</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>float</em><em>, </em><em>torch.Tensor</em><em>]</em><em>]</em>) – Minimum values for each column of initial_conditions.</p></li>
+<li><p><strong>upper_bounds</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>float</em><em>, </em><em>torch.Tensor</em><em>]</em><em>]</em>) – Maximum values for each column of initial_conditions.</p></li>
 <li><p><strong>optimizer</strong> (<em>Optimizer</em>) – The pytorch optimizer to use to perform
 candidate search.</p></li>
-<li><p><strong>options</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]]) – Options used to control the optimization. Includes
+<li><p><strong>options</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>float</em><em>, </em><em>str</em><em>]</em><em>]</em><em>]</em>) – Options used to control the optimization. Includes
 maxiter: Maximum number of iterations</p></li>
-<li><p><strong>verbose</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, provide verbose output.</p></li>
-<li><p><strong>fixed_features</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]]]) – This is a dictionary of feature indices to values, where
+<li><p><strong>verbose</strong> (<em>bool</em>) – If True, provide verbose output.</p></li>
+<li><p><strong>fixed_features</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>int</em><em>, </em><em>Optional</em><em>[</em><em>float</em><em>]</em><em>]</em><em>]</em>) – This is a dictionary of feature indices to values, where
 all generated candidates will have features fixed to these values.
 If the dictionary value is None, then that feature will just be
 fixed to the clamped value and not optimized. Assumes values to be
 compatible with lower_bounds and upper_bounds!</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><p>2-element tuple containing</p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><p>2-element tuple containing</p>
 <ul class="simple">
 <li><p>The set of generated candidates.</p></li>
 <li><p>The acquisition value for each t-batch.</p></li>
 </ul>
 </p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Tuple[torch.Tensor, torch.Tensor]</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -138,24 +140,24 @@ compatible with lower_bounds and upper_bounds!</p></li>
 </div>
 </dd></dl>
 <dl class="py function">
-<dt id="botorch.generation.gen.get_best_candidates">
-<code class="sig-prename descclassname"><span class="pre">botorch.generation.gen.</span></code><code class="sig-name descname"><span class="pre">get_best_candidates</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_candidates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/gen.html#get_best_candidates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.generation.gen.get_best_candidates" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="botorch.generation.gen.get_best_candidates">
+<span class="sig-prename descclassname"><span class="pre">botorch.generation.gen.</span></span><span class="sig-name descname"><span class="pre">get_best_candidates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_candidates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/gen.html#get_best_candidates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.generation.gen.get_best_candidates" title="Permalink to this definition">¶</a></dt>
 <dd><p>Extract best (q-batch) candidate from batch of candidates</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>batch_candidates</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>b x q x d</cite> tensor of <cite>b</cite> q-batch candidates, or a
+<li><p><strong>batch_candidates</strong> (<em>torch.Tensor</em>) – A <cite>b x q x d</cite> tensor of <cite>b</cite> q-batch candidates, or a
 <cite>b x d</cite> tensor of <cite>b</cite> single-point candidates.</p></li>
-<li><p><strong>batch_values</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A tensor with <cite>b</cite> elements containing the value of the
+<li><p><strong>batch_values</strong> (<em>torch.Tensor</em>) – A tensor with <cite>b</cite> elements containing the value of the
 respective candidate (higher is better).</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A tensor of size <cite>q x d</cite> (if q-batch mode) or <cite>d</cite> from batch_candidates
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A tensor of size <cite>q x d</cite> (if q-batch mode) or <cite>d</cite> from batch_candidates
 with the highest associated value.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -174,8 +176,8 @@ with the highest associated value.</p>
 </pre></div>
 </div>
 </dd></dl>
-</div>
-<div class="section" id="module-botorch.generation.sampling">
+</section>
+<section id="module-botorch.generation.sampling">
 <span id="sampling-strategies"></span><h2>Sampling Strategies<a class="headerlink" href="#module-botorch.generation.sampling" title="Permalink to this headline">¶</a></h2>
 <p>Sampling-based generation strategies.</p>
 <p>A SamplingStrategy returns samples from the input points (i.e. Tensors in feature
@@ -184,41 +186,41 @@ The q-batch dimension has similar semantics as for acquisition functions in that
 points across the q-batch are considered jointly for sampling (where as for
 q-acquisition functions we evaluate the joint value of the q-batch).</p>
 <dl class="py class">
-<dt id="botorch.generation.sampling.SamplingStrategy">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">botorch.generation.sampling.</span></code><code class="sig-name descname"><span class="pre">SamplingStrategy</span></code><a class="reference internal" href="_modules/botorch/generation/sampling.html#SamplingStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.generation.sampling.SamplingStrategy" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="botorch.generation.sampling.SamplingStrategy">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.generation.sampling.</span></span><span class="sig-name descname"><span class="pre">SamplingStrategy</span></span><a class="reference internal" href="_modules/botorch/generation/sampling.html#SamplingStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.generation.sampling.SamplingStrategy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
 <p>Abstract base class for sampling-based generation strategies.</p>
 <p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
 <dl class="py method">
-<dt id="botorch.generation.sampling.SamplingStrategy.forward">
-<em class="property"><span class="pre">abstract</span> </em><code class="sig-name descname"><span class="pre">forward</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/sampling.html#SamplingStrategy.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.generation.sampling.SamplingStrategy.forward" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="botorch.generation.sampling.SamplingStrategy.forward">
+<em class="property"><span class="pre">abstract</span> </em><span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/sampling.html#SamplingStrategy.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.generation.sampling.SamplingStrategy.forward" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sample according to the SamplingStrategy.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x N x d</cite>-dim Tensor from which to sample (in the <cite>N</cite>
+<li><p><strong>X</strong> (<em>torch.Tensor</em>) – A <cite>batch_shape x N x d</cite>-dim Tensor from which to sample (in the <cite>N</cite>
 dimension).</p></li>
-<li><p><strong>num_samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of samples to draw.</p></li>
-<li><p><strong>kwargs</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>) – Additional implementation-specific kwargs.</p></li>
+<li><p><strong>num_samples</strong> (<em>int</em>) – The number of samples to draw.</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – Additional implementation-specific kwargs.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>batch_shape x num_samples x d</cite>-dim Tensor of samples from <cite>X</cite>, where
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>batch_shape x num_samples x d</cite>-dim Tensor of samples from <cite>X</cite>, where
 <cite>X[…, i, :]</cite> is the <cite>i</cite>-th sample.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
 <dl class="py attribute">
-<dt id="botorch.generation.sampling.SamplingStrategy.training">
-<code class="sig-name descname"><span class="pre">training</span></code><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.generation.sampling.SamplingStrategy.training" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="botorch.generation.sampling.SamplingStrategy.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.generation.sampling.SamplingStrategy.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
 <dl class="py class">
-<dt id="botorch.generation.sampling.MaxPosteriorSampling">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">botorch.generation.sampling.</span></code><code class="sig-name descname"><span class="pre">MaxPosteriorSampling</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">replacement</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/sampling.html#MaxPosteriorSampling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.generation.sampling.MaxPosteriorSampling" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="botorch.generation.sampling.MaxPosteriorSampling">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.generation.sampling.</span></span><span class="sig-name descname"><span class="pre">MaxPosteriorSampling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">replacement</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/sampling.html#MaxPosteriorSampling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.generation.sampling.MaxPosteriorSampling" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.generation.sampling.SamplingStrategy" title="botorch.generation.sampling.SamplingStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.generation.sampling.SamplingStrategy</span></code></a></p>
 <p>Sample from a set of points according to their max posterior value.</p>
 <p class="rubric">Example</p>
@@ -231,44 +233,47 @@ dimension).</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a>) – A fitted model.</p></li>
-<li><p><strong>objective</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="acquisition.html#botorch.acquisition.objective.AcquisitionObjective" title="botorch.acquisition.objective.AcquisitionObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionObjective</span></code></a>]) – The objective. Typically, the AcquisitionObjective under which
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A fitted model.</p></li>
+<li><p><strong>objective</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="acquisition.html#botorch.acquisition.objective.AcquisitionObjective" title="botorch.acquisition.objective.AcquisitionObjective"><em>AcquisitionObjective</em></a><em>]</em>) – The objective. Typically, the AcquisitionObjective under which
 the samples are evaluated. If a ScalarizedObjective, samples from the
 scalarized posterior are used. Defaults to <cite>IdentityMCObjective()</cite>.</p></li>
-<li><p><strong>replacement</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, sample with replacement.</p></li>
+<li><p><strong>replacement</strong> (<em>bool</em>) – If True, sample with replacement.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py method">
-<dt id="botorch.generation.sampling.MaxPosteriorSampling.forward">
-<code class="sig-name descname"><span class="pre">forward</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/sampling.html#MaxPosteriorSampling.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.generation.sampling.MaxPosteriorSampling.forward" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="botorch.generation.sampling.MaxPosteriorSampling.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/sampling.html#MaxPosteriorSampling.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.generation.sampling.MaxPosteriorSampling.forward" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sample from the model posterior.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x N x d</cite>-dim Tensor from which to sample (in the <cite>N</cite>
+<li><p><strong>X</strong> (<em>torch.Tensor</em>) – A <cite>batch_shape x N x d</cite>-dim Tensor from which to sample (in the <cite>N</cite>
 dimension) according to the maximum posterior value under the objective.</p></li>
-<li><p><strong>num_samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of samples to draw.</p></li>
-<li><p><strong>observation_noise</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, sample with observation noise.</p></li>
+<li><p><strong>num_samples</strong> (<em>int</em>) – The number of samples to draw.</p></li>
+<li><p><strong>observation_noise</strong> (<em>bool</em>) – If True, sample with observation noise.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>batch_shape x num_samples x d</cite>-dim Tensor of samples from <cite>X</cite>, where
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>batch_shape x num_samples x d</cite>-dim Tensor of samples from <cite>X</cite>, where
 <cite>X[…, i, :]</cite> is the <cite>i</cite>-th sample.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
 <dl class="py attribute">
-<dt id="botorch.generation.sampling.MaxPosteriorSampling.training">
-<code class="sig-name descname"><span class="pre">training</span></code><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.generation.sampling.MaxPosteriorSampling.training" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="botorch.generation.sampling.MaxPosteriorSampling.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.generation.sampling.MaxPosteriorSampling.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
 <dl class="py class">
-<dt id="botorch.generation.sampling.BoltzmannSampling">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">botorch.generation.sampling.</span></code><code class="sig-name descname"><span class="pre">BoltzmannSampling</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acq_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">replacement</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/sampling.html#BoltzmannSampling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.generation.sampling.BoltzmannSampling" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="botorch.generation.sampling.BoltzmannSampling">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.generation.sampling.</span></span><span class="sig-name descname"><span class="pre">BoltzmannSampling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acq_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">replacement</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/sampling.html#BoltzmannSampling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.generation.sampling.BoltzmannSampling" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.generation.sampling.SamplingStrategy" title="botorch.generation.sampling.SamplingStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.generation.sampling.SamplingStrategy</span></code></a></p>
 <p>Sample from a set of points according to a tempered acquisition value.</p>
 <p>Given an acquisition function <cite>acq_func</cite>, this sampling strategies draws
@@ -292,47 +297,50 @@ function <cite>acq_func</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>acq_func</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code></a>) – The acquisition function; to be evaluated in batch at the
+<li><p><strong>acq_func</strong> (<a class="reference internal" href="acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><em>AcquisitionFunction</em></a>) – The acquisition function; to be evaluated in batch at the
 individual points of a q-batch (not jointly, as is the case for
 acquisition functions). Can be analytic or Monte-Carlo.</p></li>
-<li><p><strong>eta</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – The temperature parameter in the softmax.</p></li>
-<li><p><strong>replacement</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True, sample with replacement.</p></li>
+<li><p><strong>eta</strong> (<em>float</em>) – The temperature parameter in the softmax.</p></li>
+<li><p><strong>replacement</strong> (<em>bool</em>) – If True, sample with replacement.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <dl class="py method">
-<dt id="botorch.generation.sampling.BoltzmannSampling.forward">
-<code class="sig-name descname"><span class="pre">forward</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/sampling.html#BoltzmannSampling.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.generation.sampling.BoltzmannSampling.forward" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="botorch.generation.sampling.BoltzmannSampling.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/generation/sampling.html#BoltzmannSampling.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.generation.sampling.BoltzmannSampling.forward" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sample from a tempered value of the acquisition function value.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>) – A <cite>batch_shape x N x d</cite>-dim Tensor from which to sample (in the <cite>N</cite>
+<li><p><strong>X</strong> (<em>torch.Tensor</em>) – A <cite>batch_shape x N x d</cite>-dim Tensor from which to sample (in the <cite>N</cite>
 dimension) according to the maximum posterior value under the objective.
 Note that if a batched model is used in the underlying acquisition
 function, then its batch shape must be broadcastable to <cite>batch_shape</cite>.</p></li>
-<li><p><strong>num_samples</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The number of samples to draw.</p></li>
+<li><p><strong>num_samples</strong> (<em>int</em>) – The number of samples to draw.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>A <cite>batch_shape x num_samples x d</cite>-dim Tensor of samples from <cite>X</cite>, where
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>batch_shape x num_samples x d</cite>-dim Tensor of samples from <cite>X</cite>, where
 <cite>X[…, i, :]</cite> is the <cite>i</cite>-th sample.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
 <dl class="py attribute">
-<dt id="botorch.generation.sampling.BoltzmannSampling.training">
-<code class="sig-name descname"><span class="pre">training</span></code><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.generation.sampling.BoltzmannSampling.training" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="botorch.generation.sampling.BoltzmannSampling.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.generation.sampling.BoltzmannSampling.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
-</div>
-<div class="section" id="module-botorch.generation.utils">
+</section>
+<section id="module-botorch.generation.utils">
 <span id="utilities"></span><h2>Utilities<a class="headerlink" href="#module-botorch.generation.utils" title="Permalink to this headline">¶</a></h2>
-</div>
-</div>
+</section>
+</section>
 </div>
 </div>
 </div>

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/img/botorch.png"/><link rel="shortcut icon" href="/img/botorch.ico"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/img/botorch.png"/><link rel="shortcut icon" href="/img/botorch.ico"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
               (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
               (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
               m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
@@ -23,12 +23,12 @@
 <div class="documentwrapper">
 <div class="bodywrapper">
 <div class="body" role="main">
-<div class="section" id="module-botorch.fit">
+<section id="module-botorch.fit">
 <span id="botorch-fit"></span><h1>botorch.fit<a class="headerlink" href="#module-botorch.fit" title="Permalink to this headline">¶</a></h1>
 <p>Utilities for model fitting.</p>
 <dl class="py function">
-<dt id="botorch.fit.fit_gpytorch_model">
-<code class="sig-prename descclassname"><span class="pre">botorch.fit.</span></code><code class="sig-name descname"><span class="pre">fit_gpytorch_model</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="pre">mll</span></em>, <em class="sig-param"><span class="pre">optimizer=&lt;function</span> <span class="pre">fit_gpytorch_scipy&gt;</span></em>, <em class="sig-param"><span class="pre">**kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/fit.html#fit_gpytorch_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.fit.fit_gpytorch_model" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="botorch.fit.fit_gpytorch_model">
+<span class="sig-prename descclassname"><span class="pre">botorch.fit.</span></span><span class="sig-name descname"><span class="pre">fit_gpytorch_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">mll</span></em>, <em class="sig-param"><span class="pre">optimizer=&lt;function</span> <span class="pre">fit_gpytorch_scipy&gt;</span></em>, <em class="sig-param"><span class="pre">**kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/fit.html#fit_gpytorch_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.fit.fit_gpytorch_model" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fit hyperparameters of a GPyTorch model.</p>
 <p>On optimizer failures, a new initial condition is sampled from the
 hyperparameter priors and optimization is retried. The maximum number of
@@ -37,19 +37,19 @@ retries can be passed in as a <cite>max_retries</cite> kwarg (default is 5).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>mll</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">MarginalLogLikelihood</span></code>) – MarginalLogLikelihood to be maximized.</p></li>
-<li><p><strong>optimizer</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>) – The optimizer function.</p></li>
-<li><p><strong>kwargs</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>) – Arguments passed along to the optimizer function, including
+<li><p><strong>mll</strong> (<em>gpytorch.mlls.marginal_log_likelihood.MarginalLogLikelihood</em>) – MarginalLogLikelihood to be maximized.</p></li>
+<li><p><strong>optimizer</strong> (<em>Callable</em>) – The optimizer function.</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – Arguments passed along to the optimizer function, including
 <cite>max_retries</cite> and <cite>sequential</cite> (controls the fitting of <cite>ModelListGP</cite>
 and <cite>BatchedMultiOutputGPyTorchModel</cite> models) or <cite>approx_mll</cite>
 (whether to use gpytorch’s approximate MLL computation).</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">MarginalLogLikelihood</span></code></p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>MarginalLogLikelihood with optimized parameters.</p>
 </dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>MarginalLogLikelihood with optimized parameters.</p>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>gpytorch.mlls.marginal_log_likelihood.MarginalLogLikelihood</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -59,7 +59,7 @@ and <cite>BatchedMultiOutputGPyTorchModel</cite> models) or <cite>approx_mll</ci
 </pre></div>
 </div>
 </dd></dl>
-</div>
+</section>
 </div>
 </div>
 </div>

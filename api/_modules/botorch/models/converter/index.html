@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/img/botorch.png"/><link rel="shortcut icon" href="/img/botorch.ico"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/img/botorch.png"/><link rel="shortcut icon" href="/img/botorch.ico"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
               (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
               (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
               m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
@@ -43,6 +43,7 @@
 <span class="kn">from</span> <span class="nn">botorch.exceptions</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
 <span class="kn">from</span> <span class="nn">botorch.models.gp_regression</span> <span class="kn">import</span> <span class="n">FixedNoiseGP</span><span class="p">,</span> <span class="n">HeteroskedasticSingleTaskGP</span>
 <span class="kn">from</span> <span class="nn">botorch.models.gp_regression_fidelity</span> <span class="kn">import</span> <span class="n">SingleTaskMultiFidelityGP</span>
+<span class="kn">from</span> <span class="nn">botorch.models.gp_regression_mixed</span> <span class="kn">import</span> <span class="n">MixedSingleTaskGP</span>
 <span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="kn">import</span> <span class="n">BatchedMultiOutputGPyTorchModel</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model_list_gp_regression</span> <span class="kn">import</span> <span class="n">ModelListGP</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.input</span> <span class="kn">import</span> <span class="n">InputTransform</span>
@@ -216,7 +217,7 @@
     <span class="sd">"""Convert a BatchedMultiOutputGPyTorchModel to a ModelListGP.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        model_list: The `BatchedMultiOutputGPyTorchModel` to be converted to a</span>
+<span class="sd">        batch_model: The `BatchedMultiOutputGPyTorchModel` to be converted to a</span>
 <span class="sd">            `ModelListGP`.</span>
 
 <span class="sd">    Returns:</span>
@@ -232,6 +233,10 @@
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">batch_model</span><span class="p">,</span> <span class="n">HeteroskedasticSingleTaskGP</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
             <span class="s2">"Conversion of HeteroskedasticSingleTaskGP currently not supported."</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">batch_model</span><span class="p">,</span> <span class="n">MixedSingleTaskGP</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="s2">"Conversion of MixedSingleTaskGP currently not supported."</span>
         <span class="p">)</span>
     <span class="n">input_transform</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">batch_model</span><span class="p">,</span> <span class="s2">"input_transform"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="n">batch_sd</span> <span class="o">=</span> <span class="n">batch_model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span>
@@ -274,6 +279,78 @@
         <span class="n">models</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">ModelListGP</span><span class="p">(</span><span class="o">*</span><span class="n">models</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="batched_multi_output_to_single_output"><a class="viewcode-back" href="../../../models.html#botorch.models.converter.batched_multi_output_to_single_output">[docs]</a><span class="k">def</span> <span class="nf">batched_multi_output_to_single_output</span><span class="p">(</span>
+    <span class="n">batch_mo_model</span><span class="p">:</span> <span class="n">BatchedMultiOutputGPyTorchModel</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BatchedMultiOutputGPyTorchModel</span><span class="p">:</span>
+    <span class="sd">"""Convert a model from batched multi-output to a batched single-output.</span>
+
+<span class="sd">    Note: the underlying GPyTorch GP does not change. The GPyTorch GP's batch_shape</span>
+<span class="sd">    (referred to as `_aug_batch_shape`) is still `_input_batch_shape x num_outputs`.</span>
+<span class="sd">    The only things that change are the attributes of the</span>
+<span class="sd">    BatchedMultiOutputGPyTorchModel that are responsible the internal accounting of</span>
+<span class="sd">    the number of outputs: namely, num_outputs, _input_batch_shape, and</span>
+<span class="sd">    _aug_batch_shape.</span>
+<span class="sd">    Initially for the batched MO models these are: `num_outputs = m`,</span>
+<span class="sd">    `_input_batch_shape = train_X.batch_shape`, and</span>
+<span class="sd">    `_aug_batch_shape = train_X.batch_shape + torch.Size([num_outputs])`.</span>
+<span class="sd">    In the new SO model, these are: `num_outputs = 1`,</span>
+<span class="sd">    `_input_batch_shape = train_X.batch_shape + torch.Size([num_outputs])`,</span>
+<span class="sd">    and `_aug_batch_shape = train_X.batch_shape + torch.Size([num_outputs])`.</span>
+
+<span class="sd">    This is a (hopefully) temporary measure until multi-output MVNs with</span>
+<span class="sd">    independent outputs have better support in GPyTorch (see</span>
+<span class="sd">    https://github.com/cornellius-gp/gpytorch/pull/1083).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        batched_mo_model: The BatchedMultiOutputGPyTorchModel</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The model converted into a batch single-output model.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; train_X = torch.rand(5, 2)</span>
+<span class="sd">        &gt;&gt;&gt; train_Y = torch.rand(5, 2)</span>
+<span class="sd">        &gt;&gt;&gt; batch_mo_gp = SingleTaskGP(train_X, train_Y)</span>
+<span class="sd">        &gt;&gt;&gt; batch_so_gp = batched_multioutput_to_single_output(batch_gp)</span>
+<span class="sd">    """</span>
+    <span class="c1"># TODO: Add support for HeteroskedasticSingleTaskGP</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">batch_mo_model</span><span class="p">,</span> <span class="n">HeteroskedasticSingleTaskGP</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="s2">"Conversion of HeteroskedasticSingleTaskGP currently not supported."</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">batch_mo_model</span><span class="p">,</span> <span class="n">BatchedMultiOutputGPyTorchModel</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span><span class="s2">"Only BatchedMultiOutputGPyTorchModels are supported."</span><span class="p">)</span>
+    <span class="c1"># TODO: Add support for custom likelihoods</span>
+    <span class="k">elif</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">batch_mo_model</span><span class="p">,</span> <span class="s2">"_is_custom_likelihood"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="s2">"Conversion of models with custom likelihoods is currently unsupported."</span>
+        <span class="p">)</span>
+    <span class="n">input_transform</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">batch_mo_model</span><span class="p">,</span> <span class="s2">"input_transform"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">batch_sd</span> <span class="o">=</span> <span class="n">batch_mo_model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span>
+
+    <span class="c1"># TODO: add support for outcome transforms</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">batch_mo_model</span><span class="p">,</span> <span class="s2">"outcome_transform"</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="s2">"Converting batched multi-output models with outcome transforms "</span>
+            <span class="s2">"is not currently supported."</span>
+        <span class="p">)</span>
+
+    <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"train_X"</span><span class="p">:</span> <span class="n">batch_mo_model</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">clone</span><span class="p">(),</span>
+        <span class="s2">"train_Y"</span><span class="p">:</span> <span class="n">batch_mo_model</span><span class="o">.</span><span class="n">train_targets</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">batch_mo_model</span><span class="p">,</span> <span class="n">FixedNoiseGP</span><span class="p">):</span>
+        <span class="n">noise_covar</span> <span class="o">=</span> <span class="n">batch_mo_model</span><span class="o">.</span><span class="n">likelihood</span><span class="o">.</span><span class="n">noise_covar</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">"train_Yvar"</span><span class="p">]</span> <span class="o">=</span> <span class="n">noise_covar</span><span class="o">.</span><span class="n">noise</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">batch_mo_model</span><span class="p">,</span> <span class="n">SingleTaskMultiFidelityGP</span><span class="p">):</span>
+        <span class="n">kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">batch_mo_model</span><span class="o">.</span><span class="n">_init_args</span><span class="p">)</span>
+    <span class="n">single_outcome_model</span> <span class="o">=</span> <span class="n">batch_mo_model</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span>
+        <span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">)</span>
+    <span class="n">single_outcome_model</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">batch_sd</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">single_outcome_model</span></div>
 
 
 <span class="k">def</span> <span class="nf">_get_adjusted_batch_keys</span><span class="p">(</span>
