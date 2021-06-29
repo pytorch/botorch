@@ -35,6 +35,10 @@ while getopts 'dhv:' option; do
   esac
 done
 
+if [[ $VERSION != false ]]; then
+  # Strip any leading "v" in the VERSION string
+  VERSION=$(echo "$VERSION"  | sed "s/v//");
+fi
 
 # Function to get absolute filename
 fullpath() {

@@ -119,5 +119,7 @@ jobs:
         pip install .[tutorials]
         pip install beautifulsoup4 ipython "nbconvert<6.0"
     - name: Publish latest website
+      env:
+        DOCUSAURUS_PUBLISH_TOKEN: ${{ secrets.DOCUSAURUS_PUBLISH_TOKEN }}
       run: |
         ./scripts/publish_site.sh -d -v ${{ github.event.release.tag_name }}
