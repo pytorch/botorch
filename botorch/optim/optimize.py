@@ -417,6 +417,7 @@ def optimize_acqf_mixed(
     equality_constraints: Optional[List[Tuple[Tensor, Tensor, float]]] = None,
     post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
     batch_initial_conditions: Optional[Tensor] = None,
+    **kwargs: Any,
 ) -> Tuple[Tensor, Tensor]:
     r"""Optimize over a list of fixed_features and returns the best solution.
 
@@ -518,6 +519,7 @@ def optimize_acqf_discrete(
     choices: Tensor,
     max_batch_size: int = 2048,
     unique: bool = True,
+    **kwargs: Any,
 ) -> Tuple[Tensor, Tensor]:
     r"""Optimize over a discrete set of points using batch evaluation.
 
