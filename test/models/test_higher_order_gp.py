@@ -39,7 +39,15 @@ class TestHigherOrderGP(BotorchTestCase):
             likelihood=GaussianLikelihood(),
         )
 
-        for m in [self.model, model_2]:
+        model_3 = HigherOrderGP(
+            train_X=train_x,
+            train_Y=train_y,
+            covar_modules=[RBFKernel(), RBFKernel(), RBFKernel()],
+            likelihood=GaussianLikelihood(),
+            latent_init="gp",
+        )
+
+        for m in [self.model, model_2, model_3]:
             mll = ExactMarginalLogLikelihood(m.likelihood, m)
             fit_gpytorch_torch(mll, options={"maxiter": 1, "disp": False})
 
