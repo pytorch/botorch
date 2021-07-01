@@ -68,7 +68,11 @@ class TransformedPosterior(Posterior):
         r"""The mean of the posterior as a `batch_shape x n x m`-dim Tensor."""
         if self._mean_transform is None:
             raise NotImplementedError("No mean transform provided.")
-        return self._mean_transform(self._posterior.mean, self._posterior.variance)
+        try:
+            variance = self._posterior.variance
+        except (NotImplementedError, AttributeError):
+            variance = None
+        return self._mean_transform(self._posterior.mean, variance)
 
     @property
     def variance(self) -> Tensor:

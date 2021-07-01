@@ -69,3 +69,22 @@ class TestTransformedPosterior(BotorchTestCase):
                     p_tf_2.mean
                 with self.assertRaises(NotImplementedError):
                     p_tf_2.variance
+
+        # check that `mean` works even if posterior doesn't have `variance`
+        for error in (AttributeError, NotImplementedError):
+
+            class DummyPosterior(object):
+                mean = torch.zeros(5)
+
+                @property
+                def variance(self):
+                    raise error
+
+            post = DummyPosterior()
+            transformed_post = TransformedPosterior(
+                posterior=post,
+                sample_transform=None,
+                mean_transform=lambda x, _: x + 1,
+            )
+            transformed_mean = transformed_post.mean
+            self.assertTrue(torch.allclose(transformed_mean, torch.ones(5)))
