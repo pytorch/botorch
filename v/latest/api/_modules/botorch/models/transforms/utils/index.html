@@ -12,7 +12,7 @@
             {"zIndex":100}
           )
         });
-        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/latest/versions"><h3>latest</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
 <script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/underscore.js"></script>
@@ -35,6 +35,7 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">gpytorch.utils.broadcasting</span> <span class="kn">import</span> <span class="n">_mul_broadcast_shape</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
@@ -115,6 +116,25 @@
 <span class="sd">    """</span>
     <span class="n">b</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">var</span>
     <span class="k">return</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">var</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">b</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="expand_and_copy_tensor"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.utils.expand_and_copy_tensor">[docs]</a><span class="k">def</span> <span class="nf">expand_and_copy_tensor</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">batch_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="sa">r</span><span class="sd">"""Expand and copy X according to batch_shape.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        X: A `input_batch_shape x n x d`-dim tensor of inputs</span>
+<span class="sd">        batch_shape: The new batch shape</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A `input_batch_shape x batch_shape x n x d`-dim tensor of inputs</span>
+<span class="sd">    """</span>
+    <span class="n">err_msg</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"Provided batch shape (</span><span class="si">{</span><span class="n">batch_shape</span><span class="si">}</span><span class="s2">) and input batch shape "</span>
+        <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">) are not broadcastable."</span>
+    <span class="p">)</span>
+    <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">_mul_broadcast_shape</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="n">batch_shape</span><span class="p">,</span> <span class="n">error_msg</span><span class="o">=</span><span class="n">err_msg</span><span class="p">)</span>
+    <span class="n">expand_shape</span> <span class="o">=</span> <span class="n">batch_shape</span> <span class="o">+</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>
+    <span class="k">return</span> <span class="n">X</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">expand_shape</span><span class="p">)</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span></div>
 </pre></div>
 </div>
 </div>

@@ -12,7 +12,7 @@
             {"zIndex":100}
           )
         });
-        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/latest/versions"><h3>latest</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
 <script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/underscore.js"></script>
@@ -41,7 +41,7 @@
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
+<span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span><span class="p">,</span> <span class="n">CandidateGenerationError</span>
 <span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">Bounds</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
@@ -293,6 +293,69 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"`indices` must be at least one-dimensional"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">constraints</span>
+
+
+<span class="k">def</span> <span class="nf">_generate_unfixed_lin_constraints</span><span class="p">(</span>
+    <span class="n">constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]],</span>
+    <span class="n">fixed_features</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+    <span class="n">dimension</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">eq</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]:</span>
+
+    <span class="c1"># If constraints is None or an empty list, then return itself</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">constraints</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">constraints</span>
+
+    <span class="c1"># replace_index generates the new indices for the unfixed dimensions</span>
+    <span class="c1"># after eliminating the fixed dimensions.</span>
+    <span class="c1"># Example: dimension = 5, ff.keys() = [1, 3], replace_index = {0: 0, 2: 1, 4: 2}</span>
+    <span class="n">unfixed_keys</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">dimension</span><span class="p">))</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">fixed_features</span><span class="p">))</span>
+    <span class="n">unfixed_keys</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">unfixed_keys</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">constraints</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">replace_index</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">dimension</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">fixed_features</span><span class="p">))</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">constraints</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="n">new_constraints</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1"># parse constraints one-by-one</span>
+    <span class="k">for</span> <span class="n">constraint_id</span><span class="p">,</span> <span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">coefficients</span><span class="p">,</span> <span class="n">rhs</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">constraints</span><span class="p">):</span>
+        <span class="n">new_rhs</span> <span class="o">=</span> <span class="n">rhs</span>
+        <span class="n">new_indices</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">new_coefficients</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># the following unsqueeze is done to facilitate a simpler for-loop.</span>
+        <span class="n">indices_2dim</span> <span class="o">=</span> <span class="n">indices</span> <span class="k">if</span> <span class="n">indices</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span> <span class="k">else</span> <span class="n">indices</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">coefficient</span><span class="p">,</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">coefficients</span><span class="p">,</span> <span class="n">indices_2dim</span><span class="p">):</span>
+            <span class="n">ffval_or_None</span> <span class="o">=</span> <span class="n">fixed_features</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">index</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+            <span class="c1"># if ffval_or_None is None, then the index is not fixed</span>
+            <span class="k">if</span> <span class="n">ffval_or_None</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">new_indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+                <span class="n">new_coefficients</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">coefficient</span><span class="p">)</span>
+            <span class="c1"># otherwise, we "remove" the constraints corresponding to that index</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">new_rhs</span> <span class="o">-=</span> <span class="n">coefficient</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">*</span> <span class="n">ffval_or_None</span>
+
+        <span class="c1"># all indices were fixed, so the constraint is gone.</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_indices</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">eq</span> <span class="ow">and</span> <span class="n">new_rhs</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="ow">not</span> <span class="n">eq</span> <span class="ow">and</span> <span class="n">new_rhs</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="n">prefix</span> <span class="o">=</span> <span class="s2">"Eq"</span> <span class="k">if</span> <span class="n">eq</span> <span class="k">else</span> <span class="s2">"Ineq"</span>
+                <span class="k">raise</span> <span class="n">CandidateGenerationError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">ality constraint </span><span class="si">{</span><span class="n">constraint_id</span><span class="si">}</span><span class="s2"> not met "</span>
+                    <span class="s2">"with fixed_features."</span>
+                <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># However, one key transformation has to be noted.</span>
+            <span class="c1"># new_indices is with respect to the older (fuller) domain, and so it will</span>
+            <span class="c1"># have to be converted using replace_index.</span>
+            <span class="n">new_indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">new_indices</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="c1"># generate new index location after the removal of fixed_features indices</span>
+            <span class="n">new_indices_dim_d</span> <span class="o">=</span> <span class="n">new_indices</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">new_indices_dim_d</span> <span class="o">=</span> <span class="n">replace_index</span><span class="p">[</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">new_indices_dim_d</span> <span class="o">==</span> <span class="n">unfixed_keys</span><span class="p">,</span> <span class="n">as_tuple</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="p">]</span>
+            <span class="n">new_indices</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_indices_dim_d</span>
+            <span class="c1"># squeeze(-1) is a no-op if dim -1 is not singleton</span>
+            <span class="n">new_indices</span><span class="o">.</span><span class="n">squeeze_</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="c1"># convert new_coefficients to Tensor</span>
+            <span class="n">new_coefficients</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">new_coefficients</span><span class="p">)</span>
+            <span class="n">new_constraints</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">new_indices</span><span class="p">,</span> <span class="n">new_coefficients</span><span class="p">,</span> <span class="n">new_rhs</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">new_constraints</span>
 </pre></div>
 </div>
 </div>

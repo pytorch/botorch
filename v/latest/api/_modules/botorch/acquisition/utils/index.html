@@ -12,7 +12,7 @@
             {"zIndex":100}
           )
         });
-        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/latest/versions"><h3>latest</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
 <script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/underscore.js"></script>
@@ -46,12 +46,16 @@
 <span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">monte_carlo</span>  <span class="c1"># noqa F401</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective</span> <span class="kn">import</span> <span class="n">monte_carlo</span> <span class="k">as</span> <span class="n">moo_monte_carlo</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">IdentityMCObjective</span><span class="p">,</span> <span class="n">MCAcquisitionObjective</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">IdentityMCObjective</span><span class="p">,</span>
+    <span class="n">MCAcquisitionObjective</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">SamplingWarning</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.samplers</span> <span class="kn">import</span> <span class="n">IIDNormalSampler</span><span class="p">,</span> <span class="n">MCSampler</span><span class="p">,</span> <span class="n">SobolQMCNormalSampler</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.multi_objective.box_decompositions.non_dominated</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">FastNondominatedPartitioning</span><span class="p">,</span>
     <span class="n">NondominatedPartitioning</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
@@ -105,8 +109,10 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="n">sampler</span> <span class="o">=</span> <span class="n">IIDNormalSampler</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="n">mc_samples</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
     <span class="c1"># instantiate and return the requested acquisition function</span>
+    <span class="k">if</span> <span class="n">acquisition_function_name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"qEI"</span><span class="p">,</span> <span class="s2">"qPI"</span><span class="p">):</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="n">objective</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X_observed</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span>
+        <span class="n">best_f</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
     <span class="k">if</span> <span class="n">acquisition_function_name</span> <span class="o">==</span> <span class="s2">"qEI"</span><span class="p">:</span>
-        <span class="n">best_f</span> <span class="o">=</span> <span class="n">objective</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X_observed</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">monte_carlo</span><span class="o">.</span><span class="n">qExpectedImprovement</span><span class="p">(</span>
             <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
             <span class="n">best_f</span><span class="o">=</span><span class="n">best_f</span><span class="p">,</span>
@@ -115,7 +121,6 @@
             <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="k">elif</span> <span class="n">acquisition_function_name</span> <span class="o">==</span> <span class="s2">"qPI"</span><span class="p">:</span>
-        <span class="n">best_f</span> <span class="o">=</span> <span class="n">objective</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X_observed</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">monte_carlo</span><span class="o">.</span><span class="n">qProbabilityOfImprovement</span><span class="p">(</span>
             <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
             <span class="n">best_f</span><span class="o">=</span><span class="n">best_f</span><span class="p">,</span>
@@ -132,6 +137,7 @@
             <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
             <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
             <span class="n">prune_baseline</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"prune_baseline"</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+            <span class="n">marginalize_dim</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"marginalize_dim"</span><span class="p">),</span>
         <span class="p">)</span>
     <span class="k">elif</span> <span class="n">acquisition_function_name</span> <span class="o">==</span> <span class="s2">"qSR"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">monte_carlo</span><span class="o">.</span><span class="n">qSimpleRegret</span><span class="p">(</span>
@@ -162,11 +168,18 @@
             <span class="n">feas</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">c</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">constraints</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
             <span class="n">Y</span> <span class="o">=</span> <span class="n">Y</span><span class="p">[</span><span class="n">feas</span><span class="p">]</span>
         <span class="n">obj</span> <span class="o">=</span> <span class="n">objective</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>
-        <span class="n">partitioning</span> <span class="o">=</span> <span class="n">NondominatedPartitioning</span><span class="p">(</span>
-            <span class="n">ref_point</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">ref_point</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">Y</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">Y</span><span class="o">.</span><span class="n">device</span><span class="p">),</span>
-            <span class="n">Y</span><span class="o">=</span><span class="n">obj</span><span class="p">,</span>
-            <span class="n">alpha</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"alpha"</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
-        <span class="p">)</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"alpha"</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">alpha</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">partitioning</span> <span class="o">=</span> <span class="n">NondominatedPartitioning</span><span class="p">(</span>
+                <span class="n">ref_point</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">ref_point</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">Y</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">Y</span><span class="o">.</span><span class="n">device</span><span class="p">),</span>
+                <span class="n">Y</span><span class="o">=</span><span class="n">obj</span><span class="p">,</span>
+                <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">partitioning</span> <span class="o">=</span> <span class="n">FastNondominatedPartitioning</span><span class="p">(</span>
+                <span class="n">ref_point</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">ref_point</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">Y</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">Y</span><span class="o">.</span><span class="n">device</span><span class="p">),</span>
+                <span class="n">Y</span><span class="o">=</span><span class="n">obj</span><span class="p">,</span>
+            <span class="p">)</span>
         <span class="k">return</span> <span class="n">moo_monte_carlo</span><span class="o">.</span><span class="n">qExpectedHypervolumeImprovement</span><span class="p">(</span>
             <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
             <span class="n">ref_point</span><span class="o">=</span><span class="n">ref_point</span><span class="p">,</span>
@@ -175,6 +188,21 @@
             <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
             <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
             <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">acquisition_function_name</span> <span class="o">==</span> <span class="s2">"qNEHVI"</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">"ref_point"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"`ref_point` must be specified in kwargs for qNEHVI"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">moo_monte_carlo</span><span class="o">.</span><span class="n">qNoisyExpectedHypervolumeImprovement</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">ref_point</span><span class="o">=</span><span class="n">kwargs</span><span class="p">[</span><span class="s2">"ref_point"</span><span class="p">],</span>
+            <span class="n">X_baseline</span><span class="o">=</span><span class="n">X_observed</span><span class="p">,</span>
+            <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span>
+            <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+            <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
+            <span class="n">prune_baseline</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"alpha"</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
+            <span class="n">X_pending</span><span class="o">=</span><span class="n">X_pending</span><span class="p">,</span>
+            <span class="n">marginalize_dim</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"marginalize_dim"</span><span class="p">),</span>
         <span class="p">)</span>
     <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
         <span class="sa">f</span><span class="s2">"Unknown acquisition function </span><span class="si">{</span><span class="n">acquisition_function_name</span><span class="si">}</span><span class="s2">"</span>
@@ -243,6 +271,7 @@
             <span class="n">monte_carlo</span><span class="o">.</span><span class="n">qProbabilityOfImprovement</span><span class="p">,</span>
             <span class="n">multi_objective</span><span class="o">.</span><span class="n">analytic</span><span class="o">.</span><span class="n">ExpectedHypervolumeImprovement</span><span class="p">,</span>
             <span class="n">multi_objective</span><span class="o">.</span><span class="n">monte_carlo</span><span class="o">.</span><span class="n">qExpectedHypervolumeImprovement</span><span class="p">,</span>
+            <span class="n">multi_objective</span><span class="o">.</span><span class="n">monte_carlo</span><span class="o">.</span><span class="n">qNoisyExpectedHypervolumeImprovement</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">)</span></div>
 
@@ -254,6 +283,7 @@
     <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2048</span><span class="p">,</span>
     <span class="n">max_frac</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
     <span class="n">sampler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MCSampler</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">marginalize_dim</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
     <span class="sa">r</span><span class="sd">"""Prune points from an input tensor that are unlikely to be the best point.</span>
 
@@ -275,6 +305,9 @@
 <span class="sd">            returned tensor does not exceed `ceil(max_frac * n)`.</span>
 <span class="sd">        sampler: If provided, will use this customized sampler instead of</span>
 <span class="sd">            automatically constructing one with `num_samples`.</span>
+<span class="sd">        marginalize_dim: A batch dimension that should be marginalized.</span>
+<span class="sd">            For example, this is useful when using a batched fully Bayesian</span>
+<span class="sd">            model.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A `n' x d` with subset of points in `X`, where</span>
@@ -311,10 +344,14 @@
         <span class="n">objective</span> <span class="o">=</span> <span class="n">IdentityMCObjective</span><span class="p">()</span>
     <span class="n">obj_vals</span> <span class="o">=</span> <span class="n">objective</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">obj_vals</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
-        <span class="c1"># TODO: support batched inputs (req. dealing with ragged tensors)</span>
-        <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
-            <span class="s2">"Batched models are currently unsupported by prune_inferior_points"</span>
-        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">obj_vals</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">3</span> <span class="ow">and</span> <span class="n">marginalize_dim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">obj_vals</span> <span class="o">=</span> <span class="n">obj_vals</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">marginalize_dim</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># TODO: support batched inputs (req. dealing with ragged tensors)</span>
+            <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+                <span class="s2">"Models with multiple batch dims are currently unsupported by"</span>
+                <span class="s2">" prune_inferior_points."</span>
+            <span class="p">)</span>
     <span class="n">is_best</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">obj_vals</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">idcs</span><span class="p">,</span> <span class="n">counts</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">is_best</span><span class="p">,</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 

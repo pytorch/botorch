@@ -12,7 +12,7 @@
             {"zIndex":100}
           )
         });
-        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/latest/versions"><h3>latest</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
 <script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/underscore.js"></script>
@@ -33,7 +33,7 @@
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">settings</span>
@@ -45,7 +45,13 @@
 <span class="kn">from</span> <span class="nn">botorch.acquisition.utils</span> <span class="kn">import</span> <span class="n">is_nonnegative</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">BadInitialCandidatesWarning</span><span class="p">,</span> <span class="n">SamplingWarning</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
-<span class="kn">from</span> <span class="nn">botorch.utils.sampling</span> <span class="kn">import</span> <span class="n">batched_multinomial</span><span class="p">,</span> <span class="n">draw_sobol_samples</span><span class="p">,</span> <span class="n">manual_seed</span>
+<span class="kn">from</span> <span class="nn">botorch.optim.utils</span> <span class="kn">import</span> <span class="n">fix_features</span>
+<span class="kn">from</span> <span class="nn">botorch.utils.sampling</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">batched_multinomial</span><span class="p">,</span>
+    <span class="n">draw_sobol_samples</span><span class="p">,</span>
+    <span class="n">manual_seed</span><span class="p">,</span>
+    <span class="n">get_polytope_samples</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.transforms</span> <span class="kn">import</span> <span class="n">standardize</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.quasirandom</span> <span class="kn">import</span> <span class="n">SobolEngine</span>
@@ -57,9 +63,14 @@
     <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">num_restarts</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">raw_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">fixed_features</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">inequality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">equality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
     <span class="sa">r</span><span class="sd">"""Generate a batch of initial conditions for random-restart optimziation.</span>
+
+<span class="sd">    TODO: Support t-batches of initial conditions.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        acq_function: The acquisition function to be optimized.</span>
@@ -69,6 +80,8 @@
 <span class="sd">            function optimization.</span>
 <span class="sd">        raw_samples: The number of raw samples to consider in the initialization</span>
 <span class="sd">            heuristic.</span>
+<span class="sd">        fixed_features: A map `{feature_index: value}` for features that</span>
+<span class="sd">            should be fixed to a particular value during generation.</span>
 <span class="sd">        options: Options for initial condition generation. For valid options see</span>
 <span class="sd">            `initialize_q_batch` and `initialize_q_batch_nonneg`. If `options`</span>
 <span class="sd">            contains a `nonnegative=True` entry, then `acq_function` is</span>
@@ -77,6 +90,12 @@
 <span class="sd">            to specify the batch limit for the initialization. This is useful</span>
 <span class="sd">            for avoiding memory limits when computing the batch posterior over</span>
 <span class="sd">            raw samples.</span>
+<span class="sd">        inequality constraints: A list of tuples (indices, coefficients, rhs),</span>
+<span class="sd">            with each tuple encoding an inequality constraint of the form</span>
+<span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs`.</span>
+<span class="sd">        equality constraints: A list of tuples (indices, coefficients, rhs),</span>
+<span class="sd">            with each tuple encoding an inequality constraint of the form</span>
+<span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A `num_restarts x q x d` tensor of initial conditions.</span>
@@ -120,14 +139,32 @@
     <span class="k">while</span> <span class="n">factor</span> <span class="o">&lt;</span> <span class="n">max_factor</span><span class="p">:</span>
         <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">(</span><span class="n">record</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">ws</span><span class="p">:</span>
             <span class="n">n</span> <span class="o">=</span> <span class="n">raw_samples</span> <span class="o">*</span> <span class="n">factor</span>
-            <span class="k">if</span> <span class="n">effective_dim</span> <span class="o">&lt;=</span> <span class="n">SobolEngine</span><span class="o">.</span><span class="n">MAXDIM</span><span class="p">:</span>
-                <span class="n">X_rnd</span> <span class="o">=</span> <span class="n">draw_sobol_samples</span><span class="p">(</span><span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="n">q</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">inequality_constraints</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">equality_constraints</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">effective_dim</span> <span class="o">&lt;=</span> <span class="n">SobolEngine</span><span class="o">.</span><span class="n">MAXDIM</span><span class="p">:</span>
+                    <span class="n">X_rnd</span> <span class="o">=</span> <span class="n">draw_sobol_samples</span><span class="p">(</span><span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="n">q</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">with</span> <span class="n">manual_seed</span><span class="p">(</span><span class="n">seed</span><span class="p">):</span>
+                        <span class="c1"># load on cpu</span>
+                        <span class="n">X_rnd_nlzd</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span>
+                            <span class="n">n</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">bounds</span><span class="o">.</span><span class="n">dtype</span>
+                        <span class="p">)</span>
+                    <span class="n">X_rnd</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">X_rnd_nlzd</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">with</span> <span class="n">manual_seed</span><span class="p">(</span><span class="n">seed</span><span class="p">):</span>
-                    <span class="c1"># load on cpu</span>
-                    <span class="n">X_rnd_nlzd</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">n</span> <span class="o">*</span> <span class="n">effective_dim</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">bounds</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
-                    <span class="n">X_rnd_nlzd</span> <span class="o">=</span> <span class="n">X_rnd_nlzd</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-                <span class="n">X_rnd</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">X_rnd_nlzd</span>
+                <span class="n">X_rnd</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">get_polytope_samples</span><span class="p">(</span>
+                        <span class="n">n</span><span class="o">=</span><span class="n">n</span> <span class="o">*</span> <span class="n">q</span><span class="p">,</span>
+                        <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+                        <span class="n">inequality_constraints</span><span class="o">=</span><span class="n">inequality_constraints</span><span class="p">,</span>
+                        <span class="n">equality_constraints</span><span class="o">=</span><span class="n">equality_constraints</span><span class="p">,</span>
+                        <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">,</span>
+                        <span class="n">n_burnin</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"n_burnin"</span><span class="p">,</span> <span class="mi">10000</span><span class="p">),</span>
+                        <span class="n">thinning</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"thinning"</span><span class="p">,</span> <span class="mi">32</span><span class="p">),</span>
+                    <span class="p">)</span>
+                    <span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+                    <span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
+                <span class="p">)</span>
+
+            <span class="n">X_rnd</span> <span class="o">=</span> <span class="n">fix_features</span><span class="p">(</span><span class="n">X_rnd</span><span class="p">,</span> <span class="n">fixed_features</span><span class="o">=</span><span class="n">fixed_features</span><span class="p">)</span>
             <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
                 <span class="k">if</span> <span class="n">batch_limit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="n">batch_limit</span> <span class="o">=</span> <span class="n">X_rnd</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -164,7 +201,10 @@
     <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">num_restarts</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">raw_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">fixed_features</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">inequality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">equality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
     <span class="sa">r</span><span class="sd">"""Generate a batch of smart initializations for qKnowledgeGradient.</span>
 
@@ -190,6 +230,8 @@
 <span class="sd">            function optimization.</span>
 <span class="sd">        raw_samples: The number of raw samples to consider in the initialization</span>
 <span class="sd">            heuristic.</span>
+<span class="sd">        fixed_features: A map `{feature_index: value}` for features that</span>
+<span class="sd">            should be fixed to a particular value during generation.</span>
 <span class="sd">        options: Options for initial condition generation. These contain all</span>
 <span class="sd">            settings for the standard heuristic initialization from</span>
 <span class="sd">            `gen_batch_initial_conditions`. In addition, they contain</span>
@@ -198,6 +240,12 @@
 <span class="sd">            restarts and raw samples for solving the posterior objective</span>
 <span class="sd">            maximization problem, respectively) and `eta` (temperature parameter</span>
 <span class="sd">            for sampling heuristic from posterior objective maximizers).</span>
+<span class="sd">        inequality constraints: A list of tuples (indices, coefficients, rhs),</span>
+<span class="sd">            with each tuple encoding an inequality constraint of the form</span>
+<span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs`.</span>
+<span class="sd">        equality constraints: A list of tuples (indices, coefficients, rhs),</span>
+<span class="sd">            with each tuple encoding an inequality constraint of the form</span>
+<span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A `num_restarts x q' x d` tensor that can be used as initial conditions</span>
@@ -227,7 +275,10 @@
         <span class="n">q</span><span class="o">=</span><span class="n">q_aug</span><span class="p">,</span>
         <span class="n">num_restarts</span><span class="o">=</span><span class="n">num_restarts</span><span class="p">,</span>
         <span class="n">raw_samples</span><span class="o">=</span><span class="n">raw_samples</span><span class="p">,</span>
+        <span class="n">fixed_features</span><span class="o">=</span><span class="n">fixed_features</span><span class="p">,</span>
         <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">,</span>
+        <span class="n">inequality_constraints</span><span class="o">=</span><span class="n">inequality_constraints</span><span class="p">,</span>
+        <span class="n">equality_constraints</span><span class="o">=</span><span class="n">equality_constraints</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># compute maximizer of the value function</span>
@@ -245,7 +296,10 @@
         <span class="n">q</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="n">num_restarts</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"num_inner_restarts"</span><span class="p">,</span> <span class="mi">20</span><span class="p">),</span>
         <span class="n">raw_samples</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"raw_inner_samples"</span><span class="p">,</span> <span class="mi">1024</span><span class="p">),</span>
+        <span class="n">fixed_features</span><span class="o">=</span><span class="n">fixed_features</span><span class="p">,</span>
         <span class="n">return_best_only</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">inequality_constraints</span><span class="o">=</span><span class="n">inequality_constraints</span><span class="p">,</span>
+        <span class="n">equality_constraints</span><span class="o">=</span><span class="n">equality_constraints</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># sampling from the optimizers</span>
@@ -265,6 +319,7 @@
     <span class="n">num_restarts</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">raw_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">current_model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+    <span class="n">fixed_features</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
     <span class="sa">r</span><span class="sd">"""Generate a batch of smart initializations for optimizing</span>
@@ -294,6 +349,8 @@
 <span class="sd">            heuristic.</span>
 <span class="sd">        current_model: The model of the KG acquisition function that was used to</span>
 <span class="sd">            generate the fantasy model of the value function.</span>
+<span class="sd">        fixed_features: A map `{feature_index: value}` for features that</span>
+<span class="sd">            should be fixed to a particular value during generation.</span>
 <span class="sd">        options: Options for initial condition generation. These contain all</span>
 <span class="sd">            settings for the standard heuristic initialization from</span>
 <span class="sd">            `gen_batch_initial_conditions`. In addition, they contain</span>
@@ -341,6 +398,7 @@
         <span class="n">q</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="n">num_restarts</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"num_inner_restarts"</span><span class="p">,</span> <span class="mi">20</span><span class="p">),</span>
         <span class="n">raw_samples</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"raw_inner_samples"</span><span class="p">,</span> <span class="mi">1024</span><span class="p">),</span>
+        <span class="n">fixed_features</span><span class="o">=</span><span class="n">fixed_features</span><span class="p">,</span>
         <span class="n">return_best_only</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="n">options</span><span class="o">=</span><span class="p">{</span>
             <span class="n">k</span><span class="p">:</span> <span class="n">v</span>
@@ -377,6 +435,7 @@
     <span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">resampled</span><span class="p">)</span>
     <span class="c1"># full set of raw samples</span>
     <span class="n">X_rnd</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">resampled</span><span class="p">,</span> <span class="n">randomized</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">X_rnd</span> <span class="o">=</span> <span class="n">fix_features</span><span class="p">(</span><span class="n">X_rnd</span><span class="p">,</span> <span class="n">fixed_features</span><span class="o">=</span><span class="n">fixed_features</span><span class="p">)</span>
 
     <span class="c1"># evaluate the raw samples</span>
     <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>

@@ -12,7 +12,7 @@
             {"zIndex":100}
           )
         });
-        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/latest/versions"><h3>latest</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
 <script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/underscore.js"></script>
@@ -32,29 +32,66 @@
 
 <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">Multi-Task GP models.</span>
+
+<span class="sd">References</span>
+
+<span class="sd">.. [Doucet2010sampl]</span>
+<span class="sd">    A. Doucet. A Note on Efficient Conditional Simulation of Gaussian Distributions.</span>
+<span class="sd">    http://www.stats.ox.ac.uk/~doucet/doucet_simulationconditionalgaussian.pdf,</span>
+<span class="sd">    Apr 2010.</span>
+
+<span class="sd">.. [Maddox2021bohdo]</span>
+<span class="sd">    W. Maddox, M. Balandat, A. Wilson, and E. Bakshy. Bayesian Optimization with</span>
+<span class="sd">    High-Dimensional Outputs. https://botorch.org, Jun 2021.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">botorch.models.gp_regression</span> <span class="kn">import</span> <span class="n">MIN_INFERRED_NOISE_LEVEL</span>
+<span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchModel</span>
 <span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="kn">import</span> <span class="n">MultiTaskGPyTorchModel</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.input</span> <span class="kn">import</span> <span class="n">InputTransform</span>
+<span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">OutcomeTransform</span>
+<span class="kn">from</span> <span class="nn">botorch.posteriors.multitask</span> <span class="kn">import</span> <span class="n">MultitaskGPPosterior</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.containers</span> <span class="kn">import</span> <span class="n">TrainingData</span>
+<span class="kn">from</span> <span class="nn">gpytorch.constraints</span> <span class="kn">import</span> <span class="n">GreaterThan</span>
+<span class="kn">from</span> <span class="nn">gpytorch.distributions.multitask_multivariate_normal</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MultitaskMultivariateNormal</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">gpytorch.distributions.multivariate_normal</span> <span class="kn">import</span> <span class="n">MultivariateNormal</span>
 <span class="kn">from</span> <span class="nn">gpytorch.kernels.index_kernel</span> <span class="kn">import</span> <span class="n">IndexKernel</span>
 <span class="kn">from</span> <span class="nn">gpytorch.kernels.matern_kernel</span> <span class="kn">import</span> <span class="n">MaternKernel</span>
+<span class="kn">from</span> <span class="nn">gpytorch.kernels.multitask_kernel</span> <span class="kn">import</span> <span class="n">MultitaskKernel</span>
 <span class="kn">from</span> <span class="nn">gpytorch.kernels.scale_kernel</span> <span class="kn">import</span> <span class="n">ScaleKernel</span>
+<span class="kn">from</span> <span class="nn">gpytorch.lazy</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BatchRepeatLazyTensor</span><span class="p">,</span>
+    <span class="n">DiagLazyTensor</span><span class="p">,</span>
+    <span class="n">KroneckerProductLazyTensor</span><span class="p">,</span>
+    <span class="n">KroneckerProductDiagLazyTensor</span><span class="p">,</span>
+    <span class="n">lazify</span><span class="p">,</span>
+    <span class="n">RootLazyTensor</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">gpytorch.likelihoods.gaussian_likelihood</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">FixedNoiseGaussianLikelihood</span><span class="p">,</span>
     <span class="n">GaussianLikelihood</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">gpytorch.likelihoods.multitask_gaussian_likelihood</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MultitaskGaussianLikelihood</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">gpytorch.means</span> <span class="kn">import</span> <span class="n">MultitaskMean</span>
 <span class="kn">from</span> <span class="nn">gpytorch.means.constant_mean</span> <span class="kn">import</span> <span class="n">ConstantMean</span>
 <span class="kn">from</span> <span class="nn">gpytorch.models.exact_gp</span> <span class="kn">import</span> <span class="n">ExactGP</span>
 <span class="kn">from</span> <span class="nn">gpytorch.priors.lkj_prior</span> <span class="kn">import</span> <span class="n">LKJCovariancePrior</span>
 <span class="kn">from</span> <span class="nn">gpytorch.priors.prior</span> <span class="kn">import</span> <span class="n">Prior</span>
+<span class="kn">from</span> <span class="nn">gpytorch.priors.smoothed_box_prior</span> <span class="kn">import</span> <span class="n">SmoothedBoxPrior</span>
 <span class="kn">from</span> <span class="nn">gpytorch.priors.torch_priors</span> <span class="kn">import</span> <span class="n">GammaPrior</span>
+<span class="kn">from</span> <span class="nn">gpytorch.settings</span> <span class="kn">import</span> <span class="n">cholesky_jitter</span><span class="p">,</span> <span class="n">detach_test_caches</span>
+<span class="kn">from</span> <span class="nn">gpytorch.utils.errors</span> <span class="kn">import</span> <span class="n">CachingError</span>
+<span class="kn">from</span> <span class="nn">gpytorch.utils.memoize</span> <span class="kn">import</span> <span class="n">cached</span><span class="p">,</span> <span class="n">pop_from_cache</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
@@ -80,6 +117,7 @@
         <span class="n">output_tasks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">rank</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Multi-Task GP model using an ICM kernel, inferring observation noise.</span>
 
@@ -107,8 +145,6 @@
 <span class="sd">            &gt;&gt;&gt; train_Y = torch.cat(f1(X1), f2(X2)).unsqueeze(-1)</span>
 <span class="sd">            &gt;&gt;&gt; model = MultiTaskGP(train_X, train_Y, task_feature=-1)</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="n">input_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">input_transform</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
         <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
             <span class="n">transformed_X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span>
                 <span class="n">X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span>
@@ -117,6 +153,9 @@
         <span class="n">all_tasks</span><span class="p">,</span> <span class="n">task_feature</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_all_tasks</span><span class="p">(</span>
             <span class="n">transformed_X</span><span class="p">,</span> <span class="n">task_feature</span><span class="p">,</span> <span class="n">output_tasks</span>
         <span class="p">)</span>
+        <span class="k">if</span> <span class="n">outcome_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">train_Y</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">outcome_transform</span><span class="p">(</span><span class="n">train_Y</span><span class="p">)</span>
+
         <span class="c1"># squeeze output dim</span>
         <span class="n">train_Y</span> <span class="o">=</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">output_tasks</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -153,6 +192,8 @@
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">input_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">input_transform</span> <span class="o">=</span> <span class="n">input_transform</span>
+        <span class="k">if</span> <span class="n">outcome_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">outcome_transform</span> <span class="o">=</span> <span class="n">outcome_transform</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_split_inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
@@ -182,7 +223,8 @@
         <span class="k">return</span> <span class="n">x_basic</span><span class="p">,</span> <span class="n">task_idcs</span>
 
 <div class="viewcode-block" id="MultiTaskGP.forward"><a class="viewcode-back" href="../../../models.html#botorch.models.multitask.MultiTaskGP.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultivariateNormal</span><span class="p">:</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="n">x_basic</span><span class="p">,</span> <span class="n">task_idcs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_split_inputs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="c1"># Compute base mean and covariance</span>
         <span class="n">mean_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span><span class="p">(</span><span class="n">x_basic</span><span class="p">)</span>
@@ -317,8 +359,6 @@
 <span class="sd">            &gt;&gt;&gt; train_Yvar = 0.1 + 0.1 * torch.rand_like(train_Y)</span>
 <span class="sd">            &gt;&gt;&gt; model = FixedNoiseMultiTaskGP(train_X, train_Y, train_Yvar, -1)</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="n">input_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">input_transform</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
         <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
             <span class="n">transformed_X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span>
                 <span class="n">X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span>
@@ -363,6 +403,346 @@
         <span class="n">inputs</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">construct_inputs</span><span class="p">(</span><span class="n">training_data</span><span class="o">=</span><span class="n">training_data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">inputs</span><span class="p">[</span><span class="s2">"train_Yvar"</span><span class="p">]</span> <span class="o">=</span> <span class="n">training_data</span><span class="o">.</span><span class="n">Yvar</span>
         <span class="k">return</span> <span class="n">inputs</span></div></div>
+
+
+<div class="viewcode-block" id="KroneckerMultiTaskGP"><a class="viewcode-back" href="../../../models.html#botorch.models.multitask.KroneckerMultiTaskGP">[docs]</a><span class="k">class</span> <span class="nc">KroneckerMultiTaskGP</span><span class="p">(</span><span class="n">ExactGP</span><span class="p">,</span> <span class="n">GPyTorchModel</span><span class="p">):</span>
+    <span class="sd">"""Multi-task GP with Kronecker structure, using an ICM kernel.</span>
+
+<span class="sd">    This model assumes the "block design" case, i.e., it requires that all tasks</span>
+<span class="sd">    are observed at all data points.</span>
+
+<span class="sd">    For posterior sampling, this model uses Matheron's rule [Doucet2010sampl] to compute</span>
+<span class="sd">    the posterior over all tasks as in [Maddox2021bohdo] by exploiting Kronecker</span>
+<span class="sd">    structure.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">train_X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">train_Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">likelihood</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MultitaskGaussianLikelihood</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">task_covar_prior</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Prior</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">rank</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Multi-task GP with Kronecker structure, using a simple ICM kernel.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            train_X: A `batch_shape x n x d` tensor of training features.</span>
+<span class="sd">            train_Y: A `batch_shape x n x m` tensor of training observations.</span>
+<span class="sd">            likelihood: A `MultitaskGaussianLikelihood`. If omitted, uses a</span>
+<span class="sd">                `MultitaskGaussianLikelihood` with a `GammaPrior(1.1, 0.05)`</span>
+<span class="sd">                noise prior.</span>
+<span class="sd">            task_covar_prior : A Prior on the task covariance matrix. Must operate</span>
+<span class="sd">                on p.s.d. matrices. A common prior for this is the `LKJ` prior. If</span>
+<span class="sd">                omitted, uses `LKJCovariancePrior` with `eta` parameter as specified</span>
+<span class="sd">                in the keyword arguments (if not specified, use `eta=1.5`).</span>
+<span class="sd">            rank: The rank of the ICM kernel. If omitted, use a full rank kernel.</span>
+<span class="sd">            kwargs: Additional arguments to override default settings of priors,</span>
+<span class="sd">                including:</span>
+<span class="sd">                - eta: The eta parameter on the default LKJ task_covar_prior.</span>
+<span class="sd">                A value of 1.0 is uninformative, values &lt;1.0 favor stronger</span>
+<span class="sd">                correlations (in magnitude), correlations vanish as eta -&gt; inf.</span>
+<span class="sd">                - sd_prior: A scalar prior over nonnegative numbers, which is used</span>
+<span class="sd">                for the default LKJCovariancePrior task_covar_prior.</span>
+<span class="sd">                - likelihood_rank: The rank of the task covariance matrix to fit.</span>
+<span class="sd">                Defaults to 0 (which corresponds to a diagonal covariance matrix).</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; train_X = torch.rand(10, 2)</span>
+<span class="sd">            &gt;&gt;&gt; train_Y = torch.cat([f_1(X), f_2(X)], dim=-1)</span>
+<span class="sd">            &gt;&gt;&gt; model = KroneckerMultiTaskGP(train_X, train_Y)</span>
+<span class="sd">        """</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="n">transformed_X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span>
+                <span class="n">X</span><span class="o">=</span><span class="n">train_X</span><span class="p">,</span> <span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">outcome_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">train_Y</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">outcome_transform</span><span class="p">(</span><span class="n">train_Y</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_tensor_args</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">transformed_X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">train_Y</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_num_outputs</span> <span class="o">=</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">batch_shape</span><span class="p">,</span> <span class="n">ard_num_dims</span> <span class="o">=</span> <span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="n">train_X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">num_tasks</span> <span class="o">=</span> <span class="n">train_Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">rank</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">rank</span> <span class="o">=</span> <span class="n">num_tasks</span>
+        <span class="k">if</span> <span class="n">likelihood</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">noise_prior</span> <span class="o">=</span> <span class="n">GammaPrior</span><span class="p">(</span><span class="mf">1.1</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">)</span>
+            <span class="n">noise_prior_mode</span> <span class="o">=</span> <span class="p">(</span><span class="n">noise_prior</span><span class="o">.</span><span class="n">concentration</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">noise_prior</span><span class="o">.</span><span class="n">rate</span>
+            <span class="n">likelihood</span> <span class="o">=</span> <span class="n">MultitaskGaussianLikelihood</span><span class="p">(</span>
+                <span class="n">num_tasks</span><span class="o">=</span><span class="n">num_tasks</span><span class="p">,</span>
+                <span class="n">batch_shape</span><span class="o">=</span><span class="n">batch_shape</span><span class="p">,</span>
+                <span class="n">noise_prior</span><span class="o">=</span><span class="n">noise_prior</span><span class="p">,</span>
+                <span class="n">noise_constraint</span><span class="o">=</span><span class="n">GreaterThan</span><span class="p">(</span>
+                    <span class="n">MIN_INFERRED_NOISE_LEVEL</span><span class="p">,</span>
+                    <span class="n">transform</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="n">initial_value</span><span class="o">=</span><span class="n">noise_prior_mode</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">rank</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"likelihood_rank"</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">task_covar_prior</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">task_covar_prior</span> <span class="o">=</span> <span class="n">LKJCovariancePrior</span><span class="p">(</span>
+                <span class="n">n</span><span class="o">=</span><span class="n">num_tasks</span><span class="p">,</span>
+                <span class="n">eta</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"eta"</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">),</span>
+                <span class="n">sd_prior</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                    <span class="s2">"sd_prior"</span><span class="p">,</span>
+                    <span class="n">SmoothedBoxPrior</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">6</span><span class="p">),</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mf">1.25</span><span class="p">),</span> <span class="mf">0.05</span><span class="p">),</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">,</span> <span class="n">likelihood</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span> <span class="o">=</span> <span class="n">MultitaskMean</span><span class="p">(</span>
+            <span class="n">base_means</span><span class="o">=</span><span class="n">ConstantMean</span><span class="p">(</span><span class="n">batch_shape</span><span class="o">=</span><span class="n">batch_shape</span><span class="p">),</span> <span class="n">num_tasks</span><span class="o">=</span><span class="n">num_tasks</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span> <span class="o">=</span> <span class="n">MultitaskKernel</span><span class="p">(</span>
+            <span class="n">data_covar_module</span><span class="o">=</span><span class="n">MaternKernel</span><span class="p">(</span>
+                <span class="n">nu</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span>
+                <span class="n">ard_num_dims</span><span class="o">=</span><span class="n">ard_num_dims</span><span class="p">,</span>
+                <span class="n">lengthscale_prior</span><span class="o">=</span><span class="n">GammaPrior</span><span class="p">(</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">),</span>
+                <span class="n">batch_shape</span><span class="o">=</span><span class="n">batch_shape</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">num_tasks</span><span class="o">=</span><span class="n">num_tasks</span><span class="p">,</span>
+            <span class="n">rank</span><span class="o">=</span><span class="n">rank</span><span class="p">,</span>
+            <span class="n">batch_shape</span><span class="o">=</span><span class="n">batch_shape</span><span class="p">,</span>
+            <span class="n">task_covar_prior</span><span class="o">=</span><span class="n">task_covar_prior</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">outcome_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">outcome_transform</span> <span class="o">=</span> <span class="n">outcome_transform</span>
+        <span class="k">if</span> <span class="n">input_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">input_transform</span> <span class="o">=</span> <span class="n">input_transform</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
+
+<div class="viewcode-block" id="KroneckerMultiTaskGP.forward"><a class="viewcode-back" href="../../../models.html#botorch.models.multitask.KroneckerMultiTaskGP.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span><span class="p">:</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+
+        <span class="n">mean_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">covar_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">(</span><span class="n">mean_x</span><span class="p">,</span> <span class="n">covar_x</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_task_covar_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span><span class="o">.</span><span class="n">task_covar_module</span><span class="o">.</span><span class="n">covar_matrix</span>
+        <span class="k">if</span> <span class="n">detach_test_caches</span><span class="o">.</span><span class="n">on</span><span class="p">():</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">res</span>
+
+    <span class="nd">@property</span>
+    <span class="nd">@cached</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"train_full_covar"</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">train_full_covar</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">train_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="c1"># construct Kxx \otimes Ktt</span>
+        <span class="n">train_full_covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span><span class="p">(</span><span class="n">train_x</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate_kernel</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">detach_test_caches</span><span class="o">.</span><span class="n">on</span><span class="p">():</span>
+            <span class="n">train_full_covar</span> <span class="o">=</span> <span class="n">train_full_covar</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">train_full_covar</span>
+
+    <span class="nd">@property</span>
+    <span class="nd">@cached</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"predictive_mean_cache"</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">predictive_mean_cache</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">train_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">train_noise</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="o">.</span><span class="n">_shaped_noise_covar</span><span class="p">(</span><span class="n">train_x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">detach_test_caches</span><span class="o">.</span><span class="n">on</span><span class="p">():</span>
+            <span class="n">train_noise</span> <span class="o">=</span> <span class="n">train_noise</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+
+        <span class="n">train_diff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_targets</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span><span class="p">(</span><span class="n">train_x</span><span class="p">)</span>
+        <span class="n">train_solve</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">train_full_covar</span> <span class="o">+</span> <span class="n">train_noise</span><span class="p">)</span><span class="o">.</span><span class="n">inv_matmul</span><span class="p">(</span>
+            <span class="n">train_diff</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">*</span><span class="n">train_diff</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">detach_test_caches</span><span class="o">.</span><span class="n">on</span><span class="p">():</span>
+            <span class="n">train_solve</span> <span class="o">=</span> <span class="n">train_solve</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">train_solve</span>
+
+<div class="viewcode-block" id="KroneckerMultiTaskGP.posterior"><a class="viewcode-back" href="../../../models.html#botorch.models.multitask.KroneckerMultiTaskGP.posterior">[docs]</a>    <span class="k">def</span> <span class="nf">posterior</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">output_indices</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">observation_noise</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultitaskGPPosterior</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+
+        <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">train_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="c1"># construct Ktt</span>
+        <span class="n">task_covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_task_covar_matrix</span>
+        <span class="n">task_rootlt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_task_covar_matrix</span><span class="o">.</span><span class="n">root_decomposition</span><span class="p">(</span>
+            <span class="n">method</span><span class="o">=</span><span class="s2">"diagonalization"</span>
+        <span class="p">)</span>
+        <span class="n">task_root</span> <span class="o">=</span> <span class="n">task_rootlt</span><span class="o">.</span><span class="n">root</span>
+        <span class="k">if</span> <span class="n">task_covar</span><span class="o">.</span><span class="n">batch_shape</span> <span class="o">!=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]:</span>
+            <span class="n">task_covar</span> <span class="o">=</span> <span class="n">BatchRepeatLazyTensor</span><span class="p">(</span><span class="n">task_covar</span><span class="p">,</span> <span class="n">batch_repeat</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span>
+            <span class="n">task_root</span> <span class="o">=</span> <span class="n">BatchRepeatLazyTensor</span><span class="p">(</span>
+                <span class="n">lazify</span><span class="p">(</span><span class="n">task_root</span><span class="p">),</span> <span class="n">batch_repeat</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+            <span class="p">)</span>
+
+        <span class="n">task_covar_rootlt</span> <span class="o">=</span> <span class="n">RootLazyTensor</span><span class="p">(</span><span class="n">task_root</span><span class="p">)</span>
+
+        <span class="c1"># construct RR' \approx Kxx</span>
+        <span class="n">data_data_covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_full_covar</span><span class="o">.</span><span class="n">lazy_tensors</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="c1"># populate the diagonalziation caches for the root and inverse root</span>
+        <span class="c1"># decomposition</span>
+        <span class="n">data_data_evals</span><span class="p">,</span> <span class="n">data_data_evecs</span> <span class="o">=</span> <span class="n">data_data_covar</span><span class="o">.</span><span class="n">diagonalization</span><span class="p">()</span>
+
+        <span class="c1"># construct K_{xt, x}</span>
+        <span class="n">test_data_covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span><span class="o">.</span><span class="n">data_covar_module</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">train_x</span><span class="p">)</span>
+        <span class="c1"># construct K_{xt, xt}</span>
+        <span class="n">test_test_covar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covar_module</span><span class="o">.</span><span class="n">data_covar_module</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+
+        <span class="c1"># now update root so that \tilde{R}\tilde{R}' \approx K_{(x,xt), (x,xt)}</span>
+        <span class="c1"># cloning preserves the gradient history</span>
+        <span class="k">with</span> <span class="n">cholesky_jitter</span><span class="p">(</span><span class="n">cholesky_jitter</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">)):</span>
+            <span class="n">updated_lazy_tensor</span> <span class="o">=</span> <span class="n">data_data_covar</span><span class="o">.</span><span class="n">cat_rows</span><span class="p">(</span>
+                <span class="n">cross_mat</span><span class="o">=</span><span class="n">test_data_covar</span><span class="o">.</span><span class="n">clone</span><span class="p">(),</span>
+                <span class="n">new_mat</span><span class="o">=</span><span class="n">test_test_covar</span><span class="p">,</span>
+                <span class="n">method</span><span class="o">=</span><span class="s2">"diagonalization"</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">updated_root</span> <span class="o">=</span> <span class="n">updated_lazy_tensor</span><span class="o">.</span><span class="n">root_decomposition</span><span class="p">()</span><span class="o">.</span><span class="n">root</span>
+            <span class="c1"># occasionally, there's device errors so enforce this comes out right</span>
+            <span class="n">updated_root</span> <span class="o">=</span> <span class="n">updated_root</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">data_data_covar</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="c1"># build a root decomposition of the joint train/test covariance matrix</span>
+        <span class="c1"># construct (\tilde{R} \otimes M)(\tilde{R} \otimes M)' \approx</span>
+        <span class="c1"># (K_{(x,xt), (x,xt)} \otimes Ktt)</span>
+        <span class="n">joint_covar</span> <span class="o">=</span> <span class="n">RootLazyTensor</span><span class="p">(</span>
+            <span class="n">KroneckerProductLazyTensor</span><span class="p">(</span><span class="n">updated_root</span><span class="p">,</span> <span class="n">task_covar_rootlt</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">detach</span><span class="p">())</span>
+        <span class="p">)</span>
+
+        <span class="c1"># construct K_{xt, x} \otimes Ktt</span>
+        <span class="n">test_obs_kernel</span> <span class="o">=</span> <span class="n">KroneckerProductLazyTensor</span><span class="p">(</span><span class="n">test_data_covar</span><span class="p">,</span> <span class="n">task_covar</span><span class="p">)</span>
+
+        <span class="c1"># collect y - \mu(x) and \mu(X)</span>
+        <span class="n">train_diff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_targets</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span><span class="p">(</span><span class="n">train_x</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">detach_test_caches</span><span class="o">.</span><span class="n">on</span><span class="p">():</span>
+            <span class="n">train_diff</span> <span class="o">=</span> <span class="n">train_diff</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+        <span class="n">test_mean</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean_module</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+
+        <span class="n">train_noise</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="o">.</span><span class="n">_shaped_noise_covar</span><span class="p">(</span><span class="n">train_x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">diagonal_noise</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">train_noise</span><span class="p">,</span> <span class="n">DiagLazyTensor</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">detach_test_caches</span><span class="o">.</span><span class="n">on</span><span class="p">():</span>
+            <span class="n">train_noise</span> <span class="o">=</span> <span class="n">train_noise</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+        <span class="n">test_noise</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="o">.</span><span class="n">_shaped_noise_covar</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="k">if</span> <span class="n">observation_noise</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+
+        <span class="c1"># predictive mean and variance for the mvn</span>
+        <span class="c1"># first the predictive mean</span>
+        <span class="n">pred_mean</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">test_obs_kernel</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">predictive_mean_cache</span><span class="p">)</span><span class="o">.</span><span class="n">reshape_as</span><span class="p">(</span><span class="n">test_mean</span><span class="p">)</span>
+            <span class="o">+</span> <span class="n">test_mean</span>
+        <span class="p">)</span>
+        <span class="c1"># next the predictive variance, assume diagonal noise</span>
+        <span class="n">test_var_term</span> <span class="o">=</span> <span class="n">KroneckerProductLazyTensor</span><span class="p">(</span><span class="n">test_test_covar</span><span class="p">,</span> <span class="n">task_covar</span><span class="p">)</span><span class="o">.</span><span class="n">diag</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">diagonal_noise</span><span class="p">:</span>
+            <span class="n">task_evals</span><span class="p">,</span> <span class="n">task_evecs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_task_covar_matrix</span><span class="o">.</span><span class="n">diagonalization</span><span class="p">()</span>
+            <span class="c1"># TODO: make this be the default KPMatmulLT diagonal method in gpytorch</span>
+            <span class="n">full_data_inv_evals</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">KroneckerProductDiagLazyTensor</span><span class="p">(</span>
+                    <span class="n">DiagLazyTensor</span><span class="p">(</span><span class="n">data_data_evals</span><span class="p">),</span> <span class="n">DiagLazyTensor</span><span class="p">(</span><span class="n">task_evals</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="o">+</span> <span class="n">train_noise</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">inverse</span><span class="p">()</span>
+            <span class="n">test_train_hadamard</span> <span class="o">=</span> <span class="n">KroneckerProductLazyTensor</span><span class="p">(</span>
+                <span class="n">test_data_covar</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">data_data_evecs</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span>
+                <span class="n">task_covar</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">task_evecs</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">data_var_term</span> <span class="o">=</span> <span class="n">test_train_hadamard</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">full_data_inv_evals</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># if non-diagonal noise (but still kronecker structured), we have to pull</span>
+            <span class="c1"># across the noise because the inverse is not closed form</span>
+            <span class="c1"># should be a kronecker lt, R = \Sigma_X^{-1/2} \kron \Sigma_T^{-1/2}</span>
+            <span class="c1"># TODO: enforce the diagonalization to return a KPLT for all shapes in</span>
+            <span class="c1"># gpytorch or dense linear algebra for small shapes</span>
+            <span class="n">data_noise</span><span class="p">,</span> <span class="n">task_noise</span> <span class="o">=</span> <span class="n">train_noise</span><span class="o">.</span><span class="n">lazy_tensors</span>
+            <span class="n">data_noise_root</span> <span class="o">=</span> <span class="n">data_noise</span><span class="o">.</span><span class="n">root_inv_decomposition</span><span class="p">(</span>
+                <span class="n">method</span><span class="o">=</span><span class="s2">"diagonalization"</span>
+            <span class="p">)</span>
+            <span class="n">task_noise_root</span> <span class="o">=</span> <span class="n">task_noise</span><span class="o">.</span><span class="n">root_inv_decomposition</span><span class="p">(</span>
+                <span class="n">method</span><span class="o">=</span><span class="s2">"diagonalization"</span>
+            <span class="p">)</span>
+
+            <span class="c1"># ultimately we need to compute the diagonal of</span>
+            <span class="c1"># (K_{x* X} \kron K_T)(K_{XX} \kron K_T + \Sigma_X \kron \Sigma_T)^{-1}</span>
+            <span class="c1">#                           (K_{x* X} \kron K_T)^T</span>
+            <span class="c1"># = (K_{x* X} \Sigma_X^{-1/2} Q_R)(\Lambda_R + I)^{-1}</span>
+            <span class="c1">#                       (K_{x* X} \Sigma_X^{-1/2} Q_R)^T</span>
+            <span class="c1"># where R = (\Sigma_X^{-1/2T}K_{XX}\Sigma_X^{-1/2} \kron</span>
+            <span class="c1">#                   \Sigma_T^{-1/2T}K_{T}\Sigma_T^{-1/2})</span>
+            <span class="c1"># first we construct the components of R's eigen-decomposition</span>
+            <span class="c1"># TODO: make this be the default KPMatmulLT diagonal method in gpytorch</span>
+            <span class="n">whitened_data_covar</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">data_noise_root</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">data_data_covar</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">data_noise_root</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">w_data_evals</span><span class="p">,</span> <span class="n">w_data_evecs</span> <span class="o">=</span> <span class="n">whitened_data_covar</span><span class="o">.</span><span class="n">diagonalization</span><span class="p">()</span>
+            <span class="n">whitened_task_covar</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">task_noise_root</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_task_covar_matrix</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">task_noise_root</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">w_task_evals</span><span class="p">,</span> <span class="n">w_task_evecs</span> <span class="o">=</span> <span class="n">whitened_task_covar</span><span class="o">.</span><span class="n">diagonalization</span><span class="p">()</span>
+
+            <span class="c1"># we add one to the eigenvalues as above (not just for stability)</span>
+            <span class="n">full_data_inv_evals</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">KroneckerProductDiagLazyTensor</span><span class="p">(</span>
+                    <span class="n">DiagLazyTensor</span><span class="p">(</span><span class="n">w_data_evals</span><span class="p">),</span> <span class="n">DiagLazyTensor</span><span class="p">(</span><span class="n">w_task_evals</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="o">.</span><span class="n">add_jitter</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">inverse</span><span class="p">()</span>
+            <span class="p">)</span>
+
+            <span class="n">test_data_comp</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">test_data_covar</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">data_noise_root</span><span class="p">)</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">w_data_evecs</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span>
+                <span class="o">**</span> <span class="mi">2</span>
+            <span class="p">)</span>
+            <span class="n">task_comp</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">task_covar</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">task_noise_root</span><span class="p">)</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">w_task_evecs</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span> <span class="o">**</span> <span class="mi">2</span>
+            <span class="p">)</span>
+
+            <span class="n">test_train_hadamard</span> <span class="o">=</span> <span class="n">KroneckerProductLazyTensor</span><span class="p">(</span><span class="n">test_data_comp</span><span class="p">,</span> <span class="n">task_comp</span><span class="p">)</span>
+            <span class="n">data_var_term</span> <span class="o">=</span> <span class="n">test_train_hadamard</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">full_data_inv_evals</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">pred_variance</span> <span class="o">=</span> <span class="n">test_var_term</span> <span class="o">-</span> <span class="n">data_var_term</span>
+        <span class="n">specialized_mvn</span> <span class="o">=</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">(</span>
+            <span class="n">pred_mean</span><span class="p">,</span> <span class="n">DiagLazyTensor</span><span class="p">(</span><span class="n">pred_variance</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">observation_noise</span><span class="p">:</span>
+            <span class="n">specialized_mvn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="p">(</span><span class="n">specialized_mvn</span><span class="p">)</span>
+
+        <span class="n">posterior</span> <span class="o">=</span> <span class="n">MultitaskGPPosterior</span><span class="p">(</span>
+            <span class="n">mvn</span><span class="o">=</span><span class="n">specialized_mvn</span><span class="p">,</span>
+            <span class="n">joint_covariance_matrix</span><span class="o">=</span><span class="n">joint_covar</span><span class="p">,</span>
+            <span class="n">test_train_covar</span><span class="o">=</span><span class="n">test_obs_kernel</span><span class="p">,</span>
+            <span class="n">train_diff</span><span class="o">=</span><span class="n">train_diff</span><span class="p">,</span>
+            <span class="n">test_mean</span><span class="o">=</span><span class="n">test_mean</span><span class="p">,</span>
+            <span class="n">train_train_covar</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">train_full_covar</span><span class="p">,</span>
+            <span class="n">train_noise</span><span class="o">=</span><span class="n">train_noise</span><span class="p">,</span>
+            <span class="n">test_noise</span><span class="o">=</span><span class="n">test_noise</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"outcome_transform"</span><span class="p">):</span>
+            <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outcome_transform</span><span class="o">.</span><span class="n">untransform_posterior</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">posterior</span></div>
+
+<div class="viewcode-block" id="KroneckerMultiTaskGP.train"><a class="viewcode-back" href="../../../models.html#botorch.models.multitask.KroneckerMultiTaskGP.train">[docs]</a>    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">val</span><span class="p">:</span>
+            <span class="n">fixed_cache_names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"data_data_roots"</span><span class="p">,</span> <span class="s2">"train_full_covar"</span><span class="p">,</span> <span class="s2">"task_root"</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">fixed_cache_names</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">pop_from_cache</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+                <span class="k">except</span> <span class="n">CachingError</span><span class="p">:</span>
+                    <span class="k">pass</span>
+
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div></div>
 </pre></div>
 </div>
 </div>

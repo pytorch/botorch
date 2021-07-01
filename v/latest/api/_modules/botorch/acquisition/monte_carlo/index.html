@@ -12,7 +12,7 @@
             {"zIndex":100}
           )
         });
-        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/latest/versions"><h3>latest</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
 <script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/underscore.js"></script>
@@ -130,7 +130,7 @@
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; model = SingleTaskGP(train_X, train_Y)</span>
 <span class="sd">        &gt;&gt;&gt; best_f = train_Y.max()[0]</span>
-<span class="sd">        &gt;&gt;&gt; sampler = SobolQMCNormalSampler(1000)</span>
+<span class="sd">        &gt;&gt;&gt; sampler = SobolQMCNormalSampler(1024)</span>
 <span class="sd">        &gt;&gt;&gt; qEI = qExpectedImprovement(model, best_f, sampler)</span>
 <span class="sd">        &gt;&gt;&gt; qei = qEI(test_X)</span>
 <span class="sd">    """</span>
@@ -152,8 +152,8 @@
 <span class="sd">                a `batch_shape`-shaped tensor, which in case of a batched model</span>
 <span class="sd">                specifies potentially different values for each element of the batch.</span>
 <span class="sd">            sampler: The sampler used to draw base samples. Defaults to</span>
-<span class="sd">                `SobolQMCNormalSampler(num_samples=500, collapse_batch_dims=True)`</span>
-<span class="sd">            objective: The MCAcquisitionObjective under which the samples are evalauted.</span>
+<span class="sd">                `SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)`</span>
+<span class="sd">            objective: The MCAcquisitionObjective under which the samples are evaluated.</span>
 <span class="sd">                Defaults to `IdentityMCObjective()`.</span>
 <span class="sd">            X_pending:  A `m x d`-dim Tensor of `m` design points that have been</span>
 <span class="sd">                submitted for function evaluation but have not yet been evaluated.</span>
@@ -200,7 +200,7 @@
 
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; model = SingleTaskGP(train_X, train_Y)</span>
-<span class="sd">        &gt;&gt;&gt; sampler = SobolQMCNormalSampler(1000)</span>
+<span class="sd">        &gt;&gt;&gt; sampler = SobolQMCNormalSampler(1024)</span>
 <span class="sd">        &gt;&gt;&gt; qNEI = qNoisyExpectedImprovement(model, train_X, sampler)</span>
 <span class="sd">        &gt;&gt;&gt; qnei = qNEI(test_X)</span>
 <span class="sd">    """</span>
@@ -223,7 +223,7 @@
 <span class="sd">                that have already been observed. These points are considered as</span>
 <span class="sd">                the potential best design point.</span>
 <span class="sd">            sampler: The sampler used to draw base samples. Defaults to</span>
-<span class="sd">                `SobolQMCNormalSampler(num_samples=500, collapse_batch_dims=True)`.</span>
+<span class="sd">                `SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)`.</span>
 <span class="sd">            objective: The MCAcquisitionObjective under which the samples are</span>
 <span class="sd">                evaluated. Defaults to `IdentityMCObjective()`.</span>
 <span class="sd">            X_pending: A `batch_shape x m x d`-dim Tensor of `m` design points</span>
@@ -242,7 +242,10 @@
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">prune_baseline</span><span class="p">:</span>
             <span class="n">X_baseline</span> <span class="o">=</span> <span class="n">prune_inferior_points</span><span class="p">(</span>
-                <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X_baseline</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="n">objective</span>
+                <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+                <span class="n">X</span><span class="o">=</span><span class="n">X_baseline</span><span class="p">,</span>
+                <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+                <span class="n">marginalize_dim</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"marginalize_dim"</span><span class="p">),</span>
             <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s2">"X_baseline"</span><span class="p">,</span> <span class="n">X_baseline</span><span class="p">)</span>
 
@@ -262,12 +265,12 @@
 <span class="sd">        """</span>
         <span class="n">q</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
         <span class="n">X_full</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">X</span><span class="p">,</span> <span class="n">match_batch_shape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X_baseline</span><span class="p">,</span> <span class="n">X</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
-        <span class="c1"># TODO (T41248036): Implement more efficient way to compute posterior</span>
-        <span class="c1"># over both training and test points in GPyTorch</span>
+        <span class="c1"># TODO: Implement more efficient way to compute posterior over both training and</span>
+        <span class="c1"># test points in GPyTorch (https://github.com/cornellius-gp/gpytorch/issues/567)</span>
         <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X_full</span><span class="p">)</span>
         <span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
         <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X_full</span><span class="p">)</span>
-        <span class="n">diffs</span> <span class="o">=</span> <span class="n">obj</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:</span><span class="n">q</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">obj</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">q</span><span class="p">:]</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">diffs</span> <span class="o">=</span> <span class="n">obj</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="n">q</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span> <span class="o">-</span> <span class="n">obj</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">q</span><span class="p">:]</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
         <span class="k">return</span> <span class="n">diffs</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div></div>
 
 
@@ -285,7 +288,7 @@
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; model = SingleTaskGP(train_X, train_Y)</span>
 <span class="sd">        &gt;&gt;&gt; best_f = train_Y.max()[0]</span>
-<span class="sd">        &gt;&gt;&gt; sampler = SobolQMCNormalSampler(1000)</span>
+<span class="sd">        &gt;&gt;&gt; sampler = SobolQMCNormalSampler(1024)</span>
 <span class="sd">        &gt;&gt;&gt; qPI = qProbabilityOfImprovement(model, best_f, sampler)</span>
 <span class="sd">        &gt;&gt;&gt; qpi = qPI(test_X)</span>
 <span class="sd">    """</span>
@@ -307,7 +310,7 @@
 <span class="sd">                be a `batch_shape`-shaped tensor, which in case of a batched model</span>
 <span class="sd">                specifies potentially different values for each element of the batch.</span>
 <span class="sd">            sampler: The sampler used to draw base samples. Defaults to</span>
-<span class="sd">                `SobolQMCNormalSampler(num_samples=500, collapse_batch_dims=True)`</span>
+<span class="sd">                `SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)`</span>
 <span class="sd">            objective: The MCAcquisitionObjective under which the samples are</span>
 <span class="sd">                evaluated. Defaults to `IdentityMCObjective()`.</span>
 <span class="sd">            X_pending:  A `m x d`-dim Tensor of `m` design points that have</span>
@@ -357,7 +360,7 @@
 
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; model = SingleTaskGP(train_X, train_Y)</span>
-<span class="sd">        &gt;&gt;&gt; sampler = SobolQMCNormalSampler(1000)</span>
+<span class="sd">        &gt;&gt;&gt; sampler = SobolQMCNormalSampler(1024)</span>
 <span class="sd">        &gt;&gt;&gt; qSR = qSimpleRegret(model, sampler)</span>
 <span class="sd">        &gt;&gt;&gt; qsr = qSR(test_X)</span>
 <span class="sd">    """</span>
@@ -394,7 +397,7 @@
 
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; model = SingleTaskGP(train_X, train_Y)</span>
-<span class="sd">        &gt;&gt;&gt; sampler = SobolQMCNormalSampler(1000)</span>
+<span class="sd">        &gt;&gt;&gt; sampler = SobolQMCNormalSampler(1024)</span>
 <span class="sd">        &gt;&gt;&gt; qUCB = qUpperConfidenceBound(model, 0.1, sampler)</span>
 <span class="sd">        &gt;&gt;&gt; qucb = qUCB(test_X)</span>
 <span class="sd">    """</span>
@@ -413,7 +416,7 @@
 <span class="sd">            model: A fitted model.</span>
 <span class="sd">            beta: Controls tradeoff between mean and standard deviation in UCB.</span>
 <span class="sd">            sampler: The sampler used to draw base samples. Defaults to</span>
-<span class="sd">                `SobolQMCNormalSampler(num_samples=500, collapse_batch_dims=True)`</span>
+<span class="sd">                `SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)`</span>
 <span class="sd">            objective: The MCAcquisitionObjective under which the samples are</span>
 <span class="sd">                evaluated. Defaults to `IdentityMCObjective()`.</span>
 <span class="sd">            X_pending: A `batch_shape x m x d`-dim Tensor of `m` design points that have</span>

@@ -12,7 +12,7 @@
             {"zIndex":100}
           )
         });
-        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/latest/versions"><h3>latest</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
 <script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/underscore.js"></script>
@@ -27,23 +27,22 @@
 <span id="botorch-distributions"></span><h1>botorch.distributions<a class="headerlink" href="#module-botorch.distributions" title="Permalink to this headline">¶</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.distributions.Kumaraswamy">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.distributions.</span></span><span class="sig-name descname"><span class="pre">Kumaraswamy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">concentration1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">concentration0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validate_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/distributions/distributions.html#Kumaraswamy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.distributions.Kumaraswamy" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.distributions.</span></span><span class="sig-name descname"><span class="pre">Kumaraswamy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">concentration1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">concentration0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validate_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/torch/distributions/kumaraswamy.html#Kumaraswamy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.distributions.Kumaraswamy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.distributions.transformed_distribution.TransformedDistribution</span></code></p>
-<p>A Kumaraswamy distribution.</p>
+<p>Samples from a Kumaraswamy distribution.</p>
 <p>Example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">m</span> <span class="o">=</span> <span class="n">Kumaraswamy</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">([</span><span class="mf">1.0</span><span class="p">]),</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">([</span><span class="mf">1.0</span><span class="p">]))</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>  <span class="c1"># sample from a Kumaraswamy distribution</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">m</span> <span class="o">=</span> <span class="n">Kumaraswamy</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">1.0</span><span class="p">]),</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">1.0</span><span class="p">]))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>  <span class="c1"># sample from a Kumaraswamy distribution with concentration alpha=1 and beta=1</span>
 <span class="go">tensor([ 0.1729])</span>
 </pre></div>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>concentration1</strong> (<em>Union</em><em>[</em><em>float</em><em>, </em><em>Tensor</em><em>]</em>) – 1st concentration parameter of the distribution
+<li><p><strong>concentration1</strong> (<em>float</em><em> or </em><em>Tensor</em>) – 1st concentration parameter of the distribution
 (often referred to as alpha)</p></li>
-<li><p><strong>concentration0</strong> (<em>Union</em><em>[</em><em>float</em><em>, </em><em>Tensor</em><em>]</em>) – 2nd concentration parameter of the distribution
+<li><p><strong>concentration0</strong> (<em>float</em><em> or </em><em>Tensor</em>) – 2nd concentration parameter of the distribution
 (often referred to as beta)</p></li>
-<li><p><strong>validate_args</strong> (<em>bool</em>) – </p></li>
 </ul>
 </dd>
 </dl>
@@ -61,7 +60,7 @@
 <dd></dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.distributions.Kumaraswamy.expand">
-<span class="sig-name descname"><span class="pre">expand</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/distributions/distributions.html#Kumaraswamy.expand"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.distributions.Kumaraswamy.expand" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">expand</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/torch/distributions/kumaraswamy.html#Kumaraswamy.expand"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.distributions.Kumaraswamy.expand" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a new distribution instance (or populates an existing instance
 provided by a derived class) with batch dimensions expanded to
 <cite>batch_shape</cite>. This method calls <code class="xref py py-class docutils literal notranslate"><span class="pre">expand</span></code> on
@@ -73,7 +72,7 @@ this does not repeat any args checking or parameter broadcasting in
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>batch_shape</strong> (<em>torch.Size</em>) – the desired expanded size.</p></li>
-<li><p><strong>_instance</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.distributions.distributions.Kumaraswamy" title="botorch.distributions.distributions.Kumaraswamy"><em>botorch.distributions.distributions.Kumaraswamy</em></a><em>]</em>) – new instance provided by subclasses that
+<li><p><strong>_instance</strong> – new instance provided by subclasses that
 need to override <cite>.expand</cite>.</p></li>
 </ul>
 </dd>
@@ -81,127 +80,32 @@ need to override <cite>.expand</cite>.</p></li>
 <dd class="field-even"><p>New distribution instance with batch dimensions expanded to
 <cite>batch_size</cite>.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><a class="reference internal" href="#botorch.distributions.distributions.Kumaraswamy" title="botorch.distributions.distributions.Kumaraswamy">botorch.distributions.distributions.Kumaraswamy</a></p>
-</dd>
 </dl>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.distributions.Kumaraswamy.mean">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">mean</span></span><em class="property"><span class="pre">:</span> <span class="pre">None</span></em><a class="headerlink" href="#botorch.distributions.Kumaraswamy.mean" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">mean</span></span><a class="headerlink" href="#botorch.distributions.Kumaraswamy.mean" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the mean of the distribution.</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.distributions.Kumaraswamy.variance">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">variance</span></span><em class="property"><span class="pre">:</span> <span class="pre">None</span></em><a class="headerlink" href="#botorch.distributions.Kumaraswamy.variance" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">variance</span></span><a class="headerlink" href="#botorch.distributions.Kumaraswamy.variance" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the variance of the distribution.</p>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.distributions.Kumaraswamy.entropy">
-<span class="sig-name descname"><span class="pre">entropy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/distributions/distributions.html#Kumaraswamy.entropy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.distributions.Kumaraswamy.entropy" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">entropy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/torch/distributions/kumaraswamy.html#Kumaraswamy.entropy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.distributions.Kumaraswamy.entropy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns entropy of distribution, batched over batch_shape.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p>Tensor of shape batch_shape.</p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
 </dd></dl>
 <section id="module-botorch.distributions.distributions">
 <span id="distributions"></span><h2>Distributions<a class="headerlink" href="#module-botorch.distributions.distributions" title="Permalink to this headline">¶</a></h2>
-<p>Probability Distributions.</p>
-<p>This is modified from <a class="reference external" href="https://github.com/probtorch/pytorch/pull/143">https://github.com/probtorch/pytorch/pull/143</a> and
-<a class="reference external" href="https://github.com/tensorflow/probability/blob/v0.11.1/">https://github.com/tensorflow/probability/blob/v0.11.1/</a>
-tensorflow_probability/python/distributions/kumaraswamy.py.</p>
-<p>TODO: replace with PyTorch version once the PR is up and landed.</p>
-<dl class="py class">
-<dt class="sig sig-object py" id="botorch.distributions.distributions.Kumaraswamy">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.distributions.distributions.</span></span><span class="sig-name descname"><span class="pre">Kumaraswamy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">concentration1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">concentration0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validate_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/distributions/distributions.html#Kumaraswamy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.distributions.distributions.Kumaraswamy" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.distributions.transformed_distribution.TransformedDistribution</span></code></p>
-<p>A Kumaraswamy distribution.</p>
-<p>Example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">m</span> <span class="o">=</span> <span class="n">Kumaraswamy</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">([</span><span class="mf">1.0</span><span class="p">]),</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">([</span><span class="mf">1.0</span><span class="p">]))</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>  <span class="c1"># sample from a Kumaraswamy distribution</span>
-<span class="go">tensor([ 0.1729])</span>
-</pre></div>
-</div>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>concentration1</strong> (<em>Union</em><em>[</em><em>float</em><em>, </em><em>Tensor</em><em>]</em>) – 1st concentration parameter of the distribution
-(often referred to as alpha)</p></li>
-<li><p><strong>concentration0</strong> (<em>Union</em><em>[</em><em>float</em><em>, </em><em>Tensor</em><em>]</em>) – 2nd concentration parameter of the distribution
-(often referred to as beta)</p></li>
-<li><p><strong>validate_args</strong> (<em>bool</em>) – </p></li>
-</ul>
-</dd>
-</dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.distributions.distributions.Kumaraswamy.arg_constraints">
-<span class="sig-name descname"><span class="pre">arg_constraints</span></span><em class="property"><span class="pre">:</span> <span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span> </span><span class="pre">torch.distributions.constraints.Constraint</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">{'concentration0':</span> <span class="pre">GreaterThan(lower_bound=0.0),</span> <span class="pre">'concentration1':</span> <span class="pre">GreaterThan(lower_bound=0.0)}</span></em><a class="headerlink" href="#botorch.distributions.distributions.Kumaraswamy.arg_constraints" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.distributions.distributions.Kumaraswamy.support">
-<span class="sig-name descname"><span class="pre">support</span></span><em class="property"> <span class="pre">=</span> <span class="pre">Interval(lower_bound=0.0,</span> <span class="pre">upper_bound=1.0)</span></em><a class="headerlink" href="#botorch.distributions.distributions.Kumaraswamy.support" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="botorch.distributions.distributions.Kumaraswamy.has_rsample">
-<span class="sig-name descname"><span class="pre">has_rsample</span></span><em class="property"> <span class="pre">=</span> <span class="pre">True</span></em><a class="headerlink" href="#botorch.distributions.distributions.Kumaraswamy.has_rsample" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="botorch.distributions.distributions.Kumaraswamy.expand">
-<span class="sig-name descname"><span class="pre">expand</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/distributions/distributions.html#Kumaraswamy.expand"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.distributions.distributions.Kumaraswamy.expand" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a new distribution instance (or populates an existing instance
-provided by a derived class) with batch dimensions expanded to
-<cite>batch_shape</cite>. This method calls <code class="xref py py-class docutils literal notranslate"><span class="pre">expand</span></code> on
-the distribution’s parameters. As such, this does not allocate new
-memory for the expanded distribution instance. Additionally,
-this does not repeat any args checking or parameter broadcasting in
-<cite>__init__.py</cite>, when an instance is first created.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>batch_shape</strong> (<em>torch.Size</em>) – the desired expanded size.</p></li>
-<li><p><strong>_instance</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.distributions.distributions.Kumaraswamy" title="botorch.distributions.distributions.Kumaraswamy"><em>botorch.distributions.distributions.Kumaraswamy</em></a><em>]</em>) – new instance provided by subclasses that
-need to override <cite>.expand</cite>.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>New distribution instance with batch dimensions expanded to
-<cite>batch_size</cite>.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><a class="reference internal" href="#botorch.distributions.distributions.Kumaraswamy" title="botorch.distributions.distributions.Kumaraswamy">botorch.distributions.distributions.Kumaraswamy</a></p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py property">
-<dt class="sig sig-object py" id="botorch.distributions.distributions.Kumaraswamy.mean">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">mean</span></span><em class="property"><span class="pre">:</span> <span class="pre">None</span></em><a class="headerlink" href="#botorch.distributions.distributions.Kumaraswamy.mean" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the mean of the distribution.</p>
-</dd></dl>
-<dl class="py property">
-<dt class="sig sig-object py" id="botorch.distributions.distributions.Kumaraswamy.variance">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">variance</span></span><em class="property"><span class="pre">:</span> <span class="pre">None</span></em><a class="headerlink" href="#botorch.distributions.distributions.Kumaraswamy.variance" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the variance of the distribution.</p>
-</dd></dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="botorch.distributions.distributions.Kumaraswamy.entropy">
-<span class="sig-name descname"><span class="pre">entropy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/distributions/distributions.html#Kumaraswamy.entropy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.distributions.distributions.Kumaraswamy.entropy" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns entropy of distribution, batched over batch_shape.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>Tensor of shape batch_shape.</p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>None</p>
-</dd>
-</dl>
-</dd></dl>
-</dd></dl>
+<p>DEPRECATED Probability Distributions.</p>
 </section>
 </section>
 </div>

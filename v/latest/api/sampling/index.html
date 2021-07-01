@@ -12,7 +12,7 @@
             {"zIndex":100}
           )
         });
-        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/latest/versions"><h3>latest</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
 <script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/underscore.js"></script>
@@ -142,7 +142,7 @@ for the case where the non-batch dimensions are -2 (q) and
 <dd><p>Bases: <a class="reference internal" href="#botorch.sampling.samplers.MCSampler" title="botorch.sampling.samplers.MCSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.sampling.samplers.MCSampler</span></code></a></p>
 <p>Sampler for quasi-MC base samples using Sobol sequences.</p>
 <p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sampler</span> <span class="o">=</span> <span class="n">SobolQMCNormalSampler</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1234</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sampler</span> <span class="o">=</span> <span class="n">SobolQMCNormalSampler</span><span class="p">(</span><span class="mi">1024</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1234</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">posterior</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">test_X</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
 </pre></div>
@@ -151,7 +151,8 @@ for the case where the non-batch dimensions are -2 (q) and
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>num_samples</strong> (<em>int</em>) – The number of samples to use.</p></li>
+<li><p><strong>num_samples</strong> (<em>int</em>) – The number of samples to use. As a best practice,
+use powers of 2.</p></li>
 <li><p><strong>resample</strong> (<em>bool</em>) – If <cite>True</cite>, re-draw samples in each <cite>forward</cite> evaluation -
 this results in stochastic acquisition functions (and thus should
 not be used with deterministic optimization algorithms).</p></li>
@@ -313,7 +314,7 @@ following pg. 123 in <a class="reference internal" href="#pages2018numprob" id="
 instead, set <cite>inv_transform=True</cite>.</p>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">engine</span> <span class="o">=</span> <span class="n">NormalQMCEngine</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="mi">16</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Engine for drawing qMC samples from a multivariate normal <cite>N(0, I_d)</cite>.</p>
@@ -337,7 +338,7 @@ underlying SobolEngine.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>n</strong> (<em>int</em>) – The number of samples to draw.</p></li>
+<li><p><strong>n</strong> (<em>int</em>) – The number of samples to draw. As a best practice, use powers of 2.</p></li>
 <li><p><strong>out</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – An option output tensor. If provided, draws are put into this
 tensor, and the function returns None.</p></li>
 <li><p><strong>dtype</strong> (<em>torch.dtype</em>) – The desired torch data type (ignored if <cite>out</cite> is provided).</p></li>
@@ -364,7 +365,7 @@ instead, set <cite>inv_transform=True</cite>.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">mean</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">cov</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">]])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">engine</span> <span class="o">=</span> <span class="n">MultivariateNormalQMCEngine</span><span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">cov</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="mi">16</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Engine for qMC sampling from a multivariate Normal <cite>N(mu, Sigma)</cite>.</p>
@@ -389,7 +390,7 @@ underlying SobolEngine.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>n</strong> (<em>int</em>) – The number of samples to draw.</p></li>
+<li><p><strong>n</strong> (<em>int</em>) – The number of samples to draw. As a best practice, use powers of 2.</p></li>
 <li><p><strong>out</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – An option output tensor. If provided, draws are put into this
 tensor, and the function returns None.</p></li>
 </ul>

@@ -12,7 +12,7 @@
             {"zIndex":100}
           )
         });
-        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/latest/versions"><h3>latest</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
 <script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/underscore.js"></script>
@@ -41,6 +41,7 @@
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch</span> <span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span> <span class="nn">botorch.models.utils</span> <span class="kn">import</span> <span class="n">fantasize</span> <span class="k">as</span> <span class="n">fantasize_flag</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors</span> <span class="kn">import</span> <span class="n">Posterior</span>
 <span class="kn">from</span> <span class="nn">botorch.sampling.samplers</span> <span class="kn">import</span> <span class="n">MCSampler</span>
 <span class="kn">from</span> <span class="nn">botorch.utils.containers</span> <span class="kn">import</span> <span class="n">TrainingData</span>
@@ -60,6 +61,10 @@
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Posterior</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Computes the posterior over model outputs at the provided points.</span>
+
+<span class="sd">        Note: The input transforms should be applied here using</span>
+<span class="sd">            `self.transform_inputs(X)` after the `self.eval()` call and before</span>
+<span class="sd">            any `model.forward` or `model.likelihood` calls.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X: A `b x q x d`-dim Tensor, where `d` is the dimension of the</span>
@@ -160,10 +165,11 @@
 <span class="sd">            The constructed fantasy model.</span>
 <span class="sd">        """</span>
         <span class="n">propagate_grads</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"propagate_grads"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-        <span class="k">with</span> <span class="n">settings</span><span class="o">.</span><span class="n">propagate_grads</span><span class="p">(</span><span class="n">propagate_grads</span><span class="p">):</span>
-            <span class="n">post_X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">observation_noise</span><span class="o">=</span><span class="n">observation_noise</span><span class="p">)</span>
-        <span class="n">Y_fantasized</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">post_X</span><span class="p">)</span>  <span class="c1"># num_fantasies x batch_shape x n' x m</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">condition_on_observations</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">Y_fantasized</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+        <span class="k">with</span> <span class="n">fantasize_flag</span><span class="p">():</span>
+            <span class="k">with</span> <span class="n">settings</span><span class="o">.</span><span class="n">propagate_grads</span><span class="p">(</span><span class="n">propagate_grads</span><span class="p">):</span>
+                <span class="n">post_X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">observation_noise</span><span class="o">=</span><span class="n">observation_noise</span><span class="p">)</span>
+            <span class="n">Y_fantasized</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">post_X</span><span class="p">)</span>  <span class="c1"># num_fantasies x batch_shape x n' x m</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">condition_on_observations</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">Y_fantasized</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Model.construct_inputs"><a class="viewcode-back" href="../../../models.html#botorch.models.model.Model.construct_inputs">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">construct_inputs</span><span class="p">(</span>
@@ -175,7 +181,9 @@
         <span class="p">)</span></div>
 
 <div class="viewcode-block" id="Model.transform_inputs"><a class="viewcode-back" href="../../../models.html#botorch.models.model.Model.transform_inputs">[docs]</a>    <span class="k">def</span> <span class="nf">transform_inputs</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Module</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Module</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Transform inputs.</span>
 
@@ -187,6 +195,7 @@
 <span class="sd">            A tensor of transformed inputs</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="n">input_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">input_transform</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">input_transform</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_transform</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>

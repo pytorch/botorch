@@ -12,7 +12,7 @@
             {"zIndex":100}
           )
         });
-        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/latest/versions"><h3>latest</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
 <script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/underscore.js"></script>
@@ -372,8 +372,74 @@ This is used for deterministic optimization.</p></li>
 </dd></dl>
 </dd></dl>
 </section>
-<section id="multitask-gp-posterior">
-<h3>Multitask GP Posterior<a class="headerlink" href="#multitask-gp-posterior" title="Permalink to this headline">¶</a></h3>
+<section id="module-botorch.posteriors.multitask">
+<span id="multitask-gp-posterior"></span><h3>Multitask GP Posterior<a class="headerlink" href="#module-botorch.posteriors.multitask" title="Permalink to this headline">¶</a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.posteriors.multitask.MultitaskGPPosterior">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.posteriors.multitask.</span></span><span class="sig-name descname"><span class="pre">MultitaskGPPosterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mvn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">joint_covariance_matrix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_train_covar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_diff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_mean</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_train_covar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_noise</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/posteriors/multitask.html#MultitaskGPPosterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.posteriors.multitask.MultitaskGPPosterior" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.posteriors.gpytorch.GPyTorchPosterior</span></code></a></p>
+<p>Posterior class for a Kronecker Multi-task GP model using with ICM kernel.
+Extends the standard GPyTorch posterior class by overwriting the rsample
+method. In general, this posterior should ONLY be used for MTGP models
+that have structured covariances. It should also only be used internally when
+called from the KroneckerMultiTaskGP.posterior(…) method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mvn</strong> (<em>gpytorch.distributions.multivariate_normal.MultivariateNormal</em>) – Posterior multivariate normal distribution</p></li>
+<li><p><strong>joint_covariance_matrix</strong> (<em>gpytorch.lazy.lazy_tensor.LazyTensor</em>) – Joint test train covariance matrix over the entire
+tensor</p></li>
+<li><p><strong>train_train_covar</strong> (<em>gpytorch.lazy.lazy_tensor.LazyTensor</em>) – covariance matrix of train points in the data space</p></li>
+<li><p><strong>test_obs_covar</strong> – covariance matrix of test x train points in the data space</p></li>
+<li><p><strong>train_diff</strong> (<em>torch.Tensor</em>) – difference between train mean and train responses</p></li>
+<li><p><strong>train_noise</strong> (<em>Union</em><em>[</em><em>gpytorch.lazy.lazy_tensor.LazyTensor</em><em>, </em><em>torch.Tensor</em><em>]</em>) – training noise covariance</p></li>
+<li><p><strong>test_noise</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>gpytorch.lazy.lazy_tensor.LazyTensor</em><em>, </em><em>torch.Tensor</em><em>]</em><em>]</em>) – Only used if posterior should contain observation noise.
+testing noise covariance</p></li>
+<li><p><strong>test_train_covar</strong> (<em>gpytorch.lazy.lazy_tensor.LazyTensor</em>) – </p></li>
+<li><p><strong>test_mean</strong> (<em>torch.Tensor</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.posteriors.multitask.MultitaskGPPosterior.base_sample_shape">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">base_sample_shape</span></span><em class="property"><span class="pre">:</span> <span class="pre">torch.Size</span></em><a class="headerlink" href="#botorch.posteriors.multitask.MultitaskGPPosterior.base_sample_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>The shape of a base sample used for constructing posterior samples.</p>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.posteriors.multitask.MultitaskGPPosterior.device">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">device</span></span><em class="property"><span class="pre">:</span> <span class="pre">torch.device</span></em><a class="headerlink" href="#botorch.posteriors.multitask.MultitaskGPPosterior.device" title="Permalink to this definition">¶</a></dt>
+<dd><p>The torch device of the posterior.</p>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.posteriors.multitask.MultitaskGPPosterior.dtype">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">dtype</span></span><em class="property"><span class="pre">:</span> <span class="pre">torch.dtype</span></em><a class="headerlink" href="#botorch.posteriors.multitask.MultitaskGPPosterior.dtype" title="Permalink to this definition">¶</a></dt>
+<dd><p>The torch dtype of the posterior.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.posteriors.multitask.MultitaskGPPosterior.rsample">
+<span class="sig-name descname"><span class="pre">rsample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_diff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/posteriors/multitask.html#MultitaskGPPosterior.rsample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.posteriors.multitask.MultitaskGPPosterior.rsample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sample from the posterior (with gradients).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sample_shape</strong> (<em>Optional</em><em>[</em><em>torch.Size</em><em>]</em>) – A <cite>torch.Size</cite> object specifying the sample shape. To
+draw <cite>n</cite> samples, set to <cite>torch.Size([n])</cite>. To draw <cite>b</cite> batches
+of <cite>n</cite> samples each, set to <cite>torch.Size([b, n])</cite>.</p></li>
+<li><p><strong>base_samples</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – An (optional) Tensor of <cite>N(0, I)</cite> base samples of
+appropriate dimension, typically obtained from a <cite>Sampler</cite>.
+This is used for deterministic optimization.</p></li>
+<li><p><strong>train_diff</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>sample_shape x event_shape</cite>-dim Tensor of samples from the posterior.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
 </section>
 <section id="module-botorch.posteriors.transformed">
 <span id="transformed-posterior"></span><h3>Transformed Posterior<a class="headerlink" href="#module-botorch.posteriors.transformed" title="Permalink to this headline">¶</a></h3>

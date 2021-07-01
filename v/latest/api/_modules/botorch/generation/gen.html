@@ -12,7 +12,7 @@
             {"zIndex":100}
           )
         });
-        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/latest/versions"><h3>latest</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
 <script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/underscore.js"></script>
@@ -36,10 +36,12 @@
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
+<span class="kn">from</span> <span class="nn">botorch.generation.utils</span> <span class="kn">import</span> <span class="n">_remove_fixed_features_from_optimization</span>
 <span class="kn">from</span> <span class="nn">botorch.optim.parameter_constraints</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">_arrayify</span><span class="p">,</span>
     <span class="n">make_scipy_bounds</span><span class="p">,</span>
@@ -49,13 +51,12 @@
 <span class="kn">from</span> <span class="nn">botorch.optim.utils</span> <span class="kn">import</span> <span class="n">_filter_kwargs</span><span class="p">,</span> <span class="n">columnwise_clamp</span><span class="p">,</span> <span class="n">fix_features</span>
 <span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">minimize</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
-<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
 <span class="kn">from</span> <span class="nn">torch.optim</span> <span class="kn">import</span> <span class="n">Optimizer</span>
 
 
 <div class="viewcode-block" id="gen_candidates_scipy"><a class="viewcode-back" href="../../../generation.html#botorch.generation.gen.gen_candidates_scipy">[docs]</a><span class="k">def</span> <span class="nf">gen_candidates_scipy</span><span class="p">(</span>
     <span class="n">initial_conditions</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
-    <span class="n">acquisition_function</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
+    <span class="n">acquisition_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span>
     <span class="n">lower_bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">upper_bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">inequality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -81,7 +82,7 @@
 <span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`.</span>
 <span class="sd">        options: Options used to control the optimization including "method"</span>
 <span class="sd">            and "maxiter". Select method for `scipy.minimize` using the</span>
-<span class="sd">            method" key. By default uses L-BFGS-B for box-constrained problems</span>
+<span class="sd">            "method" key. By default uses L-BFGS-B for box-constrained problems</span>
 <span class="sd">            and SLSQP if inequality or equality constraints are present.</span>
 <span class="sd">        fixed_features: This is a dictionary of feature indices to values, where</span>
 <span class="sd">            all generated candidates will have features fixed to these values.</span>
@@ -109,9 +110,45 @@
 <span class="sd">            )</span>
 <span class="sd">    """</span>
     <span class="n">options</span> <span class="o">=</span> <span class="n">options</span> <span class="ow">or</span> <span class="p">{}</span>
+
+    <span class="c1"># REDUCED is used indicate if we are optimizing over a reduced domain dimension</span>
+    <span class="c1"># after considering fixed_features.</span>
+    <span class="c1"># REDUCED mode if fixed_features is not None except for when fixed_features.values()</span>
+    <span class="c1"># contains None and linear constraints are passed.</span>
+    <span class="n">REDUCED</span> <span class="o">=</span> <span class="n">fixed_features</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">inequality_constraints</span> <span class="ow">or</span> <span class="n">equality_constraints</span><span class="p">:</span>
+        <span class="n">REDUCED</span> <span class="o">=</span> <span class="n">REDUCED</span> <span class="ow">and</span> <span class="p">(</span><span class="kc">None</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fixed_features</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+    <span class="k">if</span> <span class="n">REDUCED</span><span class="p">:</span>
+        <span class="n">_no_fixed_features</span> <span class="o">=</span> <span class="n">_remove_fixed_features_from_optimization</span><span class="p">(</span>
+            <span class="n">fixed_features</span><span class="o">=</span><span class="n">fixed_features</span><span class="p">,</span>
+            <span class="n">acquisition_function</span><span class="o">=</span><span class="n">acquisition_function</span><span class="p">,</span>
+            <span class="n">initial_conditions</span><span class="o">=</span><span class="n">initial_conditions</span><span class="p">,</span>
+            <span class="n">lower_bounds</span><span class="o">=</span><span class="n">lower_bounds</span><span class="p">,</span>
+            <span class="n">upper_bounds</span><span class="o">=</span><span class="n">upper_bounds</span><span class="p">,</span>
+            <span class="n">inequality_constraints</span><span class="o">=</span><span class="n">inequality_constraints</span><span class="p">,</span>
+            <span class="n">equality_constraints</span><span class="o">=</span><span class="n">equality_constraints</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># call the routine with no fixed_features</span>
+        <span class="n">clamped_candidates</span><span class="p">,</span> <span class="n">batch_acquisition</span> <span class="o">=</span> <span class="n">gen_candidates_scipy</span><span class="p">(</span>
+            <span class="n">initial_conditions</span><span class="o">=</span><span class="n">_no_fixed_features</span><span class="o">.</span><span class="n">initial_conditions</span><span class="p">,</span>
+            <span class="n">acquisition_function</span><span class="o">=</span><span class="n">_no_fixed_features</span><span class="o">.</span><span class="n">acquisition_function</span><span class="p">,</span>
+            <span class="n">lower_bounds</span><span class="o">=</span><span class="n">_no_fixed_features</span><span class="o">.</span><span class="n">lower_bounds</span><span class="p">,</span>
+            <span class="n">upper_bounds</span><span class="o">=</span><span class="n">_no_fixed_features</span><span class="o">.</span><span class="n">upper_bounds</span><span class="p">,</span>
+            <span class="n">inequality_constraints</span><span class="o">=</span><span class="n">_no_fixed_features</span><span class="o">.</span><span class="n">inequality_constraints</span><span class="p">,</span>
+            <span class="n">equality_constraints</span><span class="o">=</span><span class="n">_no_fixed_features</span><span class="o">.</span><span class="n">equality_constraints</span><span class="p">,</span>
+            <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">,</span>
+            <span class="n">fixed_features</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">clamped_candidates</span> <span class="o">=</span> <span class="n">_no_fixed_features</span><span class="o">.</span><span class="n">acquisition_function</span><span class="o">.</span><span class="n">_construct_X_full</span><span class="p">(</span>
+            <span class="n">clamped_candidates</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">clamped_candidates</span><span class="p">,</span> <span class="n">batch_acquisition</span>
+
     <span class="n">clamped_candidates</span> <span class="o">=</span> <span class="n">columnwise_clamp</span><span class="p">(</span>
         <span class="n">X</span><span class="o">=</span><span class="n">initial_conditions</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="n">lower_bounds</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="n">upper_bounds</span>
-    <span class="p">)</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+    <span class="p">)</span>
 
     <span class="n">shapeX</span> <span class="o">=</span> <span class="n">clamped_candidates</span><span class="o">.</span><span class="n">shape</span>
     <span class="n">x0</span> <span class="o">=</span> <span class="n">_arrayify</span><span class="p">(</span><span class="n">clamped_candidates</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
@@ -137,7 +174,7 @@
             <span class="o">.</span><span class="n">contiguous</span><span class="p">()</span>
             <span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
         <span class="p">)</span>
-        <span class="n">X_fix</span> <span class="o">=</span> <span class="n">fix_features</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">fixed_features</span><span class="o">=</span><span class="n">fixed_features</span><span class="p">)</span>
+        <span class="n">X_fix</span> <span class="o">=</span> <span class="n">fix_features</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">fixed_features</span><span class="o">=</span><span class="n">fixed_features</span><span class="p">)</span>
         <span class="n">loss</span> <span class="o">=</span> <span class="o">-</span><span class="n">acquisition_function</span><span class="p">(</span><span class="n">X_fix</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
         <span class="c1"># compute gradient w.r.t. the inputs (does not accumulate in leaves)</span>
         <span class="n">gradf</span> <span class="o">=</span> <span class="n">_arrayify</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">loss</span><span class="p">,</span> <span class="n">X</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
@@ -159,23 +196,26 @@
         <span class="n">jac</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
         <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
-        <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">options</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s2">"method"</span><span class="p">},</span>
+        <span class="n">callback</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"callback"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">options</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"method"</span><span class="p">,</span> <span class="s2">"callback"</span><span class="p">]},</span>
     <span class="p">)</span>
     <span class="n">candidates</span> <span class="o">=</span> <span class="n">fix_features</span><span class="p">(</span>
-        <span class="n">X</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">initial_conditions</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">shapeX</span><span class="p">)</span><span class="o">.</span><span class="n">contiguous</span><span class="p">(),</span>
+        <span class="n">X</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">initial_conditions</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">shapeX</span><span class="p">),</span>
         <span class="n">fixed_features</span><span class="o">=</span><span class="n">fixed_features</span><span class="p">,</span>
     <span class="p">)</span>
+
     <span class="n">clamped_candidates</span> <span class="o">=</span> <span class="n">columnwise_clamp</span><span class="p">(</span>
         <span class="n">X</span><span class="o">=</span><span class="n">candidates</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="n">lower_bounds</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="n">upper_bounds</span><span class="p">,</span> <span class="n">raise_on_violation</span><span class="o">=</span><span class="kc">True</span>
     <span class="p">)</span>
     <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
         <span class="n">batch_acquisition</span> <span class="o">=</span> <span class="n">acquisition_function</span><span class="p">(</span><span class="n">clamped_candidates</span><span class="p">)</span>
+
     <span class="k">return</span> <span class="n">clamped_candidates</span><span class="p">,</span> <span class="n">batch_acquisition</span></div>
 
 
 <div class="viewcode-block" id="gen_candidates_torch"><a class="viewcode-back" href="../../../generation.html#botorch.generation.gen.gen_candidates_torch">[docs]</a><span class="k">def</span> <span class="nf">gen_candidates_torch</span><span class="p">(</span>
     <span class="n">initial_conditions</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
-    <span class="n">acquisition_function</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">acquisition_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span>
     <span class="n">lower_bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">upper_bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">optimizer</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">Optimizer</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">,</span>
@@ -224,15 +264,44 @@
 <span class="sd">            )</span>
 <span class="sd">    """</span>
     <span class="n">options</span> <span class="o">=</span> <span class="n">options</span> <span class="ow">or</span> <span class="p">{}</span>
+
+    <span class="c1"># REDUCED is used indicate if we are optimizing over a reduced domain dimension</span>
+    <span class="c1"># after considering fixed_features.</span>
+    <span class="n">REDUCED</span> <span class="o">=</span> <span class="n">fixed_features</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="n">REDUCED</span><span class="p">:</span>
+        <span class="n">_no_fixed_features</span> <span class="o">=</span> <span class="n">_remove_fixed_features_from_optimization</span><span class="p">(</span>
+            <span class="n">fixed_features</span><span class="o">=</span><span class="n">fixed_features</span><span class="p">,</span>
+            <span class="n">acquisition_function</span><span class="o">=</span><span class="n">acquisition_function</span><span class="p">,</span>
+            <span class="n">initial_conditions</span><span class="o">=</span><span class="n">initial_conditions</span><span class="p">,</span>
+            <span class="n">lower_bounds</span><span class="o">=</span><span class="n">lower_bounds</span><span class="p">,</span>
+            <span class="n">upper_bounds</span><span class="o">=</span><span class="n">upper_bounds</span><span class="p">,</span>
+            <span class="n">inequality_constraints</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">equality_constraints</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># call the routine with no fixed_features</span>
+        <span class="n">clamped_candidates</span><span class="p">,</span> <span class="n">batch_acquisition</span> <span class="o">=</span> <span class="n">gen_candidates_torch</span><span class="p">(</span>
+            <span class="n">initial_conditions</span><span class="o">=</span><span class="n">_no_fixed_features</span><span class="o">.</span><span class="n">initial_conditions</span><span class="p">,</span>
+            <span class="n">acquisition_function</span><span class="o">=</span><span class="n">_no_fixed_features</span><span class="o">.</span><span class="n">acquisition_function</span><span class="p">,</span>
+            <span class="n">lower_bounds</span><span class="o">=</span><span class="n">_no_fixed_features</span><span class="o">.</span><span class="n">lower_bounds</span><span class="p">,</span>
+            <span class="n">upper_bounds</span><span class="o">=</span><span class="n">_no_fixed_features</span><span class="o">.</span><span class="n">upper_bounds</span><span class="p">,</span>
+            <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
+            <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">,</span>
+            <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>
+            <span class="n">fixed_features</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">clamped_candidates</span> <span class="o">=</span> <span class="n">_no_fixed_features</span><span class="o">.</span><span class="n">acquisition_function</span><span class="o">.</span><span class="n">_construct_X_full</span><span class="p">(</span>
+            <span class="n">clamped_candidates</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">clamped_candidates</span><span class="p">,</span> <span class="n">batch_acquisition</span>
+
     <span class="n">clamped_candidates</span> <span class="o">=</span> <span class="n">columnwise_clamp</span><span class="p">(</span>
         <span class="n">X</span><span class="o">=</span><span class="n">initial_conditions</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="n">lower_bounds</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="n">upper_bounds</span>
     <span class="p">)</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">candidates</span> <span class="o">=</span> <span class="n">fix_features</span><span class="p">(</span><span class="n">clamped_candidates</span><span class="p">,</span> <span class="n">fixed_features</span><span class="p">)</span>
     <span class="n">bayes_optimizer</span> <span class="o">=</span> <span class="n">optimizer</span><span class="p">(</span>
         <span class="n">params</span><span class="o">=</span><span class="p">[</span><span class="n">clamped_candidates</span><span class="p">],</span> <span class="n">lr</span><span class="o">=</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"lr"</span><span class="p">,</span> <span class="mf">0.025</span><span class="p">)</span>
     <span class="p">)</span>
-    <span class="n">param_trajectory</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"candidates"</span><span class="p">:</span> <span class="p">[]}</span>
-    <span class="n">loss_trajectory</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">stop</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="n">stopping_criterion</span> <span class="o">=</span> <span class="n">ExpMAStoppingCriterion</span><span class="p">(</span>
@@ -240,29 +309,32 @@
     <span class="p">)</span>
     <span class="k">while</span> <span class="ow">not</span> <span class="n">stop</span><span class="p">:</span>
         <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
-        <span class="n">loss</span> <span class="o">=</span> <span class="o">-</span><span class="n">acquisition_function</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="o">-</span><span class="n">acquisition_function</span><span class="p">(</span><span class="n">clamped_candidates</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">"Iter: </span><span class="si">{}</span><span class="s2"> - Value: </span><span class="si">{:.3f}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="o">-</span><span class="p">(</span><span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">())))</span>
-        <span class="n">loss_trajectory</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
-        <span class="n">param_trajectory</span><span class="p">[</span><span class="s2">"candidates"</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">candidates</span><span class="o">.</span><span class="n">clone</span><span class="p">())</span>
 
         <span class="k">def</span> <span class="nf">closure</span><span class="p">():</span>
             <span class="n">bayes_optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
-            <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+            <span class="n">output_grad</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">loss</span><span class="p">,</span> <span class="n">clamped_candidates</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">clamped_candidates</span><span class="o">.</span><span class="n">grad</span> <span class="o">=</span> <span class="n">output_grad</span>
             <span class="k">return</span> <span class="n">loss</span>
 
         <span class="n">bayes_optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">closure</span><span class="p">)</span>
-        <span class="n">clamped_candidates</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">columnwise_clamp</span><span class="p">(</span>
-            <span class="n">clamped_candidates</span><span class="p">,</span> <span class="n">lower_bounds</span><span class="p">,</span> <span class="n">upper_bounds</span>
-        <span class="p">)</span>
-        <span class="n">candidates</span> <span class="o">=</span> <span class="n">fix_features</span><span class="p">(</span><span class="n">clamped_candidates</span><span class="p">,</span> <span class="n">fixed_features</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="n">clamped_candidates</span> <span class="o">=</span> <span class="n">columnwise_clamp</span><span class="p">(</span>
+                <span class="n">X</span><span class="o">=</span><span class="n">clamped_candidates</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="n">lower_bounds</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="n">upper_bounds</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">stop</span> <span class="o">=</span> <span class="n">stopping_criterion</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">fvals</span><span class="o">=</span><span class="n">loss</span><span class="o">.</span><span class="n">detach</span><span class="p">())</span>
     <span class="n">clamped_candidates</span> <span class="o">=</span> <span class="n">columnwise_clamp</span><span class="p">(</span>
-        <span class="n">X</span><span class="o">=</span><span class="n">candidates</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="n">lower_bounds</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="n">upper_bounds</span><span class="p">,</span> <span class="n">raise_on_violation</span><span class="o">=</span><span class="kc">True</span>
+        <span class="n">X</span><span class="o">=</span><span class="n">clamped_candidates</span><span class="p">,</span>
+        <span class="n">lower</span><span class="o">=</span><span class="n">lower_bounds</span><span class="p">,</span>
+        <span class="n">upper</span><span class="o">=</span><span class="n">upper_bounds</span><span class="p">,</span>
+        <span class="n">raise_on_violation</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
-        <span class="n">batch_acquisition</span> <span class="o">=</span> <span class="n">acquisition_function</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">candidates</span><span class="p">,</span> <span class="n">batch_acquisition</span></div>
+        <span class="n">batch_acquisition</span> <span class="o">=</span> <span class="n">acquisition_function</span><span class="p">(</span><span class="n">clamped_candidates</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">clamped_candidates</span><span class="p">,</span> <span class="n">batch_acquisition</span></div>
 
 
 <div class="viewcode-block" id="get_best_candidates"><a class="viewcode-back" href="../../../generation.html#botorch.generation.gen.get_best_candidates">[docs]</a><span class="k">def</span> <span class="nf">get_best_candidates</span><span class="p">(</span><span class="n">batch_candidates</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">batch_values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>

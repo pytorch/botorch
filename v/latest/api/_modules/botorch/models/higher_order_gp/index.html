@@ -12,7 +12,7 @@
             {"zIndex":100}
           )
         });
-        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/latest/versions"><h3>latest</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
 <script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/underscore.js"></script>
@@ -36,11 +36,6 @@
 <span class="sd">.. [Zhe2019hogp]</span>
 <span class="sd">    S. Zhe, W. Xing, and R. M. Kirby. Scalable high-order gaussian process regression.</span>
 <span class="sd">    Proceedings of Machine Learning Research, volume 89, Apr 2019.</span>
-
-<span class="sd">.. [Doucet2010sampl]</span>
-<span class="sd">    A. Doucet. A Note on Efficient Conditional Simulation of Gaussian Distributions.</span>
-<span class="sd">    http://www.stats.ox.ac.uk/~doucet/doucet_simulationconditionalgaussian.pdf,</span>
-<span class="sd">    Apr 2010.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
@@ -167,7 +162,8 @@
 <div class="viewcode-block" id="HigherOrderGP"><a class="viewcode-back" href="../../../models.html#botorch.models.higher_order_gp.HigherOrderGP">[docs]</a><span class="k">class</span> <span class="nc">HigherOrderGP</span><span class="p">(</span><span class="n">BatchedMultiOutputGPyTorchModel</span><span class="p">,</span> <span class="n">ExactGP</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    A Higher order Gaussian process model (HOGP) (predictions are matrices/tensors) as</span>
-<span class="sd">    described in [Zhe2019hogp]_.</span>
+<span class="sd">    described in [Zhe2019hogp]_. The posterior uses Matheron's rule [Doucet2010sampl]_</span>
+<span class="sd">    as described in [Maddox2021bohdo]_.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -268,7 +264,7 @@
         <span class="k">if</span> <span class="n">num_latent_dims</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">num_latent_dims</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_num_dimensions</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">train_X</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_latents</span><span class="p">(</span>
             <span class="n">latent_init</span><span class="o">=</span><span class="n">latent_init</span><span class="p">,</span>
@@ -352,7 +348,8 @@
                 <span class="p">)</span>
 
 <div class="viewcode-block" id="HigherOrderGP.forward"><a class="viewcode-back" href="../../../models.html#botorch.models.higher_order_gp.HigherOrderGP.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultivariateNormal</span><span class="p">:</span>
-        <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span><span class="p">:</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
 
         <span class="n">covariance_list</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">covariance_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">covar_modules</span><span class="p">[</span><span class="mi">0</span><span class="p">](</span><span class="n">X</span><span class="p">))</span>

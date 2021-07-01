@@ -12,7 +12,7 @@
             {"zIndex":100}
           )
         });
-        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/latest/versions"><h3>latest</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
 <script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/underscore.js"></script>
@@ -150,14 +150,20 @@
                 <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">original_state_dict</span><span class="p">)</span>
                 <span class="n">sample_all_priors</span><span class="p">(</span><span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
             <span class="n">mll</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">optimizer</span><span class="p">(</span><span class="n">mll</span><span class="p">,</span> <span class="n">track_iterations</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="nb">issubclass</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">OptimizationWarning</span><span class="p">)</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">ws</span><span class="p">):</span>
-                <span class="n">_set_transformed_inputs</span><span class="p">(</span><span class="n">mll</span><span class="o">=</span><span class="n">mll</span><span class="p">)</span>
-                <span class="n">mll</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
-                <span class="k">return</span> <span class="n">mll</span>
-            <span class="n">retry</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="n">logging</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"Fitting failed on try </span><span class="si">{</span><span class="n">retry</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+        <span class="n">has_optwarning</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">ws</span><span class="p">:</span>
+            <span class="n">has_optwarning</span> <span class="o">|=</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">OptimizationWarning</span><span class="p">)</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">message</span><span class="p">,</span> <span class="n">w</span><span class="o">.</span><span class="n">category</span><span class="p">)</span>
+        <span class="c1"># TODO: this counts hitting `maxiter` as an optimization failure!</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">has_optwarning</span><span class="p">:</span>
+            <span class="n">_set_transformed_inputs</span><span class="p">(</span><span class="n">mll</span><span class="o">=</span><span class="n">mll</span><span class="p">)</span>
+            <span class="n">mll</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">mll</span>
+        <span class="n">retry</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"Fitting failed on try </span><span class="si">{</span><span class="n">retry</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
 
     <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">"Fitting failed on all retries."</span><span class="p">,</span> <span class="n">OptimizationWarning</span><span class="p">)</span>
+    <span class="n">_set_transformed_inputs</span><span class="p">(</span><span class="n">mll</span><span class="o">=</span><span class="n">mll</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">mll</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span></div>
 
 

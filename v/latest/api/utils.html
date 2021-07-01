@@ -12,7 +12,7 @@
             {"zIndex":100}
           )
         });
-        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+        </script><script src="/v/latest/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/latest/css/main.css"/><script src="/v/latest/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/latest/"><img class="logo" src="/v/latest/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/latest/versions"><h3>latest</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/latest/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/latest/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/latest/api/" target="_self">API Reference</a></li><li class=""><a href="/v/latest/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
 <script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/underscore.js"></script>
@@ -62,33 +62,90 @@ Negative values imply feasibility. The callables support broadcasting
 <p>Containers to standardize inputs into models and acquisition functions.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.utils.containers.TrainingData">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.utils.containers.</span></span><span class="sig-name descname"><span class="pre">TrainingData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/containers.html#TrainingData"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.containers.TrainingData" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></p>
-<p>Standardized struct of model training data for a single outcome.</p>
-<p>Create new instance of TrainingData(X, Y, Yvar)</p>
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.utils.containers.</span></span><span class="sig-name descname"><span class="pre">TrainingData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Xs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Ys</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvars</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/containers.html#TrainingData"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.containers.TrainingData" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Standardized container of model training data for models.</p>
+<dl class="simple">
+<dt>Properties:</dt><dd><dl class="simple">
+<dt>Xs: A list of tensors, each of shape <cite>batch_shape x n_i x d</cite>,</dt><dd><p>where <cite>n_i</cite> is the number of training inputs for the i-th model.</p>
+</dd>
+<dt>Ys: A list of tensors, each of shape <cite>batch_shape x n_i x 1</cite>,</dt><dd><p>where <cite>n_i</cite> is the number of training observations for the i-th
+(single-output) model.</p>
+</dd>
+<dt>Yvars: A list of tensors, each of shape <cite>batch_shape x n_i x 1</cite>,</dt><dd><p>where <cite>n_i</cite> is the number of training observations of the
+observation noise for the i-th  (single-output) model.
+If <cite>None</cite>, the observation noise level is unobserved.</p>
+</dd>
+</dl>
+</dd>
+</dl>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>torch.Tensor</em>) – </p></li>
-<li><p><strong>Y</strong> (<em>torch.Tensor</em>) – </p></li>
-<li><p><strong>Yvar</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – </p></li>
+<li><p><strong>Xs</strong> (<em>List</em><em>[</em><em>torch.Tensor</em><em>]</em>) – </p></li>
+<li><p><strong>Ys</strong> (<em>List</em><em>[</em><em>torch.Tensor</em><em>]</em>) – </p></li>
+<li><p><strong>Yvars</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>torch.Tensor</em><em>]</em><em>]</em>) – </p></li>
 </ul>
 </dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
 </dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.utils.containers.TrainingData.Xs">
+<span class="sig-name descname"><span class="pre">Xs</span></span><em class="property"><span class="pre">:</span> <span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.utils.containers.TrainingData.Xs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.utils.containers.TrainingData.Ys">
+<span class="sig-name descname"><span class="pre">Ys</span></span><em class="property"><span class="pre">:</span> <span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.utils.containers.TrainingData.Ys" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.utils.containers.TrainingData.Yvars">
+<span class="sig-name descname"><span class="pre">Yvars</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#botorch.utils.containers.TrainingData.Yvars" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.containers.TrainingData.from_block_design">
+<em class="property"><span class="pre">classmethod</span> </em><span class="sig-name descname"><span class="pre">from_block_design</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/containers.html#TrainingData.from_block_design"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.containers.TrainingData.from_block_design" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a TrainingData object from a block design description.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>torch.Tensor</em>) – A <cite>batch_shape x n x d</cite> tensor of training points (shared across
+all outcomes).</p></li>
+<li><p><strong>Y</strong> (<em>torch.Tensor</em>) – A <cite>batch_shape x n x m</cite> tensor of training observations.</p></li>
+<li><p><strong>Yvar</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – A <cite>batch_shape x n x m</cite> tensor of training noise variance
+observations, or <cite>None</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The <cite>TrainingData</cite> object (with <cite>is_block_design=True</cite>).</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.utils.containers.TrainingData.is_block_design">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">is_block_design</span></span><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.utils.containers.TrainingData.is_block_design" title="Permalink to this definition">¶</a></dt>
+<dd><p>Indicates whether training data is a “block design”.</p>
+<p>Block designs are designs in which all outcomes are observed
+at the same training inputs.</p>
+</dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.utils.containers.TrainingData.X">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">X</span></span><a class="headerlink" href="#botorch.utils.containers.TrainingData.X" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alias for field number 0</p>
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">X</span></span><em class="property"><span class="pre">:</span> <span class="pre">torch.Tensor</span></em><a class="headerlink" href="#botorch.utils.containers.TrainingData.X" title="Permalink to this definition">¶</a></dt>
+<dd><p>The training inputs (block-design only).</p>
+<p>This raises an <cite>UnsupportedError</cite> in the non-block-design case.</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.utils.containers.TrainingData.Y">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">Y</span></span><a class="headerlink" href="#botorch.utils.containers.TrainingData.Y" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alias for field number 1</p>
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">Y</span></span><em class="property"><span class="pre">:</span> <span class="pre">torch.Tensor</span></em><a class="headerlink" href="#botorch.utils.containers.TrainingData.Y" title="Permalink to this definition">¶</a></dt>
+<dd><p>The training observations (block-design only).</p>
+<p>This raises an <cite>UnsupportedError</cite> in the non-block-design case.</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.utils.containers.TrainingData.Yvar">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">Yvar</span></span><a class="headerlink" href="#botorch.utils.containers.TrainingData.Yvar" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alias for field number 2</p>
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">Yvar</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional[List[torch.Tensor]]</span></em><a class="headerlink" href="#botorch.utils.containers.TrainingData.Yvar" title="Permalink to this definition">¶</a></dt>
+<dd><p>The training observations’s noise variance (block-design only).</p>
+<p>This raises an <cite>UnsupportedError</cite> in the non-block-design case.</p>
 </dd></dl>
 </dd></dl>
 </section>
@@ -230,6 +287,13 @@ each piece is a hyperbolic tangent function.</p>
 <section id="module-botorch.utils.sampling">
 <span id="sampling"></span><h2>Sampling<a class="headerlink" href="#module-botorch.utils.sampling" title="Permalink to this headline">¶</a></h2>
 <p>Utilities for MC and qMC sampling.</p>
+<p>References</p>
+<dl class="citation">
+<dt class="label" id="trikalinos2014polytope"><span class="brackets"><a class="fn-backref" href="#id1">Trikalinos2014polytope</a></span></dt>
+<dd><p>T. A. Trikalinos and G. van Valkenhoef. Efficient sampling from uniform
+density n-polytopes. Technical report, Brown University, 2014.</p>
+</dd>
+</dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.sampling.manual_seed">
 <span class="sig-prename descclassname"><span class="pre">botorch.utils.sampling.</span></span><span class="sig-name descname"><span class="pre">manual_seed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#manual_seed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.sampling.manual_seed" title="Permalink to this definition">¶</a></dt>
@@ -327,7 +391,7 @@ introduce any sampling variance across t-batches.</p>
 <li><p><strong>bounds</strong> (<em>Tensor</em>) – A <cite>2 x d</cite> dimensional tensor specifying box constraints on a
 <cite>d</cite>-dimensional space, where bounds[0, :] and bounds[1, :] correspond
 to lower and upper bounds, respectively.</p></li>
-<li><p><strong>n</strong> (<em>int</em>) – The number of (q-batch) samples.</p></li>
+<li><p><strong>n</strong> (<em>int</em>) – The number of (q-batch) samples. As a best practice, use powers of 2.</p></li>
 <li><p><strong>q</strong> (<em>int</em>) – The size of each q-batch.</p></li>
 <li><p><strong>batch_shape</strong> (<em>Optional</em><em>[</em><em>Iterable</em><em>[</em><em>int</em><em>]</em><em>, </em><em>torch.Size</em><em>]</em>) – The batch shape of the samples. If given, returns samples
 of shape <cite>n x batch_shape x q x d</cite>, where each batch is an
@@ -346,7 +410,7 @@ defined by bounds.</p>
 </dl>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">bounds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">3</span><span class="p">)])</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">draw_sobol_samples</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">draw_sobol_samples</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -360,7 +424,7 @@ of f(X) over X where each element of X is drawn N(0, 1).</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>d</strong> (<em>int</em>) – The dimension of the normal distribution.</p></li>
-<li><p><strong>n</strong> (<em>int</em>) – The number of samples to return.</p></li>
+<li><p><strong>n</strong> (<em>int</em>) – The number of samples to return. As a best practice, use powers of 2.</p></li>
 <li><p><strong>device</strong> (<em>Optional</em><em>[</em><em>torch.device</em><em>]</em>) – The torch device.</p></li>
 <li><p><strong>dtype</strong> (<em>Optional</em><em>[</em><em>torch.dtype</em><em>]</em>) – The torch dtype.</p></li>
 <li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The seed used for initializing Owen scrambling. If None (default),
@@ -376,7 +440,7 @@ and dtype specified by the input.</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">draw_sobol_normal_samples</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">draw_sobol_normal_samples</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -435,6 +499,34 @@ and dtype specified by the input.</p>
 </div>
 </dd></dl>
 <dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.sampling.sample_polytope">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.sampling.</span></span><span class="sig-name descname"><span class="pre">sample_polytope</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#sample_polytope"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.sampling.sample_polytope" title="Permalink to this definition">¶</a></dt>
+<dd><p>Hit and run sampler from uniform sampling points from a polytope,
+described via inequality constraints A*x&lt;=b.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>A</strong> (<em>torch.Tensor</em>) – A Tensor describing inequality constraints
+so that all samples satisfy Ax&lt;=b.</p></li>
+<li><p><strong>b</strong> (<em>torch.Tensor</em>) – A Tensor describing the inequality constraints
+so that all samples satisfy Ax&lt;=b.</p></li>
+<li><p><strong>x0</strong> (<em>torch.Tensor</em>) – A <cite>d</cite>-dim Tensor representing a starting point of the chain
+satisfying the constraints.</p></li>
+<li><p><strong>n</strong> (<em>int</em>) – The number of resulting samples kept in the output.</p></li>
+<li><p><strong>n0</strong> (<em>int</em>) – The number of burn-in samples. The chain will produce
+n+n0 samples but the first n0 samples are not saved.</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The seed for the sampler. If omitted, use a random seed.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>(n, d) dim Tensor containing the resulting samples.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.sampling.batched_multinomial">
 <span class="sig-prename descclassname"><span class="pre">botorch.utils.sampling.</span></span><span class="sig-name descname"><span class="pre">batched_multinomial</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">replacement</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#batched_multinomial"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.sampling.batched_multinomial" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sample from multinomial with an arbitrary number of batch dimensions.</p>
@@ -470,28 +562,56 @@ allows a single batch dimension). The calling signature is the same as for
 </pre></div>
 </div>
 </dd></dl>
-<dl class="py class">
-<dt class="sig sig-object py" id="botorch.utils.sampling.PolytopeSampler">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.utils.sampling.</span></span><span class="sig-name descname"><span class="pre">PolytopeSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_burnin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_point</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#PolytopeSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.sampling.PolytopeSampler" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Sampling points from a polytope described via a set of inequality and
-equality constraints.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.sampling.find_interior_point">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.sampling.</span></span><span class="sig-name descname"><span class="pre">find_interior_point</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">A_eq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_eq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#find_interior_point"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.sampling.find_interior_point" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find an interior point of a polytope via linear programming.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>inequality_constraints</strong> (<em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>]</em>) – Tensors (A, b) describing inequality
-constraints: A*x&lt;=b, where A is (n_ineq_con, d_sample)-dim Tensor
-and b is (n_ineq_con, 1)-dim Tensor with n_ineq_con
-being the number of inequalities and d_sample the dimension
-of the sample space.</p></li>
-<li><p><strong>n_burnin</strong> (<em>int</em>) – The number of burn in samples.</p></li>
-<li><p><strong>equality_constraints</strong> (<em>Optional</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – Tensors (C, d) describing the equality
-constraints: C*x=d, where C is (n_eq_con, d_sample)-dim Tensor and
-d is (n_eq_con-dim, 1) Tensor with n_eq_con
-being the number of equalities.</p></li>
-<li><p><strong>initial_point</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – An (d_sample, 1)-dim Tensor presenting an inital point of
-the chain satisfying all the conditions.
-Determined automatically (by solving an LP) if not provided.</p></li>
+<li><p><strong>A</strong> (<em>numpy.ndarray</em>) – A <cite>n_ineq x d</cite>-dim numpy array containing the coefficients of the
+constraint inequalities.</p></li>
+<li><p><strong>b</strong> (<em>numpy.ndarray</em>) – A <cite>n_ineq x 1</cite>-dim numpy array containing the right hand sides of
+the constraint inequalities.</p></li>
+<li><p><strong>A_eq</strong> (<em>Optional</em><em>[</em><em>numpy.ndarray</em><em>]</em>) – A <cite>n_eq x d</cite>-dim numpy array containing the coefficients of the
+constraint equalities.</p></li>
+<li><p><strong>b_eq</strong> (<em>Optional</em><em>[</em><em>numpy.ndarray</em><em>]</em>) – A <cite>n_eq x 1</cite>-dim numpy array containing the right hand sides of
+the constraint equalities.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>d</cite>-dim numpy array containing an interior point of the polytope.
+This function will raise a ValueError if there is no such point.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>This method solves the following Linear Program:</dt><dd><p>min -s subject to A @ x &lt;= b - 2 * s, s &gt;= 0, A_eq @ x = b_eq</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.utils.sampling.PolytopeSampler">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.utils.sampling.</span></span><span class="sig-name descname"><span class="pre">PolytopeSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interior_point</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#PolytopeSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.sampling.PolytopeSampler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>Base class for samplers that sample points from a polytope.</p>
+<p>Initialize PolytopeSampler.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inequality_constraints</strong> (<em>Optional</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – Tensors <cite>(A, b)</cite> describing inequality
+constraints <cite>A @ x &lt;= b</cite>, where <cite>A</cite> is a <cite>n_ineq_con x d</cite>-dim
+Tensor and <cite>b</cite> is a <cite>n_ineq_con x 1</cite>-dim Tensor, with <cite>n_ineq_con</cite>
+the number of inequalities and <cite>d</cite> the dimension of the sample space.</p></li>
+<li><p><strong>equality_constraints</strong> (<em>Optional</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – Tensors <cite>(C, d)</cite> describing the equality constraints
+<cite>C @ x = d</cite>, where <cite>C</cite> is a <cite>n_eq_con x d</cite>-dim Tensor and <cite>d</cite> is a
+<cite>n_eq_con x 1</cite>-dim Tensor with <cite>n_eq_con</cite> the number of equalities.</p></li>
+<li><p><strong>interior_point</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>d_sample x 1</cite>-dim Tensor presenting a point in the
+(relative) interior of the polytope. If omitted, determined
+automatically by solving a Linear Program.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>2 x d</cite>-dim tensor of box bounds.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -501,65 +621,223 @@ Determined automatically (by solving an LP) if not provided.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.utils.sampling.PolytopeSampler.feasible">
 <span class="sig-name descname"><span class="pre">feasible</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#PolytopeSampler.feasible"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.sampling.PolytopeSampler.feasible" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Check whether a point is contained in the polytope.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>x</strong> (<em>torch.Tensor</em>) – </p>
+<dd class="field-odd"><p><strong>x</strong> (<em>torch.Tensor</em>) – A <cite>d x 1</cite>-dim Tensor.</p>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>bool</p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>True if <cite>x</cite> is contained inside the polytope (incl. its boundary),
+False otherwise.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="botorch.utils.sampling.PolytopeSampler.find_initial_point">
-<span class="sig-name descname"><span class="pre">find_initial_point</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#PolytopeSampler.find_initial_point"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.sampling.PolytopeSampler.find_initial_point" title="Permalink to this definition">¶</a></dt>
-<dd><p>Finds a feasible point of the original problem.
-Details: Solves the following LP:
-min -s such that Ax&lt;=b-2*s, s&gt;=0, plus equality constraints.
-The number of inequality constrains in LP: nrow(A) + 1.
-LP solution dimension: dim(x) + dim(s) = dim(x) + 1.</p>
-</dd></dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="botorch.utils.sampling.PolytopeSampler.draw">
-<span class="sig-name descname"><span class="pre">draw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#PolytopeSampler.draw"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.sampling.PolytopeSampler.draw" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>n</strong> (<em>int</em>) – </p></li>
-<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – </p></li>
-</ul>
+<dt class="sig sig-object py" id="botorch.utils.sampling.PolytopeSampler.find_interior_point">
+<span class="sig-name descname"><span class="pre">find_interior_point</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#PolytopeSampler.find_interior_point"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.sampling.PolytopeSampler.find_interior_point" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find an interior point of the polytope.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>d x 1</cite>-dim Tensor representing a point contained in the polytope.
+This function will raise a ValueError if there is no such point.</p>
 </dd>
 <dt class="field-even">Return type</dt>
 <dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
-</dd></dl>
-<dl class="py function">
-<dt class="sig sig-object py" id="botorch.utils.sampling.sample_polytope">
-<span class="sig-prename descclassname"><span class="pre">botorch.utils.sampling.</span></span><span class="sig-name descname"><span class="pre">sample_polytope</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#sample_polytope"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.sampling.sample_polytope" title="Permalink to this definition">¶</a></dt>
-<dd><p>Hit and run sampler from uniform sampling points from a polytope,
-described via inequality constraints A*x&lt;=b.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.sampling.PolytopeSampler.draw">
+<em class="property"><span class="pre">abstract</span> </em><span class="sig-name descname"><span class="pre">draw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#PolytopeSampler.draw"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.sampling.PolytopeSampler.draw" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draw samples from the polytope.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>A</strong> (<em>torch.Tensor</em>) – A Tensor describing inequality constraints
-so that all samples satisfy Ax&lt;=b.</p></li>
-<li><p><strong>b</strong> (<em>torch.Tensor</em>) – A Tensor describing the inequality constraints
-so that all samples satisfy Ax&lt;=b.</p></li>
-<li><p><strong>x0</strong> (<em>torch.Tensor</em>) – d dim Tensor representing a starting point of the chain
-satisfying the constraints.</p></li>
-<li><p><strong>n</strong> (<em>int</em>) – The number of resulting samples kept in the output.</p></li>
-<li><p><strong>n0</strong> (<em>int</em>) – The number of burn-in samples. The chain will produce
-n+n0 samples but the first n0 samples are not saved.</p></li>
-<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The seed for the sampler. If omitted, use a random seed.</p></li>
+<li><p><strong>n</strong> (<em>int</em>) – The number of samples.</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The random seed.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>(n, d) dim Tensor containing the resulting samples.</p>
+<dd class="field-even"><p>A <cite>n x d_sample</cite> Tensor of samples from the polytope.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.utils.sampling.HitAndRunPolytopeSampler">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.utils.sampling.</span></span><span class="sig-name descname"><span class="pre">HitAndRunPolytopeSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interior_point</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_burnin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#HitAndRunPolytopeSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.sampling.HitAndRunPolytopeSampler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.utils.sampling.PolytopeSampler" title="botorch.utils.sampling.PolytopeSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.utils.sampling.PolytopeSampler</span></code></a></p>
+<p>A sampler for sampling from a polyope using a hit-and-run algorithm.</p>
+<p>A sampler for sampling from a polyope using a hit-and-run algorithm.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inequality_constraints</strong> (<em>Optional</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – Tensors <cite>(A, b)</cite> describing inequality
+constraints <cite>A @ x &lt;= b</cite>, where <cite>A</cite> is a <cite>n_ineq_con x d</cite>-dim
+Tensor and <cite>b</cite> is a <cite>n_ineq_con x 1</cite>-dim Tensor, with <cite>n_ineq_con</cite>
+the number of inequalities and <cite>d</cite> the dimension of the sample space.</p></li>
+<li><p><strong>equality_constraints</strong> (<em>Optional</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – Tensors <cite>(C, d)</cite> describing the equality constraints
+<cite>C @ x = d</cite>, where <cite>C</cite> is a <cite>n_eq_con x d</cite>-dim Tensor and <cite>d</cite> is a
+<cite>n_eq_con x 1</cite>-dim Tensor with <cite>n_eq_con</cite> the number of equalities.</p></li>
+<li><p><strong>interior_point</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>d_sample x 1</cite>-dim Tensor presenting a point in the
+(relative) interior of the polytope. If omitted, determined
+automatically by solving a Linear Program.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>2 x d</cite>-dim tensor of box bounds.</p></li>
+<li><p><strong>n_burnin</strong> (<em>int</em>) – The number of burn in samples.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.sampling.HitAndRunPolytopeSampler.draw">
+<span class="sig-name descname"><span class="pre">draw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#HitAndRunPolytopeSampler.draw"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.sampling.HitAndRunPolytopeSampler.draw" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draw samples from the polytope.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n</strong> (<em>int</em>) – The number of samples.</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The random seed.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>n x d_sample</cite> Tensor of samples from the polytope.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.utils.sampling.DelaunayPolytopeSampler">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.utils.sampling.</span></span><span class="sig-name descname"><span class="pre">DelaunayPolytopeSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interior_point</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#DelaunayPolytopeSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.sampling.DelaunayPolytopeSampler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.utils.sampling.PolytopeSampler" title="botorch.utils.sampling.PolytopeSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.utils.sampling.PolytopeSampler</span></code></a></p>
+<p>A polytope sampler using Delaunay triangulation.</p>
+<p>This sampler first enumerates the vertices of the constraint polytope and
+then uses a Delaunay triangulation to tesselate its convex hull.</p>
+<p>The sampling happens in two stages:
+1. First, we sample from the set of hypertriangles generated by the
+Delaunay triangulation (i.e. which hyper-triangle to draw the sample
+from) with probabilities proportional to the triangle volumes.
+2. Then, we sample uniformly from the chosen hypertriangle by sampling
+uniformly from the unit simplex of the appropriate dimension, and
+then computing the convex combination of the vertices of the
+hypertriangle according to that draw from the simplex.</p>
+<p>The best reference (not exactly the same, but functionally equivalent) is
+<a class="reference internal" href="#trikalinos2014polytope" id="id1"><span>[Trikalinos2014polytope]</span></a>. A simple R implementation is available at
+<a class="reference external" href="https://github.com/gertvv/tesselample">https://github.com/gertvv/tesselample</a>.</p>
+<p>Initialize DelaunayPolytopeSampler.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inequality_constraints</strong> (<em>Optional</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – Tensors <cite>(A, b)</cite> describing inequality
+constraints <cite>A @ x &lt;= b</cite>, where <cite>A</cite> is a <cite>n_ineq_con x d</cite>-dim
+Tensor and <cite>b</cite> is a <cite>n_ineq_con x 1</cite>-dim Tensor, with <cite>n_ineq_con</cite>
+the number of inequalities and <cite>d</cite> the dimension of the sample space.</p></li>
+<li><p><strong>equality_constraints</strong> (<em>Optional</em><em>[</em><em>Tuple</em><em>[</em><em>Tensor</em><em>, </em><em>Tensor</em><em>]</em><em>]</em>) – Tensors <cite>(C, d)</cite> describing the equality constraints
+<cite>C @ x = d</cite>, where <cite>C</cite> is a <cite>n_eq_con x d</cite>-dim Tensor and <cite>d</cite> is a
+<cite>n_eq_con x 1</cite>-dim Tensor with <cite>n_eq_con</cite> the number of equalities.</p></li>
+<li><p><strong>interior_point</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>d_sample x 1</cite>-dim Tensor presenting a point in the
+(relative) interior of the polytope. If omitted, determined
+automatically by solving a Linear Program.</p></li>
+<li><p><strong>bounds</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>2 x d</cite>-dim tensor of box bounds.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<p>Warning: The vertex enumeration performed in this algorithm can become
+extremely costly if there are a large number of inequalities. Similarly,
+the triangulation can get very expensive in high dimensions. Only use
+this algorithm for moderate dimensions / moderately complex constraint sets.
+An alternative is the <cite>HitAndRunPolytopeSampler</cite>.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.sampling.DelaunayPolytopeSampler.draw">
+<span class="sig-name descname"><span class="pre">draw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#DelaunayPolytopeSampler.draw"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.sampling.DelaunayPolytopeSampler.draw" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draw samples from the polytope.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n</strong> (<em>int</em>) – The number of samples.</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The random seed.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>n x d_sample</cite> Tensor of samples from the polytope.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.sampling.get_polytope_samples">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.sampling.</span></span><span class="sig-name descname"><span class="pre">get_polytope_samples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inequality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equality_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thinning</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_burnin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10000</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#get_polytope_samples"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.sampling.get_polytope_samples" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sample from polytope defined by box bounds and (in)equality constraints.</p>
+<p>This uses a hit-and-run Markov chain sampler.</p>
+<p>TODO: make this method return the sampler object, to avoid doing burn-in
+every time we draw samples.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n</strong> (<em>int</em>) – The number of samples.</p></li>
+<li><p><strong>bounds</strong> (<em>torch.Tensor</em>) – A <cite>2 x d</cite>-dim tensor containing the box bounds.</p></li>
+<li><p><strong>constraints</strong> (<em>equality</em>) – A list of tuples (indices, coefficients, rhs),
+with each tuple encoding an inequality constraint of the form
+<cite>sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs</cite>.</p></li>
+<li><p><strong>constraints</strong> – A list of tuples (indices, coefficients, rhs),
+with each tuple encoding an inequality constraint of the form
+<cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite>.</p></li>
+<li><p><strong>seed</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The random seed.</p></li>
+<li><p><strong>thinning</strong> (<em>int</em>) – The amount of thinning.</p></li>
+<li><p><strong>n_burnin</strong> (<em>int</em>) – The number of burn-in samples for the Markov chain sampler.</p></li>
+<li><p><strong>inequality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>torch.Tensor</em><em>, </em><em>torch.Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>equality_constraints</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><em>torch.Tensor</em><em>, </em><em>torch.Tensor</em><em>, </em><em>float</em><em>]</em><em>]</em><em>]</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>n x d</cite>-dim tensor of samples.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.sampling.sparse_to_dense_constraints">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.sampling.</span></span><span class="sig-name descname"><span class="pre">sparse_to_dense_constraints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/sampling.html#sparse_to_dense_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.sampling.sparse_to_dense_constraints" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert parameter constraints from a sparse format into a dense format.</p>
+<p>This method converts sparse triples of the form (indices, coefficients, rhs)
+to constraints of the form Ax &gt;= b or Ax = b.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>d</strong> (<em>int</em>) – The input dimension.</p></li>
+<li><p><strong>constraints</strong> (<em>inequality</em>) – A list of tuples (indices, coefficients, rhs),
+with each tuple encoding an (in)equality constraint of the form
+<cite>sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs</cite> or
+<cite>sum_i (X[indices[i]] * coefficients[i]) = rhs</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>A: A <cite>n_constraints x d</cite>-dim tensor of coefficients.</p></li>
+<li><p>b: A <cite>n_constraints x 1</cite>-dim tensor of right hand sides.</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>A two-element tuple containing</p>
 </dd>
 </dl>
 </dd></dl>
@@ -619,6 +897,102 @@ evaluated (or <cite>None</cite> if the sample has never been evaluated).</p>
 <dt class="sig sig-object py" id="botorch.utils.gp_sampling.GPDraw.training">
 <span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.utils.gp_sampling.GPDraw.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.utils.gp_sampling.RandomFourierFeatures">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.utils.gp_sampling.</span></span><span class="sig-name descname"><span class="pre">RandomFourierFeatures</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kernel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_rff_features</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/gp_sampling.html#RandomFourierFeatures"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.gp_sampling.RandomFourierFeatures" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code></p>
+<p>A class that represents Random Fourier Features.</p>
+<p>Initialize RandomFourierFeatures.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>kernel</strong> (<em>Kernel</em>) – the GP kernel</p></li>
+<li><p><strong>input_dim</strong> (<em>int</em>) – the input dimension to the GP kernel</p></li>
+<li><p><strong>num_rff_features</strong> (<em>int</em>) – the number of fourier features</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.gp_sampling.RandomFourierFeatures.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/gp_sampling.html#RandomFourierFeatures.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.gp_sampling.RandomFourierFeatures.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get fourier basis features for the provided inputs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.utils.gp_sampling.RandomFourierFeatures.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.utils.gp_sampling.RandomFourierFeatures.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.gp_sampling.get_deterministic_model">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.gp_sampling.</span></span><span class="sig-name descname"><span class="pre">get_deterministic_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bases</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/gp_sampling.html#get_deterministic_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.gp_sampling.get_deterministic_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a deterministic model using the provided weights and bases for each output.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>weights</strong> (<em>List</em><em>[</em><em>torch.Tensor</em><em>]</em>) – a list of weights with <cite>m</cite> elements</p></li>
+<li><p><strong>bases</strong> (<em>List</em><em>[</em><a class="reference internal" href="#botorch.utils.gp_sampling.RandomFourierFeatures" title="botorch.utils.gp_sampling.RandomFourierFeatures"><em>botorch.utils.gp_sampling.RandomFourierFeatures</em></a><em>]</em>) – a list of RandomFourierFeatures with <cite>m</cite> elements.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A deterministic model.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="models.html#botorch.models.deterministic.GenericDeterministicModel" title="botorch.models.deterministic.GenericDeterministicModel">botorch.models.deterministic.GenericDeterministicModel</a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.gp_sampling.get_weights_posterior">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.gp_sampling.</span></span><span class="sig-name descname"><span class="pre">get_weights_posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_sq</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/gp_sampling.html#get_weights_posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.gp_sampling.get_weights_posterior" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sample bayesian linear regression weights.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>torch.Tensor</em>) – a <cite>n x num_rff_features</cite>-dim tensor of inputs</p></li>
+<li><p><strong>y</strong> (<em>torch.Tensor</em>) – a <cite>n</cite>-dim tensor of outputs</p></li>
+<li><p><strong>sigma_sq</strong> (<em>float</em>) – the noise variance</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The posterior distribution over the weights.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.distributions.multivariate_normal.MultivariateNormal</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.gp_sampling.get_gp_samples">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.gp_sampling.</span></span><span class="sig-name descname"><span class="pre">get_gp_samples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_outputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_rff_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/gp_sampling.html#get_gp_samples"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.gp_sampling.get_gp_samples" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sample functions from GP posterior using RFF.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>botorch.models.model.Model</em></a>) – the model</p></li>
+<li><p><strong>num_outputs</strong> (<em>int</em>) – the number of outputs</p></li>
+<li><p><strong>n_samples</strong> (<em>int</em>) – the number of sampled functions to draw</p></li>
+<li><p><strong>num_rff_features</strong> (<em>int</em>) – the number of random fourier features</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A list of sampled functions.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>List[<a class="reference internal" href="models.html#botorch.models.deterministic.GenericDeterministicModel" title="botorch.models.deterministic.GenericDeterministicModel">botorch.models.deterministic.GenericDeterministicModel</a>]</p>
+</dd>
+</dl>
 </dd></dl>
 </section>
 <section id="module-botorch.utils.testing">
@@ -744,6 +1118,11 @@ do a shape check but return the same mock samples.</p>
 <dt class="sig sig-object py" id="botorch.utils.testing.MockModel.posterior">
 <span class="sig-name descname"><span class="pre">posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MockModel.posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.MockModel.posterior" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes the posterior over model outputs at the provided points.</p>
+<dl class="simple">
+<dt>Note: The input transforms should be applied here using</dt><dd><p><cite>self.transform_inputs(X)</cite> after the <cite>self.eval()</cite> call and before
+any <cite>model.forward</cite> or <cite>model.likelihood</cite> calls.</p>
+</dd>
+</dl>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -1342,6 +1721,14 @@ with probability above the given threshold.</p>
 <section id="module-botorch.utils.multi_objective.box_decompositions.box_decomposition">
 <span id="abstract-box-decompositions"></span><h2>Abstract Box Decompositions<a class="headerlink" href="#module-botorch.utils.multi_objective.box_decompositions.box_decomposition" title="Permalink to this headline">¶</a></h2>
 <p>Box decomposition algorithms.</p>
+<p>References</p>
+<dl class="citation">
+<dt class="label" id="lacour17"><span class="brackets">Lacour17</span><span class="fn-backref">(<a href="#id2">1</a>,<a href="#id3">2</a>,<a href="#id4">3</a>,<a href="#id5">4</a>,<a href="#id12">5</a>,<a href="#id13">6</a>)</span></dt>
+<dd><p>R. Lacour, K. Klamroth, C. Fonseca. A box decomposition algorithm to
+compute the hypervolume indicator. Computers &amp; Operations Research,
+Volume 79, 2017.</p>
+</dd>
+</dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition">
 <em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.utils.multi_objective.box_decompositions.box_decomposition.</span></span><span class="sig-name descname"><span class="pre">BoxDecomposition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sort</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/box_decomposition.html#BoxDecomposition"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition" title="Permalink to this definition">¶</a></dt>
@@ -1402,16 +1789,6 @@ with probability above the given threshold.</p>
 </dl>
 </dd></dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition.partition_space_2d">
-<em class="property"><span class="pre">abstract</span> </em><span class="sig-name descname"><span class="pre">partition_space_2d</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/box_decomposition.html#BoxDecomposition.partition_space_2d"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition.partition_space_2d" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute box decomposition for 2 objectives.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>None</p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py method">
 <dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition.get_hypercell_bounds">
 <em class="property"><span class="pre">abstract</span> </em><span class="sig-name descname"><span class="pre">get_hypercell_bounds</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/box_decomposition.html#BoxDecomposition.get_hypercell_bounds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition.get_hypercell_bounds" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the bounds of each hypercell in the decomposition.</p>
@@ -1432,12 +1809,41 @@ with probability above the given threshold.</p>
 <dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition.update">
 <span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/box_decomposition.html#BoxDecomposition.update"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition.update" title="Permalink to this definition">¶</a></dt>
 <dd><p>Update non-dominated front and decomposition.</p>
+<p>By default, the partitioning is recomputed. Subclasses can override
+this functionality.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>Y</strong> (<em>torch.Tensor</em>) – A <cite>(batch_shape) x n x m</cite>-dim tensor of outcomes.</p>
+<dd class="field-odd"><p><strong>Y</strong> (<em>torch.Tensor</em>) – A <cite>(batch_shape) x n x m</cite>-dim tensor of new, incremental outcomes.</p>
 </dd>
 <dt class="field-even">Return type</dt>
 <dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition.reset">
+<span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/box_decomposition.html#BoxDecomposition.reset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition.reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reset non-dominated front and decomposition.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition.compute_hypervolume">
+<em class="property"><span class="pre">abstract</span> </em><span class="sig-name descname"><span class="pre">compute_hypervolume</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/box_decomposition.html#BoxDecomposition.compute_hypervolume"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition.compute_hypervolume" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute hypervolume that is dominated by the Pareto Froniter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>A <cite>(batch_shape)</cite>-dim tensor containing the hypervolume dominated by</dt><dd><p>each Pareto frontier.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1446,40 +1852,411 @@ with probability above the given threshold.</p>
 <span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.box_decomposition.FastPartitioning">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.utils.multi_objective.box_decompositions.box_decomposition.</span></span><span class="sig-name descname"><span class="pre">FastPartitioning</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/box_decomposition.html#FastPartitioning"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition.FastPartitioning" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition" title="botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>A class for partitioning the (non-)dominated space into hyper-cells.</p>
+<p>Note: this assumes maximization. Internally, it multiplies outcomes by -1
+and performs the decomposition under minimization.</p>
+<p>This class is abstract to support to two applications of Alg 1 from
+<a class="reference internal" href="#lacour17" id="id2"><span>[Lacour17]</span></a>: 1) partitioning the space that is dominated by the Pareto
+frontier and 2) partitioning the space that is not dominated by the
+Pareto frontier.</p>
+<p>Initialize FastPartitioning.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ref_point</strong> (<em>Tensor</em>) – A <cite>m</cite>-dim tensor containing the reference point.</p></li>
+<li><p><strong>Y</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>(batch_shape) x n x m</cite>-dim tensor</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.box_decomposition.FastPartitioning.update">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/box_decomposition.html#FastPartitioning.update"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition.FastPartitioning.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update non-dominated front and decomposition.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>Y</strong> (<em>torch.Tensor</em>) – A <cite>(batch_shape) x n x m</cite>-dim tensor of new, incremental outcomes.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.box_decomposition.FastPartitioning.partition_space">
+<span class="sig-name descname"><span class="pre">partition_space</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/box_decomposition.html#FastPartitioning.partition_space"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition.FastPartitioning.partition_space" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute box decomposition.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.box_decomposition.FastPartitioning.get_hypercell_bounds">
+<span class="sig-name descname"><span class="pre">get_hypercell_bounds</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/box_decomposition.html#FastPartitioning.get_hypercell_bounds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition.FastPartitioning.get_hypercell_bounds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the bounds of each hypercell in the decomposition.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>A <cite>2 x (batch_shape) x num_cells x m</cite>-dim tensor containing the</dt><dd><p>lower and upper vertices bounding each hypercell.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.box_decomposition.FastPartitioning.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition.FastPartitioning.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
 </section>
-<section id="box-decomposition-list">
-<h2>Box Decomposition List<a class="headerlink" href="#box-decomposition-list" title="Permalink to this headline">¶</a></h2>
+<section id="module-botorch.utils.multi_objective.box_decompositions.box_decomposition_list">
+<span id="box-decomposition-list"></span><h2>Box Decomposition List<a class="headerlink" href="#module-botorch.utils.multi_objective.box_decompositions.box_decomposition_list" title="Permalink to this headline">¶</a></h2>
+<p>Box decomposition container.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.box_decomposition_list.BoxDecompositionList">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.utils.multi_objective.box_decompositions.box_decomposition_list.</span></span><span class="sig-name descname"><span class="pre">BoxDecompositionList</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">box_decompositions</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/box_decomposition_list.html#BoxDecompositionList"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition_list.BoxDecompositionList" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code></p>
+<p>A list of box decompositions.</p>
+<p>Initialize the box decomposition list.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*box_decompositions</strong> – An variable number of box decompositions</p></li>
+<li><p><strong>box_decompositions</strong> (<a class="reference internal" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition" title="botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition"><em>BoxDecomposition</em></a>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">bd1</span> <span class="o">=</span> <span class="n">FastNondominatedPartitioning</span><span class="p">(</span><span class="n">ref_point</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">Y1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">bd2</span> <span class="o">=</span> <span class="n">FastNondominatedPartitioning</span><span class="p">(</span><span class="n">ref_point</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">Y2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">bd</span> <span class="o">=</span> <span class="n">BoxDecompositionList</span><span class="p">(</span><span class="n">bd1</span><span class="p">,</span> <span class="n">bd2</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.box_decomposition_list.BoxDecompositionList.pareto_Y">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">pareto_Y</span></span><em class="property"><span class="pre">:</span> <span class="pre">List[torch.Tensor]</span></em><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition_list.BoxDecompositionList.pareto_Y" title="Permalink to this definition">¶</a></dt>
+<dd><p>This returns the non-dominated set.</p>
+<p>Note: Internally, we store the negative pareto set (minimization).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>A list where the ith element is the <cite>n_pareto_i x m</cite>-dim tensor</dt><dd><p>of pareto optimal outcomes for each box_decomposition <cite>i</cite>.</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.box_decomposition_list.BoxDecompositionList.ref_point">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">ref_point</span></span><em class="property"><span class="pre">:</span> <span class="pre">torch.Tensor</span></em><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition_list.BoxDecompositionList.ref_point" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the reference point.</p>
+<p>Note: Internally, we store the negative reference point (minimization).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A <cite>n_box_decompositions x m</cite>-dim tensor of outcomes.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.box_decomposition_list.BoxDecompositionList.get_hypercell_bounds">
+<span class="sig-name descname"><span class="pre">get_hypercell_bounds</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/box_decomposition_list.html#BoxDecompositionList.get_hypercell_bounds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition_list.BoxDecompositionList.get_hypercell_bounds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the bounds of each hypercell in the decomposition.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>A <cite>2 x n_box_decompositions x num_cells x num_outcomes</cite>-dim tensor</dt><dd><p>containing the lower and upper vertices bounding each hypercell.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.box_decomposition_list.BoxDecompositionList.update">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/box_decomposition_list.html#BoxDecompositionList.update"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition_list.BoxDecompositionList.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update the partitioning.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>Y</strong> (<em>Union</em><em>[</em><em>List</em><em>[</em><em>torch.Tensor</em><em>]</em><em>, </em><em>torch.Tensor</em><em>]</em>) – A <cite>n_box_decompositions x n x num_outcomes</cite>-dim tensor or a list
+where the ith  element contains the new points for
+box_decomposition <cite>i</cite>.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.box_decomposition_list.BoxDecompositionList.compute_hypervolume">
+<span class="sig-name descname"><span class="pre">compute_hypervolume</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/box_decomposition_list.html#BoxDecompositionList.compute_hypervolume"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition_list.BoxDecompositionList.compute_hypervolume" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute hypervolume that is dominated by the Pareto Froniter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>A <cite>(batch_shape)</cite>-dim tensor containing the hypervolume dominated by</dt><dd><p>each Pareto frontier.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.box_decomposition_list.BoxDecompositionList.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition_list.BoxDecompositionList.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
 </section>
 <section id="module-botorch.utils.multi_objective.box_decompositions.utils">
 <span id="box-decomposition-utilities"></span><h2>Box Decomposition Utilities<a class="headerlink" href="#module-botorch.utils.multi_objective.box_decompositions.utils" title="Permalink to this headline">¶</a></h2>
 <p>Utilities for box decomposition algorithms.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.utils.compute_local_upper_bounds">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.multi_objective.box_decompositions.utils.</span></span><span class="sig-name descname"><span class="pre">compute_local_upper_bounds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">U</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Z</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/utils.html#compute_local_upper_bounds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.utils.compute_local_upper_bounds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute local upper bounds.</p>
+<p>Note: this assumes minimization.</p>
+<p>This uses the incremental algorithm (Alg. 1) from <a class="reference internal" href="#lacour17" id="id3"><span>[Lacour17]</span></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>U</strong> (<em>torch.Tensor</em>) – A <cite>n x m</cite>-dim tensor containing the local upper bounds.</p></li>
+<li><p><strong>Z</strong> (<em>torch.Tensor</em>) – A <cite>n x m x m</cite>-dim tensor containing the defining points.</p></li>
+<li><p><strong>z</strong> (<em>torch.Tensor</em>) – A <cite>m</cite>-dim tensor containing the new point.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>A new <cite>n’ x m</cite>-dim tensor local upper bounds.</p></li>
+<li><p>A <cite>n’ x m x m</cite>-dim tensor containing the defining points.</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>2-element tuple containing</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.utils.get_partition_bounds">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.multi_objective.box_decompositions.utils.</span></span><span class="sig-name descname"><span class="pre">get_partition_bounds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Z</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">U</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_point</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/utils.html#get_partition_bounds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.utils.get_partition_bounds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the cell bounds given the local upper bounds and the defining points.</p>
+<p>This implements Equation 2 in <a class="reference internal" href="#lacour17" id="id4"><span>[Lacour17]</span></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Z</strong> (<em>torch.Tensor</em>) – A <cite>n x m x m</cite>-dim tensor containing the defining points. The first
+dimension corresponds to u_idx, the second dimension corresponds to j,
+and Z[u_idx, j] is the set of definining points Z^j(u) where
+u = U[u_idx].</p></li>
+<li><p><strong>U</strong> (<em>torch.Tensor</em>) – A <cite>n x m</cite>-dim tensor containing the local upper bounds.</p></li>
+<li><p><strong>ref_point</strong> (<em>torch.Tensor</em>) – A <cite>m</cite>-dim tensor containing the reference point.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>A <cite>2 x num_cells x m</cite>-dim tensor containing the lower and upper vertices</dt><dd><p>bounding each hypercell.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.utils.update_local_upper_bounds_incremental">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.multi_objective.box_decompositions.utils.</span></span><span class="sig-name descname"><span class="pre">update_local_upper_bounds_incremental</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_pareto_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">U</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Z</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/utils.html#update_local_upper_bounds_incremental"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.utils.update_local_upper_bounds_incremental" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update the current local upper with the new pareto points.</p>
+<p>This assumes minimization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>new_pareto_Y</strong> (<em>torch.Tensor</em>) – A <cite>n x m</cite>-dim tensor containing the new
+Pareto points.</p></li>
+<li><p><strong>U</strong> (<em>torch.Tensor</em>) – A <cite>n’ x m</cite>-dim tensor containing the local upper bounds.</p></li>
+<li><p><strong>Z</strong> (<em>torch.Tensor</em>) – A <cite>n x m x m</cite>-dim tensor containing the defining points.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>A new <cite>n’ x m</cite>-dim tensor local upper bounds.</p></li>
+<li><p>A <cite>n’ x m x m</cite>-dim tensor containing the defining points</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>2-element tuple containing</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.utils.compute_non_dominated_hypercell_bounds_2d">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.multi_objective.box_decompositions.utils.</span></span><span class="sig-name descname"><span class="pre">compute_non_dominated_hypercell_bounds_2d</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pareto_Y_sorted</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_point</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/utils.html#compute_non_dominated_hypercell_bounds_2d"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.utils.compute_non_dominated_hypercell_bounds_2d" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute an axis-aligned partitioning of the non-dominated space for 2 objectives.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pareto_Y_sorted</strong> (<em>torch.Tensor</em>) – A <cite>(batch_shape) x n_pareto x 2</cite>-dim tensor of pareto outcomes
+that are sorted by the 0th dimension in increasing order. All points must be
+better than the reference point.</p></li>
+<li><p><strong>ref_point</strong> (<em>torch.Tensor</em>) – A <cite>(batch_shape) x 2</cite>-dim reference point.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>2 x (batch_shape) x n_pareto + 1 x m</cite>-dim tensor of cell bounds.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.utils.compute_dominated_hypercell_bounds_2d">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.multi_objective.box_decompositions.utils.</span></span><span class="sig-name descname"><span class="pre">compute_dominated_hypercell_bounds_2d</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pareto_Y_sorted</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_point</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/utils.html#compute_dominated_hypercell_bounds_2d"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.utils.compute_dominated_hypercell_bounds_2d" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute an axis-aligned partitioning of the dominated space for 2-objectives.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pareto_Y_sorted</strong> (<em>torch.Tensor</em>) – A <cite>(batch_shape) x n_pareto x 2</cite>-dim tensor of pareto outcomes
+that are sorted by the 0th dimension in increasing order.</p></li>
+<li><p><strong>ref_point</strong> (<em>torch.Tensor</em>) – A <cite>2</cite>-dim reference point.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>2 x (batch_shape) x n_pareto x m</cite>-dim tensor of cell bounds.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
 </section>
 <section id="module-botorch.utils.multi_objective.box_decomposition">
 <span id="box-decompositions-deprecated-use-botorch-utils-multi-objective-box-decompositions"></span><h2>Box Decompositions [DEPRECATED - use botorch..utils.multi_objective.box_decompositions]<a class="headerlink" href="#module-botorch.utils.multi_objective.box_decomposition" title="Permalink to this headline">¶</a></h2>
 <p>DEPRECATED - Box decomposition algorithms.
 Use the botorch.utils.multi_objective.box_decompositions instead.</p>
 </section>
-<section id="dominated-partitionings">
-<h2>Dominated Partitionings<a class="headerlink" href="#dominated-partitionings" title="Permalink to this headline">¶</a></h2>
+<section id="module-botorch.utils.multi_objective.box_decompositions.dominated">
+<span id="dominated-partitionings"></span><h2>Dominated Partitionings<a class="headerlink" href="#module-botorch.utils.multi_objective.box_decompositions.dominated" title="Permalink to this headline">¶</a></h2>
+<p>Algorithms for partitioning the dominated space into hyperrectangles.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.dominated.DominatedPartitioning">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.utils.multi_objective.box_decompositions.dominated.</span></span><span class="sig-name descname"><span class="pre">DominatedPartitioning</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/dominated.html#DominatedPartitioning"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.dominated.DominatedPartitioning" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition.FastPartitioning" title="botorch.utils.multi_objective.box_decompositions.box_decomposition.FastPartitioning"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.utils.multi_objective.box_decompositions.box_decomposition.FastPartitioning</span></code></a></p>
+<p>Partition dominated space into axis-aligned hyperrectangles.</p>
+<p>This uses the Algorithm 1 from <a class="reference internal" href="#lacour17" id="id5"><span>[Lacour17]</span></a>.</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">bd</span> <span class="o">=</span> <span class="n">DominatedPartitioning</span><span class="p">(</span><span class="n">ref_point</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Initialize FastPartitioning.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ref_point</strong> (<em>Tensor</em>) – A <cite>m</cite>-dim tensor containing the reference point.</p></li>
+<li><p><strong>Y</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>(batch_shape) x n x m</cite>-dim tensor</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.dominated.DominatedPartitioning.compute_hypervolume">
+<span class="sig-name descname"><span class="pre">compute_hypervolume</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/dominated.html#DominatedPartitioning.compute_hypervolume"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.dominated.DominatedPartitioning.compute_hypervolume" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute hypervolume that is dominated by the Pareto Frontier.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>A <cite>(batch_shape)</cite>-dim tensor containing the hypervolume dominated by</dt><dd><p>each Pareto frontier.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.dominated.DominatedPartitioning.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.dominated.DominatedPartitioning.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
 </section>
 <section id="module-botorch.utils.multi_objective.hypervolume">
 <span id="hypervolume"></span><h2>Hypervolume<a class="headerlink" href="#module-botorch.utils.multi_objective.hypervolume" title="Permalink to this headline">¶</a></h2>
 <p>Hypervolume Utilities.</p>
 <p>References</p>
 <dl class="citation">
-<dt class="label" id="fonseca2006"><span class="brackets">Fonseca2006</span><span class="fn-backref">(<a href="#id1">1</a>,<a href="#id2">2</a>)</span></dt>
+<dt class="label" id="fonseca2006"><span class="brackets">Fonseca2006</span><span class="fn-backref">(<a href="#id7">1</a>,<a href="#id8">2</a>)</span></dt>
 <dd><p>C. M. Fonseca, L. Paquete, and M. Lopez-Ibanez. An improved dimension-sweep
 algorithm for the hypervolume indicator. In IEEE Congress on Evolutionary
 Computation, pages 1157-1163, Vancouver, Canada, July 2006.</p>
 </dd>
+<dt class="label" id="ishibuchi2011"><span class="brackets"><a class="fn-backref" href="#id6">Ishibuchi2011</a></span></dt>
+<dd><p>H. Ishibuchi, N. Akedo, and Y. Nojima. A many-objective test problem
+for visually examining diversity maintenance behavior in a decision
+space. Proc. 13th Annual Conf. Genetic Evol. Comput., 2011.</p>
+</dd>
 </dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.multi_objective.hypervolume.infer_reference_point">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.multi_objective.hypervolume.</span></span><span class="sig-name descname"><span class="pre">infer_reference_point</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pareto_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_ref_point</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_max_ref_point</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/hypervolume.html#infer_reference_point"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.hypervolume.infer_reference_point" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get reference point for hypervolume computations.</p>
+<p>This sets the reference point to be <cite>ref_point = nadir - 0.1 * range</cite>
+when there is no pareto_Y that is better than the reference point.</p>
+<p><a class="reference internal" href="#ishibuchi2011" id="id6"><span>[Ishibuchi2011]</span></a> find 0.1 to be a robust multiplier for scaling the
+nadir point.</p>
+<p>Note: this assumes maximization of all objectives.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pareto_Y</strong> (<em>torch.Tensor</em>) – A <cite>n x m</cite>-dim tensor of Pareto-optimal points.</p></li>
+<li><p><strong>max_ref_point</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – A <cite>m</cite> dim tensor indicating the maximum reference point.</p></li>
+<li><p><strong>scale</strong> (<em>float</em>) – A multiplier used to scale back the reference point based on the
+range of each objective.</p></li>
+<li><p><strong>scale_max_ref_point</strong> (<em>bool</em>) – A boolean indicating whether to apply scaling to
+the max_ref_point based on the range of each objective.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>m</cite>-dim tensor containing the reference point.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.utils.multi_objective.hypervolume.Hypervolume">
 <em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.utils.multi_objective.hypervolume.</span></span><span class="sig-name descname"><span class="pre">Hypervolume</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref_point</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/hypervolume.html#Hypervolume"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.hypervolume.Hypervolume" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Hypervolume computation dimension sweep algorithm from <a class="reference internal" href="#fonseca2006" id="id1"><span>[Fonseca2006]</span></a>.</p>
+<p>Hypervolume computation dimension sweep algorithm from <a class="reference internal" href="#fonseca2006" id="id7"><span>[Fonseca2006]</span></a>.</p>
 <p>Adapted from Simon Wessing’s implementation of the algorithm
-(Variant 3, Version 1.2) in <a class="reference internal" href="#fonseca2006" id="id2"><span>[Fonseca2006]</span></a> in PyMOO:
+(Variant 3, Version 1.2) in <a class="reference internal" href="#fonseca2006" id="id8"><span>[Fonseca2006]</span></a> in PyMOO:
 <a class="reference external" href="https://github.com/msu-coinlab/pymoo/blob/master/pymoo/vendor/hv.py">https://github.com/msu-coinlab/pymoo/blob/master/pymoo/vendor/hv.py</a></p>
 <p>Maximization is assumed.</p>
 <p>TODO: write this in C++ for faster looping.</p>
@@ -1651,7 +2428,7 @@ nodes of the node that is reinserted are in the list.</p>
 <p>Algorithms for partitioning the non-dominated space into rectangles.</p>
 <p>References</p>
 <dl class="citation">
-<dt class="label" id="couckuyt2012"><span class="brackets">Couckuyt2012</span><span class="fn-backref">(<a href="#id3">1</a>,<a href="#id4">2</a>)</span></dt>
+<dt class="label" id="couckuyt2012"><span class="brackets">Couckuyt2012</span><span class="fn-backref">(<a href="#id9">1</a>,<a href="#id10">2</a>)</span></dt>
 <dd><p>I. Couckuyt, D. Deschrijver and T. Dhaene, “Towards Efficient
 Multiobjective Optimization: Multiobjective statistical criterions,”
 2012 IEEE Congress on Evolutionary Computation, Brisbane, QLD, 2012,
@@ -1663,16 +2440,17 @@ pp. 1-8.</p>
 <em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.utils.multi_objective.box_decompositions.non_dominated.</span></span><span class="sig-name descname"><span class="pre">NondominatedPartitioning</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/non_dominated.html#NondominatedPartitioning"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.non_dominated.NondominatedPartitioning" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition" title="botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition</span></code></a></p>
 <p>A class for partitioning the non-dominated space into hyper-cells.</p>
-<p>Note: this assumes maximization. Internally, it multiplies by -1 and performs
-the decomposition under minimization. TODO: use maximization internally as well.</p>
+<p>Note: this assumes maximization. Internally, it multiplies outcomes by -1 and
+performs the decomposition under minimization. TODO: use maximization
+internally as well.</p>
 <p>Note: it is only feasible to use this algorithm to compute an exact
 decomposition of the non-dominated space for <cite>m&lt;5</cite> objectives (alpha=0.0).</p>
 <p>The alpha parameter can be increased to obtain an approximate partitioning
 faster. The <cite>alpha</cite> is a fraction of the total hypervolume encapsuling the
 entire Pareto set. When a hypercell’s volume divided by the total hypervolume
 is less than <cite>alpha</cite>, we discard the hypercell. See Figure 2 in
-<a class="reference internal" href="#couckuyt2012" id="id3"><span>[Couckuyt2012]</span></a> for a visual representation.</p>
-<p>This PyTorch implementation of the binary partitioning algorithm (<a class="reference internal" href="#couckuyt2012" id="id4"><span>[Couckuyt2012]</span></a>)
+<a class="reference internal" href="#couckuyt2012" id="id9"><span>[Couckuyt2012]</span></a> for a visual representation.</p>
+<p>This PyTorch implementation of the binary partitioning algorithm (<a class="reference internal" href="#couckuyt2012" id="id10"><span>[Couckuyt2012]</span></a>)
 is adapted from numpy/tensorflow implementation at:
 <a class="reference external" href="https://github.com/GPflow/GPflowOpt/blob/master/gpflowopt/pareto.py">https://github.com/GPflow/GPflowOpt/blob/master/gpflowopt/pareto.py</a>.</p>
 <p>TODO: replace this with a more efficient decomposition. E.g.
@@ -1691,17 +2469,10 @@ decomposition.</p></li>
 <dd class="field-even"><p>None</p>
 </dd>
 </dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.non_dominated.NondominatedPartitioning.partition_space_2d">
-<span class="sig-name descname"><span class="pre">partition_space_2d</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/non_dominated.html#NondominatedPartitioning.partition_space_2d"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.non_dominated.NondominatedPartitioning.partition_space_2d" title="Permalink to this definition">¶</a></dt>
-<dd><p>Partition the non-dominated space into disjoint hypercells.</p>
-<p>This direct method works for <cite>m=2</cite> outcomes.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>None</p>
-</dd>
-</dl>
-</dd></dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">bd</span> <span class="o">=</span> <span class="n">NondominatedPartitioning</span><span class="p">(</span><span class="n">ref_point</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">Y1</span><span class="p">)</span>
+</pre></div>
+</div>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.non_dominated.NondominatedPartitioning.get_hypercell_bounds">
 <span class="sig-name descname"><span class="pre">get_hypercell_bounds</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/non_dominated.html#NondominatedPartitioning.get_hypercell_bounds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.non_dominated.NondominatedPartitioning.get_hypercell_bounds" title="Permalink to this definition">¶</a></dt>
@@ -1712,7 +2483,7 @@ decomposition.</p></li>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p><dl class="simple">
-<dt>A <cite>2 x num_cells x num_outcomes</cite>-dim tensor containing the</dt><dd><p>lower and upper vertices bounding each hypercell.</p>
+<dt>A <cite>2 x num_cells x m</cite>-dim tensor containing the</dt><dd><p>lower and upper vertices bounding each hypercell.</p>
 </dd>
 </dl>
 </p>
@@ -1726,14 +2497,9 @@ decomposition.</p></li>
 <dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.non_dominated.NondominatedPartitioning.compute_hypervolume">
 <span class="sig-name descname"><span class="pre">compute_hypervolume</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/non_dominated.html#NondominatedPartitioning.compute_hypervolume"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.non_dominated.NondominatedPartitioning.compute_hypervolume" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute the hypervolume for the given reference point.</p>
-<p>Note: This assumes minimization.</p>
 <p>This method computes the hypervolume of the non-dominated space
 and computes the difference between the hypervolume between the
 ideal point and hypervolume of the non-dominated space.</p>
-<p>Note there are much more efficient alternatives for computing
-hypervolume when m &gt; 2 (which do not require partitioning the
-non-dominated space). Given such a partitioning, this method
-is quite fast.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p><cite>(batch_shape)</cite>-dim tensor containing the dominated hypervolume.</p>
@@ -1748,6 +2514,66 @@ is quite fast.</p>
 <span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.non_dominated.NondominatedPartitioning.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.non_dominated.FastNondominatedPartitioning">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.utils.multi_objective.box_decompositions.non_dominated.</span></span><span class="sig-name descname"><span class="pre">FastNondominatedPartitioning</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/non_dominated.html#FastNondominatedPartitioning"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.non_dominated.FastNondominatedPartitioning" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition.FastPartitioning" title="botorch.utils.multi_objective.box_decompositions.box_decomposition.FastPartitioning"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.utils.multi_objective.box_decompositions.box_decomposition.FastPartitioning</span></code></a></p>
+<p>A class for partitioning the non-dominated space into hyper-cells.</p>
+<p>Note: this assumes maximization. Internally, it multiplies by -1 and performs
+the decomposition under minimization.</p>
+<p>This class is far more efficient than NondominatedPartitioning for exact box
+partitionings</p>
+<dl class="simple">
+<dt>This class uses the two-step approach similar to that in <a class="reference internal" href="acquisition.html#yang2019" id="id11"><span>[Yang2019]</span></a>, where:</dt><dd><ol class="loweralpha simple">
+<li><dl class="simple">
+<dt>first, Alg 1 from <a class="reference internal" href="#lacour17" id="id12"><span>[Lacour17]</span></a> is used to find the local lower bounds</dt><dd><p>for the maximization problem</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>second, the local lower bounds are used as the Pareto frontier for the</dt><dd><p>minimization problem, and <a class="reference internal" href="#lacour17" id="id13"><span>[Lacour17]</span></a> is applied again to partition
+the space dominated by that Pareto frontier.</p>
+</dd>
+</dl>
+</li>
+</ol>
+</dd>
+</dl>
+<p>Initialize FastNondominatedPartitioning.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ref_point</strong> (<em>Tensor</em>) – A <cite>m</cite>-dim tensor containing the reference point.</p></li>
+<li><p><strong>Y</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – A <cite>(batch_shape) x n x m</cite>-dim tensor.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">bd</span> <span class="o">=</span> <span class="n">FastNondominatedPartitioning</span><span class="p">(</span><span class="n">ref_point</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">Y1</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.non_dominated.FastNondominatedPartitioning.compute_hypervolume">
+<span class="sig-name descname"><span class="pre">compute_hypervolume</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/box_decompositions/non_dominated.html#FastNondominatedPartitioning.compute_hypervolume"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.non_dominated.FastNondominatedPartitioning.compute_hypervolume" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute hypervolume that is dominated by the Pareto Froniter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>A <cite>(batch_shape)</cite>-dim tensor containing the hypervolume dominated by</dt><dd><p>each Pareto frontier.</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.non_dominated.FastNondominatedPartitioning.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.non_dominated.FastNondominatedPartitioning.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
 </section>
 <section id="module-botorch.utils.multi_objective.pareto">
 <span id="pareto"></span><h2>Pareto<a class="headerlink" href="#module-botorch.utils.multi_objective.pareto" title="Permalink to this headline">¶</a></h2>
@@ -1756,6 +2582,11 @@ is quite fast.</p>
 <span class="sig-prename descclassname"><span class="pre">botorch.utils.multi_objective.pareto.</span></span><span class="sig-name descname"><span class="pre">is_non_dominated</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deduplicate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/multi_objective/pareto.html#is_non_dominated"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.multi_objective.pareto.is_non_dominated" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes the non-dominated front.</p>
 <p>Note: this assumes maximization.</p>
+<p>For small <cite>n</cite>, this method uses a highly parallel methodology
+that compares all pairs of points in Y. However, this is memory
+intensive and slow for large <cite>n</cite>. For large <cite>n</cite> (or if Y is larger
+than 5MB), this method will dispatch to a loop-based approach
+that is faster and has a lower memory footprint.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -1779,7 +2610,7 @@ each point is non-dominated.</p>
 <p>Helper utilities for constructing scalarizations.</p>
 <p>References</p>
 <dl class="citation">
-<dt class="label" id="knowles2005"><span class="brackets">Knowles2005</span><span class="fn-backref">(<a href="#id5">1</a>,<a href="#id7">2</a>)</span></dt>
+<dt class="label" id="knowles2005"><span class="brackets">Knowles2005</span><span class="fn-backref">(<a href="#id14">1</a>,<a href="#id16">2</a>)</span></dt>
 <dd><p>J. Knowles, “ParEGO: a hybrid algorithm with on-line landscape approximation
 for expensive multiobjective optimization problems,” in IEEE Transactions
 on Evolutionary Computation, vol. 10, no. 1, pp. 50-66, Feb. 2006.</p>
@@ -1796,9 +2627,9 @@ Chebyshev scalarization is applied.</p>
 </dd>
 </dl>
 <p>Note: this assumes maximization.</p>
-<p>See <a class="reference internal" href="#knowles2005" id="id5"><span>[Knowles2005]</span></a> for details.</p>
+<p>See <a class="reference internal" href="#knowles2005" id="id14"><span>[Knowles2005]</span></a> for details.</p>
 <p>This scalarization can be used with qExpectedImprovement to implement q-ParEGO
-as proposed in <a class="reference internal" href="acquisition.html#daulton2020qehvi" id="id6"><span>[Daulton2020qehvi]</span></a>.</p>
+as proposed in <a class="reference internal" href="acquisition.html#daulton2020qehvi" id="id15"><span>[Daulton2020qehvi]</span></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -1806,7 +2637,7 @@ as proposed in <a class="reference internal" href="acquisition.html#daulton2020q
 <li><p><strong>Y</strong> (<em>torch.Tensor</em>) – A <cite>n x m</cite>-dim tensor of observed outcomes, which are used for
 scaling the outcomes to [0,1].</p></li>
 <li><p><strong>alpha</strong> (<em>float</em>) – Parameter governing the influence of the weighted sum term. The
-default value comes from <a class="reference internal" href="#knowles2005" id="id7"><span>[Knowles2005]</span></a>.</p></li>
+default value comes from <a class="reference internal" href="#knowles2005" id="id16"><span>[Knowles2005]</span></a>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
