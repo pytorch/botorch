@@ -251,8 +251,8 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
         values, _ = torch.max(values, dim=0)
         if self.current_value is not None:
             values = values - self.current_value
-
-        if hasattr(self, "cost_aware_utility"):
+        # NOTE: using getattr to cover both no-attribute with qKG and None with qMFKG
+        if getattr(self, "cost_aware_utility", None) is not None:
             values = self.cost_aware_utility(
                 X=X, deltas=values, sampler=self.cost_sampler
             )
