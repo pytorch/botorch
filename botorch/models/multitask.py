@@ -16,7 +16,7 @@ References
 
 .. [Maddox2021bohdo]
     W. Maddox, M. Balandat, A. Wilson, and E. Bakshy. Bayesian Optimization with
-    High-Dimensional Outputs. https://botorch.org, Jun 2021.
+    High-Dimensional Outputs. https://arxiv.org/abs/2106.12997, Jun 2021.
 """
 
 from __future__ import annotations
