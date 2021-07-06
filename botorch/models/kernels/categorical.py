@@ -12,8 +12,10 @@ from torch import Tensor
 class CategoricalKernel(Kernel):
     r"""A Kernel for categorical features.
 
-    Computes `exp(-(dist(x1, x2) / lengthscale)**2)`, where
+    Computes `exp(-dist(x1, x2) / lengthscale)`, where
     `dist(x1, x2)` is zero if `x1 == x2` and one if `x1 != x2`.
+    If the last dimension is not a batch dimension, then the
+    mean is considered.
 
     Note: This kernel is NOT differentiable w.r.t. the inputs.
     """
@@ -29,7 +31,7 @@ class CategoricalKernel(Kernel):
         **kwargs
     ) -> Tensor:
         delta = x1.unsqueeze(-2) != x2.unsqueeze(-3)
-        dists = (delta / self.lengthscale.unsqueeze(-2)).pow(2)
+        dists = delta / self.lengthscale.unsqueeze(-2)
         if last_dim_is_batch:
             dists = dists.transpose(-3, -1)
         else:

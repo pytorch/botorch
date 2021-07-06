@@ -132,7 +132,7 @@ class MixedSingleTaskGP(SingleTaskGP):
                 CategoricalKernel(
                     batch_shape=aug_batch_shape,
                     ard_num_dims=len(cat_dims),
-                    lengthscale_constraint=GreaterThan(1e-04),
+                    lengthscale_constraint=GreaterThan(1e-06),
                 )
             )
         else:
@@ -147,7 +147,7 @@ class MixedSingleTaskGP(SingleTaskGP):
                         batch_shape=aug_batch_shape,
                         ard_num_dims=len(cat_dims),
                         active_dims=cat_dims,
-                        lengthscale_constraint=GreaterThan(1e-04),
+                        lengthscale_constraint=GreaterThan(1e-06),
                     )
                 )
             )
@@ -161,7 +161,7 @@ class MixedSingleTaskGP(SingleTaskGP):
                     batch_shape=aug_batch_shape,
                     ard_num_dims=len(cat_dims),
                     active_dims=cat_dims,
-                    lengthscale_constraint=GreaterThan(1e-04),
+                    lengthscale_constraint=GreaterThan(1e-06),
                 )
             )
             covar_module = sum_kernel + prod_kernel

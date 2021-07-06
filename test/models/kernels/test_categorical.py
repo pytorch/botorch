@@ -42,8 +42,8 @@ class TestCategoricalKernel(BotorchTestCase, BaseKernelTestCase):
         lengthscale = 2
         kernel = CategoricalKernel().initialize(lengthscale=lengthscale)
         kernel.eval()
-        sq_sc_dists = (x1.unsqueeze(-2) != x2.unsqueeze(-3)) ** 2 / lengthscale ** 2
-        actual = torch.exp(-sq_sc_dists.mean(-1))
+        sc_dists = (x1.unsqueeze(-2) != x2.unsqueeze(-3)) / lengthscale
+        actual = torch.exp(-sc_dists.mean(-1))
         res = kernel(x1, x2).evaluate()
         self.assertTrue(torch.allclose(res, actual))
 
@@ -54,8 +54,8 @@ class TestCategoricalKernel(BotorchTestCase, BaseKernelTestCase):
         kernel = CategoricalKernel(active_dims=[0]).initialize(lengthscale=lengthscale)
         kernel.eval()
         dists = x1[:, :1].unsqueeze(-2) != x2[:, :1].unsqueeze(-3)
-        sq_sc_dists = dists ** 2 / lengthscale ** 2
-        actual = torch.exp(-sq_sc_dists.mean(-1))
+        sc_dists = dists / lengthscale
+        actual = torch.exp(-sc_dists.mean(-1))
         res = kernel(x1, x2).evaluate()
         self.assertTrue(torch.allclose(res, actual))
 
@@ -68,10 +68,9 @@ class TestCategoricalKernel(BotorchTestCase, BaseKernelTestCase):
         kernel.initialize(lengthscale=lengthscales)
         kernel.eval()
 
-        sq_sc_dists = (
-            x1.unsqueeze(-2) != x2.unsqueeze(-3)
-        ) ** 2 / lengthscales.unsqueeze(-2) ** 2
-        actual = torch.exp(-sq_sc_dists.mean(-1))
+        sc_dists = x1.unsqueeze(-2) != x2.unsqueeze(-3)
+        sc_dists = sc_dists / lengthscales.unsqueeze(-2)
+        actual = torch.exp(-sc_dists.mean(-1))
         res = kernel(x1, x2).evaluate()
         self.assertTrue(torch.allclose(res, actual))
 
@@ -81,7 +80,7 @@ class TestCategoricalKernel(BotorchTestCase, BaseKernelTestCase):
         self.assertTrue(torch.allclose(res, actual))
 
         # batch_dims
-        actual = torch.exp(-sq_sc_dists).transpose(-1, -3)
+        actual = torch.exp(-sc_dists).transpose(-1, -3)
         res = kernel(x1, x2, last_dim_is_batch=True).evaluate()
         self.assertTrue(torch.allclose(res, actual))
 
@@ -104,10 +103,9 @@ class TestCategoricalKernel(BotorchTestCase, BaseKernelTestCase):
         kernel.initialize(lengthscale=lengthscales)
         kernel.eval()
 
-        sq_sc_dists = (
-            x1.unsqueeze(-2) != x2.unsqueeze(-3)
-        ) ** 2 / lengthscales.unsqueeze(-2) ** 2
-        actual = torch.exp(-sq_sc_dists.mean(-1))
+        sc_dists = x1.unsqueeze(-2) != x2.unsqueeze(-3)
+        sc_dists = sc_dists / lengthscales.unsqueeze(-2)
+        actual = torch.exp(-sc_dists.mean(-1))
         res = kernel(x1, x2).evaluate()
         self.assertTrue(torch.allclose(res, actual))
 
@@ -126,10 +124,9 @@ class TestCategoricalKernel(BotorchTestCase, BaseKernelTestCase):
         kernel.initialize(lengthscale=lengthscales)
         kernel.eval()
 
-        sq_sc_dists = (
-            x1.unsqueeze(-2) != x2.unsqueeze(-3)
-        ) ** 2 / lengthscales.unsqueeze(-2) ** 2
-        actual = torch.exp(-sq_sc_dists.mean(-1))
+        sc_dists = x1.unsqueeze(-2) != x2.unsqueeze(-3)
+        sc_dists = sc_dists / lengthscales.unsqueeze(-2)
+        actual = torch.exp(-sc_dists.mean(-1))
         res = kernel(x1, x2).evaluate()
         self.assertTrue(torch.allclose(res, actual))
 
@@ -139,7 +136,7 @@ class TestCategoricalKernel(BotorchTestCase, BaseKernelTestCase):
         self.assertTrue(torch.allclose(res, actual))
 
         # batch_dims
-        actual = torch.exp(-sq_sc_dists).transpose(-1, -3)
+        actual = torch.exp(-sc_dists).transpose(-1, -3)
         res = kernel(x1, x2, last_dim_is_batch=True).evaluate()
         self.assertTrue(torch.allclose(res, actual))
 
