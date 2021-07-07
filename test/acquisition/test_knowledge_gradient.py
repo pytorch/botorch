@@ -507,9 +507,22 @@ class TestQMultiFidelityKnowledgeGradient(BotorchTestCase):
                         torch.ones(1, 2, 1, device=self.device, dtype=dtype),
                     )
                 )
-            self.assertEqual(
-                val, cau(None, torch.ones(1, device=self.device, dtype=dtype))
-            )
+                self.assertEqual(
+                    val, cau(None, torch.ones(1, device=self.device, dtype=dtype))
+                )
+                # test with defaults - should see no errors
+                qMFKG = qMultiFidelityKnowledgeGradient(
+                    model=mm,
+                    num_fantasies=n_f,
+                )
+                qMFKG.evaluate(
+                    X=torch.zeros(1, 1, 1, device=self.device, dtype=dtype),
+                    bounds=torch.tensor(
+                        [[0.0], [1.0]], device=self.device, dtype=dtype
+                    ),
+                    num_restarts=1,
+                    raw_samples=1,
+                )
 
 
 class TestKGUtils(BotorchTestCase):
