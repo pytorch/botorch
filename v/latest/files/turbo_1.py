@@ -5,7 +5,7 @@
 # 
 # In this tutorial, we show how to implement Trust Region Bayesian Optimization (TuRBO) [1] in a closed loop in BoTorch.
 # 
-# This implementation uses one trust region (TuRBO-1) and supports either parallel expected improvement (qEI) or Thompson sampling (TS). We optimize the $10D$ Ackley function on the domain $[-10, 15]^{10}$ and show that TuRBO-1 outperforms qEI as well as Sobol.
+# This implementation uses one trust region (TuRBO-1) and supports either parallel expected improvement (qEI) or Thompson sampling (TS). We optimize the $20D$ Ackley function on the domain $[-5, 10]^{20}$ and show that TuRBO-1 outperforms qEI as well as Sobol.
 # 
 # Since botorch assumes a maximization problem, we will attempt to maximize $-f(x)$ to achieve $\max_x -f(x)=0$.
 # 
@@ -23,7 +23,7 @@ import torch
 from botorch.acquisition import qExpectedImprovement
 from botorch.fit import fit_gpytorch_model
 from botorch.generation import MaxPosteriorSampling
-from botorch.models import FixedNoiseGP, SingleTaskGP
+from botorch.models import SingleTaskGP
 from botorch.optim import optimize_acqf
 from botorch.test_functions import Ackley
 from botorch.utils.transforms import unnormalize
@@ -31,6 +31,7 @@ from torch.quasirandom import SobolEngine
 
 import gpytorch
 from gpytorch.constraints import Interval
+from gpytorch.kernels import MaternKernel, ScaleKernel
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls import ExactMarginalLogLikelihood
 from gpytorch.priors import HorseshoePrior
@@ -41,24 +42,28 @@ dtype = torch.double
 SMOKE_TEST = os.environ.get("SMOKE_TEST")
 
 
-# ## Optimize the 10-dimensional Ackley function
+# ## Optimize the 20-dimensional Ackley function
 # 
 # The goal is to minimize the popular Ackley function:
 # 
 # $f(x_1,\ldots,x_d) = -20\exp\left(-0.2 \sqrt{\frac{1}{d} \sum_{j=1}^d x_j^2} \right) -\exp \left( \frac{1}{d} \sum_{j=1}^d \cos(2 \pi x_j) \right) + 20 + e$
 # 
-# over the domain  $[-10, 15]^{10}$.  The global optimal value of $0$ is attained at $x_1 = \ldots = x_d = 0$.
+# over the domain  $[-5, 10]^{20}$.  The global optimal value of $0$ is attained at $x_1 = \ldots = x_d = 0$.
 # 
 # As mentioned above, since botorch assumes a maximization problem, we instead maximize $-f(x)$.
 
 # In[2]:
 
 
-fun = Ackley(dim=10, negate=True).to(dtype=dtype, device=device)
-fun.bounds[0, :].fill_(-10)
-fun.bounds[1, :].fill_(15)
+fun = Ackley(dim=20, negate=True).to(dtype=dtype, device=device)
+fun.bounds[0, :].fill_(-5)
+fun.bounds[1, :].fill_(10)
 dim = fun.dim
 lb, ub = fun.bounds
+
+batch_size = 4
+n_init = 2 * dim
+max_cholesky_size = float("inf")  # Always use Cholesky
 
 
 def eval_objective(x):
@@ -122,7 +127,7 @@ def update_state(state, Y_next):
 # In[4]:
 
 
-state = TurboState(dim=dim, batch_size=4)
+state = TurboState(dim=dim, batch_size=batch_size)
 print(state)
 
 
@@ -132,8 +137,8 @@ print(state)
 # In[5]:
 
 
-def get_initial_points(dim, n_pts):
-    sobol = SobolEngine(dimension=dim, scramble=True)
+def get_initial_points(dim, n_pts, seed=0):
+    sobol = SobolEngine(dimension=dim, scramble=True, seed=seed)
     X_init = sobol.draw(n=n_pts).to(dtype=dtype, device=device)
     return X_init
 
@@ -193,7 +198,8 @@ def generate_batch(
 
         # Sample on the candidate points
         thompson_sampling = MaxPosteriorSampling(model=model, replacement=False)
-        X_next = thompson_sampling(X_cand, num_samples=batch_size)
+        with torch.no_grad():  # We don't need gradients when using TS
+            X_next = thompson_sampling(X_cand, num_samples=batch_size)
 
     elif acqf == "ei":
         ei = qExpectedImprovement(model, train_Y.max(), maximize=True)
@@ -218,13 +224,6 @@ def generate_batch(
 # In[7]:
 
 
-batch_size = 4
-n_init = 20  # 2*dim, which corresponds to 5 batches of 4
-
-
-# In[8]:
-
-
 X_turbo = get_initial_points(dim, n_init)
 Y_turbo = torch.tensor(
     [eval_objective(x) for x in X_turbo], dtype=dtype, device=device
@@ -241,22 +240,30 @@ while not state.restart_triggered:  # Run until TuRBO converges
     # Fit a GP model
     train_Y = (Y_turbo - Y_turbo.mean()) / Y_turbo.std()
     likelihood = GaussianLikelihood(noise_constraint=Interval(1e-8, 1e-3))
-    model = SingleTaskGP(X_turbo, train_Y, likelihood=likelihood)
-    mll = ExactMarginalLogLikelihood(model.likelihood, model)
-    fit_gpytorch_model(mll)
-    
-    # Create a batch
-    X_next = generate_batch(
-        state=state,
-        model=model,
-        X=X_turbo,
-        Y=train_Y,
-        batch_size=batch_size,
-        n_candidates=N_CANDIDATES,
-        num_restarts=NUM_RESTARTS,
-        raw_samples=RAW_SAMPLES,
-        acqf="ts",
+    covar_module = ScaleKernel(  # Use the same lengthscale prior as in the TuRBO paper
+        MaternKernel(nu=2.5, ard_num_dims=dim, lengthscale_constraint=Interval(0.005, 4.0))
     )
+    model = SingleTaskGP(X_turbo, train_Y, covar_module=covar_module, likelihood=likelihood)
+    mll = ExactMarginalLogLikelihood(model.likelihood, model)
+
+    # Do the fitting and acquisition function optimization inside the Cholesky context
+    with gpytorch.settings.max_cholesky_size(max_cholesky_size):
+        # Fit the model
+        fit_gpytorch_model(mll)
+    
+        # Create a batch
+        X_next = generate_batch(
+            state=state,
+            model=model,
+            X=X_turbo,
+            Y=train_Y,
+            batch_size=batch_size,
+            n_candidates=N_CANDIDATES,
+            num_restarts=NUM_RESTARTS,
+            raw_samples=RAW_SAMPLES,
+            acqf="ts",
+        )
+
     Y_next = torch.tensor(
         [eval_objective(x) for x in X_next], dtype=dtype, device=device
     ).unsqueeze(-1)
@@ -274,10 +281,10 @@ while not state.restart_triggered:  # Run until TuRBO converges
     )
 
 
-# ## EI
+# ## GP-EI
 # As a baseline, we compare TuRBO to qEI
 
-# In[9]:
+# In[8]:
 
 
 X_ei = get_initial_points(dim, n_init)
@@ -320,16 +327,16 @@ while len(Y_ei) < len(Y_turbo):
 
 # ## Sobol
 
-# In[10]:
+# In[9]:
 
 
-X_Sobol = SobolEngine(dim, scramble=True).draw(len(X_turbo)).to(dtype=dtype, device=device)
+X_Sobol = SobolEngine(dim, scramble=True, seed=0).draw(len(X_turbo)).to(dtype=dtype, device=device)
 Y_Sobol = torch.tensor([eval_objective(x) for x in X_Sobol], dtype=dtype, device=device).unsqueeze(-1)
 
 
 # ## Compare the methods
 
-# In[11]:
+# In[10]:
 
 
 import matplotlib
@@ -351,9 +358,9 @@ for name, run in zip(names, runs):
 plt.plot([0, len(Y_turbo)], [fun.optimal_value, fun.optimal_value], "k--", lw=3)
 plt.xlabel("Function value", fontsize=18)
 plt.xlabel("Number of evaluations", fontsize=18)
-plt.title("10D Ackley", fontsize=24)
+plt.title("20D Ackley", fontsize=24)
 plt.xlim([0, len(Y_turbo)])
-plt.ylim([-20, 1])
+plt.ylim([-15, 1])
 
 plt.grid(True)
 plt.tight_layout()
@@ -366,4 +373,10 @@ plt.legend(
     fontsize=16,
 )
 plt.show()
+
+
+# In[ ]:
+
+
+
 
