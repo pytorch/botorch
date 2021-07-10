@@ -343,10 +343,10 @@ class TestSetTransformedInputs(BotorchTestCase):
             # transform_on_train=True
             self.assertTrue(torch.equal(model.train_inputs[0], train_x))
             tf.transform_on_train = False
-            _set_transformed_inputs(mll)
+            _set_transformed_inputs(mll.model)
             self.assertTrue(torch.equal(model.train_inputs[0], train_x))
             tf.transform_on_train = True
-            _set_transformed_inputs(mll)
+            _set_transformed_inputs(mll.model)
             self.assertTrue(torch.equal(model.train_inputs[0], tf(train_x)))
             model.eval()
             # test no set_train_data method
@@ -356,4 +356,4 @@ class TestSetTransformedInputs(BotorchTestCase):
             mock_model.input_transform = tf
             mll = ExactMarginalLogLikelihood(mock_model.likelihood, mock_model)
             with self.assertRaises(BotorchError):
-                _set_transformed_inputs(mll)
+                _set_transformed_inputs(mll.model)
