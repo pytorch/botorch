@@ -231,7 +231,7 @@ class ConstrainedMCObjective(GenericMCObjective):
     approximated by a sigmoid function.
 
         mc_acq(X) = (
-            (objective(X) + infeasible_cost) * \prod_i (1  - sigmoid(constraint_i(X)))
+        (objective(X) + infeasible_cost) * \prod_i (1  - sigmoid(constraint_i(X)))
         ) - infeasible_cost
 
     See `botorch.utils.objective.apply_constraints` for details on the constraint
