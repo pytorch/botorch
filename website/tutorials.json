@@ -99,6 +99,10 @@
     {
       "id": "discrete_multi_fidelity_bo",
       "title": "Multi-fidelity Bayesian optimization with discrete fidelities using KG"
-    }
+    },
+    {
+      "id": "composite_bo_with_hogp",
+      "title": "Composite Bayesian optimization with the High Order Gaussian Process"
+    }      
   ]
 }
