@@ -46,13 +46,32 @@ class DeterministicModel(Model, ABC):
     def posterior(
         self, X: Tensor, output_indices: Optional[List[int]] = None, **kwargs: Any
     ) -> DeterministicPosterior:
-        r"""Compute the (deterministic) posterior at X."""
+        r"""Compute the (deterministic) posterior at X.
+
+        Args:
+            X: A `batch_shape x n x d`-dim input tensor `X`.
+            output_indices: A list of indices, corresponding to the outputs over
+                which to compute the posterior. If omitted, computes the posterior
+                over all model outputs.
+
+        Returns:
+            A `DeterministicPosterior` object, representing `batch_shape` joint
+            posteriors over `n` points and the outputs selected by `output_indices`.
+        """
+        # Apply the input transforms in `eval` mode.
+        self.eval()
+        X = self.transform_inputs(X)
         if kwargs.get("observation_noise") is not None:
             # TODO: Consider returning an MVN here instead
             raise UnsupportedError(
                 "Deterministic models do not support observation noise."
             )
         values = self.forward(X)
+        # NOTE: The `outcome_transform` `untransform`s the predictions rather than the
+        # `posterior` (as is done in GP models). This is more general since it works
+        # even if the transform doesn't support `untransform_posterior`.
+        if hasattr(self, "outcome_transform"):
+            values, _ = self.outcome_transform.untransform(values)
         if output_indices is not None:
             values = values[..., output_indices]
         return DeterministicPosterior(values=values)
