@@ -11,8 +11,23 @@ from botorch.models.deterministic import (
     DeterministicModel,
     GenericDeterministicModel,
 )
+from botorch.models.transforms.input import Normalize
+from botorch.models.transforms.outcome import Standardize
 from botorch.posteriors.deterministic import DeterministicPosterior
 from botorch.utils.testing import BotorchTestCase
+
+
+class DummyDeterministicModel(DeterministicModel):
+    r"""A dummy deterministic model that uses transforms."""
+
+    def __init__(self, outcome_transform, input_transform):
+        super().__init__()
+        self.input_transform = input_transform
+        self.outcome_transform = outcome_transform
+
+    def forward(self, X):
+        # just a non-linear objective that is sure to break without transforms
+        return (X - 1.0).pow(2).sum(dim=-1, keepdim=True) - 5.0
 
 
 class TestDeterministicModels(BotorchTestCase):
@@ -77,3 +92,18 @@ class TestDeterministicModels(BotorchTestCase):
         p = model.posterior(X)
         p_sub = subset_model.posterior(X)
         self.assertTrue(torch.equal(p_sub.mean, p.mean[..., [0]]))
+
+    def test_with_transforms(self):
+        dim = 2
+        bounds = torch.stack([torch.zeros(dim), torch.ones(dim) * 3])
+        intf = Normalize(d=dim, bounds=bounds)
+        octf = Standardize(m=1)
+        # update octf state with dummy data
+        octf(torch.rand(5, 1) * 7)
+        octf.eval()
+        model = DummyDeterministicModel(octf, intf)
+        # check that the posterior output agrees with the manually transformed one
+        test_X = torch.rand(3, dim)
+        expected_Y, _ = octf.untransform(model.forward(intf(test_X)))
+        posterior = model.posterior(test_X)
+        self.assertTrue(torch.allclose(expected_Y, posterior.mean))
