@@ -1029,6 +1029,31 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             self.assertTrue(torch.equal(acqf.X_baseline[:-2], acqf._X_baseline))
             self.assertTrue(torch.equal(acqf.X_baseline[-2:], X_pending2))
 
+            # test proper subsetting of samples in forward
+            mm.input_transform = True  # trigger hasattr check
+            n_w = 2
+            X_test = torch.rand(1, 1, **tkwargs)
+            X_full_q_batch_size = X_test.shape[-2] + X_baseline.shape[-2]
+            mm._posterior._samples = torch.rand(X_full_q_batch_size * n_w, m, **tkwargs)
+            expected_samples = mm._posterior._samples[-n_w:, :]
+
+            def dummy_compute_qehvi(acqf, samples, obj):
+                self.assertTrue(torch.equal(samples, expected_samples.unsqueeze(0)))
+                return samples.sum(dim=[-1, -2])
+
+            with mock.patch.object(
+                qNoisyExpectedHypervolumeImprovement,
+                "_compute_qehvi",
+                dummy_compute_qehvi,
+            ):
+                acqf = qNoisyExpectedHypervolumeImprovement(
+                    model=mm,
+                    ref_point=ref_point,
+                    X_baseline=X_baseline,
+                    sampler=sampler,
+                )
+                acqf(X_test)
+
     def test_constrained_q_noisy_expected_hypervolume_improvement(self):
         # TODO: improve tests with constraints
         for dtype in (torch.float, torch.double):

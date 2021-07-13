@@ -211,21 +211,18 @@ class qExpectedHypervolumeImprovement(MultiObjectiveMCAcquisitionFunction):
             )
             self.q = q
 
-    def _compute_qehvi(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+    def _compute_qehvi(self, samples: Tensor, obj: Tensor) -> Tensor:
         r"""Compute the expected (feasible) hypervolume improvement given MC samples.
 
         Args:
-            samples: A `n_samples x batch_shape x q x m`-dim tensor of samples.
-            X: A `batch_shape x q x d`-dim tensor of inputs.
+            samples: A `n_samples x batch_shape x q' x m`-dim tensor of samples.
+            obj: A `n_samples x batch_shape x q x m`-dim objective values.
 
         Returns:
             A `batch_shape x (model_batch_shape)`-dim tensor of expected hypervolume
             improvement for each batch.
         """
-        q = samples.shape[-2]
-        # Note that the objective may subset the outcomes (e.g. this will usually happen
-        # if there are constraints present).
-        obj = self.objective(samples, X=X)
+        q = obj.shape[-2]
         if self.constraints is not None:
             feas_weights = torch.ones(
                 obj.shape[:-1], device=obj.device, dtype=obj.dtype
@@ -305,7 +302,8 @@ class qExpectedHypervolumeImprovement(MultiObjectiveMCAcquisitionFunction):
     def forward(self, X: Tensor) -> Tensor:
         posterior = self.model.posterior(X)
         samples = self.sampler(posterior)
-        return self._compute_qehvi(samples=samples)
+        obj = self.objective(samples, X=X)
+        return self._compute_qehvi(samples=samples, obj=obj)
 
 
 class qNoisyExpectedHypervolumeImprovement(qExpectedHypervolumeImprovement):
@@ -684,6 +682,13 @@ class qNoisyExpectedHypervolumeImprovement(qExpectedHypervolumeImprovement):
         posterior = self.model.posterior(X_full)
         q = X.shape[-2]
         self._set_sampler(q=q, posterior=posterior)
-        samples = self.sampler(posterior)[..., -q:, :]
+        samples = self.sampler(posterior)
+        obj = self.objective(samples, X=X)[..., -q:, :]
+        # account for one-to-many transforms when subsetting samples
+        if hasattr(self.model, "input_transform"):
+            n_w = samples.shape[-2] // X_full.shape[-2]
+            samples = samples[..., -q * n_w :, :]
+        else:
+            samples = samples[..., -q:, :]
         # add previous nehvi from pending points
-        return self._compute_qehvi(samples=samples) + self._prev_nehvi
+        return self._compute_qehvi(samples=samples, obj=obj) + self._prev_nehvi
