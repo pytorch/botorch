@@ -16,7 +16,7 @@
 # 
 # over $x \in [0,1]^6$ (parameter values can be found in `botorch/test_functions/hartmann6.py`).
 # 
-# In real BO applications, the design $x$ can influence multiple metrics in unknown ways, and the decision-maker often wants to optimize one metric without sacrificing another. To illustrate this, we add a synthetic constraint fo the form $\|x\|_1 - 3 \le 0$. Both the objective and the constraint are observed with noise. 
+# In real BO applications, the design $x$ can influence multiple metrics in unknown ways, and the decision-maker often wants to optimize one metric without sacrificing another. To illustrate this, we add a synthetic constraint of the form $\|x\|_1 - 3 \le 0$. Both the objective and the constraint are observed with noise. 
 # 
 # Since botorch assumes a maximization problem, we will attempt to maximize $-f(x)$ to achieve $\max_{x} -f(x) = 3.32237$.
 
