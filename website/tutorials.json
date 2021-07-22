@@ -103,6 +103,10 @@
     {
       "id": "composite_bo_with_hogp",
       "title": "Composite Bayesian optimization with the High Order Gaussian Process"
-    }      
+    },
+    {      
+      "id": "composite_mtbo",
+      "title": "Composite Bayesian Optimization with Multi-Task Gaussian Processes"
+    }
   ]
 }
