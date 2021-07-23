@@ -15,6 +15,11 @@ References
     in Evolutionary Multiobjective Optimization, London, U.K.: Springer-Verlag,
     pp. 105-145, 2005.
 
+.. [Deb2005robust]
+    K. Deb, H. Gupta. "Searching for Robust Pareto-Optimal Solutions in
+    Multi-objective Optimization" in Evolutionary Multi-Criterion Optimization,
+    Springer-Berlin, pp. 150-164, 2005.
+
 .. [GarridoMerchan2020]
     E. C. Garrido-Merch ́an and D. Hern ́andez-Lobato. Parallel Predictive Entropy
     Search for Multi-objective Bayesian Optimization with Constraints.
@@ -50,6 +55,7 @@ References
 from __future__ import annotations
 
 import math
+from abc import ABC, abstractmethod
 from typing import Optional
 
 import torch
@@ -120,6 +126,177 @@ class BraninCurrin(MultiObjectiveTestProblem):
         return torch.stack([branin, currin], dim=-1)
 
 
+class DH(MultiObjectiveTestProblem, ABC):
+    r"""Base class for DH problems for robust multi-objective optimization.
+
+    In their paper, [Deb2005robust]_ consider these problems under a mean-robustness
+    setting, and use uniformly distributed input perturbations from the box with
+    edge lengths `delta_0 = delta`, `delta_i = 2 * delta, i > 0`, with `delta` ranging
+    up to `0.01` for DH1 and DH2, and `delta = 0.03` for DH3 and DH4.
+
+    These are d-dimensional problems with two objectives:
+
+        f_0(x) = x_0
+        f_1(x) = h(x) + g(x) * S(x) for DH1 and DH2
+        f_2(x) = h(x) * (g(x) + S(x)) for DH3 and DH4
+
+    The goal is to minimize both objectives. See [Deb2005robust]_ for more details
+    on DH. The reference points were set using `infer_reference_point`.
+    """
+
+    num_objectives = 2
+    _ref_point: float = [1.1, 1.1]
+    _x_1_lb: float
+    _area_under_curve: float
+    _min_dim: int
+
+    def __init__(
+        self,
+        dim: int,
+        noise_std: Optional[float] = None,
+        negate: bool = False,
+    ) -> None:
+        if dim < self._min_dim:
+            raise ValueError(f"dim must be >= {self._min_dim}, but got dim={dim}!")
+        self.dim = dim
+        self._bounds = [(0.0, 1.0), (self._x_1_lb, 1.0)] + [
+            (-1.0, 1.0) for _ in range(dim - 2)
+        ]
+        # max_hv is the area of the box minus the area of the curve formed by the PF.
+        self._max_hv = self._ref_point[0] * self._ref_point[1] - self._area_under_curve
+        super().__init__(noise_std=noise_std, negate=negate)
+
+    @abstractmethod
+    def _h(self, X: Tensor) -> Tensor:
+        pass  # pragma: no cover
+
+    @abstractmethod
+    def _g(self, X: Tensor) -> Tensor:
+        pass  # pragma: no cover
+
+    @abstractmethod
+    def _S(self, X: Tensor) -> Tensor:
+        pass  # pragma: no cover
+
+
+class DH1(DH):
+    r"""DH1 test problem.
+
+    d-dimensional problem evaluated on `[0, 1] x [-1, 1]^{d-1}`:
+
+        f_0(x) = x_0
+        f_1(x) = h(x_0) + g(x) * S(x_0)
+        h(x_0) = 1 - x_0^2
+        g(x) = \sum_{i=1}^{d-1} (10 + x_i^2 - 10 * cos(4 * pi * x_i))
+        S(x_0) = alpha / (0.2 + x_0) + beta * x_0^2
+
+    where alpha = 1 and beta = 1.
+
+    The Pareto front corresponds to the equation `f_1 = 1 - f_0^2`, and it is found at
+    `x_i = 0` for `i > 0` and any value of `x_0` in `(0, 1]`.
+    """
+
+    alpha = 1.0
+    beta = 1.0
+    _x_1_lb = -1.0
+    _area_under_curve = 2.0 / 3.0
+    _min_dim = 2
+
+    def _h(self, X: Tensor) -> Tensor:
+        return 1 - X[..., 0].pow(2)
+
+    def _g(self, X: Tensor) -> Tensor:
+        x_1_to = X[..., 1:]
+        return torch.sum(
+            10 + x_1_to.pow(2) - 10 * torch.cos(4 * math.pi * x_1_to),
+            dim=-1,
+        )
+
+    def _S(self, X: Tensor) -> Tensor:
+        x_0 = X[..., 0]
+        return self.alpha / (0.2 + x_0) + self.beta * x_0.pow(2)
+
+    def evaluate_true(self, X: Tensor) -> Tensor:
+        f_0 = X[..., 0]
+        # This may encounter 0 / 0, which we set to 0.
+        f_1 = self._h(X) + torch.nan_to_num(self._g(X) * self._S(X))
+        return torch.stack([f_0, f_1], dim=-1)
+
+
+class DH2(DH1):
+    r"""DH2 test problem.
+
+    This is identical to DH1 except for having `beta = 10.0`.
+    """
+
+    beta = 10.0
+
+
+class DH3(DH):
+    r"""DH3 test problem.
+
+    d-dimensional problem evaluated on `[0, 1]^2 x [-1, 1]^{d-2}`:
+
+        f_0(x) = x_0
+        f_1(x) = h(x_1) * (g(x) + S(x_0))
+        h(x_1) = 2 - 0.8 * exp(-((x_1 - 0.35) / 0.25)^2) - exp(-((x_1 - 0.85) / 0.03)^2)
+        g(x) = \sum_{i=2}^{d-1} (50 * x_i^2)
+        S(x_0) = 1 - sqrt(x_0)
+
+    The Pareto front is found at `x_i = 0` for `i > 1`. There's a local and a global
+    Pareto front, which are found at `x_1 = 0.35` and `x_1 = 0.85`, respectively.
+    The approximate relationships between the objectives at local and global Pareto
+    fronts are given by `f_1 = 1.2 (1 - sqrt(f_0))` and `f_1 = 1 - f_0`, respectively.
+    The specific values on the Pareto fronts can be found by varying `x_0`.
+    """
+
+    _x_1_lb = 0.0
+    _area_under_curve = 0.328449169794718
+    _min_dim = 3
+
+    @staticmethod
+    def _exp_args(x: Tensor) -> Tensor:
+        exp_arg_1 = -((x - 0.35) / 0.25).pow(2)
+        exp_arg_2 = -((x - 0.85) / 0.03).pow(2)
+        return exp_arg_1, exp_arg_2
+
+    def _h(self, X: Tensor) -> Tensor:
+        exp_arg_1, exp_arg_2 = self._exp_args(X[..., 1])
+        return 2 - 0.8 * torch.exp(exp_arg_1) - torch.exp(exp_arg_2)
+
+    def _g(self, X: Tensor) -> Tensor:
+        return 50 * X[..., 2:].pow(2).sum(dim=-1)
+
+    def _S(self, X: Tensor) -> Tensor:
+        return 1 - X[..., 0].sqrt()
+
+    def evaluate_true(self, X: Tensor) -> Tensor:
+        f_0 = X[..., 0]
+        f_1 = self._h(X) * (self._g(X) + self._S(X))
+        return torch.stack([f_0, f_1], dim=-1)
+
+
+class DH4(DH3):
+    r"""DH4 test problem.
+
+    This is similar to DH3 except that it is evaluated on
+    `[0, 1] x [-0.15, 1] x [-1, 1]^{d-2}` and:
+
+        h(x_0, x_1) = 2 - x_0 - 0.8 * exp(-((x_0 + x_1 - 0.35) / 0.25)^2)
+        - exp(-((x_0 + x_1 - 0.85) / 0.03)^2)
+
+    The Pareto front is found at `x_i = 0` for `i > 2`, with the local one being
+    near `x_0 + x_1 = 0.35` and the global one near `x_0 + x_1 = 0.85`.
+    """
+
+    _x_1_lb = -0.15
+    _area_under_curve = 0.22845
+
+    def _h(self, X: Tensor) -> Tensor:
+        exp_arg_1, exp_arg_2 = self._exp_args(X[..., :2].sum(dim=-1))
+        return 2 - X[..., 0] - 0.8 * torch.exp(exp_arg_1) - torch.exp(exp_arg_2)
+
+
 class DTLZ(MultiObjectiveTestProblem):
     r"""Base class for DTLZ problems.
 
@@ -135,7 +312,7 @@ class DTLZ(MultiObjectiveTestProblem):
     ) -> None:
         if dim <= num_objectives:
             raise ValueError(
-                f"dim must be > num_objectives, but got {dim} and {num_objectives}"
+                f"dim must be > num_objectives, but got {dim} and {num_objectives}."
             )
         self.num_objectives = num_objectives
         self.dim = dim
@@ -152,11 +329,11 @@ class DTLZ1(DTLZ):
 
         f_0(x) = 0.5 * x_0 * (1 + g(x))
         f_1(x) = 0.5 * (1 - x_0) * (1 + g(x))
-        g(x) = 100 * \sum_{i=m}^{n-1} (
+        g(x) = 100 * \sum_{i=m}^{d-1} (
         k + (x_i - 0.5)^2 - cos(20 * pi * (x_i - 0.5))
         )
 
-    where k = n - m + 1.
+    where k = d - m + 1.
 
     The pareto front is given by the line (or hyperplane) \sum_i f_i(x) = 0.5.
     The goal is to minimize both objectives. The reference point comes from [Yang2019]_.
@@ -209,7 +386,7 @@ class DTLZ2(DTLZ):
 
         f_0(x) = (1 + g(x)) * cos(x_0 * pi / 2)
         f_1(x) = (1 + g(x)) * sin(x_0 * pi / 2)
-        g(x) = \sum_{i=m}^{n-1} (x_i - 0.5)^2
+        g(x) = \sum_{i=m}^{d-1} (x_i - 0.5)^2
 
     The pareto front is given by the unit hypersphere \sum{i} f_i^2 = 1.
     Note: the pareto front is completely concave. The goal is to minimize
@@ -220,7 +397,7 @@ class DTLZ2(DTLZ):
 
     @property
     def _max_hv(self) -> float:
-        # hypercube - volume of hypersphere in R^n such that all coordinates are
+        # hypercube - volume of hypersphere in R^d such that all coordinates are
         # positive
         hypercube_vol = self._ref_val ** self.num_objectives
         pos_hypersphere_vol = (

@@ -11,6 +11,10 @@ from botorch.test_functions.multi_objective import (
     BNH,
     C2DTLZ2,
     CONSTR,
+    DH1,
+    DH2,
+    DH3,
+    DH4,
     DTLZ1,
     DTLZ2,
     SRN,
@@ -64,6 +68,41 @@ class TestBraninCurrin(MultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
         for f in self.functions:
             self.assertEqual(f.num_objectives, 2)
             self.assertEqual(f.dim, 2)
+
+
+class TestDH(MultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
+    functions = [DH1(dim=2), DH2(dim=3), DH3(dim=4), DH4(dim=5)]
+    dims = [2, 3, 4, 5]
+    bounds = [
+        [[0.0, -1], [1, 1]],
+        [[0.0, -1, -1], [1, 1, 1]],
+        [[0.0, 0, -1, -1], [1, 1, 1, 1]],
+        [[0.0, -0.15, -1, -1, -1], [1, 1, 1, 1, 1]],
+    ]
+    expected = [
+        [[0.0, 1.0], [1.0, 1.0 / 1.2 + 1.0]],
+        [[0.0, 1.0], [1.0, 2.0 / 1.2 + 20.0]],
+        [[0.0, 1.88731], [1.0, 1.9990726 * 100]],
+        [[0.0, 1.88731], [1.0, 150.0]],
+    ]
+
+    def test_init(self):
+        for i, f in enumerate(self.functions):
+            with self.assertRaises(ValueError):
+                f.__class__(dim=1)
+            self.assertEqual(f.num_objectives, 2)
+            self.assertEqual(f.dim, self.dims[i])
+            self.assertTrue(
+                torch.equal(f.bounds, torch.tensor(self.bounds[i]).to(f.bounds))
+            )
+
+    def test_function_values(self):
+        for i, f in enumerate(self.functions):
+            test_X = torch.zeros(2, self.dims[i], device=self.device)
+            test_X[1] = 1.0
+            actual = f(test_X)
+            expected = torch.tensor(self.expected[i], device=self.device)
+            self.assertTrue(torch.allclose(actual, expected))
 
 
 class TestDTLZ(MultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
