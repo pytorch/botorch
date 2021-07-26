@@ -163,6 +163,23 @@ class PosteriorMean(AnalyticAcquisitionFunction):
         >>> pm = PM(test_X)
     """
 
+    def __init__(
+        self,
+        model: Model,
+        objective: Optional[ScalarizedObjective] = None,
+        maximize: bool = True,
+    ) -> None:
+        r"""Single-outcome Posterior Mean.
+
+        Args:
+            model: A fitted single-outcome GP model (must be in batch mode if
+                candidate sets X will be)
+            objective: A ScalarizedObjective (optional).
+            maximize: If True, consider the problem a maximization problem.
+        """
+        super().__init__(model=model, objective=objective)
+        self.maximize = maximize
+
     @t_batch_mode_transform(expected_q=1)
     def forward(self, X: Tensor) -> Tensor:
         r"""Evaluate the posterior mean on the candidate set X.
@@ -176,7 +193,11 @@ class PosteriorMean(AnalyticAcquisitionFunction):
             points `X`.
         """
         posterior = self._get_posterior(X=X)
-        return posterior.mean.view(X.shape[:-2])
+        mean = posterior.mean.view(X.shape[:-2])
+        if self.maximize:
+            return mean
+        else:
+            return -mean
 
 
 class ProbabilityOfImprovement(AnalyticAcquisitionFunction):
