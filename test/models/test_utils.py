@@ -126,6 +126,12 @@ class TestInputDataChecks(BotorchTestCase):
                 self.assertTrue(any("not contained" in str(w.message) for w in ws))
             with self.assertRaises(InputDataError):
                 check_min_max_scaling(X=X, strict=True, raise_on_fail=True)
+            # check ignore_dims
+            with warnings.catch_warnings(record=True) as ws:
+                check_min_max_scaling(X=X, ignore_dims=[0])
+                self.assertFalse(
+                    any(issubclass(w.category, InputDataWarning) for w in ws)
+                )
 
     def test_check_standardization(self):
         Y = torch.randn(3, 4, 2)

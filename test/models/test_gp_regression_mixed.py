@@ -65,6 +65,7 @@ class TestMixedSingleTaskGP(BotorchTestCase):
                 continue
 
             model = MixedSingleTaskGP(train_X, train_Y, cat_dims=cat_dims)
+            self.assertEqual(model._ignore_X_dims_scaling_check, cat_dims)
             mll = ExactMarginalLogLikelihood(model.likelihood, model).to(**tkwargs)
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=OptimizationWarning)

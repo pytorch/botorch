@@ -97,7 +97,10 @@ class SingleTaskGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         if outcome_transform is not None:
             train_Y, _ = outcome_transform(train_Y)
         self._validate_tensor_args(X=transformed_X, Y=train_Y)
-        validate_input_scaling(train_X=transformed_X, train_Y=train_Y)
+        ignore_X_dims = getattr(self, "_ignore_X_dims_scaling_check", None)
+        validate_input_scaling(
+            train_X=transformed_X, train_Y=train_Y, ignore_X_dims=ignore_X_dims
+        )
         self._set_dimensions(train_X=train_X, train_Y=train_Y)
         train_X, train_Y, _ = self._transform_tensor_args(X=train_X, Y=train_Y)
         if likelihood is None:

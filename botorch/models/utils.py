@@ -133,7 +133,11 @@ def check_no_nans(Z: Tensor) -> None:
 
 
 def check_min_max_scaling(
-    X: Tensor, strict: bool = False, atol: float = 1e-2, raise_on_fail: bool = False
+    X: Tensor,
+    strict: bool = False,
+    atol: float = 1e-2,
+    raise_on_fail: bool = False,
+    ignore_dims: Optional[List[int]] = None,
 ) -> None:
     r"""Check that tensor is normalized to the unit cube.
 
@@ -144,9 +148,17 @@ def check_min_max_scaling(
             just to be contained within the unit cube).
         atol: The tolerance for the boundary check. Only used if `strict=True`.
         raise_on_fail: If True, raise an exception instead of a warning.
+        ignore_dims: Subset of dimensions where the min-max scaling check is omitted.
     """
+    ignore_dims = ignore_dims or []
+    check_dims = list(set(range(X.shape[-1])) - set(ignore_dims))
+    if len(check_dims) == 0:
+        return None
+
     with torch.no_grad():
-        Xmin, Xmax = torch.min(X, dim=-1)[0], torch.max(X, dim=-1)[0]
+        X_check = X[..., check_dims]
+        Xmin = torch.min(X_check, dim=-1).values
+        Xmax = torch.max(X_check, dim=-1).values
         msg = None
         if strict and max(torch.abs(Xmin).max(), torch.abs(Xmax - 1).max()) > atol:
             msg = "scaled"
@@ -195,6 +207,7 @@ def validate_input_scaling(
     train_Y: Tensor,
     train_Yvar: Optional[Tensor] = None,
     raise_on_fail: bool = False,
+    ignore_X_dims: Optional[List[int]] = None,
 ) -> None:
     r"""Helper function to validate input data to models.
 
@@ -208,11 +221,14 @@ def validate_input_scaling(
         raise_on_fail: If True, raise an error instead of emitting a warning
             (only for normalization/standardization checks, an error is always
             raised if NaN values are present).
+        ignore_X_dims: For this subset of dimensions from `{1, ..., d}`, ignore the
+            min-max scaling check.
 
     This function is typically called inside the constructor of standard BoTorch
     models. It validates the following:
     (i) none of the inputs contain NaN values
-    (ii) the training data (`train_X`) is normalized to the unit cube
+    (ii) the training data (`train_X`) is normalized to the unit cube for all
+    dimensions except those in `ignore_X_dims`.
     (iii) the training targets (`train_Y`) are standardized (zero mean, unit var)
     No checks (other than the NaN check) are performed for observed variances
     (`train_Yvar`) at this point.
@@ -225,7 +241,9 @@ def validate_input_scaling(
         check_no_nans(train_Yvar)
         if torch.any(train_Yvar < 0):
             raise InputDataError("Input data contains negative variances.")
-    check_min_max_scaling(X=train_X, raise_on_fail=raise_on_fail)
+    check_min_max_scaling(
+        X=train_X, raise_on_fail=raise_on_fail, ignore_dims=ignore_X_dims
+    )
     check_standardization(Y=train_Y, raise_on_fail=raise_on_fail)
 
 
