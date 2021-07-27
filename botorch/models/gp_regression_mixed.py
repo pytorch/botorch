@@ -96,6 +96,7 @@ class MixedSingleTaskGP(SingleTaskGP):
             raise ValueError(
                 "Must specify categorical dimensions for MixedSingleTaskGP"
             )
+        self._ignore_X_dims_scaling_check = cat_dims
         input_batch_shape, aug_batch_shape = self.get_batch_dimensions(
             train_X=train_X, train_Y=train_Y
         )
