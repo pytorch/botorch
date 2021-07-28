@@ -168,7 +168,8 @@ class HigherOrderGPPosterior(GPyTorchPosterior):
         # base samples now have trailing sample dimension
         covariance_matrix = self.joint_covariance_matrix
         covar_root = covariance_matrix.root_decomposition().root
-        samples = covar_root.matmul(base_samples)
+
+        samples = covar_root.matmul(base_samples[..., : covar_root.shape[-1], :])
 
         # now pluck out Y_x and X_x
         noiseless_train_marginal_samples = samples[

@@ -44,7 +44,7 @@ from gpytorch.likelihoods import (
 )
 from gpytorch.models import ExactGP
 from gpytorch.priors.torch_priors import GammaPrior, MultivariateNormalPrior
-from gpytorch.settings import fast_pred_var, skip_posterior_variances
+from gpytorch.settings import fast_pred_var, max_cholesky_size, skip_posterior_variances
 from torch import Tensor
 from torch.nn import ModuleList, Parameter, ParameterList
 
@@ -447,7 +447,15 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
                 )
             else:
                 train_inputs = self.train_inputs[0]
+            # TODO: use LazyTensor.cat_rows utility instead of forming the joint which
+            # we would have to decompose
             full_covar = self.covar_modules[0](torch.cat((train_inputs, X), dim=-2))
+
+            # in order to have continuous gradients wrt X we need to compute a dense
+            # cholesky wrt X, rather than relying on Lanczos so we pre-compute it here
+            # rather than in the rsample call where it is more difficult to control
+            with max_cholesky_size(10000):
+                _ = full_covar.root_decomposition(method="cholesky")
 
             if no_pred_variance:
                 pred_variance = mvn.variance
