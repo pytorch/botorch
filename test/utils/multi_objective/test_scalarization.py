@@ -68,7 +68,20 @@ class TestGetChebyshevScalarization(BotorchTestCase):
                     dim=-1
                 ).values + 0.05 * (weights * normalized_Y_test).sum(dim=-1)
                 self.assertTrue(torch.equal(Y_transformed, expected_Y_transformed))
+                # test that when minimizing an objective (i.e. with a negative weight),
+                # normalized Y values are shifted from [0,1] to [-1,0]
+                weights = torch.tensor([0.3, -0.7], **tkwargs)
+                objective_transform = get_chebyshev_scalarization(
+                    weights=weights, Y=Y_train
+                )
+                Y_transformed = objective_transform(Y_test)
+                normalized_Y_test[..., -1] = normalized_Y_test[..., -1] - 1
+                expected_Y_transformed = (weights * normalized_Y_test).min(
+                    dim=-1
+                ).values + 0.05 * (weights * normalized_Y_test).sum(dim=-1)
+                self.assertTrue(torch.equal(Y_transformed, expected_Y_transformed))
                 # test that with no observations there is no normalization
+                weights = torch.tensor([0.3, 0.7], **tkwargs)
                 objective_transform = get_chebyshev_scalarization(
                     weights=weights, Y=Y_train[:0]
                 )

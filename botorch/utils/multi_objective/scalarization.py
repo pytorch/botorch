@@ -29,13 +29,17 @@ def get_chebyshev_scalarization(
 ) -> Callable[[Tensor, Optional[Tensor]], Tensor]:
     r"""Construct an augmented Chebyshev scalarization.
 
-    Outcomes are first normalized to [0,1] and then an augmented
-    Chebyshev scalarization is applied.
-
     Augmented Chebyshev scalarization:
         objective(y) = min(w * y) + alpha * sum(w * y)
 
-    Note: this assumes maximization.
+    Outcomes are first normalized to [0,1] for maximization (or [-1,0] for minimization)
+    and then an augmented Chebyshev scalarization is applied.
+
+    Note: this assumes maximization of the augmented Chebyshev scalarization.
+    Minimizing/Maximizing an objective is supported by passing a negative/positive
+    weight for that objective. To make all w * y's have positive sign
+    such that they are comparable when computing min(w * y), outcomes of minimization
+    objectives are shifted from [0,1] to [-1,0].
 
     See [Knowles2005]_ for details.
 
@@ -44,8 +48,9 @@ def get_chebyshev_scalarization(
 
     Args:
         weights: A `m`-dim tensor of weights.
+            Positive for maximization and negative for minimization.
         Y: A `n x m`-dim tensor of observed outcomes, which are used for
-            scaling the outcomes to [0,1].
+            scaling the outcomes to [0,1] or [-1,0].
         alpha: Parameter governing the influence of the weighted sum term. The
             default value comes from [Knowles2005]_.
 
@@ -53,7 +58,7 @@ def get_chebyshev_scalarization(
         Transform function using the objective weights.
 
     Example:
-        >>> weights = torch.tensor([0.75, 0.25])
+        >>> weights = torch.tensor([0.75, -0.25])
         >>> transform = get_aug_chebyshev_scalarization(weights, Y)
     """
     if weights.shape != Y.shape[-1:]:
@@ -80,9 +85,15 @@ def get_chebyshev_scalarization(
         # Set the bounds to be [min(Y_m), max(Y_m)], for each objective m
         Y_bounds = torch.stack([Y.min(dim=-2).values, Y.max(dim=-2).values])
 
+    # A boolean mask indicating if minimizing an objective
+    minimize = weights < 0
+
     def obj(Y: Tensor, X: Optional[Tensor] = None) -> Tensor:
         # scale to [0,1]
         Y_normalized = normalize(Y, bounds=Y_bounds)
+        # If minimizing an objective, convert Y_normalized values to [-1,0],
+        # such that the min(w * y) term makes sense, we want all w_i * y_i's to be positive
+        Y_normalized[..., minimize] = Y_normalized[..., minimize] - 1
         return chebyshev_obj(Y=Y_normalized)
 
     return obj
