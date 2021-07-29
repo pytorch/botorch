@@ -92,7 +92,7 @@ def get_chebyshev_scalarization(
         # scale to [0,1]
         Y_normalized = normalize(Y, bounds=Y_bounds)
         # If minimizing an objective, convert Y_normalized values to [-1,0],
-        # such that the min(w * y) term makes sense, we want all w_i * y_i's to be positive
+        # such that min(w*y) makes sense, we want all w*y's to be positive
         Y_normalized[..., minimize] = Y_normalized[..., minimize] - 1
         return chebyshev_obj(Y=Y_normalized)
 
