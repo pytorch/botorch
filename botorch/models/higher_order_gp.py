@@ -412,7 +412,9 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         **kwargs: Any,
     ) -> GPyTorchPosterior:
         self.eval()  # make sure we're calling a posterior
-
+        # input transforms are applied at `posterior` in `eval` mode, and at
+        # `model.forward()` at the training time
+        X = self.transform_inputs(X)
         no_pred_variance = skip_posterior_variances._state
 
         with ExitStack() as es:

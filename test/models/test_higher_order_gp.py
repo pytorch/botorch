@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import itertools
+from unittest import mock
 
 import torch
 from botorch.models import HigherOrderGP
@@ -124,7 +125,11 @@ class TestHigherOrderGP(BotorchTestCase):
 
             test_x = torch.rand(2, 5, 3, device=self.device, dtype=dtype)
             test_y = torch.randn(2, 5, 4, 5, device=self.device, dtype=dtype)
-            posterior = model.posterior(test_x)
+            with mock.patch.object(
+                HigherOrderGP, "transform_inputs", wraps=model.transform_inputs
+            ) as mock_intf:
+                posterior = model.posterior(test_x)
+                mock_intf.assert_called_once()
             self.assertIsInstance(posterior, TransformedPosterior)
 
             conditioned_model = model.condition_on_observations(test_x, test_y)
