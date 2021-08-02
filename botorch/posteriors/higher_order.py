@@ -21,9 +21,12 @@ class HigherOrderGPPosterior(GPyTorchPosterior):
     HOGP is a tensorized GP model so the posterior covariance grows to be extremely
     large, but is highly structured, which means that we can exploit Kronecker
     identities to sample from the posterior using Matheron's rule as described in
-    [Doucet2010sampl]_. In general, this posterior should ONLY be used for HOGP models
+    [Doucet2010sampl]_.
+
+    In general, this posterior should ONLY be used for HOGP models
     that have highly structured covariances. It should also only be used internally when
-    called from the HigherOrderGP.posterior(...) method.
+    called from the HigherOrderGP.posterior(...) method. At this time, the posterior
+    does not support gradients with respect to the training data.
     """
 
     def __init__(
@@ -168,7 +171,8 @@ class HigherOrderGPPosterior(GPyTorchPosterior):
         # base samples now have trailing sample dimension
         covariance_matrix = self.joint_covariance_matrix
         covar_root = covariance_matrix.root_decomposition().root
-        samples = covar_root.matmul(base_samples)
+
+        samples = covar_root.matmul(base_samples[..., : covar_root.shape[-1], :])
 
         # now pluck out Y_x and X_x
         noiseless_train_marginal_samples = samples[
