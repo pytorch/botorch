@@ -19,7 +19,7 @@ from botorch.utils.testing import BotorchTestCase
 from gpytorch.kernels import RBFKernel
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls import ExactMarginalLogLikelihood
-from gpytorch.settings import skip_posterior_variances
+from gpytorch.settings import skip_posterior_variances, max_cholesky_size
 
 
 class TestHigherOrderGP(BotorchTestCase):
@@ -77,28 +77,29 @@ class TestHigherOrderGP(BotorchTestCase):
 
     def test_posterior(self):
         for dtype in [torch.float, torch.double]:
-            torch.random.manual_seed(0)
-            test_x = torch.rand(2, 30, 1).to(device=self.device, dtype=dtype)
+            for mcs in [800, 10]:
+                torch.random.manual_seed(0)
+                with max_cholesky_size(mcs):
+                    test_x = torch.rand(2, 12, 1).to(device=self.device, dtype=dtype)
 
-            self.model.to(dtype)
-            if dtype == torch.double:
-                # need to clear float caches
-                self.model.train()
-                self.model.eval()
-            # test the posterior works
-            posterior = self.model.posterior(test_x)
-            self.assertIsInstance(posterior, GPyTorchPosterior)
+                    self.model.to(dtype)
+                    # clear caches
+                    self.model.train()
+                    self.model.eval()
+                    # test the posterior works
+                    posterior = self.model.posterior(test_x)
+                    self.assertIsInstance(posterior, GPyTorchPosterior)
 
-            # test the posterior works with observation noise
-            posterior = self.model.posterior(test_x, observation_noise=True)
-            self.assertIsInstance(posterior, GPyTorchPosterior)
+                    # test the posterior works with observation noise
+                    posterior = self.model.posterior(test_x, observation_noise=True)
+                    self.assertIsInstance(posterior, GPyTorchPosterior)
 
-            # test the posterior works with no variances
-            # some funkiness in MVNs registration so the variance is non-zero.
-            with skip_posterior_variances():
-                posterior = self.model.posterior(test_x)
-                self.assertIsInstance(posterior, GPyTorchPosterior)
-                self.assertLessEqual(posterior.variance.max(), 1e-6)
+                    # test the posterior works with no variances
+                    # some funkiness in MVNs registration so the variance is non-zero.
+                    with skip_posterior_variances():
+                        posterior = self.model.posterior(test_x)
+                        self.assertIsInstance(posterior, GPyTorchPosterior)
+                        self.assertLessEqual(posterior.variance.max(), 1e-6)
 
     def test_transforms(self):
         for dtype in [torch.float, torch.double]:
