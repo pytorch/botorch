@@ -27,7 +27,7 @@ and [Wu2016parallelkg]_.
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import Any, Callable, Dict, Optional, Tuple, Type, Union
+from typing import Any, Callable, Dict, Optional, Tuple, Type
 
 import torch
 from botorch import settings
@@ -39,9 +39,8 @@ from botorch.acquisition.analytic import PosteriorMean
 from botorch.acquisition.cost_aware import CostAwareUtility
 from botorch.acquisition.monte_carlo import MCAcquisitionFunction, qSimpleRegret
 from botorch.acquisition.objective import (
-    AcquisitionObjective,
     MCAcquisitionObjective,
-    ScalarizedObjective,
+    PosteriorTransform,
 )
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.model import Model
@@ -71,7 +70,8 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
         model: Model,
         num_fantasies: Optional[int] = 64,
         sampler: Optional[MCSampler] = None,
-        objective: Optional[AcquisitionObjective] = None,
+        objective: Optional[MCAcquisitionObjective] = None,
+        posterior_transform: Optional[PosteriorTransform] = None,
         inner_sampler: Optional[MCSampler] = None,
         X_pending: Optional[Tensor] = None,
         current_value: Optional[Tensor] = None,
@@ -87,11 +87,11 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
             sampler: The sampler used to sample fantasy observations. Optional
                 if `num_fantasies` is specified.
             objective: The objective under which the samples are evaluated. If
-                `None` or a ScalarizedObjective, then the analytic posterior mean
-                is used, otherwise the objective is MC-evaluated (using
-                inner_sampler).
+                `None`, then the analytic posterior mean is used. Otherwise, the
+                objective is MC-evaluated (using inner_sampler).
+            posterior_transform: An optional PosteriorTransform.
             inner_sampler: The sampler used for inner sampling. Ignored if the
-                objective is `None` or a ScalarizedObjective.
+                objective is `None`.
             X_pending: A `m x d`-dim Tensor of `m` design points that have
                 points that have been submitted for function evaluation
                 but have not yet been evaluated.
@@ -122,12 +122,28 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
             inner_sampler = SobolQMCNormalSampler(
                 num_samples=128, resample=False, collapse_batch_dims=True
             )
-        if objective is None and model.num_outputs != 1:
+        elif objective is not None:
+            # TODO: clean this up after removing AcquisitionObjective.
+            if posterior_transform is None:
+                posterior_transform = self._deprecate_acqf_objective(
+                    posterior_transform=posterior_transform,
+                    objective=objective,
+                )
+                objective = None
+            else:
+                raise RuntimeError(
+                    "Got both a non-MC objective (DEPRECATED) and a posterior "
+                    "transform. Use only a posterior transform instead."
+                )
+
+        if objective is None and posterior_transform is None and model.num_outputs != 1:
             raise UnsupportedError(
-                "Must specify an objective when using a multi-output model."
+                "Must specify an objective or a posterior transform when using "
+                "a multi-output model."
             )
         self.sampler = sampler
         self.objective = objective
+        self.posterior_transform = posterior_transform
         self.set_X_pending(X_pending)
         self.inner_sampler = inner_sampler
         self.num_fantasies = num_fantasies
@@ -174,7 +190,10 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
 
         # get the value function
         value_function = _get_value_function(
-            model=fantasy_model, objective=self.objective, sampler=self.inner_sampler
+            model=fantasy_model,
+            objective=self.objective,
+            posterior_transform=self.posterior_transform,
+            sampler=self.inner_sampler,
         )
 
         # make sure to propagate gradients to the fantasy model train inputs
@@ -222,6 +241,7 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
         value_function = _get_value_function(
             model=fantasy_model,
             objective=self.objective,
+            posterior_transform=self.posterior_transform,
             sampler=self.inner_sampler,
             project=getattr(self, "project", None),
         )
@@ -300,7 +320,8 @@ class qMultiFidelityKnowledgeGradient(qKnowledgeGradient):
         model: Model,
         num_fantasies: Optional[int] = 64,
         sampler: Optional[MCSampler] = None,
-        objective: Optional[AcquisitionObjective] = None,
+        objective: Optional[MCAcquisitionObjective] = None,
+        posterior_transform: Optional[PosteriorTransform] = None,
         inner_sampler: Optional[MCSampler] = None,
         X_pending: Optional[Tensor] = None,
         current_value: Optional[Tensor] = None,
@@ -321,11 +342,11 @@ class qMultiFidelityKnowledgeGradient(qKnowledgeGradient):
             sampler: The sampler used to sample fantasy observations. Optional
                 if `num_fantasies` is specified.
             objective: The objective under which the samples are evaluated. If
-                `None` or a ScalarizedObjective, then the analytic posterior mean
-                is used, otherwise the objective is MC-evaluated (using
-                inner_sampler).
+                `None`, then the analytic posterior mean is used. Otherwise, the
+                objective is MC-evaluated (using inner_sampler).
+            posterior_transform: An optional PosteriorTransform.
             inner_sampler: The sampler used for inner sampling. Ignored if the
-                objective is `None` or a ScalarizedObjective.
+                objective is `None`.
             X_pending: A `m x d`-dim Tensor of `m` design points that have
                 points that have been submitted for function evaluation
                 but have not yet been evaluated.
@@ -358,6 +379,7 @@ class qMultiFidelityKnowledgeGradient(qKnowledgeGradient):
             num_fantasies=num_fantasies,
             sampler=sampler,
             objective=objective,
+            posterior_transform=posterior_transform,
             inner_sampler=inner_sampler,
             X_pending=X_pending,
             current_value=current_value,
@@ -432,6 +454,7 @@ class qMultiFidelityKnowledgeGradient(qKnowledgeGradient):
         value_function = _get_value_function(
             model=fantasy_model,
             objective=self.objective,
+            posterior_transform=self.posterior_transform,
             sampler=self.inner_sampler,
             project=self.project,
             valfunc_cls=self.valfunc_cls,
@@ -470,6 +493,7 @@ class ProjectedAcquisitionFunction(AcquisitionFunction):
         self.base_value_function = base_value_function
         self.project = project
         self.objective = base_value_function.objective
+        self.posterior_transform = base_value_function.posterior_transform
         self.sampler = getattr(base_value_function, "sampler", None)
 
     def forward(self, X: Tensor) -> Tensor:
@@ -478,7 +502,8 @@ class ProjectedAcquisitionFunction(AcquisitionFunction):
 
 def _get_value_function(
     model: Model,
-    objective: Optional[Union[MCAcquisitionObjective, ScalarizedObjective]] = None,
+    objective: Optional[MCAcquisitionObjective] = None,
+    posterior_transform: Optional[PosteriorTransform] = None,
     sampler: Optional[MCSampler] = None,
     project: Optional[Callable[[Tensor], Tensor]] = None,
     valfunc_cls: Optional[Type[AcquisitionFunction]] = None,
@@ -486,18 +511,27 @@ def _get_value_function(
 ) -> AcquisitionFunction:
     r"""Construct value function (i.e. inner acquisition function)."""
     if valfunc_cls is not None:
-        common_kwargs: Dict[str, Any] = {"model": model, "objective": objective}
+        common_kwargs: Dict[str, Any] = {
+            "model": model,
+            "posterior_transform": posterior_transform,
+        }
         if issubclass(valfunc_cls, MCAcquisitionFunction):
             common_kwargs["sampler"] = sampler
+            common_kwargs["objective"] = objective
         kwargs = valfunc_argfac(model=model) if valfunc_argfac is not None else {}
         base_value_function = valfunc_cls(**common_kwargs, **kwargs)
     else:
-        if isinstance(objective, MCAcquisitionObjective):
+        if objective is not None:
             base_value_function = qSimpleRegret(
-                model=model, sampler=sampler, objective=objective
+                model=model,
+                sampler=sampler,
+                objective=objective,
+                posterior_transform=posterior_transform,
             )
         else:
-            base_value_function = PosteriorMean(model=model, objective=objective)
+            base_value_function = PosteriorMean(
+                model=model, posterior_transform=posterior_transform
+            )
 
     if project is None:
         return base_value_function

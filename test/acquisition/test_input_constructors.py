@@ -41,7 +41,7 @@ from botorch.acquisition.multi_objective.objective import (
 from botorch.acquisition.multi_objective.utils import get_default_partitioning_alpha
 from botorch.acquisition.objective import LinearMCObjective
 from botorch.acquisition.objective import (
-    ScalarizedObjective,
+    ScalarizedPosteriorTransform,  # TODO: fix usage!
 )
 from botorch.exceptions.errors import UnsupportedError
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
@@ -78,7 +78,7 @@ class TestInputConstructorUtils(InputConstructorBaseTestCase, BotorchTestCase):
         self.assertEqual(best_f, best_f_expected)
         with self.assertRaises(NotImplementedError):
             get_best_f_analytic(training_data=self.bd_td_mo)
-        obj = ScalarizedObjective(weights=torch.rand(2))
+        obj = ScalarizedPosteriorTransform(weights=torch.rand(2))
         best_f = get_best_f_analytic(training_data=self.bd_td_mo, objective=obj)
         best_f_expected = obj.evaluate(self.bd_td_mo.Y).max()
         self.assertEqual(best_f, best_f_expected)

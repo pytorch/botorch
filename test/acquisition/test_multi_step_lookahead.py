@@ -12,7 +12,7 @@ from botorch.acquisition import (
     ExpectedImprovement,
 )
 from botorch.acquisition.multi_step_lookahead import make_best_f, warmstart_multistep
-from botorch.acquisition.objective import IdentityMCObjective, ScalarizedObjective
+from botorch.acquisition.objective import IdentityMCObjective, ScalarizedPosteriorTransform  # TODO: fix usage!
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models import SingleTaskGP
 from botorch.sampling import SobolQMCNormalSampler

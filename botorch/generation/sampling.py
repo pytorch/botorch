@@ -22,9 +22,11 @@ from typing import Any, Optional
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.objective import (
-    AcquisitionObjective,
+    MCAcquisitionObjective,
     IdentityMCObjective,
     ScalarizedObjective,
+    PosteriorTransform,
+    ScalarizedPosteriorTransform,
 )
 from botorch.generation.utils import _flip_sub_unique
 from botorch.models.model import Model
@@ -67,23 +69,38 @@ class MaxPosteriorSampling(SamplingStrategy):
     def __init__(
         self,
         model: Model,
-        objective: Optional[AcquisitionObjective] = None,
+        objective: Optional[MCAcquisitionObjective] = None,
+        posterior_transform: Optional[PosteriorTransform] = None,
         replacement: bool = True,
     ) -> None:
         r"""Constructor for the SamplingStrategy base class.
 
         Args:
             model: A fitted model.
-            objective: The objective. Typically, the AcquisitionObjective under which
-                the samples are evaluated. If a ScalarizedObjective, samples from the
-                scalarized posterior are used. Defaults to `IdentityMCObjective()`.
+            objective: The MCAcquisitionObjective under which the samples are
+                evaluated. Defaults to `IdentityMCObjective()`.
+            posterior_transform: An optional PosteriorTransform.
             replacement: If True, sample with replacement.
         """
         super().__init__()
         self.model = model
         if objective is None:
             objective = IdentityMCObjective()
+        elif isinstance(objective, ScalarizedObjective):
+            # TODO: Clean up once ScalarizedObjective is removed.
+            if posterior_transform is not None:
+                raise RuntimeError(
+                    "A ScalarizedObjective (DEPRECATED) and a posterior transform "
+                    "are not supported at the same time. Use only a posterior "
+                    "transform instead."
+                )
+            else:
+                posterior_transform = ScalarizedPosteriorTransform(
+                    weights=objective.weights, offset=objective.offset
+                )
+                objective = IdentityMCObjective()
         self.objective = objective
+        self.posterior_transform = posterior_transform
         self.replacement = replacement
 
     def forward(
@@ -101,16 +118,15 @@ class MaxPosteriorSampling(SamplingStrategy):
             A `batch_shape x num_samples x d`-dim Tensor of samples from `X`, where
             `X[..., i, :]` is the `i`-th sample.
         """
-        posterior = self.model.posterior(X, observation_noise=observation_noise)
-        if isinstance(self.objective, ScalarizedObjective):
-            posterior = self.objective(posterior)
+        posterior = self.model.posterior(
+            X,
+            observation_noise=observation_noise,
+            posterior_transform=self.posterior_transform,
+        )
 
         # num_samples x batch_shape x N x m
         samples = posterior.rsample(sample_shape=torch.Size([num_samples]))
-        if isinstance(self.objective, ScalarizedObjective):
-            obj = samples.squeeze(-1)  # num_samples x batch_shape x N
-        else:
-            obj = self.objective(samples, X=X)  # num_samples x batch_shape x N
+        obj = self.objective(samples, X=X)  # num_samples x batch_shape x N
         if self.replacement:
             # if we allow replacement then things are simple(r)
             idcs = torch.argmax(obj, dim=-1)

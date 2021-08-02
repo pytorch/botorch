@@ -19,6 +19,7 @@ from contextlib import ExitStack
 from typing import Any, List, Optional, Union, Tuple
 
 import torch
+from botorch.acquisition.objective import PosteriorTransform
 from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform, Standardize
@@ -409,6 +410,7 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
         X: Tensor,
         output_indices: Optional[List[int]] = None,
         observation_noise: Union[bool, Tensor] = False,
+        posterior_transform: Optional[PosteriorTransform] = None,
         **kwargs: Any,
     ) -> GPyTorchPosterior:
         self.eval()  # make sure we're calling a posterior
@@ -502,8 +504,10 @@ class HigherOrderGP(BatchedMultiOutputGPyTorchModel, ExactGP):
             )
             if hasattr(self, "outcome_transform"):
                 posterior = self.outcome_transform.untransform_posterior(posterior)
-
-            return posterior
+            if posterior_transform is not None:
+                return posterior_transform
+            else:
+                return posterior
 
     def make_posterior_variances(self, joint_covariance_matrix: LazyTensor) -> Tensor:
         r"""

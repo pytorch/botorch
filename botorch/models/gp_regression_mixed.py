@@ -71,12 +71,12 @@ class MixedSingleTaskGP(SingleTaskGP):
                 the kernel for the ordinal parameters.
             likelihood: A likelihood. If omitted, use a standard
                 GaussianLikelihood with inferred noise level.
-            # outcome_transform: An outcome transform that is applied to the
-            #     training data during instantiation and to the posterior during
-            #     inference (that is, the `Posterior` obtained by calling
-            #     `.posterior` on the model will be on the original scale).
-            # input_transform: An input transform that is applied in the model's
-            #     forward pass.
+            outcome_transform: An outcome transform that is applied to the
+                training data during instantiation and to the posterior during
+                inference (that is, the `Posterior` obtained by calling
+                `.posterior` on the model will be on the original scale).
+            input_transform: An input transform that is applied in the model's
+                forward pass.
 
         Example:
             >>> train_X = torch.cat(

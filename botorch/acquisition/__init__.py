@@ -50,6 +50,7 @@ from botorch.acquisition.objective import (
     LinearMCObjective,
     MCAcquisitionObjective,
     ScalarizedObjective,
+    ScalarizedPosteriorTransform,
 )
 from botorch.acquisition.utils import get_acquisition_function
 
@@ -86,6 +87,7 @@ __all__ = [
     "MCAcquisitionFunction",
     "MCAcquisitionObjective",
     "ScalarizedObjective",
+    "ScalarizedPosteriorTransform",
     "get_acquisition_function",
     "get_acqf_input_constructor",
 ]

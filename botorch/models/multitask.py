@@ -25,6 +25,7 @@ import math
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import torch
+from botorch.acquisition.objective import PosteriorTransform
 from botorch.models.gp_regression import MIN_INFERRED_NOISE_LEVEL
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.gpytorch import MultiTaskGPyTorchModel
@@ -537,6 +538,7 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel):
         X: Tensor,
         output_indices: Optional[List[int]] = None,
         observation_noise: Union[bool, Tensor] = False,
+        posterior_transform: Optional[PosteriorTransform] = None,
         **kwargs: Any,
     ) -> MultitaskGPPosterior:
         self.eval()
@@ -704,8 +706,10 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel):
 
         if hasattr(self, "outcome_transform"):
             posterior = self.outcome_transform.untransform_posterior(posterior)
-
-        return posterior
+        if posterior_transform is not None:
+            return posterior_transform(posterior)
+        else:
+            return posterior
 
     def train(self, val=True, *args, **kwargs):
         if val:

@@ -18,7 +18,7 @@ from botorch.acquisition.knowledge_gradient import (
     ProjectedAcquisitionFunction,
 )
 from botorch.acquisition.monte_carlo import qExpectedImprovement, qSimpleRegret
-from botorch.acquisition.objective import GenericMCObjective, ScalarizedObjective
+from botorch.acquisition.objective import GenericMCObjective, ScalarizedPosteriorTransform  # TODO: fix usage!
 from botorch.acquisition.utils import project_to_sample_points
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models import SingleTaskGP

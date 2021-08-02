@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional
 
 import torch
 from botorch import settings
+from botorch.acquisition.objective import PosteriorTransform
 from botorch.models.utils import fantasize as fantasize_flag
 from botorch.posteriors import Posterior
 from botorch.sampling.samplers import MCSampler
@@ -32,6 +33,7 @@ class Model(Module, ABC):
         X: Tensor,
         output_indices: Optional[List[int]] = None,
         observation_noise: bool = False,
+        posterior_transform: Optional[PosteriorTransform] = None,
         **kwargs: Any,
     ) -> Posterior:
         r"""Computes the posterior over model outputs at the provided points.
@@ -50,6 +52,7 @@ class Model(Module, ABC):
                 model's outputs are required for optimization. If omitted,
                 computes the posterior over all model outputs.
             observation_noise: If True, add observation noise to the posterior.
+            posterior_transform: An optional PosteriorTransform.
 
         Returns:
             A `Posterior` object, representing a batch of `b` joint distributions

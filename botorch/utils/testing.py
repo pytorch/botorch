@@ -14,6 +14,7 @@ from unittest import TestCase
 
 import torch
 from botorch import settings
+from botorch.acquisition.objective import PosteriorTransform
 from botorch.models.model import Model
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.posteriors.posterior import Posterior
@@ -160,9 +161,13 @@ class MockModel(Model):
         self,
         X: Tensor,
         output_indices: Optional[List[int]] = None,
+        posterior_transform: Optional[PosteriorTransform] = None,
         observation_noise: bool = False,
     ) -> MockPosterior:
-        return self._posterior
+        if posterior_transform is not None:
+            return posterior_transform(self._posterior)
+        else:
+            return self._posterior
 
     @property
     def num_outputs(self) -> int:

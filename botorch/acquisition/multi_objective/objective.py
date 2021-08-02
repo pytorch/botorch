@@ -174,6 +174,7 @@ class UnstandardizeMCMultiOutputObjective(IdentityMCMultiOutputObjective):
 
 class AnalyticMultiOutputObjective(AcquisitionObjective):
     r"""Abstract base class for multi-output analyic objectives."""
+    # TODO: Refactor these as PosteriorTransform as well.
 
     @abstractmethod
     def forward(self, posterior: GPyTorchPosterior) -> GPyTorchPosterior:

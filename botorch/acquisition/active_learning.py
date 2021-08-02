@@ -27,7 +27,7 @@ from typing import Optional
 
 from botorch import settings
 from botorch.acquisition.analytic import AnalyticAcquisitionFunction
-from botorch.acquisition.objective import ScalarizedObjective
+from botorch.acquisition.objective import PosteriorTransform
 from botorch.models.model import Model
 from botorch.sampling.samplers import MCSampler, SobolQMCNormalSampler
 from botorch.utils.transforms import concatenate_pending_points, t_batch_mode_transform
@@ -51,8 +51,9 @@ class qNegIntegratedPosteriorVariance(AnalyticAcquisitionFunction):
         model: Model,
         mc_points: Tensor,
         sampler: Optional[MCSampler] = None,
-        objective: Optional[ScalarizedObjective] = None,
+        posterior_transform: Optional[PosteriorTransform] = None,
         X_pending: Optional[Tensor] = None,
+        **kwargs,
     ) -> None:
         r"""q-Integrated Negative Posterior Variance.
 
@@ -65,12 +66,12 @@ class qNegIntegratedPosteriorVariance(AnalyticAcquisitionFunction):
             sampler: The sampler used for drawing fantasy samples. In the basic setting
                 of a standard GP (default) this is a dummy, since the variance of the
                 model after conditioning does not actually depend on the sampled values.
-            objective: A ScalarizedObjective. Required for multi-output models.
+            posterior_transform: A PosteriorTransform. Required for multi-output models.
             X_pending: A `n' x d`-dim Tensor of `n'` design points that have
                 points that have been submitted for function evaluation but
                 have not yet been evaluated.
         """
-        super().__init__(model=model, objective=objective)
+        super().__init__(model=model, posterior_transform=posterior_transform, **kwargs)
         if sampler is None:
             # If no sampler is provided, we use the following dummy sampler for the
             # fantasize() method in forward. IMPORTANT: This assumes that the posterior
@@ -107,11 +108,9 @@ class qNegIntegratedPosteriorVariance(AnalyticAcquisitionFunction):
 
         # evaluate the posterior at the grid points
         with settings.propagate_grads(True):
-            posterior = fantasy_model.posterior(mc_points)
-
-        # transform with the scalarized objective
-        if self.objective is not None:
-            posterior = self.objective(posterior)
+            posterior = fantasy_model.posterior(
+                mc_points, posterior_transform=self.posterior_transform
+            )
 
         neg_variance = posterior.variance.mul(-1.0)
 

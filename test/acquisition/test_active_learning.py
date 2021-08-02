@@ -8,7 +8,10 @@ from unittest import mock
 
 import torch
 from botorch.acquisition.active_learning import qNegIntegratedPosteriorVariance
-from botorch.acquisition.objective import IdentityMCObjective, ScalarizedObjective
+from botorch.acquisition.objective import (
+    IdentityMCObjective,
+    ScalarizedPosteriorTransform,
+)
 from botorch.exceptions.errors import UnsupportedError
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
@@ -84,7 +87,7 @@ class TestQNegIntegratedPosteriorVariance(BotorchTestCase):
                     mock_num_outputs.return_value = 2
                     mm = MockModel(None)
 
-                    # check error if objective is not ScalarizedObjective
+                    # check error if objective is not ScalarizedPosteriorTransform
                     with self.assertRaises(UnsupportedError):
                         qNegIntegratedPosteriorVariance(
                             model=mm,
@@ -96,7 +99,7 @@ class TestQNegIntegratedPosteriorVariance(BotorchTestCase):
                     qNIPV = qNegIntegratedPosteriorVariance(
                         model=mm,
                         mc_points=mc_points,
-                        objective=ScalarizedObjective(weights=weights),
+                        objective=ScalarizedPosteriorTransform(weights=weights),
                     )
                     X = torch.empty(1, 1, device=self.device, dtype=dtype)  # dummy
                     val = qNIPV(X)
@@ -118,7 +121,7 @@ class TestQNegIntegratedPosteriorVariance(BotorchTestCase):
                     qNIPV = qNegIntegratedPosteriorVariance(
                         model=mm,
                         mc_points=mc_points,
-                        objective=ScalarizedObjective(weights=weights),
+                        objective=ScalarizedPosteriorTransform(weights=weights),
                     )
                     X = torch.empty(3, 1, 1, device=self.device, dtype=dtype)  # dummy
                     val = qNIPV(X)
