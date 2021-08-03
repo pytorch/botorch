@@ -14,12 +14,6 @@ import warnings
 from abc import ABC, abstractmethod
 from typing import Optional
 
-from botorch.acquisition.objective import (
-    PosteriorTransform,
-    AcquisitionObjective,
-    ScalarizedObjective,
-    ScalarizedPosteriorTransform,
-)
 from botorch.exceptions import BotorchWarning, UnsupportedError
 from botorch.models.model import Model
 from torch import Tensor
@@ -38,20 +32,32 @@ class AcquisitionFunction(Module, ABC):
         super().__init__()
         self.add_module("model", model)
 
+    # Avoid circular imports.
+    from botorch.acquisition.objective import (
+        PosteriorTransform,
+        AcquisitionObjective,
+    )
+
     def _deprecate_acqf_objective(
         self,
         posterior_transform: Optional[PosteriorTransform],
         objective: Optional[AcquisitionObjective],
     ) -> Optional[PosteriorTransform]:
+        from botorch.acquisition.objective import (
+            ScalarizedObjective,
+            ScalarizedPosteriorTransform,
+        )
+
         if objective is None:
             return posterior_transform
         warnings.warn(
-            f"The objective argument to {self.__class__.__name__} is deprecated and "
-            "will be removed in the next version. Use `posterior_transform` instead."
+            f"The `objective` argument to {self.__class__.__name__} is DEPRECATED and "
+            "will be removed in the next version. Use `posterior_transform` instead.",
+            DeprecationWarning,
         )
         if not isinstance(objective, ScalarizedObjective):
             raise UnsupportedError(
-                f"{self.__class__.__name___} only supports ScalarizedObjective "
+                f"{self.__class__.__name__} only supports ScalarizedObjective "
                 "(DEPRECATED) type objectives."
             )
         return ScalarizedPosteriorTransform(

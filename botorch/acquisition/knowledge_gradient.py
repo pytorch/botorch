@@ -122,7 +122,9 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
             inner_sampler = SobolQMCNormalSampler(
                 num_samples=128, resample=False, collapse_batch_dims=True
             )
-        elif objective is not None:
+        elif objective is not None and not isinstance(
+            objective, MCAcquisitionObjective
+        ):
             # TODO: clean this up after removing AcquisitionObjective.
             if posterior_transform is None:
                 posterior_transform = self._deprecate_acqf_objective(
@@ -492,7 +494,7 @@ class ProjectedAcquisitionFunction(AcquisitionFunction):
         super().__init__(base_value_function.model)
         self.base_value_function = base_value_function
         self.project = project
-        self.objective = base_value_function.objective
+        self.objective = getattr(base_value_function, "objective", None)
         self.posterior_transform = base_value_function.posterior_transform
         self.sampler = getattr(base_value_function, "sampler", None)
 

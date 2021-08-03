@@ -80,6 +80,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             best_f=best_f,
             sampler=mock.ANY,
             objective=self.objective,
+            posterior_transform=None,
             X_pending=self.X_pending,
         )
         # test batched model
@@ -123,6 +124,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             best_f=best_f,
             sampler=mock.ANY,
             objective=self.objective,
+            posterior_transform=None,
             X_pending=self.X_pending,
             tau=1e-3,
         )
@@ -241,6 +243,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             model=self.model,
             sampler=mock.ANY,
             objective=self.objective,
+            posterior_transform=None,
             X_pending=self.X_pending,
         )
         args, kwargs = mock_acqf.call_args
@@ -299,6 +302,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             beta=0.3,
             sampler=mock.ANY,
             objective=self.objective,
+            posterior_transform=None,
             X_pending=self.X_pending,
         )
         args, kwargs = mock_acqf.call_args

@@ -30,7 +30,7 @@ class TestQNegIntegratedPosteriorVariance(BotorchTestCase):
         self.assertFalse(sampler.resample)
         self.assertTrue(torch.equal(mc_points, qNIPV.mc_points))
         self.assertIsNone(qNIPV.X_pending)
-        self.assertIsNone(qNIPV.objective)
+        self.assertIsNone(qNIPV.posterior_transform)
         sampler = IIDNormalSampler(num_samples=2, resample=True)
         qNIPV = qNegIntegratedPosteriorVariance(
             model=mm, mc_points=mc_points, sampler=sampler
@@ -99,7 +99,9 @@ class TestQNegIntegratedPosteriorVariance(BotorchTestCase):
                     qNIPV = qNegIntegratedPosteriorVariance(
                         model=mm,
                         mc_points=mc_points,
-                        objective=ScalarizedPosteriorTransform(weights=weights),
+                        posterior_transform=ScalarizedPosteriorTransform(
+                            weights=weights
+                        ),
                     )
                     X = torch.empty(1, 1, device=self.device, dtype=dtype)  # dummy
                     val = qNIPV(X)
@@ -121,7 +123,9 @@ class TestQNegIntegratedPosteriorVariance(BotorchTestCase):
                     qNIPV = qNegIntegratedPosteriorVariance(
                         model=mm,
                         mc_points=mc_points,
-                        objective=ScalarizedPosteriorTransform(weights=weights),
+                        posterior_transform=ScalarizedPosteriorTransform(
+                            weights=weights
+                        ),
                     )
                     X = torch.empty(3, 1, 1, device=self.device, dtype=dtype)  # dummy
                     val = qNIPV(X)

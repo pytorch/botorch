@@ -48,10 +48,17 @@ class AnalyticAcquisitionFunction(AcquisitionFunction, ABC):
             posterior_transform=posterior_transform,
             objective=kwargs.get("objective", None),
         )
-        if posterior_transform is None and model.num_outputs != 1:
-            raise UnsupportedError(
-                "Must specify a posterior transform when using a multi-output model."
-            )
+        if posterior_transform is None:
+            if model.num_outputs != 1:
+                raise UnsupportedError(
+                    "Must specify a posterior transform when using a "
+                    "multi-output model."
+                )
+        else:
+            if not isinstance(posterior_transform, PosteriorTransform):
+                raise UnsupportedError(
+                    "AnalyticAcquisitionFunctions only support PosteriorTransforms."
+                )
         self.posterior_transform = posterior_transform
 
     def set_X_pending(self, X_pending: Optional[Tensor] = None) -> None:

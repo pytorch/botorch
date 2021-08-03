@@ -11,11 +11,10 @@ Abstract base module for all BoTorch models.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Callable
 
 import torch
 from botorch import settings
-from botorch.acquisition.objective import PosteriorTransform
 from botorch.models.utils import fantasize as fantasize_flag
 from botorch.posteriors import Posterior
 from botorch.sampling.samplers import MCSampler
@@ -33,7 +32,7 @@ class Model(Module, ABC):
         X: Tensor,
         output_indices: Optional[List[int]] = None,
         observation_noise: bool = False,
-        posterior_transform: Optional[PosteriorTransform] = None,
+        posterior_transform: Optional[Callable[[Posterior], Posterior]] = None,
         **kwargs: Any,
     ) -> Posterior:
         r"""Computes the posterior over model outputs at the provided points.

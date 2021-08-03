@@ -12,7 +12,7 @@ from botorch.acquisition import (
     ExpectedImprovement,
 )
 from botorch.acquisition.multi_step_lookahead import make_best_f, warmstart_multistep
-from botorch.acquisition.objective import IdentityMCObjective, ScalarizedPosteriorTransform  # TODO: fix usage!
+from botorch.acquisition.objective import IdentityMCObjective
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models import SingleTaskGP
 from botorch.sampling import SobolQMCNormalSampler
@@ -109,19 +109,6 @@ class TestMultiStepLookahead(BotorchTestCase):
                     model=model,
                     batch_sizes=q_batch_sizes,
                     valfunc_cls=[ExpectedImprovement] * 4,
-                    valfunc_argfacs=[make_best_f] * 4,
-                    num_fantasies=num_fantasies,
-                    inner_mc_samples=[2] * 4,
-                )
-            # MCAcquisitionFunction and non MCAcquisitionObjective
-            with self.assertRaises(UnsupportedError):
-                qMultiStepLookahead(
-                    model=model,
-                    objective=ScalarizedObjective(
-                        weights=torch.tensor([1.0], device=self.device, dtype=dtype)
-                    ),
-                    batch_sizes=[2, 2, 2],
-                    valfunc_cls=[qExpectedImprovement] * 4,
                     valfunc_argfacs=[make_best_f] * 4,
                     num_fantasies=num_fantasies,
                     inner_mc_samples=[2] * 4,

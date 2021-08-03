@@ -114,7 +114,7 @@ class qNegIntegratedPosteriorVariance(AnalyticAcquisitionFunction):
 
         neg_variance = posterior.variance.mul(-1.0)
 
-        if self.objective is None:
+        if self.posterior_transform is None:
             # if single-output, shape is 1 x batch_shape x num_grid_points x 1
             return neg_variance.mean(dim=-2).squeeze(-1).squeeze(0)
         else:

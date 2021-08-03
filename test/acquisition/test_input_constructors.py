@@ -79,7 +79,9 @@ class TestInputConstructorUtils(InputConstructorBaseTestCase, BotorchTestCase):
         with self.assertRaises(NotImplementedError):
             get_best_f_analytic(training_data=self.bd_td_mo)
         obj = ScalarizedPosteriorTransform(weights=torch.rand(2))
-        best_f = get_best_f_analytic(training_data=self.bd_td_mo, objective=obj)
+        best_f = get_best_f_analytic(
+            training_data=self.bd_td_mo, posterior_transform=obj
+        )
         best_f_expected = obj.evaluate(self.bd_td_mo.Y).max()
         self.assertEqual(best_f, best_f_expected)
 
@@ -118,11 +120,15 @@ class TestAnalyticAcquisitionFunctionInputConstructors(
         mock_model = mock.Mock()
         kwargs = c(model=mock_model, training_data=self.bd_td)
         self.assertEqual(kwargs["model"], mock_model)
-        self.assertIsNone(kwargs["objective"])
+        self.assertIsNone(kwargs["posterior_transform"])
         mock_obj = mock.Mock()
-        kwargs = c(model=mock_model, training_data=self.bd_td, objective=mock_obj)
+        kwargs = c(
+            model=mock_model, training_data=self.bd_td, posterior_transform=mock_obj
+        )
         self.assertEqual(kwargs["model"], mock_model)
-        self.assertEqual(kwargs["objective"], mock_obj)
+        self.assertEqual(kwargs["posterior_transform"], mock_obj)
+        with self.assertWarns(DeprecationWarning):
+            kwargs = c(model=mock_model, training_data=self.bd_td, objective=mock_obj)
 
     def test_construct_inputs_best_f(self):
         c = get_acqf_input_constructor(ExpectedImprovement)
@@ -130,12 +136,12 @@ class TestAnalyticAcquisitionFunctionInputConstructors(
         kwargs = c(model=mock_model, training_data=self.bd_td)
         best_f_expected = self.bd_td.Y.squeeze().max()
         self.assertEqual(kwargs["model"], mock_model)
-        self.assertIsNone(kwargs["objective"])
+        self.assertIsNone(kwargs["posterior_transform"])
         self.assertEqual(kwargs["best_f"], best_f_expected)
         self.assertTrue(kwargs["maximize"])
         kwargs = c(model=mock_model, training_data=self.bd_td, best_f=0.1)
         self.assertEqual(kwargs["model"], mock_model)
-        self.assertIsNone(kwargs["objective"])
+        self.assertIsNone(kwargs["posterior_transform"])
         self.assertEqual(kwargs["best_f"], 0.1)
         self.assertTrue(kwargs["maximize"])
 
@@ -144,12 +150,12 @@ class TestAnalyticAcquisitionFunctionInputConstructors(
         mock_model = mock.Mock()
         kwargs = c(model=mock_model, training_data=self.bd_td)
         self.assertEqual(kwargs["model"], mock_model)
-        self.assertIsNone(kwargs["objective"])
+        self.assertIsNone(kwargs["posterior_transform"])
         self.assertEqual(kwargs["beta"], 0.2)
         self.assertTrue(kwargs["maximize"])
         kwargs = c(model=mock_model, training_data=self.bd_td, beta=0.1, maximize=False)
         self.assertEqual(kwargs["model"], mock_model)
-        self.assertIsNone(kwargs["objective"])
+        self.assertIsNone(kwargs["posterior_transform"])
         self.assertEqual(kwargs["beta"], 0.1)
         self.assertFalse(kwargs["maximize"])
 

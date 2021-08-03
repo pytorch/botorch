@@ -8,7 +8,7 @@ r"""
 A registry of helpers for generating inputs to acquisition function
 constructors programmatically from a consistent input format.
 """
-
+import warnings
 from typing import Any, Callable, Dict, Optional, Tuple, Type, Union
 
 import torch
@@ -142,6 +142,13 @@ def construct_inputs_analytic_base(
         A dict mapping kwarg names of the constructor to values.
     """
     # TODO: remove **kwargs once the AcquisitionObjective is removed.
+    if "objective" in kwargs:
+        warnings.warn(
+            "The `objective` argument to AnalyticAcquisitionFunctions is deprecated "
+            "and will be removed in the next version. Use `posterior_transform` "
+            "instead.",
+            DeprecationWarning,
+        )
     return {
         "model": model,
         "posterior_transform": posterior_transform,
