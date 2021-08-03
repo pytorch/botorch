@@ -20,6 +20,7 @@ from botorch.acquisition.input_constructors import (
     get_acqf_input_constructor,
     get_best_f_analytic,
     get_best_f_mc,
+    _deprecate_objective_arg,
 )
 from botorch.acquisition.monte_carlo import (
     qExpectedImprovement,
@@ -107,6 +108,19 @@ class TestInputConstructorUtils(InputConstructorBaseTestCase, BotorchTestCase):
         best_f_expected = (self.bd_td_mo.Y.sum(dim=-1)).max()
         self.assertEqual(best_f, best_f_expected)
 
+    def test_deprecate_objective_arg(self):
+        objective = ScalarizedObjective(weights=torch.ones(1))
+        post_tf = ScalarizedPosteriorTransform(weights=torch.zeros(1))
+        with self.assertRaises(RuntimeError):
+            _deprecate_objective_arg(posterior_transform=post_tf, objective=objective)
+        with self.assertWarns(DeprecationWarning):
+            new_tf = _deprecate_objective_arg(objective=objective)
+        self.assertTrue(torch.equal(new_tf.weights, objective.weights))
+        self.assertIsInstance(new_tf, ScalarizedPosteriorTransform)
+        new_tf = _deprecate_objective_arg(posterior_transform=post_tf)
+        self.assertEqual(id(new_tf), id(post_tf))
+        self.assertIsNone(_deprecate_objective_arg())
+
 
 class TestAnalyticAcquisitionFunctionInputConstructors(
     InputConstructorBaseTestCase, BotorchTestCase
@@ -136,8 +150,6 @@ class TestAnalyticAcquisitionFunctionInputConstructors(
         )
         self.assertEqual(kwargs["model"], mock_model)
         self.assertEqual(kwargs["posterior_transform"], mock_obj)
-        with self.assertWarns(DeprecationWarning):
-            kwargs = c(model=mock_model, training_data=self.bd_td, objective=mock_obj)
 
     def test_construct_inputs_best_f(self):
         c = get_acqf_input_constructor(ExpectedImprovement)

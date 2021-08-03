@@ -44,7 +44,6 @@ from botorch.acquisition.objective import (
     MCAcquisitionObjective,
     AcquisitionObjective,
     IdentityMCObjective,
-    ScalarizedObjective,
     PosteriorTransform,
     ScalarizedPosteriorTransform,
 )
@@ -119,6 +118,35 @@ def _register_acqf_input_constructor(
     ACQF_INPUT_CONSTRUCTOR_REGISTRY[acqf_cls] = input_constructor
 
 
+# ------------------------- Deprecation Helpers ------------------------- #
+
+
+def _deprecate_objective_arg(
+    posterior_transform: Optional[PosteriorTransform] = None,
+    objective: Optional[AcquisitionObjective] = None,
+) -> Optional[PosteriorTransform]:
+    if posterior_transform is not None:
+        if objective is None:
+            return posterior_transform
+        else:
+            raise RuntimeError(
+                "Got both a non-MC objective (DEPRECATED) and a posterior "
+                "transform. Use only a posterior transform instead."
+            )
+    elif objective is not None:
+        warnings.warn(
+            "The `objective` argument to AnalyticAcquisitionFunctions is deprecated "
+            "and will be removed in the next version. Use `posterior_transform` "
+            "instead.",
+            DeprecationWarning,
+        )
+        return ScalarizedPosteriorTransform(
+            weights=objective.weights, offset=objective.offset
+        )
+    else:
+        return None
+
+
 # --------------------- Input argument constructors --------------------- #
 
 
@@ -141,18 +169,12 @@ def construct_inputs_analytic_base(
     Returns:
         A dict mapping kwarg names of the constructor to values.
     """
-    # TODO: remove **kwargs once the AcquisitionObjective is removed.
-    if "objective" in kwargs:
-        warnings.warn(
-            "The `objective` argument to AnalyticAcquisitionFunctions is deprecated "
-            "and will be removed in the next version. Use `posterior_transform` "
-            "instead.",
-            DeprecationWarning,
-        )
     return {
         "model": model,
-        "posterior_transform": posterior_transform,
-        **{k: v for k, v in kwargs.items() if k == "objective"},
+        "posterior_transform": _deprecate_objective_arg(
+            posterior_transform=posterior_transform,
+            objective=kwargs.get("objective", None),
+        ),
     }
 
 
@@ -689,16 +711,16 @@ def construct_inputs_qNEHVI(
 
 def get_best_f_analytic(
     training_data: TrainingData,
-    objective: Optional[AcquisitionObjective] = None,
     posterior_transform: Optional[PosteriorTransform] = None,
+    **kwargs,
 ) -> Tensor:
     if not training_data.is_block_design:
         raise NotImplementedError("Currently only block designs are supported.")
     Y = training_data.Y
-    # TODO: Remove objective once AcquisitionObjective is removed.
-    if isinstance(objective, ScalarizedObjective):
-        return objective.evaluate(Y).max(-1).values
-    if isinstance(posterior_transform, ScalarizedPosteriorTransform):
+    posterior_transform = _deprecate_objective_arg(
+        posterior_transform=posterior_transform, objective=kwargs.get("objective", None)
+    )
+    if posterior_transform is not None:
         return posterior_transform.evaluate(Y).max(-1).values
     if Y.shape[-1] > 1:
         raise NotImplementedError
@@ -713,6 +735,12 @@ def get_best_f_mc(
     if not training_data.is_block_design:
         raise NotImplementedError("Currently only block designs are supported.")
     Y = training_data.Y
+    posterior_transform = _deprecate_objective_arg(
+        posterior_transform=posterior_transform,
+        objective=objective
+        if not isinstance(objective, MCAcquisitionObjective)
+        else None,
+    )
     if posterior_transform is not None:
         # retain the original tensor dimension since objective expects explicit
         # output dimension.

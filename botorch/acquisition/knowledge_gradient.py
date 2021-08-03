@@ -89,7 +89,12 @@ class qKnowledgeGradient(MCAcquisitionFunction, OneShotAcquisitionFunction):
             objective: The objective under which the samples are evaluated. If
                 `None`, then the analytic posterior mean is used. Otherwise, the
                 objective is MC-evaluated (using inner_sampler).
-            posterior_transform: An optional PosteriorTransform.
+            posterior_transform: An optional PosteriorTransform. If given, this
+                transforms the posterior before evaluation. If `objective is None`,
+                then the analytic posterior mean of the transformed posterior is
+                used. If `objective` is given, the `inner_sampler` is used to draw
+                samples from the transformed posterior, which are then evaluated under
+                the `objective`.
             inner_sampler: The sampler used for inner sampling. Ignored if the
                 objective is `None`.
             X_pending: A `m x d`-dim Tensor of `m` design points that have
@@ -313,7 +318,7 @@ class qMultiFidelityKnowledgeGradient(qKnowledgeGradient):
     via a `CostAwareUtility` and the `project` and `expand` operators. If none
     of these are set, this acquisition function reduces to `qKnowledgeGradient`.
     Through `valfunc_cls` and `valfunc_argfac`, this can be changed into a custom
-    multifidelity acquisition function (it is only KG if the terminal value is
+    multi-fidelity acquisition function (it is only KG if the terminal value is
     computed using a posterior mean).
     """
 
@@ -346,7 +351,12 @@ class qMultiFidelityKnowledgeGradient(qKnowledgeGradient):
             objective: The objective under which the samples are evaluated. If
                 `None`, then the analytic posterior mean is used. Otherwise, the
                 objective is MC-evaluated (using inner_sampler).
-            posterior_transform: An optional PosteriorTransform.
+            posterior_transform: An optional PosteriorTransform. If given, this
+                transforms the posterior before evaluation. If `objective is None`,
+                then the analytic posterior mean of the transformed posterior is
+                used. If `objective` is given, the `inner_sampler` is used to draw
+                samples from the transformed posterior, which are then evaluated under
+                the `objective`.
             inner_sampler: The sampler used for inner sampling. Ignored if the
                 objective is `None`.
             X_pending: A `m x d`-dim Tensor of `m` design points that have

@@ -101,7 +101,11 @@ class qMultiStepLookahead(MCAcquisitionFunction, OneShotAcquisitionFunction):
                 the model output (requires a single-output model or a posterior
                 transform). Otherwise the objective is MC-evaluated
                 (using `inner_sampler`).
-            posterior_transform: A PosteriorTransform (optional).
+            posterior_transform: An optional PosteriorTransform. If given, this
+                transforms the posterior before evaluation. If `objective is None`,
+                then the output of the transformed posterior is used. If `objective` is
+                given, the `inner_sampler` is used to draw samples from the transformed
+                posterior, which are then evaluated under the `objective`.
             inner_mc_samples: A list `[n_0, ..., n_k]` containing the number of MC
                 samples to be used for evaluating the stage value function. Ignored if
                 the objective is `None`.
@@ -361,7 +365,8 @@ def _step(
         inner_samplers: A list of `MCSampler` objects, each to be used in the stage
             value function at the corresponding index.
         objective: The MCAcquisitionObjective under which the model output is evaluated.
-        posterior_transform: A PosteriorTransform.
+        posterior_transform: A PosteriorTransform. Used to transform the posterior
+            before sampling / evaluating the model output.
         running_val: As `batch_shape`-dim tensor containing the current running value.
         sample_weights: A tensor of shape `f_i x .... x f_1 x batch_shape` when called
             in the `i`-th step by which to weight the stage value samples. Used in
