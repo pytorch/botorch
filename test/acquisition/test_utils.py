@@ -16,7 +16,7 @@ from botorch.acquisition.multi_objective import (
     MCMultiOutputObjective,
     monte_carlo as moo_monte_carlo,
 )
-from botorch.acquisition.objective import GenericMCObjective, MCAcquisitionObjective
+from botorch.acquisition.objective import GenericMCObjective, MCAcquisitionObjective, ScalarizedPosteriorTransform
 from botorch.acquisition.utils import (
     expand_trace_observations,
     get_acquisition_function,
@@ -354,6 +354,19 @@ class TestGetAcquisitionFunction(BotorchTestCase):
                 acquisition_function_name="qEHVI",
                 model=self.model,
                 objective=self.mo_objective,
+                X_observed=self.X_observed,
+                X_pending=self.X_pending,
+                mc_samples=self.mc_samples,
+                seed=self.seed,
+                ref_point=self.ref_point,
+            )
+        # posterior transforms are not supported
+        with self.assertRaises(NotImplementedError):
+            acqf = get_acquisition_function(
+                acquisition_function_name="qEHVI",
+                model=self.model,
+                objective=self.mo_objective,
+                posterior_transform=ScalarizedPosteriorTransform(weights=torch.rand(2)),
                 X_observed=self.X_observed,
                 X_pending=self.X_pending,
                 mc_samples=self.mc_samples,

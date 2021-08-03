@@ -86,7 +86,7 @@ class MaxPosteriorSampling(SamplingStrategy):
         self.model = model
         if objective is None:
             objective = IdentityMCObjective()
-        elif isinstance(objective, ScalarizedObjective):
+        elif not isinstance(objective, MCAcquisitionObjective):
             # TODO: Clean up once ScalarizedObjective is removed.
             if posterior_transform is not None:
                 raise RuntimeError(

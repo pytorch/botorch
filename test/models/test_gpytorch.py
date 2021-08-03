@@ -9,6 +9,7 @@ import itertools
 import torch
 from botorch import fit_gpytorch_model
 from botorch import settings
+from botorch.acquisition.objective import ScalarizedPosteriorTransform
 from botorch.exceptions import (
     BotorchTensorDimensionError,
     BotorchTensorDimensionWarning,
@@ -262,6 +263,17 @@ class TestGPyTorchModel(BotorchTestCase):
                 )
             )
 
+    def test_posterior_transform(self):
+        tkwargs = {"device": self.device, "dtype": torch.double}
+        train_X = torch.rand(5, 1, **tkwargs)
+        train_Y = torch.sin(train_X)
+        model = SimpleGPyTorchModel(train_X, train_Y)
+        post_tf = ScalarizedPosteriorTransform(weights=torch.zeros(1, **tkwargs))
+        post = model.posterior(torch.rand(3, 1, **tkwargs), posterior_transform=post_tf)
+        self.assertTrue(torch.equal(
+            post.mean, torch.zeros(3, 1, **tkwargs)
+        ))
+
 
 class TestBatchedMultiOutputGPyTorchModel(BotorchTestCase):
     def test_batched_multi_output_gpytorch_model(self):
@@ -333,6 +345,17 @@ class TestBatchedMultiOutputGPyTorchModel(BotorchTestCase):
                         if num_outputs == 1
                         else expected_input_batch_shape + torch.Size([2]),
                     )
+
+    def test_posterior_transform(self):
+        tkwargs = {"device": self.device, "dtype": torch.double}
+        train_X = torch.rand(5, 2, **tkwargs)
+        train_Y = torch.sin(train_X)
+        model = SimpleBatchedMultiOutputGPyTorchModel(train_X, train_Y)
+        post_tf = ScalarizedPosteriorTransform(weights=torch.zeros(2, **tkwargs))
+        post = model.posterior(torch.rand(3, 2, **tkwargs), posterior_transform=post_tf)
+        self.assertTrue(torch.equal(
+            post.mean, torch.zeros(3, 1, **tkwargs)
+        ))
 
 
 class TestModelListGPyTorchModel(BotorchTestCase):
@@ -459,3 +482,21 @@ class TestModelListGPyTorchModel(BotorchTestCase):
                         torch.cat([expected_train, expected_test], dim=0),
                     )
                 )
+
+    def test_posterior_transform(self):
+        tkwargs = {"device": self.device, "dtype": torch.double}
+        train_X1, train_X2 = (
+            torch.rand(5, 1, **tkwargs),
+            torch.rand(5, 1, **tkwargs),
+        )
+        train_Y1 = torch.sin(train_X1)
+        train_Y2 = torch.cos(train_X2)
+        # test different batch shapes
+        m1 = SimpleGPyTorchModel(
+            train_X1, train_Y1
+        )
+        m2 = SimpleGPyTorchModel(train_X2, train_Y2)
+        model = SimpleModelListGPyTorchModel(m1, m2)
+        post_tf = ScalarizedPosteriorTransform(torch.ones(2, **tkwargs))
+        post = model.posterior(torch.rand(3, 1, **tkwargs), posterior_transform=post_tf)
+        self.assertEqual(post.mean.shape, torch.Size([3, 1]))

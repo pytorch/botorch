@@ -713,10 +713,15 @@ def get_best_f_mc(
     if not training_data.is_block_design:
         raise NotImplementedError("Currently only block designs are supported.")
     Y = training_data.Y
+    if posterior_transform is not None:
+        # retain the original tensor dimension since objective expects explicit
+        # output dimension.
+        Y_dim = Y.dim()
+        Y = posterior_transform.evaluate(Y)
+        if Y.dim() < Y_dim:
+            Y = Y.unsqueeze(-1)
     if objective is None:
         if Y.shape[-1] > 1:
             raise UnsupportedError
         objective = IdentityMCObjective()
-    if posterior_transform is not None:
-        Y = posterior_transform.evaluate(Y)
     return objective(Y).max(-1).values

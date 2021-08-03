@@ -20,8 +20,9 @@ from botorch.acquisition.knowledge_gradient import (
 from botorch.acquisition.monte_carlo import qExpectedImprovement, qSimpleRegret
 from botorch.acquisition.objective import (
     GenericMCObjective,
+    ScalarizedObjective,
     ScalarizedPosteriorTransform,
-)  # TODO: fix usage!
+)
 from botorch.acquisition.utils import project_to_sample_points
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models import SingleTaskGP
@@ -116,6 +117,14 @@ class TestQKnowledgeGradient(BotorchTestCase):
             mm2 = MockModel(MockPosterior(mean=mean2))
             with self.assertRaises(UnsupportedError):
                 qKnowledgeGradient(model=mm2)
+            # test handling of scalarized objective
+            obj = ScalarizedObjective(weights=torch.rand(2))
+            post_tf = ScalarizedPosteriorTransform(weights=torch.rand(2))
+            with self.assertRaises(RuntimeError):
+                qKnowledgeGradient(model=mm2, objective=obj, posterior_transform=post_tf)
+            acqf = qKnowledgeGradient(model=mm2, objective=obj)
+            self.assertIsInstance(acqf.posterior_transform, ScalarizedPosteriorTransform)
+            self.assertIsNone(acqf.objective)
 
     def test_evaluate_q_knowledge_gradient(self):
         for dtype in (torch.float, torch.double):
