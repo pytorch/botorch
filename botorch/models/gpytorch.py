@@ -688,14 +688,15 @@ class MultiTaskGPyTorchModel(GPyTorchModel, ABC):
                 )
         # If single-output, return the posterior of a single-output model
         if num_outputs == 1:
-            return GPyTorchPosterior(mvn=mvn)
-        # Otherwise, make a MultitaskMultivariateNormal out of this
-        mtmvn = MultitaskMultivariateNormal(
-            mean=mvn.mean.view(*X.shape[:-2], num_outputs, -1).transpose(-1, -2),
-            covariance_matrix=mvn.lazy_covariance_matrix,
-            interleaved=False,
-        )
-        posterior = GPyTorchPosterior(mvn=mtmvn)
+            posterior = GPyTorchPosterior(mvn=mvn)
+        else:
+            # Otherwise, make a MultitaskMultivariateNormal out of this
+            mtmvn = MultitaskMultivariateNormal(
+                mean=mvn.mean.view(*X.shape[:-2], num_outputs, -1).transpose(-1, -2),
+                covariance_matrix=mvn.lazy_covariance_matrix,
+                interleaved=False,
+            )
+            posterior = GPyTorchPosterior(mvn=mtmvn)
         if hasattr(self, "outcome_transform"):
             posterior = self.outcome_transform.untransform_posterior(posterior)
         if posterior_transform is not None:

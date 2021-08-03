@@ -81,9 +81,7 @@ class TestInputConstructorUtils(InputConstructorBaseTestCase, BotorchTestCase):
             get_best_f_analytic(training_data=self.bd_td_mo)
         weights = torch.rand(2)
         obj = ScalarizedObjective(weights=weights)
-        best_f_obj = get_best_f_analytic(
-            training_data=self.bd_td_mo, objective=obj
-        )
+        best_f_obj = get_best_f_analytic(training_data=self.bd_td_mo, objective=obj)
         post_tf = ScalarizedPosteriorTransform(weights=weights)
         best_f_tf = get_best_f_analytic(
             training_data=self.bd_td_mo, posterior_transform=post_tf
@@ -108,9 +106,6 @@ class TestInputConstructorUtils(InputConstructorBaseTestCase, BotorchTestCase):
         best_f = get_best_f_mc(training_data=self.bd_td_mo, posterior_transform=post_tf)
         best_f_expected = (self.bd_td_mo.Y.sum(dim=-1)).max()
         self.assertEqual(best_f, best_f_expected)
-
-
-
 
 
 class TestAnalyticAcquisitionFunctionInputConstructors(

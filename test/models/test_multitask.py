@@ -9,6 +9,7 @@ import math
 import warnings
 
 import torch
+from botorch.acquisition.objective import ScalarizedPosteriorTransform
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.fit import fit_gpytorch_model
 from botorch.models.multitask import (
@@ -287,6 +288,11 @@ class TestMultiTaskGP(BotorchTestCase):
             posterior_f = model.posterior(test_x)
             self.assertIsInstance(posterior_f, GPyTorchPosterior)
             self.assertIsInstance(posterior_f.mvn, MultivariateNormal)
+
+            # test posterior transform
+            post_tf = ScalarizedPosteriorTransform(weights=torch.ones(1, **tkwargs))
+            posterior_f_tf = model.posterior(test_x, posterior_transform=post_tf)
+            self.assertTrue(torch.equal(posterior_f.mean, posterior_f_tf.mean))
 
     def test_MultiTaskGP_fixed_prior(self):
         for dtype in (torch.float, torch.double):
@@ -606,6 +612,15 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
             self.assertIsInstance(posterior_f.mvn, MultitaskMultivariateNormal)
             self.assertEqual(posterior_f.mean.shape, torch.Size([3, 2, 2]))
             self.assertEqual(posterior_f.variance.shape, torch.Size([3, 2, 2]))
+
+            # test posterior_tf
+            post_tf = ScalarizedPosteriorTransform(weights=torch.ones(2, **tkwargs))
+            posterior_f_tf = model.posterior(test_x, posterior_transform=post_tf)
+            self.assertTrue(
+                torch.equal(
+                    posterior_f.mean.sum(dim=-1, keepdim=True), posterior_f_tf.mean
+                )
+            )
 
     def test_KroneckerMultiTaskGP_custom(self):
         for batch_shape, dtype in itertools.product(

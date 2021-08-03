@@ -24,7 +24,6 @@ from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.objective import (
     MCAcquisitionObjective,
     IdentityMCObjective,
-    ScalarizedObjective,
     PosteriorTransform,
     ScalarizedPosteriorTransform,
 )

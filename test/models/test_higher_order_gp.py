@@ -8,6 +8,7 @@ import itertools
 from unittest import mock
 
 import torch
+from botorch.acquisition.objective import PosteriorTransform
 from botorch.models import HigherOrderGP
 from botorch.models.higher_order_gp import FlattenedStandardize
 from botorch.models.transforms.input import Normalize
@@ -20,6 +21,14 @@ from gpytorch.kernels import RBFKernel
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls import ExactMarginalLogLikelihood
 from gpytorch.settings import skip_posterior_variances, max_cholesky_size
+
+
+class DummyPosteriorTransform(PosteriorTransform):
+    def evaluate(self, Y):
+        return Y
+
+    def forward(self, posterior):
+        return posterior
 
 
 class TestHigherOrderGP(BotorchTestCase):
@@ -89,6 +98,13 @@ class TestHigherOrderGP(BotorchTestCase):
                     # test the posterior works
                     posterior = self.model.posterior(test_x)
                     self.assertIsInstance(posterior, GPyTorchPosterior)
+
+                    # test with posterior transform
+                    post_tf = DummyPosteriorTransform()
+                    posterior_tf = self.model.posterior(
+                        test_x, posterior_transform=post_tf
+                    )
+                    self.assertTrue(torch.equal(posterior.mean, posterior_tf.mean))
 
                     # test the posterior works with observation noise
                     posterior = self.model.posterior(test_x, observation_noise=True)

@@ -121,9 +121,13 @@ class TestQKnowledgeGradient(BotorchTestCase):
             obj = ScalarizedObjective(weights=torch.rand(2))
             post_tf = ScalarizedPosteriorTransform(weights=torch.rand(2))
             with self.assertRaises(RuntimeError):
-                qKnowledgeGradient(model=mm2, objective=obj, posterior_transform=post_tf)
+                qKnowledgeGradient(
+                    model=mm2, objective=obj, posterior_transform=post_tf
+                )
             acqf = qKnowledgeGradient(model=mm2, objective=obj)
-            self.assertIsInstance(acqf.posterior_transform, ScalarizedPosteriorTransform)
+            self.assertIsInstance(
+                acqf.posterior_transform, ScalarizedPosteriorTransform
+            )
             self.assertIsNone(acqf.objective)
 
     def test_evaluate_q_knowledge_gradient(self):

@@ -9,6 +9,7 @@ import warnings
 
 import torch
 from botorch import fit_gpytorch_model
+from botorch.acquisition.objective import ScalarizedPosteriorTransform
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.models.pairwise_gp import PairwiseGP, PairwiseLaplaceMarginalLogLikelihood
 from botorch.models.transforms.input import Normalize
@@ -129,6 +130,11 @@ class TestPairwiseGP(BotorchTestCase):
             self.assertIsInstance(posterior, GPyTorchPosterior)
             self.assertEqual(posterior.mean.shape, expected_shape)
             self.assertEqual(posterior.variance.shape, expected_shape)
+
+            # test posterior transform
+            post_tf = ScalarizedPosteriorTransform(weights=torch.ones(1))
+            posterior_tf = model.posterior(X, posterior_transform=post_tf)
+            self.assertTrue(torch.equal(posterior.mean, posterior_tf.mean))
 
             # expect to raise error when output_indices is not None
             with self.assertRaises(RuntimeError):

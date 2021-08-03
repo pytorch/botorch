@@ -16,7 +16,11 @@ from botorch.acquisition.multi_objective import (
     MCMultiOutputObjective,
     monte_carlo as moo_monte_carlo,
 )
-from botorch.acquisition.objective import GenericMCObjective, MCAcquisitionObjective, ScalarizedPosteriorTransform
+from botorch.acquisition.objective import (
+    GenericMCObjective,
+    MCAcquisitionObjective,
+    ScalarizedPosteriorTransform,
+)
 from botorch.acquisition.utils import (
     expand_trace_observations,
     get_acquisition_function,
