@@ -14,6 +14,7 @@ from botorch.fit import fit_gpytorch_model
 from botorch.models import ModelListGP
 from botorch.models.gp_regression import FixedNoiseGP, SingleTaskGP
 from botorch.models.transforms import Standardize
+from botorch.models.transforms.input import Normalize
 from botorch.posteriors import GPyTorchPosterior
 from botorch.utils.testing import BotorchTestCase, _get_random_data
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
@@ -25,7 +26,7 @@ from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikeliho
 from gpytorch.priors import GammaPrior
 
 
-def _get_model(n, fixed_noise=False, use_octf=False, **tkwargs):
+def _get_model(fixed_noise=False, use_octf=False, use_intf=False, **tkwargs):
     train_x1, train_y1 = _get_random_data(
         batch_shape=torch.Size(), m=1, n=10, **tkwargs
     )
@@ -33,6 +34,7 @@ def _get_model(n, fixed_noise=False, use_octf=False, **tkwargs):
         batch_shape=torch.Size(), m=1, n=11, **tkwargs
     )
     octfs = [Standardize(m=1), Standardize(m=1)] if use_octf else [None, None]
+    intfs = [Normalize(d=1), Normalize(d=1)] if use_intf else [None, None]
     if fixed_noise:
         train_y1_var = 0.1 + 0.1 * torch.rand_like(train_y1, **tkwargs)
         train_y2_var = 0.1 + 0.1 * torch.rand_like(train_y2, **tkwargs)
@@ -41,19 +43,27 @@ def _get_model(n, fixed_noise=False, use_octf=False, **tkwargs):
             train_Y=train_y1,
             train_Yvar=train_y1_var,
             outcome_transform=octfs[0],
+            input_transform=intfs[0],
         )
         model2 = FixedNoiseGP(
             train_X=train_x2,
             train_Y=train_y2,
             train_Yvar=train_y2_var,
             outcome_transform=octfs[1],
+            input_transform=intfs[1],
         )
     else:
         model1 = SingleTaskGP(
-            train_X=train_x1, train_Y=train_y1, outcome_transform=octfs[0]
+            train_X=train_x1,
+            train_Y=train_y1,
+            outcome_transform=octfs[0],
+            input_transform=intfs[0],
         )
         model2 = SingleTaskGP(
-            train_X=train_x2, train_Y=train_y2, outcome_transform=octfs[1]
+            train_X=train_x2,
+            train_Y=train_y2,
+            outcome_transform=octfs[1],
+            input_transform=intfs[1],
         )
     model = ModelListGP(model1, model2)
     return model.to(**tkwargs)
@@ -65,7 +75,7 @@ class TestModelListGP(BotorchTestCase):
             (torch.float, torch.double), (False, True)
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
-            model = _get_model(n=10, use_octf=use_octf, **tkwargs)
+            model = _get_model(use_octf=use_octf, **tkwargs)
             self.assertIsInstance(model, ModelListGP)
             self.assertIsInstance(model.likelihood, LikelihoodList)
             for m in model.models:
@@ -157,7 +167,7 @@ class TestModelListGP(BotorchTestCase):
             (torch.float, torch.double), (False, True)
         ):
             tkwargs = {"device": self.device, "dtype": dtype}
-            model = _get_model(n=10, fixed_noise=True, use_octf=use_octf, **tkwargs)
+            model = _get_model(fixed_noise=True, use_octf=use_octf, **tkwargs)
             self.assertIsInstance(model, ModelListGP)
             self.assertIsInstance(model.likelihood, LikelihoodList)
             for m in model.models:
@@ -236,9 +246,6 @@ class TestModelListGP(BotorchTestCase):
         train_x1, train_y1 = _get_random_data(
             batch_shape=torch.Size(), m=1, n=10, **tkwargs
         )
-        train_x2, train_y2 = _get_random_data(
-            batch_shape=torch.Size(), m=1, n=11, **tkwargs
-        )
         model1 = SingleTaskGP(train_X=train_x1, train_Y=train_y1)
         model = ModelListGP(model1)
         model.to(**tkwargs)
@@ -246,3 +253,32 @@ class TestModelListGP(BotorchTestCase):
         posterior = model.posterior(test_x)
         self.assertIsInstance(posterior, GPyTorchPosterior)
         self.assertIsInstance(posterior.mvn, MultivariateNormal)
+
+    def test_transform_revert_train_inputs(self):
+        tkwargs = {"device": self.device, "dtype": torch.float}
+        model_list = _get_model(use_intf=True, **tkwargs)
+        org_inputs = [m.train_inputs[0] for m in model_list.models]
+        model_list.eval()
+        for i, m in enumerate(model_list.models):
+            self.assertTrue(
+                torch.allclose(
+                    m.train_inputs[0],
+                    m.input_transform.preprocess_transform(org_inputs[i]),
+                )
+            )
+            self.assertTrue(m._has_transformed_inputs)
+            self.assertTrue(torch.equal(m._original_train_inputs, org_inputs[i]))
+        model_list.train(mode=True)
+        for i, m in enumerate(model_list.models):
+            self.assertTrue(torch.equal(m.train_inputs[0], org_inputs[i]))
+            self.assertFalse(m._has_transformed_inputs)
+        model_list.train(mode=False)
+        for i, m in enumerate(model_list.models):
+            self.assertTrue(
+                torch.allclose(
+                    m.train_inputs[0],
+                    m.input_transform.preprocess_transform(org_inputs[i]),
+                )
+            )
+            self.assertTrue(m._has_transformed_inputs)
+            self.assertTrue(torch.equal(m._original_train_inputs, org_inputs[i]))
