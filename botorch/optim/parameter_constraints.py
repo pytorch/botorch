@@ -303,7 +303,7 @@ def _generate_unfixed_lin_constraints(
                 new_coefficients.append(coefficient)
             # otherwise, we "remove" the constraints corresponding to that index
             else:
-                new_rhs -= coefficient.item() * ffval_or_None
+                new_rhs = new_rhs - coefficient.item() * ffval_or_None
 
         # all indices were fixed, so the constraint is gone.
         if len(new_indices) == 0:
