@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from functools import partial
 from math import pi
 from typing import List, Optional
 
@@ -106,13 +107,21 @@ class GPDraw(Module):
 class RandomFourierFeatures(Module):
     """A class that represents Random Fourier Features."""
 
-    def __init__(self, kernel: Kernel, input_dim: int, num_rff_features: int) -> None:
+    def __init__(
+        self,
+        kernel: Kernel,
+        input_dim: int,
+        num_rff_features: int,
+        sample_shape: Optional[torch.Size] = None,
+    ) -> None:
         r"""Initialize RandomFourierFeatures.
 
         Args:
-            kernel: the GP kernel
-            input_dim: the input dimension to the GP kernel
-            num_rff_features: the number of fourier features
+            kernel: The GP kernel.
+            input_dim: The input dimension to the GP kernel.
+            num_rff_features: The number of fourier features.
+            sample_shape: The shape of a single sample. For a single-element
+                `torch.Size` object, this is simply the number of RFF draws.
         """
         if not isinstance(kernel, ScaleKernel):
             base_kernel = kernel
@@ -132,12 +141,14 @@ class RandomFourierFeatures(Module):
         self.register_buffer("outputscale", outputscale)
 
         self.register_buffer("lengthscale", base_kernel.lengthscale.detach().clone())
+        self.sample_shape = torch.Size() if sample_shape is None else sample_shape
         self.register_buffer(
             "weights",
             self._get_weights(
                 base_kernel=base_kernel,
                 input_dim=input_dim,
                 num_rff_features=num_rff_features,
+                sample_shape=self.sample_shape,
             ),
         )
         # initialize uniformly in [0, 2 * pi]
@@ -146,6 +157,7 @@ class RandomFourierFeatures(Module):
             2
             * pi
             * torch.rand(
+                *self.sample_shape,
                 num_rff_features,
                 dtype=base_kernel.lengthscale.dtype,
                 device=base_kernel.lengthscale.device,
@@ -153,19 +165,25 @@ class RandomFourierFeatures(Module):
         )
 
     def _get_weights(
-        self, base_kernel: Kernel, input_dim: int, num_rff_features: int
+        self,
+        base_kernel: Kernel,
+        input_dim: int,
+        num_rff_features: int,
+        sample_shape: Optional[torch.Size] = None,
     ) -> Tensor:
         r"""Sample weights for RFF.
 
         Args:
-            kernel: the GP base kernel
-            input_dim: the input dimension to the GP kernel
-            num_rff_features: the number of fourier features
-
+            kernel: The GP base kernel.
+            input_dim: The input dimension to the GP kernel.
+            num_rff_features: The number of fourier features.
+            sample_shape: The sample shape of weights.
         Returns:
-            A `input_dim x num_rff_features`-dim tensor of weights
+            A `(sample_shape) x input_dim x num_rff_features`-dim tensor of weights
         """
+        sample_shape = torch.Size() if sample_shape is None else sample_shape
         weights = torch.randn(
+            *sample_shape,
             input_dim,
             num_rff_features,
             dtype=base_kernel.lengthscale.dtype,
@@ -180,13 +198,91 @@ class RandomFourierFeatures(Module):
         return weights
 
     def forward(self, X: Tensor) -> Tensor:
-        r"""Get fourier basis features for the provided inputs."""
+        """
+        Get fourier basis features for the provided inputs.
+        Note that if `sample_shape` has been passed, then the rightmost
+        subset of the batch shape of the input should be `sample_shape`.
+
+        Args:
+            X: input tensor of shape `(batch_shape) x n x input_dim`
+
+        Returns:
+            A Tensor of shape `(batch_shape) x n x rff`
+        """
+        self._check_forward_X_shape_compatibility(X)
+        # X is of shape (batch_shape_minus_sample_shape) x (sample_shape) x n x d
+        # weights is of shape (sample_shape) x d x num_rff
         X_scaled = torch.div(X, self.lengthscale)
-        outputs = torch.cos(X_scaled @ self.weights + self.bias)
-        return (
-            torch.sqrt(torch.tensor(2.0) * self.outputscale / self.weights.shape[-1])
-            * outputs
-        )
+        batchmatmul = X_scaled @ self.weights
+        bias = self.bias
+        # bias is of shape (sample_shape) x num_rff
+        # batchmatmul is of shape
+        # (batch_shape_minus_sample_shape) x (sample_shape) x n x num_rff
+        outputs = torch.cos(batchmatmul + bias.unsqueeze(-2))
+        return torch.sqrt(2.0 * self.outputscale / self.weights.shape[-1]) * outputs
+
+    def _check_forward_X_shape_compatibility(self, X: Tensor) -> None:
+        len_sample_shape = len(self.sample_shape)
+        full_batch_shape_X = X.shape[:-2]
+        len_full_batch_shape_X = len(full_batch_shape_X)
+        num_trail_dims = len_full_batch_shape_X - len_sample_shape
+        # if there is no batch dimension, then we forward pass through every RFF sample
+        # otherwise, we check if the rightmost subset matches sample_shape
+        if (
+            len_full_batch_shape_X
+            and full_batch_shape_X[num_trail_dims:] != self.sample_shape
+        ):
+            raise ValueError(
+                "the batch shape of X is expected to follow the pattern: "
+                f"`... x {tuple(self.sample_shape)}`"
+            )
+
+
+def get_deterministic_model_multi_samples(
+    weights: List[Tensor],
+    bases: List[RandomFourierFeatures],
+) -> GenericDeterministicModel:
+    """
+    Get a batched deterministic model that batch evaluates `n_samples` function
+    samples. This supports multi-output models as well.
+
+    Args:
+        weights: a list of weights with `num_outputs` elements. Each weight is of
+            shape `(batch_shape_input) x n_samples x num_rff_features`, where
+            `(batch_shape_input)` is the batch shape of the inputs used to obtain the
+            posterior weights.
+        bases: a list of RandomFourierFeatures with `num_outputs` elements. Each
+            basis has a sample shape of `n_samples`.
+        n_samples: the number of function samples.
+
+    Returns:
+        A batched `GenericDeterministicModel`s that batch evaluates `n_samples`
+        function samples.
+    """
+
+    def evaluate_gps_X(X, weights, bases):
+        list_of_outputs = []
+        for w, basis in zip(weights, bases):
+            # This ensures that the outermost batch dimension is the sample dimension
+            # via basis._check_forward_X_shape_compatibility.
+            phi_X = basis(X)
+            # X.shape == (batch_shape_X_minus_n_samples) x n_samples x n x d
+            # phi_X.shape == (batch_shape_X_minus_n_samples) x n_samples x n x num_rff
+            # weights[0].shape == (batch_shape_input) x n_samples x num_rff
+            # if X doesn't have a batch shape,
+            # then phi_X.shape == n_samples x n x num_rff
+            pending_dims = [1] * max(len(X.shape[:-2]) - 1, 0)
+            # the below view operation is inserting batch_shape_X_minus_n_samples
+            # dimensions in w to enable broadcasted matmul.
+            w_unsqueezed = w.view(*w.shape[:-2], *pending_dims, *w.shape[-2:], 1)
+            list_of_outputs.append((phi_X @ w_unsqueezed).squeeze(-1))
+
+        return torch.stack(list_of_outputs, dim=-1)
+
+    return GenericDeterministicModel(
+        f=partial(evaluate_gps_X, weights=weights, bases=bases),
+        num_outputs=len(weights),
+    )
 
 
 def get_deterministic_model(
@@ -212,42 +308,49 @@ def get_weights_posterior(X: Tensor, y: Tensor, sigma_sq: float) -> Multivariate
     r"""Sample bayesian linear regression weights.
 
     Args:
-        X: a `n x num_rff_features`-dim tensor of inputs
-        y: a `n`-dim tensor of outputs
+        X: a `(batch_shape) x n x num_rff_features`-dim tensor of inputs
+        y: a `(batch_shape) x n`-dim tensor of outputs
         sigma_sq: the noise variance
 
     Returns:
         The posterior distribution over the weights.
     """
     with torch.no_grad():
-        A = X.T @ X + sigma_sq * torch.eye(X.shape[-1], dtype=X.dtype, device=X.device)
+        X_trans = X.transpose(-2, -1)
+        A = X_trans @ X + sigma_sq * torch.eye(
+            X.shape[-1], dtype=X.dtype, device=X.device
+        )
         # mean is given by: m = S @ x.T @ y, where S = A_inv
         # compute inverse of A using solves
         # covariance is A_inv * sigma
         L_A = psd_safe_cholesky(A)
         # solve L_A @ u = I
-        Iw = torch.eye(L_A.shape[0], dtype=X.dtype, device=X.device)
+        Iw = torch.eye(L_A.shape[-1], dtype=X.dtype, device=X.device)
         u = torch.triangular_solve(Iw, L_A, upper=False).solution
         # solve L_A^T @ S = u
-        A_inv = torch.triangular_solve(u, L_A.T).solution
-        m = A_inv @ X.T @ y
+        A_inv = torch.triangular_solve(u, L_A.transpose(-2, -1)).solution
+        m = (A_inv @ X_trans @ y.unsqueeze(-1)).squeeze(-1)
         L = psd_safe_cholesky(A_inv * sigma_sq)
         return MultivariateNormal(loc=m, scale_tril=L)
 
 
 def get_gp_samples(
     model: Model, num_outputs: int, n_samples: int, num_rff_features: int = 500
-) -> List[GenericDeterministicModel]:
-    r"""Sample functions from GP posterior using RFF.
+) -> GenericDeterministicModel:
+    r"""Sample functions from GP posterior using RFFs. The returned
+    `GenericDeterministicModel` effectively wraps `num_outputs` models,
+    each of which has a batch shape of `n_samples`. Refer
+    `get_deterministic_model_multi_samples` for more details.
 
     Args:
-        model: the model
-        num_outputs: the number of outputs
-        n_samples: the number of sampled functions to draw
-        num_rff_features: the number of random fourier features
+        model: The model.
+        num_outputs: The number of outputs.
+        n_samples: The number of functions to be sampled IID.
+        num_rff_features: The number of random Fourier features.
 
     Returns:
-        A list of sampled functions.
+        A batched `GenericDeterministicModel` that batch evaluates `n_samples`
+        sampled functions.
     """
     if num_outputs > 1:
         if not isinstance(model, ModelListGP):
@@ -263,27 +366,42 @@ def get_gp_samples(
     bases = []
     for m in range(num_outputs):
         train_X = models[m].train_inputs[0]
+        train_targets = models[m].train_targets
         # get random fourier features
+        # sample_shape controls the number of iid functions.
         basis = RandomFourierFeatures(
             kernel=models[m].covar_module,
             input_dim=train_X.shape[-1],
             num_rff_features=num_rff_features,
+            sample_shape=torch.Size([n_samples]),
         )
         bases.append(basis)
+        # TODO: when batched kernels are supported in RandomFourierFeatures,
+        # the following code can be uncommented.
+        # if train_X.ndim > 2:
+        #    batch_shape_train_X = train_X.shape[:-2]
+        #    dataset_shape = train_X.shape[-2:]
+        #    train_X = train_X.unsqueeze(-3).expand(
+        #        *batch_shape_train_X, n_samples, *dataset_shape
+        #    )
+        #    train_targets = train_targets.unsqueeze(-2).expand(
+        #        *batch_shape_train_X, n_samples, dataset_shape[0]
+        #    )
         phi_X = basis(train_X)
-        # sample weights from bayesian linear model
+        # Sample weights from bayesian linear model
+        # 1. When inputs are not batched, train_X.shape == (n, d)
+        # weights.sample().shape == (n_samples, num_rff_features)
+        # 2. When inputs are batched, train_X.shape == (batch_shape_input, n, d)
+        # This is expanded to (batch_shape_input, n_samples, n, d)
+        # to maintain compatibility with RFF forward semantics
+        # weights.sample().shape == (batch_shape_input, n_samples, num_rff_features)
         mvn = get_weights_posterior(
             X=phi_X,
-            y=models[m].train_targets,
+            y=train_targets,
             sigma_sq=models[m].likelihood.noise.mean().item(),
         )
-        weights.append(mvn.sample(torch.Size([n_samples])))
-        # construct a determinisitic, multi-output model for each sample
-    models = [
-        get_deterministic_model(
-            weights=[weights[m][i] for m in range(num_outputs)],
-            bases=bases,
-        )
-        for i in range(n_samples)
-    ]
-    return models
+        weights.append(mvn.sample())
+
+    # TODO: Ideally support RFFs for multi-outputs instead of having to
+    # generate a basis for each output serially.
+    return get_deterministic_model_multi_samples(weights=weights, bases=bases)
