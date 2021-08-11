@@ -310,7 +310,7 @@ def _generate_unfixed_lin_constraints(
             if (eq and new_rhs != 0) or (not eq and new_rhs > 0):
                 prefix = "Eq" if eq else "Ineq"
                 raise CandidateGenerationError(
-                    f"{prefix}ality constraint {constraint_id} not met "
+                    f"{prefix}uality constraint {constraint_id} not met "
                     "with fixed_features."
                 )
         else:
