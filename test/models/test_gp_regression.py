@@ -273,6 +273,21 @@ class TestSingleTaskGP(BotorchTestCase):
             fm = model.fantasize(X=X_f, sampler=sampler, observation_noise=False)
             self.assertIsInstance(fm, model.__class__)
 
+        # check that input transforms are applied to X.
+        tkwargs = {"device": self.device, "dtype": torch.float}
+        intf = Normalize(d=1, bounds=torch.tensor([[0], [10]], **tkwargs))
+        model, _ = self._get_model_and_data(
+            batch_shape=torch.Size(),
+            m=1,
+            input_transform=intf,
+            **tkwargs,
+        )
+        X_f = torch.rand(4, 1, **tkwargs)
+        fm = model.fantasize(X_f, sampler=SobolQMCNormalSampler(num_samples=3))
+        self.assertTrue(
+            torch.allclose(fm.train_inputs[0][:, -4:], intf(X_f).expand(3, -1, -1))
+        )
+
     def test_subset_model(self):
         for batch_shape, dtype, use_octf in itertools.product(
             (torch.Size(), torch.Size([2])), (torch.float, torch.double), (True, False)
