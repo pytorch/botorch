@@ -200,7 +200,7 @@ class MockAcquisitionFunction:
 def _get_random_data(
     batch_shape: torch.Size, m: int, d: int = 1, n: int = 10, **tkwargs
 ) -> Tuple[Tensor, Tensor]:
-    r"""Generate random data for testing pursposes.
+    r"""Generate random data for testing purposes.
 
     Args:
         batch_shape: The batch shape of the data.
@@ -240,7 +240,7 @@ def _get_test_posterior(
         interleaved: A boolean indicating the format of the
             MultitaskMultivariateNormal
         lazy: A boolean indicating if the posterior should be lazy
-        indepedent: A boolean indicating whether the outputs are independent
+        independent: A boolean indicating whether the outputs are independent
         tkwargs: `device` and `dtype` tensor constructor kwargs.
 
 

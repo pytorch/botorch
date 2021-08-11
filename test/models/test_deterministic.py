@@ -107,3 +107,7 @@ class TestDeterministicModels(BotorchTestCase):
         expected_Y, _ = octf.untransform(model.forward(intf(test_X)))
         posterior = model.posterior(test_X)
         self.assertTrue(torch.allclose(expected_Y, posterior.mean))
+        # check that model.train/eval works and raises the warning
+        model.train()
+        with self.assertWarns(RuntimeWarning):
+            model.eval()

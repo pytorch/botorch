@@ -11,22 +11,18 @@ from unittest import mock
 
 import torch
 from botorch import fit_gpytorch_model, settings
-from botorch.exceptions.errors import BotorchError
 from botorch.exceptions.warnings import BotorchWarning, OptimizationWarning
-from botorch.fit import _set_transformed_inputs
 from botorch.models import FixedNoiseGP, HeteroskedasticSingleTaskGP, SingleTaskGP
-from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Standardize
 from botorch.optim.fit import (
     OptimizationIteration,
     fit_gpytorch_scipy,
     fit_gpytorch_torch,
 )
-from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
+from botorch.utils.testing import BotorchTestCase
 from gpytorch.constraints import GreaterThan, Interval
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
-from gpytorch.models.gp import GP
 from gpytorch.utils.errors import NanError, NotPSDError
 from gpytorch.utils.warnings import NumericalWarning
 
@@ -321,39 +317,3 @@ class TestFitGPyTorchModel(BotorchTestCase):
                             for w in ws
                         )
                     )
-
-
-class MockGP(MockModel, GP):
-    pass
-
-
-class TestSetTransformedInputs(BotorchTestCase):
-    def test_set_transformed_inputs(self):
-        for dtype in (torch.float, torch.double):
-            train_x = torch.rand(5, 1, dtype=dtype, device=self.device)
-            train_y = torch.rand(5, 1, dtype=dtype, device=self.device)
-            tf = Normalize(
-                d=1,
-                bounds=torch.tensor([[0.0], [2.0]], dtype=dtype, device=self.device),
-            )
-            model = SingleTaskGP(train_x, train_y, input_transform=tf)
-            self.assertTrue(torch.equal(model.train_inputs[0], train_x))
-            mll = ExactMarginalLogLikelihood(model.likelihood, model)
-            # check that input transform is only applied when
-            # transform_on_train=True
-            self.assertTrue(torch.equal(model.train_inputs[0], train_x))
-            tf.transform_on_train = False
-            _set_transformed_inputs(mll.model)
-            self.assertTrue(torch.equal(model.train_inputs[0], train_x))
-            tf.transform_on_train = True
-            _set_transformed_inputs(mll.model)
-            self.assertTrue(torch.equal(model.train_inputs[0], tf(train_x)))
-            model.eval()
-            # test no set_train_data method
-            mock_model = MockGP(MockPosterior())
-            mock_model.train_inputs = (train_x,)
-            mock_model.likelihood = model.likelihood
-            mock_model.input_transform = tf
-            mll = ExactMarginalLogLikelihood(mock_model.likelihood, mock_model)
-            with self.assertRaises(BotorchError):
-                _set_transformed_inputs(mll.model)
