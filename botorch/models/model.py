@@ -156,7 +156,9 @@ class Model(Module, ABC):
             with settings.propagate_grads(propagate_grads):
                 post_X = self.posterior(X, observation_noise=observation_noise)
             Y_fantasized = sampler(post_X)  # num_fantasies x batch_shape x n' x m
-            return self.condition_on_observations(X=X, Y=Y_fantasized, **kwargs)
+            return self.condition_on_observations(
+                X=self.transform_inputs(X), Y=Y_fantasized, **kwargs
+            )
 
     @classmethod
     def construct_inputs(

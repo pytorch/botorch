@@ -17,6 +17,7 @@ from botorch import settings
 from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import Log, OutcomeTransform
+from botorch.models.utils import fantasize as fantasize_flag
 from botorch.models.utils import validate_input_scaling
 from botorch.sampling.samplers import MCSampler
 from botorch.utils.containers import TrainingData
@@ -287,15 +288,20 @@ class FixedNoiseGP(BatchedMultiOutputGPyTorchModel, ExactGP):
             The constructed fantasy model.
         """
         propagate_grads = kwargs.pop("propagate_grads", False)
-        with settings.propagate_grads(propagate_grads):
-            post_X = self.posterior(X, observation_noise=observation_noise, **kwargs)
-        Y_fantasized = sampler(post_X)  # num_fantasies x batch_shape x n' x m
-        # Use the mean of the previous noise values (TODO: be smarter here).
-        # noise should be batch_shape x q x m when X is batch_shape x q x d, and
-        # Y_fantasized is num_fantasies x batch_shape x q x m.
-        noise_shape = Y_fantasized.shape[1:]
-        noise = self.likelihood.noise.mean().expand(noise_shape)
-        return self.condition_on_observations(X=X, Y=Y_fantasized, noise=noise)
+        with fantasize_flag():
+            with settings.propagate_grads(propagate_grads):
+                post_X = self.posterior(
+                    X, observation_noise=observation_noise, **kwargs
+                )
+            Y_fantasized = sampler(post_X)  # num_fantasies x batch_shape x n' x m
+            # Use the mean of the previous noise values (TODO: be smarter here).
+            # noise should be batch_shape x q x m when X is batch_shape x q x d, and
+            # Y_fantasized is num_fantasies x batch_shape x q x m.
+            noise_shape = Y_fantasized.shape[1:]
+            noise = self.likelihood.noise.mean().expand(noise_shape)
+            return self.condition_on_observations(
+                X=self.transform_inputs(X), Y=Y_fantasized, noise=noise
+            )
 
     def forward(self, x: Tensor) -> MultivariateNormal:
         if self.training:
