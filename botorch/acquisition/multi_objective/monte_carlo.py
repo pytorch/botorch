@@ -42,6 +42,9 @@ from botorch.exceptions.warnings import BotorchWarning
 from botorch.models.model import Model
 from botorch.posteriors.posterior import Posterior
 from botorch.sampling.samplers import MCSampler, SobolQMCNormalSampler
+from botorch.utils.multi_objective.box_decompositions.box_decomposition import (
+    BoxDecomposition,
+)
 from botorch.utils.multi_objective.box_decompositions.box_decomposition_list import (
     BoxDecompositionList,
 )
@@ -55,6 +58,7 @@ from botorch.utils.multi_objective.box_decompositions.non_dominated import (
 from botorch.utils.multi_objective.box_decompositions.utils import (
     _pad_batch_pareto_frontier,
 )
+from botorch.utils.multi_objective.pareto import is_non_dominated
 from botorch.utils.objective import apply_constraints_nonnegative_soft
 from botorch.utils.torch import BufferDict
 from botorch.utils.transforms import (
@@ -687,3 +691,91 @@ class qNoisyExpectedHypervolumeImprovement(qExpectedHypervolumeImprovement):
         samples = self.sampler(posterior)[..., -q:, :]
         # add previous nehvi from pending points
         return self._compute_qehvi(samples=samples) + self._prev_nehvi
+
+
+class NoDiffqNEHVI(MultiObjectiveMCAcquisitionFunction):
+    r"""A non-differentiable version of qNEHVI that uses
+    `DominatedPartitioning` for fast and memory efficient HV
+    computations at the expense of differentiability.
+    """
+
+    def __init__(
+        self,
+        model: Model,
+        ref_point: Tensor,
+        X_baseline: Tensor,
+        sampler: Optional[MCSampler] = None,
+        objective: Optional[MCMultiOutputObjective] = None,
+        p_class: BoxDecomposition = DominatedPartitioning,
+        **kwargs: Any,
+    ) -> None:
+        r"""Non-differentiable qNEHVI supporting m=2 outcomes.
+
+        TODO: Add support for constraints.
+
+        Args:
+            model: A fitted model.
+            ref_point: A tensor with `m` elements representing the reference
+                point (in the outcome space) w.r.t. to which compute the hypervolume.
+                This is a reference point for the objective values (i.e. after
+                applying`objective` to the samples).
+            X_baseline: A `r x d`-dim Tensor of `r` design points that have already
+                been observed. These points are considered as potential approximate
+                pareto-optimal design points.
+            sampler: The sampler used to draw base samples. Defaults to
+                `SobolQMCNormalSampler(num_samples=128, collapse_batch_dims=True)`.
+            objective: The MCMultiOutputObjective under which the samples are evaluated.
+                Defaults to `IdentityMultiOutputObjective()`.
+            p_class: The partitioning class to use for HV computations.
+                Default: `DominatedPartitioning`.
+            **kwargs: Ignored!
+        """
+        super().__init__(
+            model=model,
+            sampler=sampler,
+            objective=objective,
+        )
+        self.register_buffer("ref_point", ref_point)
+        if X_baseline.dim() != 2:
+            raise UnsupportedError("Batched baseline is not supported!")
+        self.register_buffer("X_baseline", X_baseline)
+        self.p_class = p_class
+        self._cache_baseline()
+
+    def _cache_baseline(self):
+        r"""Caches the non-dominated observations corresponding to the baseline
+        as well as the corresponding HV.
+
+        TODO: replicate the sampler magic that is done in qNEHVI for base samples.
+        For now, this is ok to use with deterministic models (NEHVI-1).
+        """
+        posterior = self.model.posterior(self.X_baseline)
+        samples = self.sampler(posterior)
+        obj = self.objective(samples, X=self.X_baseline)
+        if obj.shape[0] != 1:
+            raise UnsupportedError("Only supports deterministic models for now!")
+        else:
+            obj = obj.squeeze(0)
+        self.non_dominated_baseline = obj[is_non_dominated(obj)]
+        self.baseline_hv = self.p_class(
+            ref_point=self.ref_point,
+            Y=self.non_dominated_baseline,
+        ).compute_hypervolume()
+
+    @t_batch_mode_transform()
+    def forward(self, X: Tensor) -> Tensor:
+        posterior = self.model.posterior(X)
+        samples = self.sampler(posterior)
+        obj = self.objective(samples, X=X)
+        # reduce to a single batch dimension.
+        batch_shape = obj.shape[:-2]
+        obj = obj.view(-1, *obj.shape[-2:])
+        # add the baseline non-dominated objectives
+        obj = torch.cat(
+            [obj, match_batch_shape(self.non_dominated_baseline, obj)], dim=-2
+        )
+        # get the HVs.
+        full_hv = self.p_class(self.ref_point, obj).compute_hypervolume()
+        # return the expected HVI.
+        hvi = (full_hv - self.baseline_hv).view(batch_shape)
+        return hvi.mean(dim=0)
