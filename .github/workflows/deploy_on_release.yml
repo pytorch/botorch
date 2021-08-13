@@ -111,7 +111,7 @@ jobs:
       with:
         python-version: 3.7
     - name: Install dependencies
-      # there may not be a compatible Ax pip version, so we use master
+      # there may not be a compatible Ax pip version, so we use the development version
       run: |
         pip install gpytorch
         pip install .[dev]

@@ -36,6 +36,6 @@ To generate a static build of the website in the `website/build` directory, run
 
 The site is hosted on GitHub pages, via the `gh-pages` branch of the BoTorch
 [GitHub repo](https://github.com/pytorch/botorch/tree/gh-pages).
-The website is automatically built and published from CircleCI - see the
-[config file](https://github.com/pytorch/botorch/blob/master/.circleci/config.yml)
-for details.
+The website is automatically built and published from GitHub Actions - see the
+[config file](https://github.com/pytorch/botorch/blob/master/.github/workflows/nightly.yml)
+for the nightly build job for details.

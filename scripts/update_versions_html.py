@@ -16,7 +16,7 @@ BASE_URL = "/"
 
 
 def updateVersionHTML(base_path, base_url=BASE_URL):
-    with open(base_path + "/botorch-master/website/_versions.json", "rb") as infile:
+    with open(base_path + "/botorch-main/website/_versions.json", "rb") as infile:
         versions = json.loads(infile.read())
 
     with open(base_path + "/new-site/versions.html", "rb") as infile:
