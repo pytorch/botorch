@@ -3,7 +3,7 @@
 
 # ## Tutorial on large-scale Thompson sampling
 # 
-# This demo currently considers three approaches to discrete Thompson sampling on `m` candidates points:
+# This demo currently considers four approaches to discrete Thompson sampling on `m` candidates points:
 # 
 # 1. **Exact sampling with Cholesky:** Computing a Cholesky decomposition of the corresponding `m x m` covariance matrix which reuqires `O(m^3)` computational cost and `O(m^2)` space. This is the standard approach to sampling from a Gaussian process, but the quadratic memory usage and cubic compliexity limits the number of candidate points.
 # 
