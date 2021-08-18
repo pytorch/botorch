@@ -10,6 +10,7 @@ Abstract base module for all BoTorch models.
 
 from __future__ import annotations
 
+import warnings
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Callable
 
@@ -24,7 +25,19 @@ from torch.nn import Module
 
 
 class Model(Module, ABC):
-    r"""Abstract base class for BoTorch models."""
+    r"""Abstract base class for BoTorch models.
+
+    Args:
+        _has_transformed_inputs: A boolean denoting whether `train_inputs` are currently
+            stored as transformed or not.
+        _original_train_inputs: A Tensor storing the original train inputs for use in
+            `_revert_to_original_inputs`. Note that this is necessary since
+            transform / untransform cycle introduces numerical errors which lead
+            to upstream errors during training.
+    """
+
+    _has_transformed_inputs: bool = False
+    _original_train_inputs: Optional[Tensor] = None
 
     @abstractmethod
     def posterior(
@@ -145,7 +158,9 @@ class Model(Module, ABC):
             with settings.propagate_grads(propagate_grads):
                 post_X = self.posterior(X, observation_noise=observation_noise)
             Y_fantasized = sampler(post_X)  # num_fantasies x batch_shape x n' x m
-            return self.condition_on_observations(X=X, Y=Y_fantasized, **kwargs)
+            return self.condition_on_observations(
+                X=self.transform_inputs(X), Y=Y_fantasized, **kwargs
+            )
 
     @classmethod
     def construct_inputs(
@@ -177,3 +192,47 @@ class Model(Module, ABC):
             return self.input_transform(X)
         except AttributeError:
             return X
+
+    def _set_transformed_inputs(self) -> None:
+        r"""Update training inputs with transformed inputs."""
+        if hasattr(self, "input_transform") and not self._has_transformed_inputs:
+            if hasattr(self, "train_inputs"):
+                self._original_train_inputs = self.train_inputs[0]
+                with torch.no_grad():
+                    X_tf = self.input_transform.preprocess_transform(
+                        self.train_inputs[0]
+                    )
+                self.set_train_data(X_tf, strict=False)
+                self._has_transformed_inputs = True
+            else:
+                warnings.warn(
+                    "Could not update `train_inputs` with transformed inputs"
+                    f"since {self.__class__.__name__} does not have a `train_inputs`"
+                    "attribute. Make sure that the `input_transform` is applied to"
+                    "both the train inputs and test inputs.",
+                    RuntimeWarning,
+                )
+
+    def _revert_to_original_inputs(self) -> None:
+        r"""Revert training inputs back to original."""
+        if hasattr(self, "input_transform") and self._has_transformed_inputs:
+            self.set_train_data(self._original_train_inputs, strict=False)
+            self._has_transformed_inputs = False
+
+    def eval(self) -> Model:
+        r"""Puts the model in `eval` mode and sets the transformed inputs."""
+        self._set_transformed_inputs()
+        return super().eval()
+
+    def train(self, mode: bool = True) -> Model:
+        r"""Puts the model in `train` mode and reverts to the original inputs.
+
+        Args:
+            mode: A boolean denoting whether to put in `train` or `eval` mode.
+                If `False`, model is put in `eval` mode.
+        """
+        if mode:
+            self._revert_to_original_inputs()
+        else:
+            self._set_transformed_inputs()
+        return super().train(mode=mode)

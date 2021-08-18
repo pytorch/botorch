@@ -17,6 +17,7 @@ from botorch.utils.gp_sampling import (
     GPDraw,
     RandomFourierFeatures,
     get_deterministic_model,
+    get_deterministic_model_multi_samples,
     get_weights_posterior,
     get_gp_samples,
 )
@@ -228,64 +229,84 @@ class TestRandomFourierFeatures(BotorchTestCase):
             # check that rff makes a copy
             self.assertFalse(rff.lengthscale is kernel.lengthscale)
 
-            # test not ScaleKernel
-            rff = RandomFourierFeatures(
-                kernel=base_kernel,
-                input_dim=2,
-                num_rff_features=3,
-            )
-            self.assertTrue(torch.equal(rff.outputscale, torch.tensor(1, **tkwargs)))
-            self.assertTrue(torch.equal(rff.lengthscale, base_kernel.lengthscale))
-            # check that rff makes a copy
-            self.assertFalse(rff.lengthscale is kernel.lengthscale)
-            self.assertEqual(rff.weights.shape, torch.Size([2, 3]))
-            self.assertEqual(rff.bias.shape, torch.Size([3]))
-            self.assertTrue(((rff.bias <= 2 * pi) & (rff.bias >= 0.0)).all())
+            for sample_shape in [torch.Size(), torch.Size([5])]:
+                # test not ScaleKernel
+                rff = RandomFourierFeatures(
+                    kernel=base_kernel,
+                    input_dim=2,
+                    num_rff_features=3,
+                    sample_shape=sample_shape,
+                )
+                self.assertTrue(
+                    torch.equal(rff.outputscale, torch.tensor(1, **tkwargs))
+                )
+                self.assertTrue(torch.equal(rff.lengthscale, base_kernel.lengthscale))
+                # check that rff makes a copy
+                self.assertFalse(rff.lengthscale is kernel.lengthscale)
+                self.assertEqual(rff.weights.shape, torch.Size([*sample_shape, 2, 3]))
+                self.assertEqual(rff.bias.shape, torch.Size([*sample_shape, 3]))
+                self.assertTrue(((rff.bias <= 2 * pi) & (rff.bias >= 0.0)).all())
 
             # test forward
-            rff = RandomFourierFeatures(
-                kernel=kernel,
-                input_dim=2,
-                num_rff_features=3,
-            )
-            for batch_shape in (torch.Size([]), torch.Size([3])):
-                X = torch.rand(*batch_shape, 1, 2, **tkwargs)
-                Y = rff(X)
-                self.assertTrue(Y.shape, torch.Size([*batch_shape, 1, 1]))
-                expected_Y = torch.sqrt(2 * rff.outputscale / rff.weights.shape[-1]) * (
-                    torch.cos(X / base_kernel.lengthscale @ rff.weights + rff.bias)
+            for sample_shape in [torch.Size(), torch.Size([7])]:
+                rff = RandomFourierFeatures(
+                    kernel=kernel,
+                    input_dim=2,
+                    num_rff_features=3,
+                    sample_shape=sample_shape,
                 )
-                self.assertTrue(torch.equal(Y, expected_Y))
+                for input_batch_shape in [torch.Size([]), torch.Size([5])]:
+                    X = torch.rand(*input_batch_shape, *sample_shape, 1, 2, **tkwargs)
+                    Y = rff(X)
+                    self.assertTrue(
+                        Y.shape, torch.Size([*input_batch_shape, *sample_shape, 1, 1])
+                    )
+                    _constant = torch.sqrt(2 * rff.outputscale / rff.weights.shape[-1])
+                    _arg_to_cos = X / base_kernel.lengthscale @ rff.weights
+                    _bias_expanded = rff.bias.unsqueeze(-2)
+                    expected_Y = _constant * (torch.cos(_arg_to_cos + _bias_expanded))
+                    self.assertTrue(torch.allclose(Y, expected_Y))
 
             # test get_weights
-            with mock.patch("torch.randn", wraps=torch.randn) as mock_randn:
-                rff._get_weights(
-                    base_kernel=base_kernel, input_dim=2, num_rff_features=3
-                )
-                mock_randn.assert_called_once_with(
-                    2,
-                    3,
-                    dtype=base_kernel.lengthscale.dtype,
-                    device=base_kernel.lengthscale.device,
-                )
-            # test get_weights with Matern kernel
-            with mock.patch("torch.randn", wraps=torch.randn) as mock_randn, mock.patch(
-                "torch.distributions.Gamma", wraps=torch.distributions.Gamma
-            ) as mock_gamma:
-                base_kernel = MaternKernel(ard_num_dims=2).to(**tkwargs)
-                rff._get_weights(
-                    base_kernel=base_kernel, input_dim=2, num_rff_features=3
-                )
-                mock_randn.assert_called_once_with(
-                    2,
-                    3,
-                    dtype=base_kernel.lengthscale.dtype,
-                    device=base_kernel.lengthscale.device,
-                )
-                mock_gamma.assert_called_once_with(
-                    base_kernel.nu,
-                    base_kernel.nu,
-                )
+            for sample_shape in [torch.Size(), torch.Size([5])]:
+                with mock.patch("torch.randn", wraps=torch.randn) as mock_randn:
+                    rff._get_weights(
+                        base_kernel=base_kernel,
+                        input_dim=2,
+                        num_rff_features=3,
+                        sample_shape=sample_shape,
+                    )
+                    mock_randn.assert_called_once_with(
+                        *sample_shape,
+                        2,
+                        3,
+                        dtype=base_kernel.lengthscale.dtype,
+                        device=base_kernel.lengthscale.device,
+                    )
+                # test get_weights with Matern kernel
+                with mock.patch(
+                    "torch.randn", wraps=torch.randn
+                ) as mock_randn, mock.patch(
+                    "torch.distributions.Gamma", wraps=torch.distributions.Gamma
+                ) as mock_gamma:
+                    base_kernel = MaternKernel(ard_num_dims=2).to(**tkwargs)
+                    rff._get_weights(
+                        base_kernel=base_kernel,
+                        input_dim=2,
+                        num_rff_features=3,
+                        sample_shape=sample_shape,
+                    )
+                    mock_randn.assert_called_once_with(
+                        *sample_shape,
+                        2,
+                        3,
+                        dtype=base_kernel.lengthscale.dtype,
+                        device=base_kernel.lengthscale.device,
+                    )
+                    mock_gamma.assert_called_once_with(
+                        base_kernel.nu,
+                        base_kernel.nu,
+                    )
 
     def test_get_deterministic_model(self):
         tkwargs = {"device": self.device}
@@ -323,20 +344,81 @@ class TestRandomFourierFeatures(BotorchTestCase):
                 self.assertTrue(torch.equal(Y, expected_Y))
                 self.assertEqual(Y.shape, torch.Size([*batch_shape, 1, m]))
 
+    def test_get_deterministic_model_multi_samples(self):
+        tkwargs = {"device": self.device}
+        n_samples = 5
+        for dtype, m in product((torch.float, torch.double), (1, 2)):
+            tkwargs["dtype"] = dtype
+            for batch_shape_w, batch_shape_x in product(
+                [torch.Size([]), torch.Size([3])], repeat=2
+            ):
+                weights = []
+                bases = []
+                for i in range(m):
+                    num_rff = 2 * (i + 2)
+                    # we require weights to be of shape
+                    # `n_samples x (batch_shape) x num_rff`
+                    weights.append(
+                        torch.rand(*batch_shape_w, n_samples, num_rff, **tkwargs)
+                    )
+                    kernel = ScaleKernel(RBFKernel(ard_num_dims=2)).to(**tkwargs)
+                    kernel.outputscale = 0.3 + torch.rand(1, **tkwargs).view(
+                        kernel.outputscale.shape
+                    )
+                    kernel.base_kernel.lengthscale = 0.3 + torch.rand(
+                        2, **tkwargs
+                    ).view(kernel.base_kernel.lengthscale.shape)
+                    bases.append(
+                        RandomFourierFeatures(
+                            kernel=kernel,
+                            input_dim=2,
+                            num_rff_features=num_rff,
+                            sample_shape=torch.Size([n_samples]),
+                        )
+                    )
+
+                model = get_deterministic_model_multi_samples(
+                    weights=weights, bases=bases
+                )
+                self.assertIsInstance(model, DeterministicModel)
+                self.assertEqual(model.num_outputs, m)
+                X = torch.rand(*batch_shape_x, n_samples, 1, 2, **tkwargs)
+                Y = model(X)
+                for i in range(m):
+                    wi = weights[i]
+                    for _ in range(len(batch_shape_x)):
+                        wi = wi.unsqueeze(-3)
+                    wi = wi.expand(*batch_shape_w, *batch_shape_x, *wi.shape[-2:])
+                    expected_Yi = (bases[i](X) @ wi.unsqueeze(-1)).squeeze(-1)
+                    self.assertTrue(torch.allclose(Y[..., i], expected_Yi))
+                self.assertEqual(
+                    Y.shape,
+                    torch.Size([*batch_shape_w, *batch_shape_x, n_samples, 1, m]),
+                )
+
     def test_get_weights_posterior(self):
         tkwargs = {"device": self.device}
         sigma = 0.01
+        input_dim = 2
         for dtype in (torch.float, torch.double):
-            tkwargs["dtype"] = dtype
-            X = torch.rand(40, 2, **tkwargs)
-            w = torch.rand(2, **tkwargs)
-            Y_true = X @ w
-            Y = Y_true + sigma * torch.randn_like(Y_true)
-            posterior = get_weights_posterior(X=X, y=Y, sigma_sq=sigma ** 2)
-            self.assertIsInstance(posterior, MultivariateNormal)
-            self.assertTrue(torch.allclose(w, posterior.mean, atol=1e-1))
-            w_samp = posterior.sample()
-            self.assertEqual(w_samp.shape, w.shape)
+            for input_batch_shape in [torch.Size(), torch.Size([5])]:
+                for sample_shape in [torch.Size(), torch.Size([3])]:
+                    tkwargs["dtype"] = dtype
+                    X = torch.rand(*input_batch_shape, 40, input_dim, **tkwargs)
+                    w = torch.rand(*sample_shape, input_dim, **tkwargs)
+                    # We have to share each sample of weights with the X.
+                    # Therefore, the effective size of w is
+                    # (sample_shape) x (input_batch_shape) x input_dim.
+                    for _ in range(len(input_batch_shape)):
+                        w.unsqueeze_(-2)
+                    w = w.expand(*sample_shape, *input_batch_shape, input_dim)
+                    Y_true = (X @ w.unsqueeze(-1)).squeeze(-1)
+                    Y = Y_true + sigma * torch.randn_like(Y_true)
+                    posterior = get_weights_posterior(X=X, y=Y, sigma_sq=sigma ** 2)
+                    self.assertIsInstance(posterior, MultivariateNormal)
+                    self.assertTrue(torch.allclose(w, posterior.mean, atol=1e-1))
+                    w_samp = posterior.sample()
+                    self.assertEqual(w_samp.shape, w.shape)
 
     def test_get_gp_samples(self):
         # test multi-task model
@@ -352,20 +434,26 @@ class TestRandomFourierFeatures(BotorchTestCase):
         tkwargs = {"device": self.device}
         for dtype, m in product((torch.float, torch.double), (1, 2)):
             tkwargs["dtype"] = dtype
-            for mtype in range(2):
+            for mtype in [True, False]:
                 model, X, Y = _get_model(**tkwargs, multi_output=m == 2)
-                use_batch_model = mtype == 0 and m == 2
+                use_batch_model = mtype and m == 2
                 gp_samples = get_gp_samples(
                     model=batched_to_model_list(model) if use_batch_model else model,
                     num_outputs=m,
                     n_samples=20,
                     num_rff_features=500,
                 )
-                self.assertEqual(len(gp_samples), 20)
-                self.assertIsInstance(gp_samples[0], DeterministicModel)
-                Y_hat_rff = torch.stack(
-                    [gp_sample(X) for gp_sample in gp_samples], dim=0
-                ).mean(dim=0)
+                self.assertEqual(len(gp_samples(X)), 20)
+                self.assertIsInstance(gp_samples, DeterministicModel)
+                Y_hat_rff = gp_samples(X).mean(dim=0)
                 with torch.no_grad():
                     Y_hat = model.posterior(X).mean
                 self.assertTrue(torch.allclose(Y_hat_rff, Y_hat, atol=2e-1))
+
+                # test batched evaluation
+                Y_batched = gp_samples(torch.randn(13, 20, 3, X.shape[-1], **tkwargs))
+                self.assertEqual(Y_batched.shape, torch.Size([13, 20, 3, m]))
+
+        # test incorrect batch shape check
+        with self.assertRaises(ValueError):
+            gp_samples(torch.randn(13, 23, 3, X.shape[-1], **tkwargs))

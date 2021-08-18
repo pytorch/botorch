@@ -90,7 +90,7 @@ def gen_batch_initial_conditions(
     factor, max_factor = 1, 5
     init_kwargs = {}
     device = bounds.device
-    bounds = bounds.cpu()
+    bounds_cpu = bounds.cpu()
     if "eta" in options:
         init_kwargs["eta"] = options.get("eta")
     if options.get("nonnegative") or is_nonnegative(acq_function):
@@ -115,14 +115,14 @@ def gen_batch_initial_conditions(
             n = raw_samples * factor
             if inequality_constraints is None and equality_constraints is None:
                 if effective_dim <= SobolEngine.MAXDIM:
-                    X_rnd = draw_sobol_samples(bounds=bounds, n=n, q=q, seed=seed)
+                    X_rnd = draw_sobol_samples(bounds=bounds_cpu, n=n, q=q, seed=seed)
                 else:
                     with manual_seed(seed):
                         # load on cpu
                         X_rnd_nlzd = torch.rand(
-                            n, q, bounds.shape[-1], dtype=bounds.dtype
+                            n, q, bounds_cpu.shape[-1], dtype=bounds.dtype
                         )
-                    X_rnd = bounds[0] + (bounds[1] - bounds[0]) * X_rnd_nlzd
+                    X_rnd = bounds_cpu[0] + (bounds_cpu[1] - bounds_cpu[0]) * X_rnd_nlzd
             else:
                 X_rnd = (
                     get_polytope_samples(

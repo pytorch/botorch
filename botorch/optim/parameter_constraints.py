@@ -303,14 +303,14 @@ def _generate_unfixed_lin_constraints(
                 new_coefficients.append(coefficient)
             # otherwise, we "remove" the constraints corresponding to that index
             else:
-                new_rhs -= coefficient.item() * ffval_or_None
+                new_rhs = new_rhs - coefficient.item() * ffval_or_None
 
         # all indices were fixed, so the constraint is gone.
         if len(new_indices) == 0:
             if (eq and new_rhs != 0) or (not eq and new_rhs > 0):
                 prefix = "Eq" if eq else "Ineq"
                 raise CandidateGenerationError(
-                    f"{prefix}ality constraint {constraint_id} not met "
+                    f"{prefix}uality constraint {constraint_id} not met "
                     "with fixed_features."
                 )
         else:

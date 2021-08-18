@@ -1,5 +1,5 @@
 <a href="https://botorch.org">
-  <img width="350" src="./botorch_logo_lockup.svg" alt="BoTorch Logo" />
+  <img width="350" src="https://botorch.org/img/botorch_logo_lockup.svg" alt="BoTorch Logo" />
 </a>
 
 <hr/>
@@ -84,11 +84,12 @@ by following the [PyTorch installation instructions](https://pytorch.org/get-sta
   consult the PyTorch installation instructions above.
 
 
-##### Installing from latest master
+##### Installing from latest main branch
 
 If you would like to try our bleeding edge features (and don't mind potentially
 running into the occasional bug here or there), you can install the latest
-master directly from GitHub (this will also require installing the current GPyTorch master):
+development version directly from GitHub (this will also require installing
+the current GPyTorch development version):
 ```bash
 pip install --upgrade git+https://github.com/cornellius-gp/gpytorch.git
 pip install --upgrade git+https://github.com/pytorch/botorch.git
