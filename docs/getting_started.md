@@ -34,7 +34,7 @@ pip install botorch
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 For more detailed installation instructions, please see the
-[Project Readme](https://github.com/pytorch/botorch/blob/master/README.md)
+[Project Readme](https://github.com/pytorch/botorch/blob/main/README.md)
 on GitHub.
 
 ## Basic Components
@@ -91,5 +91,5 @@ For an in-depth reference of the various BoTorch internals, see our
 ## Contributing
 
 You'd like to contribute to BoTorch? Great! Please see
-[here](https://github.com/pytorch/botorch/blob/master/CONTRIBUTING.md)
+[here](https://github.com/pytorch/botorch/blob/main/CONTRIBUTING.md)
 for how to help out.

@@ -87,7 +87,7 @@ const siteConfig = {
   docsSideNavCollapsible: false,
 
   // URL for editing docs
-  editUrl: 'https://github.com/pytorch/botorch/edit/master/docs/',
+  editUrl: 'https://github.com/pytorch/botorch/edit/main/docs/',
 
   // Open Graph and Twitter card images
   ogImage: 'img/botorch.png',
