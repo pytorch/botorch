@@ -13,10 +13,9 @@ from __future__ import annotations
 
 import torch
 from botorch.acquisition.analytic import AnalyticAcquisitionFunction
+from botorch.utils import t_batch_mode_transform
 from torch import Tensor
 from torch.nn import Module
-
-from botorch.utils import t_batch_mode_transform
 
 
 class ProximalAcquisitionFunction(AnalyticAcquisitionFunction):
@@ -48,10 +47,13 @@ class ProximalAcquisitionFunction(AnalyticAcquisitionFunction):
         Module.__init__(self)
         self.acq_func = acq_function
 
-        self.register_buffer('proximal_weights', proximal_weights)
+        self.register_buffer("proximal_weights", proximal_weights)
 
         # check to make sure that weights match the training data shape
-        assert self.proximal_weights.shape[0] == self.acq_func.model.train_inputs[0][-1].shape[-1]
+        assert (
+            self.proximal_weights.shape[0]
+            == self.acq_func.model.train_inputs[0][-1].shape[-1]
+        )
 
     @t_batch_mode_transform(expected_q=1, assert_output_shape=False)
     def forward(self, X: Tensor):
@@ -66,7 +68,9 @@ class ProximalAcquisitionFunction(AnalyticAcquisitionFunction):
         """
         d = self.proximal_weights.shape[0]
         last_X = self.acq_func.model.train_inputs[0][-1].reshape(1, 1, -1)
-        _unbroadcasted_scale_tril = torch.diag(torch.sqrt(self.proximal_weights)).reshape(1, 1, d, d)
+        _unbroadcasted_scale_tril = torch.diag(
+            torch.sqrt(self.proximal_weights)
+        ).reshape(1, 1, d, d)
 
         diff = X - last_X
         M = _batch_mahalanobis(_unbroadcasted_scale_tril, diff)
@@ -99,16 +103,20 @@ def _batch_mahalanobis(bL, bx):
     bx_new_shape += (n,)
     bx = bx.reshape(bx_new_shape)
     # Permute bx to make it have shape (..., 1, j, i, 1, n)
-    permute_dims = (list(range(outer_batch_dims)) +
-                    list(range(outer_batch_dims, new_batch_dims, 2)) +
-                    list(range(outer_batch_dims + 1, new_batch_dims, 2)) +
-                    [new_batch_dims])
+    permute_dims = (
+        list(range(outer_batch_dims))
+        + list(range(outer_batch_dims, new_batch_dims, 2))
+        + list(range(outer_batch_dims + 1, new_batch_dims, 2))
+        + [new_batch_dims]
+    )
     bx = bx.permute(permute_dims)
 
     flat_L = bL.reshape(-1, n, n)  # shape = b x n x n
     flat_x = bx.reshape(-1, flat_L.size(0), n)  # shape = c x b x n
     flat_x_swap = flat_x.permute(1, 2, 0)  # shape = b x n x c
-    M_swap = torch.triangular_solve(flat_x_swap, flat_L, upper=False)[0].pow(2).sum(-2)  # shape = b x c
+    M_swap = (
+        torch.triangular_solve(flat_x_swap, flat_L, upper=False)[0].pow(2).sum(-2)
+    )  # shape = b x c
     M = M_swap.t()  # shape = c x b
 
     # Now we revert the above reshape and permute operators.
@@ -118,5 +126,3 @@ def _batch_mahalanobis(bL, bx):
         permute_inv_dims += [outer_batch_dims + i, old_batch_dims + i]
     reshaped_M = permuted_M.permute(permute_inv_dims)  # shape = (..., 1, i, j, 1)
     return reshaped_M.reshape(bx_batch_shape)
-
-

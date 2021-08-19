@@ -5,8 +5,8 @@
 # LICENSE file in the root directory of this source tree.
 
 import torch
-from botorch.acquisition.proximal import ProximalAcquisitionFunction
 from botorch.acquisition.analytic import ExpectedImprovement
+from botorch.acquisition.proximal import ProximalAcquisitionFunction
 from botorch.models import SingleTaskGP
 from botorch.utils.testing import BotorchTestCase
 
@@ -21,8 +21,7 @@ class TestFixedFeatureAcquisitionFunction(BotorchTestCase):
         # test single point
         proximal_weights = torch.ones(3)
         test_X = torch.rand(1, 3, device=self.device)
-        EI_prox = ProximalAcquisitionFunction(
-            EI, proximal_weights=proximal_weights)
+        EI_prox = ProximalAcquisitionFunction(EI, proximal_weights=proximal_weights)
 
         ei_prox = EI_prox(test_X)
 
