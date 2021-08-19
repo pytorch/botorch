@@ -13,10 +13,17 @@ from botorch.acquisition.penalized import (
     L2Penalty,
     PenalizedAcquisitionFunction,
     group_lasso_regularizer,
+    L1PenaltyObjective,
+    PenalizedMCObjective,
 )
 from botorch.exceptions import UnsupportedError
 from botorch.sampling.samplers import IIDNormalSampler
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
+from torch import Tensor
+
+
+def generic_obj(samples: Tensor, X=None) -> Tensor:
+    return torch.log(torch.sum(samples ** 2, dim=-1))
 
 
 class TestL2Penalty(BotorchTestCase):
@@ -126,3 +133,50 @@ class TestPenalizedAcquisitionFunction(BotorchTestCase):
             X_pending = torch.tensor([0.1, 0.2, 0.3], **tkwargs)
             acqf_2.set_X_pending(X_pending)
             self.assertTrue(torch.equal(acqf_2.X_pending, X_pending))
+
+
+class TestL1PenaltyObjective(BotorchTestCase):
+    def test_l1_penalty(self):
+        for dtype in (torch.float, torch.double):
+            init_point = torch.tensor([1.0, 1.0, 1.0], device=self.device, dtype=dtype)
+            l1_module = L1PenaltyObjective(init_point=init_point)
+
+            # testing a batch of two points
+            sample_point = torch.tensor(
+                [[1.0, 2.0, 3.0], [2.0, 3.0, 4.0]], device=self.device, dtype=dtype
+            )
+
+            real_values = torch.norm(
+                (sample_point - init_point), p=1, dim=-1
+            ).unsqueeze(dim=0)
+            computed_values = l1_module(sample_point)
+            self.assertTrue(torch.equal(real_values, computed_values))
+
+
+class TestPenalizedMCObjective(BotorchTestCase):
+    def test_penalized_mc_objective(self):
+        for dtype in (torch.float, torch.double):
+            init_point = torch.tensor(
+                [0.0, 0.0, 0.0, 0.0, 0.0], device=self.device, dtype=dtype
+            )
+            l1_penalty_obj = L1PenaltyObjective(init_point=init_point)
+            obj = PenalizedMCObjective(
+                objective=generic_obj,
+                penalty_objective=l1_penalty_obj,
+                regularization_parameter=0.1,
+            )
+            # test 'd' Tensor X
+            samples = torch.randn(4, 3, device=self.device, dtype=dtype)
+            X = torch.randn(5, device=self.device, dtype=dtype)
+            penalized_obj = generic_obj(samples) - 0.1 * l1_penalty_obj(X)
+            self.assertTrue(torch.equal(obj(samples, X), penalized_obj))
+            # test 'q x d' Tensor X
+            samples = torch.randn(4, 2, 3, device=self.device, dtype=dtype)
+            X = torch.randn(2, 5, device=self.device, dtype=dtype)
+            penalized_obj = generic_obj(samples) - 0.1 * l1_penalty_obj(X)
+            self.assertTrue(torch.equal(obj(samples, X), penalized_obj))
+            # test 'batch-shape x q x d' Tensor X
+            samples = torch.randn(4, 3, 2, 3, device=self.device, dtype=dtype)
+            X = torch.randn(3, 2, 5, device=self.device, dtype=dtype)
+            penalized_obj = generic_obj(samples) - 0.1 * l1_penalty_obj(X)
+            self.assertTrue(torch.equal(obj(samples, X), penalized_obj))
