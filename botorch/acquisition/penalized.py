@@ -49,6 +49,34 @@ class L2Penalty(torch.nn.Module):
         return regularization_term
 
 
+class L1Penalty(torch.nn.Module):
+    r"""L1 penalty class to be added to any arbitrary acquisition function
+    to construct a PenalizedAcquisitionFunction."""
+
+    def __init__(self, init_point: Tensor):
+        r"""Initializing L1 regularization.
+
+        Args:
+            init_point: The "1 x dim" reference point against which
+                we want to regularize.
+        """
+        super().__init__()
+        self.init_point = init_point
+
+    def forward(self, X: Tensor) -> Tensor:
+        r"""
+        Args:
+            X: A "batch_shape x q x dim" representing the points to be evaluated.
+
+        Returns:
+            A tensor of size "batch_shape" representing the acqfn for each q-batch.
+        """
+        regularization_term = (
+            torch.norm((X - self.init_point), p=1, dim=-1).max(dim=-1).values
+        )
+        return regularization_term
+
+
 class GaussianPenalty(torch.nn.Module):
     r"""Gaussian penalty class to be added to any arbitrary acquisition function
     to construct a PenalizedAcquisitionFunction."""
