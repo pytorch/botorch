@@ -7,7 +7,7 @@
 # 
 # $$y = \sin(2\pi x) + \epsilon, ~\epsilon \sim \mathcal N(0, 0.2).$$
 # 
-# Note: this tutorial aims to introduce batch-mode regression and evaluation in GPyTorch with CV as an example application. For alternative, more user-friendly functions to perform CV in Ax, see [ax.modelbridge.cross_validation](https://github.com/facebook/Ax/blob/master/ax/modelbridge/cross_validation.py). However, for larger CV tasks, it may be useful to exploit GPyTorch batch-mode, as shown in this tutorial.
+# Note: this tutorial aims to introduce batch-mode regression and evaluation in GPyTorch with CV as an example application. For alternative, more user-friendly functions to perform CV in Ax, see [ax.modelbridge.cross_validation](https://github.com/facebook/Ax/blob/main/ax/modelbridge/cross_validation.py). However, for larger CV tasks, it may be useful to exploit GPyTorch batch-mode, as shown in this tutorial.
 
 # In[1]:
 
