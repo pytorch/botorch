@@ -10,6 +10,7 @@ from botorch.acquisition.monte_carlo import qExpectedImprovement
 from botorch.acquisition.penalized import (
     GaussianPenalty,
     GroupLassoPenalty,
+    L1Penalty,
     L2Penalty,
     PenalizedAcquisitionFunction,
     group_lasso_regularizer,
@@ -41,6 +42,23 @@ class TestL2Penalty(BotorchTestCase):
             )
             real_value = diff_norm_squared.max(dim=-1).values
             computed_value = l2_module(sample_point)
+            self.assertEqual(computed_value.item(), real_value.item())
+
+
+class TestL1Penalty(BotorchTestCase):
+    def test_l1_penalty(self):
+        for dtype in (torch.float, torch.double):
+            init_point = torch.tensor([1.0, 1.0, 1.0], device=self.device, dtype=dtype)
+            l1_module = L1Penalty(init_point=init_point)
+
+            # testing a batch of two points
+            sample_point = torch.tensor(
+                [[1.0, 2.0, 3.0], [2.0, 3.0, 4.0]], device=self.device, dtype=dtype
+            )
+
+            diff_l1_norm = torch.norm((sample_point - init_point), p=1, dim=-1)
+            real_value = diff_l1_norm.max(dim=-1).values
+            computed_value = l1_module(sample_point)
             self.assertEqual(computed_value.item(), real_value.item())
 
 
