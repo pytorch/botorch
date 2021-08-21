@@ -55,18 +55,31 @@ class TestConverters(BotorchTestCase):
             )
             with self.assertRaises(NotImplementedError):
                 batched_to_model_list(batch_gp)
-            # test input transform
+            # test with transforms
             input_tf = Normalize(
                 d=2,
                 bounds=torch.tensor(
                     [[0.0, 0.0], [1.0, 1.0]], device=self.device, dtype=dtype
                 ),
             )
-            batch_gp = SingleTaskGP(train_X, train_Y, input_transform=input_tf)
+            octf = Standardize(m=2)
+            batch_gp = SingleTaskGP(
+                train_X, train_Y, outcome_transform=octf, input_transform=input_tf
+            )
             list_gp = batched_to_model_list(batch_gp)
-            for m in list_gp.models:
+            for i, m in enumerate(list_gp.models):
                 self.assertIsInstance(m.input_transform, Normalize)
                 self.assertTrue(torch.equal(m.input_transform.bounds, input_tf.bounds))
+                self.assertIsInstance(m.outcome_transform, Standardize)
+                self.assertEqual(m.outcome_transform._m, 1)
+                expected_octf = octf.subset_output(idcs=[i])
+                for attr_name in ["means", "stdvs", "_stdvs_sq"]:
+                    self.assertTrue(
+                        torch.equal(
+                            m.outcome_transform.__getattr__(attr_name),
+                            expected_octf.__getattr__(attr_name),
+                        )
+                    )
 
     def test_model_list_to_batched(self):
         for dtype in (torch.float, torch.double):
@@ -177,6 +190,14 @@ class TestConverters(BotorchTestCase):
             )
             gp1_ = SingleTaskGP(train_X, train_Y1, input_transform=input_tf2)
             gp2_ = SingleTaskGP(train_X, train_Y2, input_transform=input_tf2)
+            list_gp = ModelListGP(gp1_, gp2_)
+            with self.assertRaises(UnsupportedError):
+                model_list_to_batched(list_gp)
+
+            # test outcome transform
+            octf = Standardize(m=1)
+            gp1_ = SingleTaskGP(train_X, train_Y1, outcome_transform=octf)
+            gp2_ = SingleTaskGP(train_X, train_Y2, outcome_transform=octf)
             list_gp = ModelListGP(gp1_, gp2_)
             with self.assertRaises(UnsupportedError):
                 model_list_to_batched(list_gp)
