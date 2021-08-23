@@ -624,7 +624,11 @@ class qNoisyExpectedHypervolumeImprovement(qExpectedHypervolumeImprovement):
         Returns:
             A `n_samples`-dim tensor of hypervolumes.
         """
-        return self.partitioning.compute_hypervolume().view(self._batch_sample_shape)
+        return (
+            self.partitioning.compute_hypervolume()
+            .to(self.ref_point)  # for m > 2, the partitioning is on the CPU
+            .view(self._batch_sample_shape)
+        )
 
     def _set_sampler(
         self,

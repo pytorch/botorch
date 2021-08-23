@@ -785,7 +785,12 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                     incremental_nehvi=incremental_nehvi,
                 )
                 original_base_samples = sampler.base_samples.detach().clone()
-                self.assertTrue(torch.equal(acqf.partitioning.pareto_Y[0], pareto_Y))
+                # the box decomposition algorithm is faster on the CPU for m>2,
+                # so NEHVI runs it on the CPU
+                expected_pareto_Y = pareto_Y if m == 2 else pareto_Y.cpu()
+                self.assertTrue(
+                    torch.equal(acqf.partitioning.pareto_Y[0], expected_pareto_Y)
+                )
                 self.assertIsNone(acqf.X_pending)
                 new_Y = torch.tensor(
                     [[0.5, 3.0, 0.5][:m]], dtype=dtype, device=self.device
@@ -849,8 +854,11 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                 self.assertTrue(torch.equal(acqf.X_baseline[-1:], X_pending))
                 # check that partitioning has been updated
                 acqf_pareto_Y = acqf.partitioning.pareto_Y[0]
-                self.assertTrue(torch.equal(acqf_pareto_Y[:-1], pareto_Y))
-                self.assertTrue(torch.equal(acqf_pareto_Y[-1:], new_Y))
+                # the box decomposition algorithm is faster on the CPU for m>2,
+                # so NEHVI runs it on the CPU
+                self.assertTrue(torch.equal(acqf_pareto_Y[:-1], expected_pareto_Y))
+                expected_new_Y = new_Y if m == 2 else new_Y.cpu()
+                self.assertTrue(torch.equal(acqf_pareto_Y[-1:], expected_new_Y))
                 # test that base samples were retained
                 self.assertTrue(
                     torch.equal(
@@ -904,8 +912,9 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             self.assertTrue(torch.equal(acqf.X_baseline[-2:], X_pending2))
             # check that partitioning has been updated
             acqf_pareto_Y = acqf.partitioning.pareto_Y[0]
-            self.assertTrue(torch.equal(acqf_pareto_Y[:-2], pareto_Y))
-            self.assertTrue(torch.equal(acqf_pareto_Y[-2:], new_Y2))
+            self.assertTrue(torch.equal(acqf_pareto_Y[:-2], expected_pareto_Y))
+            expected_new_Y2 = new_Y2 if m == 2 else new_Y2.cpu()
+            self.assertTrue(torch.equal(acqf_pareto_Y[-2:], expected_new_Y2))
 
             # test set X_pending with grad
             with warnings.catch_warnings(record=True) as ws, settings.debug(True):
@@ -937,7 +946,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             acqf.set_X_pending(X_pending)
             self.assertTrue(torch.equal(acqf.X_pending, X_pending))
             acqf_pareto_Y = acqf.partitioning.pareto_Y[0]
-            self.assertTrue(torch.equal(acqf_pareto_Y, pareto_Y))
+            self.assertTrue(torch.equal(acqf_pareto_Y, expected_pareto_Y))
             mm._posterior._samples = torch.cat(
                 [
                     baseline_samples,
@@ -949,8 +958,8 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             acqf.set_X_pending(X_pending2)
             self.assertIsNone(acqf.X_pending)
             acqf_pareto_Y = acqf.partitioning.pareto_Y[0]
-            self.assertTrue(torch.equal(acqf_pareto_Y[:-2], pareto_Y))
-            self.assertTrue(torch.equal(acqf_pareto_Y[-2:], new_Y2))
+            self.assertTrue(torch.equal(acqf_pareto_Y[:-2], expected_pareto_Y))
+            self.assertTrue(torch.equal(acqf_pareto_Y[-2:], expected_new_Y2))
 
             # test qNEHVI without CBD
             mm._posterior._samples = baseline_samples
@@ -973,7 +982,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             acqf.set_X_pending(X_pending10)
             self.assertTrue(torch.equal(acqf.X_pending, X_pending10))
             acqf_pareto_Y = acqf.partitioning.pareto_Y[0]
-            self.assertTrue(torch.equal(acqf_pareto_Y, pareto_Y))
+            self.assertTrue(torch.equal(acqf_pareto_Y, expected_pareto_Y))
             acqf.set_X_pending(X_pending)
             mm._posterior._samples = torch.cat(
                 [
