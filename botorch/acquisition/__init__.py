@@ -42,7 +42,6 @@ from botorch.acquisition.monte_carlo import (
     qSimpleRegret,
     qUpperConfidenceBound,
 )
-from botorch.acquisition.proximal import ProximalAcquisitionFunction
 from botorch.acquisition.multi_step_lookahead import qMultiStepLookahead
 from botorch.acquisition.objective import (
     ConstrainedMCObjective,
@@ -52,6 +51,7 @@ from botorch.acquisition.objective import (
     MCAcquisitionObjective,
     ScalarizedObjective,
 )
+from botorch.acquisition.proximal import ProximalAcquisitionFunction
 from botorch.acquisition.utils import get_acquisition_function
 
 __all__ = [
