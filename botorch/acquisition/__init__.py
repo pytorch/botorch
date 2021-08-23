@@ -42,6 +42,7 @@ from botorch.acquisition.monte_carlo import (
     qSimpleRegret,
     qUpperConfidenceBound,
 )
+from botorch.acquisition.proximal import ProximalAcquisitionFunction
 from botorch.acquisition.multi_step_lookahead import qMultiStepLookahead
 from botorch.acquisition.objective import (
     ConstrainedMCObjective,
@@ -65,6 +66,7 @@ __all__ = [
     "OneShotAcquisitionFunction",
     "PosteriorMean",
     "ProbabilityOfImprovement",
+    "ProximalAcquisitionFunction",
     "UpperConfidenceBound",
     "qExpectedImprovement",
     "qKnowledgeGradient",

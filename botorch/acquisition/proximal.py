@@ -20,7 +20,7 @@ from torch.nn import Module
 
 class ProximalAcquisitionFunction(AnalyticAcquisitionFunction):
     """A wrapper around AquisitionFunctions to add proximal weighting of the acquisition function. Acquisition
-    function is weighted via a squared exponential centered at the last training point with varying lengthscales
+    function is weighted via a squared exponential centered at the last training point, with varying lengthscales
     corresponding to 'proximal_weights'. Can only be used with single batch analytical acquisition functions.
 
     Example:
@@ -36,11 +36,11 @@ class ProximalAcquisitionFunction(AnalyticAcquisitionFunction):
         acq_function: AnalyticAcquisitionFunction,
         proximal_weights: Tensor,
     ) -> None:
-        r"""Derived Acquisition Function by fixing a subset of input features.
+        r"""Derived Acquisition Function by weighted by proximity to recently observed point.
 
         Args:
             acq_function: The base acquisition function, operating on input
-                tensors `X_full` of feature dimension `d`.
+                tensors of feature dimension `d`.
             proximal_weights: Tensor used to bias locality along each axis, should be in the shape of ('d',).
 
         """
@@ -70,12 +70,12 @@ class ProximalAcquisitionFunction(AnalyticAcquisitionFunction):
         last_X = self.acq_func.model.train_inputs[0][-1].reshape(1, 1, -1)
         _unbroadcasted_scale_tril = torch.diag(
             torch.sqrt(self.proximal_weights)
-        ).reshape(1, 1, d, d)
+        ).reshape(1, d, d)
 
         diff = X - last_X
         M = _batch_mahalanobis(_unbroadcasted_scale_tril, diff)
         proximal_acq_weight = torch.exp(-0.5 * M)
-        return self.acq_func(X) * proximal_acq_weight
+        return self.acq_func(X) * proximal_acq_weight.flatten()
 
 
 def _batch_mahalanobis(bL, bx):
