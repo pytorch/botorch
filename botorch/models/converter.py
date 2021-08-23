@@ -265,7 +265,7 @@ def batched_to_model_list(batch_model: BatchedMultiOutputGPyTorchModel) -> Model
             kwargs["outcome_transform"] = octf
             # Update the outcome transform state dict entries.
             sd = {
-                **{k: v for k, v in sd.items() if "outcome_transform" not in k},
+                **sd,
                 **{"outcome_transform." + k: v for k, v in octf.state_dict().items()},
             }
         else:
