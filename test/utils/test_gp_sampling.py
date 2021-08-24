@@ -26,7 +26,8 @@ from gpytorch.kernels import RBFKernel, MaternKernel, ScaleKernel, PeriodicKerne
 from torch.distributions import MultivariateNormal
 
 
-def _get_model(device, dtype, multi_output=False):
+def _get_model(dtype, device, multi_output=False):
+    tkwargs = {"dtype": dtype, "device": device}
     train_X = torch.tensor(
         [
             [-0.1000],
@@ -41,7 +42,8 @@ def _get_model(device, dtype, multi_output=False):
             [5.2044],
             [5.7938],
             [6.3832],
-        ]
+        ],
+        **tkwargs,
     )
     train_Y = torch.tensor(
         [
@@ -57,19 +59,26 @@ def _get_model(device, dtype, multi_output=False):
             [-1.8847],
             [0.0647],
             [1.0900],
-        ]
+        ],
+        **tkwargs,
     )
     state_dict = {
-        "likelihood.noise_covar.raw_noise": torch.tensor([0.0214]),
-        "likelihood.noise_covar.noise_prior.concentration": torch.tensor(1.1000),
-        "likelihood.noise_covar.noise_prior.rate": torch.tensor(0.0500),
-        "mean_module.constant": torch.tensor([0.1398]),
-        "covar_module.raw_outputscale": torch.tensor(0.6933),
-        "covar_module.base_kernel.raw_lengthscale": torch.tensor([[-0.0444]]),
-        "covar_module.base_kernel.lengthscale_prior.concentration": torch.tensor(3.0),
-        "covar_module.base_kernel.lengthscale_prior.rate": torch.tensor(6.0),
-        "covar_module.outputscale_prior.concentration": torch.tensor(2.0),
-        "covar_module.outputscale_prior.rate": torch.tensor(0.1500),
+        "likelihood.noise_covar.raw_noise": torch.tensor([0.0214], **tkwargs),
+        "likelihood.noise_covar.noise_prior.concentration": torch.tensor(
+            1.1000, **tkwargs
+        ),
+        "likelihood.noise_covar.noise_prior.rate": torch.tensor(0.0500, **tkwargs),
+        "mean_module.constant": torch.tensor([0.1398], **tkwargs),
+        "covar_module.raw_outputscale": torch.tensor(0.6933, **tkwargs),
+        "covar_module.base_kernel.raw_lengthscale": torch.tensor(
+            [[-0.0444]], **tkwargs
+        ),
+        "covar_module.base_kernel.lengthscale_prior.concentration": torch.tensor(
+            3.0, **tkwargs
+        ),
+        "covar_module.base_kernel.lengthscale_prior.rate": torch.tensor(6.0, **tkwargs),
+        "covar_module.outputscale_prior.concentration": torch.tensor(2.0, **tkwargs),
+        "covar_module.outputscale_prior.rate": torch.tensor(0.1500, **tkwargs),
     }
     if multi_output:
         train_Y2 = torch.tensor(
@@ -86,28 +95,35 @@ def _get_model(device, dtype, multi_output=False):
                 [0.2485],
                 [1.4924],
                 [1.5393],
-            ]
+            ],
+            **tkwargs,
         )
         train_Y = torch.cat([train_Y, train_Y2], dim=-1)
         state_dict["likelihood.noise_covar.raw_noise"] = torch.stack(
-            [state_dict["likelihood.noise_covar.raw_noise"], torch.tensor([0.0745])]
+            [
+                state_dict["likelihood.noise_covar.raw_noise"],
+                torch.tensor([0.0745], **tkwargs),
+            ]
         )
         state_dict["mean_module.constant"] = torch.stack(
-            [state_dict["mean_module.constant"], torch.tensor([0.3276])]
+            [state_dict["mean_module.constant"], torch.tensor([0.3276], **tkwargs)]
         )
         state_dict["covar_module.raw_outputscale"] = torch.stack(
-            [state_dict["covar_module.raw_outputscale"], torch.tensor(0.4394)], dim=-1
+            [
+                state_dict["covar_module.raw_outputscale"],
+                torch.tensor(0.4394, **tkwargs),
+            ],
+            dim=-1,
         )
         state_dict["covar_module.base_kernel.raw_lengthscale"] = torch.stack(
             [
                 state_dict["covar_module.base_kernel.raw_lengthscale"],
-                torch.tensor([[-0.4617]]),
+                torch.tensor([[-0.4617]], **tkwargs),
             ]
         )
 
     model = SingleTaskGP(train_X, train_Y)
     model.load_state_dict(state_dict)
-    model.to(device=device, dtype=dtype)
     return model, train_X, train_Y
 
 

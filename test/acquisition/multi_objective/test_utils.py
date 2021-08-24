@@ -107,11 +107,7 @@ class TestMultiObjectiveUtils(BotorchTestCase):
                 objective=unstd_obj,
                 constraints=[lambda Y: Y[..., -1]],
             )
-            if self.device == torch.device("cuda"):
-                # sorting has different order on cuda
-                self.assertTrue(torch.equal(X_pruned, torch.stack([X[2], X[1]], dim=0)))
-            else:
-                self.assertTrue(torch.equal(X_pruned, X[:2]))
+            self.assertTrue(torch.equal(X_pruned, X[:2]))
 
             # test non-repeated samples (requires mocking out MockPosterior's rsample)
             samples = torch.tensor(
@@ -131,7 +127,7 @@ class TestMultiObjectiveUtils(BotorchTestCase):
                 X_pruned = prune_inferior_points_multi_objective(
                     model=mm, X=X, ref_point=ref_point, max_frac=2 / 3
                 )
-            if self.device == torch.device("cuda"):
+            if self.device.type == "cuda":
                 # sorting has different order on cuda
                 self.assertTrue(torch.equal(X_pruned, torch.stack([X[2], X[1]], dim=0)))
             else:
