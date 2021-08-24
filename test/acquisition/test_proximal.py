@@ -6,8 +6,8 @@
 
 import torch
 from botorch.acquisition.analytic import ExpectedImprovement
-from botorch.acquisition.proximal import ProximalAcquisitionFunction
 from botorch.acquisition.monte_carlo import qExpectedImprovement
+from botorch.acquisition.proximal import ProximalAcquisitionFunction
 from botorch.models import SingleTaskGP
 from botorch.utils.testing import BotorchTestCase
 from torch.distributions.multivariate_normal import MultivariateNormal
@@ -28,11 +28,11 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
         ei = EI(test_X)
         mv_normal = MultivariateNormal(train_X[-1], torch.diag(proximal_weights))
         test_prox_weight = torch.exp(mv_normal.log_prob(test_X)) / torch.exp(
-            mv_normal.log_prob(train_X[-1]))
+            mv_normal.log_prob(train_X[-1])
+        )
 
         ei_prox = EI_prox(test_X)
-        self.assertAlmostEqual(float(ei_prox), float(ei*test_prox_weight),
-                               places=5)
+        self.assertAlmostEqual(float(ei_prox), float(ei * test_prox_weight), places=5)
         self.assertTrue(ei_prox.shape == torch.Size([1]))
 
         # test t-batch with broadcasting
@@ -42,12 +42,12 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
         ei = EI(test_X)
         mv_normal = MultivariateNormal(train_X[-1], torch.diag(proximal_weights))
         test_prox_weight = torch.exp(mv_normal.log_prob(test_X)) / torch.exp(
-            mv_normal.log_prob(train_X[-1]))
+            mv_normal.log_prob(train_X[-1])
+        )
 
         ei_prox = EI_prox(test_X)
         for a, b in zip(ei_prox, ei * test_prox_weight.flatten()):
-            self.assertAlmostEqual(float(a), float(b),
-                                   places=5)
+            self.assertAlmostEqual(float(a), float(b), places=5)
         self.assertTrue(ei_prox.shape == torch.Size([4]))
 
         # test MC acquisition function
@@ -58,12 +58,12 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
         qei = qEI(test_X)
         mv_normal = MultivariateNormal(train_X[-1], torch.diag(proximal_weights))
         test_prox_weight = torch.exp(mv_normal.log_prob(test_X)) / torch.exp(
-            mv_normal.log_prob(train_X[-1]))
+            mv_normal.log_prob(train_X[-1])
+        )
 
         qei_prox = qEI_prox(test_X)
         for a, b in zip(qei_prox, qei * test_prox_weight.flatten()):
-            self.assertAlmostEqual(float(a), float(b),
-                                   places=5)
+            self.assertAlmostEqual(float(a), float(b), places=5)
         self.assertTrue(qei_prox.shape == torch.Size([4]))
 
         # test gradient
