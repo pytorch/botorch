@@ -410,7 +410,7 @@ class TestModelListGPyTorchModel(BotorchTestCase):
             m2 = SimpleGPyTorchModel(train_X2, train_Y2, input_transform=m2_tf)
             # test `input_transform.to(X)` call
             self.assertEqual(m2_tf.add_value.dtype, dtype)
-            self.assertEqual(m2_tf.add_value.device, self.device)
+            self.assertEqual(m2_tf.add_value.device.type, self.device.type)
             # train models to have the train inputs preprocessed
             for m in [m1, m2]:
                 mll = ExactMarginalLogLikelihood(m.likelihood, m)
