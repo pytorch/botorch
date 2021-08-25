@@ -27,7 +27,7 @@ class DummyModel(GPyTorchModel):
 
     @classmethod
     def construct_inputs(
-            cls, training_data: TrainingData, **kwargs: Any
+        cls, training_data: TrainingData, **kwargs: Any
     ) -> Dict[str, Any]:
         pass
 
@@ -40,8 +40,11 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
         for dtype in (torch.float, torch.double):
             train_X = torch.rand(5, 3, device=self.device, dtype=dtype)
             train_Y = train_X.norm(dim=-1, keepdim=True)
-            model = SingleTaskGP(train_X, train_Y).to(device=self.device,
-                                                      dtype=dtype).eval()
+            model = (
+                SingleTaskGP(train_X, train_Y)
+                .to(device=self.device, dtype=dtype)
+                .eval()
+            )
             EI = ExpectedImprovement(model, best_f=0.0)
 
             # test single point
@@ -74,8 +77,9 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
             # test MC acquisition function
             qEI = qExpectedImprovement(model, best_f=0.0)
             test_X = torch.rand(4, 1, 3, device=self.device, dtype=dtype)
-            qEI_prox = ProximalAcquisitionFunction(qEI,
-                                                   proximal_weights=proximal_weights)
+            qEI_prox = ProximalAcquisitionFunction(
+                qEI, proximal_weights=proximal_weights
+            )
 
             qei = qEI(test_X)
             mv_normal = MultivariateNormal(train_X[-1], torch.diag(proximal_weights))
@@ -88,8 +92,9 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
             self.assertTrue(qei_prox.shape == torch.Size([4]))
 
             # test gradient
-            test_X = torch.rand(1, 3, device=self.device, dtype=dtype,
-                                requires_grad=True)
+            test_X = torch.rand(
+                1, 3, device=self.device, dtype=dtype, requires_grad=True
+            )
             ei_prox = EI_prox(test_X)
             ei_prox.backward()
 
@@ -112,8 +117,9 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
             # test model with multi-batch training inputs
             train_X = torch.rand(5, 2, 3, device=self.device, dtype=dtype)
             train_Y = train_X.norm(dim=-1, keepdim=True)
-            bad_single_task = SingleTaskGP(train_X, train_Y).to(
-                device=self.device).eval()
+            bad_single_task = (
+                SingleTaskGP(train_X, train_Y).to(device=self.device).eval()
+            )
             with self.assertRaises(UnsupportedError):
                 ProximalAcquisitionFunction(
                     ExpectedImprovement(bad_single_task, 0.0), proximal_weights
