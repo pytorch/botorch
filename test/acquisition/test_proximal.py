@@ -3,14 +3,36 @@
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+from typing import List, Any, Dict
 
 import torch
+from botorch.acquisition.analytic import AnalyticAcquisitionFunction
 from botorch.acquisition.analytic import ExpectedImprovement
 from botorch.acquisition.monte_carlo import qExpectedImprovement
 from botorch.acquisition.proximal import ProximalAcquisitionFunction
+from botorch.exceptions.errors import UnsupportedError
 from botorch.models import SingleTaskGP
+from botorch.models.gpytorch import GPyTorchModel
+from botorch.models.model import Model
+from botorch.utils.containers import TrainingData
 from botorch.utils.testing import BotorchTestCase
 from torch.distributions.multivariate_normal import MultivariateNormal
+
+
+class DummyModel(GPyTorchModel):
+    num_outputs = 1
+
+    def __init__(self):
+        super(GPyTorchModel, self).__init__()
+
+    @classmethod
+    def construct_inputs(
+        cls, training_data: TrainingData, **kwargs: Any
+    ) -> Dict[str, Any]:
+        pass
+
+    def subset_output(self, idcs: List[int]) -> Model:
+        pass
 
 
 class TestProximalAcquisitionFunction(BotorchTestCase):
@@ -32,7 +54,7 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
         )
 
         ei_prox = EI_prox(test_X)
-        self.assertAlmostEqual(float(ei_prox), float(ei * test_prox_weight), places=5)
+        self.assertTrue(torch.allclose(ei_prox, ei * test_prox_weight))
         self.assertTrue(ei_prox.shape == torch.Size([1]))
 
         # test t-batch with broadcasting
@@ -46,8 +68,7 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
         )
 
         ei_prox = EI_prox(test_X)
-        for a, b in zip(ei_prox, ei * test_prox_weight.flatten()):
-            self.assertAlmostEqual(float(a), float(b), places=5)
+        self.assertTrue(torch.allclose(ei_prox, ei * test_prox_weight.flatten()))
         self.assertTrue(ei_prox.shape == torch.Size([4]))
 
         # test MC acquisition function
@@ -62,11 +83,35 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
         )
 
         qei_prox = qEI_prox(test_X)
-        for a, b in zip(qei_prox, qei * test_prox_weight.flatten()):
-            self.assertAlmostEqual(float(a), float(b), places=5)
+        self.assertTrue(torch.allclose(qei_prox, qei * test_prox_weight.flatten()))
         self.assertTrue(qei_prox.shape == torch.Size([4]))
 
         # test gradient
         test_X = torch.rand(1, 3, device=self.device, requires_grad=True)
         ei_prox = EI_prox(test_X)
         ei_prox.backward()
+
+        # test model without train_inputs
+        bad_model = DummyModel()
+        with self.assertRaises(UnsupportedError):
+            ProximalAcquisitionFunction(
+                ExpectedImprovement(bad_model, 0.0), proximal_weights
+            )
+
+        # test proximal weights that do not match training_inputs
+        train_X = torch.rand(5, 1, 3, device=self.device)
+        train_Y = train_X.norm(dim=-1, keepdim=True)
+        model = SingleTaskGP(train_X, train_Y).to(device=self.device).eval()
+        with self.assertRaises(UnsupportedError):
+            ProximalAcquisitionFunction(
+                ExpectedImprovement(model, 0.0), proximal_weights[:1]
+            )
+
+        # test model with multi-batch training inputs
+        train_X = torch.rand(5, 2, 3, device=self.device)
+        train_Y = train_X.norm(dim=-1, keepdim=True)
+        bad_single_task = SingleTaskGP(train_X, train_Y).to(device=self.device).eval()
+        with self.assertRaises(UnsupportedError):
+            ProximalAcquisitionFunction(
+                ExpectedImprovement(bad_single_task, 0.0), proximal_weights
+            )
