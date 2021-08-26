@@ -52,7 +52,6 @@ class ProximalAcquisitionFunction(AcquisitionFunction):
                 of feature dimension `d`.
             proximal_weights: A `d` dim tensor used to bias locality
                 along each axis.
-
         """
         Module.__init__(self)
 
