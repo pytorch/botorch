@@ -6,7 +6,6 @@
 from typing import List, Any, Dict
 
 import torch
-from botorch.acquisition.analytic import AnalyticAcquisitionFunction
 from botorch.acquisition.analytic import ExpectedImprovement
 from botorch.acquisition.monte_carlo import qExpectedImprovement
 from botorch.acquisition.proximal import ProximalAcquisitionFunction

@@ -16,7 +16,6 @@ from botorch.acquisition import AcquisitionFunction
 from botorch.exceptions.errors import UnsupportedError
 from botorch.utils import t_batch_mode_transform
 from torch import Tensor
-from torch.distributions.multivariate_normal import _batch_mahalanobis
 from torch.nn import Module
 
 
