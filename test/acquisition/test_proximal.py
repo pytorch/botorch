@@ -109,7 +109,7 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
             train_X = torch.rand(5, 1, 3, device=self.device, dtype=dtype)
             train_Y = train_X.norm(dim=-1, keepdim=True)
             model = SingleTaskGP(train_X, train_Y).to(device=self.device).eval()
-            with self.assertRaises(UnsupportedError):
+            with self.assertRaises(ValueError):
                 ProximalAcquisitionFunction(
                     ExpectedImprovement(model, 0.0), proximal_weights[:1]
                 )
