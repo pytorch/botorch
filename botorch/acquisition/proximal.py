@@ -24,7 +24,7 @@ class ProximalAcquisitionFunction(AcquisitionFunction):
     """A wrapper around AcquisitionFunctions to add proximal weighting of the
     acquisition function. Acquisition function is weighted via a squared exponential
     centered at the last training point, with varying lengthscales corresponding to
-    'proximal_weights'. Can only be used with acquisition functions based on single
+    `proximal_weights`. Can only be used with acquisition functions based on single
     batch models.
 
     Small values of `proximal_weights` corresponds to strong biasing towards recently
@@ -50,7 +50,7 @@ class ProximalAcquisitionFunction(AcquisitionFunction):
         Args:
             acq_function: The base acquisition function, operating on input tensors
                 of feature dimension `d`.
-            proximal_weights: A `d'-dim tensor used to bias locality
+            proximal_weights: A `d` dim tensor used to bias locality
                 along each axis.
 
         """
