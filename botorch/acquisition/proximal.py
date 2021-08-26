@@ -40,9 +40,9 @@ class ProximalAcquisitionFunction(AcquisitionFunction):
     """
 
     def __init__(
-            self,
-            acq_function: AcquisitionFunction,
-            proximal_weights: Tensor,
+        self,
+        acq_function: AcquisitionFunction,
+        proximal_weights: Tensor,
     ) -> None:
         r"""Derived Acquisition Function weighted by proximity to recently
         observed point.
@@ -65,16 +65,18 @@ class ProximalAcquisitionFunction(AcquisitionFunction):
                 "Acquisition function model must have " "`train_inputs`."
             )
 
-        if (self.acq_func.model.batch_shape != torch.Size([]) and
-                self.acq_func.model.train_inputs[0].shape[1] != 1):
+        if (
+            self.acq_func.model.batch_shape != torch.Size([])
+            and self.acq_func.model.train_inputs[0].shape[1] != 1
+        ):
             raise UnsupportedError(
                 "Proximal acquisition function requires a single batch model"
             )
 
         # check to make sure that weights match the training data shape
         if (
-                self.proximal_weights.shape[0]
-                != self.acq_func.model.train_inputs[0][-1].shape[-1]
+            self.proximal_weights.shape[0]
+            != self.acq_func.model.train_inputs[0][-1].shape[-1]
         ):
             raise ValueError(
                 "`proximal_weights` must be a one dimensional tensor with "
