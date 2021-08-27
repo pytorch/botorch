@@ -175,7 +175,10 @@ class PosteriorMean(AnalyticAcquisitionFunction):
             model: A fitted single-outcome GP model (must be in batch mode if
                 candidate sets X will be)
             objective: A ScalarizedObjective (optional).
-            maximize: If True, consider the problem a maximization problem.
+            maximize: If True, consider the problem a maximization problem. Note
+                that if `maximize=False`, the posterior mean is negated. As a
+                consequence `optimize_acqf(PosteriorMean(gp, maximize=False))`
+                does actually return -1 * minimum of the posterior mean.
         """
         super().__init__(model=model, objective=objective)
         self.maximize = maximize
