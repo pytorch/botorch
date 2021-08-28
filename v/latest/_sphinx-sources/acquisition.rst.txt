@@ -135,6 +135,11 @@ Penalized Acquisition Function Wrapper
 .. automodule:: botorch.acquisition.penalized
     :members:
 
+Proximal Acquisition Function Wrapper
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.acquisition.proximal
+    :members:
+
 General Utilities for Acquisition Functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.acquisition.utils
