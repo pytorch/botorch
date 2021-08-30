@@ -36,6 +36,11 @@ class DummyAcquisitionFunction(AcquisitionFunction):
         pass
 
 
+class DummyAcquisitionFunction(AcquisitionFunction):
+    def forward(self, X):
+        pass
+
+
 class TestProximalAcquisitionFunction(BotorchTestCase):
     def test_proximal(self):
         for dtype in (torch.float, torch.double):
@@ -167,7 +172,6 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
             pending_acq.set_X_pending(torch.rand(3, 3, device=self.device, dtype=dtype))
             with self.assertRaises(UnsupportedError):
                 ProximalAcquisitionFunction(pending_acq, proximal_weights)
-
 
             # test model with multi-batch training inputs
             train_X = torch.rand(5, 2, 3, device=self.device, dtype=dtype)
@@ -338,3 +342,4 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
                     ),
                     proximal_weights,
                 )
+                

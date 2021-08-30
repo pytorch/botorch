@@ -74,13 +74,14 @@ class ProximalAcquisitionFunction(AcquisitionFunction):
                 )
             self.X_pending = acq_function.X_pending
 
-        if acq_function.X_pending is not None:
-            raise ProximalWarning(
-                "Proximal biasing behavior will be based on pending "
-                "observation points, may result in unintuitive "
-                "behavior."
-            )
-        self.X_pending = acq_function.X_pending
+        if hasattr(acq_function, "X_pending"):
+            if acq_function.X_pending is not None:
+                raise ProximalWarning(
+                    "Proximal biasing behavior will be based on pending "
+                    "observation points, may result in unintuitive "
+                    "behavior."
+                )
+            self.X_pending = acq_function.X_pending
 
         self.register_buffer("proximal_weights", proximal_weights)
         self.register_buffer(
