@@ -142,5 +142,3 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
                 ProximalAcquisitionFunction(
                     ExpectedImprovement(bad_single_task, 0.0), proximal_weights
                 )
-
-
