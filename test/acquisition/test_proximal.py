@@ -168,6 +168,7 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
             with self.assertRaises(UnsupportedError):
                 ProximalAcquisitionFunction(pending_acq, proximal_weights)
 
+
             # test model with multi-batch training inputs
             train_X = torch.rand(5, 2, 3, device=self.device, dtype=dtype)
             train_Y = train_X.norm(dim=-1, keepdim=True)
