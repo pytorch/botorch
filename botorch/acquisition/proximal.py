@@ -74,7 +74,8 @@ class ProximalAcquisitionFunction(AcquisitionFunction):
 
         # check to make sure that weights match the training data shape
         if (
-            self.proximal_weights.shape[0]
+            len(self.proximal_weights.shape) != 1
+            or self.proximal_weights.shape[0]
             != self.acq_func.model.train_inputs[0][-1].shape[-1]
         ):
             raise ValueError(

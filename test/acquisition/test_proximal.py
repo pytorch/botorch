@@ -114,6 +114,11 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
                     ExpectedImprovement(model, 0.0), proximal_weights[:1]
                 )
 
+            with self.assertRaises(ValueError):
+                ProximalAcquisitionFunction(
+                    ExpectedImprovement(model, 0.0), torch.rand(3, 3)
+                )
+
             # test model with multi-batch training inputs
             train_X = torch.rand(5, 2, 3, device=self.device, dtype=dtype)
             train_Y = train_X.norm(dim=-1, keepdim=True)
