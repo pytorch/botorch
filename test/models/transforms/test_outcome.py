@@ -579,4 +579,3 @@ class TestOutcomeTransforms(BotorchTestCase):
             Y_tf_subset, Yvar_tf_subset = tf_subset(Y[..., [0]], None)
             self.assertTrue(torch.equal(Y_tf_subset, Y_tf[..., [0]]))
             self.assertIsNone(Yvar_tf_subset)
-            

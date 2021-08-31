@@ -628,5 +628,5 @@ class Power(OutcomeTransform):
             )
         return TransformedPosterior(
             posterior=posterior,
-            sample_transform=lambda x: x.pow(1.0 /self.power),
+            sample_transform=lambda x: x.pow(1.0 / self.power),
         )
