@@ -503,3 +503,130 @@ class Log(OutcomeTransform):
             mean_transform=norm_to_lognorm_mean,
             variance_transform=norm_to_lognorm_variance,
         )
+
+
+class Power(OutcomeTransform):
+    r"""Log-transform outcomes.
+
+    Useful if the targets are modeled using a (multivariate) power transform of
+    a Normal distribution. This means that we can use a standard GP model on the
+    power-transformed outcomes and un-transform the model posterior of that GP.
+    """
+
+    def __init__(self, power: float, outputs: Optional[List[int]] = None) -> None:
+        r"""Log-transform outcomes.
+
+        Args:
+            outputs: Which of the outputs to power-transform. If omitted, all
+                outputs will be standardized.
+        """
+        super().__init__()
+        self._outputs = outputs
+        self.power = power
+
+    def subset_output(self, idcs: List[int]) -> OutcomeTransform:
+        r"""Subset the transform along the output dimension.
+
+        Args:
+            idcs: The output indices to subset the transform to.
+
+        Returns:
+            The current outcome transform, subset to the specified output indices.
+        """
+        new_outputs = None
+        if self._outputs is not None:
+            if min(self._outputs + idcs) < 0:
+                raise NotImplementedError(
+                    f"Negative indexing not supported for {self.__class__.__name__} "
+                    "when subsetting outputs and only transforming some outputs."
+                )
+            new_outputs = [i for i in self._outputs if i in idcs]
+        new_tf = self.__class__(power=self.power, outputs=new_outputs)
+        if not self.training:
+            new_tf.eval()
+        return new_tf
+
+    def forward(
+        self, Y: Tensor, Yvar: Optional[Tensor] = None
+    ) -> Tuple[Tensor, Optional[Tensor]]:
+        r"""Log-transform outcomes.
+
+        Args:
+            Y: A `batch_shape x n x m`-dim tensor of training targets.
+            Yvar: A `batch_shape x n x m`-dim tensor of observation noises
+                associated with the training targets (if applicable).
+
+        Returns:
+            A two-tuple with the transformed outcomes:
+
+            - The transformed outcome observations.
+            - The transformed observation noise (if applicable).
+        """
+        Y_tf = Y.pow(self.power)
+        outputs = normalize_indices(self._outputs, d=Y.size(-1))
+        if outputs is not None:
+            Y_tf = torch.stack(
+                [
+                    Y_tf[..., i] if i in outputs else Y[..., i]
+                    for i in range(Y.size(-1))
+                ],
+                dim=-1,
+            )
+        if Yvar is not None:
+            # TODO: Delta method, possibly issue warning
+            raise NotImplementedError(
+                "Power does not yet support transforming observation noise"
+            )
+        return Y_tf, Yvar
+
+    def untransform(
+        self, Y: Tensor, Yvar: Optional[Tensor] = None
+    ) -> Tuple[Tensor, Optional[Tensor]]:
+        r"""Un-transform log-transformed outcomes
+
+        Args:
+            Y: A `batch_shape x n x m`-dim tensor of log-transfomred targets.
+            Yvar: A `batch_shape x n x m`-dim tensor of log- transformed
+                observation noises associated with the training targets
+                (if applicable).
+
+        Returns:
+            A two-tuple with the un-transformed outcomes:
+
+            - The exponentiated outcome observations.
+            - The exponentiated observation noise (if applicable).
+        """
+        Y_utf = Y.pow(1./ self.power)
+        outputs = normalize_indices(self._outputs, d=Y.size(-1))
+        if outputs is not None:
+            Y_utf = torch.stack(
+                [
+                    Y_utf[..., i] if i in outputs else Y[..., i]
+                    for i in range(Y.size(-1))
+                ],
+                dim=-1,
+            )
+        if Yvar is not None:
+            # TODO: Delta method, possibly issue warning
+            raise NotImplementedError(
+                "Power does not yet support transforming observation noise"
+            )
+        return Y_utf, Yvar
+
+    def untransform_posterior(self, posterior: Posterior) -> Posterior:
+        r"""Un-transform the log-transformed posterior.
+
+        Args:
+            posterior: A posterior in the log-transformed space.
+
+        Returns:
+            The un-transformed posterior.
+        """
+        if self._outputs is not None:
+            raise NotImplementedError(
+                "Power does not yet support output selection for untransform_posterior"
+            )
+        return TransformedPosterior(
+            posterior=posterior,
+            sample_transform=lambda x: x.pow(1./self.power),
+        )
