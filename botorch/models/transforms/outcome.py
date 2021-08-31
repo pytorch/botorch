@@ -596,7 +596,7 @@ class Power(OutcomeTransform):
             - The exponentiated outcome observations.
             - The exponentiated observation noise (if applicable).
         """
-        Y_utf = Y.pow(1./ self.power)
+        Y_utf = Y.pow(1.0 / self.power)
         outputs = normalize_indices(self._outputs, d=Y.size(-1))
         if outputs is not None:
             Y_utf = torch.stack(
@@ -628,5 +628,5 @@ class Power(OutcomeTransform):
             )
         return TransformedPosterior(
             posterior=posterior,
-            sample_transform=lambda x: x.pow(1./self.power),
+            sample_transform=lambda x: x.pow(1.0 /self.power),
         )

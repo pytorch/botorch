@@ -472,7 +472,7 @@ class TestOutcomeTransforms(BotorchTestCase):
         ms = (1, 2)
         batch_shapes = (torch.Size(), torch.Size([2]))
         dtypes = (torch.float, torch.double)
-        power = 1/3
+        power = 1 / 3
 
         # test transform and untransform
         for m, batch_shape, dtype in itertools.product(ms, batch_shapes, dtypes):
@@ -486,7 +486,7 @@ class TestOutcomeTransforms(BotorchTestCase):
             Y = torch.rand(*batch_shape, 3, m, device=self.device, dtype=dtype)
             Y_tf, Yvar_tf = tf(Y, None)
             self.assertTrue(tf.training)
-            self.assertTrue(torch.allclose(Y_tf, Y.pow(1/3)))
+            self.assertTrue(torch.allclose(Y_tf, Y.pow(power)))
             self.assertIsNone(Yvar_tf)
             tf.eval()
             self.assertFalse(tf.training)
@@ -522,13 +522,7 @@ class TestOutcomeTransforms(BotorchTestCase):
             self.assertIsInstance(p_utf, TransformedPosterior)
             self.assertEqual(p_utf.device.type, self.device.type)
             self.assertTrue(p_utf.dtype == dtype)
-            # self.assertTrue(p_utf._sample_transform == torch.exp)
-            # mean_expected = norm_to_lognorm_mean(posterior.mean, posterior.variance)
-            # variance_expected = norm_to_lognorm_variance(
-            #     posterior.mean, posterior.variance
-            # )
-            # self.assertTrue(torch.allclose(p_utf.mean, mean_expected))
-            # self.assertTrue(torch.allclose(p_utf.variance, variance_expected))
+
             samples = p_utf.rsample()
             self.assertEqual(samples.shape, torch.Size([1]) + shape)
             samples = p_utf.rsample(sample_shape=torch.Size([4]))
@@ -552,7 +546,7 @@ class TestOutcomeTransforms(BotorchTestCase):
             Y = torch.rand(*batch_shape, 3, m, device=self.device, dtype=dtype)
             Y_tf, Yvar_tf = tf(Y, None)
             self.assertTrue(tf.training)
-            self.assertTrue(torch.allclose(Y_tf[..., 1], Y[...,1].pow(power)))
+            self.assertTrue(torch.allclose(Y_tf[..., 1], Y[..., 1].pow(power)))
             self.assertTrue(torch.allclose(Y_tf[..., 0], Y[..., 0]))
             self.assertIsNone(Yvar_tf)
             tf.eval()
@@ -585,3 +579,4 @@ class TestOutcomeTransforms(BotorchTestCase):
             Y_tf_subset, Yvar_tf_subset = tf_subset(Y[..., [0]], None)
             self.assertTrue(torch.equal(Y_tf_subset, Y_tf[..., [0]]))
             self.assertIsNone(Yvar_tf_subset)
+            
