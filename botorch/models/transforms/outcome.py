@@ -506,7 +506,7 @@ class Log(OutcomeTransform):
 
 
 class Power(OutcomeTransform):
-    r"""Log-transform outcomes.
+    r"""Power-transform outcomes.
 
     Useful if the targets are modeled using a (multivariate) power transform of
     a Normal distribution. This means that we can use a standard GP model on the
@@ -514,7 +514,7 @@ class Power(OutcomeTransform):
     """
 
     def __init__(self, power: float, outputs: Optional[List[int]] = None) -> None:
-        r"""Log-transform outcomes.
+        r"""Power-transform outcomes.
 
         Args:
             outputs: Which of the outputs to power-transform. If omitted, all
@@ -549,7 +549,7 @@ class Power(OutcomeTransform):
     def forward(
         self, Y: Tensor, Yvar: Optional[Tensor] = None
     ) -> Tuple[Tensor, Optional[Tensor]]:
-        r"""Log-transform outcomes.
+        r"""Power-transform outcomes.
 
         Args:
             Y: A `batch_shape x n x m`-dim tensor of training targets.
@@ -582,19 +582,19 @@ class Power(OutcomeTransform):
     def untransform(
         self, Y: Tensor, Yvar: Optional[Tensor] = None
     ) -> Tuple[Tensor, Optional[Tensor]]:
-        r"""Un-transform log-transformed outcomes
+        r"""Un-transform power-transformed outcomes
 
         Args:
-            Y: A `batch_shape x n x m`-dim tensor of log-transfomred targets.
-            Yvar: A `batch_shape x n x m`-dim tensor of log- transformed
+            Y: A `batch_shape x n x m`-dim tensor of power-transfomred targets.
+            Yvar: A `batch_shape x n x m`-dim tensor of power-transformed
                 observation noises associated with the training targets
                 (if applicable).
 
         Returns:
             A two-tuple with the un-transformed outcomes:
 
-            - The exponentiated outcome observations.
-            - The exponentiated observation noise (if applicable).
+            - The un-power transformed outcome observations.
+            - The un-power transformed observation noise (if applicable).
         """
         Y_utf = Y.pow(1.0 / self.power)
         outputs = normalize_indices(self._outputs, d=Y.size(-1))
@@ -614,10 +614,10 @@ class Power(OutcomeTransform):
         return Y_utf, Yvar
 
     def untransform_posterior(self, posterior: Posterior) -> Posterior:
-        r"""Un-transform the log-transformed posterior.
+        r"""Un-transform the power-transformed posterior.
 
         Args:
-            posterior: A posterior in the log-transformed space.
+            posterior: A posterior in the power-transformed space.
 
         Returns:
             The un-transformed posterior.
