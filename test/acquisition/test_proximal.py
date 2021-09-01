@@ -48,7 +48,7 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
             EI = ExpectedImprovement(model, best_f=0.0)
 
             # test single point
-            proximal_weights = torch.ones(3, dtype=dtype)
+            proximal_weights = torch.ones(3, device=self.device, dtype=dtype)
             test_X = torch.rand(1, 3, device=self.device, dtype=dtype)
             EI_prox = ProximalAcquisitionFunction(EI, proximal_weights=proximal_weights)
 
