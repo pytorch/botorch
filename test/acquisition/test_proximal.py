@@ -7,6 +7,7 @@
 from typing import List, Any, Dict
 
 import torch
+from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.analytic import ExpectedImprovement
 from botorch.acquisition.monte_carlo import qExpectedImprovement
 from botorch.acquisition.proximal import ProximalAcquisitionFunction
@@ -32,6 +33,11 @@ class DummyModel(GPyTorchModel):
         pass
 
     def subset_output(self, idcs: List[int]) -> Model:
+        pass
+
+
+class DummyAcquisitionFunction(AcquisitionFunction):
+    def forward(self, X):
         pass
 
 
@@ -113,6 +119,18 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
                 ProximalAcquisitionFunction(
                     ExpectedImprovement(model, 0.0), proximal_weights[:1]
                 )
+
+            with self.assertRaises(ValueError):
+                ProximalAcquisitionFunction(
+                    ExpectedImprovement(model, 0.0),
+                    torch.rand(3, 3, device=self.device, dtype=dtype),
+                )
+
+            # test for x_pending points
+            pending_acq = DummyAcquisitionFunction(model)
+            pending_acq.set_X_pending(torch.rand(3, 3, device=self.device, dtype=dtype))
+            with self.assertRaises(UnsupportedError):
+                ProximalAcquisitionFunction(pending_acq, proximal_weights)
 
             # test model with multi-batch training inputs
             train_X = torch.rand(5, 2, 3, device=self.device, dtype=dtype)

@@ -56,6 +56,13 @@ class ProximalAcquisitionFunction(AcquisitionFunction):
 
         self.acq_func = acq_function
 
+        if hasattr(acq_function, "X_pending"):
+            if acq_function.X_pending is not None:
+                raise UnsupportedError(
+                    "Proximal acquisition function requires `X_pending` to be None."
+                )
+            self.X_pending = acq_function.X_pending
+
         self.register_buffer("proximal_weights", proximal_weights)
 
         # check model for train_inputs and single batch
@@ -74,7 +81,8 @@ class ProximalAcquisitionFunction(AcquisitionFunction):
 
         # check to make sure that weights match the training data shape
         if (
-            self.proximal_weights.shape[0]
+            len(self.proximal_weights.shape) != 1
+            or self.proximal_weights.shape[0]
             != self.acq_func.model.train_inputs[0][-1].shape[-1]
         ):
             raise ValueError(
