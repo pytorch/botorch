@@ -12,7 +12,6 @@ from botorch.acquisition.analytic import ExpectedImprovement
 from botorch.acquisition.monte_carlo import qExpectedImprovement
 from botorch.acquisition.proximal import ProximalAcquisitionFunction
 from botorch.exceptions.errors import UnsupportedError
-from botorch.exceptions.warnings import ProximalWarning
 from botorch.models import SingleTaskGP
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.model import Model
@@ -123,13 +122,14 @@ class TestProximalAcquisitionFunction(BotorchTestCase):
 
             with self.assertRaises(ValueError):
                 ProximalAcquisitionFunction(
-                    ExpectedImprovement(model, 0.0), torch.rand(3, 3)
+                    ExpectedImprovement(model, 0.0),
+                    torch.rand(3, 3, device=self.device, dtype=dtype),
                 )
 
             # test for x_pending points
             pending_acq = DummyAcquisitionFunction(model)
-            pending_acq.set_X_pending(torch.rand(3, 3))
-            with self.assertRaises(ProximalWarning):
+            pending_acq.set_X_pending(torch.rand(3, 3, device=self.device, dtype=dtype))
+            with self.assertRaises(UnsupportedError):
                 ProximalAcquisitionFunction(pending_acq, proximal_weights)
 
             # test model with multi-batch training inputs

@@ -14,7 +14,6 @@ from __future__ import annotations
 import torch
 from botorch.acquisition import AcquisitionFunction
 from botorch.exceptions.errors import UnsupportedError
-from botorch.exceptions.warnings import ProximalWarning
 from botorch.utils import t_batch_mode_transform
 from torch import Tensor
 from torch.nn import Module
@@ -59,10 +58,8 @@ class ProximalAcquisitionFunction(AcquisitionFunction):
 
         if hasattr(acq_function, "X_pending"):
             if acq_function.X_pending is not None:
-                raise ProximalWarning(
-                    "Proximal biasing behavior will be based on pending "
-                    "observation points, may result in unintuitive "
-                    "behavior."
+                raise UnsupportedError(
+                    "Proximal acquisition function requires `X_pending` to be None."
                 )
             self.X_pending = acq_function.X_pending
 

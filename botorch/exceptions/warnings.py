@@ -49,10 +49,3 @@ class BotorchTensorDimensionWarning(BotorchWarning):
     r"""Warning raised when a tensor possibly violates a botorch convention."""
 
     pass
-
-
-class ProximalWarning(BotorchWarning):
-    r"""Warning raised when Proximal biasing behavior is based on pending
-    observations."""
-
-    pass
