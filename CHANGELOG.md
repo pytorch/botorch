@@ -13,6 +13,7 @@ The release log for BoTorch.
 * New multi-objective test problems from (#876).
 * Add `PenalizedMCObjective` and `L1PenaltyObjective` (#913).
 * Add a `ProximalAcquisitionFunction` for regularizing new candidates towards previously generated ones (#919, #924).
+* Add a `Power` outcome transform (#925).
 
 #### Bug Fixes
 * Batch mode fix for `HigherOrderGP` initialization (#856).
