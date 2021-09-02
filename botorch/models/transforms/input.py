@@ -317,6 +317,7 @@ class Normalize(ReversibleInputTransform, Module):
         transform_on_eval: bool = True,
         transform_on_fantasize: bool = True,
         reverse: bool = False,
+        eps_range: float = 1e-8,
     ) -> None:
         r"""Normalize the inputs to the unit cube.
 
@@ -335,6 +336,8 @@ class Normalize(ReversibleInputTransform, Module):
                 transform when called from within a `fantasize` call. Default: True.
             reverse: A boolean indicating whether the forward pass should untransform
                 the inputs.
+            eps_range: Amount of noise to add to the range to ensure no division by
+                zero errors.
         """
         super().__init__()
         if bounds is not None:
@@ -357,6 +360,7 @@ class Normalize(ReversibleInputTransform, Module):
         self.transform_on_fantasize = transform_on_fantasize
         self.reverse = reverse
         self.batch_shape = batch_shape
+        self.eps_range = eps_range
 
     def _transform(self, X: Tensor) -> Tensor:
         r"""Normalize the inputs.
@@ -380,7 +384,10 @@ class Normalize(ReversibleInputTransform, Module):
                     f"expected {self.mins.size(-1)}."
                 )
             self.mins = X.min(dim=-2, keepdim=True)[0]
-            self.ranges = X.max(dim=-2, keepdim=True)[0] - self.mins
+            ranges = X.max(dim=-2, keepdim=True)[0] - self.mins
+            ranges[torch.where(ranges <= self.eps_range)] = self.eps_range
+            self.ranges = ranges
+
         return (X - self.mins) / self.ranges
 
     def _untransform(self, X: Tensor) -> Tensor:
