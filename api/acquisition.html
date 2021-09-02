@@ -391,7 +391,7 @@ given design points <cite>X</cite>.</p>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.analytic.PosteriorMean">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.analytic.</span></span><span class="sig-name descname"><span class="pre">PosteriorMean</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/analytic.html#PosteriorMean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.analytic.PosteriorMean" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.analytic.</span></span><span class="sig-name descname"><span class="pre">PosteriorMean</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/analytic.html#PosteriorMean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.analytic.PosteriorMean" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.analytic.AnalyticAcquisitionFunction" title="botorch.acquisition.analytic.AnalyticAcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.analytic.AnalyticAcquisitionFunction</span></code></a></p>
 <p>Single-outcome Posterior Mean.</p>
 <p>Only supports the case of q=1. Requires the model’s posterior to have a
@@ -402,12 +402,17 @@ given design points <cite>X</cite>.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pm</span> <span class="o">=</span> <span class="n">PM</span><span class="p">(</span><span class="n">test_X</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Base constructor for analytic acquisition functions.</p>
+<p>Single-outcome Posterior Mean.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A fitted single-outcome model.</p></li>
+<li><p><strong>model</strong> (<a class="reference internal" href="models.html#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – A fitted single-outcome GP model (must be in batch mode if
+candidate sets X will be)</p></li>
 <li><p><strong>objective</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.acquisition.objective.ScalarizedObjective" title="botorch.acquisition.objective.ScalarizedObjective"><em>ScalarizedObjective</em></a><em>]</em>) – A ScalarizedObjective (optional).</p></li>
+<li><p><strong>maximize</strong> (<em>bool</em>) – If True, consider the problem a maximization problem. Note
+that if <cite>maximize=False</cite>, the posterior mean is negated. As a
+consequence <cite>optimize_acqf(PosteriorMean(gp, maximize=False))</cite>
+does actually return -1 * minimum of the posterior mean.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -2687,9 +2692,12 @@ weighted by feasibility (assuming maximization).</p>
 <p>An Objective allowing to maximize some scalable objective on the model
 outputs subject to a number of constraints. Constraint feasibilty is
 approximated by a sigmoid function.</p>
-<p><cite>mc_acq(X) = objective(X) * prod_i (1  - sigmoid(constraint_i(X)))</cite>
-TODO: Document functional form exactly.</p>
-<p>See <cite>botorch.utils.objective.apply_constraints</cite> for details on the constarint
+<blockquote>
+<div><p>mc_acq(X) = (
+(objective(X) + infeasible_cost) * prod_i (1  - sigmoid(constraint_i(X)))
+) - infeasible_cost</p>
+</div></blockquote>
+<p>See <cite>botorch.utils.objective.apply_constraints</cite> for details on the constraint
 handling.</p>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">bound</span> <span class="o">=</span> <span class="mf">0.0</span>
@@ -3908,7 +3916,8 @@ the acquisition functions’s default sampler.</p></li>
 <dt class="sig sig-object py" id="botorch.acquisition.penalized.L2Penalty">
 <em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.penalized.</span></span><span class="sig-name descname"><span class="pre">L2Penalty</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">init_point</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/penalized.html#L2Penalty"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.penalized.L2Penalty" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code></p>
-<p>L2 penalty class to be added to any arbitrary acquisition function.</p>
+<p>L2 penalty class to be added to any arbitrary acquisition function
+to construct a PenalizedAcquisitionFunction.</p>
 <p>Initializing L2 regularization.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -3937,10 +3946,44 @@ we want to regularize.</p>
 <dd></dd></dl>
 </dd></dl>
 <dl class="py class">
+<dt class="sig sig-object py" id="botorch.acquisition.penalized.L1Penalty">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.penalized.</span></span><span class="sig-name descname"><span class="pre">L1Penalty</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">init_point</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/penalized.html#L1Penalty"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.penalized.L1Penalty" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code></p>
+<p>L1 penalty class to be added to any arbitrary acquisition function
+to construct a PenalizedAcquisitionFunction.</p>
+<p>Initializing L1 regularization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>init_point</strong> (<em>Tensor</em>) – The “1 x dim” reference point against which
+we want to regularize.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.acquisition.penalized.L1Penalty.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/penalized.html#L1Penalty.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.penalized.L1Penalty.forward" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – A “batch_shape x q x dim” representing the points to be evaluated.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A tensor of size “batch_shape” representing the acqfn for each q-batch.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.acquisition.penalized.L1Penalty.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.penalized.L1Penalty.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.penalized.GaussianPenalty">
 <em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.penalized.</span></span><span class="sig-name descname"><span class="pre">GaussianPenalty</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">init_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/penalized.html#GaussianPenalty"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.penalized.GaussianPenalty" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code></p>
-<p>Gaussian penalty class to be added to any arbitrary acquisition function.</p>
+<p>Gaussian penalty class to be added to any arbitrary acquisition function
+to construct a PenalizedAcquisitionFunction.</p>
 <p>Initializing Gaussian regularization.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -3975,7 +4018,8 @@ we want to regularize.</p></li>
 <dt class="sig sig-object py" id="botorch.acquisition.penalized.GroupLassoPenalty">
 <em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.penalized.</span></span><span class="sig-name descname"><span class="pre">GroupLassoPenalty</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">init_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groups</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/penalized.html#GroupLassoPenalty"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.penalized.GroupLassoPenalty" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code></p>
-<p>Group lasso penalty class to be added to any arbitrary acquisition function.</p>
+<p>Group lasso penalty class to be added to any arbitrary acquisition function
+to construct a PenalizedAcquisitionFunction.</p>
 <p>Initializing Group-Lasso regularization.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -4088,6 +4132,171 @@ been submitted for evaluation but have not yet been evaluated.</p>
 <dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.acquisition.penalized.L1PenaltyObjective">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.penalized.</span></span><span class="sig-name descname"><span class="pre">L1PenaltyObjective</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">init_point</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/penalized.html#L1PenaltyObjective"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.penalized.L1PenaltyObjective" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code></p>
+<p>L1 penalty objective class. An instance of this class can be added to any
+arbitrary objective to construct a PenalizedMCObjective.</p>
+<p>Initializing L1 penalty objective.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>init_point</strong> (<em>Tensor</em>) – The “1 x dim” reference point against which
+we want to regularize.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.acquisition.penalized.L1PenaltyObjective.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/penalized.html#L1PenaltyObjective.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.penalized.L1PenaltyObjective.forward" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – A “batch_shape x q x dim” representing the points to be evaluated.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A “1 x batch_shape x q” tensor representing the penalty for each point.
+The first dimension corresponds to the dimension of MC samples.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.acquisition.penalized.L1PenaltyObjective.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.penalized.L1PenaltyObjective.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.acquisition.penalized.PenalizedMCObjective">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.penalized.</span></span><span class="sig-name descname"><span class="pre">PenalizedMCObjective</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">objective</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">penalty_objective</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regularization_parameter</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/penalized.html#PenalizedMCObjective"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.penalized.PenalizedMCObjective" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.objective.GenericMCObjective" title="botorch.acquisition.objective.GenericMCObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.objective.GenericMCObjective</span></code></a></p>
+<p>Penalized MC objective.</p>
+<p>Allows to construct a penaltized MC-objective by adding a penalty term to
+the original objective.</p>
+<blockquote>
+<div><p>mc_acq(X) = objective(X) + penalty_objective(X)</p>
+</div></blockquote>
+<p>Note: PenalizedMCObjective allows adding penalty at the MCObjective level,
+different from the AcquisitionFunction level in PenalizedAcquisitionFunction.</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">regularization_parameter</span> <span class="o">=</span> <span class="mf">0.01</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">init_point</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="c1"># assume data dim is 3</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">objective</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">Y</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">l1_penalty_objective</span> <span class="o">=</span> <span class="n">L1PenaltyObjective</span><span class="p">(</span><span class="n">init_point</span><span class="o">=</span><span class="n">init_point</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">l1_penalized_objective</span> <span class="o">=</span> <span class="n">PenalizedMCObjective</span><span class="p">(</span>
+<span class="go">        objective, l1_penalty_objective, regularization_parameter</span>
+<span class="go">    )</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">samples</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span>
+<span class="go">        objective, l1_penalty_objective, regularization_parameter</span>
+</pre></div>
+</div>
+<p>Penalized MC objective.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>objective</strong> (<em>Callable</em><em>[</em><em>[</em><em>Tensor</em><em>, </em><em>Optional</em><em>[</em><em>Tensor</em><em>]</em><em>]</em><em>, </em><em>Tensor</em><em>]</em>) – A callable <cite>f(samples, X)</cite> mapping a
+<cite>sample_shape x batch-shape x q x m</cite>-dim Tensor <cite>samples</cite> and
+an optional <cite>batch-shape x q x d</cite>-dim Tensor <cite>X</cite> to a
+<cite>sample_shape x batch-shape x q</cite>-dim Tensor of objective values.</p></li>
+<li><p><strong>penalty_objective</strong> (<em>torch.nn.Module</em>) – A torch.nn.Module <cite>f(X)</cite> that takes in a
+<cite>batch-shape x q x d</cite>-dim Tensor <cite>X</cite> and outputs a
+<cite>1 x batch-shape x q</cite>-dim Tensor of penalty objective values.</p></li>
+<li><p><strong>regularization_parameter</strong> (<em>float</em>) – weight of the penalty (regularization) term</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.acquisition.penalized.PenalizedMCObjective.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/penalized.html#PenalizedMCObjective.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.penalized.PenalizedMCObjective.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the penalized objective on the samples.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>samples</strong> (<em>torch.Tensor</em>) – A <cite>sample_shape x batch_shape x q x m</cite>-dim Tensors of
+samples from a model posterior.</p></li>
+<li><p><strong>X</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – A <cite>batch_shape x q x d</cite>-dim tensor of inputs. Relevant only if
+the objective depends on the inputs explicitly.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>sample_shape x batch_shape x q</cite>-dim Tensor of objective values
+with penalty added for each point.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.acquisition.penalized.PenalizedMCObjective.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.penalized.PenalizedMCObjective.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+</section>
+<section id="module-botorch.acquisition.proximal">
+<span id="proximal-acquisition-function-wrapper"></span><h3>Proximal Acquisition Function Wrapper<a class="headerlink" href="#module-botorch.acquisition.proximal" title="Permalink to this headline">¶</a></h3>
+<p>A wrapper around AcquisitionFunctions to add proximal weighting of the
+acquisition function.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.acquisition.proximal.ProximalAcquisitionFunction">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.proximal.</span></span><span class="sig-name descname"><span class="pre">ProximalAcquisitionFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acq_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">proximal_weights</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/proximal.html#ProximalAcquisitionFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.proximal.ProximalAcquisitionFunction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.acquisition.AcquisitionFunction</span></code></a></p>
+<p>A wrapper around AcquisitionFunctions to add proximal weighting of the
+acquisition function. Acquisition function is weighted via a squared exponential
+centered at the last training point, with varying lengthscales corresponding to
+<cite>proximal_weights</cite>. Can only be used with acquisition functions based on single
+batch models.</p>
+<p>Small values of <cite>proximal_weights</cite> corresponds to strong biasing towards recently
+observed points, which smoothes optimization with a small potential decrese in
+convergence rate.</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">EI</span> <span class="o">=</span> <span class="n">ExpectedImprovement</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">best_f</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">proximal_weights</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">EI_proximal</span> <span class="o">=</span> <span class="n">ProximalAcquisitionFunction</span><span class="p">(</span><span class="n">EI</span><span class="p">,</span> <span class="n">proximal_weights</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">eip</span> <span class="o">=</span> <span class="n">EI_proximal</span><span class="p">(</span><span class="n">test_X</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Derived Acquisition Function weighted by proximity to recently
+observed point.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>acq_function</strong> (<a class="reference internal" href="#botorch.acquisition.acquisition.AcquisitionFunction" title="botorch.acquisition.acquisition.AcquisitionFunction"><em>AcquisitionFunction</em></a>) – The base acquisition function, operating on input tensors
+of feature dimension <cite>d</cite>.</p></li>
+<li><p><strong>proximal_weights</strong> (<em>Tensor</em>) – A <cite>d</cite> dim tensor used to bias locality
+along each axis.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.acquisition.proximal.ProximalAcquisitionFunction.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/proximal.html#ProximalAcquisitionFunction.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.proximal.ProximalAcquisitionFunction.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate base acquisition function with proximal weighting.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – Input tensor of feature dimension <cite>d</cite> .</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Base acquisition function evaluated on tensor <cite>X</cite> multiplied by proximal
+weighting.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.acquisition.proximal.ProximalAcquisitionFunction.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.proximal.ProximalAcquisitionFunction.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 </dd></dl>
 </section>
 <section id="module-botorch.acquisition.utils">
@@ -4397,7 +4606,7 @@ under <cite>num_samples</cite> samples) probability of being pareto optimal.</p>
 <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="index.html">BoTorch</a></h1>
 <h3>Navigation</h3>
-<p class="caption"><span class="caption-text">API Reference</span></p>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">botorch.acquisition</a></li>
 <li class="toctree-l1"><a class="reference internal" href="models.html">botorch.models</a></li>
@@ -4427,7 +4636,7 @@ under <cite>num_samples</cite> samples) probability of being pareto optimal.</p>
 <h3 id="searchlabel">Quick search</h3>
 <div class="searchformwrapper">
 <form action="search.html" class="search" method="get">
-<input aria-labelledby="searchlabel" name="q" type="text"/>
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
 <input type="submit" value="Go"/>
 </form>
 </div>

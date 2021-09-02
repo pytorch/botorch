@@ -310,9 +310,11 @@ The posterior variance is handled internally by the HigherOrderGP model.
 HOGP is a tensorized GP model so the posterior covariance grows to be extremely
 large, but is highly structured, which means that we can exploit Kronecker
 identities to sample from the posterior using Matheron’s rule as described in
-<a class="reference internal" href="models.html#doucet2010sampl" id="id2"><span>[Doucet2010sampl]</span></a>. In general, this posterior should ONLY be used for HOGP models
+<a class="reference internal" href="models.html#doucet2010sampl" id="id2"><span>[Doucet2010sampl]</span></a>.</p>
+<p>In general, this posterior should ONLY be used for HOGP models
 that have highly structured covariances. It should also only be used internally when
-called from the HigherOrderGP.posterior(…) method.</p>
+called from the HigherOrderGP.posterior(…) method. At this time, the posterior
+does not support gradients with respect to the training data.</p>
 <p>A Posterior for HigherOrderGP models.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -533,7 +535,7 @@ This is used for deterministic optimization.</p></li>
 <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="index.html">BoTorch</a></h1>
 <h3>Navigation</h3>
-<p class="caption"><span class="caption-text">API Reference</span></p>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="acquisition.html">botorch.acquisition</a></li>
 <li class="toctree-l1"><a class="reference internal" href="models.html">botorch.models</a></li>
@@ -563,7 +565,7 @@ This is used for deterministic optimization.</p></li>
 <h3 id="searchlabel">Quick search</h3>
 <div class="searchformwrapper">
 <form action="search.html" class="search" method="get">
-<input aria-labelledby="searchlabel" name="q" type="text"/>
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
 <input type="submit" value="Go"/>
 </form>
 </div>

@@ -329,14 +329,14 @@
                 <span class="n">new_coefficients</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">coefficient</span><span class="p">)</span>
             <span class="c1"># otherwise, we "remove" the constraints corresponding to that index</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">new_rhs</span> <span class="o">-=</span> <span class="n">coefficient</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">*</span> <span class="n">ffval_or_None</span>
+                <span class="n">new_rhs</span> <span class="o">=</span> <span class="n">new_rhs</span> <span class="o">-</span> <span class="n">coefficient</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">*</span> <span class="n">ffval_or_None</span>
 
         <span class="c1"># all indices were fixed, so the constraint is gone.</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_indices</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">if</span> <span class="p">(</span><span class="n">eq</span> <span class="ow">and</span> <span class="n">new_rhs</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="ow">not</span> <span class="n">eq</span> <span class="ow">and</span> <span class="n">new_rhs</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
                 <span class="n">prefix</span> <span class="o">=</span> <span class="s2">"Eq"</span> <span class="k">if</span> <span class="n">eq</span> <span class="k">else</span> <span class="s2">"Ineq"</span>
                 <span class="k">raise</span> <span class="n">CandidateGenerationError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">ality constraint </span><span class="si">{</span><span class="n">constraint_id</span><span class="si">}</span><span class="s2"> not met "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">uality constraint </span><span class="si">{</span><span class="n">constraint_id</span><span class="si">}</span><span class="s2"> not met "</span>
                     <span class="s2">"with fixed_features."</span>
                 <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -364,7 +364,7 @@
 <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="../../../index.html">BoTorch</a></h1>
 <h3>Navigation</h3>
-<p class="caption"><span class="caption-text">API Reference</span></p>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../acquisition.html">botorch.acquisition</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../models.html">botorch.models</a></li>
@@ -394,7 +394,7 @@
 <h3 id="searchlabel">Quick search</h3>
 <div class="searchformwrapper">
 <form action="../../../search.html" class="search" method="get">
-<input aria-labelledby="searchlabel" name="q" type="text"/>
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
 <input type="submit" value="Go"/>
 </form>
 </div>

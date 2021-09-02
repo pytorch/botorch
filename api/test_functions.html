@@ -1265,39 +1265,44 @@ where the last two dimensions are the fidelity parameters:</p>
 <p>Multi-objective optimization benchmark problems.</p>
 <p>References</p>
 <dl class="citation">
-<dt class="label" id="deb2005dtlz"><span class="brackets"><a class="fn-backref" href="#id1">Deb2005dtlz</a></span></dt>
+<dt class="label" id="deb2005dtlz"><span class="brackets"><a class="fn-backref" href="#id3">Deb2005dtlz</a></span></dt>
 <dd><p>K. Deb, L. Thiele, M. Laumanns, E. Zitzler, A. Abraham, L. Jain, R. Goldberg.
 “Scalable test problems for evolutionary multi-objective optimization”
 in Evolutionary Multiobjective Optimization, London, U.K.: Springer-Verlag,
 pp. 105-145, 2005.</p>
 </dd>
-<dt class="label" id="garridomerchan2020"><span class="brackets">GarridoMerchan2020</span><span class="fn-backref">(<a href="#id10">1</a>,<a href="#id11">2</a>,<a href="#id12">3</a>)</span></dt>
+<dt class="label" id="deb2005robust"><span class="brackets">Deb2005robust</span><span class="fn-backref">(<a href="#id1">1</a>,<a href="#id2">2</a>)</span></dt>
+<dd><p>K. Deb, H. Gupta. “Searching for Robust Pareto-Optimal Solutions in
+Multi-objective Optimization” in Evolutionary Multi-Criterion Optimization,
+Springer-Berlin, pp. 150-164, 2005.</p>
+</dd>
+<dt class="label" id="garridomerchan2020"><span class="brackets">GarridoMerchan2020</span><span class="fn-backref">(<a href="#id12">1</a>,<a href="#id13">2</a>,<a href="#id14">3</a>)</span></dt>
 <dd><p>E. C. Garrido-Merch ́an and D. Hern ́andez-Lobato. Parallel Predictive Entropy
 Search for Multi-objective Bayesian Optimization with Constraints.
 arXiv e-prints, arXiv:2004.00601, Apr. 2020.</p>
 </dd>
-<dt class="label" id="gelbart2014"><span class="brackets"><a class="fn-backref" href="#id13">Gelbart2014</a></span></dt>
+<dt class="label" id="gelbart2014"><span class="brackets"><a class="fn-backref" href="#id15">Gelbart2014</a></span></dt>
 <dd><p>Michael A. Gelbart, Jasper Snoek, and Ryan P. Adams. 2014. Bayesian
 optimization with unknown constraints. In Proceedings of the Thirtieth
 Conference on Uncertainty in Artificial Intelligence (UAI’14).
 AUAI Press, Arlington, Virginia, USA, 250–259.</p>
 </dd>
-<dt class="label" id="oszycka1995"><span class="brackets"><a class="fn-backref" href="#id14">Oszycka1995</a></span></dt>
+<dt class="label" id="oszycka1995"><span class="brackets"><a class="fn-backref" href="#id16">Oszycka1995</a></span></dt>
 <dd><p>A. Osyczka, S. Kundu. 1995. A new method to solve generalized multicriteria
 optimization problems using the simple genetic algorithm. In Structural
 Optimization 10. 94–99.</p>
 </dd>
-<dt class="label" id="tanabe2020"><span class="brackets">Tanabe2020</span><span class="fn-backref">(<a href="#id3">1</a>,<a href="#id4">2</a>,<a href="#id5">3</a>)</span></dt>
+<dt class="label" id="tanabe2020"><span class="brackets">Tanabe2020</span><span class="fn-backref">(<a href="#id5">1</a>,<a href="#id6">2</a>,<a href="#id7">3</a>)</span></dt>
 <dd><p>Ryoji Tanabe, Hisao Ishibuchi, An easy-to-use real-world multi-objective
 optimization problem suite, Applied Soft Computing,Volume 89, 2020.</p>
 </dd>
-<dt class="label" id="yang2019a"><span class="brackets">Yang2019a</span><span class="fn-backref">(<a href="#id7">1</a>,<a href="#id8">2</a>,<a href="#id9">3</a>)</span></dt>
+<dt class="label" id="yang2019a"><span class="brackets">Yang2019a</span><span class="fn-backref">(<a href="#id9">1</a>,<a href="#id10">2</a>,<a href="#id11">3</a>)</span></dt>
 <dd><p>K. Yang, M. Emmerich, A. Deutz, and T. Bäck. 2019.
 “Multi-Objective Bayesian Global Optimization using expected hypervolume
 improvement gradient” in Swarm and evolutionary computation 44, pp. 945–956,
 2019.</p>
 </dd>
-<dt class="label" id="zitzler2000"><span class="brackets"><a class="fn-backref" href="#id6">Zitzler2000</a></span></dt>
+<dt class="label" id="zitzler2000"><span class="brackets"><a class="fn-backref" href="#id8">Zitzler2000</a></span></dt>
 <dd><p>E. Zitzler, K. Deb, and L. Thiele, “Comparison of multiobjective
 evolutionary algorithms: Empirical results,” Evol. Comput., vol. 8, no. 2,
 pp. 173–195, 2000.</p>
@@ -1360,11 +1365,225 @@ pp. 173–195, 2000.</p>
 <dd></dd></dl>
 </dd></dl>
 <dl class="py class">
+<dt class="sig sig-object py" id="botorch.test_functions.multi_objective.DH">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.multi_objective.</span></span><span class="sig-name descname"><span class="pre">DH</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#DH"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.DH" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.MultiObjectiveTestProblem" title="botorch.test_functions.base.MultiObjectiveTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.base.MultiObjectiveTestProblem</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>Base class for DH problems for robust multi-objective optimization.</p>
+<p>In their paper, <a class="reference internal" href="#deb2005robust" id="id1"><span>[Deb2005robust]</span></a> consider these problems under a mean-robustness
+setting, and use uniformly distributed input perturbations from the box with
+edge lengths <cite>delta_0 = delta</cite>, <cite>delta_i = 2 * delta, i &gt; 0</cite>, with <cite>delta</cite> ranging
+up to <cite>0.01</cite> for DH1 and DH2, and <cite>delta = 0.03</cite> for DH3 and DH4.</p>
+<p>These are d-dimensional problems with two objectives:</p>
+<blockquote>
+<div><p>f_0(x) = x_0
+f_1(x) = h(x) + g(x) * S(x) for DH1 and DH2
+f_1(x) = h(x) * (g(x) + S(x)) for DH3 and DH4</p>
+</div></blockquote>
+<p>The goal is to minimize both objectives. See <a class="reference internal" href="#deb2005robust" id="id2"><span>[Deb2005robust]</span></a> for more details
+on DH. The reference points were set using <cite>infer_reference_point</cite>.</p>
+<p>Base constructor for multi-objective test functions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
+<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.multi_objective.DH.num_objectives">
+<span class="sig-name descname"><span class="pre">num_objectives</span></span><em class="property"><span class="pre">:</span> <span class="pre">int</span></em><em class="property"> <span class="pre">=</span> <span class="pre">2</span></em><a class="headerlink" href="#botorch.test_functions.multi_objective.DH.num_objectives" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.test_functions.multi_objective.DH1">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.multi_objective.</span></span><span class="sig-name descname"><span class="pre">DH1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#DH1"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.DH1" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.multi_objective.DH" title="botorch.test_functions.multi_objective.DH"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.multi_objective.DH</span></code></a></p>
+<p>DH1 test problem.</p>
+<p>d-dimensional problem evaluated on <cite>[0, 1] x [-1, 1]^{d-1}</cite>:</p>
+<blockquote>
+<div><p>f_0(x) = x_0
+f_1(x) = h(x_0) + g(x) * S(x_0)
+h(x_0) = 1 - x_0^2
+g(x) = sum_{i=1}^{d-1} (10 + x_i^2 - 10 * cos(4 * pi * x_i))
+S(x_0) = alpha / (0.2 + x_0) + beta * x_0^2</p>
+</div></blockquote>
+<p>where alpha = 1 and beta = 1.</p>
+<p>The Pareto front corresponds to the equation <cite>f_1 = 1 - f_0^2</cite>, and it is found at
+<cite>x_i = 0</cite> for <cite>i &gt; 0</cite> and any value of <cite>x_0</cite> in <cite>(0, 1]</cite>.</p>
+<p>Base constructor for multi-objective test functions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
+<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.multi_objective.DH1.alpha">
+<span class="sig-name descname"><span class="pre">alpha</span></span><em class="property"> <span class="pre">=</span> <span class="pre">1.0</span></em><a class="headerlink" href="#botorch.test_functions.multi_objective.DH1.alpha" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.multi_objective.DH1.beta">
+<span class="sig-name descname"><span class="pre">beta</span></span><em class="property"> <span class="pre">=</span> <span class="pre">1.0</span></em><a class="headerlink" href="#botorch.test_functions.multi_objective.DH1.beta" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.test_functions.multi_objective.DH1.evaluate_true">
+<span class="sig-name descname"><span class="pre">evaluate_true</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#DH1.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.DH1.evaluate_true" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.multi_objective.DH1.dim">
+<span class="sig-name descname"><span class="pre">dim</span></span><em class="property"><span class="pre">:</span> <span class="pre">int</span></em><a class="headerlink" href="#botorch.test_functions.multi_objective.DH1.dim" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.multi_objective.DH1.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.test_functions.multi_objective.DH1.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.test_functions.multi_objective.DH2">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.multi_objective.</span></span><span class="sig-name descname"><span class="pre">DH2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#DH2"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.DH2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.multi_objective.DH1" title="botorch.test_functions.multi_objective.DH1"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.multi_objective.DH1</span></code></a></p>
+<p>DH2 test problem.</p>
+<p>This is identical to DH1 except for having <cite>beta = 10.0</cite>.</p>
+<p>Base constructor for multi-objective test functions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
+<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.multi_objective.DH2.beta">
+<span class="sig-name descname"><span class="pre">beta</span></span><em class="property"> <span class="pre">=</span> <span class="pre">10.0</span></em><a class="headerlink" href="#botorch.test_functions.multi_objective.DH2.beta" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.multi_objective.DH2.dim">
+<span class="sig-name descname"><span class="pre">dim</span></span><em class="property"><span class="pre">:</span> <span class="pre">int</span></em><a class="headerlink" href="#botorch.test_functions.multi_objective.DH2.dim" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.multi_objective.DH2.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.test_functions.multi_objective.DH2.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.test_functions.multi_objective.DH3">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.multi_objective.</span></span><span class="sig-name descname"><span class="pre">DH3</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#DH3"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.DH3" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.multi_objective.DH" title="botorch.test_functions.multi_objective.DH"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.multi_objective.DH</span></code></a></p>
+<p>DH3 test problem.</p>
+<p>d-dimensional problem evaluated on <cite>[0, 1]^2 x [-1, 1]^{d-2}</cite>:</p>
+<blockquote>
+<div><p>f_0(x) = x_0
+f_1(x) = h(x_1) * (g(x) + S(x_0))
+h(x_1) = 2 - 0.8 * exp(-((x_1 - 0.35) / 0.25)^2) - exp(-((x_1 - 0.85) / 0.03)^2)
+g(x) = sum_{i=2}^{d-1} (50 * x_i^2)
+S(x_0) = 1 - sqrt(x_0)</p>
+</div></blockquote>
+<p>The Pareto front is found at <cite>x_i = 0</cite> for <cite>i &gt; 1</cite>. There’s a local and a global
+Pareto front, which are found at <cite>x_1 = 0.35</cite> and <cite>x_1 = 0.85</cite>, respectively.
+The approximate relationships between the objectives at local and global Pareto
+fronts are given by <cite>f_1 = 1.2 (1 - sqrt(f_0))</cite> and <cite>f_1 = 1 - f_0</cite>, respectively.
+The specific values on the Pareto fronts can be found by varying <cite>x_0</cite>.</p>
+<p>Base constructor for multi-objective test functions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
+<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.test_functions.multi_objective.DH3.evaluate_true">
+<span class="sig-name descname"><span class="pre">evaluate_true</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#DH3.evaluate_true"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.DH3.evaluate_true" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the function (w/o observation noise) on a set of points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.multi_objective.DH3.dim">
+<span class="sig-name descname"><span class="pre">dim</span></span><em class="property"><span class="pre">:</span> <span class="pre">int</span></em><a class="headerlink" href="#botorch.test_functions.multi_objective.DH3.dim" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.multi_objective.DH3.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.test_functions.multi_objective.DH3.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.test_functions.multi_objective.DH4">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.multi_objective.</span></span><span class="sig-name descname"><span class="pre">DH4</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#DH4"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.DH4" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.multi_objective.DH3" title="botorch.test_functions.multi_objective.DH3"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.multi_objective.DH3</span></code></a></p>
+<p>DH4 test problem.</p>
+<p>This is similar to DH3 except that it is evaluated on
+<cite>[0, 1] x [-0.15, 1] x [-1, 1]^{d-2}</cite> and:</p>
+<blockquote>
+<div><p>h(x_0, x_1) = 2 - x_0 - 0.8 * exp(-((x_0 + x_1 - 0.35) / 0.25)^2)
+- exp(-((x_0 + x_1 - 0.85) / 0.03)^2)</p>
+</div></blockquote>
+<p>The Pareto front is found at <cite>x_i = 0</cite> for <cite>i &gt; 2</cite>, with the local one being
+near <cite>x_0 + x_1 = 0.35</cite> and the global one near <cite>x_0 + x_1 = 0.85</cite>.</p>
+<p>Base constructor for multi-objective test functions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>noise_std</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Standard deviation of the observation noise.</p></li>
+<li><p><strong>negate</strong> (<em>bool</em>) – If True, negate the objectives.</p></li>
+<li><p><strong>dim</strong> (<em>int</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.multi_objective.DH4.dim">
+<span class="sig-name descname"><span class="pre">dim</span></span><em class="property"><span class="pre">:</span> <span class="pre">int</span></em><a class="headerlink" href="#botorch.test_functions.multi_objective.DH4.dim" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.test_functions.multi_objective.DH4.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.test_functions.multi_objective.DH4.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
 <dt class="sig sig-object py" id="botorch.test_functions.multi_objective.DTLZ">
 <em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.multi_objective.</span></span><span class="sig-name descname"><span class="pre">DTLZ</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_objectives</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#DTLZ"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.DTLZ" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.MultiObjectiveTestProblem" title="botorch.test_functions.base.MultiObjectiveTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.base.MultiObjectiveTestProblem</span></code></a></p>
 <p>Base class for DTLZ problems.</p>
-<p>See <a class="reference internal" href="#deb2005dtlz" id="id1"><span>[Deb2005dtlz]</span></a> for more details on DTLZ.</p>
+<p>See <a class="reference internal" href="#deb2005dtlz" id="id3"><span>[Deb2005dtlz]</span></a> for more details on DTLZ.</p>
 <p>Base constructor for multi-objective test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1401,13 +1620,13 @@ pp. 173–195, 2000.</p>
 <blockquote>
 <div><p>f_0(x) = 0.5 * x_0 * (1 + g(x))
 f_1(x) = 0.5 * (1 - x_0) * (1 + g(x))
-g(x) = 100 * sum_{i=m}^{n-1} (
+g(x) = 100 * sum_{i=m}^{d-1} (
 k + (x_i - 0.5)^2 - cos(20 * pi * (x_i - 0.5))
 )</p>
 </div></blockquote>
-<p>where k = n - m + 1.</p>
+<p>where k = d - m + 1.</p>
 <p>The pareto front is given by the line (or hyperplane) sum_i f_i(x) = 0.5.
-The goal is to minimize both objectives. The reference point comes from <a class="reference internal" href="acquisition.html#yang2019" id="id2"><span>[Yang2019]</span></a>.</p>
+The goal is to minimize both objectives. The reference point comes from <a class="reference internal" href="acquisition.html#yang2019" id="id4"><span>[Yang2019]</span></a>.</p>
 <p>Base constructor for multi-objective test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1471,7 +1690,7 @@ The goal is to minimize both objectives. The reference point comes from <a class
 <blockquote>
 <div><p>f_0(x) = (1 + g(x)) * cos(x_0 * pi / 2)
 f_1(x) = (1 + g(x)) * sin(x_0 * pi / 2)
-g(x) = sum_{i=m}^{n-1} (x_i - 0.5)^2</p>
+g(x) = sum_{i=m}^{d-1} (x_i - 0.5)^2</p>
 </div></blockquote>
 <p>The pareto front is given by the unit hypersphere sum{i} f_i^2 = 1.
 Note: the pareto front is completely concave. The goal is to minimize
@@ -1536,11 +1755,11 @@ positive section.</p>
 <em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.multi_objective.</span></span><span class="sig-name descname"><span class="pre">VehicleSafety</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#VehicleSafety"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.VehicleSafety" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.MultiObjectiveTestProblem" title="botorch.test_functions.base.MultiObjectiveTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.base.MultiObjectiveTestProblem</span></code></a></p>
 <p>Optimize Vehicle crash-worthiness.</p>
-<p>See <a class="reference internal" href="#tanabe2020" id="id3"><span>[Tanabe2020]</span></a> for details.</p>
+<p>See <a class="reference internal" href="#tanabe2020" id="id5"><span>[Tanabe2020]</span></a> for details.</p>
 <p>The reference point is 1.1 * the nadir point from
-approximate front provided by <a class="reference internal" href="#tanabe2020" id="id4"><span>[Tanabe2020]</span></a>.</p>
+approximate front provided by <a class="reference internal" href="#tanabe2020" id="id6"><span>[Tanabe2020]</span></a>.</p>
 <p>The maximum hypervolume is computed using the approximate
-pareto front from <a class="reference internal" href="#tanabe2020" id="id5"><span>[Tanabe2020]</span></a>.</p>
+pareto front from <a class="reference internal" href="#tanabe2020" id="id7"><span>[Tanabe2020]</span></a>.</p>
 <p>Base constructor for multi-objective test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1584,7 +1803,7 @@ pareto front from <a class="reference internal" href="#tanabe2020" id="id5"><spa
 <em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.multi_objective.</span></span><span class="sig-name descname"><span class="pre">ZDT</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_objectives</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#ZDT"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.ZDT" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.MultiObjectiveTestProblem" title="botorch.test_functions.base.MultiObjectiveTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.base.MultiObjectiveTestProblem</span></code></a></p>
 <p>Base class for ZDT problems.</p>
-<p>See <a class="reference internal" href="#zitzler2000" id="id6"><span>[Zitzler2000]</span></a> for more details on ZDT.</p>
+<p>See <a class="reference internal" href="#zitzler2000" id="id8"><span>[Zitzler2000]</span></a> for more details on ZDT.</p>
 <p>Base constructor for multi-objective test functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1623,7 +1842,7 @@ pareto front from <a class="reference internal" href="#tanabe2020" id="id5"><spa
 f_1(x) = g(x) * (1 - sqrt(x_0 / g(x))
 g(x) = 1 + 9 / (d - 1) * sum_{i=1}^{d-1} x_i</p>
 </div></blockquote>
-<p>The reference point comes from <a class="reference internal" href="#yang2019a" id="id7"><span>[Yang2019a]</span></a>.</p>
+<p>The reference point comes from <a class="reference internal" href="#yang2019a" id="id9"><span>[Yang2019a]</span></a>.</p>
 <p>The pareto front is convex.</p>
 <p>Base constructor for multi-objective test functions.</p>
 <dl class="field-list simple">
@@ -1689,7 +1908,7 @@ g(x) = 1 + 9 / (d - 1) * sum_{i=1}^{d-1} x_i</p>
 f_1(x) = g(x) * (1 - (x_0 / g(x))^2)
 g(x) = 1 + 9 / (d - 1) * sum_{i=1}^{d-1} x_i</p>
 </div></blockquote>
-<p>The reference point comes from <a class="reference internal" href="#yang2019a" id="id8"><span>[Yang2019a]</span></a>.</p>
+<p>The reference point comes from <a class="reference internal" href="#yang2019a" id="id10"><span>[Yang2019a]</span></a>.</p>
 <p>The pareto front is concave.</p>
 <p>Base constructor for multi-objective test functions.</p>
 <dl class="field-list simple">
@@ -1755,7 +1974,7 @@ g(x) = 1 + 9 / (d - 1) * sum_{i=1}^{d-1} x_i</p>
 f_1(x) = 1 - sqrt(x_0 / g(x)) - x_0 / g * sin(10 * pi * x_0)
 g(x) = 1 + 9 / (d - 1) * sum_{i=1}^{d-1} x_i</p>
 </div></blockquote>
-<p>The reference point comes from <a class="reference internal" href="#yang2019a" id="id9"><span>[Yang2019a]</span></a>.</p>
+<p>The reference point comes from <a class="reference internal" href="#yang2019a" id="id11"><span>[Yang2019a]</span></a>.</p>
 <p>The pareto front consists of several discontinuous convex parts.</p>
 <p>Base constructor for multi-objective test functions.</p>
 <dl class="field-list simple">
@@ -1815,7 +2034,7 @@ g(x) = 1 + 9 / (d - 1) * sum_{i=1}^{d-1} x_i</p>
 <em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.multi_objective.</span></span><span class="sig-name descname"><span class="pre">BNH</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#BNH"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.BNH" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.MultiObjectiveTestProblem" title="botorch.test_functions.base.MultiObjectiveTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.base.MultiObjectiveTestProblem</span></code></a>, <a class="reference internal" href="#botorch.test_functions.base.ConstrainedBaseTestProblem" title="botorch.test_functions.base.ConstrainedBaseTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.base.ConstrainedBaseTestProblem</span></code></a></p>
 <p>The constrained BNH problem.</p>
-<p>See <a class="reference internal" href="#garridomerchan2020" id="id10"><span>[GarridoMerchan2020]</span></a> for more details on this problem. Note that this is a
+<p>See <a class="reference internal" href="#garridomerchan2020" id="id12"><span>[GarridoMerchan2020]</span></a> for more details on this problem. Note that this is a
 minimization problem.</p>
 <p>Base constructor for multi-objective test functions.</p>
 <dl class="field-list simple">
@@ -1885,7 +2104,7 @@ constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 <em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.multi_objective.</span></span><span class="sig-name descname"><span class="pre">SRN</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#SRN"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.SRN" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.MultiObjectiveTestProblem" title="botorch.test_functions.base.MultiObjectiveTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.base.MultiObjectiveTestProblem</span></code></a>, <a class="reference internal" href="#botorch.test_functions.base.ConstrainedBaseTestProblem" title="botorch.test_functions.base.ConstrainedBaseTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.base.ConstrainedBaseTestProblem</span></code></a></p>
 <p>The constrained SRN problem.</p>
-<p>See <a class="reference internal" href="#garridomerchan2020" id="id11"><span>[GarridoMerchan2020]</span></a> for more details on this problem. Note that this is a
+<p>See <a class="reference internal" href="#garridomerchan2020" id="id13"><span>[GarridoMerchan2020]</span></a> for more details on this problem. Note that this is a
 minimization problem.</p>
 <p>Base constructor for multi-objective test functions.</p>
 <dl class="field-list simple">
@@ -1955,7 +2174,7 @@ constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 <em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.multi_objective.</span></span><span class="sig-name descname"><span class="pre">CONSTR</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#CONSTR"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.CONSTR" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.MultiObjectiveTestProblem" title="botorch.test_functions.base.MultiObjectiveTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.base.MultiObjectiveTestProblem</span></code></a>, <a class="reference internal" href="#botorch.test_functions.base.ConstrainedBaseTestProblem" title="botorch.test_functions.base.ConstrainedBaseTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.base.ConstrainedBaseTestProblem</span></code></a></p>
 <p>The constrained CONSTR problem.</p>
-<p>See <a class="reference internal" href="#garridomerchan2020" id="id12"><span>[GarridoMerchan2020]</span></a> for more details on this problem. Note that this is a
+<p>See <a class="reference internal" href="#garridomerchan2020" id="id14"><span>[GarridoMerchan2020]</span></a> for more details on this problem. Note that this is a
 minimization problem.</p>
 <p>Base constructor for multi-objective test functions.</p>
 <dl class="field-list simple">
@@ -2025,7 +2244,7 @@ constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 <em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.multi_objective.</span></span><span class="sig-name descname"><span class="pre">ConstrainedBraninCurrin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#ConstrainedBraninCurrin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.ConstrainedBraninCurrin" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.multi_objective.BraninCurrin" title="botorch.test_functions.multi_objective.BraninCurrin"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.multi_objective.BraninCurrin</span></code></a>, <a class="reference internal" href="#botorch.test_functions.base.ConstrainedBaseTestProblem" title="botorch.test_functions.base.ConstrainedBaseTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.base.ConstrainedBaseTestProblem</span></code></a></p>
 <p>Constrained Branin Currin Function.</p>
-<p>This uses the disk constraint from <a class="reference internal" href="#gelbart2014" id="id13"><span>[Gelbart2014]</span></a>.</p>
+<p>This uses the disk constraint from <a class="reference internal" href="#gelbart2014" id="id15"><span>[Gelbart2014]</span></a>.</p>
 <p>Constructor for Branin-Currin.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -2136,7 +2355,7 @@ constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 <dt class="sig sig-object py" id="botorch.test_functions.multi_objective.OSY">
 <em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.test_functions.multi_objective.</span></span><span class="sig-name descname"><span class="pre">OSY</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/test_functions/multi_objective.html#OSY"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.test_functions.multi_objective.OSY" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.test_functions.base.MultiObjectiveTestProblem" title="botorch.test_functions.base.MultiObjectiveTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.base.MultiObjectiveTestProblem</span></code></a>, <a class="reference internal" href="#botorch.test_functions.base.ConstrainedBaseTestProblem" title="botorch.test_functions.base.ConstrainedBaseTestProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.test_functions.base.ConstrainedBaseTestProblem</span></code></a></p>
-<p>The OSY test problem from <a class="reference internal" href="#oszycka1995" id="id14"><span>[Oszycka1995]</span></a>.
+<p>The OSY test problem from <a class="reference internal" href="#oszycka1995" id="id16"><span>[Oszycka1995]</span></a>.
 Implementation from
 <a class="reference external" href="https://github.com/msu-coinlab/pymoo/blob/master/pymoo/problems/multi/osy.py">https://github.com/msu-coinlab/pymoo/blob/master/pymoo/problems/multi/osy.py</a>
 Note that this implementation assumes minimization, so please choose negate=True.</p>
@@ -2212,7 +2431,7 @@ constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="index.html">BoTorch</a></h1>
 <h3>Navigation</h3>
-<p class="caption"><span class="caption-text">API Reference</span></p>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="acquisition.html">botorch.acquisition</a></li>
 <li class="toctree-l1"><a class="reference internal" href="models.html">botorch.models</a></li>
@@ -2242,7 +2461,7 @@ constraint slacks: <cite>c_1(X), …., c_{n_c}(X)</cite>.</p>
 <h3 id="searchlabel">Quick search</h3>
 <div class="searchformwrapper">
 <form action="search.html" class="search" method="get">
-<input aria-labelledby="searchlabel" name="q" type="text"/>
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
 <input type="submit" value="Go"/>
 </form>
 </div>

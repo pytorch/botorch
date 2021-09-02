@@ -42,7 +42,7 @@
 
 <span class="sd">.. [Maddox2021bohdo]</span>
 <span class="sd">    W. Maddox, M. Balandat, A. Wilson, and E. Bakshy. Bayesian Optimization with</span>
-<span class="sd">    High-Dimensional Outputs. https://botorch.org, Jun 2021.</span>
+<span class="sd">    High-Dimensional Outputs. https://arxiv.org/abs/2106.12997, Jun 2021.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
@@ -89,7 +89,7 @@
 <span class="kn">from</span> <span class="nn">gpytorch.priors.prior</span> <span class="kn">import</span> <span class="n">Prior</span>
 <span class="kn">from</span> <span class="nn">gpytorch.priors.smoothed_box_prior</span> <span class="kn">import</span> <span class="n">SmoothedBoxPrior</span>
 <span class="kn">from</span> <span class="nn">gpytorch.priors.torch_priors</span> <span class="kn">import</span> <span class="n">GammaPrior</span>
-<span class="kn">from</span> <span class="nn">gpytorch.settings</span> <span class="kn">import</span> <span class="n">cholesky_jitter</span><span class="p">,</span> <span class="n">detach_test_caches</span>
+<span class="kn">from</span> <span class="nn">gpytorch.settings</span> <span class="kn">import</span> <span class="n">detach_test_caches</span>
 <span class="kn">from</span> <span class="nn">gpytorch.utils.errors</span> <span class="kn">import</span> <span class="n">CachingError</span>
 <span class="kn">from</span> <span class="nn">gpytorch.utils.memoize</span> <span class="kn">import</span> <span class="n">cached</span><span class="p">,</span> <span class="n">pop_from_cache</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
@@ -597,15 +597,14 @@
 
         <span class="c1"># now update root so that \tilde{R}\tilde{R}' \approx K_{(x,xt), (x,xt)}</span>
         <span class="c1"># cloning preserves the gradient history</span>
-        <span class="k">with</span> <span class="n">cholesky_jitter</span><span class="p">(</span><span class="n">cholesky_jitter</span><span class="o">.</span><span class="n">value</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">)):</span>
-            <span class="n">updated_lazy_tensor</span> <span class="o">=</span> <span class="n">data_data_covar</span><span class="o">.</span><span class="n">cat_rows</span><span class="p">(</span>
-                <span class="n">cross_mat</span><span class="o">=</span><span class="n">test_data_covar</span><span class="o">.</span><span class="n">clone</span><span class="p">(),</span>
-                <span class="n">new_mat</span><span class="o">=</span><span class="n">test_test_covar</span><span class="p">,</span>
-                <span class="n">method</span><span class="o">=</span><span class="s2">"diagonalization"</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="n">updated_root</span> <span class="o">=</span> <span class="n">updated_lazy_tensor</span><span class="o">.</span><span class="n">root_decomposition</span><span class="p">()</span><span class="o">.</span><span class="n">root</span>
-            <span class="c1"># occasionally, there's device errors so enforce this comes out right</span>
-            <span class="n">updated_root</span> <span class="o">=</span> <span class="n">updated_root</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">data_data_covar</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">updated_lazy_tensor</span> <span class="o">=</span> <span class="n">data_data_covar</span><span class="o">.</span><span class="n">cat_rows</span><span class="p">(</span>
+            <span class="n">cross_mat</span><span class="o">=</span><span class="n">test_data_covar</span><span class="o">.</span><span class="n">clone</span><span class="p">(),</span>
+            <span class="n">new_mat</span><span class="o">=</span><span class="n">test_test_covar</span><span class="p">,</span>
+            <span class="n">method</span><span class="o">=</span><span class="s2">"diagonalization"</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">updated_root</span> <span class="o">=</span> <span class="n">updated_lazy_tensor</span><span class="o">.</span><span class="n">root_decomposition</span><span class="p">()</span><span class="o">.</span><span class="n">root</span>
+        <span class="c1"># occasionally, there's device errors so enforce this comes out right</span>
+        <span class="n">updated_root</span> <span class="o">=</span> <span class="n">updated_root</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">data_data_covar</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
 
         <span class="c1"># build a root decomposition of the joint train/test covariance matrix</span>
         <span class="c1"># construct (\tilde{R} \otimes M)(\tilde{R} \otimes M)' \approx</span>
@@ -751,7 +750,7 @@
 <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="../../../index.html">BoTorch</a></h1>
 <h3>Navigation</h3>
-<p class="caption"><span class="caption-text">API Reference</span></p>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../acquisition.html">botorch.acquisition</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../models.html">botorch.models</a></li>
@@ -781,7 +780,7 @@
 <h3 id="searchlabel">Quick search</h3>
 <div class="searchformwrapper">
 <form action="../../../search.html" class="search" method="get">
-<input aria-labelledby="searchlabel" name="q" type="text"/>
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
 <input type="submit" value="Go"/>
 </form>
 </div>

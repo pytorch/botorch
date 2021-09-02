@@ -37,17 +37,19 @@
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span> <span class="nn">math</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
 <span class="kn">from</span> <span class="nn">botorch.acquisition.analytic</span> <span class="kn">import</span> <span class="n">AnalyticAcquisitionFunction</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">GenericMCObjective</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions</span> <span class="kn">import</span> <span class="n">UnsupportedError</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
 <div class="viewcode-block" id="L2Penalty"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.penalized.L2Penalty">[docs]</a><span class="k">class</span> <span class="nc">L2Penalty</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""L2 penalty class to be added to any arbitrary acquisition function."""</span>
+    <span class="sa">r</span><span class="sd">"""L2 penalty class to be added to any arbitrary acquisition function</span>
+<span class="sd">    to construct a PenalizedAcquisitionFunction."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">init_point</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">):</span>
         <span class="sa">r</span><span class="sd">"""Initializing L2 regularization.</span>
@@ -73,8 +75,37 @@
         <span class="k">return</span> <span class="n">regularization_term</span></div></div>
 
 
+<div class="viewcode-block" id="L1Penalty"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.penalized.L1Penalty">[docs]</a><span class="k">class</span> <span class="nc">L1Penalty</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""L1 penalty class to be added to any arbitrary acquisition function</span>
+<span class="sd">    to construct a PenalizedAcquisitionFunction."""</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">init_point</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">):</span>
+        <span class="sa">r</span><span class="sd">"""Initializing L1 regularization.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            init_point: The "1 x dim" reference point against which</span>
+<span class="sd">                we want to regularize.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">init_point</span> <span class="o">=</span> <span class="n">init_point</span>
+
+<div class="viewcode-block" id="L1Penalty.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.penalized.L1Penalty.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">        Args:</span>
+<span class="sd">            X: A "batch_shape x q x dim" representing the points to be evaluated.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A tensor of size "batch_shape" representing the acqfn for each q-batch.</span>
+<span class="sd">        """</span>
+        <span class="n">regularization_term</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">norm</span><span class="p">((</span><span class="n">X</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_point</span><span class="p">),</span> <span class="n">p</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">regularization_term</span></div></div>
+
+
 <div class="viewcode-block" id="GaussianPenalty"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.penalized.GaussianPenalty">[docs]</a><span class="k">class</span> <span class="nc">GaussianPenalty</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Gaussian penalty class to be added to any arbitrary acquisition function."""</span>
+    <span class="sa">r</span><span class="sd">"""Gaussian penalty class to be added to any arbitrary acquisition function</span>
+<span class="sd">    to construct a PenalizedAcquisitionFunction."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">init_point</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">sigma</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
         <span class="sa">r</span><span class="sd">"""Initializing Gaussian regularization.</span>
@@ -103,7 +134,8 @@
 
 
 <div class="viewcode-block" id="GroupLassoPenalty"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.penalized.GroupLassoPenalty">[docs]</a><span class="k">class</span> <span class="nc">GroupLassoPenalty</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">"""Group lasso penalty class to be added to any arbitrary acquisition function."""</span>
+    <span class="sa">r</span><span class="sd">"""Group lasso penalty class to be added to any arbitrary acquisition function</span>
+<span class="sd">    to construct a PenalizedAcquisitionFunction."""</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">init_point</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">groups</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]):</span>
         <span class="sa">r</span><span class="sd">"""Initializing Group-Lasso regularization.</span>
@@ -196,6 +228,97 @@
         <span class="p">),</span>
         <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
     <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="L1PenaltyObjective"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.penalized.L1PenaltyObjective">[docs]</a><span class="k">class</span> <span class="nc">L1PenaltyObjective</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    L1 penalty objective class. An instance of this class can be added to any</span>
+<span class="sd">    arbitrary objective to construct a PenalizedMCObjective.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">init_point</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">):</span>
+        <span class="sa">r</span><span class="sd">"""Initializing L1 penalty objective.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            init_point: The "1 x dim" reference point against which</span>
+<span class="sd">                we want to regularize.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">init_point</span> <span class="o">=</span> <span class="n">init_point</span>
+
+<div class="viewcode-block" id="L1PenaltyObjective.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.penalized.L1PenaltyObjective.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">        Args:</span>
+<span class="sd">            X: A "batch_shape x q x dim" representing the points to be evaluated.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A "1 x batch_shape x q" tensor representing the penalty for each point.</span>
+<span class="sd">            The first dimension corresponds to the dimension of MC samples.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">norm</span><span class="p">((</span><span class="n">X</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_point</span><span class="p">),</span> <span class="n">p</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="PenalizedMCObjective"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.penalized.PenalizedMCObjective">[docs]</a><span class="k">class</span> <span class="nc">PenalizedMCObjective</span><span class="p">(</span><span class="n">GenericMCObjective</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""Penalized MC objective.</span>
+
+<span class="sd">    Allows to construct a penaltized MC-objective by adding a penalty term to</span>
+<span class="sd">    the original objective.</span>
+
+<span class="sd">        mc_acq(X) = objective(X) + penalty_objective(X)</span>
+
+<span class="sd">    Note: PenalizedMCObjective allows adding penalty at the MCObjective level,</span>
+<span class="sd">    different from the AcquisitionFunction level in PenalizedAcquisitionFunction.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; regularization_parameter = 0.01</span>
+<span class="sd">        &gt;&gt;&gt; init_point = torch.zeros(3) # assume data dim is 3</span>
+<span class="sd">        &gt;&gt;&gt; objective = lambda Y, X: torch.sqrt(Y).sum(dim=-1)</span>
+<span class="sd">        &gt;&gt;&gt; l1_penalty_objective = L1PenaltyObjective(init_point=init_point)</span>
+<span class="sd">        &gt;&gt;&gt; l1_penalized_objective = PenalizedMCObjective(</span>
+<span class="sd">                objective, l1_penalty_objective, regularization_parameter</span>
+<span class="sd">            )</span>
+<span class="sd">        &gt;&gt;&gt; samples = sampler(posterior)</span>
+<span class="sd">                objective, l1_penalty_objective, regularization_parameter</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">objective</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]],</span> <span class="n">Tensor</span><span class="p">],</span>
+        <span class="n">penalty_objective</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
+        <span class="n">regularization_parameter</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Penalized MC objective.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            objective: A callable `f(samples, X)` mapping a</span>
+<span class="sd">                `sample_shape x batch-shape x q x m`-dim Tensor `samples` and</span>
+<span class="sd">                an optional `batch-shape x q x d`-dim Tensor `X` to a</span>
+<span class="sd">                `sample_shape x batch-shape x q`-dim Tensor of objective values.</span>
+<span class="sd">            penalty_objective: A torch.nn.Module `f(X)` that takes in a</span>
+<span class="sd">                `batch-shape x q x d`-dim Tensor `X` and outputs a</span>
+<span class="sd">                `1 x batch-shape x q`-dim Tensor of penalty objective values.</span>
+<span class="sd">            regularization_parameter: weight of the penalty (regularization) term</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">penalty_objective</span> <span class="o">=</span> <span class="n">penalty_objective</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">regularization_parameter</span> <span class="o">=</span> <span class="n">regularization_parameter</span>
+
+<div class="viewcode-block" id="PenalizedMCObjective.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.penalized.PenalizedMCObjective.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Evaluate the penalized objective on the samples.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            samples: A `sample_shape x batch_shape x q x m`-dim Tensors of</span>
+<span class="sd">                samples from a model posterior.</span>
+<span class="sd">            X: A `batch_shape x q x d`-dim tensor of inputs. Relevant only if</span>
+<span class="sd">                the objective depends on the inputs explicitly.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `sample_shape x batch_shape x q`-dim Tensor of objective values</span>
+<span class="sd">            with penalty added for each point.</span>
+<span class="sd">        """</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">penalty_obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">penalty_objective</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">obj</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">regularization_parameter</span> <span class="o">*</span> <span class="n">penalty_obj</span></div></div>
 </pre></div>
 </div>
 </div>
@@ -204,7 +327,7 @@
 <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="../../../index.html">BoTorch</a></h1>
 <h3>Navigation</h3>
-<p class="caption"><span class="caption-text">API Reference</span></p>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../acquisition.html">botorch.acquisition</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../models.html">botorch.models</a></li>
@@ -234,7 +357,7 @@
 <h3 id="searchlabel">Quick search</h3>
 <div class="searchformwrapper">
 <form action="../../../search.html" class="search" method="get">
-<input aria-labelledby="searchlabel" name="q" type="text"/>
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
 <input type="submit" value="Go"/>
 </form>
 </div>
