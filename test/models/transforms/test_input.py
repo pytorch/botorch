@@ -158,6 +158,13 @@ class TestInputTransforms(BotorchTestCase):
                 bounds = torch.zeros(2, 3, device=self.device, dtype=dtype)
                 Normalize(d=2, bounds=bounds)
 
+            # test jitter
+            nlz = Normalize(d=2, min_range=1e-4)
+            self.assertEqual(nlz.min_range, 1e-4)
+            X = torch.cat((torch.randn(4, 1), torch.zeros(4, 1)), dim=-1)
+            X = X.to(self.device)
+            self.assertEqual(torch.isfinite(nlz(X)).sum(), X.numel())
+
             # basic usage
             for batch_shape in (torch.Size(), torch.Size([3])):
                 # learned bounds
