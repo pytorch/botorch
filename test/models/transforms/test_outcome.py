@@ -92,7 +92,7 @@ class TestOutcomeTransforms(BotorchTestCase):
             tf.eval()
             self.assertFalse(tf.training)
             Y_utf, Yvar_utf = tf.untransform(Y_tf, Yvar_tf)
-            torch.allclose(Y_utf, Y)
+            self.assertTrue(torch.allclose(Y_utf, Y))
             self.assertIsNone(Yvar_utf)
 
             # subset_output
@@ -117,8 +117,8 @@ class TestOutcomeTransforms(BotorchTestCase):
             tf.eval()
             self.assertFalse(tf.training)
             Y_utf, Yvar_utf = tf.untransform(Y_tf, Yvar_tf)
-            torch.allclose(Y_utf, Y)
-            torch.allclose(Yvar_utf, Yvar)
+            self.assertTrue(torch.allclose(Y_utf, Y))
+            self.assertTrue(torch.allclose(Yvar_utf, Yvar))
 
             # untransform_posterior
             for interleaved, lazy in itertools.product((True, False), (True, False)):
@@ -200,7 +200,7 @@ class TestOutcomeTransforms(BotorchTestCase):
             tf.eval()
             self.assertFalse(tf.training)
             Y_utf, Yvar_utf = tf.untransform(Y_tf, Yvar_tf)
-            torch.allclose(Y_utf, Y)
+            self.assertTrue(torch.allclose(Y_utf, Y))
             self.assertIsNone(Yvar_utf)
 
             # subset_output
@@ -228,8 +228,8 @@ class TestOutcomeTransforms(BotorchTestCase):
             tf.eval()
             self.assertFalse(tf.training)
             Y_utf, Yvar_utf = tf.untransform(Y_tf, Yvar_tf)
-            torch.allclose(Y_utf, Y)
-            torch.allclose(Yvar_utf, Yvar)
+            self.assertTrue(torch.allclose(Y_utf, Y))
+            self.assertTrue(torch.allclose(Yvar_utf, Yvar))
 
             # error on untransform_posterior
             with self.assertRaises(NotImplementedError):
@@ -491,7 +491,7 @@ class TestOutcomeTransforms(BotorchTestCase):
             tf.eval()
             self.assertFalse(tf.training)
             Y_utf, Yvar_utf = tf.untransform(Y_tf, Yvar_tf)
-            torch.allclose(Y_utf, Y)
+            self.assertTrue(torch.allclose(Y_utf, Y))
             self.assertIsNone(Yvar_utf)
 
             # subset_output
@@ -552,7 +552,7 @@ class TestOutcomeTransforms(BotorchTestCase):
             tf.eval()
             self.assertFalse(tf.training)
             Y_utf, Yvar_utf = tf.untransform(Y_tf, Yvar_tf)
-            torch.allclose(Y_utf, Y)
+            self.assertTrue(torch.allclose(Y_utf, Y))
             self.assertIsNone(Yvar_utf)
 
             # subset_output
