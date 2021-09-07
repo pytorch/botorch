@@ -467,8 +467,9 @@ class TestOutcomeTransforms(BotorchTestCase):
             with self.assertRaises(NotImplementedError):
                 tf.untransform_posterior(None)
 
-    def test_power(self):
-
+    def test_power(self, seed=0):
+        torch.random.manual_seed(seed)
+        
         ms = (1, 2)
         batch_shapes = (torch.Size(), torch.Size([2]))
         dtypes = (torch.float, torch.double)
