@@ -11,10 +11,10 @@ from botorch.models.transforms.input import (
     Round,
 )
 from botorch.models.transforms.outcome import (
-    ChainedOutcomeTransform, 
+    ChainedOutcomeTransform,
     Log,
     Power,
-    Standardize, 
+    Standardize,
 )
 
 
