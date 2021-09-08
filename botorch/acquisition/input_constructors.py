@@ -401,6 +401,7 @@ def construct_inputs_qPI(
     X_pending: Optional[Tensor] = None,
     sampler: Optional[MCSampler] = None,
     tau: float = 1e-3,
+    best_f: Optional[Union[float, Tensor]] = None,
     **kwargs: Any,
 ) -> Dict[str, Any]:
     r"""Construct kwargs for the `qProbabilityOfImprovement` constructor.
@@ -420,7 +421,9 @@ def construct_inputs_qPI(
             of the step function. Smaller values yield more accurate
             approximations of the function, but result in gradients
             estimates with higher variance.
-
+        best_f: The best objective value observed so far (assumed noiseless). Can
+            be a `batch_shape`-shaped tensor, which in case of a batched model
+            specifies potentially different values for each element of the batch.
     Returns:
         A dict mapping kwarg names of the constructor to values.
     """
@@ -431,9 +434,14 @@ def construct_inputs_qPI(
         sampler=sampler,
         X_pending=X_pending,
     )
+    # TODO: Dedup handling of this here and in the constructor (maybe via a
+    # shared classmethod doing this)
+    if best_f is None:
+        best_f = get_best_f_mc(training_data=training_data, objective=objective)
     return {
         **base_inputs,
         "tau": tau,
+        "best_f": best_f,
     }
 
 
@@ -641,7 +649,10 @@ def get_best_f_analytic(
     if isinstance(objective, ScalarizedObjective):
         return objective.evaluate(Y).max(-1).values
     if Y.shape[-1] > 1:
-        raise NotImplementedError
+        raise NotImplementedError(
+            "Analytic acquisition functions currently only work with "
+            "multi-output models if provided with a `ScalarizedObjective`."
+        )
     return Y.max(-2).values.squeeze(-1)
 
 
@@ -654,6 +665,10 @@ def get_best_f_mc(
     Y = training_data.Y
     if objective is None:
         if Y.shape[-1] > 1:
-            raise UnsupportedError
+            raise UnsupportedError(
+                "Acquisition functions require an objective when "
+                "used with multi-output models (execpt for multi-objective"
+                "acquisition functions)."
+            )
         objective = IdentityMCObjective()
     return objective(training_data.Y).max(-1).values
