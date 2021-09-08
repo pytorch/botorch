@@ -72,13 +72,32 @@
 <div class="viewcode-block" id="DeterministicModel.posterior"><a class="viewcode-back" href="../../../models.html#botorch.models.deterministic.DeterministicModel.posterior">[docs]</a>    <span class="k">def</span> <span class="nf">posterior</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">output_indices</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DeterministicPosterior</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">"""Compute the (deterministic) posterior at X."""</span>
+        <span class="sa">r</span><span class="sd">"""Compute the (deterministic) posterior at X.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: A `batch_shape x n x d`-dim input tensor `X`.</span>
+<span class="sd">            output_indices: A list of indices, corresponding to the outputs over</span>
+<span class="sd">                which to compute the posterior. If omitted, computes the posterior</span>
+<span class="sd">                over all model outputs.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A `DeterministicPosterior` object, representing `batch_shape` joint</span>
+<span class="sd">            posteriors over `n` points and the outputs selected by `output_indices`.</span>
+<span class="sd">        """</span>
+        <span class="c1"># Apply the input transforms in `eval` mode.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_inputs</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"observation_noise"</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># TODO: Consider returning an MVN here instead</span>
             <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
                 <span class="s2">"Deterministic models do not support observation noise."</span>
             <span class="p">)</span>
         <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="c1"># NOTE: The `outcome_transform` `untransform`s the predictions rather than the</span>
+        <span class="c1"># `posterior` (as is done in GP models). This is more general since it works</span>
+        <span class="c1"># even if the transform doesn't support `untransform_posterior`.</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"outcome_transform"</span><span class="p">):</span>
+            <span class="n">values</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outcome_transform</span><span class="o">.</span><span class="n">untransform</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">output_indices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">values</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">output_indices</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">DeterministicPosterior</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="n">values</span><span class="p">)</span></div></div>

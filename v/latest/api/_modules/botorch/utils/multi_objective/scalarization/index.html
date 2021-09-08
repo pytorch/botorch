@@ -55,13 +55,17 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]],</span> <span class="n">Tensor</span><span class="p">]:</span>
     <span class="sa">r</span><span class="sd">"""Construct an augmented Chebyshev scalarization.</span>
 
-<span class="sd">    Outcomes are first normalized to [0,1] and then an augmented</span>
-<span class="sd">    Chebyshev scalarization is applied.</span>
-
 <span class="sd">    Augmented Chebyshev scalarization:</span>
 <span class="sd">        objective(y) = min(w * y) + alpha * sum(w * y)</span>
 
-<span class="sd">    Note: this assumes maximization.</span>
+<span class="sd">    Outcomes are first normalized to [0,1] for maximization (or [-1,0] for minimization)</span>
+<span class="sd">    and then an augmented Chebyshev scalarization is applied.</span>
+
+<span class="sd">    Note: this assumes maximization of the augmented Chebyshev scalarization.</span>
+<span class="sd">    Minimizing/Maximizing an objective is supported by passing a negative/positive</span>
+<span class="sd">    weight for that objective. To make all w * y's have positive sign</span>
+<span class="sd">    such that they are comparable when computing min(w * y), outcomes of minimization</span>
+<span class="sd">    objectives are shifted from [0,1] to [-1,0].</span>
 
 <span class="sd">    See [Knowles2005]_ for details.</span>
 
@@ -70,8 +74,9 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">        weights: A `m`-dim tensor of weights.</span>
+<span class="sd">            Positive for maximization and negative for minimization.</span>
 <span class="sd">        Y: A `n x m`-dim tensor of observed outcomes, which are used for</span>
-<span class="sd">            scaling the outcomes to [0,1].</span>
+<span class="sd">            scaling the outcomes to [0,1] or [-1,0].</span>
 <span class="sd">        alpha: Parameter governing the influence of the weighted sum term. The</span>
 <span class="sd">            default value comes from [Knowles2005]_.</span>
 
@@ -79,7 +84,7 @@
 <span class="sd">        Transform function using the objective weights.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; weights = torch.tensor([0.75, 0.25])</span>
+<span class="sd">        &gt;&gt;&gt; weights = torch.tensor([0.75, -0.25])</span>
 <span class="sd">        &gt;&gt;&gt; transform = get_aug_chebyshev_scalarization(weights, Y)</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="n">weights</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:]:</span>
@@ -106,9 +111,15 @@
         <span class="c1"># Set the bounds to be [min(Y_m), max(Y_m)], for each objective m</span>
         <span class="n">Y_bounds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">Y</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">Y</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">])</span>
 
+    <span class="c1"># A boolean mask indicating if minimizing an objective</span>
+    <span class="n">minimize</span> <span class="o">=</span> <span class="n">weights</span> <span class="o">&lt;</span> <span class="mi">0</span>
+
     <span class="k">def</span> <span class="nf">obj</span><span class="p">(</span><span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="c1"># scale to [0,1]</span>
         <span class="n">Y_normalized</span> <span class="o">=</span> <span class="n">normalize</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">Y_bounds</span><span class="p">)</span>
+        <span class="c1"># If minimizing an objective, convert Y_normalized values to [-1,0],</span>
+        <span class="c1"># such that min(w*y) makes sense, we want all w*y's to be positive</span>
+        <span class="n">Y_normalized</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">minimize</span><span class="p">]</span> <span class="o">=</span> <span class="n">Y_normalized</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">minimize</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
         <span class="k">return</span> <span class="n">chebyshev_obj</span><span class="p">(</span><span class="n">Y</span><span class="o">=</span><span class="n">Y_normalized</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">obj</span></div>

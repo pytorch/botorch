@@ -38,8 +38,10 @@
 <div class="viewcode-block" id="CategoricalKernel"><a class="viewcode-back" href="../../../../models.html#botorch.models.kernels.categorical.CategoricalKernel">[docs]</a><span class="k">class</span> <span class="nc">CategoricalKernel</span><span class="p">(</span><span class="n">Kernel</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""A Kernel for categorical features.</span>
 
-<span class="sd">    Computes `exp(-(dist(x1, x2) / lengthscale)**2)`, where</span>
+<span class="sd">    Computes `exp(-dist(x1, x2) / lengthscale)`, where</span>
 <span class="sd">    `dist(x1, x2)` is zero if `x1 == x2` and one if `x1 != x2`.</span>
+<span class="sd">    If the last dimension is not a batch dimension, then the</span>
+<span class="sd">    mean is considered.</span>
 
 <span class="sd">    Note: This kernel is NOT differentiable w.r.t. the inputs.</span>
 <span class="sd">    """</span>
@@ -55,7 +57,7 @@
         <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">delta</span> <span class="o">=</span> <span class="n">x1</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="o">!=</span> <span class="n">x2</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">)</span>
-        <span class="n">dists</span> <span class="o">=</span> <span class="p">(</span><span class="n">delta</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">lengthscale</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">dists</span> <span class="o">=</span> <span class="n">delta</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">lengthscale</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">last_dim_is_batch</span><span class="p">:</span>
             <span class="n">dists</span> <span class="o">=</span> <span class="n">dists</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>

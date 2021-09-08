@@ -47,6 +47,7 @@
 <span class="kn">from</span> <span class="nn">botorch.models.gpytorch</span> <span class="kn">import</span> <span class="n">BatchedMultiOutputGPyTorchModel</span>
 <span class="kn">from</span> <span class="nn">botorch.models.model_list_gp_regression</span> <span class="kn">import</span> <span class="n">ModelListGP</span>
 <span class="kn">from</span> <span class="nn">botorch.models.transforms.input</span> <span class="kn">import</span> <span class="n">InputTransform</span>
+<span class="kn">from</span> <span class="nn">botorch.models.transforms.outcome</span> <span class="kn">import</span> <span class="n">OutcomeTransform</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
 
@@ -75,7 +76,7 @@
 
 <span class="k">def</span> <span class="nf">_check_compatibility</span><span class="p">(</span><span class="n">models</span><span class="p">:</span> <span class="n">ModelListGP</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="sd">"""Check if a ModelListGP can be converted."""</span>
-    <span class="c1"># check that all submodules are of the same type</span>
+    <span class="c1"># Check that all submodules are of the same type.</span>
     <span class="k">for</span> <span class="n">modn</span><span class="p">,</span> <span class="n">mod</span> <span class="ow">in</span> <span class="n">models</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">named_modules</span><span class="p">():</span>
         <span class="n">mcls</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="vm">__class__</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">_get_module</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">modn</span><span class="p">),</span> <span class="n">mcls</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">models</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
@@ -83,22 +84,28 @@
                 <span class="s2">"Sub-modules must be of the same type across models."</span>
             <span class="p">)</span>
 
-    <span class="c1"># check that each model is a BatchedMultiOutputGPyTorchModel</span>
+    <span class="c1"># Check that each model is a BatchedMultiOutputGPyTorchModel.</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">BatchedMultiOutputGPyTorchModel</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">models</span><span class="p">):</span>
         <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
             <span class="s2">"All models must be of type BatchedMultiOutputGPyTorchModel."</span>
         <span class="p">)</span>
 
-    <span class="c1"># TODO: Add support for HeteroskedasticSingleTaskGP</span>
+    <span class="c1"># TODO: Add support for HeteroskedasticSingleTaskGP.</span>
     <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">HeteroskedasticSingleTaskGP</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">models</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
             <span class="s2">"Conversion of HeteroskedasticSingleTaskGP is currently unsupported."</span>
         <span class="p">)</span>
 
-    <span class="c1"># TODO: Add support for custom likelihoods</span>
+    <span class="c1"># TODO: Add support for custom likelihoods.</span>
     <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="s2">"_is_custom_likelihood"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">models</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
             <span class="s2">"Conversion of models with custom likelihoods is currently unsupported."</span>
+        <span class="p">)</span>
+
+    <span class="c1"># TODO: Add support for outcome transforms.</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="s2">"outcome_transform"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">models</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span>
+            <span class="s2">"Conversion of models with outcome transforms is currently unsupported."</span>
         <span class="p">)</span>
 
     <span class="c1"># check that each model is single-output</span>
@@ -229,20 +236,23 @@
 <span class="sd">        &gt;&gt;&gt; batch_gp = SingleTaskGP(train_X, train_Y)</span>
 <span class="sd">        &gt;&gt;&gt; list_gp = batched_to_model_list(batch_gp)</span>
 <span class="sd">    """</span>
-    <span class="c1"># TODO: Add support for HeteroskedasticSingleTaskGP</span>
+    <span class="c1"># TODO: Add support for HeteroskedasticSingleTaskGP.</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">batch_model</span><span class="p">,</span> <span class="n">HeteroskedasticSingleTaskGP</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-            <span class="s2">"Conversion of HeteroskedasticSingleTaskGP currently not supported."</span>
+            <span class="s2">"Conversion of HeteroskedasticSingleTaskGP is currently not supported."</span>
         <span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">batch_model</span><span class="p">,</span> <span class="n">MixedSingleTaskGP</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-            <span class="s2">"Conversion of MixedSingleTaskGP currently not supported."</span>
+            <span class="s2">"Conversion of MixedSingleTaskGP is currently not supported."</span>
         <span class="p">)</span>
     <span class="n">input_transform</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">batch_model</span><span class="p">,</span> <span class="s2">"input_transform"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">outcome_transform</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">batch_model</span><span class="p">,</span> <span class="s2">"outcome_transform"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="n">batch_sd</span> <span class="o">=</span> <span class="n">batch_model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span>
 
     <span class="n">adjusted_batch_keys</span><span class="p">,</span> <span class="n">non_adjusted_batch_keys</span> <span class="o">=</span> <span class="n">_get_adjusted_batch_keys</span><span class="p">(</span>
-        <span class="n">batch_state_dict</span><span class="o">=</span><span class="n">batch_sd</span><span class="p">,</span> <span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span>
+        <span class="n">batch_state_dict</span><span class="o">=</span><span class="n">batch_sd</span><span class="p">,</span>
+        <span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span><span class="p">,</span>
+        <span class="n">outcome_transform</span><span class="o">=</span><span class="n">outcome_transform</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">input_bdims</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch_model</span><span class="o">.</span><span class="n">_input_batch_shape</span><span class="p">)</span>
 
@@ -274,6 +284,18 @@
             <span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">batch_model</span><span class="p">,</span> <span class="n">SingleTaskMultiFidelityGP</span><span class="p">):</span>
             <span class="n">kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">batch_model</span><span class="o">.</span><span class="n">_init_args</span><span class="p">)</span>
+        <span class="c1"># NOTE: Adding outcome transform to kwargs to avoid the multiple</span>
+        <span class="c1"># values for same kwarg issue with SingleTaskMultiFidelityGP.</span>
+        <span class="k">if</span> <span class="n">outcome_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">octf</span> <span class="o">=</span> <span class="n">outcome_transform</span><span class="o">.</span><span class="n">subset_output</span><span class="p">(</span><span class="n">idcs</span><span class="o">=</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">"outcome_transform"</span><span class="p">]</span> <span class="o">=</span> <span class="n">octf</span>
+            <span class="c1"># Update the outcome transform state dict entries.</span>
+            <span class="n">sd</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="o">**</span><span class="n">sd</span><span class="p">,</span>
+                <span class="o">**</span><span class="p">{</span><span class="s2">"outcome_transform."</span> <span class="o">+</span> <span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">octf</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
+            <span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">"outcome_transform"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="n">model</span> <span class="o">=</span> <span class="n">batch_model</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">input_transform</span><span class="o">=</span><span class="n">input_transform</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">model</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">sd</span><span class="p">)</span>
         <span class="n">models</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
@@ -315,14 +337,14 @@
 <span class="sd">        &gt;&gt;&gt; batch_mo_gp = SingleTaskGP(train_X, train_Y)</span>
 <span class="sd">        &gt;&gt;&gt; batch_so_gp = batched_multioutput_to_single_output(batch_gp)</span>
 <span class="sd">    """</span>
-    <span class="c1"># TODO: Add support for HeteroskedasticSingleTaskGP</span>
+    <span class="c1"># TODO: Add support for HeteroskedasticSingleTaskGP.</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">batch_mo_model</span><span class="p">,</span> <span class="n">HeteroskedasticSingleTaskGP</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
             <span class="s2">"Conversion of HeteroskedasticSingleTaskGP currently not supported."</span>
         <span class="p">)</span>
     <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">batch_mo_model</span><span class="p">,</span> <span class="n">BatchedMultiOutputGPyTorchModel</span><span class="p">):</span>
         <span class="k">raise</span> <span class="n">UnsupportedError</span><span class="p">(</span><span class="s2">"Only BatchedMultiOutputGPyTorchModels are supported."</span><span class="p">)</span>
-    <span class="c1"># TODO: Add support for custom likelihoods</span>
+    <span class="c1"># TODO: Add support for custom likelihoods.</span>
     <span class="k">elif</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">batch_mo_model</span><span class="p">,</span> <span class="s2">"_is_custom_likelihood"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
             <span class="s2">"Conversion of models with custom likelihoods is currently unsupported."</span>
@@ -330,7 +352,7 @@
     <span class="n">input_transform</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">batch_mo_model</span><span class="p">,</span> <span class="s2">"input_transform"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="n">batch_sd</span> <span class="o">=</span> <span class="n">batch_mo_model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span>
 
-    <span class="c1"># TODO: add support for outcome transforms</span>
+    <span class="c1"># TODO: add support for outcome transforms.</span>
     <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">batch_mo_model</span><span class="p">,</span> <span class="s2">"outcome_transform"</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
             <span class="s2">"Converting batched multi-output models with outcome transforms "</span>
@@ -354,31 +376,38 @@
 
 
 <span class="k">def</span> <span class="nf">_get_adjusted_batch_keys</span><span class="p">(</span>
-    <span class="n">batch_state_dict</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">]</span>
+    <span class="n">batch_state_dict</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span>
+    <span class="n">input_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputTransform</span><span class="p">],</span>
+    <span class="n">outcome_transform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutcomeTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
     <span class="sa">r</span><span class="sd">"""Group the keys based on whether the value requires batch shape changes.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        batch_state_dict: The state dict of the batch model</span>
-<span class="sd">        input_transform: The input transform</span>
+<span class="sd">        batch_state_dict: The state dict of the batch model.</span>
+<span class="sd">        input_transform: The input transform.</span>
+<span class="sd">        outcome_transform: The outcome transform.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A two-element tuple containing:</span>
-<span class="sd">            - The keys of the parameters/buffers that require a batch shape adjustment</span>
+<span class="sd">            - The keys of the parameters/buffers that require a batch shape adjustment.</span>
 <span class="sd">            - The keys of the parameters/buffers that do not require a batch shape</span>
-<span class="sd">                adjustment</span>
+<span class="sd">                adjustment.</span>
 <span class="sd">    """</span>
-    <span class="c1"># these are the names of the parameters/buffers that need their batch shape adjusted</span>
+    <span class="c1"># These are the names of the params/buffers that need their batch shape adjusted.</span>
     <span class="n">adjusted_batch_keys</span> <span class="o">=</span> <span class="p">{</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">batch_state_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">}</span>
-    <span class="c1"># don't modify input transform buffers, so add them to non-adjusted set and remove</span>
-    <span class="c1"># them from tensors</span>
-    <span class="k">if</span> <span class="n">input_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">input_transform_keys</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">"input_transform."</span> <span class="o">+</span> <span class="n">n</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">input_transform</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-        <span class="p">}</span>
-        <span class="n">adjusted_batch_keys</span> <span class="o">=</span> <span class="n">adjusted_batch_keys</span> <span class="o">-</span> <span class="n">input_transform_keys</span>
-    <span class="c1"># these are the names of the parameters/buffers that don't need their</span>
-    <span class="c1"># batch shape adjusted</span>
+    <span class="c1"># Don't modify transform buffers, so add them to non-adjusted set and remove</span>
+    <span class="c1"># them from tensors.</span>
+    <span class="k">for</span> <span class="n">transform</span><span class="p">,</span> <span class="n">transform_type</span> <span class="ow">in</span> <span class="p">[</span>
+        <span class="p">(</span><span class="n">input_transform</span><span class="p">,</span> <span class="s2">"input_transform."</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">outcome_transform</span><span class="p">,</span> <span class="s2">"outcome_transform."</span><span class="p">),</span>
+    <span class="p">]:</span>
+        <span class="k">if</span> <span class="n">transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">transform_keys</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">transform_type</span> <span class="o">+</span> <span class="n">n</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">transform</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="p">}</span>
+            <span class="n">adjusted_batch_keys</span> <span class="o">=</span> <span class="n">adjusted_batch_keys</span> <span class="o">-</span> <span class="n">transform_keys</span>
+    <span class="c1"># These are the names of the parameters/buffers that don't need their</span>
+    <span class="c1"># batch shape adjusted.</span>
     <span class="n">non_adjusted_batch_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">batch_state_dict</span><span class="p">)</span> <span class="o">-</span> <span class="n">adjusted_batch_keys</span>
     <span class="k">return</span> <span class="n">adjusted_batch_keys</span><span class="p">,</span> <span class="n">non_adjusted_batch_keys</span>
 </pre></div>

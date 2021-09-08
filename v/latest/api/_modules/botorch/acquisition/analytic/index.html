@@ -189,6 +189,26 @@
 <span class="sd">        &gt;&gt;&gt; pm = PM(test_X)</span>
 <span class="sd">    """</span>
 
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+        <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ScalarizedObjective</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Single-outcome Posterior Mean.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            model: A fitted single-outcome GP model (must be in batch mode if</span>
+<span class="sd">                candidate sets X will be)</span>
+<span class="sd">            objective: A ScalarizedObjective (optional).</span>
+<span class="sd">            maximize: If True, consider the problem a maximization problem. Note</span>
+<span class="sd">                that if `maximize=False`, the posterior mean is negated. As a</span>
+<span class="sd">                consequence `optimize_acqf(PosteriorMean(gp, maximize=False))`</span>
+<span class="sd">                does actually return -1 * minimum of the posterior mean.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">maximize</span> <span class="o">=</span> <span class="n">maximize</span>
+
 <div class="viewcode-block" id="PosteriorMean.forward"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.PosteriorMean.forward">[docs]</a>    <span class="nd">@t_batch_mode_transform</span><span class="p">(</span><span class="n">expected_q</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""Evaluate the posterior mean on the candidate set X.</span>
@@ -202,7 +222,11 @@
 <span class="sd">            points `X`.</span>
 <span class="sd">        """</span>
         <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_posterior</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mean</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span></div></div>
+        <span class="n">mean</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">mean</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">maximize</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">mean</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="o">-</span><span class="n">mean</span></div></div>
 
 
 <div class="viewcode-block" id="ProbabilityOfImprovement"><a class="viewcode-back" href="../../../acquisition.html#botorch.acquisition.analytic.ProbabilityOfImprovement">[docs]</a><span class="k">class</span> <span class="nc">ProbabilityOfImprovement</span><span class="p">(</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>

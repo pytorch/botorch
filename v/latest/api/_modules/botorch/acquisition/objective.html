@@ -256,10 +256,11 @@
 <span class="sd">    outputs subject to a number of constraints. Constraint feasibilty is</span>
 <span class="sd">    approximated by a sigmoid function.</span>
 
-<span class="sd">    `mc_acq(X) = objective(X) * prod_i (1  - sigmoid(constraint_i(X)))`</span>
-<span class="sd">    TODO: Document functional form exactly.</span>
+<span class="sd">        mc_acq(X) = (</span>
+<span class="sd">        (objective(X) + infeasible_cost) * \prod_i (1  - sigmoid(constraint_i(X)))</span>
+<span class="sd">        ) - infeasible_cost</span>
 
-<span class="sd">    See `botorch.utils.objective.apply_constraints` for details on the constarint</span>
+<span class="sd">    See `botorch.utils.objective.apply_constraints` for details on the constraint</span>
 <span class="sd">    handling.</span>
 
 <span class="sd">    Example:</span>

@@ -47,9 +47,12 @@
 <span class="sd">    HOGP is a tensorized GP model so the posterior covariance grows to be extremely</span>
 <span class="sd">    large, but is highly structured, which means that we can exploit Kronecker</span>
 <span class="sd">    identities to sample from the posterior using Matheron's rule as described in</span>
-<span class="sd">    [Doucet2010sampl]_. In general, this posterior should ONLY be used for HOGP models</span>
+<span class="sd">    [Doucet2010sampl]_.</span>
+
+<span class="sd">    In general, this posterior should ONLY be used for HOGP models</span>
 <span class="sd">    that have highly structured covariances. It should also only be used internally when</span>
-<span class="sd">    called from the HigherOrderGP.posterior(...) method.</span>
+<span class="sd">    called from the HigherOrderGP.posterior(...) method. At this time, the posterior</span>
+<span class="sd">    does not support gradients with respect to the training data.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -194,7 +197,8 @@
         <span class="c1"># base samples now have trailing sample dimension</span>
         <span class="n">covariance_matrix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">joint_covariance_matrix</span>
         <span class="n">covar_root</span> <span class="o">=</span> <span class="n">covariance_matrix</span><span class="o">.</span><span class="n">root_decomposition</span><span class="p">()</span><span class="o">.</span><span class="n">root</span>
-        <span class="n">samples</span> <span class="o">=</span> <span class="n">covar_root</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">base_samples</span><span class="p">)</span>
+
+        <span class="n">samples</span> <span class="o">=</span> <span class="n">covar_root</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">base_samples</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span> <span class="n">covar_root</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="p">:])</span>
 
         <span class="c1"># now pluck out Y_x and X_x</span>
         <span class="n">noiseless_train_marginal_samples</span> <span class="o">=</span> <span class="n">samples</span><span class="p">[</span>

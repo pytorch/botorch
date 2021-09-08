@@ -310,9 +310,11 @@ The posterior variance is handled internally by the HigherOrderGP model.
 HOGP is a tensorized GP model so the posterior covariance grows to be extremely
 large, but is highly structured, which means that we can exploit Kronecker
 identities to sample from the posterior using Matheron’s rule as described in
-<a class="reference internal" href="models.html#doucet2010sampl" id="id2"><span>[Doucet2010sampl]</span></a>. In general, this posterior should ONLY be used for HOGP models
+<a class="reference internal" href="models.html#doucet2010sampl" id="id2"><span>[Doucet2010sampl]</span></a>.</p>
+<p>In general, this posterior should ONLY be used for HOGP models
 that have highly structured covariances. It should also only be used internally when
-called from the HigherOrderGP.posterior(…) method.</p>
+called from the HigherOrderGP.posterior(…) method. At this time, the posterior
+does not support gradients with respect to the training data.</p>
 <p>A Posterior for HigherOrderGP models.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>

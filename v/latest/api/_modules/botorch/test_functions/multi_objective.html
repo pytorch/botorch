@@ -41,6 +41,11 @@
 <span class="sd">    in Evolutionary Multiobjective Optimization, London, U.K.: Springer-Verlag,</span>
 <span class="sd">    pp. 105-145, 2005.</span>
 
+<span class="sd">.. [Deb2005robust]</span>
+<span class="sd">    K. Deb, H. Gupta. "Searching for Robust Pareto-Optimal Solutions in</span>
+<span class="sd">    Multi-objective Optimization" in Evolutionary Multi-Criterion Optimization,</span>
+<span class="sd">    Springer-Berlin, pp. 150-164, 2005.</span>
+
 <span class="sd">.. [GarridoMerchan2020]</span>
 <span class="sd">    E. C. Garrido-Merch ́an and D. Hern ́andez-Lobato. Parallel Predictive Entropy</span>
 <span class="sd">    Search for Multi-objective Bayesian Optimization with Constraints.</span>
@@ -76,6 +81,7 @@
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
@@ -146,6 +152,177 @@
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">branin</span><span class="p">,</span> <span class="n">currin</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
 
 
+<div class="viewcode-block" id="DH"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DH">[docs]</a><span class="k">class</span> <span class="nc">DH</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""Base class for DH problems for robust multi-objective optimization.</span>
+
+<span class="sd">    In their paper, [Deb2005robust]_ consider these problems under a mean-robustness</span>
+<span class="sd">    setting, and use uniformly distributed input perturbations from the box with</span>
+<span class="sd">    edge lengths `delta_0 = delta`, `delta_i = 2 * delta, i &gt; 0`, with `delta` ranging</span>
+<span class="sd">    up to `0.01` for DH1 and DH2, and `delta = 0.03` for DH3 and DH4.</span>
+
+<span class="sd">    These are d-dimensional problems with two objectives:</span>
+
+<span class="sd">        f_0(x) = x_0</span>
+<span class="sd">        f_1(x) = h(x) + g(x) * S(x) for DH1 and DH2</span>
+<span class="sd">        f_1(x) = h(x) * (g(x) + S(x)) for DH3 and DH4</span>
+
+<span class="sd">    The goal is to minimize both objectives. See [Deb2005robust]_ for more details</span>
+<span class="sd">    on DH. The reference points were set using `infer_reference_point`.</span>
+<span class="sd">    """</span>
+
+    <span class="n">num_objectives</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">_ref_point</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.1</span><span class="p">,</span> <span class="mf">1.1</span><span class="p">]</span>
+    <span class="n">_x_1_lb</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">_area_under_curve</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">_min_dim</span><span class="p">:</span> <span class="nb">int</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">noise_std</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">negate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">dim</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_min_dim</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"dim must be &gt;= </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_min_dim</span><span class="si">}</span><span class="s2">, but got dim=</span><span class="si">{</span><span class="n">dim</span><span class="si">}</span><span class="s2">!"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dim</span> <span class="o">=</span> <span class="n">dim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_bounds</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_x_1_lb</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)]</span> <span class="o">+</span> <span class="p">[</span>
+            <span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dim</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="c1"># max_hv is the area of the box minus the area of the curve formed by the PF.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_max_hv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ref_point</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ref_point</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_area_under_curve</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">noise_std</span><span class="o">=</span><span class="n">noise_std</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="n">negate</span><span class="p">)</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">_h</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">_g</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">_S</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
+
+
+<div class="viewcode-block" id="DH1"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DH1">[docs]</a><span class="k">class</span> <span class="nc">DH1</span><span class="p">(</span><span class="n">DH</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""DH1 test problem.</span>
+
+<span class="sd">    d-dimensional problem evaluated on `[0, 1] x [-1, 1]^{d-1}`:</span>
+
+<span class="sd">        f_0(x) = x_0</span>
+<span class="sd">        f_1(x) = h(x_0) + g(x) * S(x_0)</span>
+<span class="sd">        h(x_0) = 1 - x_0^2</span>
+<span class="sd">        g(x) = \sum_{i=1}^{d-1} (10 + x_i^2 - 10 * cos(4 * pi * x_i))</span>
+<span class="sd">        S(x_0) = alpha / (0.2 + x_0) + beta * x_0^2</span>
+
+<span class="sd">    where alpha = 1 and beta = 1.</span>
+
+<span class="sd">    The Pareto front corresponds to the equation `f_1 = 1 - f_0^2`, and it is found at</span>
+<span class="sd">    `x_i = 0` for `i &gt; 0` and any value of `x_0` in `(0, 1]`.</span>
+<span class="sd">    """</span>
+
+    <span class="n">alpha</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="n">beta</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="n">_x_1_lb</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span>
+    <span class="n">_area_under_curve</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">/</span> <span class="mf">3.0</span>
+    <span class="n">_min_dim</span> <span class="o">=</span> <span class="mi">2</span>
+
+    <span class="k">def</span> <span class="nf">_h</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_g</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">x_1_to</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">:]</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
+            <span class="mi">10</span> <span class="o">+</span> <span class="n">x_1_to</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">x_1_to</span><span class="p">),</span>
+            <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_S</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">x_0</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">/</span> <span class="p">(</span><span class="mf">0.2</span> <span class="o">+</span> <span class="n">x_0</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta</span> <span class="o">*</span> <span class="n">x_0</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DH1.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DH1.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">f_0</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="c1"># This may encounter 0 / 0, which we set to 0.</span>
+        <span class="n">f_1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_h</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_g</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_S</span><span class="p">(</span><span class="n">X</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">f_0</span><span class="p">,</span> <span class="n">f_1</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="DH2"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DH2">[docs]</a><span class="k">class</span> <span class="nc">DH2</span><span class="p">(</span><span class="n">DH1</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""DH2 test problem.</span>
+
+<span class="sd">    This is identical to DH1 except for having `beta = 10.0`.</span>
+<span class="sd">    """</span>
+
+    <span class="n">beta</span> <span class="o">=</span> <span class="mf">10.0</span></div>
+
+
+<div class="viewcode-block" id="DH3"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DH3">[docs]</a><span class="k">class</span> <span class="nc">DH3</span><span class="p">(</span><span class="n">DH</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""DH3 test problem.</span>
+
+<span class="sd">    d-dimensional problem evaluated on `[0, 1]^2 x [-1, 1]^{d-2}`:</span>
+
+<span class="sd">        f_0(x) = x_0</span>
+<span class="sd">        f_1(x) = h(x_1) * (g(x) + S(x_0))</span>
+<span class="sd">        h(x_1) = 2 - 0.8 * exp(-((x_1 - 0.35) / 0.25)^2) - exp(-((x_1 - 0.85) / 0.03)^2)</span>
+<span class="sd">        g(x) = \sum_{i=2}^{d-1} (50 * x_i^2)</span>
+<span class="sd">        S(x_0) = 1 - sqrt(x_0)</span>
+
+<span class="sd">    The Pareto front is found at `x_i = 0` for `i &gt; 1`. There's a local and a global</span>
+<span class="sd">    Pareto front, which are found at `x_1 = 0.35` and `x_1 = 0.85`, respectively.</span>
+<span class="sd">    The approximate relationships between the objectives at local and global Pareto</span>
+<span class="sd">    fronts are given by `f_1 = 1.2 (1 - sqrt(f_0))` and `f_1 = 1 - f_0`, respectively.</span>
+<span class="sd">    The specific values on the Pareto fronts can be found by varying `x_0`.</span>
+<span class="sd">    """</span>
+
+    <span class="n">_x_1_lb</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">_area_under_curve</span> <span class="o">=</span> <span class="mf">0.328449169794718</span>
+    <span class="n">_min_dim</span> <span class="o">=</span> <span class="mi">3</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_exp_args</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">exp_arg_1</span> <span class="o">=</span> <span class="o">-</span><span class="p">((</span><span class="n">x</span> <span class="o">-</span> <span class="mf">0.35</span><span class="p">)</span> <span class="o">/</span> <span class="mf">0.25</span><span class="p">)</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">exp_arg_2</span> <span class="o">=</span> <span class="o">-</span><span class="p">((</span><span class="n">x</span> <span class="o">-</span> <span class="mf">0.85</span><span class="p">)</span> <span class="o">/</span> <span class="mf">0.03</span><span class="p">)</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">exp_arg_1</span><span class="p">,</span> <span class="n">exp_arg_2</span>
+
+    <span class="k">def</span> <span class="nf">_h</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">exp_arg_1</span><span class="p">,</span> <span class="n">exp_arg_2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_exp_args</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="k">return</span> <span class="mi">2</span> <span class="o">-</span> <span class="mf">0.8</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">exp_arg_1</span><span class="p">)</span> <span class="o">-</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">exp_arg_2</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_g</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">50</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">2</span><span class="p">:]</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_S</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">sqrt</span><span class="p">()</span>
+
+<div class="viewcode-block" id="DH3.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DH3.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">f_0</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="n">f_1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_h</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_g</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_S</span><span class="p">(</span><span class="n">X</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">f_0</span><span class="p">,</span> <span class="n">f_1</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="DH4"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DH4">[docs]</a><span class="k">class</span> <span class="nc">DH4</span><span class="p">(</span><span class="n">DH3</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""DH4 test problem.</span>
+
+<span class="sd">    This is similar to DH3 except that it is evaluated on</span>
+<span class="sd">    `[0, 1] x [-0.15, 1] x [-1, 1]^{d-2}` and:</span>
+
+<span class="sd">        h(x_0, x_1) = 2 - x_0 - 0.8 * exp(-((x_0 + x_1 - 0.35) / 0.25)^2)</span>
+<span class="sd">        - exp(-((x_0 + x_1 - 0.85) / 0.03)^2)</span>
+
+<span class="sd">    The Pareto front is found at `x_i = 0` for `i &gt; 2`, with the local one being</span>
+<span class="sd">    near `x_0 + x_1 = 0.35` and the global one near `x_0 + x_1 = 0.85`.</span>
+<span class="sd">    """</span>
+
+    <span class="n">_x_1_lb</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.15</span>
+    <span class="n">_area_under_curve</span> <span class="o">=</span> <span class="mf">0.22845</span>
+
+    <span class="k">def</span> <span class="nf">_h</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">exp_arg_1</span><span class="p">,</span> <span class="n">exp_arg_2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_exp_args</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">))</span>
+        <span class="k">return</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mf">0.8</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">exp_arg_1</span><span class="p">)</span> <span class="o">-</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">exp_arg_2</span><span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="DTLZ"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ">[docs]</a><span class="k">class</span> <span class="nc">DTLZ</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""Base class for DTLZ problems.</span>
 
@@ -161,7 +338,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">dim</span> <span class="o">&lt;=</span> <span class="n">num_objectives</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"dim must be &gt; num_objectives, but got </span><span class="si">{</span><span class="n">dim</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">num_objectives</span><span class="si">}</span><span class="s2">"</span>
+                <span class="sa">f</span><span class="s2">"dim must be &gt; num_objectives, but got </span><span class="si">{</span><span class="n">dim</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">num_objectives</span><span class="si">}</span><span class="s2">."</span>
             <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_objectives</span> <span class="o">=</span> <span class="n">num_objectives</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dim</span> <span class="o">=</span> <span class="n">dim</span>
@@ -178,11 +355,11 @@
 
 <span class="sd">        f_0(x) = 0.5 * x_0 * (1 + g(x))</span>
 <span class="sd">        f_1(x) = 0.5 * (1 - x_0) * (1 + g(x))</span>
-<span class="sd">        g(x) = 100 * \sum_{i=m}^{n-1} (</span>
+<span class="sd">        g(x) = 100 * \sum_{i=m}^{d-1} (</span>
 <span class="sd">        k + (x_i - 0.5)^2 - cos(20 * pi * (x_i - 0.5))</span>
 <span class="sd">        )</span>
 
-<span class="sd">    where k = n - m + 1.</span>
+<span class="sd">    where k = d - m + 1.</span>
 
 <span class="sd">    The pareto front is given by the line (or hyperplane) \sum_i f_i(x) = 0.5.</span>
 <span class="sd">    The goal is to minimize both objectives. The reference point comes from [Yang2019]_.</span>
@@ -235,7 +412,7 @@
 
 <span class="sd">        f_0(x) = (1 + g(x)) * cos(x_0 * pi / 2)</span>
 <span class="sd">        f_1(x) = (1 + g(x)) * sin(x_0 * pi / 2)</span>
-<span class="sd">        g(x) = \sum_{i=m}^{n-1} (x_i - 0.5)^2</span>
+<span class="sd">        g(x) = \sum_{i=m}^{d-1} (x_i - 0.5)^2</span>
 
 <span class="sd">    The pareto front is given by the unit hypersphere \sum{i} f_i^2 = 1.</span>
 <span class="sd">    Note: the pareto front is completely concave. The goal is to minimize</span>
@@ -246,7 +423,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">_max_hv</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="c1"># hypercube - volume of hypersphere in R^n such that all coordinates are</span>
+        <span class="c1"># hypercube - volume of hypersphere in R^d such that all coordinates are</span>
         <span class="c1"># positive</span>
         <span class="n">hypercube_vol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ref_val</span> <span class="o">**</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_objectives</span>
         <span class="n">pos_hypersphere_vol</span> <span class="o">=</span> <span class="p">(</span>

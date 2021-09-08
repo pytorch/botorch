@@ -529,6 +529,133 @@
             <span class="n">mean_transform</span><span class="o">=</span><span class="n">norm_to_lognorm_mean</span><span class="p">,</span>
             <span class="n">variance_transform</span><span class="o">=</span><span class="n">norm_to_lognorm_variance</span><span class="p">,</span>
         <span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="Power"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Power">[docs]</a><span class="k">class</span> <span class="nc">Power</span><span class="p">(</span><span class="n">OutcomeTransform</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""Power-transform outcomes.</span>
+
+<span class="sd">    Useful if the targets are modeled using a (multivariate) power transform of</span>
+<span class="sd">    a Normal distribution. This means that we can use a standard GP model on the</span>
+<span class="sd">    power-transformed outcomes and un-transform the model posterior of that GP.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">power</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">outputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Power-transform outcomes.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            outputs: Which of the outputs to power-transform. If omitted, all</span>
+<span class="sd">                outputs will be standardized.</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span> <span class="o">=</span> <span class="n">outputs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">power</span> <span class="o">=</span> <span class="n">power</span>
+
+<div class="viewcode-block" id="Power.subset_output"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Power.subset_output">[docs]</a>    <span class="k">def</span> <span class="nf">subset_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idcs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">OutcomeTransform</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Subset the transform along the output dimension.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            idcs: The output indices to subset the transform to.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The current outcome transform, subset to the specified output indices.</span>
+<span class="sd">        """</span>
+        <span class="n">new_outputs</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span> <span class="o">+</span> <span class="n">idcs</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Negative indexing not supported for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> "</span>
+                    <span class="s2">"when subsetting outputs and only transforming some outputs."</span>
+                <span class="p">)</span>
+            <span class="n">new_outputs</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">idcs</span><span class="p">]</span>
+        <span class="n">new_tf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">power</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">power</span><span class="p">,</span> <span class="n">outputs</span><span class="o">=</span><span class="n">new_outputs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span><span class="p">:</span>
+            <span class="n">new_tf</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">new_tf</span></div>
+
+<div class="viewcode-block" id="Power.forward"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Power.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]:</span>
+        <span class="sa">r</span><span class="sd">"""Power-transform outcomes.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            Y: A `batch_shape x n x m`-dim tensor of training targets.</span>
+<span class="sd">            Yvar: A `batch_shape x n x m`-dim tensor of observation noises</span>
+<span class="sd">                associated with the training targets (if applicable).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A two-tuple with the transformed outcomes:</span>
+
+<span class="sd">            - The transformed outcome observations.</span>
+<span class="sd">            - The transformed observation noise (if applicable).</span>
+<span class="sd">        """</span>
+        <span class="n">Y_tf</span> <span class="o">=</span> <span class="n">Y</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">power</span><span class="p">)</span>
+        <span class="n">outputs</span> <span class="o">=</span> <span class="n">normalize_indices</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="n">Y</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">outputs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">Y_tf</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="n">Y_tf</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">outputs</span> <span class="k">else</span> <span class="n">Y</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Y</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+                <span class="p">],</span>
+                <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">Yvar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># TODO: Delta method, possibly issue warning</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="s2">"Power does not yet support transforming observation noise"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">Y_tf</span><span class="p">,</span> <span class="n">Yvar</span></div>
+
+<div class="viewcode-block" id="Power.untransform"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Power.untransform">[docs]</a>    <span class="k">def</span> <span class="nf">untransform</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Yvar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]:</span>
+        <span class="sa">r</span><span class="sd">"""Un-transform power-transformed outcomes</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            Y: A `batch_shape x n x m`-dim tensor of power-transfomred targets.</span>
+<span class="sd">            Yvar: A `batch_shape x n x m`-dim tensor of power-transformed</span>
+<span class="sd">                observation noises associated with the training targets</span>
+<span class="sd">                (if applicable).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A two-tuple with the un-transformed outcomes:</span>
+
+<span class="sd">            - The un-power transformed outcome observations.</span>
+<span class="sd">            - The un-power transformed observation noise (if applicable).</span>
+<span class="sd">        """</span>
+        <span class="n">Y_utf</span> <span class="o">=</span> <span class="n">Y</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">power</span><span class="p">)</span>
+        <span class="n">outputs</span> <span class="o">=</span> <span class="n">normalize_indices</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="n">Y</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">outputs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">Y_utf</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="n">Y_utf</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">outputs</span> <span class="k">else</span> <span class="n">Y</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Y</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+                <span class="p">],</span>
+                <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">Yvar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># TODO: Delta method, possibly issue warning</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="s2">"Power does not yet support transforming observation noise"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">Y_utf</span><span class="p">,</span> <span class="n">Yvar</span></div>
+
+<div class="viewcode-block" id="Power.untransform_posterior"><a class="viewcode-back" href="../../../../models.html#botorch.models.transforms.outcome.Power.untransform_posterior">[docs]</a>    <span class="k">def</span> <span class="nf">untransform_posterior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">posterior</span><span class="p">:</span> <span class="n">Posterior</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Posterior</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""Un-transform the power-transformed posterior.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            posterior: A posterior in the power-transformed space.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The un-transformed posterior.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_outputs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="s2">"Power does not yet support output selection for untransform_posterior"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">TransformedPosterior</span><span class="p">(</span>
+            <span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">,</span>
+            <span class="n">sample_transform</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">power</span><span class="p">),</span>
+        <span class="p">)</span></div></div>
 </pre></div>
 </div>
 </div>
