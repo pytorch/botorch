@@ -10,7 +10,12 @@ from botorch.models.transforms.input import (
     Normalize,
     Round,
 )
-from botorch.models.transforms.outcome import ChainedOutcomeTransform, Standardize, Log
+from botorch.models.transforms.outcome import (
+    ChainedOutcomeTransform,
+    Log,
+    Power,
+    Standardize,
+)
 
 
 __all__ = [
@@ -18,6 +23,7 @@ __all__ = [
     "ChainedOutcomeTransform",
     "Log",
     "Normalize",
+    "Power",
     "Round",
     "Standardize",
     "Warp",
