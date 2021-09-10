@@ -213,11 +213,7 @@ def _scipy_objective_and_grad(
         args = [output, train_targets] + _get_extra_mll_args(mll)
         loss = -mll(*args).sum()
     except RuntimeError as e:
-        if isinstance(e, NotPSDError):
-            raise e
-        if isinstance(e, NanError) or "singular" in e.args[0]:
-            return float("nan"), np.full_like(x, "nan")
-        raise e  # pragma: nocover
+        return _handle_numerical_errors(error=e, x=x)
     loss.backward()
     param_dict = OrderedDict(mll.named_parameters())
     grad = []
@@ -230,3 +226,18 @@ def _scipy_objective_and_grad(
             grad.append(t.detach().view(-1).cpu().double().clone().numpy())
     mll.zero_grad()
     return loss.item(), np.concatenate(grad)
+
+
+def _handle_numerical_errors(
+    error: RuntimeError, x: np.ndarray
+) -> Tuple[float, np.ndarray]:
+    if isinstance(error, NotPSDError):
+        raise error
+    error_message = error.args[0] if len(error.args) > 0 else ""
+    if (
+        isinstance(error, NanError)
+        or "singular" in error_message  # old pytorch message
+        or "input is not positive-definite" in error_message  # since pytorch #63864
+    ):
+        return float("nan"), np.full_like(x, "nan")
+    raise error  # pragma: nocover
