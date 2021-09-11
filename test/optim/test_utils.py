@@ -6,9 +6,11 @@
 
 from __future__ import annotations
 
+import math
 import warnings
 from copy import deepcopy
 
+import numpy as np
 import torch
 from botorch import settings
 from botorch.exceptions import BotorchError
@@ -16,6 +18,7 @@ from botorch.models import ModelListGP, SingleTaskGP
 from botorch.optim.utils import (
     _expand_bounds,
     _get_extra_mll_args,
+    _handle_numerical_errors,
     columnwise_clamp,
     fix_features,
     sample_all_priors,
@@ -28,6 +31,7 @@ from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
 from gpytorch.priors.prior import Prior
 from gpytorch.priors.torch_priors import GammaPrior
+from gpytorch.utils.errors import NanError, NotPSDError
 
 
 class DummyPrior(Prior):
@@ -267,3 +271,24 @@ class TestSampleAllPriors(BotorchTestCase):
             )
             with self.assertRaises(RuntimeError):
                 sample_all_priors(model)
+
+
+class TestHelpers(BotorchTestCase):
+    def test_handle_numerical_errors(self):
+        x = np.zeros(1)
+
+        with self.assertRaisesRegex(NotPSDError, "foo"):
+            _handle_numerical_errors(error=NotPSDError("foo"), x=x)
+
+        for error in (
+            NanError(),
+            RuntimeError("singular"),
+            RuntimeError("input is not positive-definite"),
+        ):
+            fake_loss, fake_grad = _handle_numerical_errors(error=error, x=x)
+            self.assertTrue(math.isnan(fake_loss))
+            self.assertEqual(fake_grad.shape, x.shape)
+            self.assertTrue(np.isnan(fake_grad).all())
+
+        with self.assertRaisesRegex(RuntimeError, "foo"):
+            _handle_numerical_errors(error=RuntimeError("foo"), x=x)
