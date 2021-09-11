@@ -22,7 +22,13 @@ from botorch.posteriors import GPyTorchPosterior
 from botorch.utils.containers import TrainingData
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
-from gpytorch.kernels import IndexKernel, MaternKernel, MultitaskKernel, ScaleKernel
+from gpytorch.kernels import (
+    IndexKernel,
+    MaternKernel,
+    MultitaskKernel,
+    ScaleKernel,
+    RBFKernel,
+)
 from gpytorch.likelihoods import (
     FixedNoiseGaussianLikelihood,
     GaussianLikelihood,
@@ -31,7 +37,7 @@ from gpytorch.likelihoods import (
 from gpytorch.means import ConstantMean
 from gpytorch.means import MultitaskMean
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
-from gpytorch.priors import GammaPrior, SmoothedBoxPrior
+from gpytorch.priors import GammaPrior, LogNormalPrior, SmoothedBoxPrior
 from gpytorch.priors.lkj_prior import LKJCovariancePrior
 
 
@@ -110,6 +116,17 @@ def _get_fixed_prior_model(**tkwargs):
     return model.to(**tkwargs)
 
 
+def _get_given_covar_module_model(**tkwargs):
+    train_X, train_Y = _get_random_mt_data(**tkwargs)
+    model = MultiTaskGP(
+        train_X,
+        train_Y,
+        task_feature=1,
+        covar_module=RBFKernel(lengthscale_prior=LogNormalPrior(0.0, 1.0)),
+    )
+    return model.to(**tkwargs)
+
+
 def _get_fixed_noise_and_prior_model(**tkwargs):
     train_X, train_Y = _get_random_mt_data(**tkwargs)
     train_Yvar = torch.full_like(train_Y, 0.05)
@@ -121,6 +138,19 @@ def _get_fixed_noise_and_prior_model(**tkwargs):
         train_Yvar,
         task_feature=1,
         task_covar_prior=LKJCovariancePrior(2, 0.6, sd_prior),
+    )
+    return model.to(**tkwargs)
+
+
+def _get_fixed_noise_and_given_covar_module_model(**tkwargs):
+    train_X, train_Y = _get_random_mt_data(**tkwargs)
+    train_Yvar = torch.full_like(train_Y, 0.05)
+    model = FixedNoiseMultiTaskGP(
+        train_X,
+        train_Y,
+        train_Yvar,
+        task_feature=1,
+        covar_module=MaternKernel(nu=1.5, lengthscale_prior=GammaPrior(1.0, 1.0)),
     )
     return model.to(**tkwargs)
 
@@ -298,6 +328,17 @@ class TestMultiTaskGP(BotorchTestCase):
                 model.task_covar_module.IndexKernelPrior, LKJCovariancePrior
             )
 
+    def test_MultiTaskGP_given_covar_module(self):
+        for dtype in (torch.float, torch.double):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            model = _get_given_covar_module_model(**tkwargs)
+            self.assertIsInstance(model, MultiTaskGP)
+            self.assertIsInstance(model.task_covar_module, IndexKernel)
+            self.assertIsInstance(model.covar_module, RBFKernel)
+            self.assertIsInstance(model.covar_module.lengthscale_prior, LogNormalPrior)
+            self.assertAlmostEqual(model.covar_module.lengthscale_prior.loc, 0.0)
+            self.assertAlmostEqual(model.covar_module.lengthscale_prior.scale, 1.0)
+
 
 class TestFixedNoiseMultiTaskGP(BotorchTestCase):
     def test_FixedNoiseMultiTaskGP(self):
@@ -437,6 +478,20 @@ class TestFixedNoiseMultiTaskGP(BotorchTestCase):
             self.assertIsInstance(
                 model.task_covar_module.IndexKernelPrior, LKJCovariancePrior
             )
+
+    def test_FixedNoiseMultiTaskGP_given_covar_module(self):
+        for dtype in (torch.float, torch.double):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            model = _get_fixed_noise_and_given_covar_module_model(**tkwargs)
+            self.assertIsInstance(model, FixedNoiseMultiTaskGP)
+            self.assertIsInstance(model.task_covar_module, IndexKernel)
+            self.assertIsInstance(model.covar_module, MaternKernel)
+            self.assertAlmostEqual(model.covar_module.nu, 1.5)
+            self.assertIsInstance(model.covar_module.lengthscale_prior, GammaPrior)
+            self.assertAlmostEqual(
+                model.covar_module.lengthscale_prior.concentration, 1.0
+            )
+            self.assertAlmostEqual(model.covar_module.lengthscale_prior.rate, 1.0)
 
     def test_MultiTaskGP_construct_inputs(self):
         for dtype in (torch.float, torch.double):

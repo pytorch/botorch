@@ -59,6 +59,7 @@ from gpytorch.likelihoods.multitask_gaussian_likelihood import (
 from gpytorch.means import MultitaskMean
 from gpytorch.means.constant_mean import ConstantMean
 from gpytorch.models.exact_gp import ExactGP
+from gpytorch.module import Module
 from gpytorch.priors.lkj_prior import LKJCovariancePrior
 from gpytorch.priors.prior import Prior
 from gpytorch.priors.smoothed_box_prior import SmoothedBoxPrior
@@ -87,6 +88,7 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
         train_X: Tensor,
         train_Y: Tensor,
         task_feature: int,
+        covar_module: Optional[Module] = None,
         task_covar_prior: Optional[Prior] = None,
         output_tasks: Optional[List[int]] = None,
         rank: Optional[int] = None,
@@ -152,12 +154,16 @@ class MultiTaskGP(ExactGP, MultiTaskGPyTorchModel):
             train_inputs=train_X, train_targets=train_Y, likelihood=likelihood
         )
         self.mean_module = ConstantMean()
-        self.covar_module = ScaleKernel(
-            base_kernel=MaternKernel(
-                nu=2.5, ard_num_dims=d, lengthscale_prior=GammaPrior(3.0, 6.0)
-            ),
-            outputscale_prior=GammaPrior(2.0, 0.15),
-        )
+        if covar_module is None:
+            self.covar_module = ScaleKernel(
+                base_kernel=MaternKernel(
+                    nu=2.5, ard_num_dims=d, lengthscale_prior=GammaPrior(3.0, 6.0)
+                ),
+                outputscale_prior=GammaPrior(2.0, 0.15),
+            )
+        else:
+            self.covar_module = covar_module
+
         num_tasks = len(all_tasks)
         self._rank = rank if rank is not None else num_tasks
 
@@ -298,6 +304,7 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
         train_Y: Tensor,
         train_Yvar: Tensor,
         task_feature: int,
+        covar_module: Optional[Module] = None,
         task_covar_prior: Optional[Prior] = None,
         output_tasks: Optional[List[int]] = None,
         rank: Optional[int] = None,
@@ -342,6 +349,7 @@ class FixedNoiseMultiTaskGP(MultiTaskGP):
         super().__init__(
             train_X=train_X,
             train_Y=train_Y,
+            covar_module=covar_module,
             task_feature=task_feature,
             output_tasks=output_tasks,
             rank=rank,
