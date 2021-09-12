@@ -143,7 +143,7 @@ at the same training inputs.</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.utils.containers.TrainingData.Yvar">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">Yvar</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional[List[torch.Tensor]]</span></em><a class="headerlink" href="#botorch.utils.containers.TrainingData.Yvar" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">Yvar</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.utils.containers.TrainingData.Yvar" title="Permalink to this definition">¶</a></dt>
 <dd><p>The training observations’s noise variance (block-design only).</p>
 <p>This raises an <cite>UnsupportedError</cite> in the non-block-design case.</p>
 </dd></dl>
@@ -1982,7 +1982,7 @@ Pareto frontier.</p>
 </div>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.utils.multi_objective.box_decompositions.box_decomposition_list.BoxDecompositionList.pareto_Y">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">pareto_Y</span></span><em class="property"><span class="pre">:</span> <span class="pre">List[torch.Tensor]</span></em><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition_list.BoxDecompositionList.pareto_Y" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">pareto_Y</span></span><em class="property"><span class="pre">:</span> <span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#botorch.utils.multi_objective.box_decompositions.box_decomposition_list.BoxDecompositionList.pareto_Y" title="Permalink to this definition">¶</a></dt>
 <dd><p>This returns the non-dominated set.</p>
 <p>Note: Internally, we store the negative pareto set (minimization).</p>
 <dl class="field-list simple">
