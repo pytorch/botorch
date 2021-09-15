@@ -113,6 +113,11 @@ class TestQKnowledgeGradient(BotorchTestCase):
                 qKnowledgeGradient(model=mm2)
 
     def test_evaluate_q_knowledge_gradient(self):
+        # Stop gap measure to avoid test failures on Ampere devices
+        # TODO: Find an elegant way of disallowing tf32 for botorch/gpytorch
+        # without blanket-disallowing it for all of torch.
+        torch.backends.cuda.matmul.allow_tf32 = False
+
         for dtype in (torch.float, torch.double):
             # basic test
             n_f = 4
