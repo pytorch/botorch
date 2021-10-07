@@ -4,6 +4,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import warnings
+
 import torch
 from botorch.exceptions.errors import UnsupportedError
 from botorch.models.deterministic import (
@@ -46,9 +48,12 @@ class TestDeterministicModels(BotorchTestCase):
         p = model.posterior(X)
         self.assertIsInstance(p, DeterministicPosterior)
         self.assertTrue(torch.equal(p.mean, f(X)))
-        # check that w/ observation noise this errors properly
+        # check that observation noise doesn't change things
+        p_noisy = model.posterior(X, observation_noise=True)
+        self.assertTrue(torch.equal(p_noisy.mean, f(X)))
+        # test proper error on explicit observation noise
         with self.assertRaises(UnsupportedError):
-            model.posterior(X, observation_noise=True)
+            model.posterior(X, observation_noise=X[..., :-1])
         # check output indices
         model = GenericDeterministicModel(lambda X: X, num_outputs=2)
         self.assertEqual(model.num_outputs, 2)
@@ -105,7 +110,10 @@ class TestDeterministicModels(BotorchTestCase):
         # check that the posterior output agrees with the manually transformed one
         test_X = torch.rand(3, dim)
         expected_Y, _ = octf.untransform(model.forward(intf(test_X)))
-        posterior = model.posterior(test_X)
+        with warnings.catch_warnings(record=True) as ws:
+            posterior = model.posterior(test_X)
+            msg = "does not have a `train_inputs` attribute"
+            self.assertTrue(any(msg in str(w.message) for w in ws))
         self.assertTrue(torch.allclose(expected_Y, posterior.mean))
         # check that model.train/eval works and raises the warning
         model.train()

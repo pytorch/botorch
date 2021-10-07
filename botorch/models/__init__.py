@@ -17,6 +17,7 @@ from botorch.models.gp_regression import (
 from botorch.models.gp_regression_fidelity import SingleTaskMultiFidelityGP
 from botorch.models.gp_regression_mixed import MixedSingleTaskGP
 from botorch.models.higher_order_gp import HigherOrderGP
+from botorch.models.model import ModelList
 from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.models.multitask import (
     FixedNoiseMultiTaskGP,
@@ -35,6 +36,7 @@ __all__ = [
     "HigherOrderGP",
     "KroneckerMultiTaskGP",
     "MixedSingleTaskGP",
+    "ModelList",
     "ModelListGP",
     "MultiTaskGP",
     "PairwiseGP",

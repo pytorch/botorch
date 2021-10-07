@@ -61,7 +61,10 @@ class DeterministicModel(Model, ABC):
         # Apply the input transforms in `eval` mode.
         self.eval()
         X = self.transform_inputs(X)
-        if kwargs.get("observation_noise") is not None:
+        # Note: we use a Tensor instance check so that `observation_noise = True`
+        # just gets ignored. This avoids having to do a bunch of case distinctions
+        # when using a ModelList.
+        if isinstance(kwargs.get("observation_noise"), Tensor):
             # TODO: Consider returning an MVN here instead
             raise UnsupportedError(
                 "Deterministic models do not support observation noise."
@@ -88,6 +91,10 @@ class GenericDeterministicModel(DeterministicModel):
                 to a `batch_shape x n x m`-dimensional output tensor (the
                 outcome dimension `m` must be explicit, even if `m=1`).
             num_outputs: The number of outputs `m`.
+
+        Example:
+            >>> f = lambda x: x.sum(dim=-1, keep_dims=True)
+            >>> model = GenericDeterministicModel(f)
         """
         super().__init__()
         self._f = f
@@ -106,7 +113,7 @@ class GenericDeterministicModel(DeterministicModel):
         def f_subset(X: Tensor) -> Tensor:
             return self._f(X)[..., idcs]
 
-        return self.__class__(f=f_subset)
+        return self.__class__(f=f_subset, num_outputs=len(idcs))
 
     def forward(self, X: Tensor) -> Tensor:
         r"""Compute the (deterministic) model output at X.
