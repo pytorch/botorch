@@ -22,7 +22,7 @@ from typing import Any, Iterator, List, Optional, Tuple, Union
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.exceptions.warnings import BotorchTensorDimensionWarning
-from botorch.models.model import Model
+from botorch.models.model import Model, ModelList
 from botorch.models.utils import (
     _make_X_full,
     add_output_dim,
@@ -34,6 +34,7 @@ from botorch.posteriors.gpytorch import GPyTorchPosterior
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.lazy import lazify
 from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
+from gpytorch.utils.broadcasting import _mul_broadcast_shape
 from torch import Tensor
 
 
@@ -472,7 +473,7 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
         return new_model
 
 
-class ModelListGPyTorchModel(GPyTorchModel, ABC):
+class ModelListGPyTorchModel(GPyTorchModel, ModelList, ABC):
     r"""Abstract base class for models based on multi-output GPyTorch models.
 
     This is meant to be used with a gpytorch ModelList wrapper for independent
@@ -489,14 +490,19 @@ class ModelListGPyTorchModel(GPyTorchModel, ABC):
         to the `posterior` method returns a Posterior object over an output of
         shape `broadcast(test_batch_shape, model.batch_shape) x q x m`.
         """
-        # TODO: Either check that batch shapes match across models, or broadcast them
-        batch_shape = self.models[0].batch_shape
-        if all(batch_shape == m.batch_shape for m in self.models[1:]):
-            return batch_shape
-        raise NotImplementedError(
-            "ModelListGPyTorchModel.batch_shape is only supported if all "
-            "constituent models have the same batch_shape."
-        )
+        batch_shapes = {ti[0].shape[:-2] for ti in self.train_inputs}
+        if len(batch_shapes) > 1:
+            msg = (
+                f"Component models of {self.__class__.__name__} have different "
+                "batch shapes"
+            )
+            try:
+                broadcast_shape = _mul_broadcast_shape(*batch_shapes)
+                warnings.warn(msg + ". Broadcasting batch shapes.")
+                return broadcast_shape
+            except RuntimeError:
+                raise NotImplementedError(msg + " that are not broadcastble.")
+        return next(iter(batch_shapes))
 
     def posterior(
         self,
@@ -582,30 +588,8 @@ class ModelListGPyTorchModel(GPyTorchModel, ABC):
             mvn=MultitaskMultivariateNormal.from_independent_mvns(mvns=mvns)
         )
 
-    def condition_on_observations(
-        self, X: Tensor, Y: Tensor, **kwargs: Any
-    ) -> ModelListGPyTorchModel:
-        class_name = self.__class__.__name__
-        raise NotImplementedError(
-            f"`condition_on_observations` not implemented in {class_name}"
-        )
-
-    def transform_inputs(self, X: Tensor) -> List[Tensor]:
-        r"""Individually transform the inputs for each model.
-
-        Args:
-            X: A tensor of inputs
-
-        Returns:
-            A list of tensors of transformed inputs
-        """
-        transformed_X_list = []
-        for model in self.models:
-            try:
-                transformed_X_list.append(model.input_transform(X))
-            except AttributeError:
-                transformed_X_list.append(X)
-        return transformed_X_list
+    def condition_on_observations(self, X: Tensor, Y: Tensor, **kwargs: Any) -> Model:
+        raise NotImplementedError()
 
 
 class MultiTaskGPyTorchModel(GPyTorchModel, ABC):

@@ -21,6 +21,7 @@ class TestDeterministicPosterior(BotorchTestCase):
             self.assertEqual(p.device.type, self.device.type)
             self.assertEqual(p.dtype, dtype)
             self.assertEqual(p.event_shape, values.shape)
+            self.assertEqual(p.base_sample_shape, torch.Size())
             self.assertTrue(torch.equal(p.mean, values))
             self.assertTrue(torch.equal(p.variance, torch.zeros_like(values)))
             # test sampling
