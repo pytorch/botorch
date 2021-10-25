@@ -440,6 +440,117 @@ class DTLZ2(DTLZ):
         return f_X
 
 
+class DTLZ3(DTLZ2):
+    r"""DTLZ3 test problem.
+
+    d-dimensional problem evaluated on `[0, 1]^d`:
+
+        f_0(x) = (1 + g(x)) * cos(x_0 * pi / 2)
+        f_1(x) = (1 + g(x)) * sin(x_0 * pi / 2)
+        g(x) = 100 * [k + \sum_{i=m}^{n-1} (x_i - 0.5)^2 - cos(20 * pi * (x_i - 0.5))]
+
+    `g(x)` introduces (`3k−1`) local Pareto fronts that are parallel to
+    the one global Pareto-optimal front.
+
+    The global Pareto-optimal front corresponds to x_i = 0.5 for x_i in X_m.
+    """
+
+    _ref_val = 10000.0
+
+    def evaluate_true(self, X: Tensor) -> Tensor:
+        X_m = X[..., -self.k :]
+        g_X = 100 * (
+            X_m.shape[-1]
+            + ((X_m - 0.5).pow(2) - torch.cos(20 * math.pi * (X_m - 0.5))).sum(dim=-1)
+        )
+        g_X_plus1 = 1 + g_X
+        fs = []
+        pi_over_2 = math.pi / 2
+        for i in range(self.num_objectives):
+            idx = self.num_objectives - 1 - i
+            f_i = g_X_plus1.clone()
+            f_i *= torch.cos(X[..., :idx] * pi_over_2).prod(dim=-1)
+            if i > 0:
+                f_i *= torch.sin(X[..., idx] * pi_over_2)
+            fs.append(f_i)
+        return torch.stack(fs, dim=-1)
+
+
+class DTLZ4(DTLZ2):
+    r"""DTLZ4 test problem.
+
+    This is the same as DTLZ2, but with alpha=100 as the exponent,
+    resulting in dense solutions near the f_M-f_1 plane.
+
+    The global Pareto-optimal front corresponds to x_i = 0.5 for x_i in X_m.
+    """
+    _alpha = 100.0
+
+
+class DTLZ5(DTLZ):
+    r"""DTLZ5 test problem.
+
+    d-dimensional problem evaluated on `[0, 1]^d`:
+
+        f_0(x) = (1 + g(x)) * cos(theta_0 * pi / 2)
+        f_1(x) = (1 + g(x)) * sin(theta_0 * pi / 2)
+        theta_i = pi / (4 * (1 + g(X_m)) * (1 + 2 * g(X_m) * x_i)) for i = 1, ... , M-2
+        g(x) = \sum_{i=m}^{d-1} (x_i - 0.5)^2
+
+    The global Pareto-optimal front corresponds to x_i = 0.5 for x_i in X_m.
+    """
+
+    _ref_val = 10.0
+
+    def evaluate_true(self, X: Tensor) -> Tensor:
+        X_m = X[..., -self.k :]
+        X_ = X[..., : -self.k]
+        g_X = (X_m - 0.5).pow(2).sum(dim=-1)
+        theta = 1 / (2 * (1 + g_X.unsqueeze(-1))) * (1 + 2 * g_X.unsqueeze(-1) * X_)
+        theta = torch.cat([X[..., :1], theta[..., 1:]], dim=-1)
+        fs = []
+        pi_over_2 = math.pi / 2
+        g_X_plus1 = g_X + 1
+        for i in range(self.num_objectives):
+            f_i = g_X_plus1.clone()
+            f_i *= torch.cos(theta[..., : theta.shape[-1] - i] * pi_over_2).prod(dim=-1)
+            if i > 0:
+                f_i *= torch.sin(theta[..., theta.shape[-1] - i] * pi_over_2)
+            fs.append(f_i)
+        return torch.stack(fs, dim=-1)
+
+
+class DTLZ7(DTLZ):
+    r"""DTLZ7 test problem.
+
+    d-dimensional problem evaluated on `[0, 1]^d`:
+        f_0(x) = x_0
+        f_1(x) = x_1
+        ...
+        f_{M-1}(x) = (1 + g(X_m)) * h(f_0, f_1, ..., f_{M-2}, g, x)
+        h(f_0, f_1, ..., f_{M-2}, g, x) =
+        M - sum_{i=0}^{M-2} f_i(x)/(1+g(x)) * (1 + sin(3 * pi * f_i(x)))
+
+    This test problem has 2M-1 disconnected Pareto-optimal regions in the search space.
+
+    The pareto frontier corresponds to X_m = 0.
+    """
+
+    _ref_val = 15.0
+
+    def evaluate_true(self, X):
+        f = []
+        for i in range(0, self.num_objectives - 1):
+            f.append(X[..., i])
+        f = torch.stack(f, dim=-1)
+
+        g_X = 1 + 9 / self.k * torch.sum(X[..., -self.k :], dim=-1)
+        h = self.num_objectives - torch.sum(
+            f / (1 + g_X.unsqueeze(-1)) * (1 + torch.sin(3 * math.pi * f)), dim=-1
+        )
+        return torch.cat([f, ((1 + g_X) * h).unsqueeze(-1)], dim=-1)
+
+
 class VehicleSafety(MultiObjectiveTestProblem):
     r"""Optimize Vehicle crash-worthiness.
 
@@ -660,6 +771,92 @@ class ZDT3(ZDT):
         return f_X
 
 
+class CarSideImpact(MultiObjectiveTestProblem):
+    r"""Car side impact problem.
+
+    See [Tanabe2020]_ for details.
+
+    The reference point is `nadir + 0.1 * (ideal - nadir)`
+    where the ideal and nadir points come from the approximate
+    Pareto frontier from [Tanabe2020]_. The max_hv was computed
+    based on the approximate Pareto frontier from [Tanabe2020]_.
+    """
+
+    num_objectives: int = 4
+    dim: int = 7
+    _bounds = [
+        (0.5, 1.5),
+        (0.45, 1.35),
+        (0.5, 1.5),
+        (0.5, 1.5),
+        (0.875, 2.625),
+        (0.4, 1.2),
+        (0.4, 1.2),
+    ]
+    _ref_point = [45.4872, 4.5114, 13.3394, 10.3942]
+    _max_hv = 484.72654347642793
+
+    def evaluate_true(self, X: Tensor) -> Tensor:
+        X1, X2, X3, X4, X5, X6, X7 = torch.split(X, 1, -1)
+        f1 = (
+            1.98
+            + 4.9 * X1
+            + 6.67 * X2
+            + 6.98 * X3
+            + 4.01 * X4
+            + 1.78 * X5
+            + 10 ** -5 * X6
+            + 2.73 * X7
+        )
+        f2 = 4.72 - 0.5 * X4 - 0.19 * X2 * X3
+        V_MBP = 10.58 - 0.674 * X1 * X2 - 0.67275 * X2
+        V_FD = 16.45 - 0.489 * X3 * X7 - 0.843 * X5 * X6
+        f3 = 0.5 * (V_MBP + V_FD)
+        g1 = 1 - 1.16 + 0.3717 * X2 * X4 + 0.0092928 * X3
+        g2 = (
+            0.32
+            - 0.261
+            + 0.0159 * X1 * X2
+            + 0.06486 * X1
+            + 0.019 * X2 * X7
+            - 0.0144 * X3 * X5
+            - 0.0154464 * X6
+        )
+        g3 = (
+            0.32
+            - 0.214
+            - 0.00817 * X5
+            + 0.045195 * X1
+            + 0.0135168 * X1
+            - 0.03099 * X2 * X6
+            + 0.018 * X2 * X7
+            - 0.007176 * X3
+            - 0.023232 * X3
+            + 0.00364 * X5 * X6
+            + 0.018 * X2.pow(2)
+        )
+        g4 = 0.32 - 0.74 + 0.61 * X2 + 0.031296 * X3 + 0.031872 * X7 - 0.227 * X2.pow(2)
+        g5 = 32 - 28.98 - 3.818 * X3 + 4.2 * X1 * X2 - 1.27296 * X6 + 2.68065 * X7
+        g6 = (
+            32
+            - 33.86
+            - 2.95 * X3
+            + 5.057 * X1 * X2
+            + 3.795 * X2
+            + 3.4431 * X7
+            - 1.45728
+        )
+        g7 = 32 - 46.36 + 9.9 * X2 + 4.4505 * X1
+        g8 = 4 - f2
+        g9 = 9.9 - V_MBP
+        g10 = 15.7 - V_FD
+        g = torch.cat([g1, g2, g3, g4, g5, g6, g7, g8, g9, g10], dim=-1)
+        zero = torch.tensor(0.0, dtype=X.dtype, device=X.device)
+        g = torch.where(g < 0, -g, zero)
+        f4 = g.sum(dim=-1, keepdim=True)
+        return torch.cat([f1, f2, f3, f4], dim=-1)
+
+
 # ------ Constrained Multi-Objective Test Problems ----- #
 
 
@@ -825,3 +1022,57 @@ class OSY(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
         g5 = 4.0 - (X[..., 2] - 3.0) ** 2 - X[..., 3]
         g6 = (X[..., 4] - 3.0) ** 2 + X[..., 5] - 4.0
         return torch.stack([g1, g2, g3, g4, g5, g6], dim=-1)
+
+
+class WeldedBeam(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
+    r"""
+    The Welded Beam test problem.
+    Implementation from
+    https://github.com/msu-coinlab/pymoo/blob/master/pymoo/problems/multi/welded_beam.py
+    Note that this implementation assumes minimization, so please choose negate=True.
+    """
+
+    dim = 4
+    num_constraints = 4
+    num_objectives = 2
+    _bounds = [
+        (0.125, 5.0),
+        (0.1, 10.0),
+        (0.1, 10.0),
+        (0.125, 5.0),
+    ]
+    _ref_point = [40, 0.015]
+
+    def evaluate_true(self, X: Tensor) -> Tensor:
+        f1 = 1.10471 * X[..., 0] ** 2 * X[..., 1] + 0.04811 * X[..., 2] * X[..., 3] * (
+            14.0 + X[..., 1]
+        )
+        f2 = 2.1952 / (X[..., 3] * X[..., 2] ** 3)
+        return torch.stack([f1, f2], dim=-1)
+
+    def evaluate_slack_true(self, X: Tensor) -> Tensor:
+        P = 6000
+        L = 14
+        t_max = 13600
+        s_max = 30000
+
+        R = torch.sqrt(0.25 * (X[..., 1] ** 2 + (X[..., 0] + X[..., 2]) ** 2))
+        M = P * (L + X[..., 1] / 2)
+        J = (
+            2
+            * math.sqrt(0.5)
+            * X[..., 0]
+            * X[..., 1]
+            * (X[..., 1] ** 2 / 12 + 0.25 * (X[..., 0] + X[..., 2]) ** 2)
+        )
+        t1 = P / (math.sqrt(2) * X[..., 0] * X[..., 1])
+        t2 = M * R / J
+        t = torch.sqrt(t1 ** 2 + t2 ** 2 + t1 * t2 * X[..., 1] / R)
+        s = 6 * P * L / (X[..., 3] * X[..., 2] ** 2)
+        P_c = 64746.022 * (1 - 0.0282346 * X[..., 2]) * X[..., 2] * X[..., 3] ** 3
+
+        g1 = (1 / t_max) * (t - t_max)
+        g2 = (1 / s_max) * (s - s_max)
+        g3 = (1 / (5 - 0.125)) * (X[..., 0] - X[..., 3])
+        g4 = (1 / P) * (P - P_c)
+        return torch.stack([g1, g2, g3, g4], dim=-1)
