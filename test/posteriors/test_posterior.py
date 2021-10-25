@@ -61,7 +61,7 @@ class TestPosteriorList(BotorchTestCase):
 
             self.assertEqual(p.base_sample_shape, shape + torch.Size([2]))
             self.assertEqual(p.event_shape, shape + torch.Size([1, 1]))
-            self.assertEqual(p.device, self.device)
+            self.assertEqual(p.device.type, self.device.type)
             self.assertEqual(p.dtype, dtype)
             self.assertTrue(
                 torch.equal(p.mean, torch.cat([p_1.mean, p_2.mean], dim=-1))
