@@ -7,8 +7,6 @@
 from typing import Optional
 
 import torch
-from botorch.utils.multi_objective.pareto import is_non_dominated
-from botorch.utils.testing import BotorchTestCase
 from botorch.acquisition.multi_objective.multi_output_risk_measures import (
     IndependentCVaR,
     IndependentVaR,
@@ -16,6 +14,8 @@ from botorch.acquisition.multi_objective.multi_output_risk_measures import (
     MultiOutputWorstCase,
     MVaR,
 )
+from botorch.utils.multi_objective.pareto import is_non_dominated
+from botorch.utils.testing import BotorchTestCase
 from torch import Tensor
 
 
