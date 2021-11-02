@@ -198,7 +198,7 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
     `alpha`. Note that MVaR is set valued and the size of the set depends on the
     particular realizations of the random variable. [Cousin2013MVaR]_ instead
     propose to use the expectation of the set-valued MVaR as the multivariate
-    VaR. We support this alternative with an `expectation` flag. Default: True.
+    VaR. We support this alternative with an `expectation` flag.
     """
 
     def __init__(
@@ -218,7 +218,7 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
                 dominates `alpha` fraction of all observations.
             expectation: If True, returns the expectation of the MVaR set as is
                 done in [Cousin2013MVaR]_. Otherwise, it returns the union of all
-                values in the MVaR set. Default: True.
+                values in the MVaR set. Default: False.
             weights: An optional `m`-dim tensor of weights for scaling
                 multi-output samples before calculating the risk measure.
                 This can also be used to make sure that all outputs are
