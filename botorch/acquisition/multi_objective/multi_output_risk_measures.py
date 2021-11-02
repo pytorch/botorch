@@ -232,10 +232,10 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
                 NOTE: this is only relevant if `expectation=False`.
             filter_dominated: If True, returns the non-dominated subset of
                 alpha level points (this is MVaR as defined by [Prekopa2012MVaR]_).
-                Disabling this will make this faster, and may be preferable if
+                Disabling this will make it faster, and may be preferable if
                 the dominated points will be filtered out later, e.g., while
                 calculating the hypervolume. Disabling this is not recommended
-                if `expectation=True.
+                if `expectation=True`.
         """
         super().__init__(n_w=n_w, weights=weights)
         if not 0 < alpha <= 1:
@@ -270,7 +270,7 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
         if Y.dim() == 3:
             return [self.get_mvar_set_cpu(y_) for y_ in Y]
         m = Y.shape[-1]
-        if m != 2:  # pragma: no covar
+        if m != 2:  # pragma: no cover
             raise ValueError("`get_mvar_set_cpu` only supports `m=2` outcomes!")
         # Generate sets of all unique values in each output dimension.
         unique_outcomes = [Y[:, i].unique(sorted=True).tolist()[::-1] for i in range(m)]

@@ -9,7 +9,7 @@ from typing import Optional
 import torch
 from botorch.utils.multi_objective.pareto import is_non_dominated
 from botorch.utils.testing import BotorchTestCase
-from botorch_fb.acquisition.multi_output_risk_measures import (
+from botorch.acquisition.multi_objective.multi_output_risk_measures import (
     IndependentCVaR,
     IndependentVaR,
     MultiOutputRiskMeasureMCObjective,
@@ -351,6 +351,10 @@ class TestMVaR(BotorchTestCase):
             cpu_mvar = mvar.get_mvar_set_cpu(Y)
             gpu_mvar = mvar.get_mvar_set_gpu(Y)[0]
             self.assertTrue(torch.equal(cpu_mvar, Y[:1]))
-            self.assertTrue(torch.equal(cpu_mvar, Y[:1]))
+            self.assertTrue(torch.equal(gpu_mvar, Y[:1]))
+
+            # Test grad warning
+            with self.assertWarnsRegex(RuntimeWarning, "requires grad"):
+                mvar(Y.requires_grad_())
 
             # TODO: Test grad support once properly implemented.
