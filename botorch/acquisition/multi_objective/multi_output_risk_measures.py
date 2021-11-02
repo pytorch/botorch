@@ -24,7 +24,7 @@ References
 import warnings
 from abc import ABC, abstractmethod
 from math import ceil
-from typing import Optional
+from typing import List, Optional, Union
 
 import torch
 from botorch.acquisition.multi_objective.objective import MCMultiOutputObjective
@@ -245,7 +245,7 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
         self.pad_to_n_w = pad_to_n_w
         self.filter_dominated = filter_dominated
 
-    def get_mvar_set_cpu(self, Y: Tensor) -> Tensor:
+    def get_mvar_set_cpu(self, Y: Tensor) -> Union[Tensor, List[Tensor]]:
         r"""Find MVaR set based on the definition in [Prekopa2012MVaR]_.
 
         NOTE: This is much faster on CPU for large `n_w` than the alternative but it
@@ -266,6 +266,7 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
             A `batch` length list of `k x m`-dim tensor of MVaR values, where `k`
             depends on the corresponding batch inputs. Note that MVaR values in general
             are not in-sample points.
+            If `Y` is `n_w x m`, returns only a `k x m`-dim tensor.
         """
         if Y.dim() == 3:
             return [self.get_mvar_set_cpu(y_) for y_ in Y]
@@ -319,7 +320,7 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
             mvar = alpha_level_points
         return mvar
 
-    def get_mvar_set_gpu(self, Y: Tensor) -> Tensor:
+    def get_mvar_set_gpu(self, Y: Tensor) -> List[Tensor]:
         r"""Find MVaR set based on the definition in [Prekopa2012MVaR]_.
 
         NOTE: This is much faster on GPU than the alternative but it scales very poorly
