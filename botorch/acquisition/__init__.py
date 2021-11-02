@@ -51,6 +51,7 @@ from botorch.acquisition.objective import (
     MCAcquisitionObjective,
     ScalarizedObjective,
 )
+from botorch.acquisition.proximal import ProximalAcquisitionFunction
 from botorch.acquisition.utils import get_acquisition_function
 
 __all__ = [
@@ -65,6 +66,7 @@ __all__ = [
     "OneShotAcquisitionFunction",
     "PosteriorMean",
     "ProbabilityOfImprovement",
+    "ProximalAcquisitionFunction",
     "UpperConfidenceBound",
     "qExpectedImprovement",
     "qKnowledgeGradient",

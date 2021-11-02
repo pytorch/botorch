@@ -21,6 +21,7 @@ from botorch.models.gp_regression_mixed import MixedSingleTaskGP
 from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
 from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.models.transforms.input import InputTransform
+from botorch.models.transforms.outcome import OutcomeTransform
 from torch import Tensor
 from torch.nn import Module
 
@@ -49,7 +50,7 @@ def _get_module(module: Module, name: str) -> Module:
 
 def _check_compatibility(models: ModelListGP) -> None:
     """Check if a ModelListGP can be converted."""
-    # check that all submodules are of the same type
+    # Check that all submodules are of the same type.
     for modn, mod in models[0].named_modules():
         mcls = mod.__class__
         if not all(isinstance(_get_module(m, modn), mcls) for m in models[1:]):
@@ -57,22 +58,28 @@ def _check_compatibility(models: ModelListGP) -> None:
                 "Sub-modules must be of the same type across models."
             )
 
-    # check that each model is a BatchedMultiOutputGPyTorchModel
+    # Check that each model is a BatchedMultiOutputGPyTorchModel.
     if not all(isinstance(m, BatchedMultiOutputGPyTorchModel) for m in models):
         raise UnsupportedError(
             "All models must be of type BatchedMultiOutputGPyTorchModel."
         )
 
-    # TODO: Add support for HeteroskedasticSingleTaskGP
+    # TODO: Add support for HeteroskedasticSingleTaskGP.
     if any(isinstance(m, HeteroskedasticSingleTaskGP) for m in models):
         raise NotImplementedError(
             "Conversion of HeteroskedasticSingleTaskGP is currently unsupported."
         )
 
-    # TODO: Add support for custom likelihoods
+    # TODO: Add support for custom likelihoods.
     if any(getattr(m, "_is_custom_likelihood", False) for m in models):
         raise NotImplementedError(
             "Conversion of models with custom likelihoods is currently unsupported."
+        )
+
+    # TODO: Add support for outcome transforms.
+    if any(getattr(m, "outcome_transform", None) is not None for m in models):
+        raise UnsupportedError(
+            "Conversion of models with outcome transforms is currently unsupported."
         )
 
     # check that each model is single-output
@@ -203,20 +210,23 @@ def batched_to_model_list(batch_model: BatchedMultiOutputGPyTorchModel) -> Model
         >>> batch_gp = SingleTaskGP(train_X, train_Y)
         >>> list_gp = batched_to_model_list(batch_gp)
     """
-    # TODO: Add support for HeteroskedasticSingleTaskGP
+    # TODO: Add support for HeteroskedasticSingleTaskGP.
     if isinstance(batch_model, HeteroskedasticSingleTaskGP):
         raise NotImplementedError(
-            "Conversion of HeteroskedasticSingleTaskGP currently not supported."
+            "Conversion of HeteroskedasticSingleTaskGP is currently not supported."
         )
     if isinstance(batch_model, MixedSingleTaskGP):
         raise NotImplementedError(
-            "Conversion of MixedSingleTaskGP currently not supported."
+            "Conversion of MixedSingleTaskGP is currently not supported."
         )
     input_transform = getattr(batch_model, "input_transform", None)
+    outcome_transform = getattr(batch_model, "outcome_transform", None)
     batch_sd = batch_model.state_dict()
 
     adjusted_batch_keys, non_adjusted_batch_keys = _get_adjusted_batch_keys(
-        batch_state_dict=batch_sd, input_transform=input_transform
+        batch_state_dict=batch_sd,
+        input_transform=input_transform,
+        outcome_transform=outcome_transform,
     )
     input_bdims = len(batch_model._input_batch_shape)
 
@@ -248,6 +258,18 @@ def batched_to_model_list(batch_model: BatchedMultiOutputGPyTorchModel) -> Model
             )
         if isinstance(batch_model, SingleTaskMultiFidelityGP):
             kwargs.update(batch_model._init_args)
+        # NOTE: Adding outcome transform to kwargs to avoid the multiple
+        # values for same kwarg issue with SingleTaskMultiFidelityGP.
+        if outcome_transform is not None:
+            octf = outcome_transform.subset_output(idcs=[i])
+            kwargs["outcome_transform"] = octf
+            # Update the outcome transform state dict entries.
+            sd = {
+                **sd,
+                **{"outcome_transform." + k: v for k, v in octf.state_dict().items()},
+            }
+        else:
+            kwargs["outcome_transform"] = None
         model = batch_model.__class__(input_transform=input_transform, **kwargs)
         model.load_state_dict(sd)
         models.append(model)
@@ -289,14 +311,14 @@ def batched_multi_output_to_single_output(
         >>> batch_mo_gp = SingleTaskGP(train_X, train_Y)
         >>> batch_so_gp = batched_multioutput_to_single_output(batch_gp)
     """
-    # TODO: Add support for HeteroskedasticSingleTaskGP
+    # TODO: Add support for HeteroskedasticSingleTaskGP.
     if isinstance(batch_mo_model, HeteroskedasticSingleTaskGP):
         raise NotImplementedError(
             "Conversion of HeteroskedasticSingleTaskGP currently not supported."
         )
     elif not isinstance(batch_mo_model, BatchedMultiOutputGPyTorchModel):
         raise UnsupportedError("Only BatchedMultiOutputGPyTorchModels are supported.")
-    # TODO: Add support for custom likelihoods
+    # TODO: Add support for custom likelihoods.
     elif getattr(batch_mo_model, "_is_custom_likelihood", False):
         raise NotImplementedError(
             "Conversion of models with custom likelihoods is currently unsupported."
@@ -304,7 +326,7 @@ def batched_multi_output_to_single_output(
     input_transform = getattr(batch_mo_model, "input_transform", None)
     batch_sd = batch_mo_model.state_dict()
 
-    # TODO: add support for outcome transforms
+    # TODO: add support for outcome transforms.
     if hasattr(batch_mo_model, "outcome_transform"):
         raise NotImplementedError(
             "Converting batched multi-output models with outcome transforms "
@@ -328,30 +350,37 @@ def batched_multi_output_to_single_output(
 
 
 def _get_adjusted_batch_keys(
-    batch_state_dict: Dict[str, Tensor], input_transform: Optional[InputTransform]
+    batch_state_dict: Dict[str, Tensor],
+    input_transform: Optional[InputTransform],
+    outcome_transform: Optional[OutcomeTransform] = None,
 ) -> Tuple[Set[str], Set[str]]:
     r"""Group the keys based on whether the value requires batch shape changes.
 
     Args:
-        batch_state_dict: The state dict of the batch model
-        input_transform: The input transform
+        batch_state_dict: The state dict of the batch model.
+        input_transform: The input transform.
+        outcome_transform: The outcome transform.
 
     Returns:
         A two-element tuple containing:
-            - The keys of the parameters/buffers that require a batch shape adjustment
+            - The keys of the parameters/buffers that require a batch shape adjustment.
             - The keys of the parameters/buffers that do not require a batch shape
-                adjustment
+                adjustment.
     """
-    # these are the names of the parameters/buffers that need their batch shape adjusted
+    # These are the names of the params/buffers that need their batch shape adjusted.
     adjusted_batch_keys = {n for n, p in batch_state_dict.items() if len(p.shape) > 0}
-    # don't modify input transform buffers, so add them to non-adjusted set and remove
-    # them from tensors
-    if input_transform is not None:
-        input_transform_keys = {
-            "input_transform." + n for n, p in input_transform.state_dict().items()
-        }
-        adjusted_batch_keys = adjusted_batch_keys - input_transform_keys
-    # these are the names of the parameters/buffers that don't need their
-    # batch shape adjusted
+    # Don't modify transform buffers, so add them to non-adjusted set and remove
+    # them from tensors.
+    for transform, transform_type in [
+        (input_transform, "input_transform."),
+        (outcome_transform, "outcome_transform."),
+    ]:
+        if transform is not None:
+            transform_keys = {
+                transform_type + n for n, p in transform.state_dict().items()
+            }
+            adjusted_batch_keys = adjusted_batch_keys - transform_keys
+    # These are the names of the parameters/buffers that don't need their
+    # batch shape adjusted.
     non_adjusted_batch_keys = set(batch_state_dict) - adjusted_batch_keys
     return adjusted_batch_keys, non_adjusted_batch_keys

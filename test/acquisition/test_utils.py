@@ -610,7 +610,7 @@ class TestPruneInferiorPoints(BotorchTestCase):
             with mock.patch.object(MockPosterior, "rsample", return_value=samples):
                 mm = MockModel(MockPosterior(samples=samples))
                 X_pruned = prune_inferior_points(model=mm, X=X, max_frac=2 / 3)
-            if self.device == torch.device("cuda"):
+            if self.device.type == "cuda":
                 # sorting has different order on cuda
                 self.assertTrue(torch.equal(X_pruned, torch.stack([X[2], X[1]], dim=0)))
             else:

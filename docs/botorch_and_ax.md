@@ -49,12 +49,11 @@ tutorial for more on how to do this.
 
 ## When not to use Ax
 
-If you're working in a non-standard setting, such as those with high-dimensional
-or structured feature or design spaces, or where the model fitting process
-requires interactive work, then using Ax may not be the best solution for you.
-In such a situation, you might be better off writing your own full Bayesian
-Optimization loop in BoTorch. The
-[q-Noisy Constrained EI](../tutorials/closed_loop_botorch_only) tutorial and
+If you're working in a non-standard setting, such as structured feature or
+design spaces, or where the model fitting process requires interactive work,
+then using Ax may not be the best solution for you. In such a situation, you
+might be better off writing your own full Bayesian Optimization loop in BoTorch.
+The [q-Noisy Constrained EI](../tutorials/closed_loop_botorch_only) tutorial and
 [variational auto-encoder](../tutorials/vae_mnist) tutorial give examples of how
 this can be done.
 

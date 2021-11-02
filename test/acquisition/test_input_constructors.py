@@ -205,7 +205,6 @@ class TestMCAcquisitionFunctionInputConstructors(
         c = get_acqf_input_constructor(qExpectedImprovement)
         mock_model = mock.Mock()
         kwargs = c(model=mock_model, training_data=self.bd_td)
-        best_f_expected = self.bd_td.Y.squeeze().max()
         self.assertEqual(kwargs["model"], mock_model)
         self.assertIsNone(kwargs["objective"])
         self.assertIsNone(kwargs["X_pending"])
@@ -223,6 +222,16 @@ class TestMCAcquisitionFunctionInputConstructors(
         self.assertTrue(torch.equal(kwargs["X_pending"], X_pending))
         self.assertIsNone(kwargs["sampler"])
         best_f_expected = objective(self.bd_td_mo.Y).max()
+        self.assertEqual(kwargs["best_f"], best_f_expected)
+        # Check explicitly specifying `best_f`.
+        best_f_expected = best_f_expected - 1  # Random value.
+        kwargs = c(
+            model=mock_model,
+            training_data=self.bd_td_mo,
+            objective=objective,
+            X_pending=X_pending,
+            best_f=best_f_expected,
+        )
         self.assertEqual(kwargs["best_f"], best_f_expected)
 
     def test_construct_inputs_qNEI(self):
@@ -264,7 +273,7 @@ class TestMCAcquisitionFunctionInputConstructors(
         objective = LinearMCObjective(torch.rand(2))
         kwargs = c(
             model=mock_model,
-            training_data=self.bd_td,
+            training_data=self.bd_td_mo,
             objective=objective,
             X_pending=X_pending,
             tau=1e-2,
@@ -274,6 +283,19 @@ class TestMCAcquisitionFunctionInputConstructors(
         self.assertTrue(torch.equal(kwargs["X_pending"], X_pending))
         self.assertIsNone(kwargs["sampler"])
         self.assertEqual(kwargs["tau"], 1e-2)
+        best_f_expected = objective(self.bd_td_mo.Y).max()
+        self.assertEqual(kwargs["best_f"], best_f_expected)
+        # Check explicitly specifying `best_f`.
+        best_f_expected = best_f_expected - 1  # Random value.
+        kwargs = c(
+            model=mock_model,
+            training_data=self.bd_td_mo,
+            objective=objective,
+            X_pending=X_pending,
+            tau=1e-2,
+            best_f=best_f_expected,
+        )
+        self.assertEqual(kwargs["best_f"], best_f_expected)
 
     def test_construct_inputs_qUCB(self):
         c = get_acqf_input_constructor(qUpperConfidenceBound)

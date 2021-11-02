@@ -58,6 +58,8 @@ class FixedFeatureAcquisitionFunction(AcquisitionFunction):
         """
         Module.__init__(self)
         self.acq_func = acq_function
+        dtype = torch.float
+        device = torch.device("cpu")
         self.d = d
         if isinstance(values, Tensor):
             new_values = values.detach().clone()
@@ -67,7 +69,14 @@ class FixedFeatureAcquisitionFunction(AcquisitionFunction):
                 if isinstance(value, Number):
                     new_values.append(torch.tensor([float(value)]))
                 else:
+                    # if any value uses double, use double for all values
+                    # likewise if any value uses cuda, use cuda for all values
+                    dtype = value.dtype if value.dtype == torch.double else dtype
+                    device = value.device if value.device.type == "cuda" else device
                     new_values.append(value.detach().clone())
+            # move all values to same device
+            for i, val in enumerate(new_values):
+                new_values[i] = val.to(dtype=dtype, device=device)
 
             # There are 3 cases for when `values` is a `Sequence`.
             # 1) `values` == list of floats as earlier.

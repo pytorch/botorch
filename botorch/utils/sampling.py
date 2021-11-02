@@ -773,11 +773,16 @@ class DelaunayPolytopeSampler(PolytopeSampler):
                 e = torch.rand(n, 1, device=self.new_A.device, dtype=self.new_A.dtype)
             transformed_samples = self.y_min + (self.y_max - self.y_min) * e
         else:
+            if seed is None:
+                generator = None
+            else:
+                generator = torch.Generator(device=self.A.device)
+                generator.manual_seed(seed)
             index_rvs = torch.multinomial(
                 self._p,
                 num_samples=n,
                 replacement=True,
-                generator=None if seed is None else torch.manual_seed(seed),
+                generator=generator,
             )
             simplex_rvs = sample_simplex(
                 d=self.dim + 1, n=n, seed=seed, device=self.A.device, dtype=self.A.dtype

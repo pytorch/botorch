@@ -2,6 +2,39 @@
 
 The release log for BoTorch.
 
+## [0.5.1] - Sep 2, 2021
+
+#### Compatibility
+* Require GPyTorch >=1.5.1 (#928).
+
+#### New Features
+* Add `HigherOrderGP` composite Bayesian Optimization tutorial notebook (#864).
+* Add Multi-Task Bayesian Optimziation tutorial (#867).
+* New multi-objective test problems from (#876).
+* Add `PenalizedMCObjective` and `L1PenaltyObjective` (#913).
+* Add a `ProximalAcquisitionFunction` for regularizing new candidates towards previously generated ones (#919, #924).
+* Add a `Power` outcome transform (#925).
+
+#### Bug Fixes
+* Batch mode fix for `HigherOrderGP` initialization (#856).
+* Improve `CategoricalKernel` precision (#857).
+* Fix an issue with `qMultiFidelityKnowledgeGradient.evaluate` (#858).
+* Fix an issue with transforms with `HigherOrderGP`. (#889)
+* Fix initial candidate generation when parameter constraints are on different device (#897).
+* Fix bad in-place op in `_generate_unfixed_lin_constraints` (#901).
+* Fix an input transform bug in `fantasize` call (#902).
+* Fix outcome transform bug in `batched_to_model_list` (#917).
+
+#### Other Changes
+* Make variance optional for `TransformedPosterior.mean` (#855).
+* Support transforms in `DeterministicModel` (#869).
+* Support `batch_shape` in `RandomFourierFeatures` (#877).
+* Add a `maximize` flag to `PosteriorMean` (#881).
+* Ignore categorical dimensions when validating training inputs in `MixedSingleTaskGP` (#882).
+* Refactor `HigherOrderGPPosterior` for memory efficiency (#883).
+* Support negative weights for minimization objectives in `get_chebyshev_scalarization` (#884).
+* Move `train_inputs` transforms to `model.train/eval` calls (#894).
+
 ## [0.5.0] - Jun 29, 2021
 
 #### Compatibility

@@ -17,14 +17,20 @@ from botorch.test_functions.multi_objective import (
     DH4,
     DTLZ1,
     DTLZ2,
+    DTLZ3,
+    DTLZ4,
+    DTLZ5,
+    DTLZ7,
     SRN,
     ZDT1,
     ZDT2,
     ZDT3,
     BraninCurrin,
+    CarSideImpact,
     ConstrainedBraninCurrin,
     MultiObjectiveTestProblem,
     VehicleSafety,
+    WeldedBeam,
     OSY,
 )
 from botorch.utils.testing import (
@@ -106,7 +112,14 @@ class TestDH(MultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
 
 
 class TestDTLZ(MultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
-    functions = [DTLZ1(dim=5, num_objectives=2), DTLZ2(dim=5, num_objectives=2)]
+    functions = [
+        DTLZ1(dim=5, num_objectives=2),
+        DTLZ2(dim=5, num_objectives=2),
+        DTLZ3(dim=5, num_objectives=2),
+        DTLZ4(dim=5, num_objectives=2),
+        DTLZ5(dim=5, num_objectives=2),
+        DTLZ7(dim=5, num_objectives=2),
+    ]
 
     def test_init(self):
         for f in self.functions:
@@ -122,35 +135,42 @@ class TestDTLZ(MultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
                 for negate in (True, False):
                     f.negate = negate
                     f = f.to(dtype=dtype, device=self.device)
-                    pareto_f = f.gen_pareto_front(n=10)
-                    if negate:
-                        pareto_f *= -1
-                    self.assertEqual(pareto_f.dtype, dtype)
-                    self.assertEqual(pareto_f.device.type, self.device.type)
-                    self.assertTrue((pareto_f > 0).all())
-                    if isinstance(f, DTLZ1):
-                        # assert is the hyperplane sum_i (f(x_i)) = 0.5
-                        self.assertTrue(
-                            torch.allclose(
-                                pareto_f.sum(dim=-1),
-                                torch.full(
-                                    pareto_f.shape[0:1],
-                                    0.5,
-                                    dtype=dtype,
-                                    device=self.device,
-                                ),
+                    if isinstance(f, (DTLZ5, DTLZ7)):
+                        with self.assertRaises(NotImplementedError):
+                            f.gen_pareto_front(n=1)
+                    else:
+                        pareto_f = f.gen_pareto_front(n=10)
+                        if negate:
+                            pareto_f *= -1
+                        self.assertEqual(pareto_f.dtype, dtype)
+                        self.assertEqual(pareto_f.device.type, self.device.type)
+                        self.assertTrue((pareto_f > 0).all())
+                        if isinstance(f, DTLZ1):
+                            # assert is the hyperplane sum_i (f(x_i)) = 0.5
+                            self.assertTrue(
+                                torch.allclose(
+                                    pareto_f.sum(dim=-1),
+                                    torch.full(
+                                        pareto_f.shape[0:1],
+                                        0.5,
+                                        dtype=dtype,
+                                        device=self.device,
+                                    ),
+                                )
                             )
-                        )
-                    elif isinstance(f, DTLZ2):
-                        # assert the points lie on the surface of the unit hypersphere
-                        self.assertTrue(
-                            torch.allclose(
-                                pareto_f.pow(2).sum(dim=-1),
-                                torch.ones(
-                                    pareto_f.shape[0], dtype=dtype, device=self.device
-                                ),
+                        elif isinstance(f, (DTLZ2, DTLZ3, DTLZ4)):
+                            # assert the points lie on the surface
+                            # of the unit hypersphere
+                            self.assertTrue(
+                                torch.allclose(
+                                    pareto_f.pow(2).sum(dim=-1),
+                                    torch.ones(
+                                        pareto_f.shape[0],
+                                        dtype=dtype,
+                                        device=self.device,
+                                    ),
+                                )
                             )
-                        )
 
 
 class TestZDT(MultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
@@ -223,7 +243,7 @@ class TestZDT(MultiObjectiveTestProblemBaseTestCase, BotorchTestCase):
 class TestMultiObjectiveProblems(
     MultiObjectiveTestProblemBaseTestCase, BotorchTestCase
 ):
-    functions = [VehicleSafety()]
+    functions = [VehicleSafety(), CarSideImpact()]
 
 
 class TestConstrainedMultiObjectiveProblems(
@@ -235,6 +255,7 @@ class TestConstrainedMultiObjectiveProblems(
         CONSTR(),
         ConstrainedBraninCurrin(),
         C2DTLZ2(dim=3, num_objectives=2),
+        WeldedBeam(),
         OSY(),
     ]
 

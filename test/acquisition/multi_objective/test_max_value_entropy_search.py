@@ -104,14 +104,14 @@ class TestMultiObjectiveMaxValueEntropy(BotorchTestCase):
             fant_X = torch.cat(
                 [
                     train_X.expand(16, 4, 2),
-                    torch.rand(16, 1, 2),
+                    torch.rand(16, 1, 2, device=self.device, dtype=dtype),
                 ],
                 dim=1,
             )
             fant_Y = torch.cat(
                 [
                     train_Y.expand(16, 4, m),
-                    torch.rand(16, 1, m),
+                    torch.rand(16, 1, m, device=self.device, dtype=dtype),
                 ],
                 dim=1,
             )

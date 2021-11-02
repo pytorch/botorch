@@ -12,6 +12,7 @@ from botorch.models.transforms.outcome import (
     ChainedOutcomeTransform,
     Log,
     OutcomeTransform,
+    Power,
     Standardize,
 )
 from botorch.models.transforms.utils import (
@@ -91,7 +92,7 @@ class TestOutcomeTransforms(BotorchTestCase):
             tf.eval()
             self.assertFalse(tf.training)
             Y_utf, Yvar_utf = tf.untransform(Y_tf, Yvar_tf)
-            torch.allclose(Y_utf, Y)
+            self.assertTrue(torch.allclose(Y_utf, Y))
             self.assertIsNone(Yvar_utf)
 
             # subset_output
@@ -116,8 +117,8 @@ class TestOutcomeTransforms(BotorchTestCase):
             tf.eval()
             self.assertFalse(tf.training)
             Y_utf, Yvar_utf = tf.untransform(Y_tf, Yvar_tf)
-            torch.allclose(Y_utf, Y)
-            torch.allclose(Yvar_utf, Yvar)
+            self.assertTrue(torch.allclose(Y_utf, Y))
+            self.assertTrue(torch.allclose(Yvar_utf, Yvar))
 
             # untransform_posterior
             for interleaved, lazy in itertools.product((True, False), (True, False)):
@@ -199,7 +200,7 @@ class TestOutcomeTransforms(BotorchTestCase):
             tf.eval()
             self.assertFalse(tf.training)
             Y_utf, Yvar_utf = tf.untransform(Y_tf, Yvar_tf)
-            torch.allclose(Y_utf, Y)
+            self.assertTrue(torch.allclose(Y_utf, Y))
             self.assertIsNone(Yvar_utf)
 
             # subset_output
@@ -227,8 +228,8 @@ class TestOutcomeTransforms(BotorchTestCase):
             tf.eval()
             self.assertFalse(tf.training)
             Y_utf, Yvar_utf = tf.untransform(Y_tf, Yvar_tf)
-            torch.allclose(Y_utf, Y)
-            torch.allclose(Yvar_utf, Yvar)
+            self.assertTrue(torch.allclose(Y_utf, Y))
+            self.assertTrue(torch.allclose(Yvar_utf, Yvar))
 
             # error on untransform_posterior
             with self.assertRaises(NotImplementedError):
@@ -465,3 +466,117 @@ class TestOutcomeTransforms(BotorchTestCase):
             # error on untransform_posterior
             with self.assertRaises(NotImplementedError):
                 tf.untransform_posterior(None)
+
+    def test_power(self, seed=0):
+        torch.random.manual_seed(seed)
+
+        ms = (1, 2)
+        batch_shapes = (torch.Size(), torch.Size([2]))
+        dtypes = (torch.float, torch.double)
+        power = 1 / 3
+
+        # test transform and untransform
+        for m, batch_shape, dtype in itertools.product(ms, batch_shapes, dtypes):
+
+            # test init
+            tf = Power(power=power)
+            self.assertTrue(tf.training)
+            self.assertIsNone(tf._outputs)
+
+            # no observation noise
+            Y = torch.rand(*batch_shape, 3, m, device=self.device, dtype=dtype)
+            Y_tf, Yvar_tf = tf(Y, None)
+            self.assertTrue(tf.training)
+            self.assertTrue(torch.allclose(Y_tf, Y.pow(power)))
+            self.assertIsNone(Yvar_tf)
+            tf.eval()
+            self.assertFalse(tf.training)
+            Y_utf, Yvar_utf = tf.untransform(Y_tf, Yvar_tf)
+            self.assertTrue(torch.allclose(Y_utf, Y))
+            self.assertIsNone(Yvar_utf)
+
+            # subset_output
+            tf_subset = tf.subset_output(idcs=[0])
+            Y_tf_subset, Yvar_tf_subset = tf_subset(Y[..., [0]])
+            self.assertTrue(torch.equal(Y_tf[..., [0]], Y_tf_subset))
+            self.assertIsNone(Yvar_tf_subset)
+
+            # test error if observation noise present
+            tf = Power(power=power)
+            Y = torch.rand(*batch_shape, 3, m, device=self.device, dtype=dtype)
+            Yvar = 1e-8 + torch.rand(
+                *batch_shape, 3, m, device=self.device, dtype=dtype
+            )
+            with self.assertRaises(NotImplementedError):
+                tf(Y, Yvar)
+            tf.eval()
+            with self.assertRaises(NotImplementedError):
+                tf.untransform(Y, Yvar)
+
+            # untransform_posterior
+            tf = Power(power=power)
+            Y_tf, Yvar_tf = tf(Y, None)
+            tf.eval()
+            shape = batch_shape + torch.Size([3, m])
+            posterior = _get_test_posterior(shape, device=self.device, dtype=dtype)
+            p_utf = tf.untransform_posterior(posterior)
+            self.assertIsInstance(p_utf, TransformedPosterior)
+            self.assertEqual(p_utf.device.type, self.device.type)
+            self.assertTrue(p_utf.dtype == dtype)
+
+            samples = p_utf.rsample()
+            self.assertEqual(samples.shape, torch.Size([1]) + shape)
+            samples = p_utf.rsample(sample_shape=torch.Size([4]))
+            self.assertEqual(samples.shape, torch.Size([4]) + shape)
+            samples2 = p_utf.rsample(sample_shape=torch.Size([4, 2]))
+            self.assertEqual(samples2.shape, torch.Size([4, 2]) + shape)
+
+        # test transforming a subset of outcomes
+        for batch_shape, dtype in itertools.product(batch_shapes, dtypes):
+
+            m = 2
+            outputs = [-1]
+
+            # test init
+            tf = Power(power=power, outputs=outputs)
+            self.assertTrue(tf.training)
+            # cannot normalize indices b/c we don't know dimension yet
+            self.assertEqual(tf._outputs, [-1])
+
+            # no observation noise
+            Y = torch.rand(*batch_shape, 3, m, device=self.device, dtype=dtype)
+            Y_tf, Yvar_tf = tf(Y, None)
+            self.assertTrue(tf.training)
+            self.assertTrue(torch.allclose(Y_tf[..., 1], Y[..., 1].pow(power)))
+            self.assertTrue(torch.allclose(Y_tf[..., 0], Y[..., 0]))
+            self.assertIsNone(Yvar_tf)
+            tf.eval()
+            self.assertFalse(tf.training)
+            Y_utf, Yvar_utf = tf.untransform(Y_tf, Yvar_tf)
+            self.assertTrue(torch.allclose(Y_utf, Y))
+            self.assertIsNone(Yvar_utf)
+
+            # subset_output
+            with self.assertRaises(NotImplementedError):
+                tf_subset = tf.subset_output(idcs=[0])
+
+            # with observation noise
+            tf = Power(power=power, outputs=outputs)
+            Y = torch.rand(*batch_shape, 3, m, device=self.device, dtype=dtype)
+            Yvar = 1e-8 + torch.rand(
+                *batch_shape, 3, m, device=self.device, dtype=dtype
+            )
+            with self.assertRaises(NotImplementedError):
+                tf(Y, Yvar)
+
+            # error on untransform_posterior
+            with self.assertRaises(NotImplementedError):
+                tf.untransform_posterior(None)
+
+            # test subset_output with positive on subset of outcomes (pos. index)
+            tf = Power(power=power, outputs=[0])
+            Y_tf, Yvar_tf = tf(Y, None)
+            tf_subset = tf.subset_output(idcs=[0])
+            Y_tf_subset, Yvar_tf_subset = tf_subset(Y[..., [0]], None)
+            self.assertTrue(torch.equal(Y_tf_subset, Y_tf[..., [0]]))
+            self.assertIsNone(Yvar_tf_subset)

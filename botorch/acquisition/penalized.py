@@ -11,17 +11,19 @@ Modules to add regularization to acquisition functions.
 from __future__ import annotations
 
 import math
-from typing import List, Optional
+from typing import Callable, List, Optional
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.analytic import AnalyticAcquisitionFunction
+from botorch.acquisition.objective import GenericMCObjective
 from botorch.exceptions import UnsupportedError
 from torch import Tensor
 
 
 class L2Penalty(torch.nn.Module):
-    r"""L2 penalty class to be added to any arbitrary acquisition function."""
+    r"""L2 penalty class to be added to any arbitrary acquisition function
+    to construct a PenalizedAcquisitionFunction."""
 
     def __init__(self, init_point: Tensor):
         r"""Initializing L2 regularization.
@@ -47,8 +49,37 @@ class L2Penalty(torch.nn.Module):
         return regularization_term
 
 
+class L1Penalty(torch.nn.Module):
+    r"""L1 penalty class to be added to any arbitrary acquisition function
+    to construct a PenalizedAcquisitionFunction."""
+
+    def __init__(self, init_point: Tensor):
+        r"""Initializing L1 regularization.
+
+        Args:
+            init_point: The "1 x dim" reference point against which
+                we want to regularize.
+        """
+        super().__init__()
+        self.init_point = init_point
+
+    def forward(self, X: Tensor) -> Tensor:
+        r"""
+        Args:
+            X: A "batch_shape x q x dim" representing the points to be evaluated.
+
+        Returns:
+            A tensor of size "batch_shape" representing the acqfn for each q-batch.
+        """
+        regularization_term = (
+            torch.norm((X - self.init_point), p=1, dim=-1).max(dim=-1).values
+        )
+        return regularization_term
+
+
 class GaussianPenalty(torch.nn.Module):
-    r"""Gaussian penalty class to be added to any arbitrary acquisition function."""
+    r"""Gaussian penalty class to be added to any arbitrary acquisition function
+    to construct a PenalizedAcquisitionFunction."""
 
     def __init__(self, init_point: Tensor, sigma: float):
         r"""Initializing Gaussian regularization.
@@ -77,7 +108,8 @@ class GaussianPenalty(torch.nn.Module):
 
 
 class GroupLassoPenalty(torch.nn.Module):
-    r"""Group lasso penalty class to be added to any arbitrary acquisition function."""
+    r"""Group lasso penalty class to be added to any arbitrary acquisition function
+    to construct a PenalizedAcquisitionFunction."""
 
     def __init__(self, init_point: Tensor, groups: List[List[int]]):
         r"""Initializing Group-Lasso regularization.
@@ -170,3 +202,94 @@ def group_lasso_regularizer(X: Tensor, groups: List[List[int]]) -> Tensor:
         ),
         dim=-1,
     )
+
+
+class L1PenaltyObjective(torch.nn.Module):
+    r"""
+    L1 penalty objective class. An instance of this class can be added to any
+    arbitrary objective to construct a PenalizedMCObjective.
+    """
+
+    def __init__(self, init_point: Tensor):
+        r"""Initializing L1 penalty objective.
+
+        Args:
+            init_point: The "1 x dim" reference point against which
+                we want to regularize.
+        """
+        super().__init__()
+        self.init_point = init_point
+
+    def forward(self, X: Tensor) -> Tensor:
+        r"""
+        Args:
+            X: A "batch_shape x q x dim" representing the points to be evaluated.
+
+        Returns:
+            A "1 x batch_shape x q" tensor representing the penalty for each point.
+            The first dimension corresponds to the dimension of MC samples.
+        """
+        return torch.norm((X - self.init_point), p=1, dim=-1).unsqueeze(dim=0)
+
+
+class PenalizedMCObjective(GenericMCObjective):
+    r"""Penalized MC objective.
+
+    Allows to construct a penaltized MC-objective by adding a penalty term to
+    the original objective.
+
+        mc_acq(X) = objective(X) + penalty_objective(X)
+
+    Note: PenalizedMCObjective allows adding penalty at the MCObjective level,
+    different from the AcquisitionFunction level in PenalizedAcquisitionFunction.
+
+    Example:
+        >>> regularization_parameter = 0.01
+        >>> init_point = torch.zeros(3) # assume data dim is 3
+        >>> objective = lambda Y, X: torch.sqrt(Y).sum(dim=-1)
+        >>> l1_penalty_objective = L1PenaltyObjective(init_point=init_point)
+        >>> l1_penalized_objective = PenalizedMCObjective(
+                objective, l1_penalty_objective, regularization_parameter
+            )
+        >>> samples = sampler(posterior)
+                objective, l1_penalty_objective, regularization_parameter
+    """
+
+    def __init__(
+        self,
+        objective: Callable[[Tensor, Optional[Tensor]], Tensor],
+        penalty_objective: torch.nn.Module,
+        regularization_parameter: float,
+    ) -> None:
+        r"""Penalized MC objective.
+
+        Args:
+            objective: A callable `f(samples, X)` mapping a
+                `sample_shape x batch-shape x q x m`-dim Tensor `samples` and
+                an optional `batch-shape x q x d`-dim Tensor `X` to a
+                `sample_shape x batch-shape x q`-dim Tensor of objective values.
+            penalty_objective: A torch.nn.Module `f(X)` that takes in a
+                `batch-shape x q x d`-dim Tensor `X` and outputs a
+                `1 x batch-shape x q`-dim Tensor of penalty objective values.
+            regularization_parameter: weight of the penalty (regularization) term
+        """
+        super().__init__(objective=objective)
+        self.penalty_objective = penalty_objective
+        self.regularization_parameter = regularization_parameter
+
+    def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+        r"""Evaluate the penalized objective on the samples.
+
+        Args:
+            samples: A `sample_shape x batch_shape x q x m`-dim Tensors of
+                samples from a model posterior.
+            X: A `batch_shape x q x d`-dim tensor of inputs. Relevant only if
+                the objective depends on the inputs explicitly.
+
+        Returns:
+            A `sample_shape x batch_shape x q`-dim Tensor of objective values
+            with penalty added for each point.
+        """
+        obj = super().forward(samples=samples, X=X)
+        penalty_obj = self.penalty_objective(X)
+        return obj - self.regularization_parameter * penalty_obj

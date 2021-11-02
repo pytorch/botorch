@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import itertools
+import warnings
 
 import torch
 from botorch import fit_gpytorch_model
@@ -345,13 +346,25 @@ class TestModelListGPyTorchModel(BotorchTestCase):
             )
             train_Y1 = torch.sin(train_X1)
             train_Y2 = torch.cos(train_X2)
-            # test different batch shapes
+            # test different batch shapes (broadcastable)
             m1 = SimpleGPyTorchModel(
                 train_X1.expand(2, *train_X1.shape), train_Y1.expand(2, *train_Y1.shape)
             )
             m2 = SimpleGPyTorchModel(train_X2, train_Y2)
             model = SimpleModelListGPyTorchModel(m1, m2)
             self.assertEqual(model.num_outputs, 2)
+            with warnings.catch_warnings(record=True) as ws:
+                self.assertEqual(model.batch_shape, torch.Size([2]))
+                msg = (
+                    "Component models of SimpleModelListGPyTorchModel have "
+                    "different batch shapes"
+                )
+                self.assertTrue(any(msg in str(w.message) for w in ws))
+            # test different batch shapes (not broadcastable)
+            m2 = SimpleGPyTorchModel(
+                train_X2.expand(3, *train_X2.shape), train_Y2.expand(3, *train_Y2.shape)
+            )
+            model = SimpleModelListGPyTorchModel(m1, m2)
             with self.assertRaises(NotImplementedError):
                 model.batch_shape
             # test same batch shape
@@ -410,7 +423,7 @@ class TestModelListGPyTorchModel(BotorchTestCase):
             m2 = SimpleGPyTorchModel(train_X2, train_Y2, input_transform=m2_tf)
             # test `input_transform.to(X)` call
             self.assertEqual(m2_tf.add_value.dtype, dtype)
-            self.assertEqual(m2_tf.add_value.device, self.device)
+            self.assertEqual(m2_tf.add_value.device.type, self.device.type)
             # train models to have the train inputs preprocessed
             for m in [m1, m2]:
                 mll = ExactMarginalLogLikelihood(m.likelihood, m)

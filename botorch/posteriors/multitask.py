@@ -120,6 +120,8 @@ class MultitaskGPPosterior(GPyTorchPosterior):
                         *sample_shape,
                         *batch_shape,
                         appended_shape - base_samples.shape[-1],
+                        dtype=base_samples.dtype,
+                        device=base_samples.device,
                     )
                     base_samples = torch.cat((base_samples, new_base_samples), dim=-1)
                     base_samples = base_samples.unsqueeze(-1)
