@@ -273,10 +273,19 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
         if m != 2:  # pragma: no cover
             raise ValueError("`get_mvar_set_cpu` only supports `m=2` outcomes!")
         # Generate sets of all unique values in each output dimension.
-        unique_outcomes = [Y[:, i].unique(sorted=True).tolist()[::-1] for i in range(m)]
+        # Note that points in MVaR are bounded from above by the
+        # independent VaR of each objective. Hence, we only need to
+        # consider the unique outcomes that are less than or equal to
+        # the VaR of the independent objectives
+        var_alpha_idx = ceil(self.alpha * self.n_w) - 1
+        Y_sorted = Y.topk(Y.shape[0] - var_alpha_idx, dim=0, largest=False).values
+        unique_outcomes_list = [
+            Y_sorted[:, i].unique().tolist()[::-1] for i in range(m)
+        ]
         # Convert this into a list of m dictionaries mapping values to indices.
         unique_outcomes = [
-            dict(zip(outcomes, range(len(outcomes)))) for outcomes in unique_outcomes
+            dict(zip(outcomes, range(len(outcomes))))
+            for outcomes in unique_outcomes_list
         ]
         # Initialize a tensor counting the number of points in Y that a given grid point
         # is dominated by. This will essentially be a non-normalized CDF.
@@ -286,9 +295,19 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
             device=Y.device,
         )
         # populate the tensor, counting the dominated points.
-        for y_ in Y:
-            starting_idcs = [unique_outcomes[i][y_[i].item()] for i in range(m)]
+        # we only need to consider points in Y where at least one
+        # objective is less than the max objective value in
+        # unique_outcomes_list
+        max_vals = torch.tensor(
+            [o[0] for o in unique_outcomes_list], dtype=Y.dtype, device=Y.device
+        )
+        mask = (Y < max_vals).any(dim=-1)
+        counter_tensor += self.n_w - mask.sum()
+        Y_pruned = Y[mask]
+        for y_ in Y_pruned:
+            starting_idcs = [unique_outcomes[i].get(y_[i].item(), 0) for i in range(m)]
             counter_tensor[starting_idcs[0] :, starting_idcs[1] :] += 1
+
         # Get the count alpha-level points should have.
         alpha_count = ceil(self.alpha * self.n_w)
         # Get the alpha level indices.
@@ -343,13 +362,20 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
         if Y.dim() == 2:
             Y = Y.unsqueeze(0)
         batch, m = Y.shape[0], Y.shape[-1]
+        # Note that points in MVaR are bounded from above by the
+        # independent VaR of each objective. Hence, we only need to
+        # consider the unique outcomes that are less than or equal to
+        # the VaR of the independent objectives
+        var_alpha_idx = ceil(self.alpha * self.n_w) - 1
+        n_points = Y.shape[-2] - var_alpha_idx
+        Y_sorted = Y.topk(n_points, dim=-2, largest=False).values
         # `y_grid` is the grid formed by all inputs in each batch.
         if m == 2:
             # This is significantly faster but only works with m=2.
             y_grid = torch.stack(
                 [
-                    Y[..., 0].repeat_interleave(repeats=self.n_w, dim=-1),
-                    Y[..., 1].repeat(1, self.n_w),
+                    Y_sorted[..., 0].repeat_interleave(repeats=n_points, dim=-1),
+                    Y_sorted[..., 1].repeat(1, n_points),
                 ],
                 dim=-1,
             )
@@ -357,7 +383,7 @@ class MVaR(MultiOutputRiskMeasureMCObjective):
             y_grid = torch.stack(
                 [
                     torch.stack(
-                        torch.meshgrid([Y[b, :, i] for i in range(m)]),
+                        torch.meshgrid([Y_sorted[b, :, i] for i in range(m)]),
                         dim=-1,
                     ).view(-1, m)
                     for b in range(batch)
