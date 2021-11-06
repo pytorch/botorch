@@ -70,7 +70,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     python_requires=">=3.7",
-    setup_requires=["setuptools_scm"],
+    setup_requires=["setuptools-scm"],
     use_scm_version={
         "root": ".",
         "relative_to": __file__,
