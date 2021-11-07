@@ -1203,7 +1203,8 @@ shape <cite>broadcast(test_batch_shape, model.batch_shape) x q x m</cite>.</p>
 <span class="sig-name descname"><span class="pre">state_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/testing.html#MockModel.state_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.testing.MockModel.state_dict" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a dictionary containing a whole state of the module.</p>
 <p>Both parameters and persistent buffers (e.g. running averages) are
-included. Keys are corresponding parameter and buffer names.</p>
+included. Keys are corresponding parameter and buffer names.
+Parameters and buffers set to <code class="docutils literal notranslate"><span class="pre">None</span></code> are not included.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p>a dictionary containing a whole state of the module</p>
@@ -1246,6 +1247,12 @@ in <a class="reference internal" href="#botorch.utils.testing.MockModel.state_di
 <dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">NamedTuple</span></code> with <code class="docutils literal notranslate"><span class="pre">missing_keys</span></code> and <code class="docutils literal notranslate"><span class="pre">unexpected_keys</span></code> fields</p>
 </dd>
 </dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If a parameter or buffer is registered as <code class="docutils literal notranslate"><span class="pre">None</span></code> and its corresponding key
+exists in <a class="reference internal" href="#botorch.utils.testing.MockModel.state_dict" title="botorch.utils.testing.MockModel.state_dict"><code class="xref py py-attr docutils literal notranslate"><span class="pre">state_dict</span></code></a>, <a class="reference internal" href="#botorch.utils.testing.MockModel.load_state_dict" title="botorch.utils.testing.MockModel.load_state_dict"><code class="xref py py-meth docutils literal notranslate"><span class="pre">load_state_dict()</span></code></a> will raise a
+<code class="docutils literal notranslate"><span class="pre">RuntimeError</span></code>.</p>
+</div>
 </dd></dl>
 </dd></dl>
 <dl class="py class">

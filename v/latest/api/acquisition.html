@@ -2421,6 +2421,11 @@ design points <cite>X</cite>.</p>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
 <p>Abstract base class for objectives.</p>
 <p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="botorch.acquisition.objective.AcquisitionObjective.training">
 <span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.objective.AcquisitionObjective.training" title="Permalink to this definition">¶</a></dt>
@@ -2498,6 +2503,11 @@ elements in <cite>self.weights</cite>.</p>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.objective.AcquisitionObjective" title="botorch.acquisition.objective.AcquisitionObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.objective.AcquisitionObjective</span></code></a></p>
 <p>Abstract base class for MC-based objectives.</p>
 <p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.acquisition.objective.MCAcquisitionObjective.forward">
 <em class="property"><span class="pre">abstract</span> </em><span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/objective.html#MCAcquisitionObjective.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.objective.MCAcquisitionObjective.forward" title="Permalink to this definition">¶</a></dt>
@@ -2544,6 +2554,11 @@ values (assuming maximization).</p>
 </pre></div>
 </div>
 <p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.acquisition.objective.IdentityMCObjective.forward">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/objective.html#IdentityMCObjective.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.objective.IdentityMCObjective.forward" title="Permalink to this definition">¶</a></dt>
@@ -2767,6 +2782,11 @@ weighted by feasibility (assuming maximization).</p>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.objective.AcquisitionObjective" title="botorch.acquisition.objective.AcquisitionObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.objective.AcquisitionObjective</span></code></a></p>
 <p>Abstract base class for MC multi-output objectives.</p>
 <p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective.forward">
 <em class="property"><span class="pre">abstract</span> </em><span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#MCMultiOutputObjective.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective.forward" title="Permalink to this definition">¶</a></dt>
@@ -2987,6 +3007,11 @@ dimension).</p>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.objective.AcquisitionObjective" title="botorch.acquisition.objective.AcquisitionObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.objective.AcquisitionObjective</span></code></a></p>
 <p>Abstract base class for multi-output analyic objectives.</p>
 <p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.acquisition.multi_objective.objective.AnalyticMultiOutputObjective.forward">
 <em class="property"><span class="pre">abstract</span> </em><span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#AnalyticMultiOutputObjective.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.AnalyticMultiOutputObjective.forward" title="Permalink to this definition">¶</a></dt>
@@ -3013,6 +3038,11 @@ dimension).</p>
 <em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.objective.</span></span><span class="sig-name descname"><span class="pre">IdentityAnalyticMultiOutputObjective</span></span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#IdentityAnalyticMultiOutputObjective"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.IdentityAnalyticMultiOutputObjective" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.multi_objective.objective.AnalyticMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.AnalyticMultiOutputObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.multi_objective.objective.AnalyticMultiOutputObjective</span></code></a></p>
 <p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.acquisition.multi_objective.objective.IdentityAnalyticMultiOutputObjective.forward">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/objective.html#IdentityAnalyticMultiOutputObjective.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.objective.IdentityAnalyticMultiOutputObjective.forward" title="Permalink to this definition">¶</a></dt>
@@ -3089,6 +3119,11 @@ To be used in a context where there is an objective/cost tradeoff.</p>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
 <p>Abstract base class for cost-aware utilities.</p>
 <p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.acquisition.cost_aware.CostAwareUtility.forward">
 <em class="property"><span class="pre">abstract</span> </em><span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deltas</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/cost_aware.html#CostAwareUtility.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.cost_aware.CostAwareUtility.forward" title="Permalink to this definition">¶</a></dt>
@@ -3447,6 +3482,9 @@ posterior samples. The q-batches should be ordered so that each
 <span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="pre">:</span> <span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.risk_measures.WorstCase.training" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
+</section>
+<section id="multi-output-risk-measures">
+<h3>Multi-Output Risk Measures<a class="headerlink" href="#multi-output-risk-measures" title="Permalink to this headline">¶</a></h3>
 </section>
 </section>
 <section id="utilities">

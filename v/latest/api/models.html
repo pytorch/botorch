@@ -46,6 +46,9 @@ transform / untransform cycle introduces numerical errors which lead
 to upstream errors during training.</p></li>
 </ul>
 </dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
 </dl>
 <p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
 <dl class="py method">
@@ -248,6 +251,11 @@ GPyTorch Model class such as an ExactGP.</p>
 <p>The easiest way to use this is to subclass a model from a GPyTorch model
 class (e.g. an <cite>ExactGP</cite>) and this <cite>GPyTorchModel</cite>. See e.g. <cite>SingleTaskGP</cite>.</p>
 <p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.models.gpytorch.GPyTorchModel.batch_shape">
 <em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">batch_shape</span></span><em class="property"><span class="pre">:</span> <span class="pre">torch.Size</span></em><a class="headerlink" href="#botorch.models.gpytorch.GPyTorchModel.batch_shape" title="Permalink to this definition">¶</a></dt>
@@ -338,6 +346,11 @@ observations passed in via kwargs).</p>
 <p>This model should be used when the same training data is used for all outputs.
 Outputs are modeled independently by using a different batch for each output.</p>
 <p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel.get_batch_dimensions">
 <em class="property"><span class="pre">static</span> </em><span class="sig-name descname"><span class="pre">get_batch_dimensions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gpytorch.html#BatchedMultiOutputGPyTorchModel.get_batch_dimensions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel.get_batch_dimensions" title="Permalink to this definition">¶</a></dt>
@@ -473,6 +486,11 @@ observations passed in via kwargs).</p>
 <p>This is meant to be used with a gpytorch ModelList wrapper for independent
 evaluation of submodels.</p>
 <p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.models.gpytorch.ModelListGPyTorchModel.batch_shape">
 <em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">batch_shape</span></span><em class="property"><span class="pre">:</span> <span class="pre">torch.Size</span></em><a class="headerlink" href="#botorch.models.gpytorch.ModelListGPyTorchModel.batch_shape" title="Permalink to this definition">¶</a></dt>
@@ -582,6 +600,11 @@ observations passed in via kwargs).</p>
 <p>This class provides the <cite>posterior</cite> method to models that implement a
 “long-format” multi-task GP in the style of <cite>MultiTaskGP</cite>.</p>
 <p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.gpytorch.MultiTaskGPyTorchModel.posterior">
 <span class="sig-name descname"><span class="pre">posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gpytorch.html#MultiTaskGPyTorchModel.posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gpytorch.MultiTaskGPyTorchModel.posterior" title="Permalink to this definition">¶</a></dt>
@@ -627,6 +650,11 @@ known cost functions for cost-aware acquisition utilities.</p>
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.model.Model</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
 <p>Abstract base class for deterministic models.</p>
 <p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.deterministic.DeterministicModel.forward">
 <em class="property"><span class="pre">abstract</span> </em><span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/deterministic.html#DeterministicModel.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.deterministic.DeterministicModel.forward" title="Permalink to this definition">¶</a></dt>
@@ -2858,6 +2886,11 @@ the model posterior back to the original space.</p>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
 <p>Abstract base class for outcome transforms.</p>
 <p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.transforms.outcome.OutcomeTransform.forward">
 <em class="property"><span class="pre">abstract</span> </em><span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Yvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/outcome.html#OutcomeTransform.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.outcome.OutcomeTransform.forward" title="Permalink to this definition">¶</a></dt>

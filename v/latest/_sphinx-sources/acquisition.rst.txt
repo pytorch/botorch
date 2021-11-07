@@ -116,6 +116,11 @@ Risk Measures
 .. automodule:: botorch.acquisition.risk_measures
     :members:
 
+Multi-Output Risk Measures
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.acquisition.multi_objective.multi_output_risk_measures
+    :members:
+
 
 Utilities
 -------------------------------------------
