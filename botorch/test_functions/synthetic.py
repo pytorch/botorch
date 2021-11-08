@@ -234,7 +234,7 @@ class Griewank(SyntheticTestFunction):
     def evaluate_true(self, X: Tensor) -> Tensor:
         part1 = torch.sum(X ** 2 / 4000.0, dim=-1)
         d = X.shape[-1]
-        part2 = -(torch.prod(torch.cos(X / torch.sqrt(X.new(range(1, d + 1))))))
+        part2 = -(torch.prod(torch.cos(X / torch.sqrt(X.new(range(1, d + 1)))), dim=-1))
         return part1 + part2 + 1.0
 
 
