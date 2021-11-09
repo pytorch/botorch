@@ -2645,6 +2645,18 @@ If the last dimension is not a batch dimension, then the
 mean is considered.</p>
 <p>Note: This kernel is NOT differentiable w.r.t. the inputs.</p>
 <p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ard_num_dims</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – </p></li>
+<li><p><strong>batch_shape</strong> (<em>Optional</em><em>[</em><em>torch.Size</em><em>]</em>) – </p></li>
+<li><p><strong>active_dims</strong> (<em>Optional</em><em>[</em><em>Tuple</em><em>[</em><em>int</em><em>, </em><em>...</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>lengthscale_prior</strong> (<em>Optional</em><em>[</em><em>gpytorch.priors.prior.Prior</em><em>]</em>) – </p></li>
+<li><p><strong>lengthscale_constraint</strong> (<em>Optional</em><em>[</em><em>gpytorch.constraints.constraints.Interval</em><em>]</em>) – </p></li>
+<li><p><strong>eps</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – </p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 <span class="target" id="module-botorch.models.kernels.downsampling"></span><dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.kernels.downsampling.DownsamplingKernel">
