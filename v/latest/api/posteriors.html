@@ -32,12 +32,12 @@
 <p>Abstract base module for all botorch posteriors.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.posteriors.posterior.Posterior">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.posteriors.posterior.</span></span><span class="sig-name descname"><span class="pre">Posterior</span></span><a class="reference internal" href="_modules/botorch/posteriors/posterior.html#Posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.posteriors.posterior.Posterior" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.posteriors.posterior.</span></span><span class="sig-name descname"><span class="pre">Posterior</span></span><a class="reference internal" href="_modules/botorch/posteriors/posterior.html#Posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.posteriors.posterior.Posterior" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
 <p>Abstract base class for botorch posteriors.</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.posteriors.posterior.Posterior.base_sample_shape">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">base_sample_shape</span></span><em class="property"><span class="pre">:</span> <span class="pre">torch.Size</span></em><a class="headerlink" href="#botorch.posteriors.posterior.Posterior.base_sample_shape" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">base_sample_shape</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.Size</span></em><a class="headerlink" href="#botorch.posteriors.posterior.Posterior.base_sample_shape" title="Permalink to this definition">¶</a></dt>
 <dd><p>The shape of a base sample used for constructing posterior samples.</p>
 <p>This function may be overwritten by subclasses in case <cite>base_sample_shape</cite>
 and <cite>event_shape</cite> do not agree (e.g. if the posterior is a Multivariate
@@ -45,32 +45,32 @@ Gaussian that is not full rank).</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.posteriors.posterior.Posterior.device">
-<em class="property"><span class="pre">abstract</span> <span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">device</span></span><em class="property"><span class="pre">:</span> <span class="pre">torch.device</span></em><a class="headerlink" href="#botorch.posteriors.posterior.Posterior.device" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">abstract</span><span class="w"> </span><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">device</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.device</span></em><a class="headerlink" href="#botorch.posteriors.posterior.Posterior.device" title="Permalink to this definition">¶</a></dt>
 <dd><p>The torch device of the posterior.</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.posteriors.posterior.Posterior.dtype">
-<em class="property"><span class="pre">abstract</span> <span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">dtype</span></span><em class="property"><span class="pre">:</span> <span class="pre">torch.dtype</span></em><a class="headerlink" href="#botorch.posteriors.posterior.Posterior.dtype" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">abstract</span><span class="w"> </span><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dtype</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.dtype</span></em><a class="headerlink" href="#botorch.posteriors.posterior.Posterior.dtype" title="Permalink to this definition">¶</a></dt>
 <dd><p>The torch dtype of the posterior.</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.posteriors.posterior.Posterior.event_shape">
-<em class="property"><span class="pre">abstract</span> <span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">event_shape</span></span><em class="property"><span class="pre">:</span> <span class="pre">torch.Size</span></em><a class="headerlink" href="#botorch.posteriors.posterior.Posterior.event_shape" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">abstract</span><span class="w"> </span><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">event_shape</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.Size</span></em><a class="headerlink" href="#botorch.posteriors.posterior.Posterior.event_shape" title="Permalink to this definition">¶</a></dt>
 <dd><p>The event shape (i.e. the shape of a single sample).</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.posteriors.posterior.Posterior.mean">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">mean</span></span><em class="property"><span class="pre">:</span> <span class="pre">torch.Tensor</span></em><a class="headerlink" href="#botorch.posteriors.posterior.Posterior.mean" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">mean</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.Tensor</span></em><a class="headerlink" href="#botorch.posteriors.posterior.Posterior.mean" title="Permalink to this definition">¶</a></dt>
 <dd><p>The mean of the posterior as a <cite>(b) x n x m</cite>-dim Tensor.</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.posteriors.posterior.Posterior.variance">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">variance</span></span><em class="property"><span class="pre">:</span> <span class="pre">torch.Tensor</span></em><a class="headerlink" href="#botorch.posteriors.posterior.Posterior.variance" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">variance</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.Tensor</span></em><a class="headerlink" href="#botorch.posteriors.posterior.Posterior.variance" title="Permalink to this definition">¶</a></dt>
 <dd><p>The variance of the posterior as a <cite>(b) x n x m</cite>-dim Tensor.</p>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.posteriors.posterior.Posterior.rsample">
-<em class="property"><span class="pre">abstract</span> </em><span class="sig-name descname"><span class="pre">rsample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/posteriors/posterior.html#Posterior.rsample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.posteriors.posterior.Posterior.rsample" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">rsample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/posteriors/posterior.html#Posterior.rsample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.posteriors.posterior.Posterior.rsample" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sample from the posterior (with gradients).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -125,7 +125,7 @@ This is used for deterministic optimization.</p></li>
 <p>Posterior Module to be used with GPyTorch models.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.posteriors.gpytorch.GPyTorchPosterior">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.posteriors.gpytorch.</span></span><span class="sig-name descname"><span class="pre">GPyTorchPosterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mvn</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/posteriors/gpytorch.html#GPyTorchPosterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.posteriors.gpytorch.GPyTorchPosterior" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.posteriors.gpytorch.</span></span><span class="sig-name descname"><span class="pre">GPyTorchPosterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mvn</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/posteriors/gpytorch.html#GPyTorchPosterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.posteriors.gpytorch.GPyTorchPosterior" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.posteriors.posterior.Posterior</span></code></a></p>
 <p>A posterior based on GPyTorch’s multi-variate Normal distributions.</p>
 <p>A posterior based on GPyTorch’s multi-variate Normal distributions.</p>
@@ -140,22 +140,22 @@ MultitaskMultivariateNormal (multi-output case).</p>
 </dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.posteriors.gpytorch.GPyTorchPosterior.base_sample_shape">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">base_sample_shape</span></span><em class="property"><span class="pre">:</span> <span class="pre">torch.Size</span></em><a class="headerlink" href="#botorch.posteriors.gpytorch.GPyTorchPosterior.base_sample_shape" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">base_sample_shape</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.Size</span></em><a class="headerlink" href="#botorch.posteriors.gpytorch.GPyTorchPosterior.base_sample_shape" title="Permalink to this definition">¶</a></dt>
 <dd><p>The shape of a base sample used for constructing posterior samples.</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.posteriors.gpytorch.GPyTorchPosterior.device">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">device</span></span><em class="property"><span class="pre">:</span> <span class="pre">torch.device</span></em><a class="headerlink" href="#botorch.posteriors.gpytorch.GPyTorchPosterior.device" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">device</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.device</span></em><a class="headerlink" href="#botorch.posteriors.gpytorch.GPyTorchPosterior.device" title="Permalink to this definition">¶</a></dt>
 <dd><p>The torch device of the posterior.</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.posteriors.gpytorch.GPyTorchPosterior.dtype">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">dtype</span></span><em class="property"><span class="pre">:</span> <span class="pre">torch.dtype</span></em><a class="headerlink" href="#botorch.posteriors.gpytorch.GPyTorchPosterior.dtype" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dtype</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.dtype</span></em><a class="headerlink" href="#botorch.posteriors.gpytorch.GPyTorchPosterior.dtype" title="Permalink to this definition">¶</a></dt>
 <dd><p>The torch dtype of the posterior.</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.posteriors.gpytorch.GPyTorchPosterior.event_shape">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">event_shape</span></span><em class="property"><span class="pre">:</span> <span class="pre">torch.Size</span></em><a class="headerlink" href="#botorch.posteriors.gpytorch.GPyTorchPosterior.event_shape" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">event_shape</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.Size</span></em><a class="headerlink" href="#botorch.posteriors.gpytorch.GPyTorchPosterior.event_shape" title="Permalink to this definition">¶</a></dt>
 <dd><p>The event shape (i.e. the shape of a single sample) of the posterior.</p>
 </dd></dl>
 <dl class="py method">
@@ -183,12 +183,12 @@ This is used for deterministic optimization.</p></li>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.posteriors.gpytorch.GPyTorchPosterior.mean">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">mean</span></span><em class="property"><span class="pre">:</span> <span class="pre">torch.Tensor</span></em><a class="headerlink" href="#botorch.posteriors.gpytorch.GPyTorchPosterior.mean" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">mean</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.Tensor</span></em><a class="headerlink" href="#botorch.posteriors.gpytorch.GPyTorchPosterior.mean" title="Permalink to this definition">¶</a></dt>
 <dd><p>The posterior mean.</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.posteriors.gpytorch.GPyTorchPosterior.variance">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">variance</span></span><em class="property"><span class="pre">:</span> <span class="pre">torch.Tensor</span></em><a class="headerlink" href="#botorch.posteriors.gpytorch.GPyTorchPosterior.variance" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">variance</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.Tensor</span></em><a class="headerlink" href="#botorch.posteriors.gpytorch.GPyTorchPosterior.variance" title="Permalink to this definition">¶</a></dt>
 <dd><p>The posterior variance.</p>
 </dd></dl>
 </dd></dl>
@@ -233,7 +233,7 @@ Supports <cite>t</cite>-batching.</p></li>
 models.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.posteriors.deterministic.DeterministicPosterior">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.posteriors.deterministic.</span></span><span class="sig-name descname"><span class="pre">DeterministicPosterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/posteriors/deterministic.html#DeterministicPosterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.posteriors.deterministic.DeterministicPosterior" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.posteriors.deterministic.</span></span><span class="sig-name descname"><span class="pre">DeterministicPosterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/posteriors/deterministic.html#DeterministicPosterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.posteriors.deterministic.DeterministicPosterior" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.posteriors.posterior.Posterior</span></code></a></p>
 <p>Deterministic posterior.</p>
 <dl class="field-list simple">
@@ -246,27 +246,27 @@ models.</p>
 </dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.posteriors.deterministic.DeterministicPosterior.device">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">device</span></span><em class="property"><span class="pre">:</span> <span class="pre">torch.device</span></em><a class="headerlink" href="#botorch.posteriors.deterministic.DeterministicPosterior.device" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">device</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.device</span></em><a class="headerlink" href="#botorch.posteriors.deterministic.DeterministicPosterior.device" title="Permalink to this definition">¶</a></dt>
 <dd><p>The torch device of the posterior.</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.posteriors.deterministic.DeterministicPosterior.dtype">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">dtype</span></span><em class="property"><span class="pre">:</span> <span class="pre">torch.dtype</span></em><a class="headerlink" href="#botorch.posteriors.deterministic.DeterministicPosterior.dtype" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dtype</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.dtype</span></em><a class="headerlink" href="#botorch.posteriors.deterministic.DeterministicPosterior.dtype" title="Permalink to this definition">¶</a></dt>
 <dd><p>The torch dtype of the posterior.</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.posteriors.deterministic.DeterministicPosterior.event_shape">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">event_shape</span></span><em class="property"><span class="pre">:</span> <span class="pre">torch.Size</span></em><a class="headerlink" href="#botorch.posteriors.deterministic.DeterministicPosterior.event_shape" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">event_shape</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.Size</span></em><a class="headerlink" href="#botorch.posteriors.deterministic.DeterministicPosterior.event_shape" title="Permalink to this definition">¶</a></dt>
 <dd><p>The event shape (i.e. the shape of a single sample).</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.posteriors.deterministic.DeterministicPosterior.mean">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">mean</span></span><em class="property"><span class="pre">:</span> <span class="pre">torch.Tensor</span></em><a class="headerlink" href="#botorch.posteriors.deterministic.DeterministicPosterior.mean" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">mean</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.Tensor</span></em><a class="headerlink" href="#botorch.posteriors.deterministic.DeterministicPosterior.mean" title="Permalink to this definition">¶</a></dt>
 <dd><p>The mean of the posterior as a <cite>(b) x n x m</cite>-dim Tensor.</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.posteriors.deterministic.DeterministicPosterior.variance">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">variance</span></span><em class="property"><span class="pre">:</span> <span class="pre">torch.Tensor</span></em><a class="headerlink" href="#botorch.posteriors.deterministic.DeterministicPosterior.variance" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">variance</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.Tensor</span></em><a class="headerlink" href="#botorch.posteriors.deterministic.DeterministicPosterior.variance" title="Permalink to this definition">¶</a></dt>
 <dd><p>The variance of the posterior as a <cite>(b) x n x m</cite>-dim Tensor.</p>
 <p>As this is a deterministic posterior, this is a tensor of zeros.</p>
 </dd></dl>
@@ -302,7 +302,7 @@ validation).</p></li>
 <span id="higher-order-gp-posterior"></span><h3>Higher Order GP Posterior<a class="headerlink" href="#module-botorch.posteriors.higher_order" title="Permalink to this headline">¶</a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.posteriors.higher_order.HigherOrderGPPosterior">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.posteriors.higher_order.</span></span><span class="sig-name descname"><span class="pre">HigherOrderGPPosterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mvn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">joint_covariance_matrix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_train_covar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_train_covar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_targets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_outputs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/posteriors/higher_order.html#HigherOrderGPPosterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.posteriors.higher_order.HigherOrderGPPosterior" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.posteriors.higher_order.</span></span><span class="sig-name descname"><span class="pre">HigherOrderGPPosterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mvn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">joint_covariance_matrix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_train_covar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_train_covar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_targets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_outputs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/posteriors/higher_order.html#HigherOrderGPPosterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.posteriors.higher_order.HigherOrderGPPosterior" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.posteriors.gpytorch.GPyTorchPosterior</span></code></a></p>
 <p>Posterior class for a Higher order Gaussian process model <a class="reference internal" href="models.html#zhe2019hogp" id="id1"><span>[Zhe2019hogp]</span></a>. Extends
 the standard GPyTorch posterior class by overwriting the rsample method.
@@ -335,12 +335,12 @@ tensor</p></li>
 </dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.posteriors.higher_order.HigherOrderGPPosterior.base_sample_shape">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">base_sample_shape</span></span><a class="headerlink" href="#botorch.posteriors.higher_order.HigherOrderGPPosterior.base_sample_shape" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">base_sample_shape</span></span><a class="headerlink" href="#botorch.posteriors.higher_order.HigherOrderGPPosterior.base_sample_shape" title="Permalink to this definition">¶</a></dt>
 <dd><p>The shape of a base sample used for constructing posterior samples.</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.posteriors.higher_order.HigherOrderGPPosterior.event_shape">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">event_shape</span></span><a class="headerlink" href="#botorch.posteriors.higher_order.HigherOrderGPPosterior.event_shape" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">event_shape</span></span><a class="headerlink" href="#botorch.posteriors.higher_order.HigherOrderGPPosterior.event_shape" title="Permalink to this definition">¶</a></dt>
 <dd><p>The event shape (i.e. the shape of a single sample) of the posterior.</p>
 </dd></dl>
 <dl class="py method">
@@ -378,7 +378,7 @@ This is used for deterministic optimization.</p></li>
 <span id="multitask-gp-posterior"></span><h3>Multitask GP Posterior<a class="headerlink" href="#module-botorch.posteriors.multitask" title="Permalink to this headline">¶</a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.posteriors.multitask.MultitaskGPPosterior">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.posteriors.multitask.</span></span><span class="sig-name descname"><span class="pre">MultitaskGPPosterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mvn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">joint_covariance_matrix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_train_covar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_diff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_mean</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_train_covar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_noise</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/posteriors/multitask.html#MultitaskGPPosterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.posteriors.multitask.MultitaskGPPosterior" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.posteriors.multitask.</span></span><span class="sig-name descname"><span class="pre">MultitaskGPPosterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mvn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">joint_covariance_matrix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_train_covar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_diff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_mean</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_train_covar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_noise</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/posteriors/multitask.html#MultitaskGPPosterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.posteriors.multitask.MultitaskGPPosterior" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.posteriors.gpytorch.GPyTorchPosterior</span></code></a></p>
 <p>Posterior class for a Kronecker Multi-task GP model using with ICM kernel.
 Extends the standard GPyTorch posterior class by overwriting the rsample
@@ -404,17 +404,17 @@ testing noise covariance</p></li>
 </dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.posteriors.multitask.MultitaskGPPosterior.base_sample_shape">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">base_sample_shape</span></span><em class="property"><span class="pre">:</span> <span class="pre">torch.Size</span></em><a class="headerlink" href="#botorch.posteriors.multitask.MultitaskGPPosterior.base_sample_shape" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">base_sample_shape</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.Size</span></em><a class="headerlink" href="#botorch.posteriors.multitask.MultitaskGPPosterior.base_sample_shape" title="Permalink to this definition">¶</a></dt>
 <dd><p>The shape of a base sample used for constructing posterior samples.</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.posteriors.multitask.MultitaskGPPosterior.device">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">device</span></span><em class="property"><span class="pre">:</span> <span class="pre">torch.device</span></em><a class="headerlink" href="#botorch.posteriors.multitask.MultitaskGPPosterior.device" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">device</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.device</span></em><a class="headerlink" href="#botorch.posteriors.multitask.MultitaskGPPosterior.device" title="Permalink to this definition">¶</a></dt>
 <dd><p>The torch device of the posterior.</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.posteriors.multitask.MultitaskGPPosterior.dtype">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">dtype</span></span><em class="property"><span class="pre">:</span> <span class="pre">torch.dtype</span></em><a class="headerlink" href="#botorch.posteriors.multitask.MultitaskGPPosterior.dtype" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dtype</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.dtype</span></em><a class="headerlink" href="#botorch.posteriors.multitask.MultitaskGPPosterior.dtype" title="Permalink to this definition">¶</a></dt>
 <dd><p>The torch dtype of the posterior.</p>
 </dd></dl>
 <dl class="py method">
@@ -447,7 +447,7 @@ This is used for deterministic optimization.</p></li>
 <span id="transformed-posterior"></span><h3>Transformed Posterior<a class="headerlink" href="#module-botorch.posteriors.transformed" title="Permalink to this headline">¶</a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.posteriors.transformed.TransformedPosterior">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">botorch.posteriors.transformed.</span></span><span class="sig-name descname"><span class="pre">TransformedPosterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_transform</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variance_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/posteriors/transformed.html#TransformedPosterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.posteriors.transformed.TransformedPosterior" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.posteriors.transformed.</span></span><span class="sig-name descname"><span class="pre">TransformedPosterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_transform</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variance_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/posteriors/transformed.html#TransformedPosterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.posteriors.transformed.TransformedPosterior" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.posteriors.posterior.Posterior</span></code></a></p>
 <p>An generic transformation of a posterior (implicitly represented)</p>
 <p>An implicitly represented transformed posterior</p>
@@ -473,32 +473,32 @@ posterior to a variance of the transformed posterior.</p></li>
 </dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.posteriors.transformed.TransformedPosterior.base_sample_shape">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">base_sample_shape</span></span><em class="property"><span class="pre">:</span> <span class="pre">torch.Size</span></em><a class="headerlink" href="#botorch.posteriors.transformed.TransformedPosterior.base_sample_shape" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">base_sample_shape</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.Size</span></em><a class="headerlink" href="#botorch.posteriors.transformed.TransformedPosterior.base_sample_shape" title="Permalink to this definition">¶</a></dt>
 <dd><p>The shape of a base sample used for constructing posterior samples.</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.posteriors.transformed.TransformedPosterior.device">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">device</span></span><em class="property"><span class="pre">:</span> <span class="pre">torch.device</span></em><a class="headerlink" href="#botorch.posteriors.transformed.TransformedPosterior.device" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">device</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.device</span></em><a class="headerlink" href="#botorch.posteriors.transformed.TransformedPosterior.device" title="Permalink to this definition">¶</a></dt>
 <dd><p>The torch device of the posterior.</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.posteriors.transformed.TransformedPosterior.dtype">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">dtype</span></span><em class="property"><span class="pre">:</span> <span class="pre">torch.dtype</span></em><a class="headerlink" href="#botorch.posteriors.transformed.TransformedPosterior.dtype" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dtype</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.dtype</span></em><a class="headerlink" href="#botorch.posteriors.transformed.TransformedPosterior.dtype" title="Permalink to this definition">¶</a></dt>
 <dd><p>The torch dtype of the posterior.</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.posteriors.transformed.TransformedPosterior.event_shape">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">event_shape</span></span><em class="property"><span class="pre">:</span> <span class="pre">torch.Size</span></em><a class="headerlink" href="#botorch.posteriors.transformed.TransformedPosterior.event_shape" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">event_shape</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.Size</span></em><a class="headerlink" href="#botorch.posteriors.transformed.TransformedPosterior.event_shape" title="Permalink to this definition">¶</a></dt>
 <dd><p>The event shape (i.e. the shape of a single sample).</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.posteriors.transformed.TransformedPosterior.mean">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">mean</span></span><em class="property"><span class="pre">:</span> <span class="pre">torch.Tensor</span></em><a class="headerlink" href="#botorch.posteriors.transformed.TransformedPosterior.mean" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">mean</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.Tensor</span></em><a class="headerlink" href="#botorch.posteriors.transformed.TransformedPosterior.mean" title="Permalink to this definition">¶</a></dt>
 <dd><p>The mean of the posterior as a <cite>batch_shape x n x m</cite>-dim Tensor.</p>
 </dd></dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.posteriors.transformed.TransformedPosterior.variance">
-<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">variance</span></span><em class="property"><span class="pre">:</span> <span class="pre">torch.Tensor</span></em><a class="headerlink" href="#botorch.posteriors.transformed.TransformedPosterior.variance" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">variance</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.Tensor</span></em><a class="headerlink" href="#botorch.posteriors.transformed.TransformedPosterior.variance" title="Permalink to this definition">¶</a></dt>
 <dd><p>The variance of the posterior as a <cite>batch_shape x n x m</cite>-dim Tensor.</p>
 </dd></dl>
 <dl class="py method">
