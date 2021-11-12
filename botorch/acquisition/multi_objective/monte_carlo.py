@@ -16,7 +16,8 @@ References
 
 .. [Daulton2021nehvi]
     S. Daulton, M. Balandat, and E. Bakshy. Parallel Bayesian Optimization of
-    Multiple Noisy Objectives. ArXiv, 2021.
+    Multiple Noisy Objectives with Expected Hypervolume Improvement. Advances
+    in Neural Information Processing Systems 34, 2021.
 
 """
 
