@@ -1,0 +1,33 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="PyPackageRequirementsInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredPackages">
+        <value>
+          <list size="20">
+            <item index="0" class="java.lang.String" itemvalue="traitlets" />
+            <item index="1" class="java.lang.String" itemvalue="scipy" />
+            <item index="2" class="java.lang.String" itemvalue="decorator" />
+            <item index="3" class="java.lang.String" itemvalue="jupyter-core" />
+            <item index="4" class="java.lang.String" itemvalue="pathos" />
+            <item index="5" class="java.lang.String" itemvalue="networkx" />
+            <item index="6" class="java.lang.String" itemvalue="tornado" />
+            <item index="7" class="java.lang.String" itemvalue="parso" />
+            <item index="8" class="java.lang.String" itemvalue="ptyprocess" />
+            <item index="9" class="java.lang.String" itemvalue="paramz" />
+            <item index="10" class="java.lang.String" itemvalue="pickleshare" />
+            <item index="11" class="java.lang.String" itemvalue="jupyter-client" />
+            <item index="12" class="java.lang.String" itemvalue="pexpect" />
+            <item index="13" class="java.lang.String" itemvalue="pandas" />
+            <item index="14" class="java.lang.String" itemvalue="ipython-genutils" />
+            <item index="15" class="java.lang.String" itemvalue="Pygments" />
+            <item index="16" class="java.lang.String" itemvalue="pyzmq" />
+            <item index="17" class="java.lang.String" itemvalue="matplotlib" />
+            <item index="18" class="java.lang.String" itemvalue="prompt-toolkit" />
+            <item index="19" class="java.lang.String" itemvalue="entrypoints" />
+          </list>
+        </value>
+      </option>
+    </inspection_tool>
+  </profile>
+</component>
