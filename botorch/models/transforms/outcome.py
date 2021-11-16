@@ -327,7 +327,7 @@ class Standardize(OutcomeTransform):
                 "untransform_posterior"
             )
         is_mtgp_posterior = False
-        if isinstance(posterior, GPyTorchPosterior):
+        if type(posterior) is GPyTorchPosterior:
             is_mtgp_posterior = posterior._is_mt
         if not self._m == posterior.event_shape[-1] and not is_mtgp_posterior:
             raise RuntimeError(
@@ -335,8 +335,9 @@ class Standardize(OutcomeTransform):
                 f"{self._m} and posterior {posterior.event_shape[-1]}."
             )
 
-        if not isinstance(posterior, GPyTorchPosterior):
+        if type(posterior) is not GPyTorchPosterior:
             # fall back to TransformedPosterior
+            # this applies to subclasses of GPyTorchPosterior like MultitaskGPPosterior
             return TransformedPosterior(
                 posterior=posterior,
                 sample_transform=lambda s: self.means + self.stdvs * s,
