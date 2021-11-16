@@ -636,8 +636,10 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
                 self.assertIsInstance(posterior_f.mvn, MultitaskMultivariateNormal)
             else:
                 self.assertIsInstance(posterior_f, TransformedPosterior)
-                self.assertIsInstance(posterior_f._posterior.mvn, MultitaskMultivariateNormal)
-            
+                self.assertIsInstance(
+                    posterior_f._posterior.mvn, MultitaskMultivariateNormal
+                )
+
             self.assertEqual(posterior_f.mean.shape, torch.Size([2, 2]))
             self.assertEqual(posterior_f.variance.shape, torch.Size([2, 2]))
 
@@ -668,7 +670,9 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
                 self.assertIsInstance(posterior_f.mvn, MultitaskMultivariateNormal)
             else:
                 self.assertIsInstance(posterior_f, TransformedPosterior)
-                self.assertIsInstance(posterior_f._posterior.mvn, MultitaskMultivariateNormal)
+                self.assertIsInstance(
+                    posterior_f._posterior.mvn, MultitaskMultivariateNormal
+                )
             self.assertEqual(posterior_f.mean.shape, torch.Size([3, 2, 2]))
             self.assertEqual(posterior_f.variance.shape, torch.Size([3, 2, 2]))
 
