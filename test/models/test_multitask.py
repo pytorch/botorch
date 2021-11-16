@@ -7,6 +7,7 @@
 import itertools
 import math
 import warnings
+from botorch.posteriors.transformed import TransformedPosterior
 
 import torch
 from botorch.exceptions.warnings import OptimizationWarning
@@ -630,8 +631,13 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
             # test posterior
             test_x = torch.rand(2, 2, **tkwargs)
             posterior_f = model.posterior(test_x)
-            self.assertIsInstance(posterior_f, GPyTorchPosterior)
-            self.assertIsInstance(posterior_f.mvn, MultitaskMultivariateNormal)
+            if not use_octf:
+                self.assertIsInstance(posterior_f, GPyTorchPosterior)
+                self.assertIsInstance(posterior_f.mvn, MultitaskMultivariateNormal)
+            else:
+                self.assertIsInstance(posterior_f, TransformedPosterior)
+                self.assertIsInstance(posterior_f._posterior.mvn, MultitaskMultivariateNormal)
+            
             self.assertEqual(posterior_f.mean.shape, torch.Size([2, 2]))
             self.assertEqual(posterior_f.variance.shape, torch.Size([2, 2]))
 
@@ -657,8 +663,12 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
             # test posterior (batch eval)
             test_x = torch.rand(3, 2, 2, **tkwargs)
             posterior_f = model.posterior(test_x)
-            self.assertIsInstance(posterior_f, GPyTorchPosterior)
-            self.assertIsInstance(posterior_f.mvn, MultitaskMultivariateNormal)
+            if not use_octf:
+                self.assertIsInstance(posterior_f, GPyTorchPosterior)
+                self.assertIsInstance(posterior_f.mvn, MultitaskMultivariateNormal)
+            else:
+                self.assertIsInstance(posterior_f, TransformedPosterior)
+                self.assertIsInstance(posterior_f._posterior.mvn, MultitaskMultivariateNormal)
             self.assertEqual(posterior_f.mean.shape, torch.Size([3, 2, 2]))
             self.assertEqual(posterior_f.variance.shape, torch.Size([3, 2, 2]))
 
