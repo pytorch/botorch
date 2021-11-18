@@ -205,7 +205,7 @@ class PosteriorList(Posterior):
         """
         if base_samples is not None:
             split_sizes = [
-                p.base_sample_shape[-1] if p.base_sample_shape is not None else 0
+                p.base_sample_shape[-1] if p.base_sample_shape else 0
                 for p in self.posteriors
             ]
             base_sample_splits = torch.split(base_samples, split_sizes, dim=-1)
