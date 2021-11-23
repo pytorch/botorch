@@ -391,7 +391,7 @@ class TestHeteroskedasticSingleTaskGP(TestSingleTaskGP):
     ):
         with manual_seed(0):
             train_X, train_Y = _get_random_data(batch_shape=batch_shape, m=m, **tkwargs)
-        train_Yvar = (0.1 + 0.1 * torch.rand_like(train_Y)) ** 2
+            train_Yvar = (0.1 + 0.1 * torch.rand_like(train_Y)) ** 2
         model_kwargs = {
             "train_X": train_X,
             "train_Y": train_Y,
