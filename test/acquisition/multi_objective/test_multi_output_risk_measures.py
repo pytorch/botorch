@@ -218,7 +218,7 @@ class TestMVaR(BotorchTestCase):
             expected_set = torch.stack(
                 [torch.linspace(1, 3, 3), torch.linspace(3, 1, 3)],
                 dim=-1,
-            )
+            ).to(Y)
             # check that both versions produce the correct set
             cpu_mvar = mvar.get_mvar_set_cpu(Y)  # For 2d input, returns k x m
             gpu_mvar = mvar.get_mvar_set_gpu(Y)[0]  # returns a batch list of k x m
@@ -298,7 +298,9 @@ class TestMVaR(BotorchTestCase):
             expected = [
                 mvar.get_mvar_set_cpu(Y).mean(dim=0) for Y in samples.view(4, 10, 2)
             ]
-            self.assertTrue(torch.equal(mvar_exp, torch.stack(expected).view(2, 2, 2)))
+            self.assertTrue(
+                torch.allclose(mvar_exp, torch.stack(expected).view(2, 2, 2))
+            )
 
             # m > 2
             samples = torch.rand(2, 20, 3, **tkwargs)
