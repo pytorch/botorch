@@ -72,7 +72,7 @@ def apply_constraints_nonnegative_soft(
     each constraint.
 
     Args:
-        obj: A `n_samples x b x q [x m']`-dim Tensor of objective values.
+        obj: A `n_samples x b x q (x m')`-dim Tensor of objective values.
         constraints: A list of callables, each mapping a Tensor of size `b x q x m`
             to a Tensor of size `b x q`, where negative values imply feasibility.
             This callable must support broadcasting. Only relevant for multi-
@@ -81,7 +81,7 @@ def apply_constraints_nonnegative_soft(
         eta: The temperature parameter for the sigmoid function.
 
     Returns:
-        A `n_samples x b x q [x m']`-dim tensor of feasibility-weighted objectives.
+        A `n_samples x b x q (x m')`-dim tensor of feasibility-weighted objectives.
     """
     obj = obj.clamp_min(0)  # Enforce non-negativity with constraints
     for constraint in constraints:
@@ -123,13 +123,13 @@ def apply_constraints(
     r"""Apply constraints using an infeasible_cost `M` for negative objectives.
 
     This allows feasibility-weighting an objective for the case where the
-    objective can be negative by usingthe following strategy:
-    (1) Add `M` to make obj nonnegative;
+    objective can be negative by using the following strategy:
+    (1) Add `M` to make obj non-negative;
     (2) Apply constraints using the sigmoid approximation;
     (3) Shift by `-M`.
 
     Args:
-        obj: A `n_samples x b x q [x m']`-dim Tensor of objective values.
+        obj: A `n_samples x b x q (x m')`-dim Tensor of objective values.
         constraints: A list of callables, each mapping a Tensor of size `b x q x m`
             to a Tensor of size `b x q`, where negative values imply feasibility.
             This callable must support broadcasting. Only relevant for multi-
@@ -139,9 +139,9 @@ def apply_constraints(
         eta: The temperature parameter of the sigmoid function.
 
     Returns:
-        A `n_samples x b x q [x m']`-dim tensor of feasibility-weighted objectives.
+        A `n_samples x b x q (x m')`-dim tensor of feasibility-weighted objectives.
     """
-    # obj has dimensions n_samples x b x q [x m']
+    # obj has dimensions n_samples x b x q (x m')
     obj = obj.add(infeasible_cost)  # now it is nonnegative
     obj = apply_constraints_nonnegative_soft(
         obj=obj, constraints=constraints, samples=samples, eta=eta
