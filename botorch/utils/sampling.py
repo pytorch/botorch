@@ -749,11 +749,9 @@ class DelaunayPolytopeSampler(PolytopeSampler):
                 if "Points cannot contain NaN" in str(e):
                     raise ValueError("Polytope is unbounded.")
                 raise e  # pragma: no cover
-            polytopes = torch.tensor(
-                [delaunay.points[s] for s in delaunay.simplices],
-                device=self.A.device,
-                dtype=self.A.dtype,
-            )
+            polytopes = torch.from_numpy(
+                np.array([delaunay.points[s] for s in delaunay.simplices]),
+            ).to(self.A)
             volumes = torch.stack([torch.det(p[1:] - p[0]).abs() for p in polytopes])
             self._polytopes = polytopes
             self._p = volumes / volumes.sum()
