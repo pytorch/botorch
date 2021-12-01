@@ -97,9 +97,7 @@ class TestFitGPyTorchModel(BotorchTestCase):
                     self.assertTrue(
                         any(issubclass(w.category, OptimizationWarning)) for w in ws
                     )
-                    self.assertFalse(
-                        any(MAX_RETRY_MSG in str(w.message) for w in ws)
-                    )
+                    self.assertFalse(any(MAX_RETRY_MSG in str(w.message) for w in ws))
             model = mll.model
             # Make sure all of the parameters changed
             self.assertGreater(model.likelihood.raw_noise.abs().item(), 1e-3)
@@ -241,9 +239,7 @@ class TestFitGPyTorchModel(BotorchTestCase):
             mll.to(device=self.device, dtype=dtype)
             with self.assertLogs(level="DEBUG") as logs:
                 fit_gpytorch_model(mll, options=options, max_retries=2)
-            self.assertTrue(
-                any(["NotPSDError" in l for l in logs.output])
-            )
+            self.assertTrue(any(["NotPSDError" in log for log in logs.output]))
             # ensure we can handle NaNErrors in the optimizer
             with mock.patch.object(SingleTaskGP, "__call__", side_effect=NanError):
                 gp = SingleTaskGP(X_train, Y_train, likelihood=test_likelihood)
