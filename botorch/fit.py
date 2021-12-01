@@ -23,6 +23,7 @@ from botorch.optim.fit import fit_gpytorch_scipy
 from botorch.optim.utils import sample_all_priors
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
+from gpytorch.utils.errors import NotPSDError
 
 
 FAILED_CONVERSION_MSG = (
@@ -80,7 +81,6 @@ def fit_gpytorch_model(
                 tf = mll.model.outcome_transform
                 mll.model.outcome_transform = None
             model_list = batched_to_model_list(mll.model)
-            model_ = model_list_to_batched(model_list)
             mll_ = SumMarginalLogLikelihood(model_list.likelihood, model_list)
             fit_gpytorch_model(
                 mll=mll_,
@@ -121,12 +121,22 @@ def fit_gpytorch_model(
             if retry > 0:  # use normal initial conditions on first try
                 mll.model.load_state_dict(original_state_dict)
                 sample_all_priors(mll.model)
-            mll, _ = optimizer(mll, track_iterations=False, **kwargs)
+            try:
+                mll, _ = optimizer(mll, track_iterations=False, **kwargs)
+            except NotPSDError:
+                retry += 1
+                logging.log(
+                    logging.DEBUG,
+                    f"Fitting failed on try {retry} due to a NotPSDError.",
+                )
+                continue
         has_optwarning = False
         for w in ws:
+            # Do not count reaching `maxiter` as an optimization failure/
+            if "ITERATIONS REACHED LIMIT" in str(w.message):
+                continue
             has_optwarning |= issubclass(w.category, OptimizationWarning)
             warnings.warn(w.message, w.category)
-        # TODO: this counts hitting `maxiter` as an optimization failure!
         if not has_optwarning:
             mll.eval()
             return mll
