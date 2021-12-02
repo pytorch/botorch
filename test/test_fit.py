@@ -262,6 +262,19 @@ class TestFitGPyTorchModel(BotorchTestCase):
                         )
                     )
 
+            # Failure due to optimization warning
+
+            def optimize_w_warning(mll, **kwargs):
+                warnings.warn("Dummy warning.", OptimizationWarning)
+                return mll, None
+
+            mll = self._getModel()
+            with self.assertLogs(level="DEBUG") as logs, settings.debug(True):
+                fit_gpytorch_model(mll, optimizer=optimize_w_warning, max_retries=2)
+            self.assertTrue(
+                any("Fitting failed on try 1." in log for log in logs.output)
+            )
+
     def test_fit_gpytorch_model_torch(self):
         self.test_fit_gpytorch_model(optimizer=fit_gpytorch_torch)
 
