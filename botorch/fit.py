@@ -132,8 +132,12 @@ def fit_gpytorch_model(
                 continue
         has_optwarning = False
         for w in ws:
-            # Do not count reaching `maxiter` as an optimization failure/
+            # Do not count reaching `maxiter` as an optimization failure.
             if "ITERATIONS REACHED LIMIT" in str(w.message):
+                logging.log(
+                    logging.DEBUG,
+                    "Fitting ended early due to reaching the iteration limit.",
+                )
                 continue
             has_optwarning |= issubclass(w.category, OptimizationWarning)
             warnings.warn(w.message, w.category)

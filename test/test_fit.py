@@ -239,7 +239,7 @@ class TestFitGPyTorchModel(BotorchTestCase):
             mll.to(device=self.device, dtype=dtype)
             with self.assertLogs(level="DEBUG") as logs:
                 fit_gpytorch_model(mll, options=options, max_retries=2)
-            self.assertTrue(any(["NotPSDError" in log for log in logs.output]))
+            self.assertTrue(any("NotPSDError" in log for log in logs.output))
             # ensure we can handle NaNErrors in the optimizer
             with mock.patch.object(SingleTaskGP, "__call__", side_effect=NanError):
                 gp = SingleTaskGP(X_train, Y_train, likelihood=test_likelihood)
@@ -253,13 +253,14 @@ class TestFitGPyTorchModel(BotorchTestCase):
                 mll = self._getModel()
                 with self.assertLogs(level="DEBUG") as logs:
                     fit_gpytorch_model(mll, max_retries=2)
-                self.assertEqual(
-                    logs.output,
-                    [
-                        "DEBUG:root:Fitting failed on try 1 due to a NotPSDError.",
-                        "DEBUG:root:Fitting failed on try 2 due to a NotPSDError.",
-                    ],
-                )
+                for retry in [1, 2]:
+                    self.assertTrue(
+                        any(
+                            f"Fitting failed on try {retry} due to a NotPSDError."
+                            in log
+                            for log in logs.output
+                        )
+                    )
 
     def test_fit_gpytorch_model_torch(self):
         self.test_fit_gpytorch_model(optimizer=fit_gpytorch_torch)
