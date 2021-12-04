@@ -17,9 +17,10 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
+from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.exceptions.errors import BotorchError
 from botorch.exceptions.warnings import BotorchWarning
-from botorch.models.gpytorch import GPyTorchModel
+from botorch.models.gpytorch import ModelListGPyTorchModel, GPyTorchModel
 from botorch.optim.numpy_converter import TorchAttr, set_params_with_array
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
@@ -241,3 +242,44 @@ def _handle_numerical_errors(
     ):
         return float("nan"), np.full_like(x, "nan")
     raise error  # pragma: nocover
+
+
+def get_X_baseline(acq_function: AcquisitionFunction) -> Optional[Tensor]:
+    r"""Extract X_baseline from an acquisition function.
+
+    This tries to find the baseline set of points. First, this checks if the
+    acquisition function has an `X_baseline` attribute. If it does not,
+    then this method attempts to use the model's `train_inputs` as `X_baseline`.
+
+    Args:
+        acq_function: The acquisition function.
+
+    Returns
+        An optional `n x d`-dim tensor of baseline points. This is None if no
+            baseline points are found.
+    """
+    try:
+        X = acq_function.X_baseline
+        # if there are no baseline points, use training points
+        if X.shape[0] == 0:
+            raise BotorchError
+    except (BotorchError, AttributeError):
+        try:
+            # for entropy MOO methods
+            model = acq_function.mo_model
+        except AttributeError:
+            model = acq_function.model
+        try:
+            # make sure input transforms are not applied
+            model.train()
+            if isinstance(model, ModelListGPyTorchModel):
+                X = model.models[0].train_inputs[0]
+            else:
+                X = model.train_inputs[0]
+        except (BotorchError, AttributeError):
+            warnings.warn("Failed to extract X_baseline.", BotorchWarning)
+            return
+    # just use one batch
+    while X.ndim > 2:
+        X = X[0]
+    return X
