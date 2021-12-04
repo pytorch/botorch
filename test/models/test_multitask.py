@@ -7,9 +7,8 @@
 import itertools
 import math
 import warnings
-from botorch.posteriors.transformed import TransformedPosterior
-
 import torch
+
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.fit import fit_gpytorch_model
 from botorch.models.multitask import (
@@ -20,6 +19,7 @@ from botorch.models.multitask import (
 from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Standardize
 from botorch.posteriors import GPyTorchPosterior
+from botorch.posteriors.transformed import TransformedPosterior
 from botorch.utils.containers import TrainingData
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
