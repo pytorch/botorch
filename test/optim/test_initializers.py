@@ -22,6 +22,7 @@ from botorch.acquisition.multi_objective.monte_carlo import (
     qNoisyExpectedHypervolumeImprovement,
 )
 from botorch.exceptions import BadInitialCandidatesWarning, SamplingWarning
+from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.exceptions.warnings import BotorchWarning
 from botorch.models import SingleTaskGP
 from botorch.optim import initialize_q_batch, initialize_q_batch_nonneg
@@ -31,6 +32,7 @@ from botorch.optim.initializers import (
     gen_value_function_initial_conditions,
     sample_truncated_normal_perturbations,
     sample_points_around_best,
+    sample_perturbed_subset_dims,
 )
 from botorch.sampling import IIDNormalSampler
 from botorch.utils.sampling import draw_sobol_samples
@@ -490,6 +492,73 @@ class TestSampleAroundBest(BotorchTestCase):
                 self.assertTrue((perturbed_X >= 1).all())
                 self.assertTrue((perturbed_X <= 2).all())
 
+    def test_sample_perturbed_subset_dims(self):
+        tkwargs = {"device": self.device}
+        n_discrete_points = 5
+
+        # test that errors are raised
+        with self.assertRaises(BotorchTensorDimensionError):
+            sample_perturbed_subset_dims(
+                X=torch.zeros(1, 1),
+                n_discrete_points=1,
+                sigma=1e-3,
+                bounds=torch.zeros(1, 2, 1),
+            )
+        with self.assertRaises(BotorchTensorDimensionError):
+            sample_perturbed_subset_dims(
+                X=torch.zeros(1, 1, 1),
+                n_discrete_points=1,
+                sigma=1e-3,
+                bounds=torch.zeros(2, 1),
+            )
+        for dtype in (torch.float, torch.double):
+            for n_best in (1, 2):
+                tkwargs["dtype"] = dtype
+                bounds = torch.zeros(2, 21, **tkwargs)
+                bounds[1] = 1
+                X = torch.rand(n_best, 21, **tkwargs)
+                # basic test
+                with mock.patch(
+                    "botorch.optim.initializers.draw_sobol_samples",
+                ) as mock_sobol:
+                    perturbed_X = sample_perturbed_subset_dims(
+                        X=X,
+                        n_discrete_points=n_discrete_points,
+                        qmc=False,
+                        sigma=1e-3,
+                        bounds=bounds,
+                    )
+                    mock_sobol.assert_not_called()
+                self.assertEqual(perturbed_X.shape, torch.Size([n_discrete_points, 21]))
+                self.assertTrue((perturbed_X >= 0).all())
+                self.assertTrue((perturbed_X <= 1).all())
+                # test qmc
+                with mock.patch(
+                    "botorch.optim.initializers.draw_sobol_samples",
+                    wraps=draw_sobol_samples,
+                ) as mock_sobol:
+                    perturbed_X = sample_perturbed_subset_dims(
+                        X=X,
+                        n_discrete_points=n_discrete_points,
+                        sigma=1e-3,
+                        bounds=bounds,
+                    )
+                    mock_sobol.assert_called_once()
+                self.assertEqual(perturbed_X.shape, torch.Size([n_discrete_points, 21]))
+                self.assertTrue((perturbed_X >= 0).all())
+                self.assertTrue((perturbed_X <= 1).all())
+                # for each point in perturbed_X compute the number of
+                # dimensions it has in common with each point in X
+                # and take the maximum number
+                max_equal_dims = (
+                    (perturbed_X.unsqueeze(0) == X.unsqueeze(1))
+                    .sum(dim=-1)
+                    .max(dim=0)
+                    .values
+                )
+                # check that at least one dimension is perturbed
+                self.assertTrue((20 - max_equal_dims >= 1).all())
+
     def test_sample_points_around_best(self):
         tkwargs = {"device": self.device}
         _bounds = torch.ones(2, 2)
@@ -503,12 +572,16 @@ class TestSampleAroundBest(BotorchTestCase):
             )
             # test NEI with X_baseline
             acqf = qNoisyExpectedImprovement(model, X_baseline=X_train)
-            X_rnd = sample_points_around_best(
-                acq_function=acqf,
-                n_discrete_points=4,
-                sigma=1e-3,
-                bounds=bounds,
-            )
+            with mock.patch(
+                "botorch.optim.initializers.sample_perturbed_subset_dims"
+            ) as mock_subset_dims:
+                X_rnd = sample_points_around_best(
+                    acq_function=acqf,
+                    n_discrete_points=4,
+                    sigma=1e-3,
+                    bounds=bounds,
+                )
+                mock_subset_dims.assert_not_called()
             self.assertTrue(X_rnd.shape, torch.Size([4, 2]))
             self.assertTrue((X_rnd >= 1).all())
             self.assertTrue((X_rnd <= 2).all())
@@ -571,7 +644,6 @@ class TestSampleAroundBest(BotorchTestCase):
                     dim=-1,
                 )
                 moo_model = MockModel(MockPosterior(mean=Y_train, samples=Y_train))
-
                 acqf = qNoisyExpectedHypervolumeImprovement(
                     moo_model,
                     ref_point=ref_point,
@@ -602,3 +674,34 @@ class TestSampleAroundBest(BotorchTestCase):
                     self.assertEqual(eq_mask[idcs].sum(), 4)
                 self.assertTrue((X_rnd >= 1).all())
                 self.assertTrue((X_rnd <= 2).all())
+            # test that subset_dims is called if d>=21
+            X_train = 1 + torch.rand(20, 21, **tkwargs)
+            model = MockModel(
+                MockPosterior(mean=(2 * X_train + 1).sum(dim=-1, keepdim=True))
+            )
+            bounds = torch.ones(2, 21, **tkwargs)
+            bounds[1] = 2
+            # test NEI with X_baseline
+            acqf = qNoisyExpectedImprovement(model, X_baseline=X_train)
+            with mock.patch(
+                "botorch.optim.initializers.sample_perturbed_subset_dims",
+                wraps=sample_perturbed_subset_dims,
+            ) as mock_subset_dims:
+                X_rnd = sample_points_around_best(
+                    acq_function=acqf, n_discrete_points=5, sigma=1e-3, bounds=bounds
+                )
+            self.assertTrue(X_rnd.shape, torch.Size([5, 2]))
+            self.assertTrue((X_rnd >= 1).all())
+            self.assertTrue((X_rnd <= 2).all())
+            mock_subset_dims.assert_called_once()
+            # test tiny prob_perturb to make sure we perturb at least one dimension
+            X_rnd = sample_points_around_best(
+                acq_function=acqf,
+                n_discrete_points=5,
+                sigma=1e-3,
+                bounds=bounds,
+                prob_perturb=1e-8,
+            )
+            self.assertTrue(
+                ((X_rnd.unsqueeze(0) == X_train.unsqueeze(1)).all(dim=-1)).sum() == 0
+            )
