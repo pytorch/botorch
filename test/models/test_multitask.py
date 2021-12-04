@@ -7,8 +7,8 @@
 import itertools
 import math
 import warnings
-import torch
 
+import torch
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.fit import fit_gpytorch_model
 from botorch.models.multitask import (
