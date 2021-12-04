@@ -17,8 +17,8 @@ requirements:
     - setuptools<48  # setup_requires was deprecated in v48.0.0
     - setuptools-scm
   run:
-    - pytorch>=1.8.1
-    - gpytorch>=1.5.1
+    - pytorch>=1.9
+    - gpytorch>=1.6
     - scipy
 
 test:
