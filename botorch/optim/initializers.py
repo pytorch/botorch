@@ -17,17 +17,22 @@ from botorch.acquisition.knowledge_gradient import (
     qKnowledgeGradient,
 )
 from botorch.acquisition.utils import is_nonnegative
-from botorch.exceptions.warnings import BadInitialCandidatesWarning, SamplingWarning
+from botorch.exceptions.warnings import (
+    BadInitialCandidatesWarning,
+    SamplingWarning,
+)
 from botorch.models.model import Model
-from botorch.optim.utils import fix_features
+from botorch.optim.utils import fix_features, get_X_baseline
+from botorch.utils.multi_objective.pareto import is_non_dominated
 from botorch.utils.sampling import (
     batched_multinomial,
     draw_sobol_samples,
     manual_seed,
     get_polytope_samples,
 )
-from botorch.utils.transforms import standardize
+from botorch.utils.transforms import unnormalize, normalize, standardize
 from torch import Tensor
+from torch.distributions import Normal
 from torch.quasirandom import SobolEngine
 
 
@@ -137,7 +142,22 @@ def gen_batch_initial_conditions(
                     .view(n, q, -1)
                     .cpu()
                 )
-
+            # sample points around best
+            if options.get("sample_around_best", False):
+                X_best_rnd = sample_points_around_best(
+                    acq_function=acq_function,
+                    n_discrete_points=n * q,
+                    sigma=options.get("sample_around_best_std", 1e-3),
+                    bounds=bounds,
+                )
+                if X_best_rnd is not None:
+                    X_rnd = torch.cat(
+                        [
+                            X_rnd,
+                            X_best_rnd.view(n, q, bounds.shape[-1]).cpu(),
+                        ],
+                        dim=0,
+                    )
             X_rnd = fix_features(X_rnd, fixed_features=fixed_features)
             with torch.no_grad():
                 if batch_limit is None:
@@ -566,3 +586,118 @@ def initialize_q_batch_nonneg(
     if max_idx not in idcs:
         idcs[-1] = max_idx
     return X[idcs]
+
+
+def sample_points_around_best(
+    acq_function: AcquisitionFunction,
+    n_discrete_points: int,
+    sigma: float,
+    bounds: Tensor,
+    best_pct: float = 5.0,
+) -> Optional[Tensor]:
+    r"""Find best points and sample nearby points.
+
+    Args:
+        acq_function: The acquisition function.
+        n_discrete_points: The number of points to sample.
+        sigma: The standard deviation of the additive gaussian noise for
+            perturbing the best points.
+        bounds: A `2 x d`-dim tensor containing the bounds.
+        best_pct: The percentage of best points to perturb.
+
+    Returns:
+        An optional `n_discrete_points x d`-dim tensor containing the
+            sampled points. This is None if no baseline points are found.
+    """
+    X = get_X_baseline(acq_function=acq_function)
+    if X is None:
+        return
+    with torch.no_grad():
+        posterior = acq_function.model.posterior(X)
+        mean = posterior.mean
+        while mean.ndim > 2:
+            # take average over batch dims
+            mean = mean.mean(dim=0)
+
+        f_pred = acq_function.objective(mean)
+        try:
+            # handle constraints for EHVI-based acquisition functions
+            constraints = acq_function.constraints
+            if constraints is not None:
+                neg_violation = -torch.stack(
+                    [c(mean).clamp_min(0.0) for c in constraints], dim=-1
+                ).sum(dim=-1)
+                feas = neg_violation == 0
+                if feas.any():
+                    f_pred[~feas] = float("-inf")
+                else:
+                    # set objective equal to negative violation
+                    f_pred = neg_violation
+        except AttributeError:
+            pass
+        if f_pred.ndim == mean.ndim and f_pred.shape[-1] > 1:
+            # multi-objective
+            # find pareto set
+            is_pareto = is_non_dominated(f_pred)
+            best_X = X[is_pareto]
+        else:
+            n_best = max(1, round(X.shape[0] * best_pct / 100))
+            best_idcs = torch.topk(f_pred, n_best).indices
+            best_X = X[best_idcs]
+    return sample_truncated_normal_perturbations(
+        X=best_X,
+        n_discrete_points=n_discrete_points,
+        sigma=sigma,
+        bounds=bounds,
+    )
+
+
+def sample_truncated_normal_perturbations(
+    X: Tensor,
+    n_discrete_points: int,
+    sigma: float,
+    bounds: Tensor,
+    qmc: bool = True,
+) -> Tensor:
+    r"""Sample points around `X`.
+
+    Sample perturbed points around `X` such that the added perturbations
+    are sampled from N(0, sigma^2 I) and truncated to be within [0,1]^d.
+
+    Args:
+        X: A `n x d`-dim tensor starting points.
+        n_discrete_points: The number of points to sample.
+        sigma: The standard deviation of the additive gaussian noise for
+            perturbing the points.
+        bounds: A `2 x d`-dim tensor containing the bounds.
+        qmc: A boolean indicating whether to use qmc.
+
+    Returns:
+        A `n_discrete_points x d`-dim tensor containing the sampled points.
+    """
+    X = normalize(X, bounds=bounds)
+    d = X.shape[1]
+    # sample points from N(X_center, sigma^2 I), truncated to be within
+    # [0, 1]^d.
+    if X.shape[0] > 1:
+        rand_indices = torch.randint(X.shape[0], (n_discrete_points,), device=X.device)
+        X = X[rand_indices]
+    if qmc:
+        std_bounds = torch.zeros(2, d, dtype=X.dtype, device=X.device)
+        std_bounds[1] = 1
+        u = draw_sobol_samples(bounds=std_bounds, n=n_discrete_points, q=1).squeeze(1)
+    else:
+        u = torch.rand((n_discrete_points, d), dtype=X.dtype, device=X.device)
+    # compute bounds to sample from
+    a = -X
+    b = 1 - X
+    # compute z-score of bounds
+    alpha = a / sigma
+    beta = b / sigma
+    normal = Normal(0, 1)
+    cdf_alpha = normal.cdf(alpha)
+    # use inverse transform
+    perturbation = normal.icdf(cdf_alpha + u * (normal.cdf(beta) - cdf_alpha)) * sigma
+    # add perturbation and clip points that are still outside
+    perturbed_X = (X + perturbation).clamp(0.0, 1.0)
+    return unnormalize(perturbed_X, bounds=bounds)

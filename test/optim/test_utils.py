@@ -13,8 +13,21 @@ from copy import deepcopy
 import numpy as np
 import torch
 from botorch import settings
+from botorch.acquisition.monte_carlo import (
+    qExpectedImprovement,
+    qNoisyExpectedImprovement,
+)
+from botorch.acquisition.multi_objective.max_value_entropy_search import (
+    qMultiObjectiveMaxValueEntropy,
+)
+from botorch.acquisition.multi_objective.monte_carlo import (
+    qExpectedHypervolumeImprovement,
+    qNoisyExpectedHypervolumeImprovement,
+)
 from botorch.exceptions import BotorchError
+from botorch.exceptions.warnings import BotorchWarning
 from botorch.models import ModelListGP, SingleTaskGP
+from botorch.models.transforms.input import Warp
 from botorch.optim.utils import (
     _expand_bounds,
     _get_extra_mll_args,
@@ -22,8 +35,12 @@ from botorch.optim.utils import (
     columnwise_clamp,
     fix_features,
     sample_all_priors,
+    get_X_baseline,
 )
-from botorch.utils.testing import BotorchTestCase
+from botorch.utils.multi_objective.box_decompositions.non_dominated import (
+    FastNondominatedPartitioning,
+)
+from botorch.utils.testing import MockPosterior, MockModel, BotorchTestCase
 from gpytorch.kernels.matern_kernel import MaternKernel
 from gpytorch.kernels.scale_kernel import ScaleKernel
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
@@ -292,3 +309,105 @@ class TestHelpers(BotorchTestCase):
 
         with self.assertRaisesRegex(RuntimeError, "foo"):
             _handle_numerical_errors(error=RuntimeError("foo"), x=x)
+
+
+class TestGetXBaseline(BotorchTestCase):
+    def test_get_X_baseline(self):
+        tkwargs = {"device": self.device}
+        for dtype in (torch.float, torch.double):
+            tkwargs["dtype"] = dtype
+            X_train = torch.rand(20, 2, **tkwargs)
+            model = MockModel(
+                MockPosterior(mean=(2 * X_train + 1).sum(dim=-1, keepdim=True))
+            )
+            # test NEI with X_baseline
+            acqf = qNoisyExpectedImprovement(model, X_baseline=X_train[:2])
+            X = get_X_baseline(acq_function=acqf)
+            self.assertTrue(torch.equal(X, acqf.X_baseline))
+            # test EI without X_baseline
+            acqf = qExpectedImprovement(model, best_f=0.0)
+
+            with warnings.catch_warnings(record=True) as w, settings.debug(True):
+
+                X_rnd = get_X_baseline(
+                    acq_function=acqf,
+                )
+                self.assertEqual(len(w), 1)
+                self.assertTrue(issubclass(w[-1].category, BotorchWarning))
+                self.assertIsNone(X_rnd)
+
+            # set train inputs
+            model.train_inputs = (X_train,)
+            X = get_X_baseline(
+                acq_function=acqf,
+            )
+            self.assertTrue(torch.equal(X, X_train))
+            # test that we fail back to train_inputs if X_baseline is an empty tensor
+            acqf.register_buffer("X_baseline", X_train[:0])
+            X = get_X_baseline(
+                acq_function=acqf,
+            )
+            self.assertTrue(torch.equal(X, X_train))
+
+            Y_train = 2 * X_train[:2] + 1
+            moo_model = MockModel(MockPosterior(mean=Y_train, samples=Y_train))
+            ref_point = torch.zeros(2, **tkwargs)
+            # test NEHVI with X_baseline
+            acqf = qNoisyExpectedHypervolumeImprovement(
+                moo_model, ref_point=ref_point, X_baseline=X_train[:2]
+            )
+            X = get_X_baseline(
+                acq_function=acqf,
+            )
+            self.assertTrue(torch.equal(X, acqf.X_baseline))
+            # test qEHVI without train_inputs
+            acqf = qExpectedHypervolumeImprovement(
+                moo_model,
+                ref_point=ref_point,
+                partitioning=FastNondominatedPartitioning(
+                    ref_point=ref_point,
+                    Y=Y_train,
+                ),
+            )
+            # test extracting train_inputs from model list GP
+            model_list = ModelListGP(
+                SingleTaskGP(X_train, Y_train[:, :1]),
+                SingleTaskGP(X_train, Y_train[:, 1:]),
+            )
+            acqf = qExpectedHypervolumeImprovement(
+                model_list,
+                ref_point=ref_point,
+                partitioning=FastNondominatedPartitioning(
+                    ref_point=ref_point,
+                    Y=Y_train,
+                ),
+            )
+            X = get_X_baseline(
+                acq_function=acqf,
+            )
+            self.assertTrue(torch.equal(X, X_train))
+
+            # test MESMO for which we need to use
+            # `acqf.mo_model`
+            batched_mo_model = SingleTaskGP(X_train, Y_train)
+            acqf = qMultiObjectiveMaxValueEntropy(
+                batched_mo_model,
+                sample_pareto_frontiers=lambda model: torch.rand(10, 2, **tkwargs),
+            )
+            X = get_X_baseline(
+                acq_function=acqf,
+            )
+            self.assertTrue(torch.equal(X, X_train))
+            # test that if there is an input transform that is applied
+            # to the train_inputs when the model is in eval mode, we
+            # extract the untransformed train_inputs
+            model = SingleTaskGP(
+                X_train, Y_train[:, :1], input_transform=Warp(indices=[0, 1])
+            )
+            model.eval()
+            self.assertFalse(torch.equal(model.train_inputs[0], X_train))
+            acqf = qExpectedImprovement(model, best_f=0.0)
+            X = get_X_baseline(
+                acq_function=acqf,
+            )
+            self.assertTrue(torch.equal(X, X_train))
