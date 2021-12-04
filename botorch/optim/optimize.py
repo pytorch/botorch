@@ -27,13 +27,13 @@ from botorch.optim.initializers import (
 from botorch.optim.stopping import ExpMAStoppingCriterion
 from torch import Tensor
 
-INIT_OPTION_KEYS = (
+INIT_OPTION_KEYS = {
     "init_batch_limit",
     "batch_limit",
     "nonnegative",
     "sample_around_best",
     "sample_around_best_std",
-)
+}
 
 
 def optimize_acqf(
