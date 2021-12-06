@@ -1,5 +1,5 @@
 <a href="https://botorch.org">
-  <img width="350" src="https://botorch.org/img/botorch_logo_lockup.svg" alt="BoTorch Logo" />
+  <img width="350" src="https://botorch.org/img/botorch_logo_lockup.png" alt="BoTorch Logo" />
 </a>
 
 <hr/>
