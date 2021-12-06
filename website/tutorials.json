@@ -30,11 +30,11 @@
   "Multi-Objective Bayesian Optimization": [
     {
       "id": "multi_objective_bo",
-      "title": "q-Expected Hypervolume Improvement and q-ParEGO"
+      "title": "Multi-objective optimization with qEHVI, qNEHVI, and qNParEGO"
     },
     {
       "id": "constrained_multi_objective_bo",
-      "title": "Constrained q-Expected Hypervolume Improvement and q-ParEGO"
+      "title": "Constrained multi-objective optimization with qNEHVI and qParEGO"
     }
   ],
   "Bite-Sized Tutorials": [
