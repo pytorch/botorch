@@ -32,7 +32,6 @@ from botorch.models.utils import (
 )
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
-from gpytorch.lazy import lazify
 from gpytorch.likelihoods.gaussian_likelihood import FixedNoiseGaussianLikelihood
 from gpytorch.utils.broadcasting import _mul_broadcast_shape
 from torch import Tensor
@@ -344,12 +343,12 @@ class BatchedMultiOutputGPyTorchModel(GPyTorchModel):
                     mvn = self.likelihood(mvn, X)
             if self._num_outputs > 1:
                 mean_x = mvn.mean
-                covar_x = mvn.covariance_matrix
+                covar_x = mvn.lazy_covariance_matrix
                 output_indices = output_indices or range(self._num_outputs)
                 mvns = [
                     MultivariateNormal(
                         mean_x.select(dim=output_dim_idx, index=t),
-                        lazify(covar_x.select(dim=output_dim_idx, index=t)),
+                        covar_x[(slice(None),) * output_dim_idx + (t,)],
                     )
                     for t in output_indices
                 ]

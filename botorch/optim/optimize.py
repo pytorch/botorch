@@ -27,6 +27,14 @@ from botorch.optim.initializers import (
 from botorch.optim.stopping import ExpMAStoppingCriterion
 from torch import Tensor
 
+INIT_OPTION_KEYS = {
+    "init_batch_limit",
+    "batch_limit",
+    "nonnegative",
+    "sample_around_best",
+    "sample_around_best_std",
+}
+
 
 def optimize_acqf(
     acq_function: AcquisitionFunction,
@@ -186,11 +194,7 @@ def optimize_acqf(
             acquisition_function=acq_function,
             lower_bounds=bounds[0],
             upper_bounds=bounds[1],
-            options={
-                k: v
-                for k, v in options.items()
-                if k not in ("init_batch_limit", "batch_limit", "nonnegative")
-            },
+            options={k: v for k, v in options.items() if k not in INIT_OPTION_KEYS},
             inequality_constraints=inequality_constraints,
             equality_constraints=equality_constraints,
             fixed_features=fixed_features,

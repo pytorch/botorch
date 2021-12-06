@@ -81,7 +81,7 @@ setup(
             else "node-and-date"
         ),
     },
-    install_requires=["torch>=1.8.1", "gpytorch>=1.5.1", "scipy"],
+    install_requires=["torch>=1.9", "gpytorch>=1.6", "scipy"],
     packages=find_packages(),
     extras_require={
         "dev": DEV_REQUIRES,

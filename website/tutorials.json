@@ -81,6 +81,10 @@
     {
       "id": "risk_averse_bo_with_input_perturbations",
       "title": "Risk averse Bayesian optimization with input perturbations"
+    },
+    {
+      "id": "constraint_active_search",
+      "title": "Constraint Active Search for Multiobjective Experimental Design"
     }
   ],
   "Advanced Usage": [
@@ -104,7 +108,7 @@
       "id": "composite_bo_with_hogp",
       "title": "Composite Bayesian optimization with the High Order Gaussian Process"
     },
-    {      
+    {
       "id": "composite_mtbo",
       "title": "Composite Bayesian Optimization with Multi-Task Gaussian Processes"
     }
