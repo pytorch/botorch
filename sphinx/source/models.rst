@@ -79,6 +79,11 @@ Contextual GP Models with Context Rewards
 .. automodule:: botorch.models.contextual_multioutput
     :members:
 
+Variational GP Models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.models.approximate_gp
+    :members:
+
 
 Model Components
 -------------------------------------------
