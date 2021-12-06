@@ -4,6 +4,10 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+from botorch.models.approximate_gp import (
+    ApproximateGPyTorchModel,
+    SingleTaskVariationalGP,
+)
 from botorch.models.cost import AffineFidelityCostModel
 from botorch.models.deterministic import (
     AffineDeterministicModel,
@@ -29,6 +33,7 @@ from botorch.models.pairwise_gp import PairwiseGP, PairwiseLaplaceMarginalLogLik
 __all__ = [
     "AffineDeterministicModel",
     "AffineFidelityCostModel",
+    "ApproximateGPyTorchModel",
     "FixedNoiseGP",
     "FixedNoiseMultiTaskGP",
     "GenericDeterministicModel",
@@ -43,4 +48,5 @@ __all__ = [
     "PairwiseLaplaceMarginalLogLikelihood",
     "SingleTaskGP",
     "SingleTaskMultiFidelityGP",
+    "SingleTaskVariationalGP",
 ]
