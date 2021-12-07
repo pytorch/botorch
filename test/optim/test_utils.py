@@ -13,6 +13,7 @@ from copy import deepcopy
 import numpy as np
 import torch
 from botorch import settings
+from botorch.acquisition.fixed_feature import FixedFeatureAcquisitionFunction
 from botorch.acquisition.monte_carlo import (
     qExpectedImprovement,
     qNoisyExpectedImprovement,
@@ -348,6 +349,16 @@ class TestGetXBaseline(BotorchTestCase):
                 acq_function=acqf,
             )
             self.assertTrue(torch.equal(X, X_train))
+
+            # test acquisitipon function without X_baseline or model
+            acqf = FixedFeatureAcquisitionFunction(acqf, d=2, columns=[0], values=[0])
+            with warnings.catch_warnings(record=True) as w, settings.debug(True):
+                X_rnd = get_X_baseline(
+                    acq_function=acqf,
+                )
+                self.assertEqual(len(w), 1)
+                self.assertTrue(issubclass(w[-1].category, BotorchWarning))
+                self.assertIsNone(X_rnd)
 
             Y_train = 2 * X_train[:2] + 1
             moo_model = MockModel(MockPosterior(mean=Y_train, samples=Y_train))

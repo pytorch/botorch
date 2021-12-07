@@ -27,7 +27,11 @@ from botorch.acquisition.knowledge_gradient import (
 )
 from botorch.acquisition.utils import is_nonnegative
 from botorch.exceptions.errors import BotorchTensorDimensionError
-from botorch.exceptions.warnings import BadInitialCandidatesWarning, SamplingWarning
+from botorch.exceptions.warnings import (
+    BotorchWarning,
+    BadInitialCandidatesWarning,
+    SamplingWarning,
+)
 from botorch.models.model import Model
 from botorch.optim.utils import fix_features, get_X_baseline
 from botorch.utils.multi_objective.pareto import is_non_dominated
@@ -65,7 +69,8 @@ def gen_batch_initial_conditions(
         num_restarts: The number of starting points for multistart acquisition
             function optimization.
         raw_samples: The number of raw samples to consider in the initialization
-            heuristic.
+            heuristic. Note: if `sample_around_best` is True (the default is False),
+            then `2 * raw_samples` samples are used.
         fixed_features: A map `{feature_index: value}` for features that
             should be fixed to a particular value during generation.
         options: Options for initial condition generation. For valid options see
@@ -154,7 +159,7 @@ def gen_batch_initial_conditions(
                 X_best_rnd = sample_points_around_best(
                     acq_function=acq_function,
                     n_discrete_points=n * q,
-                    sigma=options.get("sample_around_best_std", 1e-3),
+                    sigma=options.get("sample_around_best_sigma", 1e-3),
                     bounds=bounds,
                     subset_sigma=options.get("sample_around_best_subset_sigma", 1e-1),
                     prob_perturb=options.get("sample_around_best_prob_perturb"),
@@ -627,13 +632,28 @@ def sample_points_around_best(
     if X is None:
         return
     with torch.no_grad():
-        posterior = acq_function.model.posterior(X)
+        try:
+            posterior = acq_function.model.posterior(X)
+        except AttributeError:
+            warnings.warn(
+                "Failed to sample around previous best points.",
+                BotorchWarning,
+            )
+            return
         mean = posterior.mean
         while mean.ndim > 2:
             # take average over batch dims
             mean = mean.mean(dim=0)
-
-        f_pred = acq_function.objective(mean)
+        try:
+            f_pred = acq_function.objective(mean)
+        # Some acquisition functions do not have an objective
+        # and for some acquisition functions the objective is None
+        except (AttributeError, TypeError):
+            f_pred = mean
+        if hasattr(acq_function, "maximize"):
+            # make sure that the optimiztaion direction is set properly
+            if not acq_function.maximize:
+                f_pred = -f_pred
         try:
             # handle constraints for EHVI-based acquisition functions
             constraints = acq_function.constraints
@@ -655,8 +675,11 @@ def sample_points_around_best(
             is_pareto = is_non_dominated(f_pred)
             best_X = X[is_pareto]
         else:
+            if f_pred.shape[-1] == 1:
+                f_pred = f_pred.squeeze(-1)
             n_best = max(1, round(X.shape[0] * best_pct / 100))
-            best_idcs = torch.topk(f_pred, n_best).indices
+            # the view() is to ensure that best_idcs is not a scalar tensor
+            best_idcs = torch.topk(f_pred, n_best).indices.view(-1)
             best_X = X[best_idcs]
     n_trunc_normal_points = (
         n_discrete_points // 2 if best_X.shape[-1] >= 20 else n_discrete_points
