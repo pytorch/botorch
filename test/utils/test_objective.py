@@ -66,40 +66,40 @@ class TestApplyConstraints(BotorchTestCase):
 
     def test_apply_constraints_multi_output(self):
         # nonnegative objective, one constraint
-        samples = torch.rand(3, 2)
-        obj = samples.clone()
-        obj = apply_constraints(
-            obj=obj, constraints=[zeros_f], samples=samples, infeasible_cost=0.0
-        )
-        self.assertTrue(torch.equal(obj, samples * 0.5))
-        # nonnegative objective, two constraint
-        samples = torch.rand(3, 2)
-        obj = samples.clone()
-        obj = apply_constraints(
-            obj=obj,
-            constraints=[zeros_f, zeros_f],
-            samples=samples,
-            infeasible_cost=0.0,
-        )
-        self.assertTrue(torch.equal(obj, samples * 0.5 * 0.5))
-        # negative objective, one constraint, infeasible_cost
-        samples = torch.randn(3, 2)
-        obj = samples.clone().clamp_min(-1.0)
-        obj = apply_constraints(
-            obj=obj, constraints=[zeros_f], samples=samples, infeasible_cost=2.0
-        )
-        self.assertTrue(torch.allclose(obj, samples.clamp_min(-1.0) * 0.5 - 1.0))
-        # nonnegative objective, one constraint, eta = 0
-        samples = torch.randn(3, 2)
-        obj = samples
-        with self.assertRaises(ValueError):
-            apply_constraints(
+        tkwargs = {"device": self.device}
+        for dtype in (torch.float, torch.double):
+            tkwargs["dtype"] = dtype
+            samples = torch.rand(3, 2, **tkwargs)
+            obj = samples.clone()
+            obj = apply_constraints(
+                obj=obj, constraints=[zeros_f], samples=samples, infeasible_cost=0.0
+            )
+            self.assertTrue(torch.equal(obj, samples * 0.5))
+            # nonnegative objective, two constraint
+            obj = samples.clone()
+            obj = apply_constraints(
                 obj=obj,
-                constraints=[zeros_f],
+                constraints=[zeros_f, zeros_f],
                 samples=samples,
                 infeasible_cost=0.0,
-                eta=0.0,
             )
+            self.assertTrue(torch.equal(obj, samples * 0.5 * 0.5))
+            # negative objective, one constraint, infeasible_cost
+            obj = samples.clone().clamp_min(-1.0)
+            obj = apply_constraints(
+                obj=obj, constraints=[zeros_f], samples=samples, infeasible_cost=2.0
+            )
+            self.assertTrue(torch.allclose(obj, samples.clamp_min(-1.0) * 0.5 - 1.0))
+            # nonnegative objective, one constraint, eta = 0
+            obj = samples
+            with self.assertRaises(ValueError):
+                apply_constraints(
+                    obj=obj,
+                    constraints=[zeros_f],
+                    samples=samples,
+                    infeasible_cost=0.0,
+                    eta=0.0,
+                )
 
 
 class TestGetObjectiveWeightsTransform(BotorchTestCase):
