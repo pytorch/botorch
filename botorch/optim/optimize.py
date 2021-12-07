@@ -28,11 +28,21 @@ from botorch.optim.stopping import ExpMAStoppingCriterion
 from torch import Tensor
 
 INIT_OPTION_KEYS = {
-    "init_batch_limit",
+    # set of options for initialization that we should
+    # not pass to scipy.optimize.minimize to avoid
+    # warnings
+    "alpha",
     "batch_limit",
+    "eta",
+    "init_batch_limit",
     "nonnegative",
+    "n_burnin",
     "sample_around_best",
-    "sample_around_best_std",
+    "sample_around_best_sigma",
+    "sample_around_best_prob_perturb",
+    "sample_around_best_prob_perturb",
+    "seed",
+    "thinning",
 }
 
 

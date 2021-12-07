@@ -13,6 +13,7 @@ from unittest import mock
 import torch
 from botorch import settings
 from botorch.acquisition.analytic import PosteriorMean
+from botorch.acquisition.fixed_feature import FixedFeatureAcquisitionFunction
 from botorch.acquisition.knowledge_gradient import qKnowledgeGradient
 from botorch.acquisition.monte_carlo import (
     qNoisyExpectedImprovement,
@@ -591,7 +592,7 @@ class TestSampleAroundBest(BotorchTestCase):
                     mean=(2 * X_train + 1).sum(dim=-1, keepdim=True).unsqueeze(0)
                 )
             )
-            # test NEI with X_baseline
+            acqf = qNoisyExpectedImprovement(model, X_baseline=X_train)
             X_rnd = sample_points_around_best(
                 acq_function=acqf,
                 n_discrete_points=4,
@@ -628,6 +629,36 @@ class TestSampleAroundBest(BotorchTestCase):
             self.assertTrue(X_rnd.shape, torch.Size([4, 2]))
             self.assertTrue((X_rnd >= 1).all())
             self.assertTrue((X_rnd <= 2).all())
+
+            # test an acquisition function that has objective=None
+            # and maximize=False
+            pm = PosteriorMean(model, maximize=False)
+            self.assertIsNone(pm.objective)
+            self.assertFalse(pm.maximize)
+            X_rnd = sample_points_around_best(
+                acq_function=pm,
+                n_discrete_points=4,
+                sigma=0,
+                bounds=bounds,
+                best_pct=1e-8,  # ensures that we only use best value
+            )
+            idx = (-model.posterior(X_train).mean).argmax()
+            self.assertTrue((X_rnd == X_train[idx : idx + 1]).all(dim=-1).all())
+
+            # test acquisition function that has no model
+            ff = FixedFeatureAcquisitionFunction(pm, d=2, columns=[0], values=[0])
+            # set X_baseline for testing purposes
+            ff.X_baseline = X_train
+            with warnings.catch_warnings(record=True) as w, settings.debug(True):
+                X_rnd = sample_points_around_best(
+                    acq_function=ff,
+                    n_discrete_points=4,
+                    sigma=1e-3,
+                    bounds=bounds,
+                )
+                self.assertEqual(len(w), 1)
+                self.assertTrue(issubclass(w[-1].category, BotorchWarning))
+                self.assertIsNone(X_rnd)
 
             # test constraints with NEHVI
             constraints = [lambda Y: Y[..., 0]]
