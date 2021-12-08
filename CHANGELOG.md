@@ -2,6 +2,42 @@
 
 The release log for BoTorch.
 
+## [0.6.0] - Dec 8, 2021
+
+#### Compatibility
+* Require PyTorch >=1.9 (#1011).
+* Require GPyTorch >=1.6 (#1011).
+
+#### New Features
+* New `ApproximateGPyTorchModel` wrapper for various (variational) approximate GP models (#1012).
+* New `SingleTaskVariationalGP` stochastic variational Gaussian Process model (#1012).
+* Support for Multi-Output Risk Measures (#906, #965).
+* Introduce `ModelList` and `PosteriorList` (#829).
+* New Constraint Active Search tutorial (#1010).
+* Add additional multi-objective optimization test problems (#958).
+
+#### Other Changes
+* Add `covar_module` as an optional input of `MultiTaskGP` models (#941).
+* Add `min_range` argument to `Normalize` transform to prevent division by zero (#931).
+* Add initialization heuristic for acquisition function optimization that samples around best points (#987).
+* Update initialization heuristic to perturb a subset of the dimensions of the best points if the dimension is > 20 (#988).
+* Modify `apply_constraints` utility to work with multi-output objectives (#994).
+* Short-cut `t_batch_mode_transform` decorator on non-tensor inputs (#991).
+
+#### Performance Improvements
+* Use lazy covariance matrix in `BatchedMultiOutputGPyTorchModel.posterior` (#976).
+* Fast low-rank Cholesky updates for `qNoisyExpectedHypervolumeImprovement` (#747, #995, #996).
+
+#### Bug Fixes
+* Update error handling to new PyTorch linear algebra messages (#940).
+* Avoid test failures on Ampere devices (#944).
+* Fixes to the `Griewank` test function (#972).
+* Handle empty base_sample_shape in `Posterior.rsample` (#986).
+* Handle `NotPSDError` and hitting `maxiter` in `fit_gpytorch_model` (#1007).
+* Use TransformedPosterior for subclasses of GPyTorchPosterior (#983).
+* Propagate `best_f` argument to `qProbabilityOfImprovement` in input constructors (f5a5f8b6dc20413e67c6234e31783ac340797a8d).
+
+
 ## [0.5.1] - Sep 2, 2021
 
 #### Compatibility
@@ -34,6 +70,7 @@ The release log for BoTorch.
 * Refactor `HigherOrderGPPosterior` for memory efficiency (#883).
 * Support negative weights for minimization objectives in `get_chebyshev_scalarization` (#884).
 * Move `train_inputs` transforms to `model.train/eval` calls (#894).
+
 
 ## [0.5.0] - Jun 29, 2021
 
