@@ -479,6 +479,7 @@ class TestGetAcquisitionFunction(BotorchTestCase):
             alpha=0.0,
             X_pending=self.X_pending,
             marginalize_dim=None,
+            cache_root=True,
         )
         args, kwargs = mock_acqf.call_args
         self.assertEqual(args, ())
