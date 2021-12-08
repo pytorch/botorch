@@ -177,6 +177,7 @@ def get_acquisition_function(
             alpha=kwargs.get("alpha", 0.0),
             X_pending=X_pending,
             marginalize_dim=kwargs.get("marginalize_dim"),
+            cache_root=kwargs.get("cache_root", True),
         )
     raise NotImplementedError(
         f"Unknown acquisition function {acquisition_function_name}"
