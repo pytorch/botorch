@@ -17,6 +17,11 @@ Containers
 .. automodule:: botorch.utils.containers
 		:members:
 
+Low-Rank Cholesky Update Utils
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.utils.low_rank
+		:members:
+
 Objective
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.utils.objective
