@@ -210,7 +210,7 @@ def t_batch_mode_transform(
         @wraps(method)
         def decorated(acqf: ACQF, X: Any, *args: Any, **kwargs: Any) -> Any:
 
-            # Allow using acquisition funcitons for other inputs (e.g. lists of strings)
+            # Allow using acquisition functions for other inputs (e.g. lists of strings)
             if not isinstance(X, Tensor):
                 return method(acqf, X, *args, **kwargs)
 
