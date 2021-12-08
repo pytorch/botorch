@@ -229,8 +229,6 @@ def sample_cached_cholesky(
 ) -> Tensor:
     r"""Get posterior samples at the `q` new points from the joint multi-output posterior.
 
-    TODO: support single output posteriors.
-
     Args:
         posterior: The joint posterior is over (X_baseline, X).
         baseline_L: The baseline lower triangular cholesky factor.
@@ -248,10 +246,7 @@ def sample_cached_cholesky(
     if isinstance(posterior.mvn, MultitaskMultivariateNormal):
         lazy_covar = extract_batch_covar(mt_mvn=posterior.mvn)
     else:
-        raise NotImplementedError(
-            "Single-output MultivariateNormal distributions are "
-            "not currently supported."
-        )
+        lazy_covar = posterior.mvn.lazy_covariance_matrix
     # Get the `q` new rows of the batched covariance matrix
     bottom_rows = lazy_covar[..., -q:, :].evaluate()
     # The covariance in block form is:
@@ -282,6 +277,11 @@ def sample_cached_cholesky(
     base_samples = _reshape_base_samples(
         base_samples=base_samples, sample_shape=sample_shape, posterior=posterior
     )
+    if not isinstance(posterior.mvn, MultitaskMultivariateNormal):
+        # add output dim
+        mean = mean.unsqueeze(-1)
+        # add batch dim corresponding to output dim
+        new_Lq = new_Lq.unsqueeze(-3)
     new_mean = mean[..., -q:, :]
     res = (
         new_Lq.matmul(base_samples)
