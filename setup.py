@@ -82,7 +82,7 @@ setup(
         ),
     },
     install_requires=["torch>=1.9", "gpytorch>=1.6", "scipy"],
-    packages=find_packages(),
+    packages=find_packages(exclude=["test", "test.*"]),
     extras_require={
         "dev": DEV_REQUIRES,
         "test": TEST_REQUIRES,
