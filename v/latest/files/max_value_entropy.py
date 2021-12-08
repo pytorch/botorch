@@ -108,7 +108,7 @@
 # \end{align}
 # This turns out to reduce the variance of the acquisition value by a significant factor, especially when the acquisition value is small, hence making the algorithm numerically more stable. 
 # 
-# For the case of $q > 1$, joint optimization becomes difficult, since the q-batch-mode MES acquisiton funciton becomes not tractable due to the multivariate normal CDF functions in $Z$. Instead, the MES acquisition optimization is solved sequentially and using fantasies, _i. e._, we generate one point each time and when we try to generate the $i$-th point, we condition the models on the $i-1$ points generated prior to this (using the $i-1$ points as fantasies).  
+# For the case of $q > 1$, joint optimization becomes difficult, since the q-batch-mode MES acquisiton function becomes not tractable due to the multivariate normal CDF functions in $Z$. Instead, the MES acquisition optimization is solved sequentially and using fantasies, _i. e._, we generate one point each time and when we try to generate the $i$-th point, we condition the models on the $i-1$ points generated prior to this (using the $i-1$ points as fantasies).  
 # 
 # <br>
 # __References__

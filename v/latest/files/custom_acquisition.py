@@ -230,7 +230,7 @@ SUCB(torch.rand(3, 1, 2))
 
 # ### Using `ScalarizedObjective`
 # 
-# Using the `ScalarizedObjective` abstraction, the funcitonality of `ScalarizedUpperConfidenceBound` implemented above can be easily achieved in just a few lines of code:
+# Using the `ScalarizedObjective` abstraction, the functionality of `ScalarizedUpperConfidenceBound` implemented above can be easily achieved in just a few lines of code:
 
 # In[9]:
 
