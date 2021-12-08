@@ -191,6 +191,11 @@ class TestBatchModeTransform(BotorchTestCase):
         Xout = c.broadcast_batch_shape_method(X)
         self.assertEqual(Xout.shape, c.model.batch_shape)
 
+        # test with non-tensor argument
+        X = ((3, 4), {"foo": True})
+        Xout = c.q_method(X)
+        self.assertEqual(X, Xout)
+
 
 class TestConcatenatePendingPoints(BotorchTestCase):
     def test_concatenate_pending_points(self):

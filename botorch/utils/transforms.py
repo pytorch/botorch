@@ -12,10 +12,12 @@ from __future__ import annotations
 
 import warnings
 from functools import wraps
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, List, Optional, TypeVar
 
 import torch
 from torch import Tensor
+
+ACQF = TypeVar("AcquisitionFunction")
 
 
 def squeeze_last_dim(Y: Tensor) -> Tensor:
@@ -172,8 +174,8 @@ def _verify_output_shape(acqf: Any, X: Tensor, output: Tensor) -> bool:
 def t_batch_mode_transform(
     expected_q: Optional[int] = None,
     assert_output_shape: bool = True,
-) -> Callable[[Callable[[Any, Tensor], Any]], Callable[[Any, Tensor], Any]]:
-    r"""Factory for decorators taking a t-batched `X` tensor.
+) -> Callable[[Callable[[ACQF, Any], Any]], Callable[[ACQF, Any], Any]]:
+    r"""Factory for decorators enabling consistent t-batch behavior.
 
     This method creates decorators for instance methods to transform an input tensor
     `X` to t-batch mode (i.e. with at least 3 dimensions). This assumes the tensor
@@ -181,10 +183,10 @@ def t_batch_mode_transform(
     is provided, and the output shape if `assert_output_shape` is `True`.
 
     Args:
-        expected_q: The expected q-batch size of X. If specified, this will raise an
-            AssertionError if X's q-batch size does not equal expected_q.
+        expected_q: The expected q-batch size of `X`. If specified, this will raise an
+            AssertionError if `X`'s q-batch size does not equal expected_q.
         assert_output_shape: If `True`, this will raise an AssertionError if the
-            output shape does not match either the t-batch shape of X,
+            output shape does not match either the t-batch shape of `X`,
             or the `acqf.model.batch_shape` for acquisition functions using
             batched models.
 
@@ -202,9 +204,16 @@ def t_batch_mode_transform(
         >>>         ...
     """
 
-    def decorator(method: Callable[[Any, Tensor], Any]) -> Callable[[Any, Tensor], Any]:
+    def decorator(
+        method: Callable[[ACQF, Any], Any],
+    ) -> Callable[[ACQF, Any], Any]:
         @wraps(method)
-        def decorated(acqf: Any, X: Tensor, *args: Any, **kwargs: Any) -> Any:
+        def decorated(acqf: ACQF, X: Any, *args: Any, **kwargs: Any) -> Any:
+
+            # Allow using acquisition functions for other inputs (e.g. lists of strings)
+            if not isinstance(X, Tensor):
+                return method(acqf, X, *args, **kwargs)
+
             if X.dim() < 2:
                 raise ValueError(
                     f"{type(acqf).__name__} requires X to have at least 2 dimensions,"
