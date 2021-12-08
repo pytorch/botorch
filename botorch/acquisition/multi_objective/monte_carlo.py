@@ -36,10 +36,6 @@ from botorch.acquisition.multi_objective.objective import (
     MCMultiOutputObjective,
 )
 from botorch.acquisition.multi_objective.utils import (
-    extract_batch_covar,
-    sample_cached_cholesky,
-)
-from botorch.acquisition.multi_objective.utils import (
     prune_inferior_points_multi_objective,
 )
 from botorch.exceptions.errors import UnsupportedError
@@ -50,6 +46,10 @@ from botorch.models.multitask import MultiTaskGP
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.posteriors.posterior import Posterior
 from botorch.sampling.samplers import MCSampler, SobolQMCNormalSampler
+from botorch.utils.low_rank import (
+    extract_batch_covar,
+    sample_cached_cholesky,
+)
 from botorch.utils.multi_objective.box_decompositions.box_decomposition_list import (
     BoxDecompositionList,
 )
