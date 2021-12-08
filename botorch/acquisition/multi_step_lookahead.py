@@ -429,7 +429,7 @@ def _compute_stage_value(
             the `i`-th step.
         objective: The AcquisitionObjective under which the model output is evaluated.
         inner_sampler: An `MCSampler` object to be used in the stage value function. Can
-            be `None` for analytic acquisition funcitons or when using the default
+            be `None` for analytic acquisition functions or when using the default
             sampler of the acquisition function class.
         arg_fac: A callable mapping a `Model` and the input tensor `X` to a dictionary
             of kwargs for the stage value function constructor. If `None`, only the
