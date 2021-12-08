@@ -211,23 +211,7 @@ class _SingleTaskVariationalGP(ApproximateGP):
                 # as a heuristic
                 inducing_points = int(0.25 * train_X.shape[-2])
 
-            with torch.no_grad():
-                train_train_kernel = covar_module(train_X)
-                if train_train_kernel.ndimension() > 2:
-                    train_train_kernel = train_train_kernel.evaluate_kernel()[0]
-                    need_to_repeat_over_batch = True
-                else:
-                    need_to_repeat_over_batch = False
-
-                inducing_points = _pivoted_cholesky_init(
-                    train_X, train_train_kernel, max_length=inducing_points
-                )
-
-                if need_to_repeat_over_batch:
-                    inducing_points = inducing_points.unsqueeze(0)
-                    inducing_points = inducing_points.repeat(
-                        *batch_shape, *([1] * (inducing_points.ndimension() - 1))
-                    )
+            inducing_points = _select_inducing_points(train_X, covar_module, inducing_points, batch_shape)
 
         if variational_distribution is None:
             variational_distribution = CholeskyVariationalDistribution(
@@ -385,6 +369,33 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
             self.model.train_targets = train_Y.squeeze(-1)
 
         self.to(train_X)
+
+    def init_inducing_points(self, X, num_inducing) -> Tensor:
+        with torch.no_grad():
+            inducing_points = _select_inducing_points(X, self.model.covar_module, num_inducing,
+                                                      self._input_batch_shape)
+            self.model.variational_strategy.base_variational_strategy.inducing_points.copy_(
+                inducing_points.clone()
+            )
+        return inducing_points
+
+
+def _select_inducing_points(X, covar_module, num_inducing, input_batch_shape) -> Tensor:
+    train_train_kernel = covar_module(X)
+
+    if train_train_kernel.ndimension() > 2:
+        # TODO this assumes X is the same along the batch dimensions
+        train_train_kernel = train_train_kernel.evaluate_kernel()[0]
+
+    inducing_points = _pivoted_cholesky_init(
+        X, train_train_kernel, max_length=num_inducing
+    )
+
+    # previous batch handling didn't work in the multitask setting
+    if len(input_batch_shape) > 0:
+        inducing_points = inducing_points.expand(*input_batch_shape, -1, -1)
+
+    return inducing_points
 
 
 def _pivoted_cholesky_init(
