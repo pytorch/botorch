@@ -7,6 +7,7 @@
 import warnings
 from copy import deepcopy
 from itertools import product
+from math import pi
 from unittest import mock
 
 import torch
@@ -20,9 +21,11 @@ from botorch.acquisition.multi_objective.objective import (
     IdentityMCMultiOutputObjective,
     MCMultiOutputObjective,
 )
+from botorch.acquisition.multi_objective.utils import sample_cached_cholesky
 from botorch.acquisition.objective import IdentityMCObjective
 from botorch.exceptions.errors import BotorchError, UnsupportedError
 from botorch.exceptions.warnings import BotorchWarning
+from botorch.models.gp_regression import SingleTaskGP
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.multi_objective.box_decompositions.dominated import (
     DominatedPartitioning,
@@ -32,6 +35,7 @@ from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     NondominatedPartitioning,
 )
 from botorch.utils.testing import BotorchTestCase, MockModel, MockPosterior
+from botorch.utils.transforms import standardize
 
 
 class DummyMultiObjectiveMCAcquisitionFunction(MultiObjectiveMCAcquisitionFunction):
@@ -578,7 +582,11 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             # basic test
             sampler = IIDNormalSampler(num_samples=1)
             acqf = qNoisyExpectedHypervolumeImprovement(
-                model=mm, ref_point=ref_point, X_baseline=X_baseline, sampler=sampler
+                model=mm,
+                ref_point=ref_point,
+                X_baseline=X_baseline,
+                sampler=sampler,
+                cache_root=False,
             )
             # set the MockPosterior to use samples over baseline points and new
             # candidates
@@ -608,7 +616,11 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             mm2 = MockModel(MockPosterior(samples=baseline_samples))
             sampler = IIDNormalSampler(num_samples=1)
             acqf = qNoisyExpectedHypervolumeImprovement(
-                model=mm2, ref_point=ref_point, X_baseline=X_baseline, sampler=sampler
+                model=mm2,
+                ref_point=ref_point,
+                X_baseline=X_baseline,
+                sampler=sampler,
+                cache_root=False,
             )
             # set the MockPosterior to use samples over baseline points and new
             # candidates
@@ -652,6 +664,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                     ref_point=ref_point,
                     X_baseline=X_baseline.unsqueeze(0),
                     sampler=sampler,
+                    cache_root=False,
                 )
 
             # test error is raised if collapse_batch_dims=False
@@ -662,6 +675,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                     ref_point=ref_point,
                     X_baseline=X_baseline,
                     sampler=sampler_uncollapsed,
+                    cache_root=False,
                 )
 
             # test sampler with base_samples already initialized
@@ -673,6 +687,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                     ref_point=ref_point,
                     X_baseline=X_baseline,
                     sampler=sampler,
+                    cache_root=False,
                 )
                 self.assertEqual(
                     acqf.sampler.base_samples.shape,
@@ -691,6 +706,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                 X_baseline=X_baseline,
                 sampler=sampler,
                 objective=IdentityMCMultiOutputObjective(),
+                cache_root=False,
             )
             # sample_shape x n x m
             original_base_samples = sampler.base_samples.detach().clone()
@@ -713,7 +729,11 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             mm._posterior._samples = baseline_samples
             sampler = IIDNormalSampler(num_samples=1)
             acqf = qNoisyExpectedHypervolumeImprovement(
-                model=mm, ref_point=ref_point, X_baseline=X_baseline, sampler=sampler
+                model=mm,
+                ref_point=ref_point,
+                X_baseline=X_baseline,
+                sampler=sampler,
+                cache_root=False,
             )
             orig_base_sampler = deepcopy(acqf.base_sampler)
             # set the MockPosterior to use samples over baseline points and new
@@ -742,6 +762,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                 X_baseline=X_baseline,
                 sampler=sampler,
                 objective=IdentityMCMultiOutputObjective(),
+                cache_root=False,
             )
             self.assertTrue((acqf.cell_lower_bounds[..., 0] == 15).all())
             self.assertTrue((acqf.cell_lower_bounds[..., 1] == 14).all())
@@ -762,6 +783,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                 sampler=sampler,
                 objective=IdentityMCMultiOutputObjective(),
                 prune_baseline=True,
+                cache_root=False,
             )
             self.assertTrue((acqf.cell_lower_bounds[..., 0] == 15).all())
             self.assertTrue((acqf.cell_lower_bounds[..., 1] == 14).all())
@@ -783,6 +805,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                     sampler=sampler,
                     objective=IdentityMCMultiOutputObjective(),
                     incremental_nehvi=incremental_nehvi,
+                    cache_root=False,
                 )
                 original_base_samples = sampler.base_samples.detach().clone()
                 # the box decomposition algorithm is faster on the CPU for m>2,
@@ -834,6 +857,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                     sampler=sampler,
                     objective=IdentityMCMultiOutputObjective(),
                     incremental_nehvi=incremental_nehvi,
+                    cache_root=False,
                 )
                 # sample_shape x n x m
                 original_base_samples = sampler.base_samples.detach().clone()
@@ -936,6 +960,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                 objective=IdentityMCMultiOutputObjective(),
                 incremental_nehvi=False,
                 max_iep=1,
+                cache_root=False,
             )
             mm._posterior._samples = torch.cat(
                 [
@@ -971,6 +996,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                 sampler=sampler,
                 objective=IdentityMCMultiOutputObjective(),
                 cache_pending=False,
+                cache_root=False,
             )
             mm._posterior._samples = torch.cat(
                 [
@@ -1010,6 +1036,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                 objective=IdentityMCMultiOutputObjective(),
                 cache_pending=False,
                 alpha=1e-3,
+                cache_root=False,
             )
             if len(ref_point) == 2:
                 partitioning = acqf.partitioning
@@ -1033,6 +1060,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                 objective=IdentityMCMultiOutputObjective(),
                 alpha=1e-3,
                 X_pending=X_pending2,
+                cache_root=False,
             )
             self.assertTrue(torch.equal(X_baseline, acqf._X_baseline))
             self.assertTrue(torch.equal(acqf.X_baseline[:-2], acqf._X_baseline))
@@ -1072,6 +1100,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                     sampler=sampler,
                     constraints=[lambda Z: torch.zeros_like(Z[..., -1])],
                     eta=eta,
+                    cache_root=False,
                 )
                 # set the MockPosterior to use samples over baseline points and new
                 # candidates
@@ -1102,6 +1131,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                 constraints=[lambda Z: torch.zeros_like(Z[..., -1])],
                 eta=1e-3,
                 incremental_nehvi=False,
+                cache_root=False,
             )
             samples = torch.cat(
                 [
@@ -1141,6 +1171,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                 sampler=sampler,
                 constraints=[lambda Z: -100.0 * torch.ones_like(Z[..., -1])],
                 eta=1e-3,
+                cache_root=False,
             )
             samples = torch.cat(
                 [
@@ -1163,6 +1194,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                 sampler=sampler,
                 constraints=[lambda Z: 100.0 * torch.ones_like(Z[..., -1])],
                 eta=1e-3,
+                cache_root=False,
             )
             # set the MockPosterior to use samples over baseline points and new
             # candidates
@@ -1191,6 +1223,7 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             sampler=sampler,
             constraints=[lambda Z: -100.0 * torch.ones_like(Z[..., -1])],
             eta=1e-3,
+            cache_root=False,
         )
         # set the MockPosterior to use samples over baseline points and new
         # candidates
@@ -1232,6 +1265,126 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                         X_baseline=X_baseline,
                         sampler=sampler,
                         prune_baseline=True,
+                        cache_root=False,
                     )
                 mock_prune.assert_called_once()
                 self.assertTrue(torch.equal(acqf.X_baseline, X_pruned))
+
+    def test_cache_root(self):
+        sample_cached_path = (
+            "botorch.acquisition.multi_objective.monte_carlo." "sample_cached_cholesky"
+        )
+        state_dict = {
+            "likelihood.noise_covar.raw_noise": torch.tensor(
+                [[0.0895], [0.2594]], dtype=torch.float64
+            ),
+            "mean_module.constant": torch.tensor(
+                [[-0.4545], [-0.1285]], dtype=torch.float64
+            ),
+            "covar_module.raw_outputscale": torch.tensor(
+                [1.4876, 1.4897], dtype=torch.float64
+            ),
+            "covar_module.base_kernel.raw_lengthscale": torch.tensor(
+                [[[-0.7202, -0.2868]], [[-0.8794, -1.2877]]], dtype=torch.float64
+            ),
+        }
+        # test batched models (e.g. for MCMC)
+        for train_batch_shape in (torch.Size([]), torch.Size([3])):
+            if len(train_batch_shape) > 0:
+                for k, v in state_dict.items():
+                    state_dict[k] = v.unsqueeze(0).expand(*train_batch_shape, *v.shape)
+            for dtype, ref_point in product(
+                (torch.float, torch.double),
+                ([-5.0, -5.0], [10.0, 10.0]),
+            ):
+                tkwargs = {"device": self.device, "dtype": dtype}
+                for k, v in state_dict.items():
+                    state_dict[k] = v.to(**tkwargs)
+                all_close_kwargs = (
+                    {
+                        "atol": 1e-1,
+                        "rtol": 0.0,
+                    }
+                    if dtype == torch.float
+                    else {"atol": 1e-4, "rtol": 0.0}
+                )
+                torch.manual_seed(1234)
+                train_X = torch.rand(*train_batch_shape, 3, 2, **tkwargs)
+                train_Y = torch.sin(train_X * 2 * pi) + torch.randn(
+                    *train_batch_shape, 3, 2, **tkwargs
+                )
+                train_Y = standardize(train_Y)
+                model = SingleTaskGP(
+                    train_X,
+                    train_Y,
+                )
+                if len(train_batch_shape) > 0:
+                    X_baseline = train_X[0]
+                else:
+                    X_baseline = train_X
+
+                model.load_state_dict(state_dict, strict=False)
+                sampler = IIDNormalSampler(5, seed=0)
+                torch.manual_seed(0)
+                acqf = qNoisyExpectedHypervolumeImprovement(
+                    model=model,
+                    ref_point=ref_point,
+                    X_baseline=X_baseline,
+                    sampler=sampler,
+                    prune_baseline=False,
+                    cache_root=True,
+                )
+
+                orig_base_samples = acqf.base_sampler.base_samples.detach().clone()
+                sampler2 = IIDNormalSampler(5, seed=0)
+                sampler2.base_samples = orig_base_samples
+                torch.manual_seed(0)
+                acqf_no_cache = qNoisyExpectedHypervolumeImprovement(
+                    model=model,
+                    ref_point=ref_point,
+                    X_baseline=X_baseline,
+                    sampler=sampler2,
+                    prune_baseline=False,
+                    cache_root=False,
+                )
+                # load CBD
+                acqf_no_cache.cell_lower_bounds = acqf.cell_lower_bounds.clone()
+                acqf_no_cache.cell_upper_bounds = acqf.cell_upper_bounds.clone()
+                for q, batch_shape in product(
+                    (1, 3), (torch.Size([]), torch.Size([3]), torch.Size([4, 3]))
+                ):
+                    test_X = (
+                        0.3 + 0.05 * torch.randn(*batch_shape, q, 2, **tkwargs)
+                    ).requires_grad_(True)
+                    with mock.patch(
+                        sample_cached_path, wraps=sample_cached_cholesky
+                    ) as mock_sample_cached:
+                        torch.manual_seed(0)
+                        val = acqf(test_X)
+                        mock_sample_cached.assert_called_once()
+                    val.sum().backward()
+                    base_samples = acqf.sampler.base_samples.detach().clone()
+                    X_grad = test_X.grad.clone()
+                    test_X2 = test_X.detach().clone().requires_grad_(True)
+                    acqf_no_cache.sampler.base_samples = base_samples
+                    with mock.patch(
+                        sample_cached_path, wraps=sample_cached_cholesky
+                    ) as mock_sample_cached:
+                        torch.manual_seed(0)
+                        val2 = acqf_no_cache(test_X2)
+                    mock_sample_cached.assert_not_called()
+                    self.assertTrue(torch.allclose(val, val2, **all_close_kwargs))
+                    val2.sum().backward()
+                    self.assertTrue(
+                        torch.allclose(X_grad, test_X2.grad, **all_close_kwargs)
+                    )
+                    if ref_point == [-5.0, -5.0]:
+                        self.assertTrue((X_grad != 0).any())
+                # test we fall back to standard sampling for
+                # ill-conditioned covariances
+                acqf._baseline_L = torch.zeros_like(acqf._baseline_L)
+                with warnings.catch_warnings(record=True) as ws, settings.debug(True):
+                    with torch.no_grad():
+                        acqf(test_X)
+                self.assertEqual(len(ws), 1)
+                self.assertTrue(issubclass(ws[-1].category, BotorchWarning))

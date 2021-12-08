@@ -680,6 +680,7 @@ class TestSampleAroundBest(BotorchTestCase):
                     ref_point=ref_point,
                     X_baseline=X_train,
                     constraints=constraints,
+                    cache_root=False,
                 )
                 X_rnd = sample_points_around_best(
                     acq_function=acqf,

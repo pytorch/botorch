@@ -365,7 +365,10 @@ class TestGetXBaseline(BotorchTestCase):
             ref_point = torch.zeros(2, **tkwargs)
             # test NEHVI with X_baseline
             acqf = qNoisyExpectedHypervolumeImprovement(
-                moo_model, ref_point=ref_point, X_baseline=X_train[:2]
+                moo_model,
+                ref_point=ref_point,
+                X_baseline=X_train[:2],
+                cache_root=False,
             )
             X = get_X_baseline(
                 acq_function=acqf,
