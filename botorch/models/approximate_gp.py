@@ -391,7 +391,7 @@ def _select_inducing_points(X, covar_module, num_inducing, input_batch_shape) ->
         X, train_train_kernel, max_length=num_inducing
     )
 
-    # previous batch handling didn't work in the multitask setting
+    # make sure batch handling works in the multitask setting
     if len(input_batch_shape) > 0:
         inducing_points = inducing_points.expand(*input_batch_shape, -1, -1)
 
