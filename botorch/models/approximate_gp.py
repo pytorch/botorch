@@ -48,6 +48,7 @@ from gpytorch.likelihoods import (
 )
 from gpytorch.means import ConstantMean, Mean
 from gpytorch.models import ApproximateGP
+from gpytorch.module import Module
 from gpytorch.priors import GammaPrior
 from gpytorch.variational import (
     CholeskyVariationalDistribution,
@@ -370,9 +371,24 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
 
         self.to(train_X)
 
-    def init_inducing_points(self, X, num_inducing) -> Tensor:
+    def init_inducing_points(
+            self,
+            inputs: Tensor,
+    ) -> Tensor:
+        r"""
+        Reinitialize the inducing point locations in-place with the current kernel
+        applied to `inputs`.
+
+        Args:
+            inputs: input_data (*batch_shape, n, d)
+
+        Returns:
+            (*batch_shape, m, d) selected inducing point locations
+        """
+
         with torch.no_grad():
-            inducing_points = _select_inducing_points(X, self.model.covar_module, num_inducing,
+            num_inducing = self.model.variational_strategy.base_variational_strategy.inducing_points.size(-2)
+            inducing_points = _select_inducing_points(inputs, self.model.covar_module, num_inducing,
                                                       self._input_batch_shape)
             self.model.variational_strategy.base_variational_strategy.inducing_points.copy_(
                 inducing_points.clone()
@@ -380,15 +396,39 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
         return inducing_points
 
 
-def _select_inducing_points(X, covar_module, num_inducing, input_batch_shape) -> Tensor:
-    train_train_kernel = covar_module(X)
+def _select_inducing_points(
+        inputs: Tensor,
+        covar_module: Module,
+        num_inducing: int,
+        input_batch_shape: torch.Size,
+) -> Tensor:
+    r"""
+    Utility function that evaluates a kernel at `inputs` and selects inducing point
+    locations based on the pivoted Cholesky heuristic.
 
-    if train_train_kernel.ndimension() > 2:
-        # TODO this assumes X is the same along the batch dimensions
-        train_train_kernel = train_train_kernel.evaluate_kernel()[0]
+    Args:
+        inputs: input data (*batch_shape, n, d)
+        covar_module: GPyTorch Module returning a LazyTensor kernel matrix
+        num_inducing: the max number (m) of inducing points (m <= n)
+        input_batch_shape: non-task-related batch shape
+
+    Returns:
+        (*batch_shape, m, d) inducing point locations
+    """
+
+    train_train_kernel = covar_module(inputs).evaluate_kernel()
+
+    # TODO this assumes X is the same along the batch dimensions
+    if train_train_kernel.ndimension() == 2:
+        pass
+    elif train_train_kernel.ndimension() >= 3:
+        for _ in range(train_train_kernel.ndimension() - 2):
+            train_train_kernel = train_train_kernel[0]
+    else:
+        raise RuntimeError('unexpected train_train_kernel shape')
 
     inducing_points = _pivoted_cholesky_init(
-        X, train_train_kernel, max_length=num_inducing
+        inputs, train_train_kernel, max_length=num_inducing
     )
 
     # make sure batch handling works in the multitask setting
