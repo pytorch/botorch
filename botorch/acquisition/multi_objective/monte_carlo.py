@@ -40,9 +40,11 @@ from botorch.acquisition.multi_objective.utils import (
 )
 from botorch.exceptions.errors import UnsupportedError
 from botorch.exceptions.warnings import BotorchWarning
+from botorch.models.deterministic import DeterministicModel
 from botorch.models.model import Model
 from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.models.multitask import MultiTaskGP
+from botorch.posteriors import DeterministicPosterior
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.posteriors.posterior import Posterior
 from botorch.sampling.samplers import MCSampler, SobolQMCNormalSampler
@@ -449,6 +451,8 @@ class qNoisyExpectedHypervolumeImprovement(qExpectedHypervolumeImprovement):
             self.p_class = FastNondominatedPartitioning
         self.register_buffer("_X_baseline", X_baseline)
         self.register_buffer("_X_baseline_and_pending", X_baseline)
+        if isinstance(model, DeterministicModel):
+            cache_root = False
         self._cache_root = cache_root
         self.register_buffer(
             "cache_pending",
@@ -687,6 +691,7 @@ class qNoisyExpectedHypervolumeImprovement(qExpectedHypervolumeImprovement):
             if (
                 self.X_baseline.shape[0] > 0
                 and self.base_sampler.base_samples is not None
+                and not isinstance(posterior, DeterministicPosterior)
             ):
                 current_base_samples = self.base_sampler.base_samples.detach().clone()
                 view_shape = (

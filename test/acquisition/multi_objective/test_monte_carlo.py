@@ -3,7 +3,7 @@
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-
+import itertools
 import warnings
 from copy import deepcopy
 from itertools import product
@@ -24,6 +24,7 @@ from botorch.acquisition.multi_objective.objective import (
 from botorch.acquisition.objective import IdentityMCObjective
 from botorch.exceptions.errors import BotorchError, UnsupportedError
 from botorch.exceptions.warnings import BotorchWarning
+from botorch.models import GenericDeterministicModel
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.low_rank import sample_cached_cholesky
@@ -1388,3 +1389,20 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                         acqf(test_X)
                 self.assertEqual(len(ws), 1)
                 self.assertTrue(issubclass(ws[-1].category, BotorchWarning))
+
+    def test_deterministic(self):
+        for dtype, prune in ((torch.float, False), (torch.double, True)):
+            tkwargs = {"device": self.device, "dtype": dtype}
+            model = GenericDeterministicModel(f=lambda x: x, num_outputs=2)
+            acqf = qNoisyExpectedHypervolumeImprovement(
+                model=model,
+                ref_point=torch.tensor([0.0, 0.0], **tkwargs),
+                X_baseline=torch.rand(5, 2, **tkwargs),
+                sampler=SobolQMCNormalSampler(1),
+                prune_baseline=prune,
+                cache_root=True,
+            )
+            self.assertFalse(acqf._cache_root)
+            self.assertEqual(
+                acqf(torch.rand(3, 2, 2, **tkwargs)).shape, torch.Size([3])
+            )
