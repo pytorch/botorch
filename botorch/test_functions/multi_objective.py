@@ -1075,4 +1075,4 @@ class WeldedBeam(MultiObjectiveTestProblem, ConstrainedBaseTestProblem):
         g2 = (1 / s_max) * (s - s_max)
         g3 = (1 / (5 - 0.125)) * (X[..., 0] - X[..., 3])
         g4 = (1 / P) * (P - P_c)
-        return torch.stack([g1, g2, g3, g4], dim=-1)
+        return -torch.stack([g1, g2, g3, g4], dim=-1)
