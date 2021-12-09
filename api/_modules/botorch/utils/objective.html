@@ -98,20 +98,24 @@
 <span class="sd">    each constraint.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        obj: A `n_samples x b x q` Tensor of objective values.</span>
+<span class="sd">        obj: A `n_samples x b x q (x m')`-dim Tensor of objective values.</span>
 <span class="sd">        constraints: A list of callables, each mapping a Tensor of size `b x q x m`</span>
 <span class="sd">            to a Tensor of size `b x q`, where negative values imply feasibility.</span>
 <span class="sd">            This callable must support broadcasting. Only relevant for multi-</span>
 <span class="sd">            output models (`m` &gt; 1).</span>
-<span class="sd">        samples: A `b x q x m` Tensor of samples drawn from the posterior.</span>
+<span class="sd">        samples: A `n_samples x b x q x m` Tensor of samples drawn from the posterior.</span>
 <span class="sd">        eta: The temperature parameter for the sigmoid function.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        A `n_samples x b x q`-dim tensor of feasibility-weighted objectives.</span>
+<span class="sd">        A `n_samples x b x q (x m')`-dim tensor of feasibility-weighted objectives.</span>
 <span class="sd">    """</span>
     <span class="n">obj</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">clamp_min</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># Enforce non-negativity with constraints</span>
     <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="n">constraints</span><span class="p">:</span>
-        <span class="n">obj</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="n">soft_eval_constraint</span><span class="p">(</span><span class="n">constraint</span><span class="p">(</span><span class="n">samples</span><span class="p">),</span> <span class="n">eta</span><span class="o">=</span><span class="n">eta</span><span class="p">))</span>
+        <span class="n">constraint_eval</span> <span class="o">=</span> <span class="n">soft_eval_constraint</span><span class="p">(</span><span class="n">constraint</span><span class="p">(</span><span class="n">samples</span><span class="p">),</span> <span class="n">eta</span><span class="o">=</span><span class="n">eta</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="n">samples</span><span class="o">.</span><span class="n">dim</span><span class="p">():</span>
+            <span class="c1"># Need to unsqueeze to accommodate the outcome dimension.</span>
+            <span class="n">constraint_eval</span> <span class="o">=</span> <span class="n">constraint_eval</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="n">constraint_eval</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">obj</span></div>
 
 
@@ -145,25 +149,25 @@
     <span class="sa">r</span><span class="sd">"""Apply constraints using an infeasible_cost `M` for negative objectives.</span>
 
 <span class="sd">    This allows feasibility-weighting an objective for the case where the</span>
-<span class="sd">    objective can be negative by usingthe following strategy:</span>
-<span class="sd">    (1) add `M` to make obj nonnegative</span>
-<span class="sd">    (2) apply constraints using the sigmoid approximation</span>
-<span class="sd">    (3) shift by `-M`</span>
+<span class="sd">    objective can be negative by using the following strategy:</span>
+<span class="sd">    (1) Add `M` to make obj non-negative;</span>
+<span class="sd">    (2) Apply constraints using the sigmoid approximation;</span>
+<span class="sd">    (3) Shift by `-M`.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        obj: A `n_samples x b x q` Tensor of objective values.</span>
+<span class="sd">        obj: A `n_samples x b x q (x m')`-dim Tensor of objective values.</span>
 <span class="sd">        constraints: A list of callables, each mapping a Tensor of size `b x q x m`</span>
 <span class="sd">            to a Tensor of size `b x q`, where negative values imply feasibility.</span>
 <span class="sd">            This callable must support broadcasting. Only relevant for multi-</span>
 <span class="sd">            output models (`m` &gt; 1).</span>
-<span class="sd">        samples: A `b x q x m` Tensor of samples drawn from the posterior.</span>
+<span class="sd">        samples: A `n_samples x b x q x m` Tensor of samples drawn from the posterior.</span>
 <span class="sd">        infeasible_cost: The infeasible value.</span>
 <span class="sd">        eta: The temperature parameter of the sigmoid function.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        A `n_samples x b x q`-dim tensor of feasibility-weighted objectives.</span>
+<span class="sd">        A `n_samples x b x q (x m')`-dim tensor of feasibility-weighted objectives.</span>
 <span class="sd">    """</span>
-    <span class="c1"># obj has dimensions n_samples x b x q</span>
+    <span class="c1"># obj has dimensions n_samples x b x q (x m')</span>
     <span class="n">obj</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">infeasible_cost</span><span class="p">)</span>  <span class="c1"># now it is nonnegative</span>
     <span class="n">obj</span> <span class="o">=</span> <span class="n">apply_constraints_nonnegative_soft</span><span class="p">(</span>
         <span class="n">obj</span><span class="o">=</span><span class="n">obj</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span> <span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">,</span> <span class="n">eta</span><span class="o">=</span><span class="n">eta</span>
@@ -216,7 +220,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2021 Facebook Inc.</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2021 Meta Platforms Inc.</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {

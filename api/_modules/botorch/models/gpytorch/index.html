@@ -48,7 +48,7 @@
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.errors</span> <span class="kn">import</span> <span class="n">BotorchTensorDimensionError</span>
 <span class="kn">from</span> <span class="nn">botorch.exceptions.warnings</span> <span class="kn">import</span> <span class="n">BotorchTensorDimensionWarning</span>
-<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">Model</span><span class="p">,</span> <span class="n">ModelList</span>
 <span class="kn">from</span> <span class="nn">botorch.models.utils</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">_make_X_full</span><span class="p">,</span>
     <span class="n">add_output_dim</span><span class="p">,</span>
@@ -58,8 +58,8 @@
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">botorch.posteriors.gpytorch</span> <span class="kn">import</span> <span class="n">GPyTorchPosterior</span>
 <span class="kn">from</span> <span class="nn">gpytorch.distributions</span> <span class="kn">import</span> <span class="n">MultitaskMultivariateNormal</span><span class="p">,</span> <span class="n">MultivariateNormal</span>
-<span class="kn">from</span> <span class="nn">gpytorch.lazy</span> <span class="kn">import</span> <span class="n">lazify</span>
 <span class="kn">from</span> <span class="nn">gpytorch.likelihoods.gaussian_likelihood</span> <span class="kn">import</span> <span class="n">FixedNoiseGaussianLikelihood</span>
+<span class="kn">from</span> <span class="nn">gpytorch.utils.broadcasting</span> <span class="kn">import</span> <span class="n">_mul_broadcast_shape</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 
@@ -369,12 +369,12 @@
                     <span class="n">mvn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">likelihood</span><span class="p">(</span><span class="n">mvn</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_outputs</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="n">mean_x</span> <span class="o">=</span> <span class="n">mvn</span><span class="o">.</span><span class="n">mean</span>
-                <span class="n">covar_x</span> <span class="o">=</span> <span class="n">mvn</span><span class="o">.</span><span class="n">covariance_matrix</span>
+                <span class="n">covar_x</span> <span class="o">=</span> <span class="n">mvn</span><span class="o">.</span><span class="n">lazy_covariance_matrix</span>
                 <span class="n">output_indices</span> <span class="o">=</span> <span class="n">output_indices</span> <span class="ow">or</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_num_outputs</span><span class="p">)</span>
                 <span class="n">mvns</span> <span class="o">=</span> <span class="p">[</span>
                     <span class="n">MultivariateNormal</span><span class="p">(</span>
                         <span class="n">mean_x</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">output_dim_idx</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">t</span><span class="p">),</span>
-                        <span class="n">lazify</span><span class="p">(</span><span class="n">covar_x</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">output_dim_idx</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">t</span><span class="p">)),</span>
+                        <span class="n">covar_x</span><span class="p">[(</span><span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">),)</span> <span class="o">*</span> <span class="n">output_dim_idx</span> <span class="o">+</span> <span class="p">(</span><span class="n">t</span><span class="p">,)],</span>
                     <span class="p">)</span>
                     <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">output_indices</span>
                 <span class="p">]</span>
@@ -498,7 +498,7 @@
         <span class="k">return</span> <span class="n">new_model</span></div></div>
 
 
-<div class="viewcode-block" id="ModelListGPyTorchModel"><a class="viewcode-back" href="../../../models.html#botorch.models.gpytorch.ModelListGPyTorchModel">[docs]</a><span class="k">class</span> <span class="nc">ModelListGPyTorchModel</span><span class="p">(</span><span class="n">GPyTorchModel</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+<div class="viewcode-block" id="ModelListGPyTorchModel"><a class="viewcode-back" href="../../../models.html#botorch.models.gpytorch.ModelListGPyTorchModel">[docs]</a><span class="k">class</span> <span class="nc">ModelListGPyTorchModel</span><span class="p">(</span><span class="n">GPyTorchModel</span><span class="p">,</span> <span class="n">ModelList</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""Abstract base class for models based on multi-output GPyTorch models.</span>
 
 <span class="sd">    This is meant to be used with a gpytorch ModelList wrapper for independent</span>
@@ -515,14 +515,19 @@
 <span class="sd">        to the `posterior` method returns a Posterior object over an output of</span>
 <span class="sd">        shape `broadcast(test_batch_shape, model.batch_shape) x q x m`.</span>
 <span class="sd">        """</span>
-        <span class="c1"># TODO: Either check that batch shapes match across models, or broadcast them</span>
-        <span class="n">batch_shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">batch_shape</span>
-        <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">batch_shape</span> <span class="o">==</span> <span class="n">m</span><span class="o">.</span><span class="n">batch_shape</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
-            <span class="k">return</span> <span class="n">batch_shape</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-            <span class="s2">"ModelListGPyTorchModel.batch_shape is only supported if all "</span>
-            <span class="s2">"constituent models have the same batch_shape."</span>
-        <span class="p">)</span>
+        <span class="n">batch_shapes</span> <span class="o">=</span> <span class="p">{</span><span class="n">ti</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">ti</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_inputs</span><span class="p">}</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch_shapes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Component models of </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> have different "</span>
+                <span class="s2">"batch shapes"</span>
+            <span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">broadcast_shape</span> <span class="o">=</span> <span class="n">_mul_broadcast_shape</span><span class="p">(</span><span class="o">*</span><span class="n">batch_shapes</span><span class="p">)</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">msg</span> <span class="o">+</span> <span class="s2">". Broadcasting batch shapes."</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">broadcast_shape</span>
+            <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">msg</span> <span class="o">+</span> <span class="s2">" that are not broadcastble."</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">batch_shapes</span><span class="p">))</span>
 
 <div class="viewcode-block" id="ModelListGPyTorchModel.posterior"><a class="viewcode-back" href="../../../models.html#botorch.models.gpytorch.ModelListGPyTorchModel.posterior">[docs]</a>    <span class="k">def</span> <span class="nf">posterior</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -608,30 +613,8 @@
             <span class="n">mvn</span><span class="o">=</span><span class="n">MultitaskMultivariateNormal</span><span class="o">.</span><span class="n">from_independent_mvns</span><span class="p">(</span><span class="n">mvns</span><span class="o">=</span><span class="n">mvns</span><span class="p">)</span>
         <span class="p">)</span></div>
 
-<div class="viewcode-block" id="ModelListGPyTorchModel.condition_on_observations"><a class="viewcode-back" href="../../../models.html#botorch.models.gpytorch.ModelListGPyTorchModel.condition_on_observations">[docs]</a>    <span class="k">def</span> <span class="nf">condition_on_observations</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModelListGPyTorchModel</span><span class="p">:</span>
-        <span class="n">class_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"`condition_on_observations` not implemented in </span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">"</span>
-        <span class="p">)</span></div>
-
-<div class="viewcode-block" id="ModelListGPyTorchModel.transform_inputs"><a class="viewcode-back" href="../../../models.html#botorch.models.gpytorch.ModelListGPyTorchModel.transform_inputs">[docs]</a>    <span class="k">def</span> <span class="nf">transform_inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
-        <span class="sa">r</span><span class="sd">"""Individually transform the inputs for each model.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            X: A tensor of inputs</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            A list of tensors of transformed inputs</span>
-<span class="sd">        """</span>
-        <span class="n">transformed_X_list</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">:</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">transformed_X_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">input_transform</span><span class="p">(</span><span class="n">X</span><span class="p">))</span>
-            <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
-                <span class="n">transformed_X_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">transformed_X_list</span></div></div>
+<div class="viewcode-block" id="ModelListGPyTorchModel.condition_on_observations"><a class="viewcode-back" href="../../../models.html#botorch.models.gpytorch.ModelListGPyTorchModel.condition_on_observations">[docs]</a>    <span class="k">def</span> <span class="nf">condition_on_observations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Model</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div></div>
 
 
 <div class="viewcode-block" id="MultiTaskGPyTorchModel"><a class="viewcode-back" href="../../../models.html#botorch.models.gpytorch.MultiTaskGPyTorchModel">[docs]</a><span class="k">class</span> <span class="nc">MultiTaskGPyTorchModel</span><span class="p">(</span><span class="n">GPyTorchModel</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
@@ -749,7 +732,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2021 Facebook Inc.</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2021 Meta Platforms Inc.</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {

@@ -1,0 +1,686 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>BoTorch · Bayesian Optimization in PyTorch</title><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Bayesian Optimization in PyTorch"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="BoTorch · Bayesian Optimization in PyTorch"/><meta property="og:type" content="website"/><meta property="og:url" content="https://botorch.org/v/0.6.0/"/><meta property="og:description" content="Bayesian Optimization in PyTorch"/><meta property="og:image" content="https://botorch.org/v/0.6.0/img/botorch.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://botorch.org/v/0.6.0/img/botorch.png"/><link rel="shortcut icon" href="/v/0.6.0/img/botorch.ico"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script>
+              (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+              (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+              m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+              })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+              ga('create', 'UA-139570076-2', 'auto');
+              ga('send', 'pageview');
+            </script><link rel="stylesheet" href="/v/0.6.0/css/code_block_buttons.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="/v/0.6.0/js/code_block_buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script type="text/javascript" src="/v/0.6.0/js/mathjax.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_HTML"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100}
+          )
+        });
+        </script><script src="/v/0.6.0/js/scrollSpy.js"></script><link rel="stylesheet" href="/v/0.6.0/css/main.css"/><script src="/v/0.6.0/js/codetabs.js"></script></head><body><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/v/0.6.0/"><img class="logo" src="/v/0.6.0/img/botorch_logo_lockup_white.png" alt="BoTorch"/><h2 class="headerTitleWithLogo">BoTorch</h2></a><a href="/v/0.6.0/versions"><h3>0.6.0</h3></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/v/0.6.0/docs/introduction" target="_self">Docs</a></li><li class=""><a href="/v/0.6.0/tutorials/" target="_self">Tutorials</a></li><li class=""><a href="/v/0.6.0/api/" target="_self">API Reference</a></li><li class=""><a href="/v/0.6.0/docs/papers" target="_self">Papers</a></li><li class=""><a href="https://github.com/pytorch/botorch" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div>
+<script type="text/javascript" id="documentation_options" data-url_root="./" src="/js/documentation_options.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/underscore.js"></script>
+<script type="text/javascript" src="/js/doctools.js"></script>
+<script type="text/javascript" src="/js/language_data.js"></script>
+<script type="text/javascript" src="/js/searchtools.js"></script>
+<div class="sphinx"><div class="document">
+<div class="documentwrapper">
+<div class="bodywrapper">
+<div class="body" role="main">
+<h1>Source code for botorch.optim.optimize</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># Copyright (c) Facebook, Inc. and its affiliates.</span>
+<span class="c1">#</span>
+<span class="c1"># This source code is licensed under the MIT license found in the</span>
+<span class="c1"># LICENSE file in the root directory of this source tree.</span>
+
+<span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">Methods for optimizing acquisition functions.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.acquisition</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AcquisitionFunction</span><span class="p">,</span>
+    <span class="n">OneShotAcquisitionFunction</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">botorch.acquisition.knowledge_gradient</span> <span class="kn">import</span> <span class="n">qKnowledgeGradient</span>
+<span class="kn">from</span> <span class="nn">botorch.generation.gen</span> <span class="kn">import</span> <span class="n">gen_candidates_scipy</span>
+<span class="kn">from</span> <span class="nn">botorch.logging</span> <span class="kn">import</span> <span class="n">logger</span>
+<span class="kn">from</span> <span class="nn">botorch.optim.initializers</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">gen_batch_initial_conditions</span><span class="p">,</span>
+    <span class="n">gen_one_shot_kg_initial_conditions</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">botorch.optim.stopping</span> <span class="kn">import</span> <span class="n">ExpMAStoppingCriterion</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+
+<span class="n">INIT_OPTION_KEYS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="c1"># set of options for initialization that we should</span>
+    <span class="c1"># not pass to scipy.optimize.minimize to avoid</span>
+    <span class="c1"># warnings</span>
+    <span class="s2">"alpha"</span><span class="p">,</span>
+    <span class="s2">"batch_limit"</span><span class="p">,</span>
+    <span class="s2">"eta"</span><span class="p">,</span>
+    <span class="s2">"init_batch_limit"</span><span class="p">,</span>
+    <span class="s2">"nonnegative"</span><span class="p">,</span>
+    <span class="s2">"n_burnin"</span><span class="p">,</span>
+    <span class="s2">"sample_around_best"</span><span class="p">,</span>
+    <span class="s2">"sample_around_best_sigma"</span><span class="p">,</span>
+    <span class="s2">"sample_around_best_prob_perturb"</span><span class="p">,</span>
+    <span class="s2">"sample_around_best_prob_perturb"</span><span class="p">,</span>
+    <span class="s2">"seed"</span><span class="p">,</span>
+    <span class="s2">"thinning"</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="optimize_acqf"><a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize.optimize_acqf">[docs]</a><span class="k">def</span> <span class="nf">optimize_acqf</span><span class="p">(</span>
+    <span class="n">acq_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">num_restarts</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">raw_samples</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">inequality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">equality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">fixed_features</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">post_processing_func</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">batch_initial_conditions</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">return_best_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">sequential</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+    <span class="sa">r</span><span class="sd">"""Generate a set of candidates via multi-start optimization.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        acq_function: An AcquisitionFunction.</span>
+<span class="sd">        bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.</span>
+<span class="sd">        q: The number of candidates.</span>
+<span class="sd">        num_restarts: The number of starting points for multistart acquisition</span>
+<span class="sd">            function optimization.</span>
+<span class="sd">        raw_samples: The number of samples for initialization. This is required</span>
+<span class="sd">            if `batch_initial_conditions` is not specified.</span>
+<span class="sd">        options: Options for candidate generation.</span>
+<span class="sd">        inequality constraints: A list of tuples (indices, coefficients, rhs),</span>
+<span class="sd">            with each tuple encoding an inequality constraint of the form</span>
+<span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs`</span>
+<span class="sd">        equality constraints: A list of tuples (indices, coefficients, rhs),</span>
+<span class="sd">            with each tuple encoding an inequality constraint of the form</span>
+<span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`</span>
+<span class="sd">        fixed_features: A map `{feature_index: value}` for features that</span>
+<span class="sd">            should be fixed to a particular value during generation.</span>
+<span class="sd">        post_processing_func: A function that post-processes an optimization</span>
+<span class="sd">            result appropriately (i.e., according to `round-trip`</span>
+<span class="sd">            transformations).</span>
+<span class="sd">        batch_initial_conditions: A tensor to specify the initial conditions. Set</span>
+<span class="sd">            this if you do not want to use default initialization strategy.</span>
+<span class="sd">        return_best_only: If False, outputs the solutions corresponding to all</span>
+<span class="sd">            random restart initializations of the optimization.</span>
+<span class="sd">        sequential: If False, uses joint optimization, otherwise uses sequential</span>
+<span class="sd">            optimization.</span>
+<span class="sd">        kwargs: Additonal keyword arguments.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A two-element tuple containing</span>
+
+<span class="sd">        - a `(num_restarts) x q x d`-dim tensor of generated candidates.</span>
+<span class="sd">        - a tensor of associated acquisition values. If `sequential=False`,</span>
+<span class="sd">            this is a `(num_restarts)`-dim tensor of joint acquisition values</span>
+<span class="sd">            (with explicit restart dimension if `return_best_only=False`). If</span>
+<span class="sd">            `sequential=True`, this is a `q`-dim tensor of expected acquisition</span>
+<span class="sd">            values conditional on having observed canidates `0,1,...,i-1`.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; # generate `q=2` candidates jointly using 20 random restarts</span>
+<span class="sd">        &gt;&gt;&gt; # and 512 raw samples</span>
+<span class="sd">        &gt;&gt;&gt; candidates, acq_value = optimize_acqf(qEI, bounds, 2, 20, 512)</span>
+
+<span class="sd">        &gt;&gt;&gt; generate `q=3` candidates sequentially using 15 random restarts</span>
+<span class="sd">        &gt;&gt;&gt; # and 256 raw samples</span>
+<span class="sd">        &gt;&gt;&gt; qEI = qExpectedImprovement(model, best_f=0.2)</span>
+<span class="sd">        &gt;&gt;&gt; bounds = torch.tensor([[0.], [1.]])</span>
+<span class="sd">        &gt;&gt;&gt; candidates, acq_value_list = optimize_acqf(</span>
+<span class="sd">        &gt;&gt;&gt;     qEI, bounds, 3, 15, 256, sequential=True</span>
+<span class="sd">        &gt;&gt;&gt; )</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">sequential</span> <span class="ow">and</span> <span class="n">q</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">return_best_only</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="s2">"`return_best_only=False` only supported for joint optimization."</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">acq_function</span><span class="p">,</span> <span class="n">OneShotAcquisitionFunction</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="s2">"sequential optimization currently not supported for one-shot "</span>
+                <span class="s2">"acquisition functions. Must have `sequential=False`."</span>
+            <span class="p">)</span>
+        <span class="n">candidate_list</span><span class="p">,</span> <span class="n">acq_value_list</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="n">base_X_pending</span> <span class="o">=</span> <span class="n">acq_function</span><span class="o">.</span><span class="n">X_pending</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">q</span><span class="p">):</span>
+            <span class="n">candidate</span><span class="p">,</span> <span class="n">acq_value</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
+                <span class="n">acq_function</span><span class="o">=</span><span class="n">acq_function</span><span class="p">,</span>
+                <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+                <span class="n">q</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                <span class="n">num_restarts</span><span class="o">=</span><span class="n">num_restarts</span><span class="p">,</span>
+                <span class="n">raw_samples</span><span class="o">=</span><span class="n">raw_samples</span><span class="p">,</span>
+                <span class="n">options</span><span class="o">=</span><span class="n">options</span> <span class="ow">or</span> <span class="p">{},</span>
+                <span class="n">inequality_constraints</span><span class="o">=</span><span class="n">inequality_constraints</span><span class="p">,</span>
+                <span class="n">equality_constraints</span><span class="o">=</span><span class="n">equality_constraints</span><span class="p">,</span>
+                <span class="n">fixed_features</span><span class="o">=</span><span class="n">fixed_features</span><span class="p">,</span>
+                <span class="n">post_processing_func</span><span class="o">=</span><span class="n">post_processing_func</span><span class="p">,</span>
+                <span class="n">batch_initial_conditions</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">return_best_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">sequential</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">candidate_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">candidate</span><span class="p">)</span>
+            <span class="n">acq_value_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">acq_value</span><span class="p">)</span>
+            <span class="n">candidates</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">candidate_list</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
+            <span class="n">acq_function</span><span class="o">.</span><span class="n">set_X_pending</span><span class="p">(</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">base_X_pending</span><span class="p">,</span> <span class="n">candidates</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">base_X_pending</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="k">else</span> <span class="n">candidates</span>
+            <span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Generated sequential candidate </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="n">q</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="c1"># Reset acq_func to previous X_pending state</span>
+        <span class="n">acq_function</span><span class="o">.</span><span class="n">set_X_pending</span><span class="p">(</span><span class="n">base_X_pending</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">candidates</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">acq_value_list</span><span class="p">)</span>
+
+    <span class="n">options</span> <span class="o">=</span> <span class="n">options</span> <span class="ow">or</span> <span class="p">{}</span>
+
+    <span class="c1"># Handle the trivial case when all features are fixed</span>
+    <span class="k">if</span> <span class="n">fixed_features</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">fixed_features</span><span class="p">)</span> <span class="o">==</span> <span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">fixed_features</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">bounds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])],</span>
+            <span class="n">device</span><span class="o">=</span><span class="n">bounds</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="n">bounds</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="n">acq_value</span> <span class="o">=</span> <span class="n">acq_function</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">X</span><span class="p">,</span> <span class="n">acq_value</span>
+
+    <span class="k">if</span> <span class="n">batch_initial_conditions</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">raw_samples</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"Must specify `raw_samples` when `batch_initial_conditions` is `None`."</span>
+            <span class="p">)</span>
+
+        <span class="n">ic_gen</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">gen_one_shot_kg_initial_conditions</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">acq_function</span><span class="p">,</span> <span class="n">qKnowledgeGradient</span><span class="p">)</span>
+            <span class="k">else</span> <span class="n">gen_batch_initial_conditions</span>
+        <span class="p">)</span>
+        <span class="n">batch_initial_conditions</span> <span class="o">=</span> <span class="n">ic_gen</span><span class="p">(</span>
+            <span class="n">acq_function</span><span class="o">=</span><span class="n">acq_function</span><span class="p">,</span>
+            <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+            <span class="n">q</span><span class="o">=</span><span class="n">q</span><span class="p">,</span>
+            <span class="n">num_restarts</span><span class="o">=</span><span class="n">num_restarts</span><span class="p">,</span>
+            <span class="n">raw_samples</span><span class="o">=</span><span class="n">raw_samples</span><span class="p">,</span>
+            <span class="n">fixed_features</span><span class="o">=</span><span class="n">fixed_features</span><span class="p">,</span>
+            <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">,</span>
+            <span class="n">inequality_constraints</span><span class="o">=</span><span class="n">inequality_constraints</span><span class="p">,</span>
+            <span class="n">equality_constraints</span><span class="o">=</span><span class="n">equality_constraints</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="n">batch_limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"batch_limit"</span><span class="p">,</span> <span class="n">num_restarts</span><span class="p">)</span>
+    <span class="n">batch_candidates_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">batch_acq_values_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">batched_ics</span> <span class="o">=</span> <span class="n">batch_initial_conditions</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">batch_limit</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">batched_ics_</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">batched_ics</span><span class="p">):</span>
+        <span class="c1"># optimize using random restart optimization</span>
+        <span class="n">batch_candidates_curr</span><span class="p">,</span> <span class="n">batch_acq_values_curr</span> <span class="o">=</span> <span class="n">gen_candidates_scipy</span><span class="p">(</span>
+            <span class="n">initial_conditions</span><span class="o">=</span><span class="n">batched_ics_</span><span class="p">,</span>
+            <span class="n">acquisition_function</span><span class="o">=</span><span class="n">acq_function</span><span class="p">,</span>
+            <span class="n">lower_bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="n">upper_bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">options</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">INIT_OPTION_KEYS</span><span class="p">},</span>
+            <span class="n">inequality_constraints</span><span class="o">=</span><span class="n">inequality_constraints</span><span class="p">,</span>
+            <span class="n">equality_constraints</span><span class="o">=</span><span class="n">equality_constraints</span><span class="p">,</span>
+            <span class="n">fixed_features</span><span class="o">=</span><span class="n">fixed_features</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">batch_candidates_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">batch_candidates_curr</span><span class="p">)</span>
+        <span class="n">batch_acq_values_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">batch_acq_values_curr</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Generated candidate batch </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">batched_ics</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+    <span class="n">batch_candidates</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">batch_candidates_list</span><span class="p">)</span>
+    <span class="n">batch_acq_values</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">batch_acq_values_list</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">post_processing_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">batch_candidates</span> <span class="o">=</span> <span class="n">post_processing_func</span><span class="p">(</span><span class="n">batch_candidates</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">return_best_only</span><span class="p">:</span>
+        <span class="n">best</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">batch_acq_values</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">batch_candidates</span> <span class="o">=</span> <span class="n">batch_candidates</span><span class="p">[</span><span class="n">best</span><span class="p">]</span>
+        <span class="n">batch_acq_values</span> <span class="o">=</span> <span class="n">batch_acq_values</span><span class="p">[</span><span class="n">best</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">acq_function</span><span class="p">,</span> <span class="n">OneShotAcquisitionFunction</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"return_full_tree"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+            <span class="n">batch_candidates</span> <span class="o">=</span> <span class="n">acq_function</span><span class="o">.</span><span class="n">extract_candidates</span><span class="p">(</span><span class="n">X_full</span><span class="o">=</span><span class="n">batch_candidates</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">batch_candidates</span><span class="p">,</span> <span class="n">batch_acq_values</span></div>
+
+
+<div class="viewcode-block" id="optimize_acqf_cyclic"><a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize.optimize_acqf_cyclic">[docs]</a><span class="k">def</span> <span class="nf">optimize_acqf_cyclic</span><span class="p">(</span>
+    <span class="n">acq_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">num_restarts</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">raw_samples</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">inequality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">equality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">fixed_features</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">post_processing_func</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">batch_initial_conditions</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">cyclic_options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+    <span class="sa">r</span><span class="sd">"""Generate a set of `q` candidates via cyclic optimization.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        acq_function: An AcquisitionFunction</span>
+<span class="sd">        bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.</span>
+<span class="sd">        q: The number of candidates.</span>
+<span class="sd">        num_restarts:  Number of starting points for multistart acquisition</span>
+<span class="sd">            function optimization.</span>
+<span class="sd">        raw_samples: Number of samples for initialization. This is required</span>
+<span class="sd">            if `batch_initial_conditions` is not specified.</span>
+<span class="sd">        options: Options for candidate generation.</span>
+<span class="sd">        inequality constraints: A list of tuples (indices, coefficients, rhs),</span>
+<span class="sd">            with each tuple encoding an inequality constraint of the form</span>
+<span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs`</span>
+<span class="sd">        equality constraints: A list of tuples (indices, coefficients, rhs),</span>
+<span class="sd">            with each tuple encoding an inequality constraint of the form</span>
+<span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`</span>
+<span class="sd">        fixed_features: A map `{feature_index: value}` for features that</span>
+<span class="sd">            should be fixed to a particular value during generation.</span>
+<span class="sd">        post_processing_func: A function that post-processes an optimization</span>
+<span class="sd">            result appropriately (i.e., according to `round-trip`</span>
+<span class="sd">            transformations).</span>
+<span class="sd">        batch_initial_conditions: A tensor to specify the initial conditions.</span>
+<span class="sd">            If no initial conditions are provided, the default initialization will</span>
+<span class="sd">            be used.</span>
+<span class="sd">        cyclic_options: Options for stopping criterion for outer cyclic optimization.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A two-element tuple containing</span>
+
+<span class="sd">        - a `q x d`-dim tensor of generated candidates.</span>
+<span class="sd">        - a `q`-dim tensor of expected acquisition values, where the value at</span>
+<span class="sd">            index `i` is the acquisition value conditional on having observed</span>
+<span class="sd">            all candidates except candidate `i`.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; # generate `q=3` candidates cyclically using 15 random restarts</span>
+<span class="sd">        &gt;&gt;&gt; # 256 raw samples, and 4 cycles</span>
+<span class="sd">        &gt;&gt;&gt;</span>
+<span class="sd">        &gt;&gt;&gt; qEI = qExpectedImprovement(model, best_f=0.2)</span>
+<span class="sd">        &gt;&gt;&gt; bounds = torch.tensor([[0.], [1.]])</span>
+<span class="sd">        &gt;&gt;&gt; candidates, acq_value_list = optimize_acqf_cyclic(</span>
+<span class="sd">        &gt;&gt;&gt;     qEI, bounds, 3, 15, 256, cyclic_options={"maxiter": 4}</span>
+<span class="sd">        &gt;&gt;&gt; )</span>
+<span class="sd">    """</span>
+    <span class="c1"># for the first cycle, optimize the q candidates sequentially</span>
+    <span class="n">candidates</span><span class="p">,</span> <span class="n">acq_vals</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
+        <span class="n">acq_function</span><span class="o">=</span><span class="n">acq_function</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+        <span class="n">q</span><span class="o">=</span><span class="n">q</span><span class="p">,</span>
+        <span class="n">num_restarts</span><span class="o">=</span><span class="n">num_restarts</span><span class="p">,</span>
+        <span class="n">raw_samples</span><span class="o">=</span><span class="n">raw_samples</span><span class="p">,</span>
+        <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">,</span>
+        <span class="n">inequality_constraints</span><span class="o">=</span><span class="n">inequality_constraints</span><span class="p">,</span>
+        <span class="n">equality_constraints</span><span class="o">=</span><span class="n">equality_constraints</span><span class="p">,</span>
+        <span class="n">fixed_features</span><span class="o">=</span><span class="n">fixed_features</span><span class="p">,</span>
+        <span class="n">post_processing_func</span><span class="o">=</span><span class="n">post_processing_func</span><span class="p">,</span>
+        <span class="n">batch_initial_conditions</span><span class="o">=</span><span class="n">batch_initial_conditions</span><span class="p">,</span>
+        <span class="n">return_best_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">sequential</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">q</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">cyclic_options</span> <span class="o">=</span> <span class="n">cyclic_options</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="n">stopping_criterion</span> <span class="o">=</span> <span class="n">ExpMAStoppingCriterion</span><span class="p">(</span><span class="o">**</span><span class="n">cyclic_options</span><span class="p">)</span>
+        <span class="n">stop</span> <span class="o">=</span> <span class="n">stopping_criterion</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">fvals</span><span class="o">=</span><span class="n">acq_vals</span><span class="p">)</span>
+        <span class="n">base_X_pending</span> <span class="o">=</span> <span class="n">acq_function</span><span class="o">.</span><span class="n">X_pending</span>
+        <span class="n">idxr</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">bounds</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="n">stop</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">q</span><span class="p">):</span>
+                <span class="c1"># optimize only candidate i</span>
+                <span class="n">idxr</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">acq_function</span><span class="o">.</span><span class="n">set_X_pending</span><span class="p">(</span>
+                    <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">base_X_pending</span><span class="p">,</span> <span class="n">candidates</span><span class="p">[</span><span class="n">idxr</span><span class="p">]],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">base_X_pending</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                    <span class="k">else</span> <span class="n">candidates</span><span class="p">[</span><span class="n">idxr</span><span class="p">]</span>
+                <span class="p">)</span>
+                <span class="n">candidate_i</span><span class="p">,</span> <span class="n">acq_val_i</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
+                    <span class="n">acq_function</span><span class="o">=</span><span class="n">acq_function</span><span class="p">,</span>
+                    <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+                    <span class="n">q</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                    <span class="n">num_restarts</span><span class="o">=</span><span class="n">num_restarts</span><span class="p">,</span>
+                    <span class="n">raw_samples</span><span class="o">=</span><span class="n">raw_samples</span><span class="p">,</span>
+                    <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">,</span>
+                    <span class="n">inequality_constraints</span><span class="o">=</span><span class="n">inequality_constraints</span><span class="p">,</span>
+                    <span class="n">equality_constraints</span><span class="o">=</span><span class="n">equality_constraints</span><span class="p">,</span>
+                    <span class="n">fixed_features</span><span class="o">=</span><span class="n">fixed_features</span><span class="p">,</span>
+                    <span class="n">post_processing_func</span><span class="o">=</span><span class="n">post_processing_func</span><span class="p">,</span>
+                    <span class="n">batch_initial_conditions</span><span class="o">=</span><span class="n">candidates</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+                    <span class="n">return_best_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">sequential</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">candidates</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">candidate_i</span>
+                <span class="n">acq_vals</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">acq_val_i</span>
+                <span class="n">idxr</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">stop</span> <span class="o">=</span> <span class="n">stopping_criterion</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">fvals</span><span class="o">=</span><span class="n">acq_vals</span><span class="p">)</span>
+        <span class="n">acq_function</span><span class="o">.</span><span class="n">set_X_pending</span><span class="p">(</span><span class="n">base_X_pending</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">candidates</span><span class="p">,</span> <span class="n">acq_vals</span></div>
+
+
+<div class="viewcode-block" id="optimize_acqf_list"><a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize.optimize_acqf_list">[docs]</a><span class="k">def</span> <span class="nf">optimize_acqf_list</span><span class="p">(</span>
+    <span class="n">acq_function_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">AcquisitionFunction</span><span class="p">],</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">num_restarts</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">raw_samples</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">inequality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">equality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">fixed_features</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">post_processing_func</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+    <span class="sa">r</span><span class="sd">"""Generate a list of candidates from a list of acquisition functions.</span>
+
+<span class="sd">    The acquisition functions are optimized in sequence, with previous candidates</span>
+<span class="sd">    set as `X_pending`. This is also known as sequential greedy optimization.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        acq_function_list: A list of acquisition functions.</span>
+<span class="sd">        bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.</span>
+<span class="sd">        num_restarts:  Number of starting points for multistart acquisition</span>
+<span class="sd">            function optimization.</span>
+<span class="sd">        raw_samples: Number of samples for initialization. This is required</span>
+<span class="sd">            if `batch_initial_conditions` is not specified.</span>
+<span class="sd">        options: Options for candidate generation.</span>
+<span class="sd">        inequality constraints: A list of tuples (indices, coefficients, rhs),</span>
+<span class="sd">            with each tuple encoding an inequality constraint of the form</span>
+<span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs`</span>
+<span class="sd">        equality constraints: A list of tuples (indices, coefficients, rhs),</span>
+<span class="sd">            with each tuple encoding an inequality constraint of the form</span>
+<span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`</span>
+<span class="sd">        fixed_features: A map `{feature_index: value}` for features that</span>
+<span class="sd">            should be fixed to a particular value during generation.</span>
+<span class="sd">        post_processing_func: A function that post-processes an optimization</span>
+<span class="sd">            result appropriately (i.e., according to `round-trip`</span>
+<span class="sd">            transformations).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A two-element tuple containing</span>
+
+<span class="sd">        - a `q x d`-dim tensor of generated candidates.</span>
+<span class="sd">        - a `q`-dim tensor of expected acquisition values, where the value at</span>
+<span class="sd">            index `i` is the acquisition value conditional on having observed</span>
+<span class="sd">            all candidates except candidate `i`.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">acq_function_list</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"acq_function_list must be non-empty."</span><span class="p">)</span>
+    <span class="n">candidate_list</span><span class="p">,</span> <span class="n">acq_value_list</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+    <span class="n">candidates</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([],</span> <span class="n">device</span><span class="o">=</span><span class="n">bounds</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">bounds</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="n">base_X_pending</span> <span class="o">=</span> <span class="n">acq_function_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">X_pending</span>
+    <span class="k">for</span> <span class="n">acq_function</span> <span class="ow">in</span> <span class="n">acq_function_list</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">candidate_list</span><span class="p">:</span>
+            <span class="n">acq_function</span><span class="o">.</span><span class="n">set_X_pending</span><span class="p">(</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">base_X_pending</span><span class="p">,</span> <span class="n">candidates</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">base_X_pending</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="k">else</span> <span class="n">candidates</span>
+            <span class="p">)</span>
+        <span class="n">candidate</span><span class="p">,</span> <span class="n">acq_value</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
+            <span class="n">acq_function</span><span class="o">=</span><span class="n">acq_function</span><span class="p">,</span>
+            <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+            <span class="n">q</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="n">num_restarts</span><span class="o">=</span><span class="n">num_restarts</span><span class="p">,</span>
+            <span class="n">raw_samples</span><span class="o">=</span><span class="n">raw_samples</span><span class="p">,</span>
+            <span class="n">options</span><span class="o">=</span><span class="n">options</span> <span class="ow">or</span> <span class="p">{},</span>
+            <span class="n">inequality_constraints</span><span class="o">=</span><span class="n">inequality_constraints</span><span class="p">,</span>
+            <span class="n">equality_constraints</span><span class="o">=</span><span class="n">equality_constraints</span><span class="p">,</span>
+            <span class="n">fixed_features</span><span class="o">=</span><span class="n">fixed_features</span><span class="p">,</span>
+            <span class="n">post_processing_func</span><span class="o">=</span><span class="n">post_processing_func</span><span class="p">,</span>
+            <span class="n">return_best_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">sequential</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">candidate_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">candidate</span><span class="p">)</span>
+        <span class="n">acq_value_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">acq_value</span><span class="p">)</span>
+        <span class="n">candidates</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">candidate_list</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">candidates</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">acq_value_list</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="optimize_acqf_mixed"><a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize.optimize_acqf_mixed">[docs]</a><span class="k">def</span> <span class="nf">optimize_acqf_mixed</span><span class="p">(</span>
+    <span class="n">acq_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">num_restarts</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">fixed_features_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+    <span class="n">raw_samples</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">inequality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">equality_constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">post_processing_func</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">batch_initial_conditions</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+    <span class="sa">r</span><span class="sd">"""Optimize over a list of fixed_features and returns the best solution.</span>
+
+<span class="sd">    This is useful for optimizing over mixed continuous and discrete domains.</span>
+<span class="sd">    For q &gt; 1 this function always performs sequential greedy optimization (with</span>
+<span class="sd">    proper conditioning on generated candidates).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        acq_function: An AcquisitionFunction</span>
+<span class="sd">        bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.</span>
+<span class="sd">        q: The number of candidates.</span>
+<span class="sd">        num_restarts:  Number of starting points for multistart acquisition</span>
+<span class="sd">            function optimization.</span>
+<span class="sd">        raw_samples: Number of samples for initialization. This is required</span>
+<span class="sd">            if `batch_initial_conditions` is not specified.</span>
+<span class="sd">        fixed_features_list: A list of maps `{feature_index: value}`. The i-th</span>
+<span class="sd">            item represents the fixed_feature for the i-th optimization.</span>
+<span class="sd">        options: Options for candidate generation.</span>
+<span class="sd">        inequality constraints: A list of tuples (indices, coefficients, rhs),</span>
+<span class="sd">            with each tuple encoding an inequality constraint of the form</span>
+<span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) &gt;= rhs`</span>
+<span class="sd">        equality constraints: A list of tuples (indices, coefficients, rhs),</span>
+<span class="sd">            with each tuple encoding an inequality constraint of the form</span>
+<span class="sd">            `\sum_i (X[indices[i]] * coefficients[i]) = rhs`</span>
+<span class="sd">        post_processing_func: A function that post-processes an optimization</span>
+<span class="sd">            result appropriately (i.e., according to `round-trip`</span>
+<span class="sd">            transformations).</span>
+<span class="sd">        batch_initial_conditions: A tensor to specify the initial conditions. Set</span>
+<span class="sd">            this if you do not want to use default initialization strategy.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A two-element tuple containing</span>
+
+<span class="sd">        - a `q x d`-dim tensor of generated candidates.</span>
+<span class="sd">        - an associated acquisition value.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">fixed_features_list</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"fixed_features_list must be non-empty."</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">q</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">ff_candidate_list</span><span class="p">,</span> <span class="n">ff_acq_value_list</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">fixed_features</span> <span class="ow">in</span> <span class="n">fixed_features_list</span><span class="p">:</span>
+            <span class="n">candidate</span><span class="p">,</span> <span class="n">acq_value</span> <span class="o">=</span> <span class="n">optimize_acqf</span><span class="p">(</span>
+                <span class="n">acq_function</span><span class="o">=</span><span class="n">acq_function</span><span class="p">,</span>
+                <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+                <span class="n">q</span><span class="o">=</span><span class="n">q</span><span class="p">,</span>
+                <span class="n">num_restarts</span><span class="o">=</span><span class="n">num_restarts</span><span class="p">,</span>
+                <span class="n">raw_samples</span><span class="o">=</span><span class="n">raw_samples</span><span class="p">,</span>
+                <span class="n">options</span><span class="o">=</span><span class="n">options</span> <span class="ow">or</span> <span class="p">{},</span>
+                <span class="n">inequality_constraints</span><span class="o">=</span><span class="n">inequality_constraints</span><span class="p">,</span>
+                <span class="n">equality_constraints</span><span class="o">=</span><span class="n">equality_constraints</span><span class="p">,</span>
+                <span class="n">fixed_features</span><span class="o">=</span><span class="n">fixed_features</span><span class="p">,</span>
+                <span class="n">post_processing_func</span><span class="o">=</span><span class="n">post_processing_func</span><span class="p">,</span>
+                <span class="n">batch_initial_conditions</span><span class="o">=</span><span class="n">batch_initial_conditions</span><span class="p">,</span>
+                <span class="n">return_best_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">ff_candidate_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">candidate</span><span class="p">)</span>
+            <span class="n">ff_acq_value_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">acq_value</span><span class="p">)</span>
+
+        <span class="n">ff_acq_values</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">ff_acq_value_list</span><span class="p">)</span>
+        <span class="n">best</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">ff_acq_values</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ff_candidate_list</span><span class="p">[</span><span class="n">best</span><span class="p">],</span> <span class="n">ff_acq_values</span><span class="p">[</span><span class="n">best</span><span class="p">]</span>
+
+    <span class="c1"># For batch optimization with q &gt; 1 we do not want to enumerate all n_combos^n</span>
+    <span class="c1"># possible combinations of discrete choices. Instead, we use sequential greedy</span>
+    <span class="c1"># optimization.</span>
+    <span class="n">base_X_pending</span> <span class="o">=</span> <span class="n">acq_function</span><span class="o">.</span><span class="n">X_pending</span>
+    <span class="n">candidates</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([],</span> <span class="n">device</span><span class="o">=</span><span class="n">bounds</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">bounds</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">q</span><span class="p">):</span>
+        <span class="n">candidate</span><span class="p">,</span> <span class="n">acq_value</span> <span class="o">=</span> <span class="n">optimize_acqf_mixed</span><span class="p">(</span>
+            <span class="n">acq_function</span><span class="o">=</span><span class="n">acq_function</span><span class="p">,</span>
+            <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+            <span class="n">q</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="n">num_restarts</span><span class="o">=</span><span class="n">num_restarts</span><span class="p">,</span>
+            <span class="n">raw_samples</span><span class="o">=</span><span class="n">raw_samples</span><span class="p">,</span>
+            <span class="n">fixed_features_list</span><span class="o">=</span><span class="n">fixed_features_list</span><span class="p">,</span>
+            <span class="n">options</span><span class="o">=</span><span class="n">options</span> <span class="ow">or</span> <span class="p">{},</span>
+            <span class="n">inequality_constraints</span><span class="o">=</span><span class="n">inequality_constraints</span><span class="p">,</span>
+            <span class="n">equality_constraints</span><span class="o">=</span><span class="n">equality_constraints</span><span class="p">,</span>
+            <span class="n">post_processing_func</span><span class="o">=</span><span class="n">post_processing_func</span><span class="p">,</span>
+            <span class="n">batch_initial_conditions</span><span class="o">=</span><span class="n">batch_initial_conditions</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">candidates</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">candidates</span><span class="p">,</span> <span class="n">candidate</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">acq_function</span><span class="o">.</span><span class="n">set_X_pending</span><span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">base_X_pending</span><span class="p">,</span> <span class="n">candidates</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">base_X_pending</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="n">candidates</span>
+        <span class="p">)</span>
+
+    <span class="n">acq_function</span><span class="o">.</span><span class="n">set_X_pending</span><span class="p">(</span><span class="n">base_X_pending</span><span class="p">)</span>
+    <span class="n">acq_value</span> <span class="o">=</span> <span class="n">acq_function</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span>  <span class="c1"># compute joint acquisition value</span>
+    <span class="k">return</span> <span class="n">candidates</span><span class="p">,</span> <span class="n">acq_value</span></div>
+
+
+<div class="viewcode-block" id="optimize_acqf_discrete"><a class="viewcode-back" href="../../../optim.html#botorch.optim.optimize.optimize_acqf_discrete">[docs]</a><span class="k">def</span> <span class="nf">optimize_acqf_discrete</span><span class="p">(</span>
+    <span class="n">acq_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span>
+    <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">choices</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">max_batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2048</span><span class="p">,</span>
+    <span class="n">unique</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+    <span class="sa">r</span><span class="sd">"""Optimize over a discrete set of points using batch evaluation.</span>
+
+<span class="sd">    For `q &gt; 1` this function generates candidates by means of sequential</span>
+<span class="sd">    conditioning (rather than joint optimization), since for all but the</span>
+<span class="sd">    smalles number of choices the set `choices^q` of discrete points to</span>
+<span class="sd">    evaluate quickly explodes.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        acq_function: An AcquisitionFunction.</span>
+<span class="sd">        q: The number of candidates.</span>
+<span class="sd">        choices: A `num_choices x d` tensor of possible choices.</span>
+<span class="sd">        max_batch_size: The maximum number of choices to evaluate in batch.</span>
+<span class="sd">            A large limit can cause excessive memory usage if the model has</span>
+<span class="sd">            a large training set.</span>
+<span class="sd">        unique: If True return unique choices, o/w choices may be repeated</span>
+<span class="sd">            (only relevant if `q &gt; 1`).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A three-element tuple containing</span>
+
+<span class="sd">        - a `q x d`-dim tensor of generated candidates.</span>
+<span class="sd">        - an associated acquisition value.</span>
+<span class="sd">    """</span>
+    <span class="n">choices_batched</span> <span class="o">=</span> <span class="n">choices</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">q</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">candidate_list</span><span class="p">,</span> <span class="n">acq_value_list</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="n">base_X_pending</span> <span class="o">=</span> <span class="n">acq_function</span><span class="o">.</span><span class="n">X_pending</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">q</span><span class="p">):</span>
+            <span class="n">acq_values</span> <span class="o">=</span> <span class="n">_split_batch_eval_acqf</span><span class="p">(</span>
+                <span class="n">acq_function</span><span class="o">=</span><span class="n">acq_function</span><span class="p">,</span>
+                <span class="n">X</span><span class="o">=</span><span class="n">choices_batched</span><span class="p">,</span>
+                <span class="n">max_batch_size</span><span class="o">=</span><span class="n">max_batch_size</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">best_idx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">acq_values</span><span class="p">)</span>
+            <span class="n">candidate_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">choices_batched</span><span class="p">[</span><span class="n">best_idx</span><span class="p">])</span>
+            <span class="n">acq_value_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">acq_values</span><span class="p">[</span><span class="n">best_idx</span><span class="p">])</span>
+            <span class="c1"># set pending points</span>
+            <span class="n">candidates</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">candidate_list</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
+            <span class="n">acq_function</span><span class="o">.</span><span class="n">set_X_pending</span><span class="p">(</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">base_X_pending</span><span class="p">,</span> <span class="n">candidates</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">base_X_pending</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="k">else</span> <span class="n">candidates</span>
+            <span class="p">)</span>
+            <span class="c1"># need to remove choice from choice set if enforcing uniqueness</span>
+            <span class="k">if</span> <span class="n">unique</span><span class="p">:</span>
+                <span class="n">choices_batched</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">choices_batched</span><span class="p">[:</span><span class="n">best_idx</span><span class="p">],</span> <span class="n">choices_batched</span><span class="p">[</span><span class="n">best_idx</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:]]</span>
+                <span class="p">)</span>
+
+        <span class="c1"># Reset acq_func to previous X_pending state</span>
+        <span class="n">acq_function</span><span class="o">.</span><span class="n">set_X_pending</span><span class="p">(</span><span class="n">base_X_pending</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">candidates</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">acq_value_list</span><span class="p">)</span>
+
+    <span class="n">acq_values</span> <span class="o">=</span> <span class="n">_split_batch_eval_acqf</span><span class="p">(</span>
+        <span class="n">acq_function</span><span class="o">=</span><span class="n">acq_function</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">choices_batched</span><span class="p">,</span> <span class="n">max_batch_size</span><span class="o">=</span><span class="n">max_batch_size</span>
+    <span class="p">)</span>
+    <span class="n">best_idx</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">acq_values</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">choices_batched</span><span class="p">[</span><span class="n">best_idx</span><span class="p">],</span> <span class="n">acq_values</span><span class="p">[</span><span class="n">best_idx</span><span class="p">]</span></div>
+
+
+<span class="k">def</span> <span class="nf">_split_batch_eval_acqf</span><span class="p">(</span>
+    <span class="n">acq_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">max_batch_size</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">acq_function</span><span class="p">(</span><span class="n">X_</span><span class="p">)</span> <span class="k">for</span> <span class="n">X_</span> <span class="ow">in</span> <span class="n">X</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">max_batch_size</span><span class="p">)])</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div aria-label="main navigation" class="sphinxsidebar" role="navigation">
+<div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">BoTorch</a></h1>
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../acquisition.html">botorch.acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../models.html">botorch.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generation.html">botorch.generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../posteriors.html">botorch.posteriors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../optim.html">botorch.optim</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fit.html">botorch.fit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sampling.html">botorch.sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cross_validation.html">botorch.cross_validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../settings.html">botorch.settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../logging.html">botorch.logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../test_functions.html">botorch.test_functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">botorch.exceptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils.html">botorch.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../distributions.html">botorch.distributions</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+<li><a href="../../../index.html">Documentation overview</a><ul>
+<li><a href="../../index.html">Module code</a><ul>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+<div id="searchbox" role="search" style="display: none">
+<h3 id="searchlabel">Quick search</h3>
+<div class="searchformwrapper">
+<form action="../../../search.html" class="search" method="get">
+<input aria-labelledby="searchlabel" autocapitalize="off" autocomplete="off" autocorrect="off" name="q" spellcheck="false" type="text"/>
+<input type="submit" value="Go"/>
+</form>
+</div>
+</div>
+<script>$('#searchbox').show(0);</script>
+</div>
+</div>
+<div class="clearer"></div>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/v/0.6.0/" class="nav-home"><img src="/v/0.6.0/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/v/0.6.0/docs/introduction">Introduction</a><a href="/v/0.6.0/docs/getting_started">Getting Started</a><a href="/v/0.6.0/tutorials/">Tutorials</a><a href="/v/0.6.0/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/v/0.6.0/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2021 Meta Platforms Inc.</section><script>
+            (function() {
+              var BAD_BASE = '/botorch/';
+              if (window.location.origin !== 'https://botorch.org') {
+                var pathname = window.location.pathname;
+                var newPathname = pathname.slice(pathname.indexOf(BAD_BASE) === 0 ? BAD_BASE.length : 1);
+                var newLocation = 'https://botorch.org/v/0.6.0/' + newPathname;
+                console.log('redirecting to ' + newLocation);
+                window.location.href = newLocation;
+              }
+            })();
+          </script></footer></div></body></html>

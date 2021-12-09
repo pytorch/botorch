@@ -466,6 +466,117 @@
         <span class="k">return</span> <span class="n">f_X</span></div></div>
 
 
+<div class="viewcode-block" id="DTLZ3"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ3">[docs]</a><span class="k">class</span> <span class="nc">DTLZ3</span><span class="p">(</span><span class="n">DTLZ2</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""DTLZ3 test problem.</span>
+
+<span class="sd">    d-dimensional problem evaluated on `[0, 1]^d`:</span>
+
+<span class="sd">        f_0(x) = (1 + g(x)) * cos(x_0 * pi / 2)</span>
+<span class="sd">        f_1(x) = (1 + g(x)) * sin(x_0 * pi / 2)</span>
+<span class="sd">        g(x) = 100 * [k + \sum_{i=m}^{n-1} (x_i - 0.5)^2 - cos(20 * pi * (x_i - 0.5))]</span>
+
+<span class="sd">    `g(x)` introduces (`3k−1`) local Pareto fronts that are parallel to</span>
+<span class="sd">    the one global Pareto-optimal front.</span>
+
+<span class="sd">    The global Pareto-optimal front corresponds to x_i = 0.5 for x_i in X_m.</span>
+<span class="sd">    """</span>
+
+    <span class="n">_ref_val</span> <span class="o">=</span> <span class="mf">10000.0</span>
+
+<div class="viewcode-block" id="DTLZ3.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ3.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">X_m</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">k</span> <span class="p">:]</span>
+        <span class="n">g_X</span> <span class="o">=</span> <span class="mi">100</span> <span class="o">*</span> <span class="p">(</span>
+            <span class="n">X_m</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="o">+</span> <span class="p">((</span><span class="n">X_m</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">)</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">torch</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="mi">20</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="p">(</span><span class="n">X_m</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">)))</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">g_X_plus1</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">g_X</span>
+        <span class="n">fs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">pi_over_2</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_objectives</span><span class="p">):</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_objectives</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">i</span>
+            <span class="n">f_i</span> <span class="o">=</span> <span class="n">g_X_plus1</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+            <span class="n">f_i</span> <span class="o">*=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="n">idx</span><span class="p">]</span> <span class="o">*</span> <span class="n">pi_over_2</span><span class="p">)</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">f_i</span> <span class="o">*=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">*</span> <span class="n">pi_over_2</span><span class="p">)</span>
+            <span class="n">fs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f_i</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">fs</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="DTLZ4"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ4">[docs]</a><span class="k">class</span> <span class="nc">DTLZ4</span><span class="p">(</span><span class="n">DTLZ2</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""DTLZ4 test problem.</span>
+
+<span class="sd">    This is the same as DTLZ2, but with alpha=100 as the exponent,</span>
+<span class="sd">    resulting in dense solutions near the f_M-f_1 plane.</span>
+
+<span class="sd">    The global Pareto-optimal front corresponds to x_i = 0.5 for x_i in X_m.</span>
+<span class="sd">    """</span>
+    <span class="n">_alpha</span> <span class="o">=</span> <span class="mf">100.0</span></div>
+
+
+<div class="viewcode-block" id="DTLZ5"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ5">[docs]</a><span class="k">class</span> <span class="nc">DTLZ5</span><span class="p">(</span><span class="n">DTLZ</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""DTLZ5 test problem.</span>
+
+<span class="sd">    d-dimensional problem evaluated on `[0, 1]^d`:</span>
+
+<span class="sd">        f_0(x) = (1 + g(x)) * cos(theta_0 * pi / 2)</span>
+<span class="sd">        f_1(x) = (1 + g(x)) * sin(theta_0 * pi / 2)</span>
+<span class="sd">        theta_i = pi / (4 * (1 + g(X_m)) * (1 + 2 * g(X_m) * x_i)) for i = 1, ... , M-2</span>
+<span class="sd">        g(x) = \sum_{i=m}^{d-1} (x_i - 0.5)^2</span>
+
+<span class="sd">    The global Pareto-optimal front corresponds to x_i = 0.5 for x_i in X_m.</span>
+<span class="sd">    """</span>
+
+    <span class="n">_ref_val</span> <span class="o">=</span> <span class="mf">10.0</span>
+
+<div class="viewcode-block" id="DTLZ5.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ5.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">X_m</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">k</span> <span class="p">:]</span>
+        <span class="n">X_</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">k</span><span class="p">]</span>
+        <span class="n">g_X</span> <span class="o">=</span> <span class="p">(</span><span class="n">X_m</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">)</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">g_X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)))</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">g_X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">X_</span><span class="p">)</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="mi">1</span><span class="p">],</span> <span class="n">theta</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">:]],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">fs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">pi_over_2</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">g_X_plus1</span> <span class="o">=</span> <span class="n">g_X</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_objectives</span><span class="p">):</span>
+            <span class="n">f_i</span> <span class="o">=</span> <span class="n">g_X_plus1</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+            <span class="n">f_i</span> <span class="o">*=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span> <span class="n">theta</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">pi_over_2</span><span class="p">)</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">f_i</span> <span class="o">*=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">theta</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">pi_over_2</span><span class="p">)</span>
+            <span class="n">fs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f_i</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">fs</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="DTLZ7"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ7">[docs]</a><span class="k">class</span> <span class="nc">DTLZ7</span><span class="p">(</span><span class="n">DTLZ</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""DTLZ7 test problem.</span>
+
+<span class="sd">    d-dimensional problem evaluated on `[0, 1]^d`:</span>
+<span class="sd">        f_0(x) = x_0</span>
+<span class="sd">        f_1(x) = x_1</span>
+<span class="sd">        ...</span>
+<span class="sd">        f_{M-1}(x) = (1 + g(X_m)) * h(f_0, f_1, ..., f_{M-2}, g, x)</span>
+<span class="sd">        h(f_0, f_1, ..., f_{M-2}, g, x) =</span>
+<span class="sd">        M - sum_{i=0}^{M-2} f_i(x)/(1+g(x)) * (1 + sin(3 * pi * f_i(x)))</span>
+
+<span class="sd">    This test problem has 2M-1 disconnected Pareto-optimal regions in the search space.</span>
+
+<span class="sd">    The pareto frontier corresponds to X_m = 0.</span>
+<span class="sd">    """</span>
+
+    <span class="n">_ref_val</span> <span class="o">=</span> <span class="mf">15.0</span>
+
+<div class="viewcode-block" id="DTLZ7.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.DTLZ7.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_objectives</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">])</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">g_X</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="mi">9</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">k</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">k</span> <span class="p">:],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_objectives</span> <span class="o">-</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
+            <span class="n">f</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">g_X</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">f</span><span class="p">)),</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">f</span><span class="p">,</span> <span class="p">((</span><span class="mi">1</span> <span class="o">+</span> <span class="n">g_X</span><span class="p">)</span> <span class="o">*</span> <span class="n">h</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
+
+
 <div class="viewcode-block" id="VehicleSafety"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.VehicleSafety">[docs]</a><span class="k">class</span> <span class="nc">VehicleSafety</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">"""Optimize Vehicle crash-worthiness.</span>
 
@@ -686,6 +797,92 @@
         <span class="k">return</span> <span class="n">f_X</span></div></div>
 
 
+<div class="viewcode-block" id="CarSideImpact"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.CarSideImpact">[docs]</a><span class="k">class</span> <span class="nc">CarSideImpact</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""Car side impact problem.</span>
+
+<span class="sd">    See [Tanabe2020]_ for details.</span>
+
+<span class="sd">    The reference point is `nadir + 0.1 * (ideal - nadir)`</span>
+<span class="sd">    where the ideal and nadir points come from the approximate</span>
+<span class="sd">    Pareto frontier from [Tanabe2020]_. The max_hv was computed</span>
+<span class="sd">    based on the approximate Pareto frontier from [Tanabe2020]_.</span>
+<span class="sd">    """</span>
+
+    <span class="n">num_objectives</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">7</span>
+    <span class="n">_bounds</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.45</span><span class="p">,</span> <span class="mf">1.35</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.875</span><span class="p">,</span> <span class="mf">2.625</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.4</span><span class="p">,</span> <span class="mf">1.2</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.4</span><span class="p">,</span> <span class="mf">1.2</span><span class="p">),</span>
+    <span class="p">]</span>
+    <span class="n">_ref_point</span> <span class="o">=</span> <span class="p">[</span><span class="mf">45.4872</span><span class="p">,</span> <span class="mf">4.5114</span><span class="p">,</span> <span class="mf">13.3394</span><span class="p">,</span> <span class="mf">10.3942</span><span class="p">]</span>
+    <span class="n">_max_hv</span> <span class="o">=</span> <span class="mf">484.72654347642793</span>
+
+<div class="viewcode-block" id="CarSideImpact.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.CarSideImpact.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">X1</span><span class="p">,</span> <span class="n">X2</span><span class="p">,</span> <span class="n">X3</span><span class="p">,</span> <span class="n">X4</span><span class="p">,</span> <span class="n">X5</span><span class="p">,</span> <span class="n">X6</span><span class="p">,</span> <span class="n">X7</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">f1</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="mf">1.98</span>
+            <span class="o">+</span> <span class="mf">4.9</span> <span class="o">*</span> <span class="n">X1</span>
+            <span class="o">+</span> <span class="mf">6.67</span> <span class="o">*</span> <span class="n">X2</span>
+            <span class="o">+</span> <span class="mf">6.98</span> <span class="o">*</span> <span class="n">X3</span>
+            <span class="o">+</span> <span class="mf">4.01</span> <span class="o">*</span> <span class="n">X4</span>
+            <span class="o">+</span> <span class="mf">1.78</span> <span class="o">*</span> <span class="n">X5</span>
+            <span class="o">+</span> <span class="mi">10</span> <span class="o">**</span> <span class="o">-</span><span class="mi">5</span> <span class="o">*</span> <span class="n">X6</span>
+            <span class="o">+</span> <span class="mf">2.73</span> <span class="o">*</span> <span class="n">X7</span>
+        <span class="p">)</span>
+        <span class="n">f2</span> <span class="o">=</span> <span class="mf">4.72</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">X4</span> <span class="o">-</span> <span class="mf">0.19</span> <span class="o">*</span> <span class="n">X2</span> <span class="o">*</span> <span class="n">X3</span>
+        <span class="n">V_MBP</span> <span class="o">=</span> <span class="mf">10.58</span> <span class="o">-</span> <span class="mf">0.674</span> <span class="o">*</span> <span class="n">X1</span> <span class="o">*</span> <span class="n">X2</span> <span class="o">-</span> <span class="mf">0.67275</span> <span class="o">*</span> <span class="n">X2</span>
+        <span class="n">V_FD</span> <span class="o">=</span> <span class="mf">16.45</span> <span class="o">-</span> <span class="mf">0.489</span> <span class="o">*</span> <span class="n">X3</span> <span class="o">*</span> <span class="n">X7</span> <span class="o">-</span> <span class="mf">0.843</span> <span class="o">*</span> <span class="n">X5</span> <span class="o">*</span> <span class="n">X6</span>
+        <span class="n">f3</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">V_MBP</span> <span class="o">+</span> <span class="n">V_FD</span><span class="p">)</span>
+        <span class="n">g1</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="mf">1.16</span> <span class="o">+</span> <span class="mf">0.3717</span> <span class="o">*</span> <span class="n">X2</span> <span class="o">*</span> <span class="n">X4</span> <span class="o">+</span> <span class="mf">0.0092928</span> <span class="o">*</span> <span class="n">X3</span>
+        <span class="n">g2</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="mf">0.32</span>
+            <span class="o">-</span> <span class="mf">0.261</span>
+            <span class="o">+</span> <span class="mf">0.0159</span> <span class="o">*</span> <span class="n">X1</span> <span class="o">*</span> <span class="n">X2</span>
+            <span class="o">+</span> <span class="mf">0.06486</span> <span class="o">*</span> <span class="n">X1</span>
+            <span class="o">+</span> <span class="mf">0.019</span> <span class="o">*</span> <span class="n">X2</span> <span class="o">*</span> <span class="n">X7</span>
+            <span class="o">-</span> <span class="mf">0.0144</span> <span class="o">*</span> <span class="n">X3</span> <span class="o">*</span> <span class="n">X5</span>
+            <span class="o">-</span> <span class="mf">0.0154464</span> <span class="o">*</span> <span class="n">X6</span>
+        <span class="p">)</span>
+        <span class="n">g3</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="mf">0.32</span>
+            <span class="o">-</span> <span class="mf">0.214</span>
+            <span class="o">-</span> <span class="mf">0.00817</span> <span class="o">*</span> <span class="n">X5</span>
+            <span class="o">+</span> <span class="mf">0.045195</span> <span class="o">*</span> <span class="n">X1</span>
+            <span class="o">+</span> <span class="mf">0.0135168</span> <span class="o">*</span> <span class="n">X1</span>
+            <span class="o">-</span> <span class="mf">0.03099</span> <span class="o">*</span> <span class="n">X2</span> <span class="o">*</span> <span class="n">X6</span>
+            <span class="o">+</span> <span class="mf">0.018</span> <span class="o">*</span> <span class="n">X2</span> <span class="o">*</span> <span class="n">X7</span>
+            <span class="o">-</span> <span class="mf">0.007176</span> <span class="o">*</span> <span class="n">X3</span>
+            <span class="o">-</span> <span class="mf">0.023232</span> <span class="o">*</span> <span class="n">X3</span>
+            <span class="o">+</span> <span class="mf">0.00364</span> <span class="o">*</span> <span class="n">X5</span> <span class="o">*</span> <span class="n">X6</span>
+            <span class="o">+</span> <span class="mf">0.018</span> <span class="o">*</span> <span class="n">X2</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">g4</span> <span class="o">=</span> <span class="mf">0.32</span> <span class="o">-</span> <span class="mf">0.74</span> <span class="o">+</span> <span class="mf">0.61</span> <span class="o">*</span> <span class="n">X2</span> <span class="o">+</span> <span class="mf">0.031296</span> <span class="o">*</span> <span class="n">X3</span> <span class="o">+</span> <span class="mf">0.031872</span> <span class="o">*</span> <span class="n">X7</span> <span class="o">-</span> <span class="mf">0.227</span> <span class="o">*</span> <span class="n">X2</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">g5</span> <span class="o">=</span> <span class="mi">32</span> <span class="o">-</span> <span class="mf">28.98</span> <span class="o">-</span> <span class="mf">3.818</span> <span class="o">*</span> <span class="n">X3</span> <span class="o">+</span> <span class="mf">4.2</span> <span class="o">*</span> <span class="n">X1</span> <span class="o">*</span> <span class="n">X2</span> <span class="o">-</span> <span class="mf">1.27296</span> <span class="o">*</span> <span class="n">X6</span> <span class="o">+</span> <span class="mf">2.68065</span> <span class="o">*</span> <span class="n">X7</span>
+        <span class="n">g6</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="mi">32</span>
+            <span class="o">-</span> <span class="mf">33.86</span>
+            <span class="o">-</span> <span class="mf">2.95</span> <span class="o">*</span> <span class="n">X3</span>
+            <span class="o">+</span> <span class="mf">5.057</span> <span class="o">*</span> <span class="n">X1</span> <span class="o">*</span> <span class="n">X2</span>
+            <span class="o">+</span> <span class="mf">3.795</span> <span class="o">*</span> <span class="n">X2</span>
+            <span class="o">+</span> <span class="mf">3.4431</span> <span class="o">*</span> <span class="n">X7</span>
+            <span class="o">-</span> <span class="mf">1.45728</span>
+        <span class="p">)</span>
+        <span class="n">g7</span> <span class="o">=</span> <span class="mi">32</span> <span class="o">-</span> <span class="mf">46.36</span> <span class="o">+</span> <span class="mf">9.9</span> <span class="o">*</span> <span class="n">X2</span> <span class="o">+</span> <span class="mf">4.4505</span> <span class="o">*</span> <span class="n">X1</span>
+        <span class="n">g8</span> <span class="o">=</span> <span class="mi">4</span> <span class="o">-</span> <span class="n">f2</span>
+        <span class="n">g9</span> <span class="o">=</span> <span class="mf">9.9</span> <span class="o">-</span> <span class="n">V_MBP</span>
+        <span class="n">g10</span> <span class="o">=</span> <span class="mf">15.7</span> <span class="o">-</span> <span class="n">V_FD</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">g1</span><span class="p">,</span> <span class="n">g2</span><span class="p">,</span> <span class="n">g3</span><span class="p">,</span> <span class="n">g4</span><span class="p">,</span> <span class="n">g5</span><span class="p">,</span> <span class="n">g6</span><span class="p">,</span> <span class="n">g7</span><span class="p">,</span> <span class="n">g8</span><span class="p">,</span> <span class="n">g9</span><span class="p">,</span> <span class="n">g10</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">zero</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">g</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="n">g</span><span class="p">,</span> <span class="n">zero</span><span class="p">)</span>
+        <span class="n">f4</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">f1</span><span class="p">,</span> <span class="n">f2</span><span class="p">,</span> <span class="n">f3</span><span class="p">,</span> <span class="n">f4</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
+
+
 <span class="c1"># ------ Constrained Multi-Objective Test Problems ----- #</span>
 
 
@@ -851,6 +1048,60 @@
         <span class="n">g5</span> <span class="o">=</span> <span class="mf">4.0</span> <span class="o">-</span> <span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="mf">3.0</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
         <span class="n">g6</span> <span class="o">=</span> <span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">4</span><span class="p">]</span> <span class="o">-</span> <span class="mf">3.0</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">5</span><span class="p">]</span> <span class="o">-</span> <span class="mf">4.0</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">g1</span><span class="p">,</span> <span class="n">g2</span><span class="p">,</span> <span class="n">g3</span><span class="p">,</span> <span class="n">g4</span><span class="p">,</span> <span class="n">g5</span><span class="p">,</span> <span class="n">g6</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="WeldedBeam"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.WeldedBeam">[docs]</a><span class="k">class</span> <span class="nc">WeldedBeam</span><span class="p">(</span><span class="n">MultiObjectiveTestProblem</span><span class="p">,</span> <span class="n">ConstrainedBaseTestProblem</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    The Welded Beam test problem.</span>
+<span class="sd">    Implementation from</span>
+<span class="sd">    https://github.com/msu-coinlab/pymoo/blob/master/pymoo/problems/multi/welded_beam.py</span>
+<span class="sd">    Note that this implementation assumes minimization, so please choose negate=True.</span>
+<span class="sd">    """</span>
+
+    <span class="n">dim</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="n">num_constraints</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="n">num_objectives</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">_bounds</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="mf">0.125</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">),</span>
+        <span class="p">(</span><span class="mf">0.125</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">),</span>
+    <span class="p">]</span>
+    <span class="n">_ref_point</span> <span class="o">=</span> <span class="p">[</span><span class="mi">40</span><span class="p">,</span> <span class="mf">0.015</span><span class="p">]</span>
+
+<div class="viewcode-block" id="WeldedBeam.evaluate_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.WeldedBeam.evaluate_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">f1</span> <span class="o">=</span> <span class="mf">1.10471</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mf">0.04811</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span>
+            <span class="mf">14.0</span> <span class="o">+</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">f2</span> <span class="o">=</span> <span class="mf">2.1952</span> <span class="o">/</span> <span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">**</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">f1</span><span class="p">,</span> <span class="n">f2</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="WeldedBeam.evaluate_slack_true"><a class="viewcode-back" href="../../../test_functions.html#botorch.test_functions.multi_objective.WeldedBeam.evaluate_slack_true">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_slack_true</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">P</span> <span class="o">=</span> <span class="mi">6000</span>
+        <span class="n">L</span> <span class="o">=</span> <span class="mi">14</span>
+        <span class="n">t_max</span> <span class="o">=</span> <span class="mi">13600</span>
+        <span class="n">s_max</span> <span class="o">=</span> <span class="mi">30000</span>
+
+        <span class="n">R</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">0.25</span> <span class="o">*</span> <span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
+        <span class="n">M</span> <span class="o">=</span> <span class="n">P</span> <span class="o">*</span> <span class="p">(</span><span class="n">L</span> <span class="o">+</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">J</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="mi">2</span>
+            <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+            <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+            <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="o">*</span> <span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="mi">12</span> <span class="o">+</span> <span class="mf">0.25</span> <span class="o">*</span> <span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">t1</span> <span class="o">=</span> <span class="n">P</span> <span class="o">/</span> <span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="n">t2</span> <span class="o">=</span> <span class="n">M</span> <span class="o">*</span> <span class="n">R</span> <span class="o">/</span> <span class="n">J</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">t1</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">t2</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">t1</span> <span class="o">*</span> <span class="n">t2</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">R</span><span class="p">)</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="mi">6</span> <span class="o">*</span> <span class="n">P</span> <span class="o">*</span> <span class="n">L</span> <span class="o">/</span> <span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">P_c</span> <span class="o">=</span> <span class="mf">64746.022</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="mf">0.0282346</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">**</span> <span class="mi">3</span>
+
+        <span class="n">g1</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">t_max</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">t</span> <span class="o">-</span> <span class="n">t_max</span><span class="p">)</span>
+        <span class="n">g2</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">s_max</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">s</span> <span class="o">-</span> <span class="n">s_max</span><span class="p">)</span>
+        <span class="n">g3</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">5</span> <span class="o">-</span> <span class="mf">0.125</span><span class="p">))</span> <span class="o">*</span> <span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
+        <span class="n">g4</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">P</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">P</span> <span class="o">-</span> <span class="n">P_c</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">g1</span><span class="p">,</span> <span class="n">g2</span><span class="p">,</span> <span class="n">g3</span><span class="p">,</span> <span class="n">g4</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div></div>
 </pre></div>
 </div>
 </div>
@@ -898,7 +1149,7 @@
 </div>
 </div>
 <div class="clearer"></div>
-</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2021 Facebook Inc.</section><script>
+</div></div></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/" class="nav-home"><img src="/img/botorch.png" alt="BoTorch" width="66" height="58"/></a><div class="footerSection"><h5>Docs</h5><a href="/docs/introduction">Introduction</a><a href="/docs/getting_started">Getting Started</a><a href="/tutorials/">Tutorials</a><a href="/api/">API Reference</a><a href="https://arxiv.org/abs/1910.06403">Paper</a></div><div class="footerSection"><h5>Legal</h5><a href="https://opensource.facebook.com/legal/privacy/" target="_blank" rel="noreferrer noopener">Privacy</a><a href="https://opensource.facebook.com/legal/terms/" target="_blank" rel="noreferrer noopener">Terms</a></div><div class="footerSection"><h5>Social</h5><div class="social"><a class="github-button" href="https://github.com/pytorch/botorch" data-count-href="https://github.com/pytorch/botorch/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star BoTorch on GitHub">botorch</a></div></div></section><a href="https://opensource.facebook.com/" target="_blank" rel="noreferrer noopener" class="fbOpenSource"><img src="/img/oss_logo.png" alt="Facebook Open Source" width="170" height="45"/></a><section class="copyright"> Copyright © 2021 Meta Platforms Inc.</section><script>
             (function() {
               var BAD_BASE = '/botorch/';
               if (window.location.origin !== 'https://botorch.org') {
