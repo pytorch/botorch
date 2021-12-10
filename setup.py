@@ -81,8 +81,13 @@ setup(
             else "node-and-date"
         ),
     },
-    install_requires=["torch>=1.9", "gpytorch>=1.6", "scipy"],
     packages=find_packages(exclude=["test", "test.*"]),
+    install_requires=[
+        "torch>=1.9",
+        "gpytorch>=1.6",
+        "scipy",
+        "multipledispatch",
+    ],
     extras_require={
         "dev": DEV_REQUIRES,
         "test": TEST_REQUIRES,
