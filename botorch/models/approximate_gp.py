@@ -50,6 +50,7 @@ from gpytorch.means import ConstantMean, Mean
 from gpytorch.models import ApproximateGP
 from gpytorch.module import Module
 from gpytorch.priors import GammaPrior
+from gpytorch.utils.memoize import clear_cache_hook
 from gpytorch.variational import (
     CholeskyVariationalDistribution,
     IndependentMultitaskVariationalStrategy,
@@ -378,6 +379,7 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
         r"""
         Reinitialize the inducing point locations in-place with the current kernel
         applied to `inputs`.
+        The variational distribution and variational strategy caches are reset.
 
         Args:
             inputs: input_data (*batch_shape, n, d)
@@ -385,14 +387,19 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
         Returns:
             (*batch_shape, m, d) selected inducing point locations
         """
+        var_strat = self.model.variational_strategy
+        clear_cache_hook(var_strat)
+        if hasattr(var_strat, 'base_variational_strategy'):
+            var_strat = var_strat.base_variational_strategy
 
         with torch.no_grad():
-            num_inducing = self.model.variational_strategy.base_variational_strategy.inducing_points.size(-2)
-            inducing_points = _select_inducing_points(inputs, self.model.covar_module, num_inducing,
-                                                      self._input_batch_shape)
-            self.model.variational_strategy.base_variational_strategy.inducing_points.copy_(
-                inducing_points.clone()
+            num_inducing = var_strat.inducing_points.size(-2)
+            inducing_points = _select_inducing_points(
+                inputs, self.model.covar_module, num_inducing, self._input_batch_shape
             )
+            var_strat.inducing_points.copy_(inducing_points)
+            var_strat.variational_params_initialized.fill_(0)
+
         return inducing_points
 
 
@@ -417,23 +424,30 @@ def _select_inducing_points(
     """
 
     train_train_kernel = covar_module(inputs).evaluate_kernel()
-
-    # TODO this assumes X is the same along the batch dimensions
+    # base case
     if train_train_kernel.ndimension() == 2:
-        pass
-    elif train_train_kernel.ndimension() >= 3:
-        for _ in range(train_train_kernel.ndimension() - 2):
-            train_train_kernel = train_train_kernel[0]
+        inducing_points = _pivoted_cholesky_init(
+            inputs, train_train_kernel, max_length=num_inducing
+        )
+    # multi-task case
+    elif inputs.ndimension() == 2 and len(input_batch_shape) == 0:
+        inducing_points = _pivoted_cholesky_init(
+            inputs, train_train_kernel[0], max_length=num_inducing
+        )
+    # batched input cases
     else:
-        raise RuntimeError('unexpected train_train_kernel shape')
-
-    inducing_points = _pivoted_cholesky_init(
-        inputs, train_train_kernel, max_length=num_inducing
-    )
-
-    # make sure batch handling works in the multitask setting
-    if len(input_batch_shape) > 0:
-        inducing_points = inducing_points.expand(*input_batch_shape, -1, -1)
+        reshaped_inputs = inputs.flatten(end_dim=-3)
+        inducing_points = []
+        for batch_idx in reshaped_inputs.size(0):
+            input_element = reshaped_inputs[batch_idx]
+            # the extra kernel evals are a little wasteful but make it easier to infer the task batch size
+            kernel_element = covar_module(input_element).evaluate_kernel()
+            # handle extra task batch dimension
+            kernel_element = kernel_element[0] if kernel_element.ndimension() == 3 else kernel_element
+            inducing_points.append(_pivoted_cholesky_init(
+                input_element, kernel_element, max_length=num_inducing
+            ))
+        inducing_points = torch.stack(inducing_points).view(inputs.shape[:-2], num_inducing, -1)
 
     return inducing_points
 
