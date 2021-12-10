@@ -9,7 +9,9 @@ A registry of helpers for generating inputs to acquisition function
 constructors programmatically from a consistent input format.
 """
 
-from typing import Any, Callable, Dict, Optional, Tuple, Type, Union
+from __future__ import annotations
+
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
@@ -20,6 +22,16 @@ from botorch.acquisition.analytic import (
     UpperConfidenceBound,
     ConstrainedExpectedImprovement,
     NoisyExpectedImprovement,
+)
+from botorch.acquisition.cost_aware import InverseCostWeightedUtility
+from botorch.acquisition.fixed_feature import FixedFeatureAcquisitionFunction
+from botorch.acquisition.knowledge_gradient import (
+    qKnowledgeGradient,
+    qMultiFidelityKnowledgeGradient,
+)
+from botorch.acquisition.max_value_entropy_search import (
+    qMaxValueEntropy,
+    qMultiFidelityMaxValueEntropy,
 )
 from botorch.acquisition.monte_carlo import (
     qExpectedImprovement,
@@ -42,9 +54,16 @@ from botorch.acquisition.objective import (
     AcquisitionObjective,
     IdentityMCObjective,
     ScalarizedObjective,
+    MCAcquisitionObjective,
+)
+from botorch.acquisition.utils import (
+    expand_trace_observations,
+    project_to_target_fidelity,
 )
 from botorch.exceptions.errors import UnsupportedError
+from botorch.models.cost import AffineFidelityCostModel
 from botorch.models.model import Model
+from botorch.optim.optimize import optimize_acqf
 from botorch.sampling.samplers import IIDNormalSampler, MCSampler, SobolQMCNormalSampler
 from botorch.utils.constraints import get_outcome_constraint_transforms
 from botorch.utils.containers import TrainingData
@@ -639,6 +658,194 @@ def construct_inputs_qNEHVI(
     }
 
 
+@acqf_input_constructor(qMaxValueEntropy)
+def construct_inputs_qMES(
+    model: Model,
+    training_data: TrainingData,
+    objective: AcquisitionObjective,
+    bounds: List[Tuple[float, float]],
+    candidate_size: int = 1000,
+    **kwargs: Any,
+) -> Dict[str, Any]:
+    r"""Construct kwargs for `qMaxValueEntropy` constructor."""
+    inputs_mc = construct_inputs_mc_base(
+        model=model,
+        training_data=training_data,
+        objective=objective,
+        **kwargs,
+    )
+
+    _kw = {"dtype": training_data.X.dtype, "device": training_data.X.device}
+    _rvs = torch.rand(candidate_size, len(bounds), **_kw)
+    _bounds = torch.tensor(bounds, **_kw).transpose(0, 1)
+    return {
+        **inputs_mc,
+        "candidate_set": _bounds[0] + (_bounds[1] - _bounds[0]) * _rvs,
+        "maximize": kwargs.get("maximize", True),
+    }
+
+
+def construct_inputs_mf_base(
+    model: Model,
+    training_data: TrainingData,
+    target_fidelities: Dict[int, Union[int, float]],
+    fidelity_weights: Optional[Dict[int, float]] = None,
+    cost_intercept: float = 1.0,
+    num_trace_observations: int = 0,
+    **ignore: Any,
+) -> Dict[str, Any]:
+    r"""Construct kwargs for a multifidetlity acquisition function's constructor."""
+    if fidelity_weights is None:
+        fidelity_weights = {f: 1.0 for f in target_fidelities}
+
+    if set(target_fidelities) != set(fidelity_weights):
+        raise RuntimeError(
+            "Must provide the same indices for target_fidelities "
+            f"({set(target_fidelities)}) and fidelity_weights "
+            f" ({set(fidelity_weights)})."
+        )
+
+    cost_aware_utility = InverseCostWeightedUtility(
+        cost_model=AffineFidelityCostModel(
+            fidelity_weights=fidelity_weights, fixed_cost=cost_intercept
+        )
+    )
+
+    return {
+        "target_fidelities": target_fidelities,
+        "cost_aware_utility": cost_aware_utility,
+        "expand": lambda X: expand_trace_observations(
+            X=X,
+            fidelity_dims=sorted(target_fidelities),
+            num_trace_obs=num_trace_observations,
+        ),
+        "project": lambda X: project_to_target_fidelity(
+            X=X, target_fidelities=target_fidelities
+        ),
+    }
+
+
+@acqf_input_constructor(qKnowledgeGradient)
+def construct_inputs_qKG(
+    model: Model,
+    training_data: TrainingData,
+    objective: AcquisitionObjective,
+    bounds: List[Tuple[float, float]],
+    target_fidelities: Optional[Dict[int, float]] = None,
+    num_fantasies: int = 64,
+    **kwargs: Any,
+) -> Dict[str, Any]:
+    r"""Construct kwargs for `qKnowledgeGradient` constructor."""
+
+    inputs_mc = construct_inputs_mc_base(
+        model=model,
+        training_data=training_data,
+        objective=objective,
+        **kwargs,
+    )
+
+    _bounds = torch.tensor(
+        data=bounds,
+        dtype=training_data.X.dtype,
+        device=training_data.X.device,
+    )
+
+    _, current_value = optimize_objective(
+        model=model,
+        objective=objective,
+        bounds=_bounds.t(),
+        q=1,
+        target_fidelities=target_fidelities,
+        **kwargs,
+    )
+
+    return {
+        **inputs_mc,
+        "num_fantasies": num_fantasies,
+        "current_value": current_value.detach().cpu().max(),
+    }
+
+
+@acqf_input_constructor(qMultiFidelityKnowledgeGradient)
+def construct_inputs_qMFKG(
+    model: Model,
+    training_data: TrainingData,
+    objective: AcquisitionObjective,
+    bounds: List[Tuple[float, float]],
+    target_fidelities: Dict[int, Union[int, float]],
+    **kwargs: Any,
+) -> Dict[str, Any]:
+    r"""Construct kwargs for `qMultiFidelityKnowledgeGradient` constructor."""
+
+    inputs_mf = construct_inputs_mf_base(
+        model=model,
+        training_data=training_data,
+        objective=objective,
+        bounds=bounds,
+        target_fidelities=target_fidelities,
+        **kwargs,
+    )
+
+    inputs_kg = construct_inputs_qKG(
+        model=model,
+        training_data=training_data,
+        objective=objective,
+        bounds=bounds,
+        **kwargs,
+    )
+
+    return {**inputs_mf, **inputs_kg}
+
+
+@acqf_input_constructor(qMultiFidelityMaxValueEntropy)
+def construct_inputs_qMFMES(
+    model: Model,
+    training_data: TrainingData,
+    objective: AcquisitionObjective,
+    bounds: List[Tuple[float, float]],
+    target_fidelities: Dict[int, Union[int, float]],
+    **kwargs: Any,
+) -> Dict[str, Any]:
+    r"""Construct kwargs for `qMultiFidelityMaxValueEntropy` constructor."""
+    inputs_mf = construct_inputs_mf_base(
+        model=model,
+        training_data=training_data,
+        objective=objective,
+        target_fidelities=target_fidelities,
+        bounds=bounds,
+        **kwargs,
+    )
+
+    inputs_qmes = construct_inputs_qMES(
+        model=model,
+        training_data=training_data,
+        objective=objective,
+        bounds=bounds,
+        **kwargs,
+    )
+
+    _bounds = torch.tensor(
+        data=bounds,
+        dtype=training_data.X.dtype,
+        device=training_data.X.device,
+    )
+
+    _, current_value = optimize_objective(
+        model=model,
+        objective=objective,
+        bounds=_bounds.t(),
+        q=1,
+        target_fidelities=target_fidelities,
+        **kwargs,
+    )
+
+    return {
+        **inputs_mf,
+        **inputs_qmes,
+        "current_value": current_value.detach().cpu().max(),
+    }
+
+
 def get_best_f_analytic(
     training_data: TrainingData,
     objective: Optional[AcquisitionObjective] = None,
@@ -672,3 +879,105 @@ def get_best_f_mc(
             )
         objective = IdentityMCObjective()
     return objective(training_data.Y).max(-1).values
+
+
+def optimize_objective(
+    model: Model,
+    objective: Union[ScalarizedObjective, MCAcquisitionObjective],
+    bounds: Tensor,
+    q: int,
+    linear_constraints: Optional[Tuple[Tensor, Tensor]] = None,
+    fixed_features: Optional[Dict[int, float]] = None,
+    target_fidelities: Optional[Dict[int, float]] = None,
+    qmc: bool = True,
+    mc_samples: int = 512,
+    seed_inner: Optional[int] = None,
+    optimizer_options: Dict[str, Any] = None,
+    post_processing_func: Optional[Callable[[Tensor], Tensor]] = None,
+    batch_initial_conditions: Optional[Tensor] = None,
+    sequential: bool = False,
+    **ignore,
+) -> Tuple[Tensor, Tensor]:
+    r"""Optimize an objective under the given model.
+
+    Args:
+        model: The model to be used in the objective.
+        objective: The objective to optimize.
+        bounds: A `2 x d` tensor of lower and upper bounds for each column of `X`.
+        q: The cardinality of input sets on which the objective is to be evaluated.
+        linear_constraints: A tuple of (A, b). Given `k` linear constraints on a
+            `d`-dimensional space, `A` is `k x d` and `b` is `k x 1` such that
+            `A x <= b`. (Not used by single task models).
+        fixed_features: A dictionary of feature assignments `{feature_index: value}` to
+            hold fixed during generation.
+        target_fidelities: A dictionary mapping input feature indices to fidelity
+            values. Defaults to `{-1: 1.0}`.
+        qmc: Toggle for enabling (qmc=1) or disabling (qmc=0) use of Quasi Monte Carlo.
+        mc_samples: Integer number of samples used to estimate Monte Carlo objectives.
+        seed_inner: Integer seed used to initialize the sampler passed to MCObjective.
+        optimizer_options: Table used to lookup keyword arguments for the optimizer.
+        post_processing_func: A function that post-processes an optimization
+            result appropriately (i.e. according to `round-trip` transformations).
+        batch_initial_conditions: A Tensor of initial values for the optimizer.
+        sequential: If False, uses joint optimization, otherwise uses sequential
+            optimization.
+
+    Returns:
+        A tuple of <torch.Tensor> containing the best input locations and
+        corresponding objective values.
+    """
+    if optimizer_options is None:
+        optimizer_options = {}
+
+    if isinstance(objective, MCAcquisitionObjective):
+        sampler_cls = SobolQMCNormalSampler if qmc else IIDNormalSampler
+        acqf_cls = qSimpleRegret
+        acqf_opt = {"sampler": sampler_cls(num_samples=mc_samples, seed=seed_inner)}
+    else:
+        acqf_cls = PosteriorMean
+        acqf_opt = {}
+
+    acq_function = acqf_cls(model=model, objective=objective, **acqf_opt)
+    if fixed_features:
+        acq_function = FixedFeatureAcquisitionFunction(
+            acq_function=acq_function,
+            d=bounds.shape[-1],
+            columns=list(fixed_features.keys()),
+            values=list(fixed_features.values()),
+        )
+        free_feature_dims = list(range(len(bounds)) - fixed_features.keys())
+        free_feature_bounds = bounds[:, free_feature_dims]  # (2, d' <= d)
+    else:
+        free_feature_bounds = bounds
+
+    if linear_constraints is None:
+        inequality_constraints = None
+    else:
+        A, b = linear_constraints
+        inequality_constraints = []
+        k, d = A.shape
+        for i in range(k):
+            indicies = A[i, :].nonzero(as_tuple=False).squeeze()
+            coefficients = -A[i, indicies]
+            rhs = -b[i, 0]
+            inequality_constraints.append((indicies, coefficients, rhs))
+
+    return optimize_acqf(
+        acq_function=acq_function,
+        bounds=free_feature_bounds,
+        q=q,
+        num_restarts=optimizer_options.get("num_restarts", 60),
+        raw_samples=optimizer_options.get("raw_samples", 1024),
+        options={
+            "batch_limit": optimizer_options.get("batch_limit", 8),
+            "maxiter": optimizer_options.get("maxiter", 200),
+            "nonnegative": optimizer_options.get("nonnegative", False),
+            "method": optimizer_options.get("method", "L-BFGS-B"),
+        },
+        inequality_constraints=inequality_constraints,
+        fixed_features=None,  # handled inside the acquisition function
+        post_processing_func=post_processing_func,
+        batch_initial_conditions=batch_initial_conditions,
+        return_best_only=True,
+        sequential=sequential,
+    )
