@@ -447,7 +447,7 @@ def _select_inducing_points(
             inducing_points.append(_pivoted_cholesky_init(
                 input_element, kernel_element, max_length=num_inducing
             ))
-        inducing_points = torch.stack(inducing_points).view(inputs.shape[:-2], num_inducing, -1)
+        inducing_points = torch.stack(inducing_points).view(*inputs.shape[:-2], num_inducing, -1)
 
     return inducing_points
 
