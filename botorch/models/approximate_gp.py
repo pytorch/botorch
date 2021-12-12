@@ -438,8 +438,7 @@ def _select_inducing_points(
     else:
         reshaped_inputs = inputs.flatten(end_dim=-3)
         inducing_points = []
-        for batch_idx in reshaped_inputs.size(0):
-            input_element = reshaped_inputs[batch_idx]
+        for input_element in reshaped_inputs:
             # the extra kernel evals are a little wasteful but make it easier to infer the task batch size
             kernel_element = covar_module(input_element).evaluate_kernel()
             # handle extra task batch dimension
