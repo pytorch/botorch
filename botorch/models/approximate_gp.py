@@ -414,13 +414,13 @@ def _select_inducing_points(
     locations based on the pivoted Cholesky heuristic.
 
     Args:
-        inputs: input data (*batch_shape, n, d)
-        covar_module: GPyTorch Module returning a LazyTensor kernel matrix
-        num_inducing: the max number (m) of inducing points (m <= n)
-        input_batch_shape: non-task-related batch shape
+        inputs: A (*batch_shape, n, d)-dim input data tensor.
+        covar_module: GPyTorch Module returning a LazyTensor kernel matrix.
+        num_inducing: The maximun number (m) of inducing points (m <= n).
+        input_batch_shape: The non-task-related batch shape.
 
     Returns:
-        (*batch_shape, m, d) inducing point locations
+        A (*batch_shape, m, d)-din tensor of inducing point locations.
     """
 
     train_train_kernel = covar_module(inputs).evaluate_kernel()
