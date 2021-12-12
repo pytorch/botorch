@@ -382,10 +382,10 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
         The variational distribution and variational strategy caches are reset.
 
         Args:
-            inputs: input_data (*batch_shape, n, d)
+            inputs: (*batch_shape, n, d)-dim input data tensor.
 
         Returns:
-            (*batch_shape, m, d) selected inducing point locations
+            (*batch_shape, m, d)-dim tensor of selected inducing point locations.
         """
         var_strat = self.model.variational_strategy
         clear_cache_hook(var_strat)
