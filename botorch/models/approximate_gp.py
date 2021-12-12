@@ -213,7 +213,12 @@ class _SingleTaskVariationalGP(ApproximateGP):
                 # as a heuristic
                 inducing_points = int(0.25 * train_X.shape[-2])
 
-            inducing_points = _select_inducing_points(train_X, covar_module, inducing_points, batch_shape)
+            inducing_points = _select_inducing_points(
+                inputs=train_X,
+                covar_module=covar_module,
+                num_inducing=inducing_points,
+                input_batch_shape=batch_shape,
+            )
 
         if variational_distribution is None:
             variational_distribution = CholeskyVariationalDistribution(
