@@ -689,6 +689,10 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
                 rank=1,
                 batch_shape=batch_shape,
             )
+            data_covar_module = MaternKernel(
+                nu=1.5,
+                lengthscale_prior=GammaPrior(2.0, 4.0),
+            )
             task_covar_prior = LKJCovariancePrior(
                 n=2,
                 eta=0.5,
@@ -696,6 +700,7 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
             )
             model_kwargs = {
                 "likelihood": likelihood,
+                "data_covar_module": data_covar_module,
                 "task_covar_prior": task_covar_prior,
                 "rank": 1,
             }
@@ -717,8 +722,8 @@ class TestKroneckerMultiTaskGP(BotorchTestCase):
             self.assertEqual(task_covar_prior.correlation_prior.eta, 0.5)
             lengthscale_prior = base_kernel.data_covar_module.lengthscale_prior
             self.assertIsInstance(lengthscale_prior, GammaPrior)
-            self.assertEqual(lengthscale_prior.concentration, 3.0)
-            self.assertEqual(lengthscale_prior.rate, 6.0)
+            self.assertEqual(lengthscale_prior.concentration, 2.0)
+            self.assertEqual(lengthscale_prior.rate, 4.0)
             self.assertEqual(base_kernel.task_covar_module.covar_factor.shape[-1], 1)
 
             # test model fitting

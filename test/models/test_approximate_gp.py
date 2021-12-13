@@ -191,6 +191,7 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
         train_X_1 = torch.rand(15, 1, device=self.device)
         train_X_2 = torch.rand(15, 1, device=self.device)
 
+        # single-task
         model_1 = SingleTaskVariationalGP(train_X=train_X_1, inducing_points=5)
         model_1.init_inducing_points(train_X_2)
         model_1_inducing = model_1.model.variational_strategy.inducing_points
@@ -198,4 +199,42 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
         model_2 = SingleTaskVariationalGP(train_X=train_X_2, inducing_points=5)
         model_2_inducing = model_2.model.variational_strategy.inducing_points
 
+        self.assertTrue(torch.allclose(model_1_inducing, model_2_inducing))
+
+        # multi-task
+        model_1 = SingleTaskVariationalGP(
+            train_X=train_X_1, inducing_points=5, num_outputs=2
+        )
+        model_1.init_inducing_points(train_X_2)
+        model_1_inducing = (
+            model_1.model.variational_strategy.base_variational_strategy.inducing_points
+        )
+
+        model_2 = SingleTaskVariationalGP(
+            train_X=train_X_2, inducing_points=5, num_outputs=2
+        )
+        model_2_inducing = (
+            model_2.model.variational_strategy.base_variational_strategy.inducing_points
+        )
+
+        self.assertTrue(torch.allclose(model_1_inducing, model_2_inducing))
+
+        # batched inputs
+        train_X_1 = torch.rand(2, 15, 1, device=self.device)
+        train_X_2 = torch.rand(2, 15, 1, device=self.device)
+        train_Y = torch.rand(2, 15, 1, device=self.device)
+
+        model_1 = SingleTaskVariationalGP(
+            train_X=train_X_1, train_Y=train_Y, inducing_points=5
+        )
+        model_1.init_inducing_points(train_X_2)
+        model_1_inducing = model_1.model.variational_strategy.inducing_points
+
+        model_2 = SingleTaskVariationalGP(
+            train_X=train_X_2, train_Y=train_Y, inducing_points=5
+        )
+        model_2_inducing = model_2.model.variational_strategy.inducing_points
+
+        self.assertTrue(model_1_inducing.shape == (2, 5, 1))
+        self.assertTrue(model_2_inducing.shape == (2, 5, 1))
         self.assertTrue(torch.allclose(model_1_inducing, model_2_inducing))

@@ -418,8 +418,8 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel):
             likelihood: A `MultitaskGaussianLikelihood`. If omitted, uses a
                 `MultitaskGaussianLikelihood` with a `GammaPrior(1.1, 0.05)`
                 noise prior.
-            data_covar_module: The module computing the covariance (Kernel) matrix in data space.
-                If omitted, use a `MaternKernel`.
+            data_covar_module: The module computing the covariance (Kernel) matrix
+            in data space. If omitted, use a `MaternKernel`.
             task_covar_prior : A Prior on the task covariance matrix. Must operate
                 on p.s.d. matrices. A common prior for this is the `LKJ` prior. If
                 omitted, uses `LKJCovariancePrior` with `eta` parameter as specified
