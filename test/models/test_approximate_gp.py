@@ -186,3 +186,16 @@ class TestSingleTaskVariationalGP(BotorchTestCase):
                 self.assertIsInstance(posterior, TransformedPosterior)
             else:
                 self.assertFalse(hasattr(model, "outcome_transform"))
+
+    def test_inducing_point_init(self):
+        train_X_1 = torch.rand(15, 1, device=self.device)
+        train_X_2 = torch.rand(15, 1, device=self.device)
+
+        model_1 = SingleTaskVariationalGP(train_X=train_X_1, inducing_points=5)
+        model_1.init_inducing_points(train_X_2)
+        model_1_inducing = model_1.model.variational_strategy.inducing_points
+
+        model_2 = SingleTaskVariationalGP(train_X=train_X_2, inducing_points=5)
+        model_2_inducing = model_2.model.variational_strategy.inducing_points
+
+        self.assertTrue(torch.allclose(model_1_inducing, model_2_inducing))

@@ -406,7 +406,7 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
                 inputs=inputs,
                 covar_module=self.model.covar_module,
                 num_inducing=num_inducing,
-                input_batch_shape=self._input_batch_shape
+                input_batch_shape=self._input_batch_shape,
             )
             var_strat.inducing_points.copy_(inducing_points)
             var_strat.variational_params_initialized.fill_(0)
@@ -441,7 +441,7 @@ def _select_inducing_points(
         inducing_points = _pivoted_cholesky_init(
             train_inputs=inputs,
             kernel_matrix=train_train_kernel,
-            max_length=num_inducing
+            max_length=num_inducing,
         )
     # multi-task case
     elif train_train_kernel.ndimension() == 3 and len(input_batch_shape) == 0:
@@ -450,7 +450,7 @@ def _select_inducing_points(
         inducing_points = _pivoted_cholesky_init(
             train_inputs=input_element,
             kernel_matrix=kernel_element,
-            max_length=num_inducing
+            max_length=num_inducing,
         )
     # batched input cases
     else:
@@ -474,7 +474,7 @@ def _select_inducing_points(
                 _pivoted_cholesky_init(
                     train_inputs=input_element,
                     kernel_matrix=kernel_element,
-                    max_length=num_inducing
+                    max_length=num_inducing,
                 )
             )
         inducing_points = torch.stack(inducing_points).view(
