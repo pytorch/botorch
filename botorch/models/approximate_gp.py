@@ -398,11 +398,15 @@ class SingleTaskVariationalGP(ApproximateGPyTorchModel):
         clear_cache_hook(var_strat)
         if hasattr(var_strat, "base_variational_strategy"):
             var_strat = var_strat.base_variational_strategy
+            clear_cache_hook(var_strat)
 
         with torch.no_grad():
             num_inducing = var_strat.inducing_points.size(-2)
             inducing_points = _select_inducing_points(
-                inputs, self.model.covar_module, num_inducing, self._input_batch_shape
+                inputs=inputs,
+                covar_module=self.model.covar_module,
+                num_inducing=num_inducing,
+                input_batch_shape=self._input_batch_shape
             )
             var_strat.inducing_points.copy_(inducing_points)
             var_strat.variational_params_initialized.fill_(0)
@@ -435,14 +439,18 @@ def _select_inducing_points(
     # base case
     if train_train_kernel.ndimension() == 2:
         inducing_points = _pivoted_cholesky_init(
-            inputs, train_train_kernel, max_length=num_inducing
+            train_inputs=inputs,
+            kernel_matrix=train_train_kernel,
+            max_length=num_inducing
         )
     # multi-task case
     elif train_train_kernel.ndimension() == 3 and len(input_batch_shape) == 0:
         input_element = inputs[0] if inputs.ndimension() == 3 else inputs
         kernel_element = train_train_kernel[0]
         inducing_points = _pivoted_cholesky_init(
-            input_element, kernel_element, max_length=num_inducing
+            train_inputs=input_element,
+            kernel_matrix=kernel_element,
+            max_length=num_inducing
         )
     # batched input cases
     else:
@@ -464,7 +472,9 @@ def _select_inducing_points(
             )
             inducing_points.append(
                 _pivoted_cholesky_init(
-                    input_element, kernel_element, max_length=num_inducing
+                    train_inputs=input_element,
+                    kernel_matrix=kernel_element,
+                    max_length=num_inducing
                 )
             )
         inducing_points = torch.stack(inducing_points).view(
