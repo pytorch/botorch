@@ -403,6 +403,7 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel):
         train_X: Tensor,
         train_Y: Tensor,
         likelihood: Optional[MultitaskGaussianLikelihood] = None,
+        data_covar_module: Optional[Module] = None,
         task_covar_prior: Optional[Prior] = None,
         rank: Optional[int] = None,
         input_transform: Optional[InputTransform] = None,
@@ -417,6 +418,8 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel):
             likelihood: A `MultitaskGaussianLikelihood`. If omitted, uses a
                 `MultitaskGaussianLikelihood` with a `GammaPrior(1.1, 0.05)`
                 noise prior.
+            data_covar_module: The module computing the covariance (Kernel) matrix
+                in data space. If omitted, use a `MaternKernel`.
             task_covar_prior : A Prior on the task covariance matrix. Must operate
                 on p.s.d. matrices. A common prior for this is the `LKJ` prior. If
                 omitted, uses `LKJCovariancePrior` with `eta` parameter as specified
@@ -478,13 +481,18 @@ class KroneckerMultiTaskGP(ExactGP, GPyTorchModel):
         self.mean_module = MultitaskMean(
             base_means=ConstantMean(batch_shape=batch_shape), num_tasks=num_tasks
         )
-        self.covar_module = MultitaskKernel(
-            data_covar_module=MaternKernel(
+        if data_covar_module is None:
+            data_covar_module = MaternKernel(
                 nu=2.5,
                 ard_num_dims=ard_num_dims,
                 lengthscale_prior=GammaPrior(3.0, 6.0),
                 batch_shape=batch_shape,
-            ),
+            )
+        else:
+            data_covar_module = data_covar_module
+
+        self.covar_module = MultitaskKernel(
+            data_covar_module=data_covar_module,
             num_tasks=num_tasks,
             rank=rank,
             batch_shape=batch_shape,
