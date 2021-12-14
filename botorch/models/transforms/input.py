@@ -804,7 +804,7 @@ class AppendFeatures(InputTransform, Module):
         super().__init__()
         if feature_set.dim() != 2:
             raise ValueError("`feature_set` must be an `n_f x d_f`-dim tensor!")
-        self.feature_set = feature_set
+        self.register_buffer("feature_set", feature_set)
         self.transform_on_train = transform_on_train
         self.transform_on_eval = transform_on_eval
         self.transform_on_fantasize = transform_on_fantasize
@@ -877,14 +877,17 @@ class InputPerturbation(InputTransform, Module):
         super().__init__()
         if perturbation_set.dim() != 2:
             raise ValueError("`perturbation_set` must be an `n_p x d`-dim tensor!")
-        self.perturbation_set = perturbation_set
-        if bounds is not None and bounds.shape[-1] != perturbation_set.shape[-1]:
-            raise ValueError(
-                "`bounds` must have the same number of columns (last dimension) as "
-                f"the `perturbation_set`! Got {bounds.shape[-1]} and "
-                f"{perturbation_set.shape[-1]}."
-            )
-        self.bounds = bounds
+        self.register_buffer("perturbation_set", perturbation_set)
+        if bounds is not None:
+            if bounds.shape[-1] != perturbation_set.shape[-1]:
+                raise ValueError(
+                    "`bounds` must have the same number of columns (last dimension) as "
+                    f"the `perturbation_set`! Got {bounds.shape[-1]} and "
+                    f"{perturbation_set.shape[-1]}."
+                )
+            self.register_buffer("bounds", bounds)
+        else:
+            self.bounds = None
         self.multiplicative = multiplicative
         self.transform_on_train = transform_on_train
         self.transform_on_eval = transform_on_eval
