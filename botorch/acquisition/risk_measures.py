@@ -24,6 +24,7 @@ from abc import ABC, abstractmethod
 from math import ceil
 from typing import Optional
 
+import torch
 from botorch.acquisition.objective import MCAcquisitionObjective
 from torch import Tensor
 
@@ -144,8 +145,12 @@ class CVaR(RiskMeasureMCObjective):
             A `sample_shape x batch_shape x q`-dim tensor of CVaR samples.
         """
         prepared_samples = self._prepare_samples(samples)
-        sorted_samples = prepared_samples.sort(dim=-1, descending=True).values
-        return sorted_samples[..., self.alpha_idx :].mean(dim=-1)
+        return torch.topk(
+            prepared_samples,
+            k=prepared_samples.shape[-1] - self.alpha_idx,
+            largest=False,
+            dim=-1,
+        ).values.mean(dim=-1)
 
 
 class VaR(CVaR):
@@ -156,6 +161,23 @@ class VaR(CVaR):
     is commonly used in financial risk management, and it corresponds to the
     `1 - alpha` quantile of a given random variable.
     """
+
+    def __init__(
+        self,
+        alpha: float,
+        n_w: int,
+        weights: Optional[Tensor] = None,
+    ) -> None:
+        r"""Transform the posterior samples to samples of a risk measure.
+
+        Args:
+            alpha: The risk level, float in `(0.0, 1.0]`.
+            n_w: The size of the `w_set` to calculate the risk measure over.
+            weights: An optional `m`-dim tensor of weights for scalarizing
+                multi-objective samples before calculating the risk measure.
+        """
+        super().__init__(n_w=n_w, alpha=alpha)
+        self._q = 1 - self.alpha_idx / n_w
 
     def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
         r"""Calculate the VaR corresponding to the given samples.
@@ -170,8 +192,20 @@ class VaR(CVaR):
             A `sample_shape x batch_shape x q`-dim tensor of VaR samples.
         """
         prepared_samples = self._prepare_samples(samples)
-        sorted_samples = prepared_samples.sort(dim=-1, descending=True).values
-        return sorted_samples[..., self.alpha_idx]
+        # this is equivalent to sorting along dim=-1 in descending order
+        # and taking the values at index self.alpha_idx. E.g.
+        # >>> sorted_res = prepared_samples.sort(dim=-1, descending=True)
+        # >>> sorted_res.values[..., self.alpha_idx]
+        # Using quantile is far more memory efficient since `torch.sort`
+        # produces values and indices tensors with shape
+        # `sample_shape x batch_shape x (q * n_w) x m`
+        return torch.quantile(
+            input=prepared_samples,
+            q=self._q,
+            dim=-1,
+            keepdim=False,
+            interpolation="lower",
+        )
 
 
 class WorstCase(RiskMeasureMCObjective):
