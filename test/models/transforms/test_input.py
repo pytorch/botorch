@@ -626,6 +626,11 @@ class TestAppendFeatures(BotorchTestCase):
                 transformed_X = transform(X)
             self.assertTrue(torch.equal(X, transformed_X))
 
+            # Make sure .to calls work.
+            transform.to(device=torch.device("cpu"), dtype=torch.half)
+            self.assertEqual(transform.feature_set.device.type, "cpu")
+            self.assertEqual(transform.feature_set.dtype, torch.half)
+
 
 class TestInputPerturbation(BotorchTestCase):
     def test_input_perturbation(self):
@@ -711,6 +716,13 @@ class TestInputPerturbation(BotorchTestCase):
             )
             transformed = transform(X)
             self.assertTrue(torch.allclose(transformed, expected))
+
+            # Make sure .to calls work.
+            transform.to(device=torch.device("cpu"), dtype=torch.half)
+            self.assertEqual(transform.perturbation_set.device.type, "cpu")
+            self.assertEqual(transform.perturbation_set.dtype, torch.half)
+            self.assertEqual(transform.bounds.device.type, "cpu")
+            self.assertEqual(transform.bounds.dtype, torch.half)
 
             # multiplicative
             perturbation_set = torch.tensor(
