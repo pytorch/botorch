@@ -49,6 +49,7 @@
 <span class="kn">from</span> <span class="nn">botorch.optim.utils</span> <span class="kn">import</span> <span class="n">sample_all_priors</span>
 <span class="kn">from</span> <span class="nn">gpytorch.mlls.marginal_log_likelihood</span> <span class="kn">import</span> <span class="n">MarginalLogLikelihood</span>
 <span class="kn">from</span> <span class="nn">gpytorch.mlls.sum_marginal_log_likelihood</span> <span class="kn">import</span> <span class="n">SumMarginalLogLikelihood</span>
+<span class="kn">from</span> <span class="nn">gpytorch.utils.errors</span> <span class="kn">import</span> <span class="n">NotPSDError</span>
 
 
 <span class="n">FAILED_CONVERSION_MSG</span> <span class="o">=</span> <span class="p">(</span>
@@ -106,7 +107,6 @@
                 <span class="n">tf</span> <span class="o">=</span> <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">outcome_transform</span>
                 <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">outcome_transform</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="n">model_list</span> <span class="o">=</span> <span class="n">batched_to_model_list</span><span class="p">(</span><span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
-            <span class="n">model_</span> <span class="o">=</span> <span class="n">model_list_to_batched</span><span class="p">(</span><span class="n">model_list</span><span class="p">)</span>
             <span class="n">mll_</span> <span class="o">=</span> <span class="n">SumMarginalLogLikelihood</span><span class="p">(</span><span class="n">model_list</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="n">model_list</span><span class="p">)</span>
             <span class="n">fit_gpytorch_model</span><span class="p">(</span>
                 <span class="n">mll</span><span class="o">=</span><span class="n">mll_</span><span class="p">,</span>
@@ -147,12 +147,26 @@
             <span class="k">if</span> <span class="n">retry</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># use normal initial conditions on first try</span>
                 <span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">original_state_dict</span><span class="p">)</span>
                 <span class="n">sample_all_priors</span><span class="p">(</span><span class="n">mll</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
-            <span class="n">mll</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">optimizer</span><span class="p">(</span><span class="n">mll</span><span class="p">,</span> <span class="n">track_iterations</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">mll</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">optimizer</span><span class="p">(</span><span class="n">mll</span><span class="p">,</span> <span class="n">track_iterations</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">NotPSDError</span><span class="p">:</span>
+                <span class="n">retry</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">"Fitting failed on try </span><span class="si">{</span><span class="n">retry</span><span class="si">}</span><span class="s2"> due to a NotPSDError."</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">continue</span>
         <span class="n">has_optwarning</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">ws</span><span class="p">:</span>
+            <span class="c1"># Do not count reaching `maxiter` as an optimization failure.</span>
+            <span class="k">if</span> <span class="s2">"ITERATIONS REACHED LIMIT"</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">message</span><span class="p">):</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">,</span>
+                    <span class="s2">"Fitting ended early due to reaching the iteration limit."</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">continue</span>
             <span class="n">has_optwarning</span> <span class="o">|=</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">OptimizationWarning</span><span class="p">)</span>
             <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">message</span><span class="p">,</span> <span class="n">w</span><span class="o">.</span><span class="n">category</span><span class="p">)</span>
-        <span class="c1"># TODO: this counts hitting `maxiter` as an optimization failure!</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">has_optwarning</span><span class="p">:</span>
             <span class="n">mll</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
             <span class="k">return</span> <span class="n">mll</span>

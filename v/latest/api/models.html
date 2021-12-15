@@ -237,6 +237,122 @@ If <cite>False</cite>, model is put in <cite>eval</cite> mode.</p>
 </dl>
 </dd></dl>
 </dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.models.model.ModelList">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.model.</span></span><span class="sig-name descname"><span class="pre">ModelList</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">models</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model.html#ModelList"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.model.ModelList" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.model.Model" title="botorch.models.model.Model"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.model.Model</span></code></a></p>
+<p>Container for a list of models.</p>
+<p>A multi-output Model represented by a list of independent models.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*models</strong> – A variable number of models.</p></li>
+<li><p><strong>models</strong> (<a class="reference internal" href="#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">m_1</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m_2</span> <span class="o">=</span> <span class="n">GenericDeterministicModel</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m_12</span> <span class="o">=</span> <span class="n">ModelList</span><span class="p">(</span><span class="n">m_1</span><span class="p">,</span> <span class="n">m_2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m_12</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">test_X</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.model.ModelList.posterior">
+<span class="sig-name descname"><span class="pre">posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model.html#ModelList.posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.model.ModelList.posterior" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the posterior over model outputs at the provided points.</p>
+<dl class="simple">
+<dt>Note: The input transforms should be applied here using</dt><dd><p><cite>self.transform_inputs(X)</cite> after the <cite>self.eval()</cite> call and before
+any <cite>model.forward</cite> or <cite>model.likelihood</cite> calls.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>torch.Tensor</em>) – A <cite>b x q x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of the
+feature space, <cite>q</cite> is the number of points considered jointly,
+and <cite>b</cite> is the batch dimension.</p></li>
+<li><p><strong>output_indices</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – A list of indices, corresponding to the outputs over
+which to compute the posterior (if the model is multi-output).
+Can be used to speed up computation if only a subset of the
+model’s outputs are required for optimization. If omitted,
+computes the posterior over all model outputs.</p></li>
+<li><p><strong>observation_noise</strong> (<em>bool</em>) – If True, add observation noise to the posterior.</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>Posterior</cite> object, representing a batch of <cite>b</cite> joint distributions
+over <cite>q</cite> points and <cite>m</cite> outputs each.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="posteriors.html#botorch.posteriors.posterior.Posterior" title="botorch.posteriors.posterior.Posterior">botorch.posteriors.posterior.Posterior</a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.models.model.ModelList.batch_shape">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">batch_shape</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.Size</span></em><a class="headerlink" href="#botorch.models.model.ModelList.batch_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>The batch shape of the model.</p>
+<p>This is a batch shape from an I/O perspective, independent of the internal
+representation of the model (as e.g. in BatchedMultiOutputGPyTorchModel).
+For a model with <cite>m</cite> outputs, a <cite>test_batch_shape x q x d</cite>-shaped input <cite>X</cite>
+to the <cite>posterior</cite> method returns a Posterior object over an output of
+shape <cite>broadcast(test_batch_shape, model.batch_shape) x q x m</cite>.</p>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.models.model.ModelList.num_outputs">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_outputs</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#botorch.models.model.ModelList.num_outputs" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of outputs of the model.</p>
+<p>Equal to the sum of the number of outputs of the individual models
+in the ModelList.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.model.ModelList.subset_output">
+<span class="sig-name descname"><span class="pre">subset_output</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idcs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model.html#ModelList.subset_output"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.model.ModelList.subset_output" title="Permalink to this definition">¶</a></dt>
+<dd><p>Subset the model along the output dimension.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>idcs</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – The output indices to subset the model to. Relative to the
+overall number of outputs of the model.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>Model</cite> (either a <cite>ModelList</cite> or one of the submodels) with
+the outputs subset to the indices in <cite>idcs</cite>.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#botorch.models.model.Model" title="botorch.models.model.Model">botorch.models.model.Model</a></p>
+</dd>
+</dl>
+<p>Internally, this drops (if single-output) or subsets (if multi-output)
+the constitutent models and returns them as a <cite>ModelList</cite>. If the
+result is a single (possibly subset) model from the list, returns this
+model (instead of forming a degenerate singe-model <cite>ModelList</cite>).
+For instance, if <cite>m = ModelList(m1, m2)</cite> with <cite>m1</cite> a two-output model
+and <cite>m2</cite> a single-output model, then <cite>m.subset_output([1]) ` will return
+the model `m1</cite> subset to its second output.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.model.ModelList.transform_inputs">
+<span class="sig-name descname"><span class="pre">transform_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/model.html#ModelList.transform_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.model.ModelList.transform_inputs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Individually transform the inputs for each model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – A tensor of inputs.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A list of tensors of transformed inputs.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>List[torch.Tensor]</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
 </section>
 <section id="module-botorch.models.gpytorch">
 <span id="gpytorch-model-api"></span><h3>GPyTorch Model API<a class="headerlink" href="#module-botorch.models.gpytorch" title="Permalink to this headline">¶</a></h3>
@@ -480,17 +596,30 @@ observations passed in via kwargs).</p>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.gpytorch.ModelListGPyTorchModel">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.gpytorch.</span></span><span class="sig-name descname"><span class="pre">ModelListGPyTorchModel</span></span><a class="reference internal" href="_modules/botorch/models/gpytorch.html#ModelListGPyTorchModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gpytorch.ModelListGPyTorchModel" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#botorch.models.gpytorch.GPyTorchModel" title="botorch.models.gpytorch.GPyTorchModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.gpytorch.GPyTorchModel</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.gpytorch.</span></span><span class="sig-name descname"><span class="pre">ModelListGPyTorchModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">models</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gpytorch.html#ModelListGPyTorchModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gpytorch.ModelListGPyTorchModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.gpytorch.GPyTorchModel" title="botorch.models.gpytorch.GPyTorchModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.gpytorch.GPyTorchModel</span></code></a>, <a class="reference internal" href="#botorch.models.model.ModelList" title="botorch.models.model.ModelList"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.model.ModelList</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
 <p>Abstract base class for models based on multi-output GPyTorch models.</p>
 <p>This is meant to be used with a gpytorch ModelList wrapper for independent
 evaluation of submodels.</p>
-<p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<p>A multi-output Model represented by a list of independent models.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>None</p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*models</strong> – A variable number of models.</p></li>
+<li><p><strong>models</strong> (<a class="reference internal" href="#botorch.models.model.Model" title="botorch.models.model.Model"><em>Model</em></a>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">m_1</span> <span class="o">=</span> <span class="n">SingleTaskGP</span><span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_Y</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m_2</span> <span class="o">=</span> <span class="n">GenericDeterministicModel</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m_12</span> <span class="o">=</span> <span class="n">ModelList</span><span class="p">(</span><span class="n">m_1</span><span class="p">,</span> <span class="n">m_2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m_12</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">test_X</span><span class="p">)</span>
+</pre></div>
+</div>
 <dl class="py property">
 <dt class="sig sig-object py" id="botorch.models.gpytorch.ModelListGPyTorchModel.batch_shape">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">batch_shape</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">torch.Size</span></em><a class="headerlink" href="#botorch.models.gpytorch.ModelListGPyTorchModel.batch_shape" title="Permalink to this definition">¶</a></dt>
@@ -562,7 +691,7 @@ conditioned on the new observations <cite>(X, Y)</cite> (and possibly noise
 observations passed in via kwargs).</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><a class="reference internal" href="#botorch.models.gpytorch.ModelListGPyTorchModel" title="botorch.models.gpytorch.ModelListGPyTorchModel">botorch.models.gpytorch.ModelListGPyTorchModel</a></p>
+<dd class="field-odd"><p><a class="reference internal" href="#botorch.models.model.Model" title="botorch.models.model.Model">botorch.models.model.Model</a></p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -574,22 +703,6 @@ observations passed in via kwargs).</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">condition_on_observations</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">new_X</span><span class="p">,</span> <span class="n">Y</span><span class="o">=</span><span class="n">new_Y</span><span class="p">)</span>
 </pre></div>
 </div>
-</dd></dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="botorch.models.gpytorch.ModelListGPyTorchModel.transform_inputs">
-<span class="sig-name descname"><span class="pre">transform_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/gpytorch.html#ModelListGPyTorchModel.transform_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.gpytorch.ModelListGPyTorchModel.transform_inputs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Individually transform the inputs for each model.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – A tensor of inputs</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A list of tensors of transformed inputs</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>List[torch.Tensor]</p>
-</dd>
-</dl>
 </dd></dl>
 </dd></dl>
 <dl class="py class">
@@ -720,6 +833,11 @@ outcome dimension <cite>m</cite> must be explicit, even if <cite>m=1</cite>).</p
 <dd class="field-even"><p>None</p>
 </dd>
 </dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keep_dims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">GenericDeterministicModel</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+</pre></div>
+</div>
 <dl class="py method">
 <dt class="sig sig-object py" id="botorch.models.deterministic.GenericDeterministicModel.subset_output">
 <span class="sig-name descname"><span class="pre">subset_output</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idcs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/deterministic.html#GenericDeterministicModel.subset_output"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.deterministic.GenericDeterministicModel.subset_output" title="Permalink to this definition">¶</a></dt>
@@ -1572,7 +1690,7 @@ High-Dimensional Outputs. <a class="reference external" href="https://arxiv.org/
 </dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.multitask.MultiTaskGP">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.multitask.</span></span><span class="sig-name descname"><span class="pre">MultiTaskGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_feature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_covar_prior</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tasks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/multitask.html#MultiTaskGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.multitask.MultiTaskGP" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.multitask.</span></span><span class="sig-name descname"><span class="pre">MultiTaskGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_feature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covar_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_covar_prior</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tasks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/multitask.html#MultiTaskGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.multitask.MultiTaskGP" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">gpytorch.models.exact_gp.ExactGP</span></code>, <a class="reference internal" href="#botorch.models.gpytorch.MultiTaskGPyTorchModel" title="botorch.models.gpytorch.MultiTaskGPyTorchModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.gpytorch.MultiTaskGPyTorchModel</span></code></a></p>
 <p>Multi-Task GP model using an ICM kernel, inferring observation noise.</p>
 <p>Multi-task exact GP that uses a simple ICM kernel. Can be single-output or
@@ -1599,6 +1717,7 @@ full rank (i.e. number of tasks) kernel.</p></li>
 on p.s.d. matrices. A common prior for this is the <cite>LKJ</cite> prior.</p></li>
 <li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><em>InputTransform</em></a><em>]</em>) – An input transform that is applied in the model’s
 forward pass.</p></li>
+<li><p><strong>covar_module</strong> (<em>Optional</em><em>[</em><em>Module</em><em>]</em>) – </p></li>
 <li><p><strong>outcome_transform</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.models.transforms.outcome.OutcomeTransform" title="botorch.models.transforms.outcome.OutcomeTransform"><em>OutcomeTransform</em></a><em>]</em>) – </p></li>
 </ul>
 </dd>
@@ -1686,7 +1805,7 @@ float),</p></li>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.multitask.FixedNoiseMultiTaskGP">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.multitask.</span></span><span class="sig-name descname"><span class="pre">FixedNoiseMultiTaskGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_feature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_covar_prior</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tasks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/multitask.html#FixedNoiseMultiTaskGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.multitask.FixedNoiseMultiTaskGP" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.multitask.</span></span><span class="sig-name descname"><span class="pre">FixedNoiseMultiTaskGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Yvar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_feature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covar_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_covar_prior</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tasks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/multitask.html#FixedNoiseMultiTaskGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.multitask.FixedNoiseMultiTaskGP" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.multitask.MultiTaskGP" title="botorch.models.multitask.MultiTaskGP"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.multitask.MultiTaskGP</span></code></a></p>
 <p>Multi-Task GP model using an ICM kernel, with known observation noise.</p>
 <p>Multi-task exact GP that uses a simple ICM kernel. Can be single-output or
@@ -1714,6 +1833,7 @@ outputs for. If omitted, return outputs for all task indices.</p></li>
 full rank (i.e. number of tasks) kernel.</p></li>
 <li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><em>InputTransform</em></a><em>]</em>) – An input transform that is applied in the model’s
 forward pass.</p></li>
+<li><p><strong>covar_module</strong> (<em>Optional</em><em>[</em><em>Module</em><em>]</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -2629,8 +2749,182 @@ forward pass.</p></li>
 </div>
 </dd></dl>
 </section>
-<section id="variational-gp-models">
-<h3>Variational GP Models<a class="headerlink" href="#variational-gp-models" title="Permalink to this headline">¶</a></h3>
+<section id="module-botorch.models.approximate_gp">
+<span id="variational-gp-models"></span><h3>Variational GP Models<a class="headerlink" href="#module-botorch.models.approximate_gp" title="Permalink to this headline">¶</a></h3>
+<p>References</p>
+<dl class="citation">
+<dt class="label" id="burt2020svgp"><span class="brackets">burt2020svgp</span><span class="fn-backref">(<a href="#id12">1</a>,<a href="#id14">2</a>)</span></dt>
+<dd><p>David R. Burt and Carl Edward Rasmussen and Mark van der Wilk,
+Convergence of Sparse Variational Inference in Gaussian Process Regression,
+Journal of Machine Learning Research, 2020,
+<a class="reference external" href="http://jmlr.org/papers/v21/19-1015.html">http://jmlr.org/papers/v21/19-1015.html</a>.</p>
+</dd>
+<dt class="label" id="chen2018dpp"><span class="brackets"><a class="fn-backref" href="#id11">chen2018dpp</a></span></dt>
+<dd><p>Laming Chen and Guoxin Zhang and Hanning Zhou, Fast greedy MAP inference
+for determinantal point process to improve recommendation diversity,
+Proceedings of the 32nd International Conference on Neural Information
+Processing Systems, 2018, <a class="reference external" href="https://arxiv.org/abs/1709.05135">https://arxiv.org/abs/1709.05135</a>.</p>
+</dd>
+<dt class="label" id="hensman2013svgp"><span class="brackets">hensman2013svgp</span><span class="fn-backref">(<a href="#id10">1</a>,<a href="#id13">2</a>)</span></dt>
+<dd><p>James Hensman and Nicolo Fusi and Neil D. Lawrence, Gaussian Processes
+for Big Data, Proceedings of the 29th Conference on Uncertainty in
+Artificial Intelligence, 2013, <a class="reference external" href="https://arxiv.org/abs/1309.6835">https://arxiv.org/abs/1309.6835</a>.</p>
+</dd>
+</dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.models.approximate_gp.ApproximateGPyTorchModel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.approximate_gp.</span></span><span class="sig-name descname"><span class="pre">ApproximateGPyTorchModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">likelihood</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_outputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/approximate_gp.html#ApproximateGPyTorchModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.approximate_gp.ApproximateGPyTorchModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.gpytorch.GPyTorchModel" title="botorch.models.gpytorch.GPyTorchModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.gpytorch.GPyTorchModel</span></code></a></p>
+<p>Botorch wrapper class for various (variational) approximate GP models in
+gpytorch. This can either include stochastic variational GPs (SVGPs) or
+variational implementations of weight space approximate GPs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>Optional</em><em>[</em><em>ApproximateGP</em><em>]</em>) – Instance of gpytorch.approximate GP models. If omitted,
+constructs a <cite>_SingleTaskVariationalGP</cite>.</p></li>
+<li><p><strong>likelihood</strong> (<em>Optional</em><em>[</em><em>Likelihood</em><em>]</em>) – Instance of a GPyYorch likelihood. If omitted, uses a
+either a <cite>GaussianLikelihood</cite> (if <cite>num_outputs=1</cite>) or a
+<cite>MultitaskGaussianLikelihood`(if `num_outputs&gt;1</cite>).</p></li>
+<li><p><strong>num_outputs</strong> (<em>int</em>) – Number of outputs expected for the GP model.</p></li>
+<li><p><strong>args</strong> – Optional positional arguments passed to the
+<cite>_SingleTaskVariationalGP</cite> constructor if no model is provided.</p></li>
+<li><p><strong>kwargs</strong> – Optional keyword arguments passed to the
+<cite>_SingleTaskVariationalGP</cite> constructor if no model is provided.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="botorch.models.approximate_gp.ApproximateGPyTorchModel.num_outputs">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_outputs</span></span><a class="headerlink" href="#botorch.models.approximate_gp.ApproximateGPyTorchModel.num_outputs" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of outputs of the model.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.approximate_gp.ApproximateGPyTorchModel.posterior">
+<span class="sig-name descname"><span class="pre">posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/approximate_gp.html#ApproximateGPyTorchModel.posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.approximate_gp.ApproximateGPyTorchModel.posterior" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the posterior over model outputs at the provided points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> – A <cite>(batch_shape) x q x d</cite>-dim Tensor, where <cite>d</cite> is the dimension
+of the feature space and <cite>q</cite> is the number of points considered
+jointly.</p></li>
+<li><p><strong>observation_noise</strong> – If True, add the observation noise from the
+likelihood to the posterior. If a Tensor, use it directly as the
+observation noise (must be of shape <cite>(batch_shape) x q</cite>).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>GPyTorchPosterior</cite> object, representing a batch of <cite>b</cite> joint
+distributions over <cite>q</cite> points. Includes observation noise if
+specified.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior">botorch.posteriors.gpytorch.GPyTorchPosterior</a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.approximate_gp.ApproximateGPyTorchModel.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/approximate_gp.html#ApproximateGPyTorchModel.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.approximate_gp.ApproximateGPyTorchModel.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>gpytorch.distributions.multivariate_normal.MultivariateNormal</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.models.approximate_gp.ApproximateGPyTorchModel.fantasize">
+<span class="sig-name descname"><span class="pre">fantasize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler=&lt;class</span> <span class="pre">'botorch.sampling.samplers.MCSampler'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_noise=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/approximate_gp.html#ApproximateGPyTorchModel.fantasize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.approximate_gp.ApproximateGPyTorchModel.fantasize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a fantasy model.</p>
+<p>Constructs a fantasy model in the following fashion:
+(1) compute the model posterior at <cite>X</cite> (including observation noise if
+<cite>observation_noise=True</cite>).
+(2) sample from this posterior (using <cite>sampler</cite>) to generate “fake”
+observations.
+(3) condition the model on the new fake observations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> – A <cite>batch_shape x n’ x d</cite>-dim Tensor, where <cite>d</cite> is the dimension of
+the feature space, <cite>n’</cite> is the number of points per batch, and
+<cite>batch_shape</cite> is the batch shape (must be compatible with the
+batch shape of the model).</p></li>
+<li><p><strong>sampler</strong> – The sampler used for sampling from the posterior at <cite>X</cite>.</p></li>
+<li><p><strong>observation_noise</strong> – If True, include observation noise.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The constructed fantasy model.</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.models.approximate_gp.SingleTaskVariationalGP">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.approximate_gp.</span></span><span class="sig-name descname"><span class="pre">SingleTaskVariationalGP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_Y=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">likelihood=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_outputs=1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">learn_inducing_points=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covar_module=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean_module=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variational_distribution=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variational_strategy=&lt;class</span> <span class="pre">'gpytorch.variational.variational_strategy.VariationalStrategy'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inducing_points=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_transform=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_transform=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/approximate_gp.html#SingleTaskVariationalGP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.approximate_gp.SingleTaskVariationalGP" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.models.approximate_gp.ApproximateGPyTorchModel" title="botorch.models.approximate_gp.ApproximateGPyTorchModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.approximate_gp.ApproximateGPyTorchModel</span></code></a></p>
+<p>A single-task variational GP model following <a class="reference internal" href="#hensman2013svgp" id="id10"><span>[hensman2013svgp]</span></a> with pivoted
+cholesky initialization following <a class="reference internal" href="#chen2018dpp" id="id11"><span>[chen2018dpp]</span></a> and <a class="reference internal" href="#burt2020svgp" id="id12"><span>[burt2020svgp]</span></a>.</p>
+<p>A single-task variational GP using relatively strong priors on the Kernel
+hyperparameters, which work best when covariates are normalized to the unit
+cube and outcomes are standardized (zero mean, unit variance).</p>
+<p>This model works in batch mode (each batch having its own hyperparameters).
+When the training observations include multiple outputs, this model will use
+batching to model outputs independently. However, batches of multi-output models
+are not supported at this time, if you need to use those, please use a
+ModelListGP.</p>
+<p>Use this model if you have a lot of data or if your responses are non-Gaussian.</p>
+<p>To train this model, you should use <cite>gpytorch.mlls.VariationalELBO</cite> and not the
+exact marginal log likelihood. Example mll:</p>
+<blockquote>
+<div><p>mll = VariationalELBO(model.likelihood, model, num_data=train_X.shape[-2])</p>
+</div></blockquote>
+<p>A single task stochastic variational Gaussian process model (SVGP) as described
+by <a class="reference internal" href="#hensman2013svgp" id="id13"><span>[hensman2013svgp]</span></a>. We use pivoted cholesky initialization <a class="reference internal" href="#burt2020svgp" id="id14"><span>[burt2020svgp]</span></a> to
+initialize the inducing points of the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>train_X</strong> (<em>Tensor</em>) – Training inputs (due to the ability of the SVGP to sub-sample
+this does not have to be all of the training inputs).</p></li>
+<li><p><strong>train_Y</strong> (<em>Optional</em><em>[</em><em>Tensor</em><em>]</em>) – Training targets (optional).</p></li>
+<li><p><strong>likelihood</strong> (<em>Optional</em><em>[</em><em>Likelihood</em><em>]</em>) – Instance of a GPyYorch likelihood. If omitted, uses a
+either a <cite>GaussianLikelihood</cite> (if <cite>num_outputs=1</cite>) or a
+<cite>MultitaskGaussianLikelihood`(if `num_outputs&gt;1</cite>).</p></li>
+<li><p><strong>num_outputs</strong> (<em>int</em>) – Number of output responses per input (default: 1).</p></li>
+<li><p><strong>covar_module</strong> (<em>Optional</em><em>[</em><em>Kernel</em><em>]</em>) – Kernel function. If omitted, uses a <cite>MaternKernel</cite>.</p></li>
+<li><p><strong>mean_module</strong> (<em>Optional</em><em>[</em><em>Mean</em><em>]</em>) – Mean of GP model. If omitted, uses a <cite>ConstantMean</cite>.</p></li>
+<li><p><strong>variational_distribution</strong> (<em>Optional</em><em>[</em><em>_VariationalDistribution</em><em>]</em>) – Type of variational distribution to use
+(default: CholeskyVariationalDistribution), the properties of the
+variational distribution will encourage scalability or ease of
+optimization.</p></li>
+<li><p><strong>variational_strategy</strong> (<em>Type</em><em>[</em><em>_VariationalStrategy</em><em>]</em>) – Type of variational strategy to use (default:
+VariationalStrategy). The default setting uses “whitening” of the
+variational distribution to make training easier.</p></li>
+<li><p><strong>inducing_points</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>Tensor</em><em>, </em><em>int</em><em>]</em><em>]</em>) – The number or specific locations of the inducing points.</p></li>
+<li><p><strong>learn_inducing_points</strong> (<em>bool</em>) – </p></li>
+<li><p><strong>outcome_transform</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.models.transforms.outcome.OutcomeTransform" title="botorch.models.transforms.outcome.OutcomeTransform"><em>OutcomeTransform</em></a><em>]</em>) – </p></li>
+<li><p><strong>input_transform</strong> (<em>Optional</em><em>[</em><a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><em>InputTransform</em></a><em>]</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
 </section>
 </section>
 <section id="model-components">
@@ -3725,7 +4019,7 @@ same transformations as the cached training inputs.</p>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.models.transforms.input.Normalize">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.transforms.input.</span></span><span class="sig-name descname"><span class="pre">Normalize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.Size([])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_eval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_fantasize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reverse</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#Normalize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.input.Normalize" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.models.transforms.input.</span></span><span class="sig-name descname"><span class="pre">Normalize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.Size([])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_eval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_on_fantasize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reverse</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/models/transforms/input.html#Normalize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.models.transforms.input.Normalize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.input.ReversibleInputTransform" title="botorch.models.transforms.input.ReversibleInputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.transforms.input.ReversibleInputTransform</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code></p>
 <p>Normalize the inputs to the unit cube.</p>
 <p>If no explicit bounds are provided this module is stateful: If in train mode,
@@ -3750,6 +4044,8 @@ transform in eval() mode. Default: True.</p></li>
 transform when called from within a <cite>fantasize</cite> call. Default: True.</p></li>
 <li><p><strong>reverse</strong> (<em>bool</em>) – A boolean indicating whether the forward pass should untransform
 the inputs.</p></li>
+<li><p><strong>min_range</strong> (<em>float</em>) – Amount of noise to add to the range to ensure no division by
+zero errors.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -3997,8 +4293,8 @@ of the Kumaraswamy distribution.</p></li>
 <dd><p>Bases: <a class="reference internal" href="#botorch.models.transforms.input.InputTransform" title="botorch.models.transforms.input.InputTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.transforms.input.InputTransform</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code></p>
 <p>A transform that appends the input with a given set of features.</p>
 <p>As an example, this can be used with <cite>RiskMeasureMCObjective</cite> to optimize risk
-measures as described in <a class="reference internal" href="acquisition.html#cakmak2020risk" id="id10"><span>[Cakmak2020risk]</span></a>. A tutorial notebook implementing the
-rhoKG acqusition function introduced in <a class="reference internal" href="acquisition.html#cakmak2020risk" id="id11"><span>[Cakmak2020risk]</span></a> can be found at
+measures as described in <a class="reference internal" href="acquisition.html#cakmak2020risk" id="id15"><span>[Cakmak2020risk]</span></a>. A tutorial notebook implementing the
+rhoKG acqusition function introduced in <a class="reference internal" href="acquisition.html#cakmak2020risk" id="id16"><span>[Cakmak2020risk]</span></a> can be found at
 <a class="reference external" href="https://botorch.org/tutorials/risk_averse_bo_with_environmental_variables">https://botorch.org/tutorials/risk_averse_bo_with_environmental_variables</a>.</p>
 <p>The steps for using this to obtain samples of a risk measure are as follows:</p>
 <ul class="simple">

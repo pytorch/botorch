@@ -1299,7 +1299,8 @@ Information Processing Systems 33, 2020.</p>
 </dd>
 <dt class="label" id="daulton2021nehvi"><span class="brackets"><a class="fn-backref" href="#id13">Daulton2021nehvi</a></span></dt>
 <dd><p>S. Daulton, M. Balandat, and E. Bakshy. Parallel Bayesian Optimization of
-Multiple Noisy Objectives. ArXiv, 2021.</p>
+Multiple Noisy Objectives with Expected Hypervolume Improvement. Advances
+in Neural Information Processing Systems 34, 2021.</p>
 </dd>
 </dl>
 <dl class="py class">
@@ -1372,7 +1373,7 @@ evaluations.</p>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.monte_carlo.</span></span><span class="sig-name descname"><span class="pre">qNoisyExpectedHypervolumeImprovement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_baseline</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prune_baseline</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">incremental_nehvi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/monte_carlo.html#qNoisyExpectedHypervolumeImprovement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.monte_carlo.</span></span><span class="sig-name descname"><span class="pre">qNoisyExpectedHypervolumeImprovement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_baseline</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prune_baseline</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">incremental_nehvi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/monte_carlo.html#qNoisyExpectedHypervolumeImprovement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.multi_objective.monte_carlo.qExpectedHypervolumeImprovement" title="botorch.acquisition.multi_objective.monte_carlo.qExpectedHypervolumeImprovement"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.multi_objective.monte_carlo.qExpectedHypervolumeImprovement</span></code></a></p>
 <p>q-Noisy Expected Hypervolume Improvement supporting m&gt;=2 outcomes.</p>
 <p>See <a class="reference internal" href="#daulton2021nehvi" id="id13"><span>[Daulton2021nehvi]</span></a> for details.</p>
@@ -1429,6 +1430,8 @@ decompositions will be recomputed.</p></li>
 incremental NEHVI from the <cite>i`th point where `i=1, …, q</cite>
 under sequential greedy optimization, or the full qNEHVI over
 <cite>q</cite> points.</p></li>
+<li><p><strong>cache_root</strong> (<em>bool</em>) – A boolean indicating whether to cache the root
+decomposition over <cite>X_baseline</cite> and use low-rank updates.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
 </dd>
@@ -3483,8 +3486,362 @@ posterior samples. The q-batches should be ordered so that each
 <dd></dd></dl>
 </dd></dl>
 </section>
-<section id="multi-output-risk-measures">
-<h3>Multi-Output Risk Measures<a class="headerlink" href="#multi-output-risk-measures" title="Permalink to this headline">¶</a></h3>
+<section id="module-botorch.acquisition.multi_objective.multi_output_risk_measures">
+<span id="multi-output-risk-measures"></span><h3>Multi-Output Risk Measures<a class="headerlink" href="#module-botorch.acquisition.multi_objective.multi_output_risk_measures" title="Permalink to this headline">¶</a></h3>
+<p>Multi-output extensions of the risk measures, implemented as Monte-Carlo
+objectives. Except for MVaR, the risk measures are computed over each
+output dimension independently. In contrast, MVaR is computed using the
+joint distribution of the outputs, and provides more accurate risk estimates.</p>
+<p>References</p>
+<dl class="citation">
+<dt class="label" id="prekopa2012mvar"><span class="brackets">Prekopa2012MVaR</span><span class="fn-backref">(<a href="#id27">1</a>,<a href="#id30">2</a>,<a href="#id31">3</a>,<a href="#id32">4</a>)</span></dt>
+<dd><p>A. Prekopa. Multivariate value at risk and related topics.
+Annals of Operations Research, 2012.</p>
+</dd>
+<dt class="label" id="cousin2013mvar"><span class="brackets">Cousin2013MVaR</span><span class="fn-backref">(<a href="#id28">1</a>,<a href="#id29">2</a>)</span></dt>
+<dd><p>A. Cousin and E. Di Bernardino. On multivariate extensions of Value-at-Risk.
+Journal of Multivariate Analysis, 2013.</p>
+</dd>
+</dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputRiskMeasureMCObjective">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.multi_output_risk_measures.</span></span><span class="sig-name descname"><span class="pre">MultiOutputRiskMeasureMCObjective</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/multi_output_risk_measures.html#MultiOutputRiskMeasureMCObjective"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputRiskMeasureMCObjective" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.risk_measures.RiskMeasureMCObjective" title="botorch.acquisition.risk_measures.RiskMeasureMCObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.risk_measures.RiskMeasureMCObjective</span></code></a>, <a class="reference internal" href="#botorch.acquisition.multi_objective.objective.MCMultiOutputObjective" title="botorch.acquisition.multi_objective.objective.MCMultiOutputObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.multi_objective.objective.MCMultiOutputObjective</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>Objective transforming the multi-output posterior samples to samples
+of a multi-output risk measure.</p>
+<p>The risk measure is calculated over joint q-batch samples from the posterior.
+If the q-batch includes samples corresponding to multiple inputs, it is assumed
+that first <cite>n_w</cite> samples correspond to first input, second <cite>n_w</cite> samples
+correspond to second input, etc.</p>
+<p>Transform the posterior samples to samples of a risk measure.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_w</strong> (<em>int</em>) – The size of the <cite>w_set</cite> to calculate the risk measure over.</p></li>
+<li><p><strong>weights</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – An optional <cite>m</cite>-dim tensor of weights for scaling
+multi-output samples before calculating the risk measure.
+This can also be used to make sure that all outputs are
+correctly aligned for maximization by negating those that are
+originally defined for minimization.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputRiskMeasureMCObjective.forward">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/multi_output_risk_measures.html#MultiOutputRiskMeasureMCObjective.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputRiskMeasureMCObjective.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the risk measure corresponding to the given samples.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>samples</strong> (<em>torch.Tensor</em>) – A <cite>sample_shape x batch_shape x (q * n_w) x m</cite>-dim tensor of
+posterior samples. The q-batches should be ordered so that each
+<cite>n_w</cite> block of samples correspond to the same input.</p></li>
+<li><p><strong>X</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – A <cite>batch_shape x q x d</cite>-dim tensor of inputs. Ignored.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>sample_shape x batch_shape x q x m</cite>-dim tensor of risk measure samples.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputRiskMeasureMCObjective.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputRiskMeasureMCObjective.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.multi_output_risk_measures.IndependentCVaR">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.multi_output_risk_measures.</span></span><span class="sig-name descname"><span class="pre">IndependentCVaR</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/multi_output_risk_measures.html#IndependentCVaR"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.IndependentCVaR" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.risk_measures.CVaR" title="botorch.acquisition.risk_measures.CVaR"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.risk_measures.CVaR</span></code></a>, <a class="reference internal" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputRiskMeasureMCObjective" title="botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputRiskMeasureMCObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputRiskMeasureMCObjective</span></code></a></p>
+<p>The multi-output Conditional Value-at-Risk risk measure that operates on
+each output dimension independently. Since this does not consider the joint
+distribution of the outputs (i.e., that the outputs were evaluated on same
+perturbed input and are not independent), the risk estimates provided by
+<cite>IndependentCVaR</cite> in general are more optimistic than the definition of CVaR
+would suggest.</p>
+<p>The Conditional Value-at-Risk measures the expectation of the worst outcomes
+(small rewards or large losses) with a total probability of <cite>1 - alpha</cite>. It
+is commonly defined as the conditional expectation of the reward function,
+with the condition that the reward is smaller than the corresponding
+Value-at-Risk (also defined below).</p>
+<p>NOTE: Due to the use of a discrete <cite>w_set</cite> of samples, the VaR and CVaR
+calculated here are (possibly biased) Monte-Carlo approximations of the
+true risk measures.</p>
+<p>Transform the posterior samples to samples of a risk measure.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>alpha</strong> (<em>float</em>) – The risk level, float in <cite>(0.0, 1.0]</cite>.</p></li>
+<li><p><strong>n_w</strong> (<em>int</em>) – The size of the <cite>w_set</cite> to calculate the risk measure over.</p></li>
+<li><p><strong>weights</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – An optional <cite>m</cite>-dim tensor of weights for scalarizing
+multi-objective samples before calculating the risk measure.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.multi_output_risk_measures.IndependentCVaR.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/multi_output_risk_measures.html#IndependentCVaR.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.IndependentCVaR.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the CVaR corresponding to the given samples.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>samples</strong> (<em>torch.Tensor</em>) – A <cite>sample_shape x batch_shape x (q * n_w) x m</cite>-dim tensor of
+posterior samples. The q-batches should be ordered so that each
+<cite>n_w</cite> block of samples correspond to the same input.</p></li>
+<li><p><strong>X</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – A <cite>batch_shape x q x d</cite>-dim tensor of inputs. Ignored.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>sample_shape x batch_shape x q x m</cite>-dim tensor of CVaR samples.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.multi_output_risk_measures.IndependentCVaR.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.IndependentCVaR.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.multi_output_risk_measures.IndependentVaR">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.multi_output_risk_measures.</span></span><span class="sig-name descname"><span class="pre">IndependentVaR</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/multi_output_risk_measures.html#IndependentVaR"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.IndependentVaR" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.IndependentCVaR" title="botorch.acquisition.multi_objective.multi_output_risk_measures.IndependentCVaR"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.multi_objective.multi_output_risk_measures.IndependentCVaR</span></code></a></p>
+<p>The multi-output Value-at-Risk risk measure that operates on each output
+dimension independently. For the same reasons as <cite>IndependentCVaR</cite>, the risk
+estimates provided by this are in general more optimistic than the definition
+of VaR would suggest.</p>
+<p>Value-at-Risk measures the smallest possible reward (or largest possible loss)
+after excluding the worst outcomes with a total probability of <cite>1 - alpha</cite>. It
+is commonly used in financial risk management, and it corresponds to the
+<cite>1 - alpha</cite> quantile of a given random variable.</p>
+<p>Transform the posterior samples to samples of a risk measure.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>alpha</strong> (<em>float</em>) – The risk level, float in <cite>(0.0, 1.0]</cite>.</p></li>
+<li><p><strong>n_w</strong> (<em>int</em>) – The size of the <cite>w_set</cite> to calculate the risk measure over.</p></li>
+<li><p><strong>weights</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – An optional <cite>m</cite>-dim tensor of weights for scalarizing
+multi-objective samples before calculating the risk measure.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.multi_output_risk_measures.IndependentVaR.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/multi_output_risk_measures.html#IndependentVaR.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.IndependentVaR.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the VaR corresponding to the given samples.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>samples</strong> (<em>torch.Tensor</em>) – A <cite>sample_shape x batch_shape x (q * n_w) x m</cite>-dim tensor of
+posterior samples. The q-batches should be ordered so that each
+<cite>n_w</cite> block of samples correspond to the same input.</p></li>
+<li><p><strong>X</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – A <cite>batch_shape x q x d</cite>-dim tensor of inputs. Ignored.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>sample_shape x batch_shape x q x m</cite>-dim tensor of VaR samples.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.multi_output_risk_measures.IndependentVaR.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.IndependentVaR.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputWorstCase">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.multi_output_risk_measures.</span></span><span class="sig-name descname"><span class="pre">MultiOutputWorstCase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/multi_output_risk_measures.html#MultiOutputWorstCase"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputWorstCase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputRiskMeasureMCObjective" title="botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputRiskMeasureMCObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputRiskMeasureMCObjective</span></code></a></p>
+<p>The multi-output worst-case risk measure.</p>
+<p>Transform the posterior samples to samples of a risk measure.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_w</strong> (<em>int</em>) – The size of the <cite>w_set</cite> to calculate the risk measure over.</p></li>
+<li><p><strong>weights</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – An optional <cite>m</cite>-dim tensor of weights for scaling
+multi-output samples before calculating the risk measure.
+This can also be used to make sure that all outputs are
+correctly aligned for maximization by negating those that are
+originally defined for minimization.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputWorstCase.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/multi_output_risk_measures.html#MultiOutputWorstCase.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputWorstCase.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the worst-case measure corresponding to the given samples.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>samples</strong> (<em>torch.Tensor</em>) – A <cite>sample_shape x batch_shape x (q * n_w) x m</cite>-dim tensor of
+posterior samples. The q-batches should be ordered so that each
+<cite>n_w</cite> block of samples correspond to the same input.</p></li>
+<li><p><strong>X</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – A <cite>batch_shape x q x d</cite>-dim tensor of inputs. Ignored.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>sample_shape x batch_shape x q x m</cite>-dim tensor of worst-case samples.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputWorstCase.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputWorstCase.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">botorch.acquisition.multi_objective.multi_output_risk_measures.</span></span><span class="sig-name descname"><span class="pre">MVaR</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expectation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pad_to_n_w</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_dominated</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/multi_output_risk_measures.html#MVaR"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputRiskMeasureMCObjective" title="botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputRiskMeasureMCObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputRiskMeasureMCObjective</span></code></a></p>
+<p>The multivariate Value-at-Risk as introduced in <a class="reference internal" href="#prekopa2012mvar" id="id27"><span>[Prekopa2012MVaR]</span></a>.</p>
+<p>MVaR is defined as the non-dominated set of points in the extended domain
+of the random variable that have multivariate CDF greater than or equal to
+<cite>alpha</cite>. Note that MVaR is set valued and the size of the set depends on the
+particular realizations of the random variable. <a class="reference internal" href="#cousin2013mvar" id="id28"><span>[Cousin2013MVaR]</span></a> instead
+propose to use the expectation of the set-valued MVaR as the multivariate
+VaR. We support this alternative with an <cite>expectation</cite> flag.</p>
+<p>The multivariate Value-at-Risk.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_w</strong> (<em>int</em>) – The size of the <cite>w_set</cite> to calculate the risk measure over.</p></li>
+<li><p><strong>alpha</strong> (<em>float</em>) – The risk level of MVaR, float in <cite>(0.0, 1.0]</cite>. Each MVaR value
+dominates <cite>alpha</cite> fraction of all observations.</p></li>
+<li><p><strong>expectation</strong> (<em>bool</em>) – If True, returns the expectation of the MVaR set as is
+done in <a class="reference internal" href="#cousin2013mvar" id="id29"><span>[Cousin2013MVaR]</span></a>. Otherwise, it returns the union of all
+values in the MVaR set. Default: False.</p></li>
+<li><p><strong>weights</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – An optional <cite>m</cite>-dim tensor of weights for scaling
+multi-output samples before calculating the risk measure.
+This can also be used to make sure that all outputs are
+correctly aligned for maximization by negating those that are
+originally defined for minimization.</p></li>
+<li><p><strong>pad_to_n_w</strong> (<em>bool</em>) – If True, instead of padding up to <cite>k’</cite>, which is the size of
+the largest MVaR set across all batches, we pad the MVaR set up to
+<cite>n_w</cite>. This produces a return tensor of known size, however, it may
+in general be much larger than the alternative. See <cite>forward</cite> for
+more details on the return shape.
+NOTE: this is only relevant if <cite>expectation=False</cite>.</p></li>
+<li><p><strong>filter_dominated</strong> (<em>bool</em>) – If True, returns the non-dominated subset of
+alpha level points (this is MVaR as defined by <a class="reference internal" href="#prekopa2012mvar" id="id30"><span>[Prekopa2012MVaR]</span></a>).
+Disabling this will make it faster, and may be preferable if
+the dominated points will be filtered out later, e.g., while
+calculating the hypervolume. Disabling this is not recommended
+if <cite>expectation=True</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.get_mvar_set_cpu">
+<span class="sig-name descname"><span class="pre">get_mvar_set_cpu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/multi_output_risk_measures.html#MVaR.get_mvar_set_cpu"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.get_mvar_set_cpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find MVaR set based on the definition in <a class="reference internal" href="#prekopa2012mvar" id="id31"><span>[Prekopa2012MVaR]</span></a>.</p>
+<p>NOTE: This is much faster on CPU for large <cite>n_w</cite> than the alternative but it
+is significantly slower on GPU. Based on empirical evidence, this is recommended
+when running on CPU with <cite>n_w &gt; 64</cite>.</p>
+<p>This first calculates the CDF for each point on the extended domain of the
+random variable (the grid defined by the given samples), then takes the
+values with CDF equal to (rounded if necessary) <cite>alpha</cite>. The non-dominated
+subset of these form the MVaR set.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>Y</strong> (<em>torch.Tensor</em>) – A <cite>batch x n_w x m</cite>-dim tensor of outcomes. This is currently
+restricted to <cite>m = 2</cite> objectives.
+TODO: Support <cite>m &gt; 2</cite> objectives.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>batch</cite> length list of <cite>k x m</cite>-dim tensor of MVaR values, where <cite>k</cite>
+depends on the corresponding batch inputs. Note that MVaR values in general
+are not in-sample points.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.get_mvar_set_gpu">
+<span class="sig-name descname"><span class="pre">get_mvar_set_gpu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/multi_output_risk_measures.html#MVaR.get_mvar_set_gpu"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.get_mvar_set_gpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find MVaR set based on the definition in <a class="reference internal" href="#prekopa2012mvar" id="id32"><span>[Prekopa2012MVaR]</span></a>.</p>
+<p>NOTE: This is much faster on GPU than the alternative but it scales very poorly
+on CPU as <cite>n_w</cite> increases. This should be preferred if a GPU is available or
+when <cite>n_w &lt;= 64</cite>. In addition, this supports <cite>m &gt;= 2</cite> outcomes (vs <cite>m = 2</cite> for
+the CPU version) and it should be used if <cite>m &gt; 2</cite>.</p>
+<p>This first calculates the CDF for each point on the extended domain of the
+random variable (the grid defined by the given samples), then takes the
+values with CDF equal to (rounded if necessary) <cite>alpha</cite>. The non-dominated
+subset of these form the MVaR set.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>Y</strong> (<em>torch.Tensor</em>) – A <cite>batch x n_w x m</cite>-dim tensor of observations.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>batch</cite> length list of <cite>k x m</cite>-dim tensor of MVaR values, where <cite>k</cite>
+depends on the corresponding batch inputs. Note that MVaR values in general
+are not in-sample points.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/multi_objective/multi_output_risk_measures.html#MVaR.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the MVaR corresponding to the given samples.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>samples</strong> (<em>torch.Tensor</em>) – A <cite>sample_shape x batch_shape x (q * n_w) x m</cite>-dim tensor of
+posterior samples. The q-batches should be ordered so that each
+<cite>n_w</cite> block of samples correspond to the same input.</p></li>
+<li><p><strong>X</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – A <cite>batch_shape x q x d</cite>-dim tensor of inputs. Ignored.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A <cite>sample_shape x batch_shape x q x m</cite>-dim tensor of MVaR values,
+if <cite>self.expectation=True</cite>.
+Otherwise, this returns a <cite>sample_shape x batch_shape x (q * k’) x m</cite>-dim
+tensor, where <cite>k’</cite> is the maximum <cite>k</cite> across all batches that is returned
+by <cite>get_mvar_set_…</cite>. Each <cite>(q * k’) x m</cite> corresponds to the <cite>k</cite> MVaR
+values for each <cite>q</cite> batch of <cite>n_w</cite> inputs, padded up to <cite>k’</cite> by repeating
+the last element. If <cite>self.pad_to_n_w</cite>, we set <cite>k’ = self.n_w</cite>, producing
+a deterministic return shape.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.training" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
 </section>
 </section>
 <section id="utilities">
@@ -3800,7 +4157,7 @@ improve performance and is generally recommended.</p></li>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.acquisition.input_constructors.construct_inputs_qPI">
-<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.input_constructors.</span></span><span class="sig-name descname"><span class="pre">construct_inputs_qPI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/input_constructors.html#construct_inputs_qPI"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.input_constructors.construct_inputs_qPI" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">botorch.acquisition.input_constructors.</span></span><span class="sig-name descname"><span class="pre">construct_inputs_qPI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tau</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">best_f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/acquisition/input_constructors.html#construct_inputs_qPI"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.acquisition.input_constructors.construct_inputs_qPI" title="Permalink to this definition">¶</a></dt>
 <dd><p>Construct kwargs for the <cite>qProbabilityOfImprovement</cite> constructor.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -3819,6 +4176,9 @@ the acquisition functions’s default sampler.</p></li>
 of the step function. Smaller values yield more accurate
 approximations of the function, but result in gradients
 estimates with higher variance.</p></li>
+<li><p><strong>best_f</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>float</em><em>, </em><em>torch.Tensor</em><em>]</em><em>]</em>) – The best objective value observed so far (assumed noiseless). Can
+be a <cite>batch_shape</cite>-shaped tensor, which in case of a batched model
+specifies potentially different values for each element of the batch.</p></li>
 <li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
 </ul>
 </dd>

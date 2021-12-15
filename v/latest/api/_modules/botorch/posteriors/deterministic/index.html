@@ -51,6 +51,16 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="n">values</span>
 
     <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">base_sample_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">:</span>
+        <span class="sa">r</span><span class="sd">"""The shape of a base sample used for constructing posterior samples.</span>
+
+<span class="sd">        This function may be overwritten by subclasses in case `base_sample_shape`</span>
+<span class="sd">        and `event_shape` do not agree (e.g. if the posterior is a Multivariate</span>
+<span class="sd">        Gaussian that is not full rank).</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">device</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">:</span>
         <span class="sa">r</span><span class="sd">"""The torch device of the posterior."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">device</span>

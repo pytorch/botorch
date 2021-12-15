@@ -353,7 +353,7 @@
                 <span class="s2">"untransform_posterior"</span>
             <span class="p">)</span>
         <span class="n">is_mtgp_posterior</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">posterior</span><span class="p">,</span> <span class="n">GPyTorchPosterior</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span> <span class="ow">is</span> <span class="n">GPyTorchPosterior</span><span class="p">:</span>
             <span class="n">is_mtgp_posterior</span> <span class="o">=</span> <span class="n">posterior</span><span class="o">.</span><span class="n">_is_mt</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_m</span> <span class="o">==</span> <span class="n">posterior</span><span class="o">.</span><span class="n">event_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_mtgp_posterior</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
@@ -361,8 +361,9 @@
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_m</span><span class="si">}</span><span class="s2"> and posterior </span><span class="si">{</span><span class="n">posterior</span><span class="o">.</span><span class="n">event_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">."</span>
             <span class="p">)</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">posterior</span><span class="p">,</span> <span class="n">GPyTorchPosterior</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">posterior</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">GPyTorchPosterior</span><span class="p">:</span>
             <span class="c1"># fall back to TransformedPosterior</span>
+            <span class="c1"># this applies to subclasses of GPyTorchPosterior like MultitaskGPPosterior</span>
             <span class="k">return</span> <span class="n">TransformedPosterior</span><span class="p">(</span>
                 <span class="n">posterior</span><span class="o">=</span><span class="n">posterior</span><span class="p">,</span>
                 <span class="n">sample_transform</span><span class="o">=</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">means</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">stdvs</span> <span class="o">*</span> <span class="n">s</span><span class="p">,</span>

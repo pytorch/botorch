@@ -152,8 +152,57 @@ at the same training inputs.</p>
 <section id="dispatcher">
 <h2>Dispatcher<a class="headerlink" href="#dispatcher" title="Permalink to this headline">¶</a></h2>
 </section>
-<section id="low-rank-cholesky-update-utils">
-<h2>Low-Rank Cholesky Update Utils<a class="headerlink" href="#low-rank-cholesky-update-utils" title="Permalink to this headline">¶</a></h2>
+<section id="module-botorch.utils.low_rank">
+<span id="low-rank-cholesky-update-utils"></span><h2>Low-Rank Cholesky Update Utils<a class="headerlink" href="#module-botorch.utils.low_rank" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.low_rank.extract_batch_covar">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.low_rank.</span></span><span class="sig-name descname"><span class="pre">extract_batch_covar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mt_mvn</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/low_rank.html#extract_batch_covar"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.low_rank.extract_batch_covar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract a batched independent covariance matrix from an MTMVN.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>mt_mvn</strong> (<em>gpytorch.distributions.multitask_multivariate_normal.MultitaskMultivariateNormal</em>) – A multi-task multivariate normal with a block diagonal
+covariance matrix.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>A lazy covariance matrix consisting of a batch of the blocks of</dt><dd><p>the diagonal of the MultitaskMultivariateNormal.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>gpytorch.lazy.lazy_tensor.LazyTensor</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="botorch.utils.low_rank.sample_cached_cholesky">
+<span class="sig-prename descclassname"><span class="pre">botorch.utils.low_rank.</span></span><span class="sig-name descname"><span class="pre">sample_cached_cholesky</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">posterior</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">baseline_L</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tries</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">6</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/low_rank.html#sample_cached_cholesky"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.low_rank.sample_cached_cholesky" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get posterior samples at the <cite>q</cite> new points from the joint multi-output posterior.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>posterior</strong> (<a class="reference internal" href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior" title="botorch.posteriors.gpytorch.GPyTorchPosterior"><em>botorch.posteriors.gpytorch.GPyTorchPosterior</em></a>) – The joint posterior is over (X_baseline, X).</p></li>
+<li><p><strong>baseline_L</strong> (<em>torch.Tensor</em>) – The baseline lower triangular cholesky factor.</p></li>
+<li><p><strong>q</strong> (<em>int</em>) – The number of new points in X.</p></li>
+<li><p><strong>base_samples</strong> (<em>torch.Tensor</em>) – The base samples.</p></li>
+<li><p><strong>sample_shape</strong> (<em>torch.Size</em>) – The sample shape.</p></li>
+<li><p><strong>max_tries</strong> (<em>int</em>) – The number of tries for computing the Cholesky
+decomposition with increasing jitter.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>A <cite>sample_shape x batch_shape x q x m</cite>-dim tensor of posterior</dt><dd><p>samples at the new points.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
 </section>
 <section id="module-botorch.utils.objective">
 <span id="objective"></span><h2>Objective<a class="headerlink" href="#module-botorch.utils.objective" title="Permalink to this headline">¶</a></h2>
@@ -195,17 +244,17 @@ each constraint.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>obj</strong> (<em>torch.Tensor</em>) – A <cite>n_samples x b x q</cite> Tensor of objective values.</p></li>
+<li><p><strong>obj</strong> (<em>torch.Tensor</em>) – A <cite>n_samples x b x q (x m’)</cite>-dim Tensor of objective values.</p></li>
 <li><p><strong>constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>torch.Tensor</em><em>]</em><em>, </em><em>torch.Tensor</em><em>]</em><em>]</em>) – A list of callables, each mapping a Tensor of size <cite>b x q x m</cite>
 to a Tensor of size <cite>b x q</cite>, where negative values imply feasibility.
 This callable must support broadcasting. Only relevant for multi-
 output models (<cite>m</cite> &gt; 1).</p></li>
-<li><p><strong>samples</strong> (<em>torch.Tensor</em>) – A <cite>b x q x m</cite> Tensor of samples drawn from the posterior.</p></li>
+<li><p><strong>samples</strong> (<em>torch.Tensor</em>) – A <cite>n_samples x b x q x m</cite> Tensor of samples drawn from the posterior.</p></li>
 <li><p><strong>eta</strong> (<em>float</em>) – The temperature parameter for the sigmoid function.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A <cite>n_samples x b x q</cite>-dim tensor of feasibility-weighted objectives.</p>
+<dd class="field-even"><p>A <cite>n_samples x b x q (x m’)</cite>-dim tensor of feasibility-weighted objectives.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>torch.Tensor</p>
@@ -240,25 +289,25 @@ For each element <cite>x</cite>, <cite>value(x) -&gt; 0</cite> as <cite>x</cite>
 <span class="sig-prename descclassname"><span class="pre">botorch.utils.objective.</span></span><span class="sig-name descname"><span class="pre">apply_constraints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">infeasible_cost</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/objective.html#apply_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.objective.apply_constraints" title="Permalink to this definition">¶</a></dt>
 <dd><p>Apply constraints using an infeasible_cost <cite>M</cite> for negative objectives.</p>
 <p>This allows feasibility-weighting an objective for the case where the
-objective can be negative by usingthe following strategy:
-(1) add <cite>M</cite> to make obj nonnegative
-(2) apply constraints using the sigmoid approximation
-(3) shift by <cite>-M</cite></p>
+objective can be negative by using the following strategy:
+(1) Add <cite>M</cite> to make obj non-negative;
+(2) Apply constraints using the sigmoid approximation;
+(3) Shift by <cite>-M</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>obj</strong> (<em>torch.Tensor</em>) – A <cite>n_samples x b x q</cite> Tensor of objective values.</p></li>
+<li><p><strong>obj</strong> (<em>torch.Tensor</em>) – A <cite>n_samples x b x q (x m’)</cite>-dim Tensor of objective values.</p></li>
 <li><p><strong>constraints</strong> (<em>List</em><em>[</em><em>Callable</em><em>[</em><em>[</em><em>torch.Tensor</em><em>]</em><em>, </em><em>torch.Tensor</em><em>]</em><em>]</em>) – A list of callables, each mapping a Tensor of size <cite>b x q x m</cite>
 to a Tensor of size <cite>b x q</cite>, where negative values imply feasibility.
 This callable must support broadcasting. Only relevant for multi-
 output models (<cite>m</cite> &gt; 1).</p></li>
-<li><p><strong>samples</strong> (<em>torch.Tensor</em>) – A <cite>b x q x m</cite> Tensor of samples drawn from the posterior.</p></li>
+<li><p><strong>samples</strong> (<em>torch.Tensor</em>) – A <cite>n_samples x b x q x m</cite> Tensor of samples drawn from the posterior.</p></li>
 <li><p><strong>infeasible_cost</strong> (<em>float</em>) – The infeasible value.</p></li>
 <li><p><strong>eta</strong> (<em>float</em>) – The temperature parameter of the sigmoid function.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>A <cite>n_samples x b x q</cite>-dim tensor of feasibility-weighted objectives.</p>
+<dd class="field-even"><p>A <cite>n_samples x b x q (x m’)</cite>-dim tensor of feasibility-weighted objectives.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>torch.Tensor</p>
@@ -1555,7 +1604,7 @@ contained within <cite>bounds</cite>.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="botorch.utils.transforms.t_batch_mode_transform">
 <span class="sig-prename descclassname"><span class="pre">botorch.utils.transforms.</span></span><span class="sig-name descname"><span class="pre">t_batch_mode_transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">expected_q</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">assert_output_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/botorch/utils/transforms.html#t_batch_mode_transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#botorch.utils.transforms.t_batch_mode_transform" title="Permalink to this definition">¶</a></dt>
-<dd><p>Factory for decorators taking a t-batched <cite>X</cite> tensor.</p>
+<dd><p>Factory for decorators enabling consistent t-batch behavior.</p>
 <p>This method creates decorators for instance methods to transform an input tensor
 <cite>X</cite> to t-batch mode (i.e. with at least 3 dimensions). This assumes the tensor
 has a q-batch dimension. The decorator also checks the q-batch size if <cite>expected_q</cite>
@@ -1563,10 +1612,10 @@ is provided, and the output shape if <cite>assert_output_shape</cite> is <cite>T
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>expected_q</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The expected q-batch size of X. If specified, this will raise an
-AssertionError if X’s q-batch size does not equal expected_q.</p></li>
+<li><p><strong>expected_q</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – The expected q-batch size of <cite>X</cite>. If specified, this will raise an
+AssertionError if <cite>X</cite>’s q-batch size does not equal expected_q.</p></li>
 <li><p><strong>assert_output_shape</strong> (<em>bool</em>) – If <cite>True</cite>, this will raise an AssertionError if the
-output shape does not match either the t-batch shape of X,
+output shape does not match either the t-batch shape of <cite>X</cite>,
 or the <cite>acqf.model.batch_shape</cite> for acquisition functions using
 batched models.</p></li>
 </ul>
@@ -1575,7 +1624,7 @@ batched models.</p></li>
 <dd class="field-even"><p>The decorated instance method.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>Callable[[Callable[[Any, torch.Tensor], Any]], Callable[[Any, torch.Tensor], Any]]</p>
+<dd class="field-odd"><p>Callable[[Callable[[botorch.utils.transforms.AcquisitionFunction, Any], Any]], Callable[[botorch.utils.transforms.AcquisitionFunction, Any], Any]]</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>

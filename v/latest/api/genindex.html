@@ -72,10 +72,10 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.analytic.AnalyticAcquisitionFunction">AnalyticAcquisitionFunction (class in botorch.acquisition.analytic)</a>
 </li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.objective.AnalyticMultiOutputObjective">AnalyticMultiOutputObjective (class in botorch.acquisition.multi_objective.objective)</a>
 </li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="utils.html#botorch.utils.multi_objective.hypervolume.MultiList.append">append() (botorch.utils.multi_objective.hypervolume.MultiList method)</a>
 </li>
 <li><a href="models.html#botorch.models.transforms.input.AppendFeatures">AppendFeatures (class in botorch.models.transforms.input)</a>
@@ -85,6 +85,8 @@
 <li><a href="utils.html#botorch.utils.objective.apply_constraints_nonnegative_soft">apply_constraints_nonnegative_soft() (in module botorch.utils.objective)</a>
 </li>
 <li><a href="utils.html#botorch.utils.rounding.approximate_round">approximate_round() (in module botorch.utils.rounding)</a>
+</li>
+<li><a href="models.html#botorch.models.approximate_gp.ApproximateGPyTorchModel">ApproximateGPyTorchModel (class in botorch.models.approximate_gp)</a>
 </li>
 <li><a href="distributions.html#botorch.distributions.Kumaraswamy.arg_constraints">arg_constraints (botorch.distributions.Kumaraswamy attribute)</a>
 </li>
@@ -101,13 +103,17 @@
 <td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="exceptions.html#botorch.exceptions.warnings.BadInitialCandidatesWarning">BadInitialCandidatesWarning</a>
 </li>
-<li><a href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior.base_sample_shape">base_sample_shape (botorch.posteriors.gpytorch.GPyTorchPosterior property)</a>
+<li><a href="posteriors.html#botorch.posteriors.deterministic.DeterministicPosterior.base_sample_shape">base_sample_shape (botorch.posteriors.deterministic.DeterministicPosterior property)</a>
 <ul>
+<li><a href="posteriors.html#botorch.posteriors.gpytorch.GPyTorchPosterior.base_sample_shape">(botorch.posteriors.gpytorch.GPyTorchPosterior property)</a>
+</li>
 <li><a href="posteriors.html#botorch.posteriors.higher_order.HigherOrderGPPosterior.base_sample_shape">(botorch.posteriors.higher_order.HigherOrderGPPosterior property)</a>
 </li>
 <li><a href="posteriors.html#botorch.posteriors.multitask.MultitaskGPPosterior.base_sample_shape">(botorch.posteriors.multitask.MultitaskGPPosterior property)</a>
 </li>
 <li><a href="posteriors.html#botorch.posteriors.posterior.Posterior.base_sample_shape">(botorch.posteriors.posterior.Posterior property)</a>
+</li>
+<li><a href="posteriors.html#botorch.posteriors.posterior.PosteriorList.base_sample_shape">(botorch.posteriors.posterior.PosteriorList property)</a>
 </li>
 <li><a href="posteriors.html#botorch.posteriors.transformed.TransformedPosterior.base_sample_shape">(botorch.posteriors.transformed.TransformedPosterior property)</a>
 </li>
@@ -127,6 +133,8 @@
 <li><a href="models.html#botorch.models.gpytorch.ModelListGPyTorchModel.batch_shape">(botorch.models.gpytorch.ModelListGPyTorchModel property)</a>
 </li>
 <li><a href="models.html#botorch.models.model.Model.batch_shape">(botorch.models.model.Model property)</a>
+</li>
+<li><a href="models.html#botorch.models.model.ModelList.batch_shape">(botorch.models.model.ModelList property)</a>
 </li>
 <li><a href="models.html#botorch.models.pairwise_gp.PairwiseGP.batch_shape">(botorch.models.pairwise_gp.PairwiseGP property)</a>
 </li>
@@ -241,6 +249,13 @@
 
       <ul>
 <li><a href="acquisition.html#module-botorch.acquisition.multi_objective.monte_carlo">module</a>
+</li>
+</ul></li>
+<li>
+    botorch.acquisition.multi_objective.multi_output_risk_measures
+
+      <ul>
+<li><a href="acquisition.html#module-botorch.acquisition.multi_objective.multi_output_risk_measures">module</a>
 </li>
 </ul></li>
 <li>
@@ -391,6 +406,13 @@
 </li>
 </ul></li>
 <li>
+    botorch.models.approximate_gp
+
+      <ul>
+<li><a href="models.html#module-botorch.models.approximate_gp">module</a>
+</li>
+</ul></li>
+<li>
     botorch.models.contextual
 
       <ul>
@@ -481,6 +503,8 @@
 <li><a href="models.html#module-botorch.models.kernels.contextual_sac">module</a>
 </li>
 </ul></li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li>
     botorch.models.kernels.downsampling
 
@@ -488,8 +512,6 @@
 <li><a href="models.html#module-botorch.models.kernels.downsampling">module</a>
 </li>
 </ul></li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li>
     botorch.models.kernels.exponential_decay
 
@@ -771,6 +793,13 @@
 </li>
 </ul></li>
 <li>
+    botorch.utils.low_rank
+
+      <ul>
+<li><a href="utils.html#module-botorch.utils.low_rank">module</a>
+</li>
+</ul></li>
+<li>
     botorch.utils.multi_objective.box_decomposition
 
       <ul>
@@ -907,6 +936,8 @@
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.C2DTLZ2">C2DTLZ2 (class in botorch.test_functions.multi_objective)</a>
 </li>
 <li><a href="exceptions.html#botorch.exceptions.errors.CandidateGenerationError">CandidateGenerationError</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.multi_objective.CarSideImpact">CarSideImpact (class in botorch.test_functions.multi_objective)</a>
 </li>
 <li><a href="models.html#botorch.models.kernels.categorical.CategoricalKernel">CategoricalKernel (class in botorch.models.kernels.categorical)</a>
 </li>
@@ -1067,6 +1098,8 @@
 </li>
 <li><a href="posteriors.html#botorch.posteriors.posterior.Posterior.device">(botorch.posteriors.posterior.Posterior property)</a>
 </li>
+<li><a href="posteriors.html#botorch.posteriors.posterior.PosteriorList.device">(botorch.posteriors.posterior.PosteriorList property)</a>
+</li>
 <li><a href="posteriors.html#botorch.posteriors.transformed.TransformedPosterior.device">(botorch.posteriors.transformed.TransformedPosterior property)</a>
 </li>
 <li><a href="utils.html#botorch.utils.testing.BotorchTestCase.device">(botorch.utils.testing.BotorchTestCase attribute)</a>
@@ -1098,6 +1131,8 @@
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.C2DTLZ2.dim">(botorch.test_functions.multi_objective.C2DTLZ2 attribute)</a>
 </li>
+<li><a href="test_functions.html#botorch.test_functions.multi_objective.CarSideImpact.dim">(botorch.test_functions.multi_objective.CarSideImpact attribute)</a>
+</li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.CONSTR.dim">(botorch.test_functions.multi_objective.CONSTR attribute)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.ConstrainedBraninCurrin.dim">(botorch.test_functions.multi_objective.ConstrainedBraninCurrin attribute)</a>
@@ -1116,11 +1151,21 @@
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.DTLZ2.dim">(botorch.test_functions.multi_objective.DTLZ2 attribute)</a>
 </li>
+<li><a href="test_functions.html#botorch.test_functions.multi_objective.DTLZ3.dim">(botorch.test_functions.multi_objective.DTLZ3 attribute)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.multi_objective.DTLZ4.dim">(botorch.test_functions.multi_objective.DTLZ4 attribute)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.multi_objective.DTLZ5.dim">(botorch.test_functions.multi_objective.DTLZ5 attribute)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.multi_objective.DTLZ7.dim">(botorch.test_functions.multi_objective.DTLZ7 attribute)</a>
+</li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.OSY.dim">(botorch.test_functions.multi_objective.OSY attribute)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.SRN.dim">(botorch.test_functions.multi_objective.SRN attribute)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.VehicleSafety.dim">(botorch.test_functions.multi_objective.VehicleSafety attribute)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.multi_objective.WeldedBeam.dim">(botorch.test_functions.multi_objective.WeldedBeam attribute)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.ZDT.dim">(botorch.test_functions.multi_objective.ZDT attribute)</a>
 </li>
@@ -1202,6 +1247,14 @@
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.DTLZ2">DTLZ2 (class in botorch.test_functions.multi_objective)</a>
 </li>
+<li><a href="test_functions.html#botorch.test_functions.multi_objective.DTLZ3">DTLZ3 (class in botorch.test_functions.multi_objective)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.multi_objective.DTLZ4">DTLZ4 (class in botorch.test_functions.multi_objective)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.multi_objective.DTLZ5">DTLZ5 (class in botorch.test_functions.multi_objective)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.multi_objective.DTLZ7">DTLZ7 (class in botorch.test_functions.multi_objective)</a>
+</li>
 <li><a href="optim.html#botorch.optim.numpy_converter.TorchAttr.dtype">dtype (botorch.optim.numpy_converter.TorchAttr property)</a>
 <ul>
 <li><a href="posteriors.html#botorch.posteriors.deterministic.DeterministicPosterior.dtype">(botorch.posteriors.deterministic.DeterministicPosterior property)</a>
@@ -1211,6 +1264,8 @@
 <li><a href="posteriors.html#botorch.posteriors.multitask.MultitaskGPPosterior.dtype">(botorch.posteriors.multitask.MultitaskGPPosterior property)</a>
 </li>
 <li><a href="posteriors.html#botorch.posteriors.posterior.Posterior.dtype">(botorch.posteriors.posterior.Posterior property)</a>
+</li>
+<li><a href="posteriors.html#botorch.posteriors.posterior.PosteriorList.dtype">(botorch.posteriors.posterior.PosteriorList property)</a>
 </li>
 <li><a href="posteriors.html#botorch.posteriors.transformed.TransformedPosterior.dtype">(botorch.posteriors.transformed.TransformedPosterior property)</a>
 </li>
@@ -1268,6 +1323,8 @@
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.SRN.evaluate_slack_true">(botorch.test_functions.multi_objective.SRN method)</a>
 </li>
+<li><a href="test_functions.html#botorch.test_functions.multi_objective.WeldedBeam.evaluate_slack_true">(botorch.test_functions.multi_objective.WeldedBeam method)</a>
+</li>
 </ul></li>
 <li><a href="test_functions.html#botorch.test_functions.base.BaseTestProblem.evaluate_true">evaluate_true() (botorch.test_functions.base.BaseTestProblem method)</a>
 <ul>
@@ -1281,6 +1338,8 @@
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.BraninCurrin.evaluate_true">(botorch.test_functions.multi_objective.BraninCurrin method)</a>
 </li>
+<li><a href="test_functions.html#botorch.test_functions.multi_objective.CarSideImpact.evaluate_true">(botorch.test_functions.multi_objective.CarSideImpact method)</a>
+</li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.CONSTR.evaluate_true">(botorch.test_functions.multi_objective.CONSTR method)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.DH1.evaluate_true">(botorch.test_functions.multi_objective.DH1 method)</a>
@@ -1291,11 +1350,19 @@
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.DTLZ2.evaluate_true">(botorch.test_functions.multi_objective.DTLZ2 method)</a>
 </li>
+<li><a href="test_functions.html#botorch.test_functions.multi_objective.DTLZ3.evaluate_true">(botorch.test_functions.multi_objective.DTLZ3 method)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.multi_objective.DTLZ5.evaluate_true">(botorch.test_functions.multi_objective.DTLZ5 method)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.multi_objective.DTLZ7.evaluate_true">(botorch.test_functions.multi_objective.DTLZ7 method)</a>
+</li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.OSY.evaluate_true">(botorch.test_functions.multi_objective.OSY method)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.SRN.evaluate_true">(botorch.test_functions.multi_objective.SRN method)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.VehicleSafety.evaluate_true">(botorch.test_functions.multi_objective.VehicleSafety method)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.multi_objective.WeldedBeam.evaluate_true">(botorch.test_functions.multi_objective.WeldedBeam method)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.ZDT1.evaluate_true">(botorch.test_functions.multi_objective.ZDT1 method)</a>
 </li>
@@ -1354,6 +1421,8 @@
 </li>
 <li><a href="posteriors.html#botorch.posteriors.posterior.Posterior.event_shape">(botorch.posteriors.posterior.Posterior property)</a>
 </li>
+<li><a href="posteriors.html#botorch.posteriors.posterior.PosteriorList.event_shape">(botorch.posteriors.posterior.PosteriorList property)</a>
+</li>
 <li><a href="posteriors.html#botorch.posteriors.transformed.TransformedPosterior.event_shape">(botorch.posteriors.transformed.TransformedPosterior property)</a>
 </li>
 <li><a href="utils.html#botorch.utils.testing.MockPosterior.event_shape">(botorch.utils.testing.MockPosterior property)</a>
@@ -1377,6 +1446,8 @@
 </li>
 <li><a href="utils.html#botorch.utils.torch.BufferDict.extra_repr">extra_repr() (botorch.utils.torch.BufferDict method)</a>
 </li>
+<li><a href="utils.html#botorch.utils.low_rank.extract_batch_covar">extract_batch_covar() (in module botorch.utils.low_rank)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.acquisition.OneShotAcquisitionFunction.extract_candidates">extract_candidates() (botorch.acquisition.acquisition.OneShotAcquisitionFunction method)</a>
 <ul>
 <li><a href="acquisition.html#botorch.acquisition.knowledge_gradient.qKnowledgeGradient.extract_candidates">(botorch.acquisition.knowledge_gradient.qKnowledgeGradient method)</a>
@@ -1391,8 +1462,10 @@
 <td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="models.html#botorch.models.utils.fantasize">fantasize (class in botorch.models.utils)</a>
 </li>
-<li><a href="models.html#botorch.models.gp_regression.FixedNoiseGP.fantasize">fantasize() (botorch.models.gp_regression.FixedNoiseGP method)</a>
+<li><a href="models.html#botorch.models.approximate_gp.ApproximateGPyTorchModel.fantasize">fantasize() (botorch.models.approximate_gp.ApproximateGPyTorchModel method)</a>
 <ul>
+<li><a href="models.html#botorch.models.gp_regression.FixedNoiseGP.fantasize">(botorch.models.gp_regression.FixedNoiseGP method)</a>
+</li>
 <li><a href="models.html#botorch.models.model.Model.fantasize">(botorch.models.model.Model method)</a>
 </li>
 </ul></li>
@@ -1487,6 +1560,16 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement.forward">(botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement method)</a>
 </li>
+<li><a href="acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.IndependentCVaR.forward">(botorch.acquisition.multi_objective.multi_output_risk_measures.IndependentCVaR method)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.IndependentVaR.forward">(botorch.acquisition.multi_objective.multi_output_risk_measures.IndependentVaR method)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputRiskMeasureMCObjective.forward">(botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputRiskMeasureMCObjective method)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputWorstCase.forward">(botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputWorstCase method)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.forward">(botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR method)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.objective.AnalyticMultiOutputObjective.forward">(botorch.acquisition.multi_objective.objective.AnalyticMultiOutputObjective method)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.objective.IdentityAnalyticMultiOutputObjective.forward">(botorch.acquisition.multi_objective.objective.IdentityAnalyticMultiOutputObjective method)</a>
@@ -1544,6 +1627,8 @@
 <li><a href="generation.html#botorch.generation.sampling.MaxPosteriorSampling.forward">(botorch.generation.sampling.MaxPosteriorSampling method)</a>
 </li>
 <li><a href="generation.html#botorch.generation.sampling.SamplingStrategy.forward">(botorch.generation.sampling.SamplingStrategy method)</a>
+</li>
+<li><a href="models.html#botorch.models.approximate_gp.ApproximateGPyTorchModel.forward">(botorch.models.approximate_gp.ApproximateGPyTorchModel method)</a>
 </li>
 <li><a href="models.html#botorch.models.contextual_multioutput.LCEMGP.forward">(botorch.models.contextual_multioutput.LCEMGP method)</a>
 </li>
@@ -1668,10 +1753,10 @@
 </li>
 <li><a href="utils.html#botorch.utils.multi_objective.scalarization.get_chebyshev_scalarization">get_chebyshev_scalarization() (in module botorch.utils.multi_objective.scalarization)</a>
 </li>
-</ul></td>
-<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.utils.get_default_partitioning_alpha">get_default_partitioning_alpha() (in module botorch.acquisition.multi_objective.utils)</a>
 </li>
+</ul></td>
+<td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="utils.html#botorch.utils.gp_sampling.get_deterministic_model">get_deterministic_model() (in module botorch.utils.gp_sampling)</a>
 </li>
 <li><a href="utils.html#botorch.utils.gp_sampling.get_deterministic_model_multi_samples">get_deterministic_model_multi_samples() (in module botorch.utils.gp_sampling)</a>
@@ -1697,6 +1782,10 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.get_multi_step_tree_input_representation">get_multi_step_tree_input_representation() (botorch.acquisition.multi_step_lookahead.qMultiStepLookahead method)</a>
 </li>
+<li><a href="acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.get_mvar_set_cpu">get_mvar_set_cpu() (botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR method)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.get_mvar_set_gpu">get_mvar_set_gpu() (botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR method)</a>
+</li>
 <li><a href="utils.html#botorch.utils.objective.get_objective_weights_transform">get_objective_weights_transform() (in module botorch.utils.objective)</a>
 </li>
 <li><a href="utils.html#botorch.utils.constraints.get_outcome_constraint_transforms">get_outcome_constraint_transforms() (in module botorch.utils.constraints)</a>
@@ -1710,6 +1799,8 @@
 <li><a href="acquisition.html#botorch.acquisition.multi_step_lookahead.qMultiStepLookahead.get_split_shapes">get_split_shapes() (botorch.acquisition.multi_step_lookahead.qMultiStepLookahead method)</a>
 </li>
 <li><a href="utils.html#botorch.utils.gp_sampling.get_weights_posterior">get_weights_posterior() (in module botorch.utils.gp_sampling)</a>
+</li>
+<li><a href="optim.html#botorch.optim.utils.get_X_baseline">get_X_baseline() (in module botorch.optim.utils)</a>
 </li>
 <li><a href="utils.html#botorch.utils.gp_sampling.GPDraw">GPDraw (class in botorch.utils.gp_sampling)</a>
 </li>
@@ -1761,16 +1852,20 @@
 </li>
 <li><a href="sampling.html#botorch.sampling.samplers.IIDNormalSampler">IIDNormalSampler (class in botorch.sampling.samplers)</a>
 </li>
+<li><a href="acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.IndependentCVaR">IndependentCVaR (class in botorch.acquisition.multi_objective.multi_output_risk_measures)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.IndependentVaR">IndependentVaR (class in botorch.acquisition.multi_objective.multi_output_risk_measures)</a>
+</li>
 <li><a href="utils.html#botorch.utils.multi_objective.hypervolume.infer_reference_point">infer_reference_point() (in module botorch.utils.multi_objective.hypervolume)</a>
 </li>
 <li><a href="optim.html#botorch.optim.initializers.initialize_q_batch">initialize_q_batch() (in module botorch.optim.initializers)</a>
 </li>
 <li><a href="optim.html#botorch.optim.initializers.initialize_q_batch_nonneg">initialize_q_batch_nonneg() (in module botorch.optim.initializers)</a>
 </li>
-<li><a href="exceptions.html#botorch.exceptions.errors.InputDataError">InputDataError</a>
-</li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="exceptions.html#botorch.exceptions.errors.InputDataError">InputDataError</a>
+</li>
 <li><a href="exceptions.html#botorch.exceptions.warnings.InputDataWarning">InputDataWarning</a>
 </li>
 <li><a href="models.html#botorch.models.transforms.input.InputPerturbation">InputPerturbation (class in botorch.models.transforms.input)</a>
@@ -1880,6 +1975,8 @@
 </li>
 <li><a href="posteriors.html#botorch.posteriors.posterior.Posterior.mean">(botorch.posteriors.posterior.Posterior property)</a>
 </li>
+<li><a href="posteriors.html#botorch.posteriors.posterior.PosteriorList.mean">(botorch.posteriors.posterior.PosteriorList property)</a>
+</li>
 <li><a href="posteriors.html#botorch.posteriors.transformed.TransformedPosterior.mean">(botorch.posteriors.transformed.TransformedPosterior property)</a>
 </li>
 <li><a href="utils.html#botorch.utils.testing.MockPosterior.mean">(botorch.utils.testing.MockPosterior property)</a>
@@ -1902,6 +1999,8 @@
 <li><a href="models.html#botorch.models.model.Model">Model (class in botorch.models.model)</a>
 </li>
 <li><a href="models.html#botorch.models.converter.model_list_to_batched">model_list_to_batched() (in module botorch.models.converter)</a>
+</li>
+<li><a href="models.html#botorch.models.model.ModelList">ModelList (class in botorch.models.model)</a>
 </li>
 <li><a href="models.html#botorch.models.model_list_gp_regression.ModelListGP">ModelListGP (class in botorch.models.model_list_gp_regression)</a>
 </li>
@@ -1936,6 +2035,8 @@
 <li><a href="acquisition.html#module-botorch.acquisition.multi_objective.max_value_entropy_search">botorch.acquisition.multi_objective.max_value_entropy_search</a>
 </li>
 <li><a href="acquisition.html#module-botorch.acquisition.multi_objective.monte_carlo">botorch.acquisition.multi_objective.monte_carlo</a>
+</li>
+<li><a href="acquisition.html#module-botorch.acquisition.multi_objective.multi_output_risk_measures">botorch.acquisition.multi_objective.multi_output_risk_measures</a>
 </li>
 <li><a href="acquisition.html#module-botorch.acquisition.multi_objective.objective">botorch.acquisition.multi_objective.objective</a>
 </li>
@@ -1978,6 +2079,8 @@
 <li><a href="logging.html#module-botorch.logging">botorch.logging</a>
 </li>
 <li><a href="models.html#module-botorch.models">botorch.models</a>
+</li>
+<li><a href="models.html#module-botorch.models.approximate_gp">botorch.models.approximate_gp</a>
 </li>
 <li><a href="models.html#module-botorch.models.contextual">botorch.models.contextual</a>
 </li>
@@ -2087,6 +2190,8 @@
 </li>
 <li><a href="utils.html#module-botorch.utils.gp_sampling">botorch.utils.gp_sampling</a>
 </li>
+<li><a href="utils.html#module-botorch.utils.low_rank">botorch.utils.low_rank</a>
+</li>
 <li><a href="utils.html#module-botorch.utils.multi_objective.box_decomposition">botorch.utils.multi_objective.box_decomposition</a>
 </li>
 <li><a href="utils.html#module-botorch.utils.multi_objective.box_decompositions.box_decomposition">botorch.utils.multi_objective.box_decompositions.box_decomposition</a>
@@ -2134,6 +2239,10 @@
 </li>
 <li><a href="models.html#botorch.models.utils.multioutput_to_batch_mode_transform">multioutput_to_batch_mode_transform() (in module botorch.models.utils)</a>
 </li>
+<li><a href="acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputRiskMeasureMCObjective">MultiOutputRiskMeasureMCObjective (class in botorch.acquisition.multi_objective.multi_output_risk_measures)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputWorstCase">MultiOutputWorstCase (class in botorch.acquisition.multi_objective.multi_output_risk_measures)</a>
+</li>
 <li><a href="models.html#botorch.models.multitask.MultiTaskGP">MultiTaskGP (class in botorch.models.multitask)</a>
 </li>
 <li><a href="posteriors.html#botorch.posteriors.multitask.MultitaskGPPosterior">MultitaskGPPosterior (class in botorch.posteriors.multitask)</a>
@@ -2141,6 +2250,8 @@
 <li><a href="models.html#botorch.models.gpytorch.MultiTaskGPyTorchModel">MultiTaskGPyTorchModel (class in botorch.models.gpytorch)</a>
 </li>
 <li><a href="sampling.html#botorch.sampling.qmc.MultivariateNormalQMCEngine">MultivariateNormalQMCEngine (class in botorch.sampling.qmc)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR">MVaR (class in botorch.acquisition.multi_objective.multi_output_risk_measures)</a>
 </li>
 </ul></td>
 </tr></table>
@@ -2183,6 +2294,8 @@
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.SRN.num_constraints">(botorch.test_functions.multi_objective.SRN attribute)</a>
 </li>
+<li><a href="test_functions.html#botorch.test_functions.multi_objective.WeldedBeam.num_constraints">(botorch.test_functions.multi_objective.WeldedBeam attribute)</a>
+</li>
 </ul></li>
 <li><a href="test_functions.html#botorch.test_functions.base.MultiObjectiveTestProblem.num_objectives">num_objectives (botorch.test_functions.base.MultiObjectiveTestProblem attribute)</a>
 <ul>
@@ -2191,6 +2304,8 @@
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.BraninCurrin.num_objectives">(botorch.test_functions.multi_objective.BraninCurrin attribute)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.C2DTLZ2.num_objectives">(botorch.test_functions.multi_objective.C2DTLZ2 attribute)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.multi_objective.CarSideImpact.num_objectives">(botorch.test_functions.multi_objective.CarSideImpact attribute)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.CONSTR.num_objectives">(botorch.test_functions.multi_objective.CONSTR attribute)</a>
 </li>
@@ -2204,11 +2319,21 @@
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.DTLZ2.num_objectives">(botorch.test_functions.multi_objective.DTLZ2 attribute)</a>
 </li>
+<li><a href="test_functions.html#botorch.test_functions.multi_objective.DTLZ3.num_objectives">(botorch.test_functions.multi_objective.DTLZ3 attribute)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.multi_objective.DTLZ4.num_objectives">(botorch.test_functions.multi_objective.DTLZ4 attribute)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.multi_objective.DTLZ5.num_objectives">(botorch.test_functions.multi_objective.DTLZ5 attribute)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.multi_objective.DTLZ7.num_objectives">(botorch.test_functions.multi_objective.DTLZ7 attribute)</a>
+</li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.OSY.num_objectives">(botorch.test_functions.multi_objective.OSY attribute)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.SRN.num_objectives">(botorch.test_functions.multi_objective.SRN attribute)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.VehicleSafety.num_objectives">(botorch.test_functions.multi_objective.VehicleSafety attribute)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.multi_objective.WeldedBeam.num_objectives">(botorch.test_functions.multi_objective.WeldedBeam attribute)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.ZDT.num_objectives">(botorch.test_functions.multi_objective.ZDT attribute)</a>
 </li>
@@ -2223,11 +2348,15 @@
 </ul></li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
-<li><a href="models.html#botorch.models.deterministic.DeterministicModel.num_outputs">num_outputs (botorch.models.deterministic.DeterministicModel property)</a>
+<li><a href="models.html#botorch.models.approximate_gp.ApproximateGPyTorchModel.num_outputs">num_outputs (botorch.models.approximate_gp.ApproximateGPyTorchModel property)</a>
 <ul>
+<li><a href="models.html#botorch.models.deterministic.DeterministicModel.num_outputs">(botorch.models.deterministic.DeterministicModel property)</a>
+</li>
 <li><a href="models.html#botorch.models.gpytorch.GPyTorchModel.num_outputs">(botorch.models.gpytorch.GPyTorchModel property)</a>
 </li>
 <li><a href="models.html#botorch.models.model.Model.num_outputs">(botorch.models.model.Model property)</a>
+</li>
+<li><a href="models.html#botorch.models.model.ModelList.num_outputs">(botorch.models.model.ModelList property)</a>
 </li>
 <li><a href="models.html#botorch.models.pairwise_gp.PairwiseGP.num_outputs">(botorch.models.pairwise_gp.PairwiseGP property)</a>
 </li>
@@ -2310,8 +2439,10 @@
 </li>
 <li><a href="posteriors.html#botorch.posteriors.posterior.Posterior">Posterior (class in botorch.posteriors.posterior)</a>
 </li>
-<li><a href="models.html#botorch.models.deterministic.DeterministicModel.posterior">posterior() (botorch.models.deterministic.DeterministicModel method)</a>
+<li><a href="models.html#botorch.models.approximate_gp.ApproximateGPyTorchModel.posterior">posterior() (botorch.models.approximate_gp.ApproximateGPyTorchModel method)</a>
 <ul>
+<li><a href="models.html#botorch.models.deterministic.DeterministicModel.posterior">(botorch.models.deterministic.DeterministicModel method)</a>
+</li>
 <li><a href="models.html#botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel.posterior">(botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel method)</a>
 </li>
 <li><a href="models.html#botorch.models.gpytorch.GPyTorchModel.posterior">(botorch.models.gpytorch.GPyTorchModel method)</a>
@@ -2324,6 +2455,8 @@
 </li>
 <li><a href="models.html#botorch.models.model.Model.posterior">(botorch.models.model.Model method)</a>
 </li>
+<li><a href="models.html#botorch.models.model.ModelList.posterior">(botorch.models.model.ModelList method)</a>
+</li>
 <li><a href="models.html#botorch.models.multitask.KroneckerMultiTaskGP.posterior">(botorch.models.multitask.KroneckerMultiTaskGP method)</a>
 </li>
 <li><a href="models.html#botorch.models.pairwise_gp.PairwiseGP.posterior">(botorch.models.pairwise_gp.PairwiseGP method)</a>
@@ -2333,6 +2466,8 @@
 </ul></li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="posteriors.html#botorch.posteriors.posterior.PosteriorList">PosteriorList (class in botorch.posteriors.posterior)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.analytic.PosteriorMean">PosteriorMean (class in botorch.acquisition.analytic)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.Powell">Powell (class in botorch.test_functions.synthetic)</a>
@@ -2454,6 +2589,8 @@
 </li>
 <li><a href="posteriors.html#botorch.posteriors.posterior.Posterior.rsample">(botorch.posteriors.posterior.Posterior method)</a>
 </li>
+<li><a href="posteriors.html#botorch.posteriors.posterior.PosteriorList.rsample">(botorch.posteriors.posterior.PosteriorList method)</a>
+</li>
 <li><a href="posteriors.html#botorch.posteriors.transformed.TransformedPosterior.rsample">(botorch.posteriors.transformed.TransformedPosterior method)</a>
 </li>
 <li><a href="utils.html#botorch.utils.testing.MockPosterior.rsample">(botorch.utils.testing.MockPosterior method)</a>
@@ -2472,13 +2609,21 @@
 </li>
 <li><a href="optim.html#botorch.optim.utils.sample_all_priors">sample_all_priors() (in module botorch.optim.utils)</a>
 </li>
+<li><a href="utils.html#botorch.utils.low_rank.sample_cached_cholesky">sample_cached_cholesky() (in module botorch.utils.low_rank)</a>
+</li>
 <li><a href="utils.html#botorch.utils.sampling.sample_hypersphere">sample_hypersphere() (in module botorch.utils.sampling)</a>
+</li>
+<li><a href="optim.html#botorch.optim.initializers.sample_perturbed_subset_dims">sample_perturbed_subset_dims() (in module botorch.optim.initializers)</a>
+</li>
+<li><a href="optim.html#botorch.optim.initializers.sample_points_around_best">sample_points_around_best() (in module botorch.optim.initializers)</a>
 </li>
 <li><a href="utils.html#botorch.utils.sampling.sample_polytope">sample_polytope() (in module botorch.utils.sampling)</a>
 </li>
 <li><a href="sampling.html#botorch.sampling.samplers.MCSampler.sample_shape">sample_shape (botorch.sampling.samplers.MCSampler property)</a>
 </li>
 <li><a href="utils.html#botorch.utils.sampling.sample_simplex">sample_simplex() (in module botorch.utils.sampling)</a>
+</li>
+<li><a href="optim.html#botorch.optim.initializers.sample_truncated_normal_perturbations">sample_truncated_normal_perturbations() (in module botorch.optim.initializers)</a>
 </li>
 <li><a href="generation.html#botorch.generation.sampling.SamplingStrategy">SamplingStrategy (class in botorch.generation.sampling)</a>
 </li>
@@ -2521,10 +2666,12 @@
 </li>
 <li><a href="models.html#botorch.models.gp_regression.SingleTaskGP">SingleTaskGP (class in botorch.models.gp_regression)</a>
 </li>
-<li><a href="models.html#botorch.models.gp_regression_fidelity.SingleTaskMultiFidelityGP">SingleTaskMultiFidelityGP (class in botorch.models.gp_regression_fidelity)</a>
-</li>
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
+<li><a href="models.html#botorch.models.gp_regression_fidelity.SingleTaskMultiFidelityGP">SingleTaskMultiFidelityGP (class in botorch.models.gp_regression_fidelity)</a>
+</li>
+<li><a href="models.html#botorch.models.approximate_gp.SingleTaskVariationalGP">SingleTaskVariationalGP (class in botorch.models.approximate_gp)</a>
+</li>
 <li><a href="test_functions.html#botorch.test_functions.synthetic.SixHumpCamel">SixHumpCamel (class in botorch.test_functions.synthetic)</a>
 </li>
 <li><a href="sampling.html#botorch.sampling.samplers.SobolQMCNormalSampler">SobolQMCNormalSampler (class in botorch.sampling.samplers)</a>
@@ -2562,6 +2709,8 @@
 <li><a href="models.html#botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel.subset_output">(botorch.models.gpytorch.BatchedMultiOutputGPyTorchModel method)</a>
 </li>
 <li><a href="models.html#botorch.models.model.Model.subset_output">(botorch.models.model.Model method)</a>
+</li>
+<li><a href="models.html#botorch.models.model.ModelList.subset_output">(botorch.models.model.ModelList method)</a>
 </li>
 <li><a href="models.html#botorch.models.model_list_gp_regression.ModelListGP.subset_output">(botorch.models.model_list_gp_regression.ModelListGP method)</a>
 </li>
@@ -2702,6 +2851,16 @@
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement.training">(botorch.acquisition.multi_objective.monte_carlo.qNoisyExpectedHypervolumeImprovement attribute)</a>
 </li>
+<li><a href="acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.IndependentCVaR.training">(botorch.acquisition.multi_objective.multi_output_risk_measures.IndependentCVaR attribute)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.IndependentVaR.training">(botorch.acquisition.multi_objective.multi_output_risk_measures.IndependentVaR attribute)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputRiskMeasureMCObjective.training">(botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputRiskMeasureMCObjective attribute)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputWorstCase.training">(botorch.acquisition.multi_objective.multi_output_risk_measures.MultiOutputWorstCase attribute)</a>
+</li>
+<li><a href="acquisition.html#botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR.training">(botorch.acquisition.multi_objective.multi_output_risk_measures.MVaR attribute)</a>
+</li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.objective.AnalyticMultiOutputObjective.training">(botorch.acquisition.multi_objective.objective.AnalyticMultiOutputObjective attribute)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.objective.IdentityAnalyticMultiOutputObjective.training">(botorch.acquisition.multi_objective.objective.IdentityAnalyticMultiOutputObjective attribute)</a>
@@ -2818,11 +2977,21 @@
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.DTLZ2.training">(botorch.test_functions.multi_objective.DTLZ2 attribute)</a>
 </li>
+<li><a href="test_functions.html#botorch.test_functions.multi_objective.DTLZ3.training">(botorch.test_functions.multi_objective.DTLZ3 attribute)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.multi_objective.DTLZ4.training">(botorch.test_functions.multi_objective.DTLZ4 attribute)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.multi_objective.DTLZ5.training">(botorch.test_functions.multi_objective.DTLZ5 attribute)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.multi_objective.DTLZ7.training">(botorch.test_functions.multi_objective.DTLZ7 attribute)</a>
+</li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.OSY.training">(botorch.test_functions.multi_objective.OSY attribute)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.SRN.training">(botorch.test_functions.multi_objective.SRN attribute)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.VehicleSafety.training">(botorch.test_functions.multi_objective.VehicleSafety attribute)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.multi_objective.WeldedBeam.training">(botorch.test_functions.multi_objective.WeldedBeam attribute)</a>
 </li>
 <li><a href="test_functions.html#botorch.test_functions.multi_objective.ZDT.training">(botorch.test_functions.multi_objective.ZDT attribute)</a>
 </li>
@@ -2902,9 +3071,9 @@
 <li><a href="models.html#botorch.models.transforms.input.Round.transform">(botorch.models.transforms.input.Round method)</a>
 </li>
 </ul></li>
-<li><a href="models.html#botorch.models.gpytorch.ModelListGPyTorchModel.transform_inputs">transform_inputs() (botorch.models.gpytorch.ModelListGPyTorchModel method)</a>
+<li><a href="models.html#botorch.models.model.Model.transform_inputs">transform_inputs() (botorch.models.model.Model method)</a>
 <ul>
-<li><a href="models.html#botorch.models.model.Model.transform_inputs">(botorch.models.model.Model method)</a>
+<li><a href="models.html#botorch.models.model.ModelList.transform_inputs">(botorch.models.model.ModelList method)</a>
 </li>
 </ul></li>
 <li><a href="models.html#botorch.models.transforms.input.AppendFeatures.transform_on_eval">transform_on_eval (botorch.models.transforms.input.AppendFeatures attribute)</a>
@@ -3041,6 +3210,8 @@
 </li>
 <li><a href="posteriors.html#botorch.posteriors.posterior.Posterior.variance">(botorch.posteriors.posterior.Posterior property)</a>
 </li>
+<li><a href="posteriors.html#botorch.posteriors.posterior.PosteriorList.variance">(botorch.posteriors.posterior.PosteriorList property)</a>
+</li>
 <li><a href="posteriors.html#botorch.posteriors.transformed.TransformedPosterior.variance">(botorch.posteriors.transformed.TransformedPosterior property)</a>
 </li>
 <li><a href="utils.html#botorch.utils.testing.MockPosterior.variance">(botorch.utils.testing.MockPosterior property)</a>
@@ -3062,6 +3233,8 @@
 </ul></td>
 <td style="width: 33%; vertical-align: top;"><ul>
 <li><a href="acquisition.html#botorch.acquisition.multi_objective.objective.WeightedMCMultiOutputObjective">WeightedMCMultiOutputObjective (class in botorch.acquisition.multi_objective.objective)</a>
+</li>
+<li><a href="test_functions.html#botorch.test_functions.multi_objective.WeldedBeam">WeldedBeam (class in botorch.test_functions.multi_objective)</a>
 </li>
 <li><a href="acquisition.html#botorch.acquisition.risk_measures.WorstCase">WorstCase (class in botorch.acquisition.risk_measures)</a>
 </li>
