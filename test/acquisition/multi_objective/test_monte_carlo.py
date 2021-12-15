@@ -19,11 +19,17 @@ from botorch.acquisition.multi_objective.monte_carlo import (
 from botorch.acquisition.multi_objective.objective import (
     IdentityMCMultiOutputObjective,
     MCMultiOutputObjective,
+    GenericMCMultiOutputObjective,
 )
 from botorch.acquisition.objective import IdentityMCObjective
 from botorch.exceptions.errors import BotorchError, UnsupportedError
 from botorch.exceptions.warnings import BotorchWarning
-from botorch.models import GenericDeterministicModel
+from botorch.models import (
+    GenericDeterministicModel,
+    HigherOrderGP,
+    KroneckerMultiTaskGP,
+    MultiTaskGP,
+)
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.low_rank import sample_cached_cholesky
@@ -1404,4 +1410,55 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
             self.assertFalse(acqf._cache_root)
             self.assertEqual(
                 acqf(torch.rand(3, 2, 2, **tkwargs)).shape, torch.Size([3])
+            )
+
+    def test_with_multitask(self):
+        # Verify that _set_sampler works with MTGP, KroneckerMTGP and HOGP.
+        tkwargs = {"device": self.device, "dtype": torch.float}
+        train_x = torch.rand(6, 2, **tkwargs)
+        train_y = torch.randn(6, 2, **tkwargs)
+        mtgp_task = torch.cat(
+            [torch.zeros(6, 1, **tkwargs), torch.ones(6, 1, **tkwargs)], dim=0
+        )
+        mtgp_x = torch.cat([train_x.repeat(2, 1), mtgp_task], dim=-1)
+        mtgp = MultiTaskGP(mtgp_x, train_y.view(-1, 1), task_feature=2).eval()
+        kmtgp = KroneckerMultiTaskGP(train_x, train_y).eval()
+        hogp = HigherOrderGP(train_x, train_y.repeat(6, 1, 1)).eval()
+        hogp_obj = GenericMCMultiOutputObjective(lambda Y, X: Y.mean(dim=-2))
+        test_x = torch.rand(2, 3, 2, **tkwargs)
+
+        def get_acqf(model):
+            return qNoisyExpectedHypervolumeImprovement(
+                model=model,
+                ref_point=torch.tensor([0.0, 0.0], **tkwargs),
+                X_baseline=train_x,
+                sampler=IIDNormalSampler(num_samples=2),
+                objective=hogp_obj if isinstance(model, HigherOrderGP) else None,
+                prune_baseline=True,
+                cache_root=True,
+            )
+
+        for model in [mtgp, kmtgp, hogp]:
+            matheron = isinstance(model, (KroneckerMultiTaskGP, HigherOrderGP))
+            if matheron:
+                with self.assertWarnsRegex(BotorchWarning, "Matheron"):
+                    acqf = get_acqf(model)
+            else:
+                acqf = get_acqf(model)
+            self.assertTrue(acqf._is_mt)
+            self.assertEqual(acqf._uses_matheron, matheron)
+            with mock.patch.object(
+                qNoisyExpectedHypervolumeImprovement,
+                "_compute_qehvi",
+                wraps=acqf._compute_qehvi,
+            ) as wrapped_compute:
+                acqf(test_x)
+            wrapped_compute.assert_called_once()
+            expected_shape = (
+                torch.Size([2, 2, 3, 6, 2])
+                if isinstance(model, HigherOrderGP)
+                else torch.Size([2, 2, 3, 2])
+            )
+            self.assertEqual(
+                wrapped_compute.call_args.kwargs["samples"].shape, expected_shape
             )

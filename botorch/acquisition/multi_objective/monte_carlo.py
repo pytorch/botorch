@@ -40,10 +40,11 @@ from botorch.acquisition.multi_objective.utils import (
 )
 from botorch.exceptions.errors import UnsupportedError
 from botorch.exceptions.warnings import BotorchWarning
+from botorch.models import HigherOrderGP
 from botorch.models.deterministic import DeterministicModel
 from botorch.models.model import Model
 from botorch.models.model_list_gp_regression import ModelListGP
-from botorch.models.multitask import MultiTaskGP
+from botorch.models.multitask import MultiTaskGP, KroneckerMultiTaskGP
 from botorch.posteriors import DeterministicPosterior
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.posteriors.posterior import Posterior
@@ -234,10 +235,10 @@ class qExpectedHypervolumeImprovement(MultiObjectiveMCAcquisitionFunction):
             A `batch_shape x (model_batch_shape)`-dim tensor of expected hypervolume
             improvement for each batch.
         """
-        q = samples.shape[-2]
         # Note that the objective may subset the outcomes (e.g. this will usually happen
         # if there are constraints present).
         obj = self.objective(samples, X=X)
+        q = obj.shape[-2]
         if self.constraints is not None:
             feas_weights = torch.ones(
                 obj.shape[:-1], device=obj.device, dtype=obj.dtype
@@ -249,7 +250,7 @@ class qExpectedHypervolumeImprovement(MultiObjectiveMCAcquisitionFunction):
                 eta=self.eta,
             )
         self._cache_q_subset_indices(q=q)
-        batch_shape = samples.shape[:-2]
+        batch_shape = obj.shape[:-2]
         # this is n_samples x input_batch_shape x
         areas_per_segment = torch.zeros(
             *batch_shape,
@@ -273,7 +274,7 @@ class qExpectedHypervolumeImprovement(MultiObjectiveMCAcquisitionFunction):
         )
         for i in range(1, q + 1):
             # TODO: we could use batches to compute (q choose i) and (q choose q-i)
-            # simulataneously since subsets of size i and q-i have the same number of
+            # simultaneously since subsets of size i and q-i have the same number of
             # elements. This would decrease the number of iterations, but increase
             # memory usage.
             q_choose_i = self.q_subset_indices[f"q_choose_{i}"]
@@ -402,6 +403,14 @@ class qNoisyExpectedHypervolumeImprovement(qExpectedHypervolumeImprovement):
         super(qExpectedHypervolumeImprovement, self).__init__(
             model=model, sampler=sampler, objective=objective
         )
+        models = model.models if isinstance(model, ModelListGP) else [model]
+        self._is_mt = any(
+            isinstance(m, (MultiTaskGP, KroneckerMultiTaskGP, HigherOrderGP))
+            for m in models
+        )
+        self._uses_matheron = any(
+            isinstance(m, (KroneckerMultiTaskGP, HigherOrderGP)) for m in models
+        )
         if not self.sampler.collapse_batch_dims:
             raise UnsupportedError(
                 "qNoisyExpectedHypervolumeImprovement currently requires sampler "
@@ -417,6 +426,17 @@ class qNoisyExpectedHypervolumeImprovement(qExpectedHypervolumeImprovement):
                 category=BotorchWarning,
             )
             self.sampler.base_samples = None
+        elif self._uses_matheron and sampler.batch_range != (0, -1):
+            warnings.warn(
+                message=(
+                    "sampler.batch_range is not (0, -1). qNEHVI requires that the "
+                    "sampler.batch_range is (0, -1) with GPs that use Matheron's rule "
+                    "for sampling, in order to properly collapse batch dimensions. "
+                    "Overwriting the batch_range with (0, -1)!"
+                ),
+                category=BotorchWarning,
+            )
+            self.sampler.batch_range = (0, -1)
         if X_baseline.ndim > 2:
             raise UnsupportedError(
                 "qNoisyExpectedHypervolumeImprovement does not support batched "
@@ -437,8 +457,6 @@ class qNoisyExpectedHypervolumeImprovement(qExpectedHypervolumeImprovement):
         self.constraints = constraints
         self.alpha = alpha
         self.eta = eta
-        models = model.models if isinstance(model, ModelListGP) else [model]
-        self._is_mt = any(isinstance(m, MultiTaskGP) for m in models)
         self.q = -1
         self.q_subset_indices = BufferDict()
         self.partitioning = None
@@ -451,7 +469,7 @@ class qNoisyExpectedHypervolumeImprovement(qExpectedHypervolumeImprovement):
             self.p_class = FastNondominatedPartitioning
         self.register_buffer("_X_baseline", X_baseline)
         self.register_buffer("_X_baseline_and_pending", X_baseline)
-        if isinstance(model, DeterministicModel):
+        if isinstance(model, DeterministicModel) or self._is_mt:
             cache_root = False
         self._cache_root = cache_root
         self.register_buffer(
@@ -694,13 +712,19 @@ class qNoisyExpectedHypervolumeImprovement(qExpectedHypervolumeImprovement):
                 and not isinstance(posterior, DeterministicPosterior)
             ):
                 current_base_samples = self.base_sampler.base_samples.detach().clone()
+                # This is the # of non-`sample_shape` dimensions.
+                base_ndims = current_base_samples.dim() - 1
+                # Unsqueeze as many dimensions as needed to match base_sample_shape.
                 view_shape = (
-                    base_sample_shape[0:1]
-                    + torch.Size([1] * (len(base_sample_shape) - 3))
-                    + current_base_samples.shape[-2:]
+                    self.sampler.sample_shape
+                    + torch.Size(
+                        [1] * (len(base_sample_shape) - current_base_samples.dim())
+                    )
+                    + current_base_samples.shape[-base_ndims:]
                 )
                 expanded_shape = (
-                    base_sample_shape[:-2] + current_base_samples.shape[-2:]
+                    base_sample_shape[:-base_ndims]
+                    + current_base_samples.shape[-base_ndims:]
                 )
                 # Use stored base samples:
                 # Use all base_samples from the current sampler
@@ -709,10 +733,14 @@ class qNoisyExpectedHypervolumeImprovement(qExpectedHypervolumeImprovement):
                 # For example, when using sequential greedy candidate generation
                 # then generate the new candidate point using last (-1) base_sample
                 # in sampler. This copies that base sample.
-                end_idx = current_base_samples.shape[-2]
-                self.sampler.base_samples[..., :end_idx, :] = current_base_samples.view(
-                    view_shape
-                ).expand(expanded_shape)
+                end_idx = current_base_samples.shape[-1 if self._uses_matheron else -2]
+                expanded_samples = current_base_samples.view(view_shape).expand(
+                    expanded_shape
+                )
+                if self._uses_matheron:
+                    self.sampler.base_samples[..., :end_idx] = expanded_samples
+                else:
+                    self.sampler.base_samples[..., :end_idx, :] = expanded_samples
                 # update cached subset indices
                 # Note: this also stores self.q = q
                 self._cache_q_subset_indices(q=q)
@@ -752,7 +780,13 @@ class qNoisyExpectedHypervolumeImprovement(qExpectedHypervolumeImprovement):
 
         # TODO: improve efficiency for multi-task models
         samples = self.sampler(posterior)
-        return samples[..., -q:, :]
+        if isinstance(self.model, HigherOrderGP):
+            # Select the correct q-batch dimension for HOGP.
+            q_dim = -self.model._num_dimensions
+            q_idcs = torch.arange(-q, 0) + samples.shape[q_dim]
+            return samples.index_select(q_dim, q_idcs)
+        else:
+            return samples[..., -q:, :]
 
     @concatenate_pending_points
     @t_batch_mode_transform()
