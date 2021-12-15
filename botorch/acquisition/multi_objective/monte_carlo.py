@@ -426,7 +426,7 @@ class qNoisyExpectedHypervolumeImprovement(qExpectedHypervolumeImprovement):
                 category=BotorchWarning,
             )
             self.sampler.base_samples = None
-        elif self._uses_matheron and sampler.batch_range != (0, -1):
+        elif self._uses_matheron and self.sampler.batch_range != (0, -1):
             warnings.warn(
                 message=(
                     "sampler.batch_range is not (0, -1). qNEHVI requires that the "
