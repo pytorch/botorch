@@ -1460,5 +1460,5 @@ class TestQNoisyExpectedHypervolumeImprovement(BotorchTestCase):
                 else torch.Size([2, 2, 3, 2])
             )
             self.assertEqual(
-                wrapped_compute.call_args.kwargs["samples"].shape, expected_shape
+                wrapped_compute.call_args[-1]["samples"].shape, expected_shape
             )
