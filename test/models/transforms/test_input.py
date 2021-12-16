@@ -12,6 +12,7 @@ from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.models.transforms.input import (
     AppendFeatures,
     ChainedInputTransform,
+    FilterFeatures,
     InputPerturbation,
     InputTransform,
     Warp,
@@ -630,6 +631,47 @@ class TestAppendFeatures(BotorchTestCase):
             transform.to(device=torch.device("cpu"), dtype=torch.half)
             self.assertEqual(transform.feature_set.device.type, "cpu")
             self.assertEqual(transform.feature_set.dtype, torch.half)
+
+
+class TestFilterFeatures(BotorchTestCase):
+    def test_filter_features(self):
+        with self.assertRaises(ValueError):
+            FilterFeatures(torch.tensor([[1, 2]], dtype=torch.long))
+        with self.assertRaises(ValueError):
+            FilterFeatures(torch.tensor([1.0, 2.0]))
+        with self.assertRaises(ValueError):
+            FilterFeatures(torch.tensor([-1, 0, 1], dtype=torch.long))
+        with self.assertRaises(ValueError):
+            FilterFeatures(torch.tensor([0, 1, 1], dtype=torch.long))
+
+        for dtype in (torch.float, torch.double):
+            feature_indices = torch.tensor(
+                [0, 2, 3, 5], dtype=torch.long, device=self.device
+            )
+            transform = FilterFeatures(feature_indices=feature_indices)
+            X = torch.rand(4, 5, 6, device=self.device, dtype=dtype)
+            # in train - yes transform
+            transform.train()
+            transformed_X = transform(X)
+            self.assertFalse(torch.equal(X, transformed_X))
+            self.assertEqual(transformed_X.shape, torch.Size([4, 5, 4]))
+            self.assertTrue(torch.equal(transformed_X, X[..., feature_indices]))
+            # in eval - yes transform
+            transform.eval()
+            transformed_X = transform(X)
+            self.assertFalse(torch.equal(X, transformed_X))
+            self.assertEqual(transformed_X.shape, torch.Size([4, 5, 4]))
+            self.assertTrue(torch.equal(transformed_X, X[..., feature_indices]))
+            # in fantasize - yes transform
+            with fantasize():
+                transformed_X = transform(X)
+                self.assertFalse(torch.equal(X, transformed_X))
+                self.assertEqual(transformed_X.shape, torch.Size([4, 5, 4]))
+                self.assertTrue(torch.equal(transformed_X, X[..., feature_indices]))
+
+            # Make sure .to calls work.
+            transform.to(device=torch.device("cpu"))
+            self.assertEqual(transform.feature_indices.device.type, "cpu")
 
 
 class TestInputPerturbation(BotorchTestCase):
