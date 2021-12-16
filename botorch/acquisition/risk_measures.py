@@ -176,7 +176,7 @@ class VaR(CVaR):
             weights: An optional `m`-dim tensor of weights for scalarizing
                 multi-objective samples before calculating the risk measure.
         """
-        super().__init__(n_w=n_w, alpha=alpha)
+        super().__init__(n_w=n_w, alpha=alpha, weights=weights)
         self._q = 1 - self.alpha_idx / n_w
 
     def forward(self, samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
