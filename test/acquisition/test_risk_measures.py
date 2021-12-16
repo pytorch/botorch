@@ -108,7 +108,8 @@ class TestCVaR(BotorchTestCase):
                 )
             )
             # w/ weights=-1
-            obj.weights = torch.tensor([-1.0], device=self.device, dtype=dtype)
+            weights = torch.tensor([-1.0], device=self.device, dtype=dtype)
+            obj = CVaR(alpha=0.5, n_w=3, weights=weights)
             rm_samples = obj(samples)
             self.assertTrue(
                 torch.equal(
@@ -135,7 +136,8 @@ class TestVaR(BotorchTestCase):
                 )
             )
             # w/ weights=-1.0
-            obj.weights = torch.tensor([-1.0], device=self.device, dtype=dtype)
+            weights = torch.tensor([-1.0], device=self.device, dtype=dtype)
+            obj = VaR(alpha=0.5, n_w=3, weights=weights)
             rm_samples = obj(samples)
             self.assertTrue(
                 torch.equal(
@@ -162,7 +164,8 @@ class TestWorstCase(BotorchTestCase):
                 )
             )
             # w/ weights = -1.0
-            obj.weights = torch.tensor([-1.0], device=self.device, dtype=dtype)
+            weights = torch.tensor([-1.0], device=self.device, dtype=dtype)
+            obj = WorstCase(n_w=3, weights=weights)
             rm_samples = obj(samples)
             self.assertTrue(
                 torch.equal(
