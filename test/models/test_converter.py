@@ -15,9 +15,9 @@ from botorch.models import (
     SingleTaskMultiFidelityGP,
 )
 from botorch.models.converter import (
+    batched_multi_output_to_single_output,
     batched_to_model_list,
     model_list_to_batched,
-    batched_multi_output_to_single_output,
 )
 from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Standardize

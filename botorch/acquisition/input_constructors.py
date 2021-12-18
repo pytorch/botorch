@@ -16,12 +16,12 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.analytic import (
+    ConstrainedExpectedImprovement,
     ExpectedImprovement,
+    NoisyExpectedImprovement,
     PosteriorMean,
     ProbabilityOfImprovement,
     UpperConfidenceBound,
-    ConstrainedExpectedImprovement,
-    NoisyExpectedImprovement,
 )
 from botorch.acquisition.cost_aware import InverseCostWeightedUtility
 from botorch.acquisition.fixed_feature import FixedFeatureAcquisitionFunction
@@ -53,8 +53,8 @@ from botorch.acquisition.multi_objective.utils import get_default_partitioning_a
 from botorch.acquisition.objective import (
     AcquisitionObjective,
     IdentityMCObjective,
-    ScalarizedObjective,
     MCAcquisitionObjective,
+    ScalarizedObjective,
 )
 from botorch.acquisition.utils import (
     expand_trace_observations,

@@ -14,10 +14,10 @@ from botorch.models.transforms.input import (
     ChainedInputTransform,
     InputPerturbation,
     InputTransform,
-    Warp,
     Log10,
     Normalize,
     Round,
+    Warp,
 )
 from botorch.models.transforms.utils import expand_and_copy_tensor
 from botorch.models.utils import fantasize

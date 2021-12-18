@@ -12,8 +12,8 @@ from botorch.acquisition.acquisition import OneShotAcquisitionFunction
 from botorch.optim.optimize import (
     optimize_acqf,
     optimize_acqf_cyclic,
-    optimize_acqf_list,
     optimize_acqf_discrete,
+    optimize_acqf_list,
     optimize_acqf_mixed,
 )
 from botorch.utils.testing import BotorchTestCase, MockAcquisitionFunction

@@ -25,7 +25,7 @@ from __future__ import annotations
 from typing import List, Optional
 
 import torch
-from botorch.exceptions.errors import BotorchTensorDimensionError, BotorchError
+from botorch.exceptions.errors import BotorchError, BotorchTensorDimensionError
 from torch import Tensor
 
 MIN_Y_RANGE = 1e-7

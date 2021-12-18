@@ -14,15 +14,15 @@ from botorch.models.deterministic import DeterministicModel
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.multitask import MultiTaskGP
 from botorch.utils.gp_sampling import (
-    GPDraw,
-    RandomFourierFeatures,
     get_deterministic_model,
     get_deterministic_model_multi_samples,
-    get_weights_posterior,
     get_gp_samples,
+    get_weights_posterior,
+    GPDraw,
+    RandomFourierFeatures,
 )
 from botorch.utils.testing import BotorchTestCase
-from gpytorch.kernels import RBFKernel, MaternKernel, ScaleKernel, PeriodicKernel
+from gpytorch.kernels import MaternKernel, PeriodicKernel, RBFKernel, ScaleKernel
 from torch.distributions import MultivariateNormal
 
 

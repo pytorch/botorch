@@ -13,8 +13,8 @@ from botorch.utils.multi_objective.box_decompositions.box_decomposition import (
     FastPartitioning,
 )
 from botorch.utils.multi_objective.box_decompositions.utils import (
-    get_partition_bounds,
     compute_dominated_hypercell_bounds_2d,
+    get_partition_bounds,
 )
 from torch import Tensor
 

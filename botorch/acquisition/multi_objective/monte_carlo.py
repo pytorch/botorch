@@ -27,7 +27,7 @@ import warnings
 from abc import abstractmethod
 from copy import deepcopy
 from itertools import combinations
-from typing import Union, Any, Callable, List, Optional
+from typing import Any, Callable, List, Optional, Union
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
@@ -46,10 +46,7 @@ from botorch.models.multitask import MultiTaskGP
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.posteriors.posterior import Posterior
 from botorch.sampling.samplers import MCSampler, SobolQMCNormalSampler
-from botorch.utils.low_rank import (
-    extract_batch_covar,
-    sample_cached_cholesky,
-)
+from botorch.utils.low_rank import extract_batch_covar, sample_cached_cholesky
 from botorch.utils.multi_objective.box_decompositions.box_decomposition_list import (
     BoxDecompositionList,
 )
@@ -71,7 +68,7 @@ from botorch.utils.transforms import (
     t_batch_mode_transform,
 )
 from gpytorch import settings as gpt_settings
-from gpytorch.utils.errors import NotPSDError, NanError
+from gpytorch.utils.errors import NanError, NotPSDError
 from torch import Tensor
 
 

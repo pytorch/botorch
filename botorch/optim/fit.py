@@ -17,9 +17,9 @@ from typing import Any, Callable, Dict, List, NamedTuple, Optional, Set, Tuple, 
 import numpy as np
 from botorch.exceptions.warnings import OptimizationWarning
 from botorch.optim.numpy_converter import (
-    TorchAttr,
     module_to_array,
     set_params_with_array,
+    TorchAttr,
 )
 from botorch.optim.stopping import ExpMAStoppingCriterion
 from botorch.optim.utils import (
