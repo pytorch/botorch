@@ -9,11 +9,11 @@ from itertools import product
 
 import torch
 from botorch.models.transforms.utils import (
+    expand_and_copy_tensor,
     lognorm_to_norm,
     norm_to_lognorm,
     norm_to_lognorm_mean,
     norm_to_lognorm_variance,
-    expand_and_copy_tensor,
 )
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.utils.broadcasting import _mul_broadcast_shape

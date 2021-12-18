@@ -16,8 +16,8 @@ from botorch.acquisition.analytic import PosteriorMean
 from botorch.acquisition.fixed_feature import FixedFeatureAcquisitionFunction
 from botorch.acquisition.knowledge_gradient import qKnowledgeGradient
 from botorch.acquisition.monte_carlo import (
-    qNoisyExpectedImprovement,
     qExpectedImprovement,
+    qNoisyExpectedImprovement,
 )
 from botorch.acquisition.multi_objective.monte_carlo import (
     qNoisyExpectedHypervolumeImprovement,
@@ -31,9 +31,9 @@ from botorch.optim.initializers import (
     gen_batch_initial_conditions,
     gen_one_shot_kg_initial_conditions,
     gen_value_function_initial_conditions,
-    sample_truncated_normal_perturbations,
-    sample_points_around_best,
     sample_perturbed_subset_dims,
+    sample_points_around_best,
+    sample_truncated_normal_perturbations,
 )
 from botorch.sampling import IIDNormalSampler
 from botorch.utils.sampling import draw_sobol_samples

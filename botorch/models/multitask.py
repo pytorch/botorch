@@ -26,8 +26,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import torch
 from botorch.models.gp_regression import MIN_INFERRED_NOISE_LEVEL
-from botorch.models.gpytorch import GPyTorchModel
-from botorch.models.gpytorch import MultiTaskGPyTorchModel
+from botorch.models.gpytorch import GPyTorchModel, MultiTaskGPyTorchModel
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
 from botorch.posteriors.multitask import MultitaskGPPosterior
@@ -44,8 +43,8 @@ from gpytorch.kernels.scale_kernel import ScaleKernel
 from gpytorch.lazy import (
     BatchRepeatLazyTensor,
     DiagLazyTensor,
-    KroneckerProductLazyTensor,
     KroneckerProductDiagLazyTensor,
+    KroneckerProductLazyTensor,
     lazify,
     RootLazyTensor,
 )

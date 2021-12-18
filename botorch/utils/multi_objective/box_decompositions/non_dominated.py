@@ -27,9 +27,9 @@ from botorch.utils.multi_objective.box_decompositions.box_decomposition import (
 )
 from botorch.utils.multi_objective.box_decompositions.utils import (
     _expand_ref_point,
+    compute_non_dominated_hypercell_bounds_2d,
     get_partition_bounds,
     update_local_upper_bounds_incremental,
-    compute_non_dominated_hypercell_bounds_2d,
 )
 from torch import Tensor
 

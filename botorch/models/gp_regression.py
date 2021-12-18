@@ -17,8 +17,7 @@ from botorch import settings
 from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import Log, OutcomeTransform
-from botorch.models.utils import fantasize as fantasize_flag
-from botorch.models.utils import validate_input_scaling
+from botorch.models.utils import fantasize as fantasize_flag, validate_input_scaling
 from botorch.sampling.samplers import MCSampler
 from botorch.utils.containers import TrainingData
 from gpytorch.constraints.constraints import GreaterThan
@@ -26,9 +25,9 @@ from gpytorch.distributions.multivariate_normal import MultivariateNormal
 from gpytorch.kernels.matern_kernel import MaternKernel
 from gpytorch.kernels.scale_kernel import ScaleKernel
 from gpytorch.likelihoods.gaussian_likelihood import (
+    _GaussianLikelihoodBase,
     FixedNoiseGaussianLikelihood,
     GaussianLikelihood,
-    _GaussianLikelihoodBase,
 )
 from gpytorch.likelihoods.likelihood import Likelihood
 from gpytorch.likelihoods.noise_models import HeteroskedasticNoise

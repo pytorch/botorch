@@ -7,9 +7,9 @@
 
 import torch
 from botorch.acquisition import (
-    qMultiStepLookahead,
-    qExpectedImprovement,
     ExpectedImprovement,
+    qExpectedImprovement,
+    qMultiStepLookahead,
 )
 from botorch.acquisition.multi_step_lookahead import make_best_f, warmstart_multistep
 from botorch.acquisition.objective import IdentityMCObjective, ScalarizedObjective

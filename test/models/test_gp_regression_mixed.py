@@ -17,7 +17,7 @@ from botorch.models.transforms import Normalize, Standardize
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling import SobolQMCNormalSampler
 from botorch.utils.containers import TrainingData
-from botorch.utils.testing import BotorchTestCase, _get_random_data
+from botorch.utils.testing import _get_random_data, BotorchTestCase
 from gpytorch.kernels.kernel import AdditiveKernel, ProductKernel
 from gpytorch.kernels.matern_kernel import MaternKernel
 from gpytorch.kernels.scale_kernel import ScaleKernel

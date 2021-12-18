@@ -17,19 +17,19 @@ from botorch.exceptions.errors import BotorchError
 from botorch.exceptions.warnings import SamplingWarning
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.utils.sampling import (
-    DelaunayPolytopeSampler,
-    get_polytope_samples,
     _convert_bounds_to_inequality_constraints,
-    sparse_to_dense_constraints,
-    HitAndRunPolytopeSampler,
-    PolytopeSampler,
     batched_multinomial,
     construct_base_samples,
     construct_base_samples_from_posterior,
+    DelaunayPolytopeSampler,
     draw_sobol_samples,
+    get_polytope_samples,
+    HitAndRunPolytopeSampler,
     manual_seed,
+    PolytopeSampler,
     sample_hypersphere,
     sample_simplex,
+    sparse_to_dense_constraints,
 )
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal

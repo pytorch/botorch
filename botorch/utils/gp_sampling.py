@@ -18,7 +18,7 @@ from botorch.models.model import Model
 from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.models.multitask import MultiTaskGP
 from botorch.utils.sampling import manual_seed
-from gpytorch.kernels import Kernel, RBFKernel, MaternKernel, ScaleKernel
+from gpytorch.kernels import Kernel, MaternKernel, RBFKernel, ScaleKernel
 from gpytorch.utils.cholesky import psd_safe_cholesky
 from torch import Tensor
 from torch.distributions import MultivariateNormal

@@ -22,8 +22,7 @@ from botorch.acquisition.multi_objective.objective import (
     MCMultiOutputObjective,
 )
 from botorch.exceptions.errors import UnsupportedError
-from botorch.exceptions.warnings import BotorchWarning
-from botorch.exceptions.warnings import SamplingWarning
+from botorch.exceptions.warnings import BotorchWarning, SamplingWarning
 from botorch.models.model import Model
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
 from botorch.utils.multi_objective.pareto import is_non_dominated

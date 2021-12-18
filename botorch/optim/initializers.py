@@ -28,8 +28,8 @@ from botorch.acquisition.knowledge_gradient import (
 from botorch.acquisition.utils import is_nonnegative
 from botorch.exceptions.errors import BotorchTensorDimensionError
 from botorch.exceptions.warnings import (
-    BotorchWarning,
     BadInitialCandidatesWarning,
+    BotorchWarning,
     SamplingWarning,
 )
 from botorch.models.model import Model
@@ -38,10 +38,10 @@ from botorch.utils.multi_objective.pareto import is_non_dominated
 from botorch.utils.sampling import (
     batched_multinomial,
     draw_sobol_samples,
-    manual_seed,
     get_polytope_samples,
+    manual_seed,
 )
-from botorch.utils.transforms import unnormalize, normalize, standardize
+from botorch.utils.transforms import normalize, standardize, unnormalize
 from torch import Tensor
 from torch.distributions import Normal
 from torch.quasirandom import SobolEngine

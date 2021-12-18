@@ -30,9 +30,9 @@ from botorch.acquisition.knowledge_gradient import (
 )
 from botorch.acquisition.max_value_entropy_search import (
     MaxValueBase,
+    qLowerBoundMaxValueEntropy,
     qMaxValueEntropy,
     qMultiFidelityMaxValueEntropy,
-    qLowerBoundMaxValueEntropy,
 )
 from botorch.acquisition.monte_carlo import (
     MCAcquisitionFunction,

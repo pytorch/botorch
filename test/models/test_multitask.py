@@ -27,16 +27,15 @@ from gpytorch.kernels import (
     IndexKernel,
     MaternKernel,
     MultitaskKernel,
-    ScaleKernel,
     RBFKernel,
+    ScaleKernel,
 )
 from gpytorch.likelihoods import (
     FixedNoiseGaussianLikelihood,
     GaussianLikelihood,
     MultitaskGaussianLikelihood,
 )
-from gpytorch.means import ConstantMean
-from gpytorch.means import MultitaskMean
+from gpytorch.means import ConstantMean, MultitaskMean
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.priors import GammaPrior, LogNormalPrior, SmoothedBoxPrior
 from gpytorch.priors.lkj_prior import LKJCovariancePrior

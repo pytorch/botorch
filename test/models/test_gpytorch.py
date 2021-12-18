@@ -8,8 +8,7 @@ import itertools
 import warnings
 
 import torch
-from botorch import fit_gpytorch_model
-from botorch import settings
+from botorch import fit_gpytorch_model, settings
 from botorch.exceptions import (
     BotorchTensorDimensionError,
     BotorchTensorDimensionWarning,

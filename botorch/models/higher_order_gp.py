@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import warnings
 from contextlib import ExitStack
-from typing import Any, List, Optional, Union, Tuple
+from typing import Any, List, Optional, Tuple, Union
 
 import torch
 from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
@@ -38,10 +38,7 @@ from gpytorch.lazy import (
     LazyTensor,
     ZeroLazyTensor,
 )
-from gpytorch.likelihoods import (
-    GaussianLikelihood,
-    Likelihood,
-)
+from gpytorch.likelihoods import GaussianLikelihood, Likelihood
 from gpytorch.models import ExactGP
 from gpytorch.priors.torch_priors import GammaPrior, MultivariateNormalPrior
 from gpytorch.settings import fast_pred_var, skip_posterior_variances

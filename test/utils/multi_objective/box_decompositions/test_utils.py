@@ -11,8 +11,8 @@ from botorch.exceptions.errors import BotorchTensorDimensionError, UnsupportedEr
 from botorch.utils.multi_objective.box_decompositions.utils import (
     _expand_ref_point,
     _pad_batch_pareto_frontier,
-    compute_local_upper_bounds,
     compute_dominated_hypercell_bounds_2d,
+    compute_local_upper_bounds,
     compute_non_dominated_hypercell_bounds_2d,
     get_partition_bounds,
     update_local_upper_bounds_incremental,

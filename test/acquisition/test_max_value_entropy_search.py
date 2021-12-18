@@ -12,9 +12,9 @@ from botorch.acquisition.cost_aware import InverseCostWeightedUtility
 from botorch.acquisition.max_value_entropy_search import (
     _sample_max_value_Gumbel,
     _sample_max_value_Thompson,
+    qLowerBoundMaxValueEntropy,
     qMaxValueEntropy,
     qMultiFidelityMaxValueEntropy,
-    qLowerBoundMaxValueEntropy,
 )
 from botorch.posteriors import GPyTorchPosterior
 from botorch.sampling.samplers import SobolQMCNormalSampler

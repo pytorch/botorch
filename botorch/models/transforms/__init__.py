@@ -6,9 +6,9 @@
 
 from botorch.models.transforms.input import (
     ChainedInputTransform,
-    Warp,
     Normalize,
     Round,
+    Warp,
 )
 from botorch.models.transforms.outcome import (
     ChainedOutcomeTransform,

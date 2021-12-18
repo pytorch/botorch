@@ -9,12 +9,12 @@ from botorch.acquisition.analytic import ExpectedImprovement
 from botorch.acquisition.monte_carlo import qExpectedImprovement
 from botorch.acquisition.penalized import (
     GaussianPenalty,
+    group_lasso_regularizer,
     GroupLassoPenalty,
     L1Penalty,
+    L1PenaltyObjective,
     L2Penalty,
     PenalizedAcquisitionFunction,
-    group_lasso_regularizer,
-    L1PenaltyObjective,
     PenalizedMCObjective,
 )
 from botorch.exceptions import UnsupportedError

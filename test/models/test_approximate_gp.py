@@ -8,9 +8,9 @@ import itertools
 
 import torch
 from botorch.models.approximate_gp import (
+    _SingleTaskVariationalGP,
     ApproximateGPyTorchModel,
     SingleTaskVariationalGP,
-    _SingleTaskVariationalGP,
 )
 from botorch.models.transforms.input import Normalize
 from botorch.models.transforms.outcome import Log

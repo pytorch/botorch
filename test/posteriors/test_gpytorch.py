@@ -12,7 +12,7 @@ from unittest import mock
 import torch
 from botorch.exceptions import BotorchTensorDimensionError
 from botorch.posteriors.gpytorch import GPyTorchPosterior, scalarize_posterior
-from botorch.utils.testing import BotorchTestCase, _get_test_posterior
+from botorch.utils.testing import _get_test_posterior, BotorchTestCase
 from gpytorch import settings as gpt_settings
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
 from gpytorch.lazy.non_lazy_tensor import lazify

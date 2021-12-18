@@ -20,8 +20,8 @@ import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.exceptions.errors import BotorchError
 from botorch.exceptions.warnings import BotorchWarning
-from botorch.models.gpytorch import ModelListGPyTorchModel, GPyTorchModel
-from botorch.optim.numpy_converter import TorchAttr, set_params_with_array
+from botorch.models.gpytorch import GPyTorchModel, ModelListGPyTorchModel
+from botorch.optim.numpy_converter import set_params_with_array, TorchAttr
 from gpytorch.mlls.exact_marginal_log_likelihood import ExactMarginalLogLikelihood
 from gpytorch.mlls.marginal_log_likelihood import MarginalLogLikelihood
 from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood

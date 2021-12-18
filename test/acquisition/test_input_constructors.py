@@ -51,19 +51,14 @@ from botorch.acquisition.multi_objective.objective import (
     WeightedMCMultiOutputObjective,
 )
 from botorch.acquisition.multi_objective.utils import get_default_partitioning_alpha
-from botorch.acquisition.objective import (
-    ScalarizedObjective,
-    LinearMCObjective,
-)
+from botorch.acquisition.objective import LinearMCObjective, ScalarizedObjective
 from botorch.acquisition.utils import (
     expand_trace_observations,
     project_to_target_fidelity,
 )
 from botorch.exceptions.errors import UnsupportedError
 from botorch.sampling.samplers import IIDNormalSampler, SobolQMCNormalSampler
-from botorch.utils.constraints import (
-    get_outcome_constraint_transforms,
-)
+from botorch.utils.constraints import get_outcome_constraint_transforms
 from botorch.utils.containers import TrainingData
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     FastNondominatedPartitioning,

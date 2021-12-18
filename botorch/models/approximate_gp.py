@@ -53,11 +53,11 @@ from gpytorch.module import Module
 from gpytorch.priors import GammaPrior
 from gpytorch.utils.memoize import clear_cache_hook
 from gpytorch.variational import (
+    _VariationalDistribution,
+    _VariationalStrategy,
     CholeskyVariationalDistribution,
     IndependentMultitaskVariationalStrategy,
     VariationalStrategy,
-    _VariationalDistribution,
-    _VariationalStrategy,
 )
 from torch import Tensor
 

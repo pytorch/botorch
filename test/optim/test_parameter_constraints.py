@@ -6,15 +6,15 @@
 
 import numpy as np
 import torch
-from botorch.exceptions.errors import UnsupportedError, CandidateGenerationError
+from botorch.exceptions.errors import CandidateGenerationError, UnsupportedError
 from botorch.optim.parameter_constraints import (
     _arrayify,
+    _generate_unfixed_lin_constraints,
     _make_linear_constraints,
     eval_lin_constraint,
     lin_constraint_jac,
     make_scipy_bounds,
     make_scipy_linear_constraints,
-    _generate_unfixed_lin_constraints,
 )
 from botorch.utils.testing import BotorchTestCase
 from scipy.optimize import Bounds
