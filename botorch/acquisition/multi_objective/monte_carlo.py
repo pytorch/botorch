@@ -783,7 +783,7 @@ class qNoisyExpectedHypervolumeImprovement(qExpectedHypervolumeImprovement):
         if isinstance(self.model, HigherOrderGP):
             # Select the correct q-batch dimension for HOGP.
             q_dim = -self.model._num_dimensions
-            q_idcs = torch.arange(-q, 0) + samples.shape[q_dim]
+            q_idcs = torch.arange(-q, 0, device=samples.device) + samples.shape[q_dim]
             return samples.index_select(q_dim, q_idcs)
         else:
             return samples[..., -q:, :]
