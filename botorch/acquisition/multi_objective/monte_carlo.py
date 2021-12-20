@@ -44,7 +44,7 @@ from botorch.models import HigherOrderGP
 from botorch.models.deterministic import DeterministicModel
 from botorch.models.model import Model
 from botorch.models.model_list_gp_regression import ModelListGP
-from botorch.models.multitask import MultiTaskGP, KroneckerMultiTaskGP
+from botorch.models.multitask import KroneckerMultiTaskGP, MultiTaskGP
 from botorch.posteriors import DeterministicPosterior
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from botorch.posteriors.posterior import Posterior
