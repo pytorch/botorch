@@ -14,15 +14,15 @@ from botorch.models.deterministic import DeterministicModel
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.multitask import MultiTaskGP
 from botorch.utils.gp_sampling import (
-    GPDraw,
-    RandomFourierFeatures,
     get_deterministic_model,
     get_deterministic_model_multi_samples,
-    get_weights_posterior,
     get_gp_samples,
+    get_weights_posterior,
+    GPDraw,
+    RandomFourierFeatures,
 )
 from botorch.utils.testing import BotorchTestCase
-from gpytorch.kernels import RBFKernel, MaternKernel, ScaleKernel, PeriodicKernel
+from gpytorch.kernels import MaternKernel, PeriodicKernel, RBFKernel, ScaleKernel
 from torch.distributions import MultivariateNormal
 
 
@@ -438,8 +438,11 @@ class TestRandomFourierFeatures(BotorchTestCase):
 
     def test_get_gp_samples(self):
         # test multi-task model
-        X = torch.stack([torch.rand(3), torch.tensor([1.0, 0.0, 1.0])], dim=-1)
-        Y = torch.rand(3, 1)
+        with torch.random.fork_rng():
+            torch.manual_seed(0)
+            X = torch.stack([torch.rand(3), torch.tensor([1.0, 0.0, 1.0])], dim=-1)
+            Y = torch.rand(3, 1)
+
         with self.assertRaises(NotImplementedError):
             gp_samples = get_gp_samples(
                 model=MultiTaskGP(X, Y, task_feature=1),
@@ -453,12 +456,16 @@ class TestRandomFourierFeatures(BotorchTestCase):
             for mtype in [True, False]:
                 model, X, Y = _get_model(**tkwargs, multi_output=m == 2)
                 use_batch_model = mtype and m == 2
-                gp_samples = get_gp_samples(
-                    model=batched_to_model_list(model) if use_batch_model else model,
-                    num_outputs=m,
-                    n_samples=20,
-                    num_rff_features=500,
-                )
+                with torch.random.fork_rng():
+                    torch.manual_seed(0)
+                    gp_samples = get_gp_samples(
+                        model=batched_to_model_list(model)
+                        if use_batch_model
+                        else model,
+                        num_outputs=m,
+                        n_samples=20,
+                        num_rff_features=500,
+                    )
                 self.assertEqual(len(gp_samples(X)), 20)
                 self.assertIsInstance(gp_samples, DeterministicModel)
                 Y_hat_rff = gp_samples(X).mean(dim=0)

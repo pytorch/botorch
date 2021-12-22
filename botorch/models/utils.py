@@ -11,7 +11,7 @@ Utiltiy functions for models.
 from __future__ import annotations
 
 import warnings
-from contextlib import ExitStack, contextmanager
+from contextlib import contextmanager, ExitStack
 from typing import List, Optional, Tuple
 
 import torch

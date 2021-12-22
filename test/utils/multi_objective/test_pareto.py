@@ -11,8 +11,8 @@ from unittest.mock import patch
 
 import torch
 from botorch.utils.multi_objective.pareto import (
-    is_non_dominated,
     _is_non_dominated_loop,
+    is_non_dominated,
 )
 from botorch.utils.testing import BotorchTestCase
 

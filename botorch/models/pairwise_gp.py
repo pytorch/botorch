@@ -45,7 +45,7 @@ from gpytorch.priors.smoothed_box_prior import SmoothedBoxPrior
 from gpytorch.priors.torch_priors import GammaPrior
 from gpytorch.utils.cholesky import psd_safe_cholesky
 from scipy import optimize
-from torch import Tensor, float32, float64
+from torch import float32, float64, Tensor
 
 
 class PairwiseGP(Model, GP):

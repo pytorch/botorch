@@ -13,9 +13,9 @@ from botorch.acquisition.cost_aware import GenericCostAwareUtility
 from botorch.acquisition.knowledge_gradient import (
     _get_value_function,
     _split_fantasy_points,
+    ProjectedAcquisitionFunction,
     qKnowledgeGradient,
     qMultiFidelityKnowledgeGradient,
-    ProjectedAcquisitionFunction,
 )
 from botorch.acquisition.monte_carlo import qExpectedImprovement, qSimpleRegret
 from botorch.acquisition.objective import GenericMCObjective, ScalarizedObjective

@@ -457,18 +457,33 @@ def find_interior_point(
         min -s subject to A @ x <= b - 2 * s, s >= 0, A_eq @ x = b_eq
     """
     # augment inequality constraints: A @ (x, s) <= b
+    d = A.shape[-1]
     ncon = A.shape[-2] + 1
-    dim = A.shape[-1] + 1
-    c = np.zeros(dim)
+    c = np.zeros(d + 1)
     c[-1] = -1
     b_ub = np.zeros(ncon)
-    b_ub[:-1] = b.squeeze(-1)
-    A_ub = np.zeros((ncon, dim))
+    b_ub[:-1] = b.reshape(-1)
+    A_ub = np.zeros((ncon, d + 1))
     A_ub[:-1, :-1] = A
-    A_ub[:, -1] = 2.0
+    A_ub[:-1, -1] = 2.0
     A_ub[-1, -1] = -1.0
 
-    result = scipy.optimize.linprog(c=c, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq)
+    result = scipy.optimize.linprog(
+        c=c, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq, bounds=(None, None)
+    )
+
+    if result.status == 3:
+        # problem is unbounded - let's try finding the minimum L1 norm x, i.e. solve
+        # min s subject to A @ x <= b, s >= 0, A_eq @ x = b_eq, |x|_1 <= s
+        c[-1] = 1.0
+        A_ub[:-1, -1] = 0.0  # get rid of -2s term
+        # add constraints that +/- x_i <= s for all i
+        A_ = np.concatenate([np.eye(d), -np.ones((d, 1))], axis=-1)
+        A_ub = np.concatenate([A_ub, A_, -A_], axis=0)
+        b_ub = np.concatenate([b_ub, np.zeros(2 * d)], axis=-1)
+        result = scipy.optimize.linprog(
+            c=c, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq, bounds=(None, None)
+        )
 
     if result.status == 2:
         raise ValueError(

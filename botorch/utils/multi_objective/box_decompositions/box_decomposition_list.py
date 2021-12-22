@@ -16,7 +16,7 @@ from botorch.utils.multi_objective.box_decompositions.box_decomposition import (
     BoxDecomposition,
 )
 from torch import Tensor
-from torch.nn import ModuleList, Module
+from torch.nn import Module, ModuleList
 
 
 class BoxDecompositionList(Module):

@@ -19,7 +19,7 @@ from botorch.utils.testing import BotorchTestCase
 from gpytorch.kernels import RBFKernel
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls import ExactMarginalLogLikelihood
-from gpytorch.settings import skip_posterior_variances, max_cholesky_size
+from gpytorch.settings import max_cholesky_size, skip_posterior_variances
 
 
 class TestHigherOrderGP(BotorchTestCase):

@@ -9,8 +9,11 @@ import math
 import torch
 from botorch.test_functions.multi_objective import (
     BNH,
+    BraninCurrin,
     C2DTLZ2,
+    CarSideImpact,
     CONSTR,
+    ConstrainedBraninCurrin,
     DH1,
     DH2,
     DH3,
@@ -21,17 +24,14 @@ from botorch.test_functions.multi_objective import (
     DTLZ4,
     DTLZ5,
     DTLZ7,
+    MultiObjectiveTestProblem,
+    OSY,
     SRN,
+    VehicleSafety,
+    WeldedBeam,
     ZDT1,
     ZDT2,
     ZDT3,
-    BraninCurrin,
-    CarSideImpact,
-    ConstrainedBraninCurrin,
-    MultiObjectiveTestProblem,
-    VehicleSafety,
-    WeldedBeam,
-    OSY,
 )
 from botorch.utils.testing import (
     BotorchTestCase,

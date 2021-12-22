@@ -15,7 +15,7 @@ from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
-from botorch.exceptions.errors import UnsupportedError, CandidateGenerationError
+from botorch.exceptions.errors import CandidateGenerationError, UnsupportedError
 from scipy.optimize import Bounds
 from torch import Tensor
 

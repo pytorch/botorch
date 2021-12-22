@@ -8,7 +8,7 @@
 from unittest.mock import Mock
 
 import torch
-from botorch.posteriors import Posterior, PosteriorList, GPyTorchPosterior
+from botorch.posteriors import GPyTorchPosterior, Posterior, PosteriorList
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions import MultivariateNormal
 from gpytorch.lazy.non_lazy_tensor import lazify

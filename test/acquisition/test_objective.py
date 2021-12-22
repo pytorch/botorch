@@ -18,7 +18,7 @@ from botorch.acquisition.objective import (
     ScalarizedObjective,
 )
 from botorch.utils import apply_constraints
-from botorch.utils.testing import BotorchTestCase, _get_test_posterior
+from botorch.utils.testing import _get_test_posterior, BotorchTestCase
 from torch import Tensor
 
 

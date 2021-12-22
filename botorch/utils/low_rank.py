@@ -109,7 +109,7 @@ def sample_cached_cholesky(
     # bl := K(X, X_baseline)
     # br := K(X, X)
     # Get bottom right block of new covariance
-    bl, br = torch.split(bottom_rows, bottom_rows.shape[-1] - q, dim=-1)
+    bl, br = bottom_rows.split([bottom_rows.shape[-1] - q, q], dim=-1)
     # Solve Ax = b
     # where A = K(X_baseline, X_baseline) and b = K(X, X_baseline)^T
     # and bl_chol := x^T

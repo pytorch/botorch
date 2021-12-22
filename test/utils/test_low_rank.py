@@ -9,10 +9,7 @@ from botorch.exceptions.errors import BotorchError
 from botorch.models.gp_regression import SingleTaskGP
 from botorch.models.model_list_gp_regression import ModelListGP
 from botorch.sampling.samplers import IIDNormalSampler
-from botorch.utils.low_rank import (
-    extract_batch_covar,
-    sample_cached_cholesky,
-)
+from botorch.utils.low_rank import extract_batch_covar, sample_cached_cholesky
 from botorch.utils.testing import BotorchTestCase
 from gpytorch.distributions.multitask_multivariate_normal import (
     MultitaskMultivariateNormal,
@@ -73,7 +70,7 @@ class TestSampleCachedCholesky(BotorchTestCase):
                             train_Y[:, :m],
                         )
                     sampler = IIDNormalSampler(3)
-                    for q in (1, 3):
+                    for q in (1, 3, 9):
                         # test batched baseline_L
                         for train_batch_shape in (
                             torch.Size([]),

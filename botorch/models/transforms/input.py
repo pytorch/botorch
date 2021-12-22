@@ -28,7 +28,7 @@ from botorch.utils.rounding import approximate_round
 from gpytorch import Module as GPyTorchModule
 from gpytorch.constraints import GreaterThan
 from gpytorch.priors import Prior
-from torch import Tensor, nn
+from torch import nn, Tensor
 from torch.distributions import Kumaraswamy
 from torch.nn import Module, ModuleDict
 

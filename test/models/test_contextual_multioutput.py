@@ -7,7 +7,7 @@
 
 import torch
 from botorch import fit_gpytorch_model
-from botorch.models.contextual_multioutput import LCEMGP, FixedNoiseLCEMGP
+from botorch.models.contextual_multioutput import FixedNoiseLCEMGP, LCEMGP
 from botorch.models.multitask import MultiTaskGP
 from botorch.posteriors import GPyTorchPosterior
 from botorch.utils.testing import BotorchTestCase
