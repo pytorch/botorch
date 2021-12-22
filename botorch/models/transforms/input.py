@@ -867,7 +867,7 @@ class FilterFeatures(InputTransform, Module):
         """
         super().__init__()
         if feature_indices.dim() != 1:
-            raise ValueError("`feature_indices` must be a onedimensional tensor!")
+            raise ValueError("`feature_indices` must be a one-dimensional tensor!")
         if feature_indices.dtype != torch.int64:
             raise ValueError("`feature_indices` tensor must be int64/long!")
         if (feature_indices < 0).any():
