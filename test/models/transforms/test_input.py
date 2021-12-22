@@ -688,13 +688,19 @@ class TestFilterFeatures(BotorchTestCase):
             transform2 = FilterFeatures(feature_indices=feature_indices2)
             self.assertFalse(transform.equals(transform2))
             # test different transform_on_train
-            transform2 = FilterFeatures(feature_indices=feature_indices,transform_on_train=False)
+            transform2 = FilterFeatures(
+                feature_indices=feature_indices, transform_on_train=False
+            )
             self.assertFalse(transform.equals(transform2))
             # test different transform_on_eval
-            transform2 = FilterFeatures(feature_indices=feature_indices,transform_on_eval=False)
+            transform2 = FilterFeatures(
+                feature_indices=feature_indices, transform_on_eval=False
+            )
             self.assertFalse(transform.equals(transform2))
             # test different transform_on_fantasize
-            transform2 = FilterFeatures(feature_indices=feature_indices,transform_on_fantasize=False)
+            transform2 = FilterFeatures(
+                feature_indices=feature_indices, transform_on_fantasize=False
+            )
             self.assertFalse(transform.equals(transform2))
 
 

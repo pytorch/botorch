@@ -843,7 +843,7 @@ class FilterFeatures(InputTransform, Module):
     As an example, this can be used in a multiobjective optimization with `ModelListGP`
     in which the specific models only share subsets of features (feature selection).
     A reason could be that it is known that specific features do not have any impact on
-    a specific objective but they need to be included in the model for another objective.
+    a specific objective but they need to be included in the model for another one.
     """
 
     def __init__(
@@ -889,7 +889,8 @@ class FilterFeatures(InputTransform, Module):
             X: A `batch_shape x q x d`-dim tensor of inputs.
 
         Returns:
-            A `batch_shape x q x e`-dim tensor of filtered inputs, where is the length of `feature_indices`.
+            A `batch_shape x q x e`-dim tensor of filtered inputs,
+                where `e` is the length of `feature_indices`.
         """
         return X[..., self.feature_indices]
 
@@ -905,8 +906,8 @@ class FilterFeatures(InputTransform, Module):
         if len(self.feature_indices) != len(other.feature_indices):
             return False
         return super().equals(other=other)
- 
- 
+
+
 class InputPerturbation(InputTransform, Module):
     r"""A transform that adds the set of perturbations to the given input.
 
