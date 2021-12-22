@@ -29,7 +29,14 @@ if sys.version_info < (REQUIRED_MAJOR, REQUIRED_MINOR):
 
 TEST_REQUIRES = ["pytest", "pytest-cov"]
 
-DEV_REQUIRES = TEST_REQUIRES + ["black", "flake8", "sphinx", "usort"]
+DEV_REQUIRES = TEST_REQUIRES + [
+    "flake8",
+    "sphinx",
+    "black==21.4b2",
+    "libcst==0.3.19",
+    "usort==0.6.4",
+    "ufmt",
+]
 
 TUTORIALS_REQUIRES = [
     "ax-platform",
