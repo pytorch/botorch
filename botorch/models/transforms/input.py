@@ -902,12 +902,11 @@ class FilterFeatures(InputTransform, Module):
         Returns:
             A boolean indicating if the other transform is equivalent.
         """
-        return (
-            super().equals(other=other)
-            and self.feature_indices == other.feature_indices
-        )
-
-
+        if len(self.feature_indices) != len(other.feature_indices):
+            return False
+        return super().equals(other=other)
+ 
+ 
 class InputPerturbation(InputTransform, Module):
     r"""A transform that adds the set of perturbations to the given input.
 

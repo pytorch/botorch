@@ -672,6 +672,30 @@ class TestFilterFeatures(BotorchTestCase):
             # Make sure .to calls work.
             transform.to(device=torch.device("cpu"))
             self.assertEqual(transform.feature_indices.device.type, "cpu")
+            # test equals
+            transform2 = FilterFeatures(feature_indices=feature_indices)
+            self.assertTrue(transform.equals(transform2))
+            # test different indices
+            feature_indices2 = torch.tensor(
+                [0, 2, 3, 6], dtype=torch.long, device=self.device
+            )
+            transform2 = FilterFeatures(feature_indices=feature_indices2)
+            self.assertFalse(transform.equals(transform2))
+            # test different length
+            feature_indices2 = torch.tensor(
+                [2, 3, 5], dtype=torch.long, device=self.device
+            )
+            transform2 = FilterFeatures(feature_indices=feature_indices2)
+            self.assertFalse(transform.equals(transform2))
+            # test different transform_on_train
+            transform2 = FilterFeatures(feature_indices=feature_indices,transform_on_train=False)
+            self.assertFalse(transform.equals(transform2))
+            # test different transform_on_eval
+            transform2 = FilterFeatures(feature_indices=feature_indices,transform_on_eval=False)
+            self.assertFalse(transform.equals(transform2))
+            # test different transform_on_fantasize
+            transform2 = FilterFeatures(feature_indices=feature_indices,transform_on_fantasize=False)
+            self.assertFalse(transform.equals(transform2))
 
 
 class TestInputPerturbation(BotorchTestCase):
