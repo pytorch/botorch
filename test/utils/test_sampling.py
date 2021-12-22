@@ -11,6 +11,7 @@ import warnings
 from typing import Any, Dict, Type
 from unittest import mock
 
+import numpy as np
 import torch
 from botorch import settings
 from botorch.exceptions.errors import BotorchError
@@ -23,6 +24,7 @@ from botorch.utils.sampling import (
     construct_base_samples_from_posterior,
     DelaunayPolytopeSampler,
     draw_sobol_samples,
+    find_interior_point,
     get_polytope_samples,
     HitAndRunPolytopeSampler,
     manual_seed,
@@ -273,6 +275,27 @@ class TestSampleUtils(BotorchTestCase):
             self.assertTrue(torch.equal(A, expected_A))
             expected_b = torch.tensor([[3.0]], **tkwargs)
             self.assertTrue(torch.equal(b, expected_b))
+
+    def test_find_interior_point(self):
+        # basic problem: 1 <= x_1 <= 2, 2 <= x_2 <= 3
+        A = np.concatenate([np.eye(2), -np.eye(2)], axis=0)
+        b = np.array([2.0, 3.0, -1.0, -2.0])
+        x = find_interior_point(A=A, b=b)
+        self.assertTrue(np.allclose(x, np.array([1.5, 2.5])))
+        # problem w/ negatives variables: -2 <= x_1 <= -1, -3 <= x_2 <= -2
+        b = np.array([-1.0, -2.0, 2.0, 3.0])
+        x = find_interior_point(A=A, b=b)
+        self.assertTrue(np.allclose(x, np.array([-1.5, -2.5])))
+        # problem with bound on a single variable: x_1 <= 0
+        A = np.array([[1.0, 0.0]])
+        b = np.zeros(1)
+        x = find_interior_point(A=A, b=b)
+        self.assertLessEqual(x[0].item(), 0.0)
+        # unbounded problem: x >= 3
+        A = np.array([[-1.0]])
+        b = np.array([-3.0])
+        x = find_interior_point(A=A, b=b)
+        self.assertAlmostEqual(x.item(), 3.0)
 
     def test_get_polytope_samples(self):
         tkwargs = {"device": self.device}
