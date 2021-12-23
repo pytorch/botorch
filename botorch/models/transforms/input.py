@@ -311,6 +311,7 @@ class Normalize(ReversibleInputTransform, Module):
     def __init__(
         self,
         d: int,
+        indices: Optional[List[int]] = None,
         bounds: Optional[Tensor] = None,
         batch_shape: torch.Size = torch.Size(),  # noqa: B008
         transform_on_train: bool = True,
@@ -323,6 +324,8 @@ class Normalize(ReversibleInputTransform, Module):
 
         Args:
             d: The dimension of the input space.
+            indices: The indices of the inputs to log transform. If omitted,
+                take all dimensions of the inputs into account.
             bounds: If provided, use these bounds to normalize the inputs. If
                 omitted, learn the bounds in train mode.
             batch_shape: The batch shape of the inputs (asssuming input tensors
@@ -340,6 +343,21 @@ class Normalize(ReversibleInputTransform, Module):
                 zero errors.
         """
         super().__init__()
+        if (indices is None) or (len(indices) == 0):
+            self.register_buffer(
+                "indices", torch.tensor(list(range(d)), dtype=torch.long)
+            )
+        else:
+            indices = torch.tensor(indices, dtype=torch.long)
+            if len(indices) > d:
+                raise ValueError(
+                    "Dimensions of provided `indices` are incompatible with `d`!"
+                )
+            if (indices > d - 1).any():
+                raise ValueError("Elements of `indices` have to be smaller than `d`!")
+            if len(indices.unique()) != len(indices):
+                raise ValueError("Elements of `indices` tensor must be unique!")
+            self.register_buffer("indices", indices)
         if bounds is not None:
             if bounds.size(-1) != d:
                 raise BotorchTensorDimensionError(
@@ -387,8 +405,11 @@ class Normalize(ReversibleInputTransform, Module):
             ranges = X.max(dim=-2, keepdim=True)[0] - self.mins
             ranges[torch.where(ranges <= self.min_range)] = self.min_range
             self.ranges = ranges
-
-        return (X - self.mins) / self.ranges
+        X_new = X.clone()
+        X_new[..., self.indices] = (
+            X_new[..., self.indices] - self.mins[..., self.indices]
+        ) / self.ranges[..., self.indices]
+        return X_new
 
     def _untransform(self, X: Tensor) -> Tensor:
         r"""Un-normalize the inputs.
@@ -399,7 +420,12 @@ class Normalize(ReversibleInputTransform, Module):
         Returns:
             A `batch_shape x n x d`-dim tensor of un-normalized inputs.
         """
-        return self.mins + X * self.ranges
+        X_new = X.clone()
+        X_new[..., self.indices] = (
+            self.mins[..., self.indices]
+            + X_new[..., self.indices] * self.ranges[..., self.indices]
+        )
+        return X_new
 
     @property
     def bounds(self) -> Tensor:
