@@ -836,6 +836,78 @@ class AppendFeatures(InputTransform, Module):
         return appended_X.view(*X.shape[:-2], -1, appended_X.shape[-1])
 
 
+class FilterFeatures(InputTransform, Module):
+
+    r"""A transform that filters the input with a given set of features indices.
+
+    As an example, this can be used in a multiobjective optimization with `ModelListGP`
+    in which the specific models only share subsets of features (feature selection).
+    A reason could be that it is known that specific features do not have any impact on
+    a specific objective but they need to be included in the model for another one.
+    """
+
+    def __init__(
+        self,
+        feature_indices: Tensor,
+        transform_on_train: bool = True,
+        transform_on_eval: bool = True,
+        transform_on_fantasize: bool = True,
+    ) -> None:
+        r"""Filter features from a model.
+
+        Args:
+            feature_set: An one-dim tensor denoting the indices of the features to be
+                kept and fed to the model.
+            transform_on_train: A boolean indicating whether to apply the
+                transforms in train() mode. Default: True.
+            transform_on_eval: A boolean indicating whether to apply the
+                transform in eval() mode. Default: True.
+            transform_on_fantasize: A boolean indicating whether to apply the
+                transform when called from within a `fantasize` call. Default: True.
+        """
+        super().__init__()
+        if feature_indices.dim() != 1:
+            raise ValueError("`feature_indices` must be a one-dimensional tensor!")
+        if feature_indices.dtype != torch.int64:
+            raise ValueError("`feature_indices` tensor must be int64/long!")
+        if (feature_indices < 0).any():
+            raise ValueError(
+                "Elements of `feature_indices` have to be larger/equal to zero!"
+            )
+        if len(feature_indices.unique()) != len(feature_indices):
+            raise ValueError("Elements of `feature_indices` tensor must be unique!")
+        self.transform_on_train = transform_on_train
+        self.transform_on_eval = transform_on_eval
+        self.transform_on_fantasize = transform_on_fantasize
+        self.register_buffer("feature_indices", feature_indices)
+
+    def transform(self, X: Tensor) -> Tensor:
+        r"""Transform the inputs by keeping only the in `feature_indices` specified
+        feature indices and filtering out the others.
+
+        Args:
+            X: A `batch_shape x q x d`-dim tensor of inputs.
+
+        Returns:
+            A `batch_shape x q x e`-dim tensor of filtered inputs,
+                where `e` is the length of `feature_indices`.
+        """
+        return X[..., self.feature_indices]
+
+    def equals(self, other: InputTransform) -> bool:
+        r"""Check if another input transform is equivalent.
+
+        Args:
+            other: Another input transform
+
+        Returns:
+            A boolean indicating if the other transform is equivalent.
+        """
+        if len(self.feature_indices) != len(other.feature_indices):
+            return False
+        return super().equals(other=other)
+
+
 class InputPerturbation(InputTransform, Module):
     r"""A transform that adds the set of perturbations to the given input.
 
