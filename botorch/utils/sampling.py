@@ -456,7 +456,11 @@ def find_interior_point(
         This function will raise a ValueError if there is no such point.
 
     This method solves the following Linear Program:
+
         min -s subject to A @ x <= b - 2 * s, s >= 0, A_eq @ x = b_eq
+
+    In case the polytope is unbounded, then it will also constrain the slack
+    variable `s` to `s<=1`.
     """
     # augment inequality constraints: A @ (x, s) <= b
     d = A.shape[-1]
@@ -475,14 +479,11 @@ def find_interior_point(
     )
 
     if result.status == 3:
-        # problem is unbounded - let's try finding the minimum L1 norm x, i.e. solve
-        # min s subject to A @ x <= b, s >= 0, A_eq @ x = b_eq, |x|_1 <= s
-        c[-1] = 1.0
-        A_ub[:-1, -1] = 0.0  # get rid of -2s term
-        # add constraints that +/- x_i <= s for all i
-        A_ = np.concatenate([np.eye(d), -np.ones((d, 1))], axis=-1)
-        A_ub = np.concatenate([A_ub, A_, -A_], axis=0)
-        b_ub = np.concatenate([b_ub, np.zeros(2 * d)], axis=-1)
+        # problem is unbounded - to find a bounded solution we constrain the
+        # slack variable `s` to `s <= 1.0`.
+        A_s = np.concatenate([np.zeros((1, d)), np.ones((1, 1))], axis=-1)
+        A_ub = np.concatenate([A_ub, A_s], axis=0)
+        b_ub = np.concatenate([b_ub, np.ones(1)], axis=-1)
         result = scipy.optimize.linprog(
             c=c, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq, bounds=(None, None)
         )
