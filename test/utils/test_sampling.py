@@ -247,15 +247,28 @@ class TestSampleUtils(BotorchTestCase):
 
     def test_convert_bounds_to_inequality_constraints(self):
         for dtype in (torch.float, torch.double):
-            lower_bounds = torch.rand(3, dtype=dtype, device=self.device)
+            tkwargs = {"device": self.device, "dtype": dtype}
+            # test basic case with no indefinite bounds
+            lower_bounds = torch.rand(3, **tkwargs)
             upper_bounds = torch.rand_like(lower_bounds) + lower_bounds
             bounds = torch.stack([lower_bounds, upper_bounds], dim=0)
-            (A, b) = _convert_bounds_to_inequality_constraints(bounds=bounds)
-            identity = torch.eye(3, dtype=dtype, device=self.device)
+            A, b = _convert_bounds_to_inequality_constraints(bounds=bounds)
+            identity = torch.eye(3, **tkwargs)
             self.assertTrue(torch.equal(A[:3], -identity))
             self.assertTrue(torch.equal(A[3:], identity))
             self.assertTrue(torch.equal(b[:3], -bounds[:1].t()))
             self.assertTrue(torch.equal(b[3:], bounds[1:].t()))
+            # test filtering of indefinite bounds
+            inf = float("inf")
+            bounds = torch.tensor(
+                [[-3.0, -inf, -inf], [inf, 2.0, inf]],
+                **tkwargs,
+            )
+            A, b = _convert_bounds_to_inequality_constraints(bounds=bounds)
+            A_xpct = torch.tensor([[-1.0, -0.0, -0.0], [0.0, 1.0, 0.0]], **tkwargs)
+            b_xpct = torch.tensor([[3.0], [2.0]], **tkwargs)
+            self.assertTrue(torch.equal(A, A_xpct))
+            self.assertTrue(torch.equal(b, b_xpct))
 
     def test_sparse_to_dense_constraints(self):
         tkwargs = {"device": self.device}
