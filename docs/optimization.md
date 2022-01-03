@@ -59,7 +59,7 @@ defined as the sum of the $b$ individual q-batch acquisition values.
 The wrapper function
 [`optimize_acqf()`](../api/optim.html#botorch.optim.optimize.optimize_acqf)
 uses
-[`get_best_candidates()`](../api/gen.html#botorch.generation.gen.get_best_candidates)
+[`get_best_candidates()`](../api/generation.html#botorch.generation.gen.get_best_candidates)
 to process the output of `gen_candidates_scipy()` and return the best point
 found over the random restarts. For reasonable values of $b$ and $q$, jointly
 optimizing over random restarts can significantly reduce wall time by exploiting
