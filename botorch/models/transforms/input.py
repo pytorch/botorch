@@ -344,9 +344,7 @@ class Normalize(ReversibleInputTransform, Module):
         """
         super().__init__()
         if (indices is None) or (len(indices) == 0):
-            self.register_buffer(
-                "indices", torch.tensor(list(range(d)), dtype=torch.long)
-            )
+            self.register_buffer("indices", torch.arange(d))
         else:
             indices = torch.tensor(indices, dtype=torch.long)
             if len(indices) > d:
