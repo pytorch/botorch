@@ -32,7 +32,7 @@ used directly, without the need to perform `numpy` conversion. These first-order
 gradient-based optimizers are particularly useful for the case when the
 acquisition function is stochastic, where algorithms like L-BFGS or SLSQP that
 are designed for deterministic functions should not be applied. The function
-[`gen_candidates_torch()`](../api/gen.html#botorch.generation.gen.gen_candidates_torch)
+[`gen_candidates_torch()`](../api/generation.html#botorch.generation.gen.gen_candidates_torch)
 provides an interface for `torch` optimizers and handles bounding.
 See the example notebooks
 [here](../tutorials/compare_mc_analytic_acquisition) and
