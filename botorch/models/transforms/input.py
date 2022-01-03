@@ -348,9 +348,7 @@ class Normalize(ReversibleInputTransform, Module):
         else:
             indices = torch.tensor(indices, dtype=torch.long)
             if len(indices) > d:
-                raise ValueError(
-                    "Dimensions of provided `indices` are incompatible with `d`!"
-                )
+                raise ValueError("Can provide at most `d` indices!")
             if (indices > d - 1).any():
                 raise ValueError("Elements of `indices` have to be smaller than `d`!")
             if len(indices.unique()) != len(indices):
