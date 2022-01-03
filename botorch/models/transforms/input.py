@@ -343,9 +343,9 @@ class Normalize(ReversibleInputTransform, Module):
                 zero errors.
         """
         super().__init__()
-        if (indices is None) or (len(indices) == 0):
-            self.register_buffer("indices", torch.arange(d))
-        else:
+        if (indices is not None) and (len(indices) == 0):
+            raise ValueError("`indices` list is empty!")
+        if (indices is not None) and (len(indices) > 0):
             indices = torch.tensor(indices, dtype=torch.long)
             if len(indices) > d:
                 raise ValueError("Can provide at most `d` indices!")
@@ -353,7 +353,7 @@ class Normalize(ReversibleInputTransform, Module):
                 raise ValueError("Elements of `indices` have to be smaller than `d`!")
             if len(indices.unique()) != len(indices):
                 raise ValueError("Elements of `indices` tensor must be unique!")
-            self.register_buffer("indices", indices)
+            self.indices = indices
         if bounds is not None:
             if bounds.size(-1) != d:
                 raise BotorchTensorDimensionError(
@@ -401,11 +401,13 @@ class Normalize(ReversibleInputTransform, Module):
             ranges = X.max(dim=-2, keepdim=True)[0] - self.mins
             ranges[torch.where(ranges <= self.min_range)] = self.min_range
             self.ranges = ranges
-        X_new = X.clone()
-        X_new[..., self.indices] = (
-            X_new[..., self.indices] - self.mins[..., self.indices]
-        ) / self.ranges[..., self.indices]
-        return X_new
+        if hasattr(self, "indices"):
+            X_new = X.clone()
+            X_new[..., self.indices] = (
+                X_new[..., self.indices] - self.mins[..., self.indices]
+            ) / self.ranges[..., self.indices]
+            return X_new
+        return (X - self.mins) / self.ranges
 
     def _untransform(self, X: Tensor) -> Tensor:
         r"""Un-normalize the inputs.
@@ -416,12 +418,14 @@ class Normalize(ReversibleInputTransform, Module):
         Returns:
             A `batch_shape x n x d`-dim tensor of un-normalized inputs.
         """
-        X_new = X.clone()
-        X_new[..., self.indices] = (
-            self.mins[..., self.indices]
-            + X_new[..., self.indices] * self.ranges[..., self.indices]
-        )
-        return X_new
+        if hasattr(self, "indices"):
+            X_new = X.clone()
+            X_new[..., self.indices] = (
+                self.mins[..., self.indices]
+                + X_new[..., self.indices] * self.ranges[..., self.indices]
+            )
+            return X_new
+        return self.mins + X * self.ranges
 
     @property
     def bounds(self) -> Tensor:
@@ -437,11 +441,21 @@ class Normalize(ReversibleInputTransform, Module):
         Returns:
             A boolean indicating if the other transform is equivalent.
         """
-        return (
-            super().equals(other=other)
-            and (self._d == other._d)
-            and (self.learn_bounds == other.learn_bounds)
-        )
+        if hasattr(self, "indices") == hasattr(other, "indices"):
+            if hasattr(self, "indices"):
+                return (
+                    super().equals(other=other)
+                    and (self._d == other._d)
+                    and (self.learn_bounds == other.learn_bounds)
+                    and (self.indices == other.indices).all()
+                )
+            else:
+                return (
+                    super().equals(other=other)
+                    and (self._d == other._d)
+                    and (self.learn_bounds == other.learn_bounds)
+                )
+        return False
 
 
 class Round(InputTransform, Module):

@@ -133,17 +133,12 @@ class TestInputTransforms(BotorchTestCase):
             self.assertEqual(nlz._d, 2)
             self.assertEqual(nlz.mins.shape, torch.Size([1, 2]))
             self.assertEqual(nlz.ranges.shape, torch.Size([1, 2]))
-            self.assertEqual(len(nlz.indices), 2)
             nlz = Normalize(d=2, batch_shape=torch.Size([3]))
             self.assertTrue(nlz.learn_bounds)
             self.assertTrue(nlz.training)
             self.assertEqual(nlz._d, 2)
             self.assertEqual(nlz.mins.shape, torch.Size([3, 1, 2]))
             self.assertEqual(nlz.ranges.shape, torch.Size([3, 1, 2]))
-            self.assertEqual(len(nlz.indices), 2)
-            self.assertTrue(
-                (nlz.indices == torch.tensor([0, 1], dtype=torch.long)).all()
-            )
 
             # basic init, fixed bounds
             bounds = torch.zeros(2, 2, device=self.device, dtype=dtype)
@@ -163,6 +158,8 @@ class TestInputTransforms(BotorchTestCase):
                 nlz = Normalize(d=2, indices=[0, 2])
             with self.assertRaises(ValueError):
                 nlz = Normalize(d=2, indices=[0, 0])
+            with self.assertRaises(ValueError):
+                nlz = Normalize(d=2, indices=[])
             nlz = Normalize(d=2, indices=[0])
             self.assertTrue(nlz.learn_bounds)
             self.assertTrue(nlz.training)
@@ -296,9 +293,14 @@ class TestInputTransforms(BotorchTestCase):
                 nlz5 = Normalize(d=2, batch_shape=batch_shape)
                 self.assertFalse(nlz.equals(nlz5))
                 nlz6 = Normalize(d=2, batch_shape=batch_shape, indices=[0, 1])
-                self.assertTrue(nlz5.equals(nlz6))
+                self.assertFalse(nlz5.equals(nlz6))
                 nlz7 = Normalize(d=2, batch_shape=batch_shape, indices=[0])
                 self.assertFalse(nlz5.equals(nlz7))
+                nlz8 = Normalize(d=2, batch_shape=batch_shape, indices=[0, 1])
+                self.assertTrue(nlz6.equals(nlz8))
+                nlz9 = Normalize(d=3, batch_shape=batch_shape, indices=[0, 1])
+                nlz10 = Normalize(d=3, batch_shape=batch_shape, indices=[0, 2])
+                self.assertFalse(nlz9.equals(nlz10))
 
     def test_chained_input_transform(self):
 
