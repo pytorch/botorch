@@ -17,7 +17,7 @@ observations.
 #### Using scipy Optimizers on Tensors
 
 The default method used by BoTorch to optimize acquisition functions is
-[`gen_candidates_scipy()`](../api/gen.html#botorch.generation.gen.gen_candidates_scipy).
+[`gen_candidates_scipy()`](../api/generation.html#botorch.generation.gen.gen_candidates_scipy).
 Given a set of starting points (for multiple restarts) and an acquisition
 function, this optimizer makes use of `scipy.optimize.minimize()` for
 optimization, via either the L-BFGS-B or SLSQP routines.
