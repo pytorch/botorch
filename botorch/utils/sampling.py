@@ -354,7 +354,8 @@ def sample_polytope(
         # given x, the next point in the chain is x+alpha*r
         # it also satisfies A(x+alpha*r)<=b which implies A*alpha*r<=b-Ax
         # so alpha<=(b-Ax)/ar for ar>0, and alpha>=(b-Ax)/ar for ar<0.
-        w = (b - A @ x).squeeze() / ar  # b - A @ x is always >= 0
+        # b - A @ x is always >= 0, clamping for numerical tolerances
+        w = (b - A @ x).squeeze().clamp(min=0.0) / ar
         pos = w >= 0
         alpha_max = w[pos].min()
         # important to include equality here in cases x is at the boundary
