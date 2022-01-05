@@ -124,6 +124,7 @@ class TestInputTransforms(BotorchTestCase):
             self.assertTrue(torch.equal(ipt5(X), X))
 
     def test_normalize(self):
+
         for dtype in (torch.float, torch.double):
 
             # basic init, learned bounds
@@ -150,6 +151,25 @@ class TestInputTransforms(BotorchTestCase):
             self.assertTrue(
                 torch.equal(nlz.mins, bounds[..., 1:2, :] - bounds[..., 0:1, :])
             )
+
+            # basic init, provided indices
+            with self.assertRaises(ValueError):
+                nlz = Normalize(d=2, indices=[0, 1, 2])
+            with self.assertRaises(ValueError):
+                nlz = Normalize(d=2, indices=[0, 2])
+            with self.assertRaises(ValueError):
+                nlz = Normalize(d=2, indices=[0, 0])
+            with self.assertRaises(ValueError):
+                nlz = Normalize(d=2, indices=[])
+            nlz = Normalize(d=2, indices=[0])
+            self.assertTrue(nlz.learn_bounds)
+            self.assertTrue(nlz.training)
+            self.assertEqual(nlz._d, 2)
+            self.assertEqual(nlz.mins.shape, torch.Size([1, 2]))
+            self.assertEqual(nlz.ranges.shape, torch.Size([1, 2]))
+            self.assertEqual(len(nlz.indices), 1)
+            self.assertTrue((nlz.indices == torch.tensor([0], dtype=torch.long)).all())
+
             # test .to
             other_dtype = torch.float if dtype == torch.double else torch.double
             nlz.to(other_dtype)
@@ -232,7 +252,32 @@ class TestInputTransforms(BotorchTestCase):
                 X_nlzd2 = nlz.untransform(X2)
                 self.assertTrue(torch.allclose(X_nlzd, X_nlzd2, atol=1e-4, rtol=1e-4))
 
+                # test non complete indices
+                indices = [0, 2]
+                nlz = Normalize(d=3, batch_shape=batch_shape, indices=indices)
+                X = torch.randn(*batch_shape, 4, 3, device=self.device, dtype=dtype)
+                X_nlzd = nlz(X)
+                self.assertEqual(X_nlzd[..., indices].min().item(), 0.0)
+                self.assertEqual(X_nlzd[..., indices].max().item(), 1.0)
+                self.assertTrue(torch.allclose(X_nlzd[..., 1], X[..., 1]))
+                nlz.eval()
+                X_unnlzd = nlz.untransform(X_nlzd)
+                self.assertTrue(torch.allclose(X, X_unnlzd, atol=1e-4, rtol=1e-4))
+                expected_bounds = torch.cat(
+                    [X.min(dim=-2, keepdim=True)[0], X.max(dim=-2, keepdim=True)[0]],
+                    dim=-2,
+                )
+                self.assertTrue(torch.allclose(nlz.bounds, expected_bounds))
+                # test errors on wrong shape
+                nlz = Normalize(d=2, batch_shape=batch_shape)
+                X = torch.randn(*batch_shape, 2, 1, device=self.device, dtype=dtype)
+                with self.assertRaises(BotorchTensorDimensionError):
+                    nlz(X)
+
                 # test equals
+                nlz = Normalize(
+                    d=2, bounds=bounds, batch_shape=batch_shape, reverse=True
+                )
                 nlz2 = Normalize(
                     d=2, bounds=bounds, batch_shape=batch_shape, reverse=False
                 )
@@ -248,6 +293,15 @@ class TestInputTransforms(BotorchTestCase):
                 self.assertFalse(nlz.equals(nlz4))
                 nlz5 = Normalize(d=2, batch_shape=batch_shape)
                 self.assertFalse(nlz.equals(nlz5))
+                nlz6 = Normalize(d=2, batch_shape=batch_shape, indices=[0, 1])
+                self.assertFalse(nlz5.equals(nlz6))
+                nlz7 = Normalize(d=2, batch_shape=batch_shape, indices=[0])
+                self.assertFalse(nlz5.equals(nlz7))
+                nlz8 = Normalize(d=2, batch_shape=batch_shape, indices=[0, 1])
+                self.assertTrue(nlz6.equals(nlz8))
+                nlz9 = Normalize(d=3, batch_shape=batch_shape, indices=[0, 1])
+                nlz10 = Normalize(d=3, batch_shape=batch_shape, indices=[0, 2])
+                self.assertFalse(nlz9.equals(nlz10))
 
     def test_chained_input_transform(self):
 
