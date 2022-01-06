@@ -324,7 +324,7 @@ class Normalize(ReversibleInputTransform, Module):
 
         Args:
             d: The dimension of the input space.
-            indices: The indices of the inputs to log transform. If omitted,
+            indices: The indices of the inputs to normalize. If omitted,
                 take all dimensions of the inputs into account.
             bounds: If provided, use these bounds to normalize the inputs. If
                 omitted, learn the bounds in train mode.
@@ -455,6 +455,136 @@ class Normalize(ReversibleInputTransform, Module):
                     and (self._d == other._d)
                     and (self.learn_bounds == other.learn_bounds)
                 )
+        return False
+
+
+class Standardize(ReversibleInputTransform, Module):
+    r"""Standardize inputs (zero mean, unit variance).
+
+    In train mode, calling `forward` updates the module state
+    (i.e. the mean/std normalizing constants). If in eval mode, calling `forward`
+    simply applies the standardization using the current module state.
+    """
+
+    def __init__(
+        self,
+        d: int,
+        indices: Optional[List[int]] = None,
+        batch_shape: torch.Size = torch.Size(),  # noqa: B008
+        transform_on_train: bool = True,
+        transform_on_eval: bool = True,
+        transform_on_fantasize: bool = True,
+        reverse: bool = False,
+        min_std: float = 1e-8,
+    ) -> None:
+        r"""Standardize inputs (zero mean, unit variance).
+
+        Args:
+            d: The dimension of the input space.
+            indices: The indices of the inputs to standardize. If omitted,
+                take all dimensions of the inputs into account.
+            batch_shape: The batch shape of the inputs (asssuming input tensors
+                of shape `batch_shape x n x d`). If provided, perform individual
+                normalization per batch, otherwise uses a single normalization.
+            transform_on_train: A boolean indicating whether to apply the
+                transforms in train() mode. Default: True
+            transform_on_eval: A boolean indicating whether to apply the
+                transform in eval() mode. Default: True
+            reverse: A boolean indicating whether the forward pass should untransform
+                the inputs.
+            min_std: Amount of noise to add to the standard deviation to ensure no
+                division by zero errors.
+        """
+        super().__init__()
+        if (indices is not None) and (len(indices) == 0):
+            raise ValueError("`indices` list is empty!")
+        if (indices is not None) and (len(indices) > 0):
+            indices = torch.tensor(indices, dtype=torch.long)
+            if len(indices) > d:
+                raise ValueError("Can provide at most `d` indices!")
+            if (indices > d - 1).any():
+                raise ValueError("Elements of `indices` have to be smaller than `d`!")
+            if len(indices.unique()) != len(indices):
+                raise ValueError("Elements of `indices` tensor must be unique!")
+            self.indices = indices
+        means = torch.zeros(*batch_shape, 1, d)
+        stds = torch.ones(*batch_shape, 1, d)
+        self.register_buffer("means", means)
+        self.register_buffer("stds", stds)
+        self._d = d
+        self.transform_on_train = transform_on_train
+        self.transform_on_eval = transform_on_eval
+        self.transform_on_fantasize = transform_on_fantasize
+        self.batch_shape = batch_shape
+        self.min_std = min_std
+        self.reverse = reverse
+
+    def _transform(self, X: Tensor) -> Tensor:
+        r"""Standardize the inputs.
+
+        In train mode, calling `forward` updates the module state
+        (i.e. the mean/std normalizing constants). If in eval mode, calling `forward`
+        simply applies the standardization using the current module state.
+
+        Args:
+            X: A `batch_shape x n x d`-dim tensor of inputs.
+
+        Returns:
+            A `batch_shape x n x d`-dim tensor of inputs normalized to the
+            module's bounds.
+        """
+        if self.training:
+            if X.size(-1) != self.means.size(-1):
+                raise BotorchTensorDimensionError(
+                    f"Wrong input. dimension. Received {X.size(-1)}, "
+                    f"expected {self.means.size(-1)}"
+                )
+            self.means = X.mean(dim=-2, keepdim=True)
+            self.stds = X.std(dim=-2, keepdim=True)
+
+            self.stds[torch.where(self.stds <= self.min_std)] = self.min_std
+        if hasattr(self, "indices"):
+            X_new = X.clone()
+            X_new[..., self.indices] = (
+                X_new[..., self.indices] - self.means[..., self.indices]
+            ) / self.stds[..., self.indices]
+            return X_new
+        return (X - self.means) / self.stds
+
+    def _untransform(self, X: Tensor) -> Tensor:
+        r"""Un-standardize the inputs.
+        Args:
+            X: A `batch_shape x n x d`-dim tensor of normalized inputs.
+        Returns:
+            A `batch_shape x n x d`-dim tensor of un-normalized inputs.
+        """
+        if hasattr(self, "indices"):
+            X_new = X.clone()
+            X_new[..., self.indices] = (
+                self.means[..., self.indices]
+                + X_new[..., self.indices] * self.stds[..., self.indices]
+            )
+            return X_new
+        return self.means + self.stds * X
+
+    def equals(self, other: InputTransform) -> bool:
+        r"""Check if another input transform is equivalent.
+
+        Args:
+            other: Another input transform.
+
+        Returns:
+            A boolean indicating if the other transform is equivalent.
+        """
+        if hasattr(self, "indices") == hasattr(other, "indices"):
+            if hasattr(self, "indices"):
+                return (
+                    super().equals(other=other)
+                    and (self._d == other._d)
+                    and (self.indices == other.indices).all()
+                )
+            else:
+                return super().equals(other=other) and (self._d == other._d)
         return False
 
 
