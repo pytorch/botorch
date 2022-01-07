@@ -14,10 +14,10 @@ from botorch.models.transforms.input import (
     ChainedInputTransform,
     FilterFeatures,
     InputPerturbation,
+    InputStandardize,
     InputTransform,
     Log10,
     Normalize,
-    Standardize,
     Round,
     Warp,
 )
@@ -308,12 +308,12 @@ class TestInputTransforms(BotorchTestCase):
         for dtype in (torch.float, torch.double):
 
             # basic init
-            stdz = Standardize(d=2)
+            stdz = InputStandardize(d=2)
             self.assertTrue(stdz.training)
             self.assertEqual(stdz._d, 2)
             self.assertEqual(stdz.means.shape, torch.Size([1, 2]))
             self.assertEqual(stdz.stds.shape, torch.Size([1, 2]))
-            stdz = Standardize(d=2, batch_shape=torch.Size([3]))
+            stdz = InputStandardize(d=2, batch_shape=torch.Size([3]))
             self.assertTrue(stdz.training)
             self.assertEqual(stdz._d, 2)
             self.assertEqual(stdz.means.shape, torch.Size([3, 1, 2]))
@@ -321,38 +321,43 @@ class TestInputTransforms(BotorchTestCase):
 
             # basic init, provided indices
             with self.assertRaises(ValueError):
-                stdz = Standardize(d=2, indices=[0, 1, 2])
+                stdz = InputStandardize(d=2, indices=[0, 1, 2])
             with self.assertRaises(ValueError):
-                stdz = Standardize(d=2, indices=[0, 2])
+                stdz = InputStandardize(d=2, indices=[0, 2])
             with self.assertRaises(ValueError):
-                stdz = Standardize(d=2, indices=[0, 0])
+                stdz = InputStandardize(d=2, indices=[0, 0])
             with self.assertRaises(ValueError):
-                stdz = Standardize(d=2, indices=[])
-            stdz = Standardize(d=2, indices=[0])
+                stdz = InputStandardize(d=2, indices=[])
+            stdz = InputStandardize(d=2, indices=[0])
             self.assertTrue(stdz.training)
             self.assertEqual(stdz._d, 2)
             self.assertEqual(stdz.means.shape, torch.Size([1, 2]))
             self.assertEqual(stdz.stds.shape, torch.Size([1, 2]))
             self.assertEqual(len(stdz.indices), 1)
-            self.assertTrue(torch.equal(stdz.indices, torch.tensor([0], dtype=torch.long)))
-            stdz = Standardize(d=2, indices=[0], batch_shape=torch.Size([3]))
+            self.assertTrue(
+                torch.equal(stdz.indices, torch.tensor([0], dtype=torch.long))
+            )
+            stdz = InputStandardize(d=2, indices=[0], batch_shape=torch.Size([3]))
             self.assertTrue(stdz.training)
             self.assertEqual(stdz._d, 2)
             self.assertEqual(stdz.means.shape, torch.Size([3, 1, 2]))
             self.assertEqual(stdz.stds.shape, torch.Size([3, 1, 2]))
             self.assertEqual(len(stdz.indices), 1)
-            self.assertTrue((stdz.indices == torch.tensor([0], dtype=torch.long)).all())
+            self.assertTrue(
+                torch.equal(stdz.indices, torch.tensor([0], dtype=torch.long))
+            )
 
             # test jitter
-            stdz = Standardize(d=2, min_std=1e-4)
+            stdz = InputStandardize(d=2, min_std=1e-4)
             self.assertEqual(stdz.min_std, 1e-4)
             X = torch.cat((torch.randn(4, 1), torch.zeros(4, 1)), dim=-1)
-            X = X.to(self.device)
+            X = X.to(self.device, dtype=dtype)
             self.assertEqual(torch.isfinite(stdz(X)).sum(), X.numel())
 
             # basic usage
             for batch_shape in (torch.Size(), torch.Size([3])):
-                stdz = Standardize(d=2, batch_shape=batch_shape)
+                stdz = InputStandardize(d=2, batch_shape=batch_shape)
+                torch.manual_seed(42)
                 X = torch.randn(*batch_shape, 4, 2, device=self.device, dtype=dtype)
                 X_stdz = stdz(X)
                 self.assertTrue(torch.all(X_stdz.mean(dim=-2).abs() < 1e-4))
@@ -371,13 +376,13 @@ class TestInputTransforms(BotorchTestCase):
                 self.assertTrue(stdz.means.dtype == other_dtype)
 
                 # test errors on wrong shape
-                stdz = Standardize(d=2, batch_shape=batch_shape)
+                stdz = InputStandardize(d=2, batch_shape=batch_shape)
                 X = torch.randn(*batch_shape, 2, 1, device=self.device, dtype=dtype)
                 with self.assertRaises(BotorchTensorDimensionError):
                     stdz(X)
 
                 # test no normalization on eval
-                stdz = Standardize(
+                stdz = InputStandardize(
                     d=2, batch_shape=batch_shape, transform_on_eval=False
                 )
                 X = torch.randn(*batch_shape, 4, 2, device=self.device, dtype=dtype)
@@ -388,7 +393,7 @@ class TestInputTransforms(BotorchTestCase):
                 self.assertTrue(torch.equal(stdz(X), X))
 
                 # test no normalization on train
-                stdz = Standardize(
+                stdz = InputStandardize(
                     d=2, batch_shape=batch_shape, transform_on_train=False
                 )
                 X_stdz = stdz(X)
@@ -399,7 +404,7 @@ class TestInputTransforms(BotorchTestCase):
 
                 # test indices
                 indices = [0, 2]
-                stdz = Standardize(d=3, batch_shape=batch_shape, indices=indices)
+                stdz = InputStandardize(d=3, batch_shape=batch_shape, indices=indices)
                 X = torch.randn(*batch_shape, 4, 3, device=self.device, dtype=dtype)
                 X_stdz = stdz(X)
                 self.assertTrue(
@@ -409,7 +414,7 @@ class TestInputTransforms(BotorchTestCase):
                     torch.all(X_stdz[..., indices].std(dim=-2) < 1.0 + 1e-4)
                 )
                 self.assertTrue(
-                    torch.all((X_stdz[..., indices].std(dim=-2) - 1.0).abs() <  1e-4)
+                    torch.all((X_stdz[..., indices].std(dim=-2) - 1.0).abs() < 1e-4)
                 )
                 self.assertTrue(torch.allclose(X_stdz[..., 1], X[..., 1]))
                 stdz.eval()
@@ -417,19 +422,19 @@ class TestInputTransforms(BotorchTestCase):
                 self.assertTrue(torch.allclose(X, X_unstdz, atol=1e-4, rtol=1e-4))
 
                 # test equals
-                stdz = Standardize(d=2, batch_shape=batch_shape, reverse=True)
-                stdz2 = Standardize(d=2, batch_shape=batch_shape, reverse=False)
+                stdz = InputStandardize(d=2, batch_shape=batch_shape, reverse=True)
+                stdz2 = InputStandardize(d=2, batch_shape=batch_shape, reverse=False)
                 self.assertFalse(stdz.equals(stdz2))
-                stdz3 = Standardize(d=2, batch_shape=batch_shape, reverse=True)
+                stdz3 = InputStandardize(d=2, batch_shape=batch_shape, reverse=True)
                 self.assertTrue(stdz.equals(stdz3))
-                stdz4 = Standardize(d=2, batch_shape=batch_shape, indices=[0, 1])
+                stdz4 = InputStandardize(d=2, batch_shape=batch_shape, indices=[0, 1])
                 self.assertFalse(stdz4.equals(stdz))
-                stdz5 = Standardize(d=2, batch_shape=batch_shape, indices=[0])
+                stdz5 = InputStandardize(d=2, batch_shape=batch_shape, indices=[0])
                 self.assertFalse(stdz5.equals(stdz))
-                stdz6 = Standardize(d=2, batch_shape=batch_shape, indices=[0, 1])
+                stdz6 = InputStandardize(d=2, batch_shape=batch_shape, indices=[0, 1])
                 self.assertTrue(stdz6.equals(stdz4))
-                stdz7 = Standardize(d=3, batch_shape=batch_shape, indices=[0, 1])
-                stdz8 = Standardize(d=3, batch_shape=batch_shape, indices=[0, 2])
+                stdz7 = InputStandardize(d=3, batch_shape=batch_shape, indices=[0, 1])
+                stdz8 = InputStandardize(d=3, batch_shape=batch_shape, indices=[0, 2])
                 self.assertFalse(stdz7.equals(stdz8))
 
     def test_chained_input_transform(self):
