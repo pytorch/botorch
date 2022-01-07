@@ -409,7 +409,7 @@ class TestInputTransforms(BotorchTestCase):
                     torch.all(X_stdz[..., indices].std(dim=-2) < 1.0 + 1e-4)
                 )
                 self.assertTrue(
-                    torch.all(X_stdz[..., indices].std(dim=-2) > 1.0 - 1e-4)
+                    torch.all((X_stdz[..., indices].std(dim=-2) - 1.0).abs() <  1e-4)
                 )
                 self.assertTrue(torch.allclose(X_stdz[..., 1], X[..., 1]))
                 stdz.eval()
