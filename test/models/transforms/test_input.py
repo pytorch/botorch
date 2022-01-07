@@ -334,7 +334,7 @@ class TestInputTransforms(BotorchTestCase):
             self.assertEqual(stdz.means.shape, torch.Size([1, 2]))
             self.assertEqual(stdz.stds.shape, torch.Size([1, 2]))
             self.assertEqual(len(stdz.indices), 1)
-            self.assertTrue((stdz.indices == torch.tensor([0], dtype=torch.long)).all())
+            self.assertTrue(torch.equal(stdz.indices, torch.tensor([0], dtype=torch.long)))
             stdz = Standardize(d=2, indices=[0], batch_shape=torch.Size([3]))
             self.assertTrue(stdz.training)
             self.assertEqual(stdz._d, 2)
