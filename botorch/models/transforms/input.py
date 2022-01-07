@@ -542,7 +542,7 @@ class Standardize(ReversibleInputTransform, Module):
             self.means = X.mean(dim=-2, keepdim=True)
             self.stds = X.std(dim=-2, keepdim=True)
 
-            self.stds[torch.where(self.stds <= self.min_std)] = self.min_std
+            self.stds = torch.clamp(self.stds, min=self.min_std)
         if hasattr(self, "indices"):
             X_new = X.clone()
             X_new[..., self.indices] = (
