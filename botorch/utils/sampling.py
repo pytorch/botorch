@@ -624,7 +624,7 @@ class PolytopeSampler(ABC):
             seed: The random seed.
 
         Returns:
-            A `n x d_sample` Tensor of samples from the polytope.
+            A `n x d` Tensor of samples from the polytope.
         """
         pass  # pragma: no cover
 
@@ -673,7 +673,7 @@ class HitAndRunPolytopeSampler(PolytopeSampler):
             seed: The random seed.
 
         Returns:
-            A `n x d_sample` Tensor of samples from the polytope.
+            A `n x d` Tensor of samples from the polytope.
         """
         transformed_samples = sample_polytope(
             # run this on the cpu
@@ -786,7 +786,7 @@ class DelaunayPolytopeSampler(PolytopeSampler):
             seed: The random seed.
 
         Returns:
-            A `n x d_sample` Tensor of samples from the polytope.
+            A `n x d` Tensor of samples from the polytope.
         """
         if self.dim == 1:
             with manual_seed(seed):
