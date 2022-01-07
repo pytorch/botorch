@@ -553,8 +553,10 @@ class Standardize(ReversibleInputTransform, Module):
 
     def _untransform(self, X: Tensor) -> Tensor:
         r"""Un-standardize the inputs.
+        
         Args:
             X: A `batch_shape x n x d`-dim tensor of normalized inputs.
+        
         Returns:
             A `batch_shape x n x d`-dim tensor of un-normalized inputs.
         """
