@@ -507,10 +507,8 @@ class Standardize(ReversibleInputTransform, Module):
             if len(indices.unique()) != len(indices):
                 raise ValueError("Elements of `indices` tensor must be unique!")
             self.indices = indices
-        means = torch.zeros(*batch_shape, 1, d)
-        stds = torch.ones(*batch_shape, 1, d)
-        self.register_buffer("means", means)
-        self.register_buffer("stds", stds)
+        self.register_buffer("means", torch.zeros(*batch_shape, 1, d))
+        self.register_buffer("stds", torch.ones(*batch_shape, 1, d))
         self._d = d
         self.transform_on_train = transform_on_train
         self.transform_on_eval = transform_on_eval
