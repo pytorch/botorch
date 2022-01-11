@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import torch
 from botorch.exceptions.errors import BotorchError
+from botorch.posteriors.base_samples import _reshape_base_samples_non_interleaved
 from botorch.posteriors.gpytorch import GPyTorchPosterior
 from gpytorch.distributions.multitask_multivariate_normal import (
     MultitaskMultivariateNormal,
@@ -55,13 +56,18 @@ def _reshape_base_samples(
     Returns:
         Reshaped and expanded base samples.
     """
-    loc = posterior.mvn.loc
+    mvn = posterior.mvn
+    loc = mvn.loc
     peshape = posterior.event_shape
     base_samples = base_samples.view(
         sample_shape + torch.Size([1 for _ in range(loc.ndim - 1)]) + peshape[-2:]
     ).expand(sample_shape + loc.shape[:-1] + peshape[-2:])
+    if posterior._is_mt:
+        base_samples = _reshape_base_samples_non_interleaved(
+            mvn=posterior.mvn, base_samples=base_samples, sample_shape=sample_shape
+        )
     base_samples = base_samples.reshape(
-        -1, *loc.shape[:-1], posterior.mvn.lazy_covariance_matrix.shape[-1]
+        -1, *loc.shape[:-1], mvn.lazy_covariance_matrix.shape[-1]
     )
     base_samples = base_samples.permute(*range(1, loc.dim() + 1), 0)
     return base_samples.reshape(
@@ -130,7 +136,9 @@ def sample_cached_cholesky(
     new_Lq = torch.cat([bl_chol, br_chol], dim=-1)
     mean = posterior.mvn.mean
     base_samples = _reshape_base_samples(
-        base_samples=base_samples, sample_shape=sample_shape, posterior=posterior
+        base_samples=base_samples,
+        sample_shape=sample_shape,
+        posterior=posterior,
     )
     if not isinstance(posterior.mvn, MultitaskMultivariateNormal):
         # add output dim
@@ -140,9 +148,9 @@ def sample_cached_cholesky(
     new_mean = mean[..., -q:, :]
     res = (
         new_Lq.matmul(base_samples)
-        .permute(-1, *range(mean.dim() - 2), -2, -3)
+        .add(new_mean.transpose(-1, -2).unsqueeze(-1))
+        .permute(-1, *range(posterior.mvn.loc.dim() - 1), -2, -3)
         .contiguous()
-        .add(new_mean)
     )
     contains_nans = torch.isnan(res).any()
     contains_infs = torch.isinf(res).any()
