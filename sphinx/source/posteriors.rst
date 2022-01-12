@@ -43,3 +43,11 @@ Transformed Posterior
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. automodule:: botorch.posteriors.transformed
     :members:
+
+Utilities
+---------------------------------------------
+
+Base Samples
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. automodule:: botorch.posteriors.base_samples
+		:members:

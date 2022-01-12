@@ -15,6 +15,7 @@ from typing import Optional
 
 import torch
 from botorch.exceptions.errors import BotorchTensorDimensionError
+from botorch.posteriors.base_samples import _reshape_base_samples_non_interleaved
 from botorch.posteriors.posterior import Posterior
 from gpytorch import settings as gpt_settings
 from gpytorch.distributions import MultitaskMultivariateNormal, MultivariateNormal
@@ -86,8 +87,12 @@ class GPyTorchPosterior(Posterior):
                 raise RuntimeError("sample_shape disagrees with shape of base_samples.")
             # get base_samples to the correct shape
             base_samples = base_samples.expand(sample_shape + self.event_shape)
+            if self._is_mt:
+                base_samples = _reshape_base_samples_non_interleaved(
+                    mvn=self.mvn, base_samples=base_samples, sample_shape=sample_shape
+                )
             # remove output dimension in single output case
-            if not self._is_mt:
+            else:
                 base_samples = base_samples.squeeze(-1)
         with ExitStack() as es:
             if gpt_settings._fast_covar_root_decomposition.is_default():
